@@ -5,7 +5,6 @@
 #' @import Matrix
 #' @importFrom Rcpp evalCpp
 #' @import Rook
-#' @importFrom WGCNA cor
 #' @import igraph
 #' @importFrom irlba irlba
 #' @importFrom mgcv gam
@@ -1301,7 +1300,7 @@ Pagoda2 <- setRefClass(
         require(Rtsne);
         cat("calculating distance ... ")
         #d <- dist(x);
-        d <- as.dist(1-WGCNA::cor(t(x), method = 'pearson', nThreads = n.cores))
+        d <- as.dist(1-cor(t(x), method = 'pearson', nThreads = n.cores))
         #d <- as.dist(1-cor(x))
         cat("done\n")
         emb <- Rtsne(d,is_distance=T, perplexity=perplexity, ...)$Y;
