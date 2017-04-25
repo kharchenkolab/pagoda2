@@ -4,10 +4,11 @@
 
 Installation of pagoda2 requires installation of the Non-metric space library (nmslib)
 and a custom built largeVis package. Pagoda 2 has been tested with nmslib v1.5.3 although
-it should work with any subsequent version. To install pagoda2 please follow the instructions below:
+it should work with any subsequent version. To install pagoda2 please follow the instructions below.
 
+
+Install system dependencies for building nmslib, example here provided for Ubuntu
 ```
-# Install system dependencies for building nmslib
 $ sudo apt-get update
 $ sudo apt-get install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev
 
@@ -22,25 +23,32 @@ $ cd nmslib-1.5.3
 $ cd similarity_search
 $ cmake .
 $ make
+```
 
-# Install custom largeVis package. You just need a temporary
-# directory for this. ( e.g. ~/tmp/largeVisCustom/)
+Install custom largeVis package.
+```
+# You just need a temporary directory for this. ( e.g. ~/tmp/largeVisCustom/)
 $ cd /other/path/of/choice
-$ wget http://pklab.hms.harvard.edu:/pagoda2dependencies/largeVis.tar.gz
-$ sha1sum largeVis.tar.gz # = 0eb51b7322d795f3f6cc35aec03e5bdd3189fa1e
+$ wget http://pklab.med.harvard.edu/pagoda2dependencies/largeVis.tar.gz
+$ sha1sum largeVis.tar.gz # (optional) should be: 0eb51b7322d795f3f6cc35aec03e5bdd3189fa1e
 $ tar xvzf largeVis.tar.gz
 # Start R and install largeVis
 $ R
 > library(devtools)
 > install('largeVis/')
-> q() # leave R
+> q()
+```
 
-# Get a copy of the pagoda2 package from git into a
+ Get a copy of the pagoda2 package
+```
+# Clone a copy from git from git into a
 # temporary directory (e.g. ~/tmp/pagoda2/)
 $ cd /another/temp/dir/
 $ git clone https://github.com/barkasn/pagoda2.git
+```
 
-# Install the package
+Install pagoda2
+```
 # Specify the NMSLIB_PATH enviroment to the location that you installed
 # and built nmslib above
 $ export NMSLIB_PATH=/path/to/nmslib-1.5.3/
@@ -51,4 +59,5 @@ $ R
 > install('pagoda2')
 > library('pagoda2')
 # Pagoda2 is now ready to use
+```
 
