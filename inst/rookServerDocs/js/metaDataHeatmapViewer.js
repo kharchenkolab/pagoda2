@@ -302,10 +302,15 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
 	    // Print names
 	    var name = labels[i];
-	    ctx.font = '20px Arial';
-	    ctx.fillStyle = 'black';
-	    var labelx = (j) * cellWidth + left + labelXpad;
-	    ctx.fillText(name, labelx , y + labelYpad);
+
+      // Cap at 16 and don't plot if smaller than 6
+	    var fontSize = Math.min(cellHeight, 16);
+	    if (fontSize >= 6) {
+  	    ctx.font = fontSize + 'px Arial';
+  	    ctx.fillStyle = 'black';
+  	    var labelx = (j) * cellWidth + left + labelXpad;
+  	    ctx.fillText(name, labelx , y + labelYpad);
+	    }
 
 	    // Register a click region for this metadata row
 	    var y1 = i * cellHeight + top;
