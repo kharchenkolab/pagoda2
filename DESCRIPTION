@@ -24,7 +24,10 @@ Imports: rjson,
     RcppProgress,
     stats,
     scde,
-    Rtsne
+    Rtsne,
+    GO.db,
+    RMTstat,
+    org.Hs.eg.db
 RoxygenNote: 6.0.1
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
