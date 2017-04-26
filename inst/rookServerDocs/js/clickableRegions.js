@@ -9,7 +9,7 @@
  * @constructor
  * @description provides support for handling clickable regions on a
  * surface by allowing region registration and resolution.
- * @todo  This is an reimplementation of the dendrogram clickable regions that can be 
+ * @todo  This is an reimplementation of the dendrogram clickable regions that can be
  * used independently. The dendrogram should be modified to use this
  * and region resolution optimisations should be implemented here
  */
@@ -23,7 +23,7 @@ function clickableRegions() {
 
 /**
  * Resolve a click
- * @description Find which element was clicked and call the callback function 
+ * @description Find which element was clicked and call the callback function
  * with information about it
 
  */
@@ -48,7 +48,7 @@ clickableRegions.prototype.resolveClick = function (x,y, callback) {
 clickableRegions.prototype.resolveClickManual =  function (x,y, callback) {
     for (var i = 0; i < this.clickAreas.length; i++) {
 	var vs = this.clickAreas[i].vertices
-	if (pointInPolygon([x,y], vs)) {	
+	if (pointInPolygon([x,y], vs)) {
 	    if ( typeof callback !== 'undefined' ) {
 		callback(this.clickAreas[i].data);
 	    } else {
@@ -56,7 +56,7 @@ clickableRegions.prototype.resolveClickManual =  function (x,y, callback) {
 	    }
 	    break;
 	}; // if
-    }; // for  
+    }; // for
 }
 
 clickableRegions.prototype.resolveClickCache = function(x,y, callback) {
@@ -70,13 +70,13 @@ clickableRegions.prototype.clearClickAreas = function() {
     //var dv = new dendrogramViewer();
     this.clickAreas.length = 0;
     // Invalidate the clickMapCache
-    this.clickMapCacheValid = 0;
+    this.clickMapCacheValid = false;
 }
 
 /**
  * This function will build the click cache and for every location
  * on the canvas will pre-calculate what needs to be returned.
- * @description NOT IMPLEMENTED. It will also map nearby clicks to regions even if the regions is not 
+ * @description NOT IMPLEMENTED. It will also map nearby clicks to regions even if the regions is not
  * specified provided that there are no collisiong. NOTES on future implementation: implement this using a region
  * growing algorith -- take  from image processing. Store the region resolutions
  * parameters seperately as many adjacent pixes will have the same
