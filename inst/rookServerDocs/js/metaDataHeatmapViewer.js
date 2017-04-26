@@ -13,7 +13,7 @@ function metaDataHeatmapViewer() {
 	return metaDataHeatmapViewer.instance;
     }
 
-    // The initializer is called externally when the 
+    // The initializer is called externally when the
     // dendrogram (which will provide the order)
     // is ready
 
@@ -22,8 +22,8 @@ function metaDataHeatmapViewer() {
 
 /**
  * Initialise the metadata heatmap viewer
- * @description this is separate from the constructor 
- * because it's called by the container object when things 
+ * @description this is separate from the constructor
+ * because it's called by the container object when things
  * are ready
  */
 metaDataHeatmapViewer.prototype.initialize = function () {
@@ -32,12 +32,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     var metadataContainer = $('#metadata-area-container');
     metadataContainer.append('<div id="metadata-area-container-inner"></div>');
 
-    // We need an inner container for establishing a new 
+    // We need an inner container for establishing a new
     // reference for the absolute positioning of the two canvases
     var metadataContainerInner = $('#metadata-area-container-inner');
     metadataContainerInner.css({position: 'relative'});
-    
-    metadataContainerInner.append( 
+
+    metadataContainerInner.append(
 	'<canvas id="metadata-area"></canvas>' +
 	'<canvas id="metadata-area-overlay"></canvas>'
     );
@@ -60,22 +60,22 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     this.clickRegions = new clickableRegions();
 
     // Setup the click listener
-    // NOTE: At this point we are only interested in resoving 
-    // which line we are clicking on. In the future some of the 
+    // NOTE: At this point we are only interested in resoving
+    // which line we are clicking on. In the future some of the
     // metadata should support clicking on individual cells and/or
     // regions of contigious properties.
-    // For clicking on contigious chucks (e.g. clusters) we 
+    // For clicking on contigious chucks (e.g. clusters) we
     // will need a propery that says the the data is guaranteed to be
     // contigious with the default ordering
     (metadataAreaOverlay[0]).addEventListener('click', function(e) {
 	var x = e.layerX;
 	var y = e.layerY;
-	
+
 	var mdhv = new metaDataHeatmapViewer();
 	mdhv.clickRegions.resolveClick(x,y, function(params) {
 	    var embV = new embeddingViewer();
 	    embV.setColorConfiguration('metadata');
-	    // Here  we are just passing the params from the  
+	    // Here  we are just passing the params from the
 	    // click region registration, we might want to change this
 	    // later, but in any case keep processin in here to the minimum
 	    embV.setMetadataColorInfo(params);
@@ -89,6 +89,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 	metaV.showOverlay(x);
 	var heatV = new heatmapViewer();
 	heatV.showOverlay(x);
+	var aspeV = new aspectHeatmapViewer();
+	aspeV.showOverlay(x);
     });
 
     (metadataAreaOverlay[0]).addEventListener('mouseout', function(e) {
@@ -97,6 +99,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
 	metaV.clearOverlay();
 	heatV.clearOverlay();
+	var aspeV = new aspectHeatmapViewer();
+	aspeV.clearOverlay()
     });
 
     // Pointer change to cross hairs when over the heatmap
@@ -147,22 +151,22 @@ metaDataHeatmapViewer.prototype.clearOverlay = function() {
     var ctx = overlayArea.getContext('2d');
 
     ctx.clearRect(0,0, overlayArea.width, overlayArea.height);
-} 
+}
 
 /**
- * Update the canvas size of this element with the 
+ * Update the canvas size of this element with the
  * sized provided by thhe heatmapDendrogramViewer
  */
 metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
     console.log('metadataheatmapviewer updating canvas size');
-    
+
     var metaArea =  $('#metadata-area')[0];
     var metadataAreaOverlay = $('#metadata-area-overlay')[0];
 
     var metadataContainer = $('#metadata-area-container');
-    
+
     heatDendV = new heatmapDendrogramViewer();
-    
+
     var curWidth =  heatDendV.getCurrentWidth();
     var curHeight =   heatDendV.getCurrentMetadataHeight();
 
@@ -170,7 +174,7 @@ metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
     this.canvasElementHeight =  curHeight;
 
     metaArea.width = curWidth;
-    metaArea.height = curHeight; 
+    metaArea.height = curHeight;
 
     metadataAreaOverlay.width = curWidth;
     metadataAreaOverlay.height = curHeight;
@@ -178,7 +182,7 @@ metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
     metadataContainer.css({width: curWidth+'px', height: curHeight+'px'});
 }
 
-/** 
+/**
  * Get the draw constants for the metadata heatmap
  */
 metaDataHeatmapViewer.prototype.getDrawConstants = function() {
@@ -196,7 +200,7 @@ metaDataHeatmapViewer.prototype.getDrawConstants = function() {
 /**
  * Draw an updated metadata heatmap
  *
- * @todo This function should be broken up into a data prep and 
+ * @todo This function should be broken up into a data prep and
  * data plot step
  */
 metaDataHeatmapViewer.prototype.drawMetadata = function() {
@@ -213,7 +217,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
     var left = plotConsts.left;
     var metaWidth = plotConsts.width;
     var metaHeight = plotConsts.height - bottomPadding;
-    
+
 
     // Request the data
     var dataCntr = new dataController();
@@ -225,7 +229,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 	// Clear the canvas
 	// FIXME: Clear the proper area
 	ctx.clearRect(0,0,5000,5000);
-	
+
 	// Generate two full arrays with the things that were requested
 	// One has the actual values and the other the plot colors
 	// We will need the actual values for the rollovers later
@@ -252,9 +256,9 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
 	    var curRow = new Array();
 	    for (var i = 0; i < cellSelection.length; i++) {
-		var curCell =  cellSelection[i];	
+		var curCell =  cellSelection[i];
 		curRow[i] = curEntry.data[curCell];
-	    }    
+	    }
 	    renderedArrayValues[j] = curRow;
 
 	    // The palette from R has an alpha channel that we
@@ -276,7 +280,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 	// Computed plotting param
 	var nCells = renderedArrayColors[0].length;
 
-	// TODO: should be subtracting left and top here ( and 
+	// TODO: should be subtracting left and top here ( and
 	//  later for the click regions as well)
 	var cellWidth = metaWidth / (nCells);
 	var cellHeight = metaHeight / (renderedArrayColors.length);
@@ -293,7 +297,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 	    for (var j = 0; j < row.length; j++) {
 		    x = (j) * cellWidth + left;
 		    ctx.fillStyle =  row[j];
-		    ctx.fillRect(x,y, cellWidth, cellHeight);	
+		    ctx.fillRect(x,y, cellWidth, cellHeight);
 	    }
 
 	    // Print names
@@ -325,6 +329,6 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 	ctx.beginPath();
 	ctx.rect(left, top, metaWidth, metaHeight);
 	ctx.stroke();
-	
+
     });
 }

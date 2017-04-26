@@ -20,6 +20,10 @@ function aspectHeatmapViewer() {
  * when initialization has finished.
  */
 aspectHeatmapViewer.prototype.initialize = function() {
+
+  // Clickable regions for cross hairs and navigating
+  this.geneRegions = new clickableRegions();
+
   var aspectHeatmapContainer = $('#aspect-heatmap-container');
   aspectHeatmapContainer.css({position: 'relative'});
 
@@ -56,12 +60,62 @@ aspectHeatmapViewer.prototype.initialize = function() {
   // Draw the heatmap
   this.drawHeatmap();
 
-}
+};
 
 
 aspectHeatmapViewer.prototype.setupOverlays = function() {
-  // TODO
-}
+  var heatmapOverlayArea = $('#aspect-heatmap-area-overlay')[0];
+  var aspHeatView = this;
+
+  heatmapOverlayArea.addEventListener('click', function(e) {
+    var x = e.layerX;
+    var y = e.layerY;
+
+    var regionData = aspHeatView.geneRegions.resolveClick(x,y);
+    if (typeof regionData !== 'undefined') {
+      // TODO: Uncomment when embedding viewer supports this
+      /*
+      var embV = new embeddingViewer();
+	    embV.setColorConfiguration('aspect');
+	    embV.setAspectColorInfo({geneid: regionData.aspectId});
+	    embV.updateColors();
+	    */
+    };
+  }); // click listener
+
+  heatmapOverlayArea.addEventListener('mousemove', function(e) {
+
+    var aspHeatView =  new aspectHeatmapViewer();
+
+    var x = e.layerX;
+    var y = e.layerY;
+
+    console.log(x,y)
+
+  	var heatV = new heatmapViewer();
+  	var metaV = new metaDataHeatmapViewer();
+
+  	heatV.showOverlay(x);
+  	metaV.showOverlay(x);
+
+  	aspHeatView.showOverlay(x, y);
+
+  });
+
+   heatmapOverlayArea.addEventListener('mouseenter', function(e) {
+     document.body.style.cursor = "crosshair";
+   });
+
+   heatmapOverlayArea.addEventListener('mouseout', function(e) {
+     var aspHeatView =  new aspectHeatmapViewer();
+     aspHeatView.clearOverlay();
+     document.body.style.cursor = "default";
+   });
+
+
+};
+
+
 
 /**
  * Clear the overlay
@@ -74,9 +128,57 @@ aspectHeatmapViewer.prototype.clearOverlay = function() {
   ctx.clearRect(0,0,width,height);
 }
 
-aspectHeatmapViewer.prototype.showOverlay = function() {
-  // TODO
+aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
+  var aspHeatView = new aspectHeatmapViewer()
+
+  var overlayArea = document.getElementById('aspect-heatmap-area-overlay');
+  var ctx = overlayArea.getContext('2d');
+
+  var drawConsts = aspHeatView.getDrawConstants();
+
+  var areaWidth = overlayArea.width;
+  var areaHeight = overlayArea.height;
+
+  ctx.setLineDash([10,10])
+  ctx.lineWidth = 1;
+  ctx.clearRect(0,0,areaWidth,areaHeight);
+
+  var actualPlotHeight = this.getActualPlotHeight();
+
+  if (typeof y !== 'undefined' & y < actualPlotHeight & y > drawConsts.top){
+    ctx.beginPath();
+    ctx.moveTo(drawConsts.left, y);
+    ctx.lineTo(drawConsts.width + drawConsts.left, y);
+    ctx.stroke();
+  }
+
+  if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left  &
+	    (y < actualPlotHeight  | typeof y === 'undefined') // if y is provided it is in the plot
+       ) {
+
+	ctx.beginPath();
+	ctx.moveTo(x, drawConsts.top);
+	ctx.lineTo(x, actualPlotHeight + drawConsts.top);
+	ctx.stroke();
+  }
+
 }
+
+/**
+ * Get the plot height that was actually used
+ */
+aspectHeatmapViewer.prototype.getActualPlotHeight = function() {
+    return this.actualPlotHeight;
+}
+
+/**
+ * Set the plot height that was actually used
+ */
+aspectHeatmapViewer.prototype.setActualPlotHeight = function(val) {
+    this.actualPlotHeight = val;
+}
+
+
 
 /**
  * Update the canvas size to that provided by the heatmapDendrogramViewer
@@ -141,7 +243,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 
 	var dataCntr = new dataController();
 	dataCntr.getAspectMatrix(cellIndexStart, cellIndexEnd, false, function(data){
-console.log('Debug: Data for aspect heatmap', data);
+
 	  loadingDomItem.remove();
 
     var naspects = data.Dim[1];
@@ -152,6 +254,7 @@ console.log('Debug: Data for aspect heatmap', data);
     var cellHeight = heatmapHeight / naspects;
 
     var actualPlotHeight = heatmapHeight; // for convinience
+    aspHeatView.setActualPlotHeight( actualPlotHeight );
 
     var palSize = aspHeatView.palManager.getNumberOfColors();
     var pal = aspHeatView.palManager.getPaletteColors();
@@ -167,7 +270,7 @@ console.log('Debug: Data for aspect heatmap', data);
       if (rsi === rei) {continue;};
 
       // Calculate row normalisation
-      var rowMin = data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
+      var rowMin = data.x.slice(rsi, rei).reduce( function(a,b){ return Math.min(a,b)} );
 	    var rowMax = data.x.slice(rsi, rei).reduce(function(a,b){ return Math.max(a,b) } );
 	    var rowSum = data.x.slice(rsi, rei).reduce(function(a,b){ return a+b });
       var rowMean = rowSum / (rei - rsi + 1);

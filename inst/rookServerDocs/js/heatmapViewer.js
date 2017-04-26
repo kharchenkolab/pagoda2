@@ -8,7 +8,7 @@
  * Manages the heatmap viewer
  * @constructor
  */
-function heatmapViewer() { 
+function heatmapViewer() {
     if (typeof heatmapViewer.instance ===  'object') {
 	return heatmapViewer.instance;
     }
@@ -21,17 +21,17 @@ function heatmapViewer() {
 
 
 /**
- * Perform initialization of the heatmap viewer. 
- * @description This is called by the 
- * parent heatmapDendrogram viewer object when the dendrogram has finished 
- * loading. This is dore because it is the dendrogram object that will 
+ * Perform initialization of the heatmap viewer.
+ * @description This is called by the
+ * parent heatmapDendrogram viewer object when the dendrogram has finished
+ * loading. This is dore because it is the dendrogram object that will
  * provide order for the columns here -- we can't rely on the backend
  * to do this because we will eventually need to do this clientside
  */
 heatmapViewer.prototype.initialize = function() {
     // TODO: get a variable to check that this is not run twice
 
-    // Make a clickable regions object that we will uses for the crosshair gene name 
+    // Make a clickable regions object that we will uses for the crosshair gene name
     this.geneRegions = new clickableRegions();
 
 
@@ -40,19 +40,19 @@ heatmapViewer.prototype.initialize = function() {
     // NOTE: We are putting two canvases in #heatmap-area-container
     // and we are positioning them directly on top of each other
     // So we can have our static heatmap on the bottom and dynamic
-    // annotation (like crosshairs) on top without having 
+    // annotation (like crosshairs) on top without having
     // to redraw the bottom repeatedly
 
     var heatmapContainer = $('#heatmap-area-container');
     heatmapContainer.css({position: 'relative'});
 
     heatmapContainer.append(
-	'<canvas id="heatmap-area" ></canvas>' + 
+	'<canvas id="heatmap-area" ></canvas>' +
 	'<canvas id="heatmap-area-overlay"></canvas>'
     );
 
     var heatmapArea = $('#heatmap-area');
-    
+
     heatmapArea.css({
 	position: 'absolute',
 	top: 0,
@@ -68,7 +68,7 @@ heatmapViewer.prototype.initialize = function() {
 
     // Setup the events handling the overlay effect of the canvas
     this.setupOverlays();
-   
+
     // Update the size of both canvases
     this.updateCanvasSize();
 
@@ -121,6 +121,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
 	var heatV = new heatmapViewer();
 	var metaV = new metaDataHeatmapViewer();
+	var aspeV = new aspectHeatmapViewer();
 
 	var label;
 
@@ -131,13 +132,16 @@ heatmapViewer.prototype.setupOverlays = function() {
 
 	heatV.showOverlay(e.layerX, e.layerY, label);
 	metaV.showOverlay(e.layerX);
+	aspeV.showOverlay(e.layerX);
+
+
     });
 
     // Remove the cursor when done
     heatmapAreaOverlay.addEventListener('mouseout', function(e) {
 	var metaV = new metaDataHeatmapViewer();
 	var heatV = new heatmapViewer();
-	
+
 	heatV.clearOverlay();
 	metaV.clearOverlay();
     });
@@ -160,14 +164,14 @@ heatmapViewer.prototype.setupOverlays = function() {
 heatmapViewer.prototype.getRowVisualOrder = function(data) {
 //    the bin size
 
-    
+
     var ncols = data.Dim[0];
     var nrows = data.Dim[1];
 
 
     var binsize = Math.max(ncols / 30);
     var ncolsbin = Math.ceil(ncols / binsize);
-    
+
     // Make empty bins array
     var binsSumArray = new Array(nrows);
     for (var k = 0; k < nrows; k++) {
@@ -183,10 +187,10 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
     	// Row start and end index
     	var rsi = data.p[j];
     	var rei = data.p[j+1] - 1;
-	
+
     	for (var k = rsi; k < rei; k++) {
     	    var cn = data.i[k];
-	    
+
     	    // Find the bin index for this element
     	    var binindex = Math.floor(cn / binsize);
     	    binsSumArray[j][binindex] = binsSumArray[j][binindex] + data.x[k];
@@ -196,7 +200,7 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
     function meanClampNorm(v, rowMean, maxAbsValue) {
     	const trim = 0.3;
     	maxAbsValue *= trim;
-	
+
     	const range = 1;
 
     	var val =  (v - rowMean) / (maxAbsValue * 2) + 0.5;
@@ -208,7 +212,7 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
 
     // Normalise
     for (var j = 0; j < binsSumArray.length; j++) {
-	
+
     	var maxAbsValue = 0;
 
     	var rowMean = 0;
@@ -277,8 +281,8 @@ heatmapViewer.prototype.clearOverlay = function() {
 
 	var width = overlayArea.width;
 	var height = overlayArea.height;
-	
-	ctx.clearRect(0,0,width, height);  
+
+	ctx.clearRect(0,0,width, height);
 }
 
 /**
@@ -291,7 +295,7 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
     var ctx = overlayArea.getContext('2d');
 
     var heatView = new heatmapViewer();
-    
+
     var drawConsts = heatView.getDrawConstants();
 
     var areaWidth = overlayArea.width;
@@ -310,8 +314,8 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
 	ctx.lineTo(drawConsts.width + drawConsts.left, y);
 	ctx.stroke();
     }
-    
-    if (typeof x !== 'undefined' & 
+
+    if (typeof x !== 'undefined' &
 	x > drawConsts.left &
 	x < drawConsts.width + drawConsts.left  &
 	(y < actualPlotHeight  | typeof y === 'undefined') // if y is provided it is in the plot
@@ -371,13 +375,13 @@ heatmapViewer.prototype.updateCanvasSize = function() {
 }
 
 /**
- * Sets a gene selection from the gene selection controller as the 
+ * Sets a gene selection from the gene selection controller as the
  * display genelist
  * @param selectionName Name of the selection from the gene selection controller
  */
 heatmapViewer.prototype.setNamedSelectionToDisplayGenes = function(selectionName) {
     var geneSelCntr =  new geneSelectionController();
-    this.displayGenes = geneSelCntr.getSelection(selectionName).genes; 
+    this.displayGenes = geneSelCntr.getSelection(selectionName).genes;
 }
 
 
@@ -400,7 +404,7 @@ heatmapViewer.prototype.setRowReordering = function(v) {
 }
 
 
-/** 
+/**
  * get the row reordeing
  */
 heatmapViewer.prototype.getRowReordering = function(v) {
@@ -428,7 +432,7 @@ heatmapViewer.prototype.drawHeatmap = function() {
 	this.clearHeatmap(ctx);
 
 	var heatDendView = new heatmapDendrogramViewer();
-	
+
 	var left = heatDendView.getPlotAreaLeftPadding();
 	var heatmapWidth = heatDendView.getPlotAreaWidth();
 	var heatmapHeight = heatDendView.getCurrentHeatmapHeight();
@@ -443,8 +447,8 @@ heatmapViewer.prototype.drawHeatmap = function() {
 	ctx.fillText(text, heatmapWidth /2 + left, heatmapHeight/2);
 
 
-	// We also want to maintain a gene selection showing the 
-	// current plotted genes 
+	// We also want to maintain a gene selection showing the
+	// current plotted genes
 	var geneSelCntr = new geneSelectionController();
 	geneSelCntr.setSelection('heatmapDisplayGenes', [], 'Current Heatmap Genes');
     } else {
@@ -516,7 +520,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
     var dendV = new dendrogramViewer();
     var heatDendView = new heatmapDendrogramViewer();
-    
+
 
 // heatDendView.getCurrentHeatmapHeight()
 
@@ -542,12 +546,12 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     heatView.clearHeatmap(ctx);
 
     // Show centered waiting icon
-    $('#heatmap-area-container').append("<img class='loadingIcon' src='img/loading.gif'/>"); 
+    $('#heatmap-area-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
     var loadingDomItem =  $('#heatmap-area-container > .loadingIcon')
     var lpad = heatDendView.getCurrentWidth()  / 2;
     var tpad = heatDendView.getCurrentHeatmapHeight() /2;
     loadingDomItem.css({'padding-left': lpad + 'px', 'padding-top': tpad + 'px'});
-			     
+
     var dataCntr = new dataController();
     dataCntr.getExpressionValuesSparseByCellIndexUnpacked(geneIds = geneSelection, cellIndexStart = cellIndexStart, cellIndexEnd = cellIndexEnd, getCellNames = false, callback =  function(data) {
         loadingDomItem.remove();
@@ -597,9 +601,9 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    var rowSum = data.x.slice(rsi, rei).reduce(function(a,b){ return a+b });
 	    var rowMean = rowSum / (rei - rsi + 1);
 	    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
-	    
+
 	    // color mapper is a function
-	    // use a color mapper to ensure consistency of coloring with 
+	    // use a color mapper to ensure consistency of coloring with
 	    // other views (eg embedding)
 	    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
 
@@ -630,7 +634,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
 	    // Get the appropriate font size for this number of cells
 	    var fontSize =  heatView.getRowFontSize(cellHeight)
-	   
+
 	    // Calculate position
 	    x = ncells * cellWidth + left + 20;
 	    y = rowOrder[i] * cellHeight + top + cellHeight / 2 + fontSize / 3;
@@ -649,7 +653,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    j = rowOrder[i];
 
 	    var x1 = left;
-	    var y1 = cellHeight * j + top;	    
+	    var y1 = cellHeight * j + top;
 	    var x2 = heatmapWidth;
 	    var y2 = cellHeight * ( j +1 ) + top;
 
@@ -658,12 +662,12 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 		x1, y2,
 		x2, y2,
 		x2, y1,
-		{geneId: data.DimNames2[i] } 
+		{geneId: data.DimNames2[i] }
 	    );
 	} // for
 
-	
-    }); // dataCntr.getExpressionValuesSparseTransposedByCellIndexUnpacked callback    
+
+    }); // dataCntr.getExpressionValuesSparseTransposedByCellIndexUnpacked callback
 } // doDrawHeatmapSparseMatrix
 
 
