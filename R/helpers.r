@@ -1,4 +1,40 @@
+#' @import org.Hs.eg.db
+#' @import GO.db
 #' @import Rook
+NULL
+
+#' @export generate.p2.human.go
+generate.p2.human.go <- function(hgenes) {
+  library(org.Hs.eg.db)
+  library(GO.db)
+  library(BiocGenerics)
+
+  ids <- unlist(lapply(mget(hgenes, org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+  rids <- names(ids);
+  names(rids) <- ids;
+  go.env <- eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
+  go.env <- go.env[unlist(lapply(go.env,length))>5];
+
+  geneSets <- lapply(names(go.env), function(x) {
+    list(
+      properties = list(
+        locked =T,
+        genesetname = x,
+        shortdescription = GOTERM[[x]]@Term
+      ),
+      genes = c(go.env[[x]])
+    )
+  });
+
+  names(geneSets) <- names(go.env);
+  geneSets
+}
+
+
+
+
+
+
 
 #' @title Generate a Rook Server app from a pagoda2 object
 #' @description Contains some code required to convert from the pagoda2 object to the
