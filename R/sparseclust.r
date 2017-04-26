@@ -1300,7 +1300,7 @@ Pagoda2 <- setRefClass(
         require(Rtsne);
         cat("calculating distance ... ")
         #d <- dist(x);
-        d <- as.dist(1-cor(t(x), method = 'pearson', nThreads = n.cores))
+        d <- as.dist(1-cor(t(x), method = 'pearson'))
         #d <- as.dist(1-cor(x))
         cat("done\n")
         emb <- Rtsne(d,is_distance=T, perplexity=perplexity, ...)$Y;
