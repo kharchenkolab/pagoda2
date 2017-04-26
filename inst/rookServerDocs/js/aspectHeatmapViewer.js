@@ -4,6 +4,9 @@
  * Description: implements the aspect heatmap viewer for pagoda2
  */
 
+/**
+ * Object that manages the aspect heatmap viewer
+ */
 function aspectHeatmapViewer() {
   if (typeof aspectHeatmapViewer.instance === 'object') {
     return aspectHeatmapViewer.instance;
@@ -62,7 +65,9 @@ aspectHeatmapViewer.prototype.initialize = function() {
 
 };
 
-
+/**
+ * Setup the event listeners for the overlay effects
+ */
 aspectHeatmapViewer.prototype.setupOverlays = function() {
   var heatmapOverlayArea = $('#aspect-heatmap-area-overlay')[0];
   var aspHeatView = this;
@@ -128,6 +133,9 @@ aspectHeatmapViewer.prototype.clearOverlay = function() {
   ctx.clearRect(0,0,width,height);
 }
 
+/**
+ * Show overlay for specific coordinates
+ */
 aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   var aspHeatView = new aspectHeatmapViewer()
 
@@ -211,10 +219,16 @@ aspectHeatmapViewer.prototype.updateCanvasSize = function() {
   aspectHeatmapAreaOverlay.height = curHeight;
 }
 
+/**
+ * Clear the heatmap
+ */
 aspectHeatmapViewer.prototype.clearHeatmap = function(ctx) {
   ctx.clearRect(0,0,this.width,this.height);
 }
 
+/**
+ * Draw the heatmap. Will clear heatmap if required
+ */
 aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	var aspHeatView = this;
   var heatDendView = new heatmapDendrogramViewer();
@@ -304,12 +318,16 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 };
 
 
-
+/**
+ * Get 2d drawing context for the canvas
+ */
 aspectHeatmapViewer.prototype.getDrawingContext = function() {
   return document.getElementById('aspect-heatmap-area').getContext('2d');
 }
 
-
+/**
+ * Get drawing constants for drawing
+ */
 aspectHeatmapViewer.prototype.getDrawConstants = function() {
     var heatDendView = new heatmapDendrogramViewer();
 
@@ -323,13 +341,4 @@ aspectHeatmapViewer.prototype.getDrawConstants = function() {
     	maxCellHeight: 30,
     }
 }
-
-
-
-
-
-
-
-
-
 
