@@ -31,6 +31,7 @@ function dataController(repository) {
     this.cache["embeddings"] = [];
 
     this.cache["lastexpressionmatrix"] = null;
+    this.cache["lastaspectmatrix"] = null;
 
     // Define extjs objects -- used for the table data
     // where extjs controls are used
@@ -41,7 +42,7 @@ function dataController(repository) {
 
 /**
  * Returns the named hierarchy in the hclust format
- * @description This is currently a partial implementation as it will 
+ * @description This is currently a partial implementation as it will
  * just return the 'dummy' hierarchy. Can simply change this to be called main
  * if we want to use only one hierarchy
  * @param name Name of the hierarchy to return
@@ -78,7 +79,7 @@ dataController.prototype.getHierarchy =  function(name, callback) {
 
 		callback(data);
 	    }
-	});  
+	});
     };
 };
 
@@ -125,6 +126,95 @@ dataController.prototype.getCellOrder = function(callback) {
     }
 }
 
+dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
+  var dataCntr = this;
+
+  // Does the function return via callback
+  function doReturn(data) {
+		// Unpack the data
+		var x = dataCntr.unpackCompressedBase64Float64Array(data.x);
+		var i = dataCntr.unpackCompressedBase64Int32Array(data.i);
+		var p = dataCntr.unpackCompressedBase64Int32Array(data.p);
+
+		// This is a fix for the way R toJSON encodes one element arrays
+		if (typeof data.Dimnames1 === 'string') {data.Dimnames1 = [ data.Dimnames1 ]; }
+		if (typeof data.Dimnames2 === 'string') {data.Dimnames2 = [ data.Dimnames2 ]; }
+
+		//Convert to matrix reader and return
+		var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1,
+					    data.Dimnames2, x);
+		callback(m);
+  }
+
+  // Check input
+  if (!Number.isInteger(cellIndexStart)) { throw new Error("cellIndexStart must be an integer"); }
+	if (!Number.isInteger(cellIndexEnd)) { throw new Error("cellIndexEnd must be an interger"); }
+
+
+	// Check the cache
+	if(this.cache.lastaspectmatrix !== null ) {
+	    if ( this.cache.lastaspectmatrix.cellindexstart === cellIndexStart &
+  		 this.cache.lastaspectmatrix.cellindexend === cellIndexEnd &
+  		 this.cache.lastaspectmatrix.getCellNames === getCellNames) {
+    		doReturn(this.cache.lastaspectmatrix.data);
+    		return null; // No ajax request to return
+	    }
+	}
+
+
+  // Setup the request data
+	var requestData = {
+	    "dataidentifier": "aspectmatrixsparsebyindexbinary",
+	    "cellindexstart": cellIndexStart,
+	    "cellindexend": cellIndexEnd,
+	    "getcellnames": getCellNames
+	};
+
+
+	var ajaxRequest = $.ajax({
+	    type: "GET",
+	    dataType: "json",
+	    url: "getData.php",
+	    data: requestData,
+	    success: function(data) {
+
+		// Check if the returned data are valid
+		if (typeof data !== 'object') {
+		    throw new Error('Returned data is not of type object');
+		}
+		if (! data.hasOwnProperty('i') ){
+		    throw new Error('data object does not have an i field');
+		}
+		if (! data.hasOwnProperty('p')) {
+		    throw new Error('data object does not have a p field');
+		}
+		if (! data.hasOwnProperty('Dim')) {
+		    throw new Error('data object does not have a Dim field');
+		}
+		if (! data.hasOwnProperty('Dimnames1')) {
+		    throw new Error('data object does not have Dimnames1 field');
+		}
+		if (! data.hasOwnProperty('Dimnames2')){
+		    throw new Error('data object does not have Dimnames2 field');
+		}
+		if (! data.hasOwnProperty('x')) {
+		    throw new Error('data object does not have x field');
+		}
+
+		// Update the cache
+		dataCntr.cache.lastaspectmatrix = {};
+		dataCntr.cache.lastaspectmatrix.cellindexstart = cellIndexStart;
+		dataCntr.cache.lastaspectmatrix.cellindexend = cellIndexEnd;
+		dataCntr.cache.lastaspectmatrix.getCellNames = getCellNames;
+		dataCntr.cache.lastaspectmatrix.data = data;
+
+		doReturn(data);
+	    }
+	});
+
+	return ajaxRequest;
+}
+
 /**
  * Get a subset of the expression matrix specified but only
  * transfer lz compressed binary array data. Cells are specified
@@ -141,23 +231,23 @@ dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 	// Does the function return via callback, factored out to avoid duplication
 	function doReturn(data) {
 
-		// Unpack the data		    
+		// Unpack the data
 		var x = dataCntr.unpackCompressedBase64Float64Array(data.x);
 		var i = dataCntr.unpackCompressedBase64Int32Array(data.i);
 		var p = dataCntr.unpackCompressedBase64Int32Array(data.p);
-	    	
+
 		// This is a fix for the way R toJSON encodes one element arrays
 		if (typeof data.Dimnames1 === 'string') {data.Dimnames1 = [ data.Dimnames1 ]; }
 		if (typeof data.Dimnames2 === 'string') {data.Dimnames2 = [ data.Dimnames2 ]; }
-		
+
 		//Convert to matrix reader and return
-		var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1, 
+		var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1,
 					    data.Dimnames2, x);
 		callback(m);
 	}
-	
+
 	// Check input
-	if (!Array.isArray(geneIds)) { throw new Error("geneIds must be an array of strings");	} 
+	if (!Array.isArray(geneIds)) { throw new Error("geneIds must be an array of strings");	}
 	if (!Number.isInteger(cellIndexStart)) { throw new Error("cellIndexStart must be an integer"); }
 	if (!Number.isInteger(cellIndexEnd)) { throw new Error("cellIndexEnd must be an interger"); }
 
@@ -167,11 +257,11 @@ dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 		 this.cache.lastexpressionmatrix.cellindexend === cellIndexEnd &
 		 this.cache.lastexpressionmatrix.getCellNames === getCellNames &
 		 pagHelpers.compareArrays1d(geneIds, this.cache.lastexpressionmatrix.geneIds)) {
-		
+
 		doReturn(this.cache.lastexpressionmatrix.data);
 		return null;
 	    }
-	} 
+	}
 
 	// Setup the request data
 	var requestData = {
@@ -185,10 +275,10 @@ dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 	var ajaxRequest = $.ajax({
 	    type: "POST",
 	    dataType: "json",
-	    url: "getData.php?dataidentifier=expressionmatrixsparsebyindexbinary", 
+	    url: "getData.php?dataidentifier=expressionmatrixsparsebyindexbinary",
 	    data: requestData,
 	    success: function(data) {
-		
+
 		// Check if the returned data are valid
 		if (typeof data !== 'object') {
 		    throw new Error('Returned data is not of type object');
@@ -255,11 +345,11 @@ dataController.prototype.getExpressionValuesSparseByCellIndex = function(geneIds
  * @return the ajax object
  */
 dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(geneIds, cellIndexStart, cellIndexEnd, callback) {
-    
+
     // Check input
     if (!Array.isArray(geneIds)) {
 	throw new Error("geneIds must be an array of strings");
-    } 
+    }
 
     if (!Number.isInteger(cellIndexStart)) {
 	throw new Error("cellIndexStart must be an integer");
@@ -268,7 +358,7 @@ dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(g
     if (!Number.isInteger(cellIndexEnd)) {
 	throw new Error("cellIndexEnd must be an interger");
     }
-    
+
     // Setup the request data
     var requestData = {
 	"dataidentifier": "expressionmatrixsparsebyindexbinary",
@@ -284,7 +374,7 @@ dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(g
 	url: "getData.php?dataidentifier=expressionmatrixsparsebyindexbinary",
 	data: requestData,
 	success: function(data) {
-	    
+
 
 	    // Check if the returned data are valid
 	    if (typeof data !== 'object') {
@@ -322,8 +412,8 @@ dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(g
 	    if (typeof data.Dimnames2 === 'string') {
 		data.Dimnames2 = [ data.Dimnames2 ]
 	    }
-	   
- 
+
+
 	    //Convert to full matrix and return
 	    var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1, data.Dimnames2, x);
 	    callback(m.getFullMatrix());
@@ -336,7 +426,7 @@ dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(g
 /**
  * Given a string that encodes a sequence of lz compressed
  * Int32 values, decompress and return resulting typed array
- * @param encoded the encoded array 
+ * @param encoded the encoded array
  * @return Int32Array with decoded values
  */
 dataController.prototype.unpackCompressedBase64Int32Array = function(encoded) {
@@ -351,14 +441,14 @@ dataController.prototype.unpackCompressedBase64Int32Array = function(encoded) {
 /**
  * Given a string that encodes a sequence of lz compressed
  * Float64 values, decompress and return resulting typed array
- * @param encoded the encoded array 
+ * @param encoded the encoded array
  * @return Float64Array with decoded values
  */
 
 dataController.prototype.unpackCompressedBase64Float64Array =  function (encoded) {
     // Unpack base 64
     var compressed = atob(encoded);
-    var raw = pako.inflate(compressed);     
+    var raw = pako.inflate(compressed);
     var f64aBuffer = new Uint8Array(raw);
     var f64a = new Float64Array(f64aBuffer.buffer);
 
@@ -405,7 +495,7 @@ dataController.prototype.getAvailableEmbeddings =  function(type, callback, call
 	    if (typeof data === "string") {
 	       data = [data];
 	    }
-	    
+
 	    callback(data, callbackParams);
 	}
     });
@@ -438,7 +528,7 @@ dataController.prototype.getEmbedding = function(type, embeddingType, callback) 
 	    url: "getData.php",
 	    data: {'dataidentifier': 'embedding', 'type': type, 'embeddingtype': embeddingType },
 	    success: function(data) {
-		
+
 		// The data is returned in serialised array format
 		// Do some checks to ensure we got what we wanted
 		if (! data.hasOwnProperty('values')) {
@@ -468,7 +558,7 @@ dataController.prototype.getEmbedding = function(type, embeddingType, callback) 
 		dataCntr.cache.embeddings[cacheId] = data;
 
 		// TODO: Check that the arrays contain numbers
-		
+
 		var unpackedValues = dataCntr.unpackCompressedBase64Float64Array(data.values);
 		data.values = unpackedValues;
 
@@ -488,7 +578,7 @@ dataController.prototype.getAvailableReductionTypes = function(callback) {
 	url: "getData.php",
 	data: {'dataidentifier': 'availablereductiontypes' },
 	success: function(data) {
-	    // If there is only one R sends it as a string not 
+	    // If there is only one R sends it as a string not
 	    // as an array of length 1
 	    if (typeof data === "string") {
 	       data = [data];
@@ -505,7 +595,7 @@ dataController.prototype.getAvailableReductionTypes = function(callback) {
  */
 dataController.prototype.getCellMetadata = function(callback) {
     var dataCntr = new dataController();
-  
+
 
     if (dataCntr.cache["cellmetadata"] !== null) {
 	// If the data is in the  cache don't make another request
@@ -528,7 +618,7 @@ dataController.prototype.getCellMetadata = function(callback) {
 		    if ( data[key]['data'].length === 0) {
 			throw new Error('data member of the metadata entry ' + key + ' is empty');
 		    }
-		    
+
 
 		    if ( typeof data[key]['palette'] !== 'object' ){
 			throw new Error('palette member of the metadata entry ' + key + ' is not an object');
@@ -536,7 +626,7 @@ dataController.prototype.getCellMetadata = function(callback) {
 		    if (data[key]['palette'].length === 0 ) {
 			throw new Error('palette member of the metadata entry ' + key + ' is empty');
 		    }
-		    
+
 		}
 
 		// TODO: Check all meta data contain the same number of entries
@@ -546,12 +636,12 @@ dataController.prototype.getCellMetadata = function(callback) {
 		callback(data);
 	    }
 	});
-    }	
+    }
 };
 
 /**
- * Get an Extjs store for a list of genes that 
- * belong to the specified geneset 
+ * Get an Extjs store for a list of genes that
+ * belong to the specified geneset
  * @param name the name of the geneset the list of which to retrieve
  */
 dataController.prototype.getGeneSetStoreByName = function(name, callback) {
@@ -564,7 +654,7 @@ dataController.prototype.getGeneSetStoreByName = function(name, callback) {
     }
 }
 
-/** 
+/**
  * Get an extjs memory store that contains all the genes
  * that belong to the specified gene set
  * @param name the name of the geneset
@@ -591,15 +681,15 @@ dataController.prototype.getGeneSetStoreByNameRemote = function(name, callback) 
 		model: 'geneTableEntry',
 		pageSize: 100,
 		localData: data
-	    }); 
+	    });
 	    callback(pagingStore);
 	}
     });
 }
 
 /**
- * get an extjs information store for the 
- * genesets 
+ * get an extjs information store for the
+ * genesets
  */
 dataController.prototype.getGeneSetInformationStore = function(callback) {
     if (this.repository === 'remote') {
@@ -635,7 +725,7 @@ dataController.prototype.getGeneSetInformationStoreRemote = function(callback) {
     // var pagingStore = Ext.create('Ext.data.Store', {
     // 	autoLoad: true,
     // 	model: 'geneSetTableEntry',
-    // 	pageSize: 20, 
+    // 	pageSize: 20,
     // 	proxy: {
     // 	    type: 'memory',
     // 	    enablePaging: true
@@ -659,11 +749,11 @@ dataController.prototype.getGeneSetInformationStoreRemote = function(callback) {
     // 	    }
     // 	}
     // });
-	    
+
     // return pagingStore;
 }
 
-/** 
+/**
  * Get a custom extJS object of type LocalJsonStore
  * with the overdispersed genes. Return via callback
  */
@@ -709,7 +799,7 @@ dataController.prototype.getLocalOdGeneInformationStore = function() {
 
 /**
  * Get an ExtJS proxy object for connecting to the GeneTable.
- * @description return a extjs store object with the gene table 
+ * @description return a extjs store object with the gene table
  * information data
  */
 dataController.prototype.getGeneInformationStore = function(callback) {
@@ -733,7 +823,7 @@ dataController.prototype.getLocalGeneInformationStore =  function() {
 };
 
 /**
- * Define extJS models and objects required by the data controller. 
+ * Define extJS models and objects required by the data controller.
  * All data models that involve the data controller should
  * be defined here
  * @description called once during the singleton constructor
@@ -760,7 +850,7 @@ dataController.prototype.defineExtJsObjects = function() {
 		writer: config.writerConfig ? config.writerConfig : { type: 'json', allowSingle: false, nameProperty: 'mapping' }
 	    };
 	    this.callParent(arguments);
-	    
+
 	}
     });
 
@@ -784,11 +874,11 @@ dataController.prototype.defineExtJsObjects = function() {
 
 	]
     });
-    
+
 } // dataController.prototype.defineExtJsObjects
 
 /**
- * Get an ExtJS information store configured to get 
+ * Get an ExtJS information store configured to get
  * data from a server via ajax calls
  * @private
  */
@@ -838,7 +928,7 @@ dataController.prototype.getGeneInformation =  function(callback) {
 //     var dataset = [
 // 	{"name": "pathwayA", cZ: "1234", score: "2134" },
 //     ];
-    
+
 //     return dataset;
 // }
 
