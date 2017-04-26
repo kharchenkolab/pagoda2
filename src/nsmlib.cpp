@@ -2,28 +2,6 @@
 
 #include "pagoda2.h"
 
-/*
-#include <iostream>
-#include <chrono>
-#include <boost/progress.hpp>
-#include <vector>
-#include "space.h"
-#include "space/space_scalar.h"
-#include "space/space_js.h"
-#include "init.h"
-#include "index.h"
-#include "params.h"
-#include "rangequery.h"
-#include "knnquery.h"
-#include "knnqueue.h"
-#include "methodfactory.h"
-#include "spacefactory.h"
-#include "ztimer.h"
-*/
-
-
-
-
 #include <omp.h>
 // [[Rcpp::plugins(openmp)]]
 
@@ -41,7 +19,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
   // each row of a matrix will be an entry
   cout << "reading points ... " << flush;
   vector<vector<float> > data;
-  ObjectVector    dataSet; 
+  ObjectVector    dataSet;
   for(int i=0;i<m.nrow();i++) {
     NumericVector nv = m.row(i);
     std::vector<float> v=Rcpp::as<std::vector<float> >(nv);
@@ -50,19 +28,19 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
     Object *o = space.CreateObjFromVect(i, NULL, v);
     dataSet.push_back(o);
   }
-  cout << "done ("<<dataSet.size()<< " points)" << endl;  
+  cout << "done ("<<dataSet.size()<< " points)" << endl;
   cout << "converting ... " << flush;
 
-//  vector<LabelType> labels(data.size()); 
+//  vector<LabelType> labels(data.size());
 //space->CreateDataset(dataSet,data,labels);
-  cout << " done" << endl;  
+  cout << " done" << endl;
 
   AnyParams IndexParams({
             "M=20",
             "efConstruction=100",
             "indexThreadQty=30", /* number of indexing threads */
 	     "searchMethod=4",
-	    });  
+	    });
   AnyParams QueryTimeParams({
             "efSearch=100",
             });
@@ -78,7 +56,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
   auto t2 = high_resolution_clock::now();
   auto elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
   cout << endl<<"done (" << elapsed_time <<"s)"<< endl;
-  
+
   int nqueries=m.nrow();
   vector<vector<int32_t> > answers(nqueries);
   int k=20;
@@ -91,7 +69,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
     const Object* queryObj=dataSet[i];
     KNNQuery<float>   knnQ(space, queryObj, k);
     index->Search(&knnQ);
-    
+
     KNNQueue<float>* res = knnQ.Result()->Clone();
     vector<int32_t> candidates;
     while (!res->Empty()) {
@@ -109,7 +87,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
   t2 = high_resolution_clock::now();
   elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
   cout << "done (" << elapsed_time << "s)"<< endl;
-  
+
   return(answers);
 }
 
@@ -132,7 +110,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
   if(seed!=-1) srand(seed);
   if(verbose) cout << "reading points ... " << flush;
   vector<vector<float> > data;
-  ObjectVector    dataSet; 
+  ObjectVector    dataSet;
   for(int i=0;i<m.nrow();i++) {
     NumericVector nv = m.row(i);
     std::vector<float> v=Rcpp::as<std::vector<float> >(nv);
@@ -140,23 +118,23 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
     Object *o = space.CreateObjFromVect(i, NULL, v);
     dataSet.push_back(o);
   }
-  if(verbose) cout << "done ("<<dataSet.size()<< " points)" << endl;  
+  if(verbose) cout << "done ("<<dataSet.size()<< " points)" << endl;
   if(verbose) cout << "converting ... " << flush;
 
-//  vector<LabelType> labels(data.size()); 
+//  vector<LabelType> labels(data.size());
 //space->CreateDataset(dataSet,data,labels);
-  if(verbose)   cout << " done" << endl;  
+  if(verbose)   cout << " done" << endl;
 
   AnyParams IndexParams({
   "M=20",
     "efConstruction=100",
     "indexThreadQty="+std::to_string(nThreads), /* indexing threads */
     "searchMethod=4",
-    });  
+    });
   AnyParams QueryTimeParams({
   "efSearch=100",
     });
-  
+
 
   if(verbose) cout << "building the index ... " << flush;
   auto t1 = high_resolution_clock::now();
@@ -168,7 +146,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
   auto t2 = high_resolution_clock::now();
   auto elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
   if(verbose) if(verbose) cout << endl<<"done (" << elapsed_time <<"s)"<< endl;
-  
+
   int nqueries=m.nrow();
   vector<vector<int32_t> > answers(nqueries);
 
@@ -186,7 +164,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
     const Object* queryObj=dataSet[i];
     KNNQuery<float>   knnQ(space, queryObj, k);
     index->Search(&knnQ);
-    
+
     KNNQueue<float>* res = knnQ.Result()->Clone();
     vector<int32_t> candidates;
     vector<float> candidateDists;
@@ -198,7 +176,7 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
 
       res->Pop();
     }
-    
+
     //table.get_candidates_with_duplicates(dataset[i],&candidates);
     //Point p=dataset[i];
     //table->get_candidates_with_duplicates(p, &candidates);
@@ -216,9 +194,9 @@ vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction=20, int ind
   vector<int> startV,endV; vector<float> distV;
   for(auto i=0;i<nqueries;i++) {
     auto k=dists[i].begin();
-    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) { 
-      startV.push_back(i); 
-      endV.push_back(*j); 
+    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) {
+      startV.push_back(i);
+      endV.push_back(*j);
       distV.push_back(*k);
     }
   }
@@ -241,12 +219,12 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
   SpaceJSMetric<float> space(SpaceJSBase<float>::kJSFastPrecompApprox);
   //SpaceJSDiv<float> space(SpaceJSBase<float>::kJSFastPrecomp);
   //SpaceAngularDistance<float> space;
-  
+
   // each row of a matrix will be an entry
   if(seed!=-1) srand(seed);
   cout << "reading points ... " << flush;
   vector<vector<float> > data;
-  ObjectVector    dataSet; 
+  ObjectVector    dataSet;
   for(int i=0;i<m.nrow();i++) {
     NumericVector nv = m.row(i);
     std::vector<float> v=Rcpp::as<std::vector<float> >(nv);
@@ -254,19 +232,19 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
     Object *o = space.CreateObjFromVect(i, NULL, v);
     dataSet.push_back(o);
   }
-  cout << "done ("<<dataSet.size()<< " points)" << endl;  
+  cout << "done ("<<dataSet.size()<< " points)" << endl;
   cout << "converting ... " << flush;
 
-//  vector<LabelType> labels(data.size()); 
+//  vector<LabelType> labels(data.size());
 //space->CreateDataset(dataSet,data,labels);
-  cout << " done" << endl;  
+  cout << " done" << endl;
 
   AnyParams IndexParams({
             "M=20",
             "efConstruction=100",
 	      "indexThreadQty="+std::to_string(nThreads), /* indexing threads */
             "searchMethod=4",
-	    });  
+	    });
   AnyParams QueryTimeParams({
             "efSearch=100",
             });
@@ -283,7 +261,7 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
   auto t2 = high_resolution_clock::now();
   auto elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
   cout << endl<<"done (" << elapsed_time <<"s)"<< endl;
-  
+
   int nqueries=m.nrow();
   vector<vector<int32_t> > answers(nqueries);
 
@@ -300,7 +278,7 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
     const Object* queryObj=dataSet[i];
     KNNQuery<float>   knnQ(space, queryObj, k);
     index->Search(&knnQ);
-    
+
     KNNQueue<float>* res = knnQ.Result()->Clone();
     vector<int32_t> candidates;
     vector<float> candidateDists;
@@ -312,7 +290,7 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
 
       res->Pop();
     }
-    
+
     //table.get_candidates_with_duplicates(dataset[i],&candidates);
     //Point p=dataset[i];
     //table->get_candidates_with_duplicates(p, &candidates);
@@ -330,9 +308,9 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
   vector<int> startV,endV; vector<float> distV;
   for(auto i=0;i<nqueries;i++) {
     auto k=dists[i].begin();
-    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) { 
-      startV.push_back(i); 
-      endV.push_back(*j); 
+    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) {
+      startV.push_back(i);
+      endV.push_back(*j);
       distV.push_back(*k);
     }
   }
@@ -358,7 +336,7 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
   if(seed!=-1) srand(seed);
   if(verbose) cout << "reading points ... " << flush;
   vector<vector<float> > data;
-  ObjectVector    dataSet; 
+  ObjectVector    dataSet;
   for(int i=0;i<m.nrow();i++) {
     NumericVector nv = m.row(i);
     std::vector<float> v=Rcpp::as<std::vector<float> >(nv);
@@ -366,23 +344,23 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
     Object *o = space.CreateObjFromVect(i, NULL, v);
     dataSet.push_back(o);
   }
-  if(verbose) cout << "done ("<<dataSet.size()<< " points)" << endl;  
+  if(verbose) cout << "done ("<<dataSet.size()<< " points)" << endl;
   if(verbose) cout << "converting ... " << flush;
 
-//  vector<LabelType> labels(data.size()); 
+//  vector<LabelType> labels(data.size());
 //space->CreateDataset(dataSet,data,labels);
-  if(verbose)   cout << " done" << endl;  
+  if(verbose)   cout << " done" << endl;
 
   AnyParams IndexParams({
   "M=20",
     "efConstruction=100",
     "indexThreadQty="+std::to_string(nThreads), /* indexing threads */
     "searchMethod=4",
-    });  
+    });
   AnyParams QueryTimeParams({
   "efSearch=100",
     });
-  
+
 
   if(verbose) cout << "building the index ... " << flush;
   auto t1 = high_resolution_clock::now();
@@ -394,7 +372,7 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
   auto t2 = high_resolution_clock::now();
   auto elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
   if(verbose) if(verbose) cout << endl<<"done (" << elapsed_time <<"s)"<< endl;
-  
+
   int nqueries=m.nrow();
   vector<vector<int32_t> > answers(nqueries);
 
@@ -412,7 +390,7 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
     const Object* queryObj=dataSet[i];
     KNNQuery<float>   knnQ(space, queryObj, k);
     index->Search(&knnQ);
-    
+
     KNNQueue<float>* res = knnQ.Result()->Clone();
     vector<int32_t> candidates;
     vector<float> candidateDists;
@@ -424,7 +402,7 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
 
       res->Pop();
     }
-    
+
     //table.get_candidates_with_duplicates(dataset[i],&candidates);
     //Point p=dataset[i];
     //table->get_candidates_with_duplicates(p, &candidates);
@@ -442,9 +420,9 @@ DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20, int efConstructio
   vector<int> startV,endV; vector<float> distV;
   for(auto i=0;i<nqueries;i++) {
     auto k=dists[i].begin();
-    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) { 
-      startV.push_back(i); 
-      endV.push_back(*j); 
+    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) {
+      startV.push_back(i);
+      endV.push_back(*j);
       distV.push_back(*k);
     }
   }
@@ -472,7 +450,7 @@ DataFrame hnswKnn3test(NumericMatrix m, int k=5, int multiplex=1, int nqueries=1
   if(seed!=-1) srand(seed);
   if(verbose) cout << "reading points ... " << flush;
   vector<vector<float> > data;
-  ObjectVector    dataSet; 
+  ObjectVector    dataSet;
   for(int i=0;i<m.nrow();i++) {
     NumericVector nv = m.row(i);
     for(int j=0;j<multiplex;j++) {
@@ -483,44 +461,44 @@ DataFrame hnswKnn3test(NumericMatrix m, int k=5, int multiplex=1, int nqueries=1
       dataSet.push_back(o);
     }
   }
-  if(verbose) cout << "done ("<<dataSet.size()<< " points)" << endl;  
+  if(verbose) cout << "done ("<<dataSet.size()<< " points)" << endl;
   if(verbose) cout << "converting ... " << flush;
-  
-  //  vector<LabelType> labels(data.size()); 
+
+  //  vector<LabelType> labels(data.size());
   //space->CreateDataset(dataSet,data,labels);
-  if(verbose)   cout << " done" << endl;  
-  
+  if(verbose)   cout << " done" << endl;
+
   AnyParams IndexParams({
     "M=20",
     "efConstruction=100",
     "indexThreadQty="+std::to_string(nThreads), /* indexing threads */
     "searchMethod=4",
-  });  
+  });
   AnyParams QueryTimeParams({
     "efSearch=100",
   });
-  
-  
+
+
   if(verbose) cout << "building the index ... " << flush;
   auto t1 = high_resolution_clock::now();
   //auto table = construct_table<Point>(dataset, params);
   Index<float> *index=MethodFactoryRegistry<float>::Instance().CreateMethod(verbose,"hnsw", "consinesimil",space, dataSet);
   index->CreateIndex(IndexParams);
   index->SetQueryTimeParams(QueryTimeParams);
-  
+
   auto t2 = high_resolution_clock::now();
   auto elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
   if(verbose) if(verbose) cout << endl<<"done (" << elapsed_time <<"s)"<< endl;
-  
+
   //int nqueries=m.nrow();
   vector<vector<int32_t> > answers(nqueries);
-  
+
   if(verbose) cout << "running "<<nqueries<<" queries with k="<<k<<" ... " << flush;
   t1 = high_resolution_clock::now();
   int nanswers=nqueries*k;
   vector<vector<int32_t> > ids(nqueries);
   vector<vector<float> > dists(nqueries);
-  
+
   omp_set_num_threads(nThreads);
   unique_ptr<boost::progress_display> query_bar(verbose ? new boost::progress_display(nqueries) : NULL);
   //boost::progress_display query_bar(nqueries);
@@ -529,7 +507,7 @@ DataFrame hnswKnn3test(NumericMatrix m, int k=5, int multiplex=1, int nqueries=1
     const Object* queryObj=dataSet[i];
     KNNQuery<float>   knnQ(space, queryObj, k);
     index->Search(&knnQ);
-    
+
     KNNQueue<float>* res = knnQ.Result()->Clone();
     vector<int32_t> candidates;
     vector<float> candidateDists;
@@ -538,10 +516,10 @@ DataFrame hnswKnn3test(NumericMatrix m, int k=5, int multiplex=1, int nqueries=1
       candidateDists.push_back(res->TopDistance());
       //candidateDists.push_back(space->IndexTimeDistance(dataSet[i],dataSet[res->TopObject()->id()]))
       //cout << res->TopObject()->id() << " : " << res->TopDistance() << endl;
-      
+
       res->Pop();
     }
-    
+
     //table.get_candidates_with_duplicates(dataset[i],&candidates);
     //Point p=dataset[i];
     //table->get_candidates_with_duplicates(p, &candidates);
@@ -553,15 +531,15 @@ DataFrame hnswKnn3test(NumericMatrix m, int k=5, int multiplex=1, int nqueries=1
   t2 = high_resolution_clock::now();
   elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
   if(verbose) cout << endl << "done (" << elapsed_time << "s)"<< endl;
-  
+
   // recode into an edge data frame ($s $e $d)
   if(verbose) cout << "creating report data frame ... " << flush;
   vector<int> startV,endV; vector<float> distV;
   for(auto i=0;i<nqueries;i++) {
     auto k=dists[i].begin();
-    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) { 
-      startV.push_back(i); 
-      endV.push_back(*j); 
+    for(auto j=ids[i].begin();j!=ids[i].end();++j, ++k) {
+      startV.push_back(i);
+      endV.push_back(*j);
       distV.push_back(*k);
     }
   }

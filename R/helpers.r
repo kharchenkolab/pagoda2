@@ -1,52 +1,15 @@
-#' @import org.Hs.eg.db
-#' @import GO.db
 #' @import Rook
 
-#' @export generate.p2.human.go
-generate.p2.human.go <- function(hgenes) {
-    library(org.Hs.eg.db)
-    library(GO.db)
-    library(BiocGenerics)
-    
-    ids <- unlist(lapply(mget(hgenes, org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1])) 
-    rids <- names(ids);
-    names(rids) <- ids;
-    go.env <- eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-    go.env <- go.env[unlist(lapply(go.env,length))>5];
-
-    geneSets <- lapply(names(go.env), function(x) {
-        list(
-            properties = list(
-                locked =T,
-                genesetname = x,
-                shortdescription = GOTERM[[x]]@Term
-            ),
-            genes = c(go.env[[x]])
-        )
-    });
-
-    names(geneSets) <- names(go.env);
-    geneSets
-}
-
-
-
-
-
-#' Generate a Rook Server app from a pagoda2 object
-#'
-#' Contains some code required to convert from the pagoda2 object to the
+#' @title Generate a Rook Server app from a pagoda2 object
+#' @description Contains some code required to convert from the pagoda2 object to the
 #' web object constructor. Advanced users may wish to use the PagodaWebApp
 #' constructor directly
-#'
 #' @param r pagoda2 object
 #' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added
 #' @param geneSets a list of genesets to show
 #' @param debug build debug app?
-#'
 #' @return a Rook web app
-#' 
 #' @export make.p2.app
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets) {
 
@@ -55,7 +18,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
                                         # group that we can zoom in
                                         # We probably want this to be a partition of the actual displayed clusters
                                         # So that the user can zoom in a bit further than the cluster level
-  
+
 
 
     # Build the metadata
@@ -63,7 +26,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     if ( "depth" %in% names(r@.xData) ) {
         if ( !is.null(r@.xData$depth ) ) {
             levels  <- 20
-            
+
             dpt <- log10(r@.xData$depth+0.00001)
             max <- max(dpt)
             min <- min(dpt)
@@ -72,8 +35,8 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
                 data = dptnorm,
                 palette = colorRampPalette(c('white','black'))(levels+1)
             )
-           
-            
+
+
         }
     }
     if ( "batch" %in% names(r@.xData) ) {
@@ -92,8 +55,8 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     for ( itemName in names(additionalMetadata)) {
         metadata[[itemName]] <- additionalMetadata[[itemName]]
     }
-    
-    
+
+
     # Make the app object
     p2w <- pagoda2WebApp$new(
         pagoda2obj = r,
