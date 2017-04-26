@@ -2,7 +2,7 @@
 /**
  * @namespace
  * This is an namespace that keeps all the startup and on going
- * parameters for this pagoda app. 
+ * parameters for this pagoda app.
  */
 var p2globalParams = {
 /* --- PARAMS START --- */
@@ -32,9 +32,9 @@ var p2globalParams = {
 
 	// winsorizeDefault: false,
 	// winsorizeTrim: 0.1,
-	
-	defaultLayoutName: "default", 
-	// Different layout options for the menu 
+
+	defaultLayoutName: "default",
+	// Different layout options for the menu
 	// Specify the % height of different canvas elements
 	layoutSettings: {
 	    default: {
@@ -42,35 +42,41 @@ var p2globalParams = {
 		displayName: "Default",
 		dendrogramHeight: 0.3,
 		metadataHeight: 0.05,
-		heatmapHeight: 0.65
+		heatmapHeight: 0.55,
+		aspectHeatmapHeight: 0.10
 	    },
 	    equal: {
 		name: "equal",
 		displayName: "Equal",
-		dendrogramHeight: 0.33,
-		metadataHeight: 0.33,
-		heatmapHeight: 0.33
+		dendrogramHeight: 0.25,
+		metadataHeight: 0.25,
+		heatmapHeight: 0.25,
+		aspectHeatmapHeight: 0.25
 	    },
 	    heatmapFocus: {
 		name: "heatmapFocus",
 		displayName: "Heatmap Focus",
 		dendrogramHeight: 0.10,
 		metadataHeight: 0.05,
-		heatmapHeight: 0.85		
+		heatmapHeight: 0.75,
+		aspectHeatmapHeight: 0.10
 	    },
 	    dendrogramFocus: {
 		name: "dendrogramFocus",
 		displayName: "Dendrogram Focus",
-		dendrogramHeight: 0.90,
+		dendrogramHeight: 0.85,
 		metadataHeight: 0.05,
-		heatmapHeight: 0.05
+		heatmapHeight: 0.05,
+		aspectHeatmapHeight: 0.05
+
 	    },
 	    metadataFocus: {
 		name: "metadataFocus",
 		displayName: "Metadata Focus",
 		dendrogramHeight: 0.05,
-		metadataHeight: 0.90,
-		heatmapHeight: 0.05	
+		metadataHeight: 0.85,
+		heatmapHeight: 0.05	,
+		aspectHeatmapHeight: 0.05
 	    }
 	}
     },
@@ -109,7 +115,7 @@ var p2globalParams = {
 		minColors: 2,
 		generate: 'palette.js-standard'
 	    },
-	    'cb-RdYlBu': { 
+	    'cb-RdYlBu': {
 		name: 'cb-RdYlBu',
 		displayName: 'Red-Yellow-Blue',
 		maxColors: 11,
@@ -137,7 +143,7 @@ var p2globalParams = {
 		minColors: 2,
 		generate: 'palette.js-standard'
 	    }
-	}	    
+	}
     },
 
     // Dendrogram parameters

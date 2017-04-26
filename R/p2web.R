@@ -413,11 +413,12 @@ pagoda2WebApp <- setRefClass(
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
                                           matrixToSend <- pathways$xv[,cellIndices,drop=F];
 
-                                          # Discard values < 1/50 of the max
-                                          trimPoint <-  max(abs(matrixToSend)) / 50;
+                                          # Discard values < 1/100 of the max
+                                          trimPoint <-  max(abs(matrixToSend)) / 100;
                                           matrixToSend[matrixToSend < trimPoint] <- 0;
 
-                                          matrixToSend <- Matrix(matrixToSend, sparse = T);
+                                          # Transpose and make sparse
+                                          matrixToSend <- Matrix(t(matrixToSend), sparse = T);
 
                                           # Bit pack and compress arrays
                                           xSend <- .self$packCompressFloat64Array(matrixToSend@x);
