@@ -2,7 +2,7 @@
  * Filename: pagoda2frontend.js
  * Author: Nikolas Barkas
  * Date: January 2017
- * Description: pagoda2 front end application javascript for 
+ * Description: pagoda2 front end application javascript for
  *    analysis of large single cell datasets.
  */
 
@@ -46,21 +46,22 @@ function initialise() {
     var actionPanelUICntr = new actionPanelUIcontroller();
 
     // Set the page title
-    document.title = p2globalParams.generalParams.applicationName;   
+    document.title = p2globalParams.generalParams.applicationName;
 
     // Initialize page components
     embView = new embeddingViewer();
     // Load the default embedding
-    embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction, 
+    embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
 			  p2globalParams.embedding.defaultEmbedding.embedding);
 
 
     // Generate the tables
     var geneTable = new geneTableViewer();
-//    var odGeneTable = new odGeneTableViewer();
+//  var odGeneTable = new odGeneTableViewer();
     var geneSetsTable = new geneSetsTableViewer();
-    
-    heatDendView = new heatmapDendrogramViewer();
+    var heatDendView = new heatmapDendrogramViewer();
+    var aspTableView = new aspectsTableViewer();
+
 
     // Update status bar
     stsBar.showMessage("Ready");
@@ -73,8 +74,8 @@ function initialise() {
  */
 function generateExtJsLayout() {
 
-    // Generation of some of these items could be 
-    // responsibility of individual objects, this function is really 
+    // Generation of some of these items could be
+    // responsibility of individual objects, this function is really
     // meant only for the overall layout
 
     var statusBar = Ext.create('Ext.ux.StatusBar', {
@@ -82,7 +83,7 @@ function generateExtJsLayout() {
 	defaultText: 'Ready',
 	height: '20px',
     });
-    
+
     // These are the innermost panels that contain the divs
     // that the app will use. This layer exists to facilitate
     // transitioning to a window system
@@ -98,7 +99,7 @@ function generateExtJsLayout() {
 	glyph: 0xf096,
 	items: [{
 	    id: 'embedding-app-container',
-	    html: '<div id="embedding-draw-outer" style="position: relative;">' + 
+	    html: '<div id="embedding-draw-outer" style="position: relative;">' +
 		'<div id="embedding-draw" style="position: absolute; top:0px; left: 0px;">' +
 		'</div></div>'
 	    }]
@@ -250,6 +251,18 @@ function generateExtJsLayout() {
 		    glyph: 0xf20e,
 		    // items: []
 		},
+
+		{
+		  title: 'Aspects',
+		  id: 'aspectsExtJS',
+		  layout: 'border',
+		  height: '100%',
+		  width: '100%',
+		  tooltip: 'This tab displays the table of aspects',
+		  glyph: 0xf0e8
+		}
+
+
 	    ] // Items of TabPanel
 	   }) // TabPanel
 	       ] // items of Panel
@@ -321,7 +334,7 @@ function generateExtJsLayout() {
 	header: false,
         items: [ tableViewerPanel ]
     });
-    
+
     // The main Viewport layout
     var viewport = Ext.create('Ext.Viewport', {
         layout: {
