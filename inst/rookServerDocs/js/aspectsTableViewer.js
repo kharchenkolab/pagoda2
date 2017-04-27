@@ -8,14 +8,14 @@
  * @constructor
  */
 function aspectsTableViewer() {
-  if (typeof aspectsTableViewer.instance == 'object'){
+  if (typeof aspectsTableViewer.instance === 'object'){
     return aspectsTableViewer.instance;
   }
 
-  console.log('Initializing aspects table viewer');
+  console.log('Initializing aspects table viewer...');
 
+  // Generate the extjs elemetns
   this.generateTables();
-
 
   // Load the data
   // NOTE: There is a race condition here between the generation of the tables
@@ -29,17 +29,28 @@ function aspectsTableViewer() {
   aspectsTableViewer.instance = this;
 };
 
+aspectsTableViewer.prototype.updateGeneSetsInAspectTable = function(selectedAspect) {
+      var dataCntr = new dataController();
+      dataCntr.getAvailableGenesetsInAspectStore(selectedAspect, function(store) {
+          table = Ext.getCmp('genesetsAspectTable');
+          table.bindStore(store);
+
+
+      });
+};
+
 aspectsTableViewer.prototype.generateTables = function() {
   var dataCntr = new dataController() ;
 
   var areaHolder = Ext.getCmp('aspectsExtJS');
 
+  //
+
   // Selection change listener for aspects
   var aspectSelectionChangeListener = function(obj, selected, eOpts) {
     var selectedAspect = selected[0].data.name;
-    console.log('selection listener', selectedAspect);
-
-    // TODO: Update downstream
+    aspTableViewer = new aspectsTableViewer();
+    aspTableViewer.updateGeneSetsInAspectTable(selectedAspect);
   };
 
   var aspectSelectionGrid = Ext.create('Ext.grid.Panel',{
@@ -53,9 +64,10 @@ aspectsTableViewer.prototype.generateTables = function() {
   });
 
   var setsTableForAspects = Ext.create('Ext.grid.Panel',{
-    title: 'Gene sets in this aspect',
+    title: 'Gene sets in Aspect',
     id: 'genesetsAspectTable',
-    empty: 'No sets available'
+    empty: 'No sets available',
+    columns: [{text:'Name', dataIndex:'name', width:'100%'}],
   });
 
   var genesTableForAspects = Ext.create('Ext.grid.Panel',{
@@ -107,8 +119,6 @@ aspectsTableViewer.prototype.showSelectedAspect = function(aspectIdentifier) {
 
   var table = Ext.getCmp('aspectstable');
   var index = table.getStore().find('name', aspectIdentifier);
-  console.log('aspectId', aspectIdentifier);
-  console.log('index',index);
   table.getSelectionModel().select(index);
 };
 

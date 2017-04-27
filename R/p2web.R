@@ -349,10 +349,8 @@ pagoda2WebApp <- setRefClass(
 
                                       'genesetsinaspect' = {
                                           requestArguments <- request$GET();
-                                          aspectId <- URLdecode(requestArguments['aspectId']);
-
-                                          genesets <- pathways$cnam[aspectId];
-
+                                          aspectId <- URLdecode(requestArguments[['aspectId']]);
+                                          genesets <- unname(pathways$cnam[[aspectId]]);
                                           response$header("Content-type", "application/javascript");
                                           response$write(toJSON(genesets));
                                           return(response$finish());

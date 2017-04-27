@@ -160,6 +160,7 @@ dataController.prototype.getAvailableAspectsStore = function(callback) {
 
 /**
  * Get the available genesets in the selected aspect
+ * @return ajax request
  */
 dataController.prototype.getAvailableGenesetsInAspectStore = function(aspectId, callback) {
   var ajaxReq = $.ajax({
@@ -171,8 +172,23 @@ dataController.prototype.getAvailableGenesetsInAspectStore = function(aspectId, 
       'aspectId': aspectId
     },
     success: function(data) {
-      console.log('getAvailableGenesetsInAspectStore', data);
-      callback(data);
+
+      var dataStructured = [];
+      for(var i = 0; i < data.length; i++){
+        dataStructured[i] = {'name': data[i]};
+      };
+
+      var pagingStore = Ext.create('LocalJsonStore', {
+        autoLoad: true,
+        model: 'genesetInAspectEntry',
+        pageSize: 50,
+        localData: dataStructured
+      });
+
+      callback(pagingStore);
+
+
+
     }
   })
 
@@ -910,6 +926,13 @@ dataController.prototype.defineExtJsObjects = function() {
       ]
 
     });
+
+    Ext.define('genesetInAspectEntry', {
+      extend: 'Ext.data.Model',
+      fields: [
+        {name: 'name', type: 'string'}
+      ]
+    })
 
 } // dataController.prototype.defineExtJsObjects
 
