@@ -425,9 +425,9 @@ pagoda2WebApp <- setRefClass(
                                           iSend <- .self$packCompressInt32Array(matrixToSend@i);
                                           pSend <- .self$packCompressInt32Array(matrixToSend@p);
 
-                                          Dimnames2Send <- "";
+                                          Dimnames1Send <- "";
                                           if (getCellNames) {
-                                            Dimnames2Send <- matrixToSend@Dimnames[[2]];
+                                            Dimnames1Send <- matrixToSend@Dimnames[[1]];
                                           };
 
                                           # Convert the attributes to list for JSON packing
@@ -435,8 +435,8 @@ pagoda2WebApp <- setRefClass(
                                             i = iSend,
                                             p = pSend,
                                             Dim = matrixToSend@Dim,
-                                            Dimnames1 = matrixToSend@Dimnames[[1]],
-                                            Dimnames2 = Dimnames2Send,
+                                            Dimnames1 = Dimnames1Send,
+                                            Dimnames2 = matrixToSend@Dimnames[[2]],
                                             x = xSend
                                           )
 

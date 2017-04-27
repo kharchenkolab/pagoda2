@@ -25,7 +25,7 @@ function aspectHeatmapViewer() {
 aspectHeatmapViewer.prototype.initialize = function() {
 
   // Clickable regions for cross hairs and navigating
-  this.geneRegions = new clickableRegions();
+  this.aspectRegions = new clickableRegions();
 
   var aspectHeatmapContainer = $('#aspect-heatmap-container');
   aspectHeatmapContainer.css({position: 'relative'});
@@ -76,13 +76,15 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
     var x = e.layerX;
     var y = e.layerY;
 
-    var regionData = aspHeatView.geneRegions.resolveClick(x,y);
+    var regionData = aspHeatView.aspectRegions.resolveClick(x,y);
     if (typeof regionData !== 'undefined') {
+      console.log(regionData);
+
       // TODO: Uncomment when embedding viewer supports this
       /*
       var embV = new embeddingViewer();
 	    embV.setColorConfiguration('aspect');
-	    embV.setAspectColorInfo({geneid: regionData.aspectId});
+	    embV.setAspectColorInfo({aspectid: regionData.aspectId});
 	    embV.updateColors();
 	    */
     };
@@ -94,8 +96,6 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
     var x = e.layerX;
     var y = e.layerY;
-
-    console.log(x,y)
 
   	var heatV = new heatmapViewer();
   	var metaV = new metaDataHeatmapViewer();
@@ -119,8 +119,6 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
 
 };
-
-
 
 /**
  * Clear the overlay
@@ -306,14 +304,29 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 
     } // for j
 
+    // Plot the bounding box
     ctx.strokeRect(left, top, heatmapWidth, actualPlotHeight);
 
 
     // TODO: setup click areas here
+    aspHeatView.aspectRegions.clearClickAreas();
+    for (var i = 0; i < data.DimNames2.length; i++){
+      var x1 = left;
+	    var y1 = cellHeight * i + top;
+	    var x2 = heatmapWidth;
+	    var y2 = cellHeight * ( i + 1 ) + top;
+
+	    aspHeatView.aspectRegions.addClickArea(
+    		x1, y1,
+    		x1, y2,
+    		x2, y2,
+    		x2, y1,
+    		{aspectId: data.DimNames2[i] }
+	    );
+    }
 
 
-	});
-
+	}); // dataController callback
 
 };
 
