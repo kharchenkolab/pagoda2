@@ -1,11 +1,11 @@
-/* 
+/*
  * Filename: Dendrogram Viewer
  * Author: Nikolas Barkas
  * Date: March 2017
  */
 
 /**
- * Manages the dendrogram 
+ * Manages the dendrogram
  * @constructor
  */
 function dendrogramViewer() {
@@ -33,7 +33,7 @@ function dendrogramViewer() {
 	zoomNode: undefined,
 	currentSelectedNode: undefined,
 	view: "full", // full or zoom
-	lineWidth: '4',
+	lineWidth: '2',
 	highlightColor: '#FF0000', // hover
 	highlightColor2: '#0000FF' // selection
     };
@@ -76,17 +76,17 @@ dendrogramViewer.prototype.generatePalettesMenu = function() {
 	    value: palettes[i].name,
             handler: function(item) {
 		var heatView = new heatmapViewer();
-		
+
 		heatView.palManager.setPalette(item.value);
 
-		// NOTE: WE are getting  the number of colors because the 
-		// Manger will have sorted out any issues with exceeing the 
+		// NOTE: WE are getting  the number of colors because the
+		// Manger will have sorted out any issues with exceeing the
 		// new palette limits
 		var curNoColours = heatView.palManager.getNumberOfColors();
 		console.log(curNoColours);
-		
+
 		// TODO: Set the value to the menu
-		
+
 		heatView.drawHeatmap();
 	    }
 	});
@@ -109,9 +109,9 @@ dendrogramViewer.prototype.generateLayoutOptionsMenu = function() {
 	    checked = true;
 	}
 
-	layoutOptionsMenu.add({ 
-	    text: layout.displayName, 
-	    name: layout.name,  
+	layoutOptionsMenu.add({
+	    text: layout.displayName,
+	    name: layout.name,
 	    group: 'layout',
 	    checked: checked,
 	    checkHandler: function(e, checked, eOpts) {
@@ -131,7 +131,7 @@ dendrogramViewer.prototype.generateLayoutOptionsMenu = function() {
 
 // Config for the dendrogram and other things should be split
 /**
- * Setup the buttons for the dendrogram control and the  associated 
+ * Setup the buttons for the dendrogram control and the  associated
  * listeners.
  */
 dendrogramViewer.prototype.initializeButtons =  function() {
@@ -154,7 +154,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 	    // CONTNUE: We want to zoom to the parent of the current _zoom_ node
 //	    var selectedNode = dendView.getCurrentSelectedNode();
 	    var selectedNode = dendView.getZoomNode();
-	    
+
 	    if (typeof selectedNode !== 'undefined') {
 		var updateHeatmapOnce = function() {
 		    var heatmapV = new heatmapViewer();
@@ -192,10 +192,10 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 	tooltip: 'Zoom to current selection',
 	glyph: 0xf00e, //fa-search-plus
 
-	handler: function(){ 
+	handler: function(){
 	    var selCntr = new cellSelectionController();
 	    var dendView = new dendrogramViewer();
-	    
+
 	    var selectedNode = dendView.getCurrentSelectedNode();
 
 	    if (typeof selectedNode !== 'undefined') {
@@ -241,7 +241,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 	xtype: 'button',
 	tooltip: 'Switch to full view mode',
 	glyph: 0xf010, // fa-search-minus
-	handler: function() { 
+	handler: function() {
 	    var dendView = new dendrogramViewer();
 
 	    if (dendView.currentConfiguration.view !== "full") {
@@ -252,13 +252,13 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 
 		    var metaV = new metaDataHeatmapViewer();
 		    metaV.drawMetadata();
-		    
+
 		    var evtBus = new eventBus();
 		    evtBus.unregister("dendrogram-cell-order-updated", null, updateHeatmapOnce);
 		}
 		var evtBus = new eventBus();
 		evtBus.register("dendrogram-cell-order-updated", null, updateHeatmapOnce);
-		
+
 
 		// Clear the selected node
 		dendView.clearCurrentSelectedNode();
@@ -279,7 +279,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 
     // Add a separator
     toolbar.add({xtype: 'tbseparator'});
-    
+
     // Generate palette menu
     var paletteMenu =  this.generatePalettesMenu();
 
@@ -309,7 +309,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 			var heatView = new heatmap1Viewer();
 			heatView.setNumberOfColors(v);
 			heatView.drawHeatmap();
-			
+
 		    }} // buffer of change listener
 		}
 	    },
@@ -338,7 +338,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 	tooltip: 'Configure dendrogram and heatmap plot settings',
 	glyph: 0xf013,
 	menu: dendHeatSettingsMenu
-	
+
     });
 
     mainPanelHeader.add(toolbar);
@@ -346,7 +346,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 
 /**
  * Resolve a click
- * @description Find which element was clicked and call the callback function 
+ * @description Find which element was clicked and call the callback function
  * with information about it
  * @private
  */
@@ -360,7 +360,7 @@ dendrogramViewer.prototype.resolveClick = function(x, y, callback) {
 
 /**
  * Resolve a click synchronously
- * @description Find which element was clicked and call the callback function 
+ * @description Find which element was clicked and call the callback function
  * with information about it
  * @private
  */
@@ -422,7 +422,7 @@ dendrogramViewer.prototype.getNodeDescendents =  function(data, nodeId) {
 
     var pendingVisit = [];
     var children = [];
-    
+
     // Starting point
     pendingVisit.push(nodeId);
 
@@ -438,7 +438,7 @@ dendrogramViewer.prototype.getNodeDescendents =  function(data, nodeId) {
 	    // Subtract 1 because the numbers in the merge array
 	    // Refer to 1-indexes R positions
 	    pendingVisit.push(mergeArray[currentNode - 1][0]);
-	    pendingVisit.push(mergeArray[currentNode - 1][1]); 
+	    pendingVisit.push(mergeArray[currentNode - 1][1]);
 	}
     }
     return children;
@@ -446,10 +446,10 @@ dendrogramViewer.prototype.getNodeDescendents =  function(data, nodeId) {
 
 
 /**
- * Updates the transform matrix using the built in 
+ * Updates the transform matrix using the built in
  * transform function and keeps track of the
  * applied transformations
- */ 
+ */
 dendrogramViewer.prototype.transform = function(a,b,c,d,e,f) {
     //dendArea = $('#dendrogram-area')[0];
     //var ctx = dendArea.getContext("2d");
@@ -459,8 +459,8 @@ dendrogramViewer.prototype.transform = function(a,b,c,d,e,f) {
     // Update the locally kept transform matrix
     var dendV = new dendrogramViewer();
     var newTransformMatrix = [ [a, c, e], [b, d, f], [0, 0, 1] ];
-    // Multiplication is done the other way around to 
-    // keep in line with the orientation of the matrices 
+    // Multiplication is done the other way around to
+    // keep in line with the orientation of the matrices
     // that canvas maintains
     dendV.currentTransform = (math.multiply(newTransformMatrix, dendV.currentTransform));
     dendV.restoreCurrentTransform();
@@ -474,8 +474,8 @@ dendrogramViewer.prototype.setTransform = function(a,b,c,d,e,f) {
     var dendV = new dendrogramViewer();
     var newTransformMatrix = [ [a, c, e], [b, d, f], [0, 0, 1] ];
 
-    // Multiplication is done the other way around to 
-    // keep in line with the orientation of the matrices 
+    // Multiplication is done the other way around to
+    // keep in line with the orientation of the matrices
     // that canvas maintains
     dendV.currentTransform = newTransformMatrix;
     dendV.restoreCurrentTransform();
@@ -491,8 +491,8 @@ dendrogramViewer.prototype.getCurrentTransform = function() {
 
 /**
  * Transforms an x and y from the canvas back to the plot coordinates
- * @description Takes an x and y from the canvas and 
- * takes it back through the applied transformation to 
+ * @description Takes an x and y from the canvas and
+ * takes it back through the applied transformation to
  * find which position in the canvas plotting coordinate
  * frame was clicked
  * @param x the x-coordinate
@@ -502,7 +502,7 @@ dendrogramViewer.prototype.transformToLocalCoordinates = function(x,y) {
     var dendV = new dendrogramViewer();
 
     // Augment the point
-    var p = [x, y, 1];    
+    var p = [x, y, 1];
     var invTr = dendV.getCurrentInverseTransform();
 
     // Map back through current transform
@@ -546,7 +546,7 @@ dendrogramViewer.prototype.restoreCurrentTransform = function() {
     var ctx2 = dendAreaOverlay.getContext("2d");
     ctx2.setTransform(a,b,c,d,e,f);
 
-    // Transform the internal copy 
+    // Transform the internal copy
     var ctx3 = this.canvasCopy.getContext('2d');
     ctx3.setTransform(a,b,c,d,e,f);
 
@@ -557,7 +557,7 @@ dendrogramViewer.prototype.restoreCurrentTransform = function() {
 
 /**
  * Get the inverse of the current transformation
- * If calls to this become common, save as a obj variable 
+ * If calls to this become common, save as a obj variable
  * during set time
  */
 dendrogramViewer.prototype.getCurrentInverseTransform = function() {
@@ -566,7 +566,7 @@ dendrogramViewer.prototype.getCurrentInverseTransform = function() {
 }
 
 /**
- * This function will draw the dendrogram with a root at 
+ * This function will draw the dendrogram with a root at
  * topnode. If no topnode is provided it will draw the entire dendrogram
  * A node identifier is the merge matrix position that generated this node
  * @param topnode the topmost node to draw, 1-indexed
@@ -602,7 +602,7 @@ dendrogramViewer.prototype.drawDendrogram =  function(topnode) {
 
 /**
  * Given the order of the clusters and the number of items
- * they contain return an array with the start and end positions 
+ * they contain return an array with the start and end positions
  * of the clusters as they are ploted.
  * @param data the data from the server side
  */
@@ -615,7 +615,7 @@ dendrogramViewer.prototype.getClusterPositionRanges =  function (data) {
     for (var i = 0; i < data.order.length; i++) {
 	memCountInOrder[i] = data.clusterMemberCount[data.order[i]];
     }
- 
+
     // Calculate the coordinates
     var coordInOrder = [];
     var lastPos =0;
@@ -662,7 +662,7 @@ dendrogramViewer.prototype.getCurrentDisplayCellsIndexes = function() {
 	    this.currentConfiguration.endCellIndex];
 }
 
-/** 
+/**
  * Draw a dendrogram that only includes everything under the specified node
  * @param data the data as received from the dataController
  * @param topnode the identifier for the top most node to draw
@@ -683,7 +683,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
     var maxHeight = data.height[topnode - 1];
 
     // Vertical scaling
-    var vscale = heatDendView.getCurrentDendHeight() / maxHeight * 
+    var vscale = heatDendView.getCurrentDendHeight() / maxHeight *
 	p2globalParams.dendrogram.scaleFactor;
 
     // Get the canvas object
@@ -700,7 +700,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
     // Calculating leaf positions
     coordOfNodes = dendV.getClusterPositionRanges(data);
-    
+
 
 
     // Get the mid-points of the  clusters
@@ -735,7 +735,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
     // Calculate the scallings for the transformation
     var horizontalScaling = heatDendView.getPlotAreaWidth() / (scaleMax - scaleMin + 1);
-    var horizontalShift = -1 * scaleMin * horizontalScaling + 
+    var horizontalShift = -1 * scaleMin * horizontalScaling +
 	heatDendView.getPlotAreaLeftPadding();
 
 
@@ -755,12 +755,12 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
     // merge the plot start can be easily determined
     var internalNodePositions = [];
 
-    // This array holds [x1, x2] range of x-coordinates that 
+    // This array holds [x1, x2] range of x-coordinates that
     // are to be highlighted for each internal node
     var internalNodeOverlayRanges = [];
 
     // Loop over merge array
-    for (var i = 0; i <  mergeArray.length; i++) {	
+    for (var i = 0; i <  mergeArray.length; i++) {
 	// Keeping track of node boundaries
 	var currentNodeLeft = +Infinity;
 	var currentNodeRight = -Infinity;
@@ -770,12 +770,12 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
 	// Height for this step
 	var drawHeight = data.height[i];
-	
+
 	// Merge array entry
 	var mergeStep = mergeArray[i];
 
 	// The two points to connect with a horisontal line in the last step
-	var p1 = undefined; 
+	var p1 = undefined;
 	var p2 = undefined;
 
 	// Step 1:
@@ -785,9 +785,9 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 	    // A leaf node (-ve), check if it is in the children array
 	    var nodeId = Math.abs(mergeStep[0]);
 	    nodeType = "leaf";
- 	    if (children.indexOf(nodeId) >= 0) {	
+ 	    if (children.indexOf(nodeId) >= 0) {
 		// Keep track of left and right for this node
-		currentNodeLeft = Math.min(currentNodeLeft, Math.min(coordOfNodes[nodeId][0], 
+		currentNodeLeft = Math.min(currentNodeLeft, Math.min(coordOfNodes[nodeId][0],
 								     coordOfNodes[nodeId][1]) );
 		currentNodeRight = Math.max(currentNodeRight, Math.max(coordOfNodes[nodeId][0],
 								       coordOfNodes[nodeId][1]) );
@@ -800,13 +800,13 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 		ctx.stroke();
 
 		// No click region for nodes
-	    } 
+	    }
 	} else {
 	    // An internal node
 	    var nodeId = mergeStep[0];
 	    nodeType = "internal";
 	    var intNodePos = internalNodePositions[nodeId];
- 	    
+
 	    // It is possible that the internal node does not
 	    // exist because its descendents are not part of
 	    // what we are currently plotting
@@ -827,19 +827,19 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 		var y1 = scaleY(intNodePos[1]) - 2;
 		var x2 = scaleX(intNodePos[0]) + 2;
 		var y2 = scaleY(drawHeight) +2;
-		
+
 		var left = scaleX(Math.min(internalNodeOverlayRanges[nodeId][0],internalNodeOverlayRanges[nodeId][1]));
 		var width = scaleX(Math.max(internalNodeOverlayRanges[nodeId][0],internalNodeOverlayRanges[nodeId][1])) - left;
-		
-		
+
+
 		dendV.clickRegions.addClickArea(
 		    x1, y1,
 		    x1, y2,
 		    x2, y2,
 		    x2, y1,
 		    {
-			nodeId: nodeId, 
-			nodeType: 'vertical', 
+			nodeId: nodeId,
+			nodeType: 'vertical',
 			highlightBoundingbox: {
 			    top: 0,
 			    left: left,
@@ -851,7 +851,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
 
 		p1 = intNodePos;
-	    } 
+	    }
 	}
 
 	// Step 2:
@@ -864,7 +864,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 		p2 = nodePositions[nodeId];
 
 		// Keep track of left and right for this node
-		currentNodeLeft = Math.min(currentNodeLeft, Math.min(coordOfNodes[nodeId][0], 
+		currentNodeLeft = Math.min(currentNodeLeft, Math.min(coordOfNodes[nodeId][0],
 								     coordOfNodes[nodeId][1]) );
 		currentNodeRight = Math.max(currentNodeRight, Math.max(coordOfNodes[nodeId][0],
 								       coordOfNodes[nodeId][1]) );
@@ -873,13 +873,13 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 		ctx.moveTo(scaleX(p2[0]),scaleY(0));
 		ctx.lineTo(scaleX(p2[0]),scaleY(drawHeight));
 		ctx.stroke();
-	    } 
+	    }
 	} else {
 	    // An internal node
 	    var nodeId = mergeStep[1];
 	    nodeType = "internal";
 	    var intNodePos = internalNodePositions[nodeId];
-	    
+
 	    if (typeof intNodePos !== 'undefined') {
 		currentNodeLeft = Math.min(currentNodeLeft, Math.min(internalNodeOverlayRanges[nodeId][0],
 								      internalNodeOverlayRanges[nodeId][1]));
@@ -890,7 +890,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 		ctx.beginPath();
 		ctx.moveTo(scaleX(intNodePos[0]),scaleY(intNodePos[1]));
 		ctx.lineTo(scaleX(intNodePos[0]),scaleY(drawHeight));
-		ctx.stroke();	
+		ctx.stroke();
 
 		var x1 = scaleX(intNodePos[0]) -2;
 		var y1 = scaleY(intNodePos[1]) -2;
@@ -901,7 +901,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
 		var left = scaleX(Math.min(internalNodeOverlayRanges[nodeId][0],internalNodeOverlayRanges[nodeId][1]));
 		var width = scaleX(Math.max(internalNodeOverlayRanges[nodeId][0],internalNodeOverlayRanges[nodeId][1])) - left;
-		
+
 
 		dendV.clickRegions.addClickArea(
 		    x1, y1,
@@ -909,7 +909,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 		    x2, y2,
 		    x2, y1,
 		    {
-			nodeId: nodeId, 
+			nodeId: nodeId,
 			nodeType: 'vertical',
 			highlightBoundingbox: {
 			    top: 0,
@@ -919,9 +919,9 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 			}
 		    }
 		);
-		
+
 		p2 = intNodePos;
-	    } 
+	    }
 	}
 
 	// Step 3:
@@ -947,7 +947,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 		x2, y2,
 		x2, y1,
 		{
-		    nodeId: i + 1, 
+		    nodeId: i + 1,
 		    nodeType: 'horizontal',
 		    highlightBoundingbox: {
 			top: scaleY(0),
@@ -963,18 +963,18 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
 	    // Keep track of node leaf boundaries
 	    internalNodeOverlayRanges[i+1] = [currentNodeLeft, currentNodeRight];
-	} 
+	}
     }; // end loop over mergeArray
 
-    
+
     ctx.restore();
 
     this.updateCanvasCopy();
 } // dendrogramViewer.prototype.drawDendrogramSubsetWithData
 
 /**
- * Update the internal canvas copy object we use for the 
- * overlay at hover. 
+ * Update the internal canvas copy object we use for the
+ * overlay at hover.
  */
 dendrogramViewer.prototype.updateCanvasCopy = function() {
     var mainCanvas = document.getElementById('dendrogram-area');
@@ -993,7 +993,7 @@ dendrogramViewer.prototype.updateCanvasCopy = function() {
     ctx.fillStyle = this.currentConfiguration.highlightColor;
     ctx.globalCompositeOperation = 'source-in';
     ctx.fillRect(0,0, this.canvasElementWidth, this.canvasElementHeight);
-    
+
     // Restore draw settings
     ctx.restore();
 
@@ -1071,13 +1071,13 @@ dendrogramViewer.prototype.setupDOM = function() {
 
     var dendrogramContainer = $('#dendrogram-area-container');
     dendrogramContainer.append('<div id="dendrogram-area-container-inner"></div>');
-    
+
     var dendrogramContainerInner = $('#dendrogram-area-container-inner');
     dendrogramContainerInner.css({position: 'relative'});
-   
+
     dendrogramContainerInner.append('<canvas id="dendrogram-area"></canvas>' +
 				   '<canvas id="dendrogram-area-overlay"></canvas>');
-    
+
     var dendrogramArea = $('#dendrogram-area');
     dendrogramArea.css({
 	position: 'absolute',
@@ -1099,9 +1099,9 @@ dendrogramViewer.prototype.setupDOM = function() {
  */
 dendrogramViewer.prototype.updateOverlay = function() {
     var dendV = new dendrogramViewer();
-    
+
     var ctx = document.getElementById('dendrogram-area-overlay').getContext('2d');
-    ctx.save();    
+    ctx.save();
 
     // Clear the overlay
     ctx.clearRect(0,0, dendV.canvasElementWidth, dendV.canvasElementHeight);
@@ -1111,9 +1111,9 @@ dendrogramViewer.prototype.updateOverlay = function() {
     var permanentHighlight = this.getPermanentHighlightArea();
     if (typeof permanentHighlight !== 'undefined') {
 	ctx.drawImage(this.canvasCopy2,
-		      permanentHighlight.left, permanentHighlight.top, 
+		      permanentHighlight.left, permanentHighlight.top,
 		      permanentHighlight.width, permanentHighlight.height,
-		      permanentHighlight.left, permanentHighlight.top, 
+		      permanentHighlight.left, permanentHighlight.top,
 		      permanentHighlight.width, permanentHighlight.height);
     }
 
@@ -1193,7 +1193,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 		var dataCntr = new dataController();
 		dataCntr.getReducedDendrogram(function(data) {
 		    descendants = dendV.getNodeDescendents(data, nodeId);
-		    
+
 		    // Get the start end positions of the clusters
 		    var clusterPositions = dendV.getClusterPositionRanges(data);
 
@@ -1203,7 +1203,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 			    var currDesc = descendants[i];
 			    var currPos = clusterPositions[currDesc];
 			    var cellsInCluster = cellorder.slice(currPos[0] - 1, currPos[1] - 1 );
-			    
+
 			    selectedCellIdentifiers.push.apply(selectedCellIdentifiers, cellsInCluster);
 			}
 
@@ -1235,7 +1235,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 			    var currDesc = Math.abs(immediateChildren[0]);
 			    var currPos = clusterPositions[currDesc];
 			    var cellsInCluster = cellorder.slice(currPos[0] - 1, currPos[1] -1);
-			    
+
 			    var selectionMetadata = {
 				clusters: [currDesc]
 			    }
@@ -1248,7 +1248,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 			// The left child is an internal node
 
 			descendants = dendV.getNodeDescendents(data, immediateChildren[0]);
-			
+
 			// Get the start end positions of the clusters
 			var clusterPositions = dendV.getClusterPositionRanges(data);
 
@@ -1258,7 +1258,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 				var currDesc = descendants[i];
 				var currPos = clusterPositions[currDesc];
 				var cellsInCluster = cellorder.slice(currPos[0] - 1, currPos[1] - 1 );
-				
+
 				selectedCellIdentifiers.push.apply(selectedCellIdentifiers, cellsInCluster);
 			    }
 
@@ -1271,7 +1271,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 			    cellSelCntr.setSelection('currentPrimarySel', selectedCellIdentifiers,
 						     'Primary Selection', selectionMetadata);
 			}); // getCellOrder();
-		    } // else 
+		    } // else
 
 
 
@@ -1285,7 +1285,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 			    var currDesc = Math.abs(immediateChildren[1]);
 			    var currPos = clusterPositions[currDesc];
 			    var cellsInCluster = cellorder.slice(currPos[0] - 1, currPos[1] -1);
-			    
+
 			    var selectionMetadata = {
 				clusters: [currDesc]
 			    }
@@ -1296,7 +1296,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 			});
 		    } else {
 			descendants = dendV.getNodeDescendents(data, immediateChildren[1]);
-			
+
 			// Get the start end positions of the clusters
 			var clusterPositions = dendV.getClusterPositionRanges(data);
 
@@ -1306,7 +1306,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 				var currDesc = descendants[i];
 				var currPos = clusterPositions[currDesc];
 				var cellsInCluster = cellorder.slice(currPos[0] - 1, currPos[1] - 1 );
-				
+
 				selectedCellIdentifiers.push.apply(selectedCellIdentifiers, cellsInCluster);
 			    }
 
@@ -1319,9 +1319,9 @@ dendrogramViewer.prototype.setupListeners = function() {
 			    cellSelCntr.setSelection('currentSecondarySel', selectedCellIdentifiers,
 						     'Secondary Selection', selectionMetadata);
 			}); // getCellOrder();
-		    } // else 
+		    } // else
 
-		    
+
 
 
 
@@ -1369,8 +1369,8 @@ dendrogramViewer.prototype.clearHighlight = function() {
 
 /**
  * Initialise the dendrogram viewer:
- * @description set the canvas element width and height; Set up the 
- * click listener; Call the first draw function. Assumes that <canvas id="dendrogram-area"> 
+ * @description set the canvas element width and height; Set up the
+ * click listener; Call the first draw function. Assumes that <canvas id="dendrogram-area">
  *
  */
 dendrogramViewer.prototype.initialize = function() {
