@@ -10,7 +10,7 @@
  */
 function metaDataHeatmapViewer() {
     if (typeof metaDataHeatmapViewer.instance === 'object') {
-	return metaDataHeatmapViewer.instance;
+	    return metaDataHeatmapViewer.instance;
     }
 
     // The initializer is called externally when the
@@ -186,6 +186,7 @@ metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
  * Get the draw constants for the metadata heatmap
  */
 metaDataHeatmapViewer.prototype.getDrawConstants = function() {
+  var heatDendView = new heatmapDendrogramViewer();
     var dendV = new dendrogramViewer();
 
     return {
