@@ -78,7 +78,9 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
     var regionData = aspHeatView.aspectRegions.resolveClick(x,y);
     if (typeof regionData !== 'undefined') {
-      console.log(regionData);
+
+      var aspTable = new aspectsTableViewer();
+      aspTable.showSelectedAspect(regionData.aspectId);
 
       // TODO: Uncomment when embedding viewer supports this
       /*
@@ -183,8 +185,6 @@ aspectHeatmapViewer.prototype.getActualPlotHeight = function() {
 aspectHeatmapViewer.prototype.setActualPlotHeight = function(val) {
     this.actualPlotHeight = val;
 }
-
-
 
 /**
  * Update the canvas size to that provided by the heatmapDendrogramViewer

@@ -10,25 +10,25 @@ function geneSetsTableViewer() {
     }
 
     console.log('Initializing geneSetsTableViewer...');
-    
+
     this.generateTables();
-    
+
     geneSetsTableViewer = this;
 };
 
 /**
- * Generate the visual elements for this 
+ * Generate the visual elements for this
  * @description This function generates two tables in the "Gene Sets of Interest" tab
- * The first table is to display the available gene sets and the second to 
+ * The first table is to display the available gene sets and the second to
  * display the genes in these gene sets
  */
 geneSetsTableViewer.prototype.generateTables = function() {
     var dataCntr = new dataController();
-    
+
     var areaHolder = Ext.getCmp('geneSetsOfInterestExtJS');
 
     dataCntr.getGeneSetInformationStore(function(geneSetTableStore) {
-	
+
 	// Listener for selection change of the table of the genesets
 	var geneSetSelectionChangeListener = function (obj, selected, eOpts) {
 	    // Get the name of the selected set
@@ -43,10 +43,10 @@ geneSetsTableViewer.prototype.generateTables = function() {
 		var genesetTable =  Ext.getCmp('genesetGenesTable');
 		store.sort({property: 'dispersion', direction: 'DESC'});
 		genesetTable.bindStore(store);
-		
+
 	    });
 	}
-	
+
 	var genesetSelectionGrid = Ext.create('Ext.grid.Panel',{
 	    title: 'Available Gene Sets',
 	    id: 'genesettable',
@@ -124,7 +124,7 @@ geneSetsTableViewer.prototype.generateTables = function() {
 		    selectedItems.each(function(item,index,length){
 			selectedGeneNames.push(item.data.genename);
 		    });
-		    
+
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
 		}
@@ -169,7 +169,7 @@ geneSetsTableViewer.prototype.generateTables = function() {
 	    }) // tbar
 
 	});
-	
+
 
 	areaHolder.add([{
 	    type: 'panel',

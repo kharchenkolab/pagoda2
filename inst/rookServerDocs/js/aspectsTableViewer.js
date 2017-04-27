@@ -14,12 +14,22 @@ function aspectsTableViewer() {
 
   console.log('Initializing aspects table viewer');
 
-  this.generateTable();
+  this.generateTables();
+
+
+  // Load the data
+  // NOTE: There is a race condition here between the generation of the tables
+  // and the ajax call
+  var dataCntr = new dataController();
+  dataCntr.getAvailableAspectsStore(function(aspectTableStore){
+        table = Ext.getCmp('aspectstable');
+        table.bindStore(aspectTableStore);
+  });
 
   aspectsTableViewer.instance = this;
 };
 
-aspectsTableViewer.prototype.generateTable = function() {
+aspectsTableViewer.prototype.generateTables = function() {
   var dataCntr = new dataController() ;
 
   var areaHolder = Ext.getCmp('aspectsExtJS');
@@ -28,7 +38,7 @@ aspectsTableViewer.prototype.generateTable = function() {
     title: 'Available Aspects',
     id: 'aspectstable',
     empty: 'No aspects are defined',
-    // TODO:...
+    columns: [{text:'Name', dataIndex:'name', width:'100%'}]
   });
 
   var setsTableForAspects = Ext.create('Ext.grid.Panel',{
@@ -74,7 +84,28 @@ aspectsTableViewer.prototype.generateTable = function() {
     height: '50%',
     items: [genesTableForAspects]
   }]);
+};
 
-}
+/**
+ * Responds to an external aspect selection
+ * @description responds to an aspect selection, it brings up the aspects tag
+ * and selects the designated aspect
+ */
+aspectsTableViewer.prototype.showSelectedAspect = function(aspectIdentifier) {
+  this.raiseTab();
 
+  var table = Ext.getCmp('aspectstable');
+  var index = table.getStore().find('name', aspectIdentifier);
+  console.log('aspectId', aspectIdentifier);
+  console.log('index',index);
+  table.getSelectionModel().select(index);
+};
 
+/**
+ * Raised the tab to of this panel
+ */
+aspectsTableViewer.prototype.raiseTab = function() {
+  var tablesTab = Ext.getCmp('tablesTabExtJS');
+  // FIXME: The tab order is hard-wired here
+  tablesTab.setActiveTab(2);
+};

@@ -216,6 +216,7 @@ function generateExtJsLayout() {
 	bodyPadding: 0,
 	glyph: 0xf0c9,
 	items: [ Ext.create('Ext.TabPanel', {
+	  	    id: 'tablesTabExtJS',
 	    layout: 'fit',
 	    width: '100%',
 	    height: '100%',

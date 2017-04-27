@@ -126,6 +126,33 @@ dataController.prototype.getCellOrder = function(callback) {
     }
 }
 
+dataController.prototype.getAvailableAspectsStore = function(callback) {
+  $.ajax({
+	    type: "GET",
+	    dataType: "json",
+	    url: "getData.php",
+	    data: {'dataidentifier':'availableaspects'},
+	    success: function(data) {
+
+        // Data needs to be converted into an array
+        // of objects with named properties
+        var dataStructured = [];
+        for (var i = 0; i < data.length; i++) {
+          dataStructured[i] = {'name': data[i]};
+        };
+
+	      var pagingStore = Ext.create('LocalJsonStore', {
+	        autoLoad: true,
+	        model: 'aspectTableEntry',
+	        pageSize: 20,
+	        localData: dataStructured
+	      });
+	      callback(pagingStore);
+
+	   }
+  });
+}
+
 dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
   var dataCntr = this;
 
@@ -873,6 +900,14 @@ dataController.prototype.defineExtJsObjects = function() {
 	    {name: 'shortdescription', type: 'string'}
 
 	]
+    });
+
+    Ext.define('aspectTableEntry', {
+      extend: 'Ext.data.Model',
+      fields: [
+        {name: 'name', type: 'string'}
+      ]
+
     });
 
 } // dataController.prototype.defineExtJsObjects

@@ -339,8 +339,20 @@ pagoda2WebApp <- setRefClass(
                                           # TODO
                                       },
 
+                                      'availableaspects' = {
+                                        # /getData.php?dataidentifier=availableaspects
+                                        response$header("Content-type", "application/javascript");
+                                        response$write(toJSON(rownames(pathways$xv)));
+                                        return(response$finish());
+                                      },
 
+                                      'genesetsinaspect' = {
 
+                                      },
+
+                                      'genesinaspectgeneset' = {
+
+                                      },
 
                                       # Request for reduced dendrogram, down to some
                                       # cell partitioning, this returns an hcluse object
@@ -413,9 +425,9 @@ pagoda2WebApp <- setRefClass(
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
                                           matrixToSend <- pathways$xv[,cellIndices,drop=F];
 
-                                          # Discard values < 1/100 of the max
-                                          trimPoint <-  max(abs(matrixToSend)) / 100;
-                                          matrixToSend[matrixToSend < trimPoint] <- 0;
+                                          # Discard values < 1/50 of the max
+                                          trimPoint <-  max(abs(matrixToSend)) / 50;
+                                          matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
 
                                           # Transpose and make sparse
                                           matrixToSend <- Matrix(t(matrixToSend), sparse = T);
