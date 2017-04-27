@@ -126,6 +126,10 @@ dataController.prototype.getCellOrder = function(callback) {
     }
 }
 
+/**
+ * Get an extjs store with
+ * the available aspects
+ */
 dataController.prototype.getAvailableAspectsStore = function(callback) {
   $.ajax({
 	    type: "GET",
@@ -153,6 +157,11 @@ dataController.prototype.getAvailableAspectsStore = function(callback) {
   });
 }
 
+
+
+/**
+ * Get a dgCMatrixReader with the cell aspect weights
+ */
 dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
   var dataCntr = this;
 
@@ -747,37 +756,6 @@ dataController.prototype.getGeneSetInformationStoreRemote = function(callback) {
 	}
     });
 
-
-
-    // var pagingStore = Ext.create('Ext.data.Store', {
-    // 	autoLoad: true,
-    // 	model: 'geneSetTableEntry',
-    // 	pageSize: 20,
-    // 	proxy: {
-    // 	    type: 'memory',
-    // 	    enablePaging: true
-    // 	}
-    // });
-
-    // var remoteStore = Ext.create('Ext.data.Store', {
-    // 	autoLoad: true,
-    // 	model: 'geneSetTableEntry',
-    // 	proxy: {
-    // 	    type: 'ajax',
-    // 	    url: 'getData.php?dataidentifier=availablegenesets',
-    // 	    reader: {
-    // 		type: 'json'
-    // 		}
-    // 	},
-    // 	listeners: {
-    // 	    load: function() {
-    // 		pagingStore.getProxy().setData(remoteStore.getRange());
-    // 		pagingStore.load();
-    // 	    }
-    // 	}
-    // });
-
-    // return pagingStore;
 }
 
 /**
@@ -950,23 +928,6 @@ dataController.prototype.getGeneInformation =  function(callback) {
 	}
     });
 }
-
-
-
-/**
- * get pathway information from the back end. Dummy implementation
- * returns some sample data
- */
-// dataController.prototype.getPathwayInformation = function() {
-//     console.warn("dataController.getPathwayInformation() dummy implementation called!");
-
-//     var dataset = [
-// 	{"name": "pathwayA", cZ: "1234", score: "2134" },
-//     ];
-
-//     return dataset;
-// }
-
 
 
 
