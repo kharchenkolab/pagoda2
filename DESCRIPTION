@@ -8,6 +8,7 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports: rjson,
+    utils,
     Rook,
     base64enc,
     Matrix,

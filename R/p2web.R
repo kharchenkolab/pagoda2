@@ -5,6 +5,7 @@
 
 
 #' @import Rook
+#' @importFrom utils URLdecode
 #' @importFrom rjson fromJSON toJSON
 #' @import base64enc
 
@@ -347,7 +348,14 @@ pagoda2WebApp <- setRefClass(
                                       },
 
                                       'genesetsinaspect' = {
+                                          requestArguments <- request$GET();
+                                          aspectId <- URLdecode(requestArguments['aspectId']);
 
+                                          genesets <- pathways$cnam[aspectId];
+
+                                          response$header("Content-type", "application/javascript");
+                                          response$write(toJSON(genesets));
+                                          return(response$finish());
                                       },
 
                                       'genesinaspectgeneset' = {

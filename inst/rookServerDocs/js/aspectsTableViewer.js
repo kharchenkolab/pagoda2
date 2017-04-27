@@ -34,11 +34,22 @@ aspectsTableViewer.prototype.generateTables = function() {
 
   var areaHolder = Ext.getCmp('aspectsExtJS');
 
+  // Selection change listener for aspects
+  var aspectSelectionChangeListener = function(obj, selected, eOpts) {
+    var selectedAspect = selected[0].data.name;
+    console.log('selection listener', selectedAspect);
+
+    // TODO: Update downstream
+  };
+
   var aspectSelectionGrid = Ext.create('Ext.grid.Panel',{
     title: 'Available Aspects',
     id: 'aspectstable',
     empty: 'No aspects are defined',
-    columns: [{text:'Name', dataIndex:'name', width:'100%'}]
+    columns: [{text:'Name', dataIndex:'name', width:'100%'}],
+    listeners: {
+      'selectionchange': aspectSelectionChangeListener
+    }
   });
 
   var setsTableForAspects = Ext.create('Ext.grid.Panel',{

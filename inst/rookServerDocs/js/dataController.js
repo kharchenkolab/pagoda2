@@ -158,6 +158,29 @@ dataController.prototype.getAvailableAspectsStore = function(callback) {
 }
 
 
+/**
+ * Get the available genesets in the selected aspect
+ */
+dataController.prototype.getAvailableGenesetsInAspectStore = function(aspectId, callback) {
+  var ajaxReq = $.ajax({
+    type: 'GET',
+    dataType:'json',
+    url: 'getData.php',
+    data: {
+      'dataidentifier': 'genesetsinaspect',
+      'aspectId': aspectId
+    },
+    success: function(data) {
+      console.log('getAvailableGenesetsInAspectStore', data);
+      callback(data);
+    }
+  })
+
+
+  // return the ajax request so that it can be cancelled if required
+  return ajaxReq;
+}
+
 
 /**
  * Get a dgCMatrixReader with the cell aspect weights
