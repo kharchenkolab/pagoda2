@@ -163,6 +163,9 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 		    var metaV = new metaDataHeatmapViewer();
 		    metaV.drawMetadata();
 
+		    var aspHeatV = new aspectHeatmapViewer();
+		    aspHeatV.drawHeatmap();
+
 		    var evtBus = new eventBus();
 		    evtBus.unregister("dendrogram-cell-order-updated", null, updateHeatmapOnce);
 		}
@@ -205,6 +208,9 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 
 		    var metaV = new metaDataHeatmapViewer();
 		    metaV.drawMetadata();
+
+		    var aspHeatV = new aspectHeatmapViewer();
+		    aspHeatV.drawHeatmap();
 
 		    var evtBus = new eventBus();
 		    evtBus.unregister("dendrogram-cell-order-updated", null, updateHeatmapOnce);
@@ -252,6 +258,9 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 
 		    var metaV = new metaDataHeatmapViewer();
 		    metaV.drawMetadata();
+
+		    var aspHeatV = new aspectHeatmapViewer();
+		    aspHeatV.drawHeatmap();
 
 		    var evtBus = new eventBus();
 		    evtBus.unregister("dendrogram-cell-order-updated", null, updateHeatmapOnce);

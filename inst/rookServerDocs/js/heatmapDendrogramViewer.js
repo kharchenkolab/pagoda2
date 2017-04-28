@@ -44,9 +44,9 @@ function heatmapDendrogramViewer() {
     // TODO: Fix me, add listener don't replace
     var extJsContainer = Ext.getCmp('mainViewPanel');
     extJsContainer.onResize = function() {
-	var heatDendView = new heatmapDendrogramViewer();
-	heatDendView.updateContainerSize();
-	heatDendView.updateView();
+    	var heatDendView = new heatmapDendrogramViewer();
+    	heatDendView.updateContainerSize();
+    	heatDendView.updateView();
     };
 };
 
@@ -239,7 +239,7 @@ heatmapDendrogramViewer.prototype.updateView = function() {
 	// Unregister this handler
 	var evtBus = new eventBus();
 	evtBus.unregister("dendrogram-cell-order-updated", null, dendrogramInitListener);
-    }
+  }
 
     // Listen for first dendrogram initialization
     evtBus.register("dendrogram-cell-order-updated", null,dendrogramInitListener);

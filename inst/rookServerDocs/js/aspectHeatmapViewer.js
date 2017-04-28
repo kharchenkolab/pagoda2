@@ -246,6 +246,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 
 	this.clearHeatmap(ctx);
 
+
 	// Show centered waiting icon
 	$('#aspect-heatmap-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
 	var loadingDomItem =  $('#aspect-heatmap-container > .loadingIcon');

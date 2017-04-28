@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: aspectsTableViewer.js
  * Author:  Nikolas Barkas
@@ -22,7 +24,7 @@ function aspectsTableViewer() {
   // and the ajax call
   var dataCntr = new dataController();
   dataCntr.getAvailableAspectsStore(function(aspectTableStore){
-        table = Ext.getCmp('aspectstable');
+        var table = Ext.getCmp('aspectstable');
         table.bindStore(aspectTableStore);
   });
 
@@ -32,7 +34,7 @@ function aspectsTableViewer() {
 aspectsTableViewer.prototype.updateGeneSetsInAspectTable = function(selectedAspect) {
       var dataCntr = new dataController();
       dataCntr.getAvailableGenesetsInAspectStore(selectedAspect, function(store) {
-          table = Ext.getCmp('genesetsAspectTable');
+          var table = Ext.getCmp('genesetsAspectTable');
           table.bindStore(store);
 
 
@@ -49,7 +51,7 @@ aspectsTableViewer.prototype.generateTables = function() {
   // Selection change listener for aspects
   var aspectSelectionChangeListener = function(obj, selected, eOpts) {
     var selectedAspect = selected[0].data.name;
-    aspTableViewer = new aspectsTableViewer();
+    var aspTableViewer = new aspectsTableViewer();
     aspTableViewer.updateGeneSetsInAspectTable(selectedAspect);
   };
 
@@ -63,17 +65,83 @@ aspectsTableViewer.prototype.generateTables = function() {
     }
   });
 
+  var genesetSelectionChangeListener = function(obj, selected, eOpts) {
+    // FIXME: Here we assume that they are all go terms
+    // and they are also provided in the genesets of interest
+
+    var selectedGeneset = selected[0].data.name;
+    var goTerm = selectedGeneset.replace(/#.*# /,'');
+
+    var dataCntr = new dataController();
+    dataCntr.getGeneSetStoreByName(goTerm, function(store) {
+      var genesetTable = Ext.getCmp('genesAspectsTable');
+		  store.sort({property: 'dispersion', direction: 'DESC'});
+		  genesetTable.bindStore(store);
+
+    })
+
+  }
+
   var setsTableForAspects = Ext.create('Ext.grid.Panel',{
     title: 'Gene sets in Aspect',
     id: 'genesetsAspectTable',
     empty: 'No sets available',
     columns: [{text:'Name', dataIndex:'name', width:'100%'}],
+    listeners: {
+      'selectionchange': genesetSelectionChangeListener
+    }
   });
 
+  var selModel =  Ext.create('Ext.selection.CheckboxModel', {});
+
   var genesTableForAspects = Ext.create('Ext.grid.Panel',{
-    title: 'Genes in the selected table',
+    title: 'Genes in the selected Gene Set',
     id: 'genesAspectsTable',
-    empty: 'No genes selected'
+    empty: 'No genes selected',
+    selModel: selModel,
+    columns: [
+      {
+        text: 'Name', dataIndex: 'genename', width: '80%',
+        renderer: function(value) {return Ext.String.format(p2globalParams.misc.jaxGeneQueryFormatString ,value,value)}
+      },
+      {
+        text: 'Dispersion',
+        dataIndex: 'dispersion',
+        width: '20%'
+      }], //columns
+      height: '100%',
+      width: '100%',
+      singleSelect: false,
+      listeners: {
+        'selectionchange': function(selected, eOpts) {
+          		var selectedGeneNames =  [];
+
+      		    var selectedItems = selected.getSelected();
+      		    selectedItems.each(function(item,index,length){
+      			    selectedGeneNames.push(item.data.genename);
+      		    });
+
+      		    var geneSelCntr =  new geneSelectionController();
+      		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
+        } // selection change
+      }, // listeners
+      tbar: Ext.create('Ext.PagingToolbar', {
+      		displayInfo: true,
+		      prependButtons: true,
+		      items: [
+            {
+      			type: 'button',
+      			text: 'Show selected',
+      			tooltip: 'Show selected genes in the main heatmap',
+      			glyph: 0xf0ce,
+      			handler: function() {
+      			    var heatmapV = new heatmapViewer();
+      			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+      			    heatmapV.drawHeatmap();
+      			} //handler
+          }, //item
+         ] //items
+      }) //tbar
   });
 
   areaHolder.add([{
