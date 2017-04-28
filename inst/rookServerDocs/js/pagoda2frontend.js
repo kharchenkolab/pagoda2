@@ -32,7 +32,7 @@ function initialise() {
     var dataCntr = new dataController('remote');
 
     // Calculation controllers are init from a factory that is singleton
-    var calcCntr = new calculationControllerFactory('local');
+    var calcCntr = new calculationController(true, true);// Both local and remote
 
     var evtBus = new eventBus();
     var stsBar = new statusBar();
@@ -57,11 +57,13 @@ function initialise() {
 
     // Generate the tables
     var geneTable = new geneTableViewer();
-//  var odGeneTable = new odGeneTableViewer();
+
     var geneSetsTable = new geneSetsTableViewer();
     var heatDendView = new heatmapDendrogramViewer();
     var aspTableView = new aspectsTableViewer();
 
+    // Not used
+//  var odGeneTable = new odGeneTableViewer();
 
     // Update status bar
     stsBar.showMessage("Ready");

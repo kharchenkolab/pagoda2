@@ -11,7 +11,7 @@ function actionPanelUIcontroller() {
     if (typeof actionPanelUIcontroller.instance === 'object') {
 	return actionPanelUIcontroller.instance;
     }
-    
+
     this.generateCellSelectionStore();
     this.generateUI();
 
@@ -22,7 +22,7 @@ function actionPanelUIcontroller() {
 	actPaneUICntr.syncCellSelectionStore();
     });
 
-    actionPanelUIcontroller.instance = this; 
+    actionPanelUIcontroller.instance = this;
 };
 
 
@@ -32,7 +32,7 @@ function actionPanelUIcontroller() {
  */
 actionPanelUIcontroller.prototype.generateUI = function() {
     var actionsTab = Ext.getCmp('actions-ui-tab');
-    
+
     var actionsInnerTab = Ext.create('Ext.TabPanel', {
 	layout: 'fit',
 	width: '100%',
@@ -67,12 +67,12 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     });
 
     // Populate the store
-    var calcFactory = new calculationControllerFactory();
-    var calcCntr = calcFactory.makeCalculationController();
+    var calcCntr = new calculationController();
     var availableMethods = calcCntr.getAvailableDEmethods();
-    for (i in availableMethods) {
 
-	deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
+
+    for (i in availableMethods) {
+	    deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
     }
 
     var deTab = Ext.getCmp('differentialExpressionTab');
@@ -113,20 +113,22 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 	},{
 	    xtype: 'button',
 	    text: 'Run differential expression',
-	    handler: function() {	
+	    handler: function() {
 		var selectionA = Ext.getCmp("formPanelDE").getForm()
 		    .findField("selectionA").getValue();
 		var selectionB = Ext.getCmp("formPanelDE").getForm()
 		    .findField("selectionB").getValue();
 
 		if (selectionA === selectionB) {
-		    Ext.MessageBox.alert('Warning', 'Please select a differnt set for A and B');
+		    Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
 		} else {
 		    //TODO: Some kind of visual wait indicator
-		    var calcFactory = new calculationControllerFactory();
-		    var calcCntr = calcFactory.makeCalculationController();
+		    var calcCntr = new calculationController();
+		    calcCntr.performDEbySelection(selectionA, selectionB, function() {
+		        // The callback context
 
-		    calcCntr.performDEbySelection(selectionA, selectionB, function() {} );
+
+		    } );
 		}
 	    }
 	}
@@ -167,11 +169,12 @@ actionPanelUIcontroller.prototype.syncCellSelectionStore = function() {
     // Repopulate the store
     var cellSelCntr =  new cellSelectionController();
     var availSelections = cellSelCntr.getAvailableSelections();
-    
-    for (sel in availSelections) {
-	var selName = availSelections[sel];;
-	var selDisplayName =  cellSelCntr.getSelectionDisplayName(selName);
 
-	store.add({selectionname: selName, displayname: selDisplayName});
+    for (sel in availSelections) {
+    	var selName = availSelections[sel];
+    	var selDisplayName =  cellSelCntr.getSelectionDisplayName(selName);
+
+    	store.add({selectionname: selName, displayname: selDisplayName});
     }// for
+
 }
