@@ -41,20 +41,13 @@ generate.p2.human.go <- function(hgenes) {
 #' web object constructor. Advanced users may wish to use the PagodaWebApp
 #' constructor directly
 #' @param r pagoda2 object
-#' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram
+#' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added
 #' @param geneSets a list of genesets to show
 #' @param debug build debug app?
 #' @return a Rook web app
 #' @export make.p2.app
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets) {
-
-                                        # dendrogramCellGroups is named factor of cells
-                                        # that assigns cells to groups that will be the smallest
-                                        # group that we can zoom in
-                                        # We probably want this to be a partition of the actual displayed clusters
-                                        # So that the user can zoom in a bit further than the cluster level
-
 
 
     # Build the metadata
@@ -91,6 +84,14 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     for ( itemName in names(additionalMetadata)) {
         metadata[[itemName]] <- additionalMetadata[[itemName]]
     }
+
+    # Pre-calculate differential gene expression between
+    # each cluster in the dendrogram clusters and the background
+    # Append these to gene sets of interest
+    deGenes <- r$getDifferentialGenes(type='counts', groups=dendrogramCellGroups)
+
+
+
 
 
     # Make the app object
