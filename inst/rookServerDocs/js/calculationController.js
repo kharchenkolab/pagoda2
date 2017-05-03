@@ -68,6 +68,10 @@ calculationController.prototype.getAvailableDEmethods = function() {
 }
 
 
+//////////////////////////////////////////
+
+
+
 /**
  * Stores differential expression results and accompanying metadata
  * Singleton
@@ -78,19 +82,52 @@ function differentialExpressionStore() {
 	    return differentialExpressionStore.instance;
     };
 
-    this.deSets = new Array();
+    this.deSets = new Object();
 
     differentialExpressionStore.instance = this;
     return this;
 };
 
+
 differentialExpressionStore.prototype.getAvailableDEsets = function() {
+  var result = new Array();
+  var availKeys = Object.keys(this.deSets);
 
+  // Push key/display name pairs on an array
+  for (i = 0; i < availKeys.length; i++) {
+    var curKey = availKeys[i];
+    var name = curKey;
+    var displayName = this.deSets[curKey].getName();
+
+    result.push({'name': name, 'displayName': displayName});
+  }
+
+  return result;
 };
 
+
+/**
+ * Add differential expression result to the store
+ */
 differentialExpressionStore.prototype.addResultSet = function(deset) {
-  this.deSets.push(deset);
+  var newid = this.getUniqueId();
+  this.deSets[newid] = deset;
 };
+
+
+/**
+ * Generate a unique identifier for a de set
+ */
+differentialExpressionStore.prototype.getUniqueId = function() {
+  var dobj = new Date();
+  var r = Math.floor(Math.random() * 1e12);
+  var d = dobj.getTime();
+  return  'deset_' +  d + '_' + r
+}
+
+
+///////////////////////////////
+
 
 /**
  * Represents a differential expression result set and accompanying metadata
@@ -115,7 +152,7 @@ deResultSet.prototype.getSelectionA = function() {
 };
 
 deResultSet.prototype.setSelectionA = function(val) {
-  this.seletionA = val;
+  this.selectionA = val;
 };
 
 deResultSet.prototype.getSelectionB = function() {
@@ -133,7 +170,4 @@ deResultSet.prototype.getResults = function() {
 deResultSet.prototype.setResults = function(val) {
   this.results = val;
 };
-
-
-
 

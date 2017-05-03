@@ -15,19 +15,24 @@ function diffExprTableViewer() {
 
   console.log('Initializing aspects table viewer...');
 
+  this.declareExtJStypes();
   this.generateTables();
+
 
   diffExprTableViewer.instance = this;
 };
 
 diffExprTableViewer.prototype.generateTables = function() {
-console.log('Hello!!!')
 
   var areaHolder = Ext.getCmp('diffExprExtJS');
 
   var resultSetSelectionGrid = Ext.create('Ext.grid.Panel',{
     title: 'DE Result sets',
-    id: 'deResultSets',
+    id: 'deResultSetsTableExtJ',
+    columns: [
+      {text: 'Name', dataIndex: 'displayName', width: '80%' },
+      {text: 'Internal name', dataIndex: 'name', width: '20%' }
+      ],
     empty: 'No differential expression results are available. You can perform differential expression analysis using the Actions panel.',
   });
 
@@ -59,13 +64,35 @@ console.log('Hello!!!')
     height: '75%',
     items: [resultSetGenesGrid]
   });
+};
 
-}
+diffExprTableViewer.prototype.declareExtJStypes = function() {
+    Ext.define('deResultSetsEntry', {
+    	extend: 'Ext.data.Model',
+    	fields: [
+    	    {name: 'name', type: 'string'},
+    	    {name: 'displayName', type: 'string'},
+    	]
+    });
+};
 
+/**
+ * Update the table from the differnetialExpresssionStore
+ */
 diffExprTableViewer.prototype.update = function() {
-
-
   var diffExprStore = new differentialExpressionStore();
     //TODO: Update freom the store
+  var desets = diffExprStore.getAvailableDEsets();
 
+  // Create a store and put the data in there
+  var pagingStore = Ext.create('LocalJsonStore', {
+    autoLoad: true,
+    model: 'deResultSetsEntry',
+    pageSize: 100,
+    localData: desets
+  });
+
+  // Update the store
+  var diffExprTable = Ext.getCmp('deResultSetsTableExtJ');
+  diffExprTable.bindStore(pagingStore);
 }

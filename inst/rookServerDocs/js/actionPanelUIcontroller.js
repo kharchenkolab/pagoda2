@@ -152,7 +152,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
                   diffExprStore.addResultSet(resultSet);
 
                   // Notify the DE results table to updata from the store
-                  diffExprStore.update();
+                  var diffExpreTblView = new diffExprTableViewer();
+                  diffExpreTblView.update();
 
       		    } );
       		}  // if .. else
