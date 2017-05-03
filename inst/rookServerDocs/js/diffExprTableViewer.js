@@ -61,3 +61,11 @@ console.log('Hello!!!')
   });
 
 }
+
+diffExprTableViewer.prototype.update = function() {
+
+
+  var diffExprStore = new differentialExpressionStore();
+    //TODO: Update freom the store
+
+}

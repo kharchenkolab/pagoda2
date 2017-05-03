@@ -1,7 +1,9 @@
+/*
+ * Filename: actionPanelUIcontroller.js
+ * Author: Nikolas Barkas
+ * Date: May 2017
+ */
 
-
-
-//////////////////////////////////////////////////
 
 /**
  * Manages the action panel interface. Singleton
@@ -118,28 +120,44 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 	    xtype: 'button',
 	    text: 'Run differential expression',
 	    handler: function() {
-		var selectionA = Ext.getCmp("formPanelDE").getForm()
-		    .findField("selectionA").getValue();
-		var selectionB = Ext.getCmp("formPanelDE").getForm()
-		    .findField("selectionB").getValue();
+      		var selectionA = Ext.getCmp("formPanelDE").getForm()
+      		    .findField("selectionA").getValue();
+      		var selectionB = Ext.getCmp("formPanelDE").getForm()
+      		    .findField("selectionB").getValue();
+          var resultName = Ext.getCmp("formPanelDE").getForm()
+              .findField("resultName").getValue();
 
-		if (selectionA === selectionB) {
-		    Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
-		} else {
-		    //TODO: Some kind of visual wait indicator
-		    var calcCntr = new calculationController();
-		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
-		        console.log('We are in the callback', results)
+      		if (selectionA === selectionB) {
+      		    Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
+      		} else {
+      		    //TODO: Some kind of visual wait indicator
+      		    var calcCntr = new calculationController();
+      		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
 
-		        // TODO: Take the results and put them in a a table for diff expressinpo
+                  // Get the cell names in the selection for storing
+      		        var cellSelCntr = new cellSelectionController();
+      		        selAcells = cellSelCntr.getSelection(selectionA);
+      		        selBcells = cellSelCntr.getSelection(selectionB);
 
+                  // Make a deResult set for saving the results
+                  // and save metadata related to this de result
+                  var resultSet = new deResultSet();
+                  resultSet.setResults(results);
+                  resultSet.setName(resultName);
+                  resultSet.setSelectionA(selAcells);
+                  resultSet.setSelectionB(selBcells);
 
+                  // Save this de result set in the differentialExpresionStore
+                  var diffExprStore = new differentialExpressionStore();
+                  diffExprStore.addResultSet(resultSet);
 
-		    } );
-		}
-	    }
-	}
-	] //items
+                  // Notify the DE results table to updata from the store
+                  diffExprStore.update();
+
+      		    } );
+      		}  // if .. else
+	    } // handler function
+	}] //items
     });
     deTab.add(formPanelDE);
 

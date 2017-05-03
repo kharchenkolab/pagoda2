@@ -58,7 +58,6 @@ calculationController.prototype.calculateDEbySelectionRemote = function(selectio
 		    callback(data);
 	    }
 	});
-
 }
 
 /**
@@ -74,22 +73,22 @@ calculationController.prototype.getAvailableDEmethods = function() {
  * Singleton
  * @constructor
  */
-function diffExpressionStore() {
-    if ( typeof differentialExpressionStorageController.instance === 'object' ){
-	    return differentialExpressionStorageController.instance;
+function differentialExpressionStore() {
+    if ( typeof differentialExpressionStore.instance === 'object' ){
+	    return differentialExpressionStore.instance;
     };
 
     this.deSets = new Array();
 
-    differentialExpressionStorageController.instance = this;
+    differentialExpressionStore.instance = this;
     return this;
 };
 
-diffExpressionStore.prototype.getAvailableDEsets = function() {
+differentialExpressionStore.prototype.getAvailableDEsets = function() {
 
 };
 
-diffExpressionStore.prototype.addDEset = function(deset) {
+differentialExpressionStore.prototype.addResultSet = function(deset) {
   this.deSets.push(deset);
 };
 
@@ -125,6 +124,14 @@ deResultSet.prototype.getSelectionB = function() {
 
 deResultSet.prototype.setSelectionB = function(val) {
   this.selectionB = val;
+};
+
+deResultSet.prototype.getResults = function() {
+  return this.results;
+};
+
+deResultSet.prototype.setResults = function(val) {
+  this.results = val;
 };
 
 
