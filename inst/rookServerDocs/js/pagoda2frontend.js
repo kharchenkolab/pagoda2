@@ -62,8 +62,10 @@ function initialise() {
     var heatDendView = new heatmapDendrogramViewer();
     var aspTableView = new aspectsTableViewer();
 
+    var diffExprTableView = new diffExprTableViewer();
+
     // Not used
-//  var odGeneTable = new odGeneTableViewer();
+    //  var odGeneTable = new odGeneTableViewer();
 
     // Update status bar
     stsBar.showMessage("Ready");
@@ -263,6 +265,16 @@ function generateExtJsLayout() {
 		  width: '100%',
 		  tooltip: 'This tab displays the table of aspects',
 		  glyph: 0xf0e8
+		},
+		{
+		  title: 'Differential Expression',
+		  id: 'diffExprExtJS',
+		  layout: 'border',
+		  height: '100%',
+		  width: '100%',
+		  tooltip: 'Display the results of differential expression',
+		  glyph: 0xf07e
+
 		}
 
 
