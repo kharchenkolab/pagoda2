@@ -19,9 +19,13 @@ function diffExprTableViewer() {
   this.declareExtJStypes();
   this.generateTables();
 
+  this.changeListenerEnabled = true;
 
   diffExprTableViewer.instance = this;
 };
+
+diffExprTableViewer.prototype.enableChangeListener = function() { this.changeListenerEnabled = true; }
+diffExprTableViewer.prototype.disableChangeListener = function() { this.changeListenerEnabled = false; }
 
 
 /**
@@ -34,26 +38,28 @@ diffExprTableViewer.prototype.generateTables = function() {
   // Handler function for table of de result sets
   var resultSetChangeSelectionListener = function(obj, selected, eOpts) {
 
-    // Get the name of the de set
-    var intName = selected[0].data.name;
+    var detv = new diffExprTableViewer();
+    if (detv.changeListenerEnabled) {
 
-    // Get the results
-    var diffExprStore = new differentialExpressionStore();
-    var deResults = diffExprStore.getResultSetByInternalName(intName);
+      // Get the name of the de set
+      var intName = selected[0].data.name;
+
+      // Get the results
+      var diffExprStore = new differentialExpressionStore();
+      var deResults = diffExprStore.getResultSetByInternalName(intName);
 
 
-    // Create a store and put the data in there
-    var pagingStore = Ext.create('LocalJsonStore', {
-      autoLoad: true,
-      model: 'deResultTableEntry',
-      pageSize: 100,
-      localData: deResults.results
-    });
+      // Create a store and put the data in there
+      var pagingStore = Ext.create('LocalJsonStore', {
+        autoLoad: true,
+        model: 'deResultTableEntry',
+        pageSize: 100,
+        localData: deResults.results
+      });
 
-    debugger;
-    var table = Ext.getCmp('deResultsGenes');
-    table.bindStore(pagingStore);
-
+      var table = Ext.getCmp('deResultsGenes');
+      table.bindStore(pagingStore);
+    }
   }; // resultSetChangeSelectionListener
 
 
@@ -72,10 +78,14 @@ diffExprTableViewer.prototype.generateTables = function() {
     }
   });
 
+
+var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
   // Table for the contents of the result sets
   var resultSetGenesGrid = Ext.create('Ext.grid.Panel', {
     title: 'Differentially expressed genes',
     id: 'deResultsGenes',
+    selModel: geneTableSelectionModel,
+    singleSelect: false,
     empty: 'No differentially expressed genes to show.',
     columns: [
         {text: 'Name', dataIndex: 'name'},
@@ -83,7 +93,47 @@ diffExprTableViewer.prototype.generateTables = function() {
         {text: 'Z', dataIndex: 'Z'},
         {text: 'fe', dataIndex: 'fe'},
         {text: 'highest', dataIndex: 'highest'}
-      ]
+      ],
+
+      ///
+      tbar: Ext.create('Ext.PagingToolbar', {
+		//store: geneTableEntryStore,
+		displayInfo: true,
+		prependButtons: true,
+
+		items: [
+		    {
+			type: "button",
+			text: 'Show selected',
+			tooltip: 'Show selected genes in main heatmap',
+			glyph: 0xf0ce,
+			handler: function() {
+			    var heatmapV = new heatmapViewer();
+			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+			    heatmapV.drawHeatmap();
+			} //handler
+		    }, //button
+		    {xtype: 'tbseparator'},
+
+		]
+	    }), //tbar
+
+
+
+      ///
+      listeners: {
+		'selectionchange': function(selected, eOpts) {
+		    var selectedGeneNames =  [];
+
+		    var selectedItems = selected.getSelected();
+		      selectedItems.each(function(item,index,length){
+			    selectedGeneNames.push(item.data.name);
+		    });
+
+		    var geneSelCntr =  new geneSelectionController();
+		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
+
+		}}
   });
 
   areaHolder.add({
@@ -141,6 +191,8 @@ diffExprTableViewer.prototype.declareExtJStypes = function() {
  * Update the table from the differnetialExpresssionStore
  */
 diffExprTableViewer.prototype.update = function() {
+  this.disableChangeListener();
+
 
   // Get the available DEsets
   var diffExprStore = new differentialExpressionStore();
@@ -157,4 +209,7 @@ diffExprTableViewer.prototype.update = function() {
   // Update the store
   var diffExprTable = Ext.getCmp('deResultSetsTableExtJS');
   diffExprTable.bindStore(pagingStore);
+
+    this.enableChangeListener();
+
 }

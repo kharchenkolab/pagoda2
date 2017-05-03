@@ -133,9 +133,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
       		    //TODO: Some kind of visual wait indicator
       		    var calcCntr = new calculationController();
       		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
-      		        console.log('fresh results:',results);
-
-
                   // Get the cell names in the selection for storing
       		        var cellSelCntr = new cellSelectionController();
       		        selAcells = cellSelCntr.getSelection(selectionA);
