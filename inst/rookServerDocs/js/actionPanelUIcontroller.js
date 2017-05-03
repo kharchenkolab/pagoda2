@@ -111,6 +111,10 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 	    displayField: 'displayname',
 	    valueField: 'name'
 	},{
+	  id: 'resultName',
+	  xtype: 'textfield',
+	  fieldLabel: 'Name for results'
+	},{
 	    xtype: 'button',
 	    text: 'Run differential expression',
 	    handler: function() {
@@ -124,8 +128,11 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 		} else {
 		    //TODO: Some kind of visual wait indicator
 		    var calcCntr = new calculationController();
-		    calcCntr.performDEbySelection(selectionA, selectionB, function() {
-		        // The callback context
+		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
+		        console.log('We are in the callback', results)
+
+		        // TODO: Take the results and put them in a a table for diff expressinpo
+
 
 
 		    } );

@@ -965,14 +965,14 @@ dataController.prototype.getRemoteGeneInformationStore = function(callback) {
  * @param callback the callback function
  */
 dataController.prototype.getGeneInformation =  function(callback) {
-    $.ajax({
-	dataType: "json",
-	url: "getData.php",
-	data: {'dataidentifier': 'geneinformation' },
-	success: function(data) {
-	    callback(data);
-	}
-    });
+  $.ajax({
+  	dataType: "json",
+  	url: "getData.php",
+  	data: {'dataidentifier': 'geneinformation' },
+  	success: function(data) {
+  	    callback(data);
+  	}
+  });
 }
 
 

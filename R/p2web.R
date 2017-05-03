@@ -38,7 +38,8 @@ pagoda2WebApp <- setRefClass(
         "mainDendrogram",
         "geneSets",
         "varinfo",
-        "pathways"
+        "pathways",
+        "originalP2object"
     ),
 
 
@@ -49,11 +50,16 @@ pagoda2WebApp <- setRefClass(
         # verbose: verbosity level, def: 0, higher values will printmore
         # debug: T|F load debug version?, def: F
         # dendGroups: a factor defining the groups of cells to use for the dendrogram
+        # keepOriginal: maintain a copy to the original RF object -- this allows for some extra capabilities
 
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
-                              verbose = 0, debug, geneSets, metadata=metadata) {
+                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE) {
 
             serverLog('Initialising server...');
+
+            if (keepOriginal) {
+              originalP2object <<- pagoda2obj
+            }
 
 		# Check that the object we are getting is what it should be
             if (class(pagoda2obj) != "Pagoda2") {
@@ -726,28 +732,60 @@ pagoda2WebApp <- setRefClass(
 
                    # Perform a computation and return the results
                    # e.g. Differential expression
-                   'doComputation.php' = {
-                       # TODO: Implement the following:
-                       #
-                       # * getGeneOrdering()
-                       #   Get the gene ordering for a subset of cells and genes
-                       #   This will also be implemented on the client side
-                       #
-                       # * getDEgenes()
-                       #   Get differentially expressed genes for two groups of cells
-                       #   specified by cell identifiers. Check in function that they are not overlaping
-                       #   This allows for the flexibility of the user to perform selections client side
-                       #   This could also be a server-only function
-                       #
-                       # * getDEgenesByGroup()
-                       #   Provide a clustering name and two groups of cluster ids
-                       #   Perform differential expression between them
-                       #   We want this as a separate function as this can potentially be precomputed
-                       #   and cached/stored client side
-                       #
+                   '/doComputation.php' = {
 
 
-                   },
+                      requestArguments <- request$GET();
+                      compIdentifier <- requestArguments[['compidentifier']];
+
+                      if (!is.null(compIdentifier)) {
+                        switch(compIdentifier,
+                               'doDifferentialExpression' = {
+                                    cat('doDifferentialExpression request');
+
+                                    postArguments <- request$POST();
+
+                                    selAarg <- postArguments[['selectionA']];
+                                    selBarg <- postArguments[['selectionB']];
+
+                                    selectionA <- fromJSON(selAarg);
+                                    selectionB <- fromJSON(selBarg);
+
+                                    # TODO: check that the originalP2object field is populated, as this is optional
+
+                                    # Generate factor for de
+                                    v1 <- c(rep('selectionA',length(selectionA)),rep('selectionB',length(selectionB)))
+                                    names(v1) <- c(selectionA, selectionB)
+                                    v1 <- factor(v1)
+
+                                    # run de with factor
+                                    de <- myPagoda2Object$getDifferentialGenes(groups=v1)
+
+
+                                    de$selectionA$name <- rownames(de$selectionA)
+                                    de$selectionB$name <- rownames(de$selectionB)
+                                    results <- rbind(de$selectionA, de$selectionB)
+
+
+                                    # Convert to JSON-suitable format
+                                    # For performance this best done client side, or the resulting string is compressed
+                                    p <- lapply(c(1:dim(results)[1]), function(x) {
+                                      list(Z = results[x,][1],
+                                           M = results[x,][2],
+                                           highest=results[x,][3],
+                                           fe=results[x,][4],
+                                           name=results[x,][5])
+                                    });
+
+                                    response$write(toJSON(p));
+
+
+                                    #originalP2object
+                                    return(response$finish());
+                                 }
+                        );
+                      }
+                   }, # doComputation
 
                    # Default
                    {

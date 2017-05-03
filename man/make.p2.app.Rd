@@ -13,7 +13,7 @@ make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(), geneSets)
 
 \item{geneSets}{a list of genesets to show}
 
-\item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram}
+\item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
 
 \item{debug}{build debug app?}
 }
