@@ -7,6 +7,7 @@ function calculationController(localAvailable, remoteAvailable) {
 	    return calculationController.instance;
     };
 
+    // TODO: Don't hard-code these
     this.methods = [
       {
         name: 'remoteDefault',
@@ -66,5 +67,66 @@ calculationController.prototype.calculateDEbySelectionRemote = function(selectio
 calculationController.prototype.getAvailableDEmethods = function() {
   return this.methods;
 }
+
+
+/**
+ * Stores differential expression results and accompanying metadata
+ * Singleton
+ * @constructor
+ */
+function diffExpressionStore() {
+    if ( typeof differentialExpressionStorageController.instance === 'object' ){
+	    return differentialExpressionStorageController.instance;
+    };
+
+    this.deSets = new Array();
+
+    differentialExpressionStorageController.instance = this;
+    return this;
+};
+
+diffExpressionStore.prototype.getAvailableDEsets = function() {
+
+};
+
+diffExpressionStore.prototype.addDEset = function(deset) {
+  this.deSets.push(deset);
+};
+
+/**
+ * Represents a differential expression result set and accompanying metadata
+ */
+function deResultSet() {
+  this.selectionA = null;
+  this.selectionB = null;
+  this.results = null;
+  this.name = null;
+};
+
+deResultSet.prototype.getName = function() {
+  return this.name;
+};
+
+deResultSet.prototype.setName = function(val) {
+  this.name = val;
+};
+
+deResultSet.prototype.getSelectionA = function() {
+  return this.selectionA;
+};
+
+deResultSet.prototype.setSelectionA = function(val) {
+  this.seletionA = val;
+};
+
+deResultSet.prototype.getSelectionB = function() {
+  return this.selectionB;
+};
+
+deResultSet.prototype.setSelectionB = function(val) {
+  this.selectionB = val;
+};
+
+
 
 
