@@ -70,7 +70,7 @@ calculationController.prototype.getAvailableDEmethods = function() {
 
 //////////////////////////////////////////
 
-
+// TODO: Split this object to a new file
 
 /**
  * Stores differential expression results and accompanying metadata
@@ -88,7 +88,9 @@ function differentialExpressionStore() {
     return this;
 };
 
-
+/**
+ * Get all available de sets
+ */
 differentialExpressionStore.prototype.getAvailableDEsets = function() {
   var result = new Array();
   var availKeys = Object.keys(this.deSets);
@@ -105,6 +107,14 @@ differentialExpressionStore.prototype.getAvailableDEsets = function() {
   return result;
 };
 
+/**
+ * Get a de result by internal name
+ */
+differentialExpressionStore.prototype.getResultSetByInternalName = function(internalName) {
+  //TODO: Implement some checks here
+  return this.deSets[internalName];
+}
+
 
 /**
  * Add differential expression result to the store
@@ -117,6 +127,7 @@ differentialExpressionStore.prototype.addResultSet = function(deset) {
 
 /**
  * Generate a unique identifier for a de set
+ * @private
  */
 differentialExpressionStore.prototype.getUniqueId = function() {
   var dobj = new Date();
@@ -127,7 +138,7 @@ differentialExpressionStore.prototype.getUniqueId = function() {
 
 
 ///////////////////////////////
-
+// TODO: Split this object into a new file
 
 /**
  * Represents a differential expression result set and accompanying metadata

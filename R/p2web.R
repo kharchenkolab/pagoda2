@@ -770,11 +770,11 @@ pagoda2WebApp <- setRefClass(
                                     # Convert to JSON-suitable format
                                     # For performance this best done client side, or the resulting string is compressed
                                     p <- lapply(c(1:dim(results)[1]), function(x) {
-                                      list(Z = results[x,][1],
-                                           M = results[x,][2],
-                                           highest=results[x,][3],
-                                           fe=results[x,][4],
-                                           name=results[x,][5])
+                                      list(Z = results[x,][[1]],
+                                           M = results[x,][[2]],
+                                           highest=results[x,][[3]],
+                                           fe=results[x,][[4]],
+                                           name=results[x,][[5]])
                                     });
 
                                     response$write(toJSON(p));

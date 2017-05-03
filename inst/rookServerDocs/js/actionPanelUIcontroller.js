@@ -133,6 +133,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
       		    //TODO: Some kind of visual wait indicator
       		    var calcCntr = new calculationController();
       		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
+      		        console.log('fresh results:',results);
+
 
                   // Get the cell names in the selection for storing
       		        var cellSelCntr = new cellSelectionController();
@@ -154,6 +156,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
                   // Notify the DE results table to updata from the store
                   var diffExpreTblView = new diffExprTableViewer();
                   diffExpreTblView.update();
+
+                  // TODO: Change focus to the table and hightlight new de set
 
       		    } );
       		}  // if .. else
