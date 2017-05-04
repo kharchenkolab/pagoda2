@@ -119,8 +119,6 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
             		// Manger will have sorted out any issues with exceeing the
             		// new palette limits
             		var curNoColours = heatView.palManager.getNumberOfColors();
-            		console.log(curNoColours);
-
             		// TODO: Set the value to the menu
 
             		heatView.drawHeatmap();
