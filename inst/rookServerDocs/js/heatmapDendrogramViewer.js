@@ -1,5 +1,4 @@
 "use strict";
-
 /*
  * Filename: heatmapDendrogramViewer.js
  * Author:  Nikolas Barkas
@@ -29,30 +28,10 @@ function heatmapDendrogramViewer() {
     var aspectHeatView = new aspectHeatmapViewer();
     var dendroV =  new dendrogramViewer();
 
-
     heatmapDendrogramViewer.instance = this;
 
-
-    this.updateContainerSize();
     this.initializeComponents();
-
-    // Keep track of the main container horizontatl size
-    var extJsContainer = Ext.getCmp('centreColumnPanel');
-    extJsContainer.onResize = function() {
-    	var heatDendView = new heatmapDendrogramViewer();
-    	heatDendView.updateContainerSize();
-    };
 };
-
-/**
- * Obtain the size of the container element from ExtJS and store it
- * in the object so that the children can access it
- */
-heatmapDendrogramViewer.prototype.updateContainerSize = function() {
-    var extJsContainer = Ext.getCmp('centreColumnPanel');
-    this.viewerWidth = extJsContainer.body.getWidth(true);
-};
-
 
 /**
  * Returns the padding that the dendrogram/heatmap/metadata heatmap
@@ -69,9 +48,6 @@ heatmapDendrogramViewer.prototype.getPlotAreaLeftPadding = function() {
 heatmapDendrogramViewer.prototype.getPlotAreaRightPadding = function() {
     return p2globalParams.dendrogramHeatmapViewer.paddingRight;
 };
-
-
-
 
 /**
  * Call the component initializers and do a view update
@@ -98,7 +74,6 @@ heatmapDendrogramViewer.prototype.initializeComponents = function() {
   var dendView = new dendrogramViewer();
   dendView.initialize();
 };
-
 
 /**
  * Update the view of the dendrogram (usually to apply new subsetting)

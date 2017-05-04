@@ -17,8 +17,6 @@ function metaDataHeatmapViewer() {
     // dendrogram (which will provide the order)
     // is ready
 
-
-
     var extJsContainer = Ext.getCmp('metadataPanel');
     extJsContainer.onResize = function() {
     	var metaView = new metaDataHeatmapViewer();
@@ -176,8 +174,6 @@ metaDataHeatmapViewer.prototype.clearOverlay = function() {
  * sized provided by thhe heatmapDendrogramViewer
  */
 metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
-    console.log('metadataheatmapviewer updating canvas size');
-
     var metaArea =  $('#metadata-area')[0];
     var metadataAreaOverlay = $('#metadata-area-overlay')[0];
 
