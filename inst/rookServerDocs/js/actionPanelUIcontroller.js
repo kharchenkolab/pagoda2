@@ -124,12 +124,21 @@ actionPanelUIcontroller.prototype.generateUI = function() {
       		    .findField("selectionA").getValue();
       		var selectionB = Ext.getCmp("formPanelDE").getForm()
       		    .findField("selectionB").getValue();
+      		var method = Ext.getCmp("formPanelDE").getForm()
+      		    .findField('selectionMethod').getValue();
           var resultName = Ext.getCmp("formPanelDE").getForm()
               .findField("resultName").getValue();
 
+  console.log(method);
+
+
       		if (selectionA === selectionB) {
       		    Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
-      		} else {
+      		} else if (method === null) {
+                Ext.MessageBox.alert('Warning', 'Please enter a method for the differential expression',function(){});
+      		} else if (resultName === '') {
+      		      Ext.MessageBox.alert('Warning', 'Please enter a name for the results',function(){});
+      	  } else {
       		    //TODO: Some kind of visual wait indicator
       		    var calcCntr = new calculationController();
       		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
