@@ -3,7 +3,7 @@
 /**
  * Responsible for for handling the embedding panel
  * This class does not actually do any plotting. It delegates the plotting
- * to a suitable class depending on the type of the embedding. It does 
+ * to a suitable class depending on the type of the embedding. It does
  * however maintain the plot state, the individual embedders should not
  * maintain state
  * Singleton
@@ -20,7 +20,7 @@ function embeddingViewer() {
     embeddingViewer.instance = this;
 
     // FIXME: This needs to be done before the event listeners are configured
-    // and after the instance is set to this. This is a race condition 
+    // and after the instance is set to this. This is a race condition
     // for the backend
     this.generateToolbar();
 
@@ -48,13 +48,13 @@ function embeddingViewer() {
  * Shows the wait overlay
  */
 embeddingViewer.prototype.showWait = function() {
-    
+
     var extJsContainer = Ext.getCmp('embeddingExtJSWrapper');
     var plotHeight = extJsContainer.body.getHeight(true);
     var plotWidth = extJsContainer.body.getWidth(true);
 
     var embWaitDiv = $('#embedding-wait');
-    
+
     var top = (plotHeight - embWaitDiv.height() ) /2;
     var left = (plotWidth - embWaitDiv.width() ) /2;
 
@@ -92,7 +92,7 @@ embeddingViewer.prototype.loadDefaultConfig = function () {
     this.currentConfiguration.currentAlpha = p2globalParams.embedding.defaultAlpha;
     this.currentConfiguration.border = p2globalParams.embedding.defaultBorder;
     this.currentConfiguration.borderColor = p2globalParams.embedding.defaultBorderColor;
-    this.currentConfiguration.borderWidth = p2globalParams.embedding.defaultBorderWidth;    
+    this.currentConfiguration.borderWidth = p2globalParams.embedding.defaultBorderWidth;
 }
 
 
@@ -119,7 +119,7 @@ embeddingViewer.prototype.generateToolbar = function() {
     });
 
     // Set the option change listener
-    comboBox.addListener('change', function(e) { 
+    comboBox.addListener('change', function(e) {
 	var value =  e.value;
 	var embeddingIds = value.split(':');
 	embView = new embeddingViewer();
@@ -144,7 +144,7 @@ embeddingViewer.prototype.generateToolbar = function() {
 		    embViewer.redraw();
 		}} // change buffered listerne
 	    }// listeners
-	}, 
+	},
 	{
 	    fieldLabel: 'Opacity',
 	    xtype: 'numberfield',
@@ -165,7 +165,7 @@ embeddingViewer.prototype.generateToolbar = function() {
 	{
 	    text: 'Show border',
 	    checked: p2globalParams.embedding.defaultBorder,
-	    checkHandler: function(f, v){ 
+	    checkHandler: function(f, v){
 		var embViewer = new embeddingViewer();
 		embViewer.setCurrentBorder(v);
 		embViewer.redraw();
@@ -187,7 +187,7 @@ embeddingViewer.prototype.generateToolbar = function() {
 		    embViewer.setCurrentBorderWidth(v);
 		    embViewer.redraw();
 		}} // change
-	    }    
+	    }
 	}
 	], // items
     });
@@ -201,19 +201,19 @@ embeddingViewer.prototype.generateToolbar = function() {
     // Add a button for the settings menu
     toolbar.add(
 	{
-	    text: "Settings",
+	    text: "",
 	    type: "button",
 	    tooltip: "Customize embedding view",
 	    glyph: 0xf013,
 	    menu: embeddingSettingsMenu
 	}
-	
+
     );
 
     embeddingPanelHeader.add(toolbar);
 
 
-    // Delay populating the menu above as this will not be used 
+    // Delay populating the menu above as this will not be used
     // as soon as the app loads and it helps reduce the inital swarm of requests
     setTimeout(this.populateMenu, 2000)
 
@@ -222,9 +222,9 @@ embeddingViewer.prototype.generateToolbar = function() {
 /**
  * Populates the available embeddings menu
  * @private
- * @todo this is slow, and generates many requests we should remodel 
- * the data controller to get all the data that we want with 
- * one request, also account for the fact that some embeddings 
+ * @todo this is slow, and generates many requests we should remodel
+ * the data controller to get all the data that we want with
+ * one request, also account for the fact that some embeddings
  * might not correspond to reduction
  * Also embedding will now need to have a plot type
  */
@@ -251,19 +251,19 @@ embeddingViewer.prototype.populateMenu = function() {
 			    // The default
 			}
 
-			embeddingOptionstore.add({ 
-			    'reduction': currReduction, 
-			    'embedding':  embeddings[j], 
-			    "label": embeddingLabel, 
+			embeddingOptionstore.add({
+			    'reduction': currReduction,
+			    'embedding':  embeddings[j],
+			    "label": embeddingLabel,
 			    "value": embeddingIdentifier
 			});
 
-		    } // for 
+		    } // for
 
 		}
 	    }, currReduction // For the callback extra information
 					  ) // getAvailableEmbeddings
-	} //for 
+	} //for
     }); // getAvailableReductionTypes
 }
 
@@ -275,7 +275,7 @@ embeddingViewer.prototype.updateColorsDendrogram = function() {
     this.currentViewer.updateColorsDendrogram();
 }
 
-/** 
+/**
  * Update the embedding colors to match metadata information
  */
 embeddingViewer.prototype.updateColorsMetadata = function() {
@@ -290,7 +290,7 @@ embeddingViewer.prototype.updateColorsGeneexpression = function() {
 }
 
 /**
- * Update the current colors, some embedders optimise this 
+ * Update the current colors, some embedders optimise this
  * operation and do nor redraw (e.g. SVG)
  */
 embeddingViewer.prototype.updateColors =  function() {
@@ -339,9 +339,9 @@ embeddingViewer.prototype.getConfig = function() {
 /**
  * Set the overall color configuration, what is the embedding colored by. Different configurations
  * have their own conventions for passing information about the coloring of individual nodes
- * for example the dendrogram uses cell selections and the metadata pass the metadata type 
+ * for example the dendrogram uses cell selections and the metadata pass the metadata type
  * seperately by the setMetaDataColorInfo() function
- * @param colorConfig {string} the type of color configuration, 
+ * @param colorConfig {string} the type of color configuration,
  * one of 'dendrogram', 'metadata', 'geneexpression'
  */
 embeddingViewer.prototype.setColorConfiguration = function(colorConfig) {
@@ -356,20 +356,20 @@ embeddingViewer.prototype.getColorConfiguration = function() {
 }
 
 /**
- * Get the extra information required for plotting gene colors 
+ * Get the extra information required for plotting gene colors
  */
 embeddingViewer.prototype.getGeneExpressionColorInfo = function() {
     return this.currentConfiguration.geneexpressionColorInfo;
 }
 
-/** 
+/**
  * Set the extra information required for plotting gene colors
  */
 embeddingViewer.prototype.setGeneExpressionColorInfo = function(colorInfo) {
     this.currentConfiguration.geneexpressionColorInfo = colorInfo;
 }
 
-/** 
+/**
  * Set the extra information required for plotting dendrogram colors
  */
 embeddingViewer.prototype.setDendrogramColorInfo = function(colorInfo) {
@@ -392,7 +392,7 @@ embeddingViewer.prototype.setMetadataColorInfo = function(colorInfo) {
 }
 
 /**
- * Get the extra information required for coloring by metadata 
+ * Get the extra information required for coloring by metadata
  */
 embeddingViewer.prototype.getMetadataColorInfo = function() {
     return this.currentConfiguration.metaDataColorInfo;
@@ -405,15 +405,15 @@ embeddingViewer.prototype.setCurrentAlpha = function(alpha) {
     this.currentConfiguration.currentAlpha =  alpha;
 }
 
-/** 
+/**
  * Set the current border
  */
 embeddingViewer.prototype.setCurrentBorder = function(border) {
     this.currentConfiguration.border = border;
 }
 
-/** 
- * Get the current border 
+/**
+ * Get the current border
  */
 embeddingViewer.prototype.getCurrentBorder = function() {
 
@@ -428,14 +428,14 @@ embeddingViewer.prototype.getCurrentBorderColor = function() {
 }
 
 /**
- * Set the current  border color 
+ * Set the current  border color
  */
 embeddingViewer.prototype.setCurrentBorderColor = function(borderColor) {
     this.currentConfiguration.borderColor = borderColor
 }
 
-/** 
- * Get  current border width 
+/**
+ * Get  current border width
  */
 embeddingViewer.prototype.getCurrentBorderWidth = function() {
     return this.currentConfiguration.borderWidth;
@@ -448,7 +448,7 @@ embeddingViewer.prototype.setCurrentBorderWidth = function(borderWidth) {
     this.currentConfiguration.borderWidth =  borderWidth;
 }
 
-/** 
+/**
  * Get the alpha value used to plot
  */
 embeddingViewer.prototype.getCurrentAlpha = function() {
@@ -456,8 +456,8 @@ embeddingViewer.prototype.getCurrentAlpha = function() {
 }
 
 /**
- * Get the point size to plot with 
- */ 
+ * Get the point size to plot with
+ */
 embeddingViewer.prototype.getCurrentPointSize = function() {
     return this.currentConfiguration.pointsize;
 }
