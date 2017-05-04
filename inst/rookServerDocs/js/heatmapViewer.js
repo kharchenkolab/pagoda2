@@ -16,8 +16,6 @@ function heatmapViewer() {
 
     // NOTE: Actual init is done by parent object
 
-
-
     var extJsContainer = Ext.getCmp('heatmapPanel');
     extJsContainer.onResize = function() {
     	var heatView = new heatmapViewer();
@@ -63,16 +61,16 @@ heatmapViewer.prototype.initialize = function() {
     var heatmapArea = $('#heatmap-area');
 
     heatmapArea.css({
-	position: 'absolute',
-	top: 0,
-	left: 0
+    	position: 'absolute',
+    	top: 0,
+    	left: 0
     });
 
     var heatmapAreaOverlay = $('#heatmap-area-overlay');
     heatmapAreaOverlay.css({
-	position: 'absolute',
-	top: 0,
-	left: 0,
+      	position: 'absolute',
+      	top: 0,
+      	left: 0,
     });
 
     // Setup the events handling the overlay effect of the canvas

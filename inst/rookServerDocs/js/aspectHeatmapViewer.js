@@ -43,7 +43,12 @@ aspectHeatmapViewer.prototype.generatePalettesMenu = function() {
     	// new palette limits
     	var curNoColours = aspHeatView.palManager.getNumberOfColors();
 
-    	// TODO: Set the value to the menu
+  	 // Set the actual value to the menu
+      Ext.getCmp('aspectspaletteslevelsfield').setValue(curNoColours);
+
+      // Impose the new limits of this palette on the extjs control
+      Ext.getCmp('aspectspaletteslevelsfield').setMinValue(aspHeatView.palManager.getMinNumberOfColors());
+      Ext.getCmp('aspectspaletteslevelsfield').setMaxValue(aspHeatView.palManager.getMaxNumberOfColors());
 
     	aspHeatView.drawHeatmap();
   };
@@ -70,7 +75,7 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
   var toolbar = Ext.create('Ext.Toolbar');
 
   var paletteMenu = this.generatePalettesMenu();
-
+  var aspHeatView = new aspectHeatmapViewer();
 
   var settingsMenu = Ext.create('Ext.menu.Menu', {
     id: 'aspectSettingsMenu',
@@ -82,12 +87,21 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
       },
       {
         fieldLabel: 'Palette Levels',
+        id: 'aspectspaletteslevelsfield',
         xtype: 'numberfield',
         tooltip: 'Number of colors for the palette',
-        value: 10, // FIXME
+        value: p2globalParams.aspectViewer.defaultPaletteLevels, // FIXME
     		disabled: false,
-    		maxValue: 100,
-    		minValue: 2
+    		maxValue: aspHeatView.palManager.getMaxNumberOfColors(),
+    		minValue: aspHeatView.palManager.getMinNumberOfColors(),
+    		listeners: {
+		    change: {buffer: 800, fn: function(f,v) {
+      			var aspView = new aspectHeatmapViewer();
+      			aspView.palManager.setNumberOfColors(v);
+      			aspView.drawHeatmap();
+
+		    }} // buffer of change listener
+		}
       } // numberfield
     ] // items
 

@@ -32,7 +32,7 @@ var p2globalParams = {
 
   aspectViewer: {
     defaultPaletteName: 'tol-rainbow',
-    defaultPaletteLevels: 20,
+    defaultPaletteLevels: 8,
   },
 
   heatmapViewer: {
