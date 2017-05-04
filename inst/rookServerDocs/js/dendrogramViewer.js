@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: Dendrogram Viewer
  * Author: Nikolas Barkas
@@ -231,9 +233,9 @@ dendrogramViewer.prototype.initializeButtons =  function() {
  * @private
  */
 dendrogramViewer.prototype.resolveClick = function(x, y, callback) {
-	localCoord = this.transformToLocalCoordinates(x,y);
-	x = localCoord[0];
-	y = localCoord[1];
+	var localCoord = this.transformToLocalCoordinates(x,y);
+	var x = localCoord[0];
+	var y = localCoord[1];
 
         this.clickRegions.resolveClick(x,y,callback);
 };
@@ -245,9 +247,9 @@ dendrogramViewer.prototype.resolveClick = function(x, y, callback) {
  * @private
  */
 dendrogramViewer.prototype.resolveClickSync = function(x, y) {
-	localCoord = this.transformToLocalCoordinates(x,y);
-	x = localCoord[0];
-	y = localCoord[1];
+	var localCoord = this.transformToLocalCoordinates(x,y);
+	var x = localCoord[0];
+	var y = localCoord[1];
 
         return(this.clickRegions.resolveClick(x,y));
 };
@@ -261,7 +263,7 @@ dendrogramViewer.prototype.resolveClickSync = function(x, y) {
  */
 dendrogramViewer.prototype.getNodeImmediateChildren = function(data, nodeId) {
     var n = data.order.length;
-    mergeArray = pagHelpers.serialisedArrayTo2D(data["merge"], n - 1, 2);
+    var mergeArray = pagHelpers.serialisedArrayTo2D(data["merge"], n - 1, 2);
     return mergeArray[nodeId -1];
 };
 
@@ -275,7 +277,7 @@ dendrogramViewer.prototype.getInternalNodeParent = function(nodeId, callback) {
 	var retValue = undefined;
 
 	var n = data.order.length;
-	mergeArray = pagHelpers.serialisedArrayTo2D(data["merge"], n - 1, 2);
+	var mergeArray = pagHelpers.serialisedArrayTo2D(data["merge"], n - 1, 2);
 
 	if (nodeId >= n - 1) {
 	    // We are at the head node
@@ -409,20 +411,20 @@ dendrogramViewer.prototype.transformToCanvasCoordinates = function(x,y) {
 dendrogramViewer.prototype.restoreCurrentTransform = function() {
      var dendV = new dendrogramViewer();
     var curT = dendV.currentTransform;
-    a = curT[0][0];
-    b = curT[2][0];
-    c = curT[0][1];
-    d = curT[1][1];
-    e = curT[0][2];
-    f = curT[1][2];
+    var a = curT[0][0];
+   var  b = curT[2][0];
+   var  c = curT[0][1];
+  var   d = curT[1][1];
+  var   e = curT[0][2];
+  var   f = curT[1][2];
 
     // Transform main canvas
-    dendArea = $('#dendrogram-area')[0];
+    var dendArea = $('#dendrogram-area')[0];
     var ctx = dendArea.getContext("2d");
     ctx.setTransform(a,b,c,d,e,f);
 
     // Transform the overlay canvas as well
-    dendAreaOverlay = $('#dendrogram-area-overlay')[0];
+    var dendAreaOverlay = $('#dendrogram-area-overlay')[0];
     var ctx2 = dendAreaOverlay.getContext("2d");
     ctx2.setTransform(a,b,c,d,e,f);
 
@@ -561,7 +563,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
     // Recover the data
     var n = data.order.length;
-    mergeArray = pagHelpers.serialisedArrayTo2D(data["merge"], n - 1, 2);
+    var mergeArray = pagHelpers.serialisedArrayTo2D(data["merge"], n - 1, 2);
 
     // Max height is  the height of the top node
     var maxHeight = data.height[topnode - 1];
@@ -571,7 +573,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
 
     // Get the canvas object
     var dendAreaOuter = $('#dendrogram-area');
-    dendArea = dendAreaOuter[0];
+    var dendArea = dendAreaOuter[0];
     var ctx = dendArea.getContext("2d");
     ctx.save();
 
@@ -582,19 +584,19 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
     ctx.clearRect(0,0,heatDendView.getCurrentWidth(), this.getHeight())
 
     // Calculating leaf positions
-    coordOfNodes = dendV.getClusterPositionRanges(data);
+    var coordOfNodes = dendV.getClusterPositionRanges(data);
 
 
 
     // Get the mid-points of the  clusters
     var nodePositions = [];
     for (var i = 1; i < coordOfNodes.length; i++) {
-	nodePositions[i] = [(coordOfNodes[i][0] + coordOfNodes[i][1]) /2, 0];
+      nodePositions[i] = [(coordOfNodes[i][0] + coordOfNodes[i][1]) /2, 0];
     }
 
     // Get Min/max only for the children of the nodes we are plotting
-    scaleMin = +Infinity;
-    scaleMax = -Infinity;
+    var scaleMin = +Infinity;
+    var scaleMax = -Infinity;
     for ( var i = 1; i < coordOfNodes.length; i++) {
 	if (  children.indexOf(i) >= 0 ) {
 	    if ( coordOfNodes[i][0]  < scaleMin ) {
@@ -913,7 +915,7 @@ dendrogramViewer.prototype.getZoomNode = function() {
  */
 dendrogramViewer.prototype.updateCanvasSize = function() {
     // Get current dimentions
-    heatDendV = new heatmapDendrogramViewer();
+    var heatDendV = new heatmapDendrogramViewer();
     var curWidth = heatDendV.getCurrentWidth();
     var curHeight = this.getHeight();
 
@@ -1130,7 +1132,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 		    } else {
 			// The left child is an internal node
 
-			descendants = dendV.getNodeDescendents(data, immediateChildren[0]);
+			var descendants = dendV.getNodeDescendents(data, immediateChildren[0]);
 
 			// Get the start end positions of the clusters
 			var clusterPositions = dendV.getClusterPositionRanges(data);

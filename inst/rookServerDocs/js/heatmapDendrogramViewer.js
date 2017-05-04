@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: heatmapDendrogramViewer.js
  * Author:  Nikolas Barkas
@@ -16,27 +18,22 @@
  */
 function heatmapDendrogramViewer() {
     if (typeof heatmapDendrogramViewer.instance === 'object') {
-	return heatmapDendrogramViewer.instance;
+	    return heatmapDendrogramViewer.instance;
     };
 
     console.log("Initializing heatmapDendrogramViewer...");
 
+    // Initialise subobjects
     var heatmapV =  new heatmapViewer();
     var metaV = new metaDataHeatmapViewer();
+    var aspectHeatView = new aspectHeatmapViewer();
     var dendroV =  new dendrogramViewer();
 
-    // Are we actually using these? Only in updateView, which will be replaced
-    currentCellSelection = [];
-    currentGeneSelection = [];
 
     heatmapDendrogramViewer.instance = this;
 
-    // Set defaults here
-   // this.currentLayoutName = p2globalParams.dendrogramHeatmapViewer.defaultLayoutName;
-
 
     this.updateContainerSize();
-
     this.initializeComponents();
 
     // Keep track of the main container horizontatl size
@@ -54,22 +51,7 @@ function heatmapDendrogramViewer() {
 heatmapDendrogramViewer.prototype.updateContainerSize = function() {
     var extJsContainer = Ext.getCmp('centreColumnPanel');
     this.viewerWidth = extJsContainer.body.getWidth(true);
-}
-
-
-/**
- * Returns the name of the current layout
- */
-heatmapDendrogramViewer.prototype.getCurrentLayoutName = function(){
-    return this.currentLayoutName;
-}
-
-/**
- * Updates the name of the layout to use
- */
-heatmapDendrogramViewer.prototype.setCurrentLayout = function(layoutName) {
-    this.currentLayoutName = layoutName;
-}
+};
 
 /**
  * Get the width of all the elements in the dendrogram and heatmap areas
@@ -80,8 +62,6 @@ heatmapDendrogramViewer.prototype.setCurrentLayout = function(layoutName) {
  * @returns the width of all the elements
  */
 heatmapDendrogramViewer.prototype.getCurrentWidth = function() {
-    // Just return the width of the parent
-    // TODO: Adjust for padding purposes
     return this.viewerWidth;
 };
 
@@ -91,7 +71,7 @@ heatmapDendrogramViewer.prototype.getCurrentWidth = function() {
  */
 heatmapDendrogramViewer.prototype.getPlotAreaLeftPadding = function() {
     return p2globalParams.dendrogramHeatmapViewer.paddingLeft;
-}
+};
 
 /**
  * Returns the width that the dendrogram/heatmap/metadata heatmap
@@ -125,12 +105,12 @@ heatmapDendrogramViewer.prototype.initializeComponents = function() {
     // Unregister this handler
     var evtBus = new eventBus();
     evtBus.unregister("dendrogram-cell-order-updated", null, dendrogramInitListener);
-  }
+  };
   evtBus.register("dendrogram-cell-order-updated", null,dendrogramInitListener);
 
   var dendView = new dendrogramViewer();
   dendView.initialize();
-}
+};
 
 
 /**
