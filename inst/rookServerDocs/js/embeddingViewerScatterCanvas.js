@@ -13,7 +13,7 @@ function embeddingViewerScatterCanvas() {
     console.log('Initializing scatterEmbeddingCanvas...');
 
     // Here we need to tap into the extjs container
-    // component resize function 
+    // component resize function
     var element = Ext.getCmp('embedding-app-container');
     element.onResize = function(){
 	embView = new embeddingViewer();
@@ -33,7 +33,7 @@ function embeddingViewerScatterCanvas() {
 	embV.setDendrogramColorInfo({nodeType: p.type});
 
 	embV.updateColors();
-    }); 
+    });
 
     // This variable hold the last ajax request for expression values
     // The purpose of this is to be able to cancel this request
@@ -41,7 +41,7 @@ function embeddingViewerScatterCanvas() {
     this.expressionValuesAJAXrequest;
 
     // We use this to cache the cell order as calculated by getExpression
-    // and avoid recalculating every time. We need to cache this for 
+    // and avoid recalculating every time. We need to cache this for
     // each embedding seperately
     this.fillStylesGeneExpressionOrder = {};
 
@@ -49,9 +49,9 @@ function embeddingViewerScatterCanvas() {
     // plotting on the edges
     this.rangeScaleFactor = 0.95;
 
-    // These are used to keep track of the 
+    // These are used to keep track of the
     // Transformation applied to the embedding points
-    // This is needed so that selections can be made 
+    // This is needed so that selections can be made
     this.xScaleDomainMin;
     this.xScaleDomainMax;
     this.xScaleRangeMin;
@@ -63,19 +63,29 @@ function embeddingViewerScatterCanvas() {
     this.yScaleRangeMax;
 
     // Generates the html structure required for the viewer
-    this.generateStructure();    
+    this.generateStructure();
 }
 
+/**
+ * Return a dataURL string the the contents of the main canvas
+ * rendered as an image
+ */
+embeddingViewerScatterCanvas.prototype.getImageDataURL = function() {
+  var canvas = document.getElementById('embedding-canvas');
+  var imageURL = canvas.toDataURL('image/png');
+  imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+  return imageURL;
+}
 
 /**
- * Generate the selection following the completion of the 
+ * Generate the selection following the completion of the
  * drag event.
- * @description Perform the actions necessary at the end of  
+ * @description Perform the actions necessary at the end of
  * the drag event completion. Specifically, clear the overlay
  * plot only the selected points onto the overlay
  * and set the cell selection
  */
-embeddingViewerScatterCanvas.prototype.generateDragSelection = 
+embeddingViewerScatterCanvas.prototype.generateDragSelection =
     function(dragStartX, dragStartY, dragEndX, dragEndY) {
 	if (dragStartX > dragEndX) {
 	    var t = dragEndX;
@@ -87,7 +97,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    dragEndY = dragStartY;
 	    dragStartY = t;
 	}
-	
+
 
 	thisViewer = this;
 	var embViewer = new embeddingViewer();
@@ -117,8 +127,8 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 
 	dataCntr.getEmbedding(type, embeddingType, function(data) {
 	    plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
-	    
-	    
+
+
 	    // Make the xscale
 	    thisViewer.xScaleDomainMin = +Infinity;
 	    thisViewer.xScaleDomainMax = -Infinity;
@@ -128,9 +138,9 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    }
 	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin, 
-							 thisViewer.xScaleDomainMax, 
-							 thisViewer.xScaleRangeMin, 
+	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+							 thisViewer.xScaleDomainMax,
+							 thisViewer.xScaleRangeMin,
 							 thisViewer.xScaleRangeMax);
 
 	    // Make the y scale
@@ -143,7 +153,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
 	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
-							 thisViewer.yScaleDomainMax, 
+							 thisViewer.yScaleDomainMax,
 							 thisViewer.yScaleRangeMin,
 							 thisViewer.yScaleRangeMax);
 
@@ -157,14 +167,14 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 
 	    for (var i = 0; i < plotData.length; i++) {
 		var point = plotData[i];
-		
+
 		if ( point[1] > x1 && point[1] < x2 && point[2] > y1 && point[2] < y2) {
 		    // Point in selection
 		    cellsForSelection.push(point[0]);
-		    
+
 		    var xs = xScale(point[1]);
 		    var ys = yScale(point[2]);
-		    
+
 		    ctx.beginPath();
 		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
 		    ctx.stroke();
@@ -231,17 +241,17 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 	    var dragEndX = e.layerX;
 	    var dragEndY = e.layerY;
 
-	    
+
 
 	    thisViewer.generateDragSelection(dragStartX, dragStartY, dragEndX, dragEndY);
 	}
 	dragging = false;
     });
-    
+
     overlayCanvasElement.addEventListener('mousemove', function(e) {
 	var dragEndX =  e.layerX;
 	var dragEndY = e.layerY;
-	
+
 
 	if (dragging) {
 	    // TODO: clear the correct coordinates
@@ -271,7 +281,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
  * Generated the necessary html structure for this viewer
  */
 embeddingViewerScatterCanvas.prototype.generateStructure = function() {
-    var embeddingContainer = $("#embedding-draw"); 
+    var embeddingContainer = $("#embedding-draw");
     var extJsContainer = Ext.getCmp('embeddingExtJSWrapper');
 
     // Clears the loader and anything else left in the container
@@ -363,7 +373,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
     var plotHeight = extJsContainer.body.getHeight(true);
     var plotWidth = extJsContainer.body.getWidth(true);
 
-    
+
     // Show the wait window
     embViewer.showWait();
 
@@ -373,7 +383,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 
 	// Generate the colors for the data points -- async
 	thisViewer.generateFillStyles(plotData, function(plotData, fillInfo) {
-	    
+
 	thisViewer.resizeElements();
 
 	    var embCanvas = document.getElementById('embedding-canvas');
@@ -386,9 +396,9 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	    }
 	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin, 
-							 thisViewer.xScaleDomainMax, 
-							 thisViewer.xScaleRangeMin, 
+	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+							 thisViewer.xScaleDomainMax,
+							 thisViewer.xScaleRangeMin,
 							 thisViewer.xScaleRangeMax);
 
 	    // Make the y scale
@@ -401,13 +411,13 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
 	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
-							 thisViewer.yScaleDomainMax, 
+							 thisViewer.yScaleDomainMax,
 							 thisViewer.yScaleRangeMin,
 							 thisViewer.yScaleRangeMax);
 
 	    // The size to plot at
 	    var pointsize = embViewer.getCurrentPointSize();
-	    
+
 	    // The border
 	    var stroke;
 	    var strokeColor;
@@ -457,7 +467,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
     });
 }
 
-/** 
+/**
  * Generate fill styles suitable for the given dataset
  */
 embeddingViewerScatterCanvas.prototype.generateFillStyles = function(plotdata, callback, type, embeddingType) {
@@ -505,7 +515,7 @@ embeddingViewerScatterCanvas.prototype.updateColorAlpha = function(colors, newAl
     var retVals = [];
     for (var k = 0; k < colors.length; k++) {
 	color = colors[k];
-	
+
 	// Split the channels
 	var r = parseInt(color.substring(1,3),16);
 	var g = parseInt(color.substring(3,5),16)
@@ -519,8 +529,8 @@ embeddingViewerScatterCanvas.prototype.updateColorAlpha = function(colors, newAl
 
 }
 
-/** 
- * Annotate the plotdata with color from the dendrogram selections and 
+/**
+ * Annotate the plotdata with color from the dendrogram selections and
  * call the callback with it.
  */
 embeddingViewerScatterCanvas.prototype.generateFillStylesDendrogram = function (plotdata, callback) {
@@ -531,20 +541,20 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesDendrogram = function (
     var selectedRGB = p2globalParams.dendrogram.selectionColors.selectedMainRGB;
     var selectedAltRGB =  p2globalParams.dendrogram.selectionColors.selectedAltRGB;
     var deselectedRGB =  p2globalParams.dendrogram.selectionColors.deselectedRGB;
-    
+
     var alpha = embV.getCurrentAlpha();
 
     if (embV.currentConfiguration.dendrogramColorInfo.nodeType == "vertical") {
 	var curPrimSel = selCntr.getSelection("currentPrimarySel");
 	for (var i = 0; i < plotdata.length; i++) {
 	    var cellid = plotdata[i][0];
-	    if ($.inArray(cellid, curPrimSel) > -1) { 
-		plotdata[i][3] = 'rgba(' +  selectedRGB[0] + ',' +  selectedRGB[1] + 
+	    if ($.inArray(cellid, curPrimSel) > -1) {
+		plotdata[i][3] = 'rgba(' +  selectedRGB[0] + ',' +  selectedRGB[1] +
 		    ' , ' + selectedRGB[2] +  ','  + alpha  + ')';
 	    } else {
-		plotdata[i][3] =  'rgba(' +  deselectedRGB[0] + ',' +  deselectedRGB[1] + 
+		plotdata[i][3] =  'rgba(' +  deselectedRGB[0] + ',' +  deselectedRGB[1] +
 		    ' , ' + deselectedRGB[2] +  ','  + alpha  + ')';
-	    }		 
+	    }
 	}
 	callback(plotdata);
 	return;
@@ -554,15 +564,15 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesDendrogram = function (
 	for (var i = 0; i < plotdata.length; i++) {
 	    var cellid = plotdata[i][0];
 	    if ($.inArray(cellid, curPrimSel) > -1) {
-		plotdata[i][3] = 'rgba(' +  selectedRGB[0] + ',' +  selectedRGB[1] + 
+		plotdata[i][3] = 'rgba(' +  selectedRGB[0] + ',' +  selectedRGB[1] +
 		    ' , ' + selectedRGB[2] +  ','  + alpha  + ')';
 	    } else if ($.inArray(cellid, curAltSel) > -1) {
-		plotdata[i][3] = 'rgba(' +  selectedAltRGB[0] + ',' +  selectedAltRGB[1] + 
+		plotdata[i][3] = 'rgba(' +  selectedAltRGB[0] + ',' +  selectedAltRGB[1] +
 		    ' , ' + selectedAltRGB[2] +  ','  + alpha  + ')';
 	    } else {
-		plotdata[i][3] =  'rgba(' +  deselectedRGB[0] + ',' +  deselectedRGB[1] + 
+		plotdata[i][3] =  'rgba(' +  deselectedRGB[0] + ',' +  deselectedRGB[1] +
 		    ' , ' + deselectedRGB[2] +  ','  + alpha  + ')';
-	    }    
+	    }
 	}
 	callback(plotdata);
 	return;
@@ -597,7 +607,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
 	    var cellId = plotdata[i][0];
 	    var clusterId = colorData[cellId];
 	    var clusterColor;
-	    
+
 	    if (typeof clusterId === 'undefined') {
 		// There is a cell that is not in the metadata
 		console.warn('Embedding plotter found a cell that does not have and entry ' +
@@ -642,7 +652,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 
     var evSC = this;
 
-    var ev = embeddingViewer();   
+    var ev = embeddingViewer();
     var config = ev.getConfig();
     var dataCntr = new dataController();
     var alpha = ev.getCurrentAlpha();
@@ -656,15 +666,15 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 	    evSC.expressionValuesAJAXrequest.abort();
 	}
     }
-    
-    // We only end up using this for the number of cell 
+
+    // We only end up using this for the number of cell
     // which is a complete waste, but it takes less than 1ms so not worth removing
     dataCntr.getCellOrder (function(data) {
 	var cellIndexStart = 0;
 	var cellIndexEnd = data.length;
 	var geneSelection = [config.geneexpressionColorInfo.geneid];
 
-	evSC.expressionValuesAJAXrequest = 
+	evSC.expressionValuesAJAXrequest =
 	    dataCntr.getExpressionValuesSparseByCellIndex(
 		geneSelection, cellIndexStart, cellIndexEnd, function(data) {
 
@@ -690,12 +700,12 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 
 		    // Update the palette colors with our alpha
 		    var palAlpha = evSC.updateColorAlpha(pal, alpha);
-		    
+
 		    // colorMapper is a function
 		    // use it for consistency with heatmap
 		    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
 
-		    
+
 		    var cacheId = type + '_' + embeddingType;
 
 		    if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
@@ -704,15 +714,15 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 			// So we need to calculate it and cache it on the way
 			evSC.fillStylesGeneExpressionOrder[cacheId] = [];
 
-			// NOTE: The following construction ensures that 
-			// The interfact doesn't lock up during the long 
+			// NOTE: The following construction ensures that
+			// The interfact doesn't lock up during the long
 			// calculation time of the color matching
 			function doMatching(plotdata, i) {
 		    	    if (i == undefined) {
 		    		i = 0;
 		    	    }
 		    	    if (i < plotdata.length) {
-				// The size of the batch is a trade off between slowing the 
+				// The size of the batch is a trade off between slowing the
 				// processing and maintaining responsiveness
 		    		var batchSize = 500;
 		    		for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
@@ -727,7 +737,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    		    if (index < 0) {
 		    			console.warn('Embedding plotter found a cell that does not' +
 						     'have and entry in the expression matrix. Cellid: "' +
-						     cellId + 
+						     cellId +
 		    				     '. This is an error with the data provided by server.');
 		    			color = '#000000'; // default to black
 		    		    } else {
@@ -742,10 +752,10 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 				}
 
 		    		var nextBatch = function()
-				{ 
+				{
 				    // Here we can optionaly update the
 				    // inteface with a progress bar
-				    doMatching(plotdata, i + batchSize);    
+				    doMatching(plotdata, i + batchSize);
 				}
 				// Process the next batch immediately,
 				// Allowing other pending event to run in the meanwhile
@@ -761,15 +771,15 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 			// Use much larger batches here
 		    	var batchSize = 50000;
 
-			// NOTE: The following construction ensures that 
-			// The interfact doesn't lock up during the long 
+			// NOTE: The following construction ensures that
+			// The interfact doesn't lock up during the long
 			// calculation time of the color matching
 			function doMatching(plotdata, i) {
 		    	    if (i == undefined) {
 		    		i = 0;
 		    	    }
 		    	    if (i < plotdata.length) {
-				// The size of the batch is a trade off between slowing the 
+				// The size of the batch is a trade off between slowing the
 				// processing and maintaining responsiveness
 
 		    		for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
@@ -782,7 +792,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    			var palIndex = colorMapper(data.array[index][0]);
 		    			plotdata[j][3] = palAlpha[palIndex];
 		    		    }
-				    
+
 		    		}
 
 				if (j == plotdata.length) {
@@ -791,10 +801,10 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 				}
 
 		    		var nextBatch = function()
-				{ 
+				{
 				    // Here we can optionaly update the
 				    // inteface with a progress bar
-				    doMatching(plotdata, i + batchSize);    
+				    doMatching(plotdata, i + batchSize);
 				}
 				// Process the next batch immediately,
 				// Allowing other pending event to run in the meanwhile
@@ -804,11 +814,11 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 			doMatching(plotdata);
 
 		    }
-		    
+
 		    // This is the same code as above without the fix for
 		    // maintaining a responsive ui
 		    // // Plot
-		    // // TODO: This loop is slow (2.5s for 30k cells) 
+		    // // TODO: This loop is slow (2.5s for 30k cells)
 		    // // because of the lookups
 		    // for (var i = 0; i < plotdata.length;  i++) {
 		    // 	var cellId = plotdata[i][0];
@@ -816,7 +826,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    // 	var color;
 		    // 	if (index < 0) {
 		    // 	    console.warn('Embedding plotter found a cell that does not have and entry ' +
-		    // 			 'in the expression matrix. Cellid: "' + cellId + 
+		    // 			 'in the expression matrix. Cellid: "' + cellId +
 		    // 			 '. This is an error with the data provided by server.');
 		    // 	    color = '#000000'; // default to black
 		    // 	} else {

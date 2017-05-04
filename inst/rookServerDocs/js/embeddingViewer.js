@@ -200,6 +200,21 @@ embeddingViewer.prototype.generateToolbar = function() {
     toolbar.add({xtype: 'tbseparator'});
     // Add a button for the settings menu
     toolbar.add(
+      {
+        text: "",
+        type: "button",
+        tooltip: 'Download current view',
+        glyph: 0xf0ed,
+        handler: function(){
+              var embV = new embeddingViewer();
+              var dataURL = embV.currentViewer.getImageDataURL();
+              window.open(dataURL);
+              //console.log(dataURL);
+        } // handler
+        });
+
+
+    toolbar.add(
 	{
 	    text: "",
 	    type: "button",
