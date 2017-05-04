@@ -31,6 +31,10 @@ function aspectsTableViewer() {
   aspectsTableViewer.instance = this;
 };
 
+
+/**
+ * Update the geneset in the the aspects table
+ */
 aspectsTableViewer.prototype.updateGeneSetsInAspectTable = function(selectedAspect) {
       var dataCntr = new dataController();
       dataCntr.getAvailableGenesetsInAspectStore(selectedAspect, function(store) {
@@ -41,12 +45,15 @@ aspectsTableViewer.prototype.updateGeneSetsInAspectTable = function(selectedAspe
       });
 };
 
+
+/**
+ * Generate the tables
+ * @private
+ */
 aspectsTableViewer.prototype.generateTables = function() {
   var dataCntr = new dataController() ;
 
   var areaHolder = Ext.getCmp('aspectsExtJS');
-
-  //
 
   // Selection change listener for aspects
   var aspectSelectionChangeListener = function(obj, selected, eOpts) {

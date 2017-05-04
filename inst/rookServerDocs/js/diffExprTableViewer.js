@@ -24,7 +24,16 @@ function diffExprTableViewer() {
   diffExprTableViewer.instance = this;
 };
 
+/**
+ * Enable the change listener that updates the subtable
+ */
 diffExprTableViewer.prototype.enableChangeListener = function() { this.changeListenerEnabled = true; }
+
+
+/**
+ * Disable the change listener that update the subtable.
+ * @description this is required during main table changes to avoid errors
+ */
 diffExprTableViewer.prototype.disableChangeListener = function() { this.changeListenerEnabled = false; }
 
 
@@ -239,6 +248,10 @@ diffExprTableViewer.prototype.update = function() {
 
 }
 
+/**
+ * Raise the tab with the tables and hightlight a de set by it's internal name
+ * @param internalName the internal name of the dataset
+ */
 diffExprTableViewer.prototype.showSelectedSet = function(internalName) {
   this.raiseTab();
 
@@ -248,6 +261,9 @@ diffExprTableViewer.prototype.showSelectedSet = function(internalName) {
 
 }
 
+/**
+ * Raise the tab that holds the tables for this object
+ */
 diffExprTableViewer.prototype.raiseTab = function() {
   var tablesTab = Ext.getCmp('tablesTabExtJS');
   // FIXME: The tab order is hard-wired here

@@ -6,6 +6,7 @@
 
 /**
  * Object that manages the aspect heatmap viewer
+ * @constructor
  */
 function aspectHeatmapViewer() {
   if (typeof aspectHeatmapViewer.instance === 'object') {
@@ -20,8 +21,6 @@ function aspectHeatmapViewer() {
   	o.updateCanvasSize();
   	o.drawHeatmap();
   };
-
-
 
   aspectHeatmapViewer.instance = this;
 }
@@ -61,7 +60,10 @@ aspectHeatmapViewer.prototype.generatePalettesMenu = function() {
 }
 
 
-
+/**
+ * Genereate the menu
+ * @private
+ */
 aspectHeatmapViewer.prototype.generateMenu = function(){
   var toolbar = Ext.create('Ext.Toolbar');
 
@@ -103,10 +105,17 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
 
 }
 
+
+/**
+ * Get the area height
+ */
 aspectHeatmapViewer.prototype.getHeight = function() {
   return Ext.getCmp('aspectPanel').getHeight() - 40;
 }
 
+/**
+ * Get the area width
+ */
 aspectHeatmapViewer.prototype.getWidth = function() {
   return (Ext.getCmp('aspectPanel').getWidth());
 }

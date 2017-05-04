@@ -39,6 +39,12 @@ calculationController.prototype.calculateDEbySelection = function(selectionA, se
   }
 }
 
+
+/**
+ * Calculate differential expression between two groups of cells via connection to a remote server
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ * @param selectionB the name of the second cell selection as registered in the cell selection controller
+ */
 calculationController.prototype.calculateDEbySelectionRemote = function(selectionA, selectionB, callback) {
   var cellSelCntr = new cellSelectionController();
   selAcells = cellSelCntr.getSelection(selectionA);
@@ -89,7 +95,7 @@ function differentialExpressionStore() {
 };
 
 /**
- * Get all available de sets
+ * Get all available differential expression sets
  */
 differentialExpressionStore.prototype.getAvailableDEsets = function() {
   var result = new Array();
@@ -143,6 +149,7 @@ differentialExpressionStore.prototype.getUniqueId = function() {
 
 /**
  * Represents a differential expression result set and accompanying metadata
+ * @constructor
  */
 function deResultSet() {
   this.selectionA = null;
@@ -151,34 +158,63 @@ function deResultSet() {
   this.name = null;
 };
 
+
+/**
+ * get the name
+ */
 deResultSet.prototype.getName = function() {
   return this.name;
 };
 
+/**
+ * set the name
+ */
 deResultSet.prototype.setName = function(val) {
   this.name = val;
 };
 
+
+/**
+ * Get the first cell selection (an array of cell ids)
+ */
 deResultSet.prototype.getSelectionA = function() {
   return this.selectionA;
 };
 
+/**
+ * Set the first cell selection (an array of cell ids)
+ */
 deResultSet.prototype.setSelectionA = function(val) {
   this.selectionA = val;
 };
 
+/**
+ * Set the second cell selection (an array of cell ids)
+ */
 deResultSet.prototype.getSelectionB = function() {
   return this.selectionB;
 };
 
+
+/**
+ * Get the second cell selection (an array of cell ids)
+ */
 deResultSet.prototype.setSelectionB = function(val) {
   this.selectionB = val;
 };
 
+
+/**
+ * Get the table of results
+ */
 deResultSet.prototype.getResults = function() {
   return this.results;
 };
 
+
+/**
+ * Set the table of results
+ */
 deResultSet.prototype.setResults = function(val) {
   this.results = val;
 };

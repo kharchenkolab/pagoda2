@@ -64,6 +64,9 @@ dendrogramViewer.prototype.getCurrentSelectedNode = function() {
     return this.currentConfiguration.currentSelectedNode;
 }
 
+/**
+ * Clear the currently selected node
+ */
 dendrogramViewer.prototype.clearCurrentSelectedNode = function() {
     this.currentConfiguration.currentSelectedNode = undefined;
 }
@@ -518,6 +521,9 @@ dendrogramViewer.prototype.getClusterPositionRanges =  function (data) {
     return coordOfNodes;
 }
 
+/**
+ * Update the internally kept display cell order
+ */
 dendrogramViewer.prototype.updateCurrentDisplayCells = function(callback) {
     var dataCntr = new dataController();
     var dendV = this;
@@ -544,10 +550,16 @@ dendrogramViewer.prototype.getCurrentDisplayCellsIndexes = function() {- p2globa
 	    this.currentConfiguration.endCellIndex];
 }
 
+/**
+ * Get the current height of the region
+ */
 dendrogramViewer.prototype.getHeight = function() {
     return Ext.getCmp('dendrogramPanel').getHeight()  - 45;
 }
 
+/**
+ * Get the current width of the region
+ */
 dendrogramViewer.prototype.getWidth = function() {
   return (Ext.getCmp('dendrogramPanel').getWidth());
 }
@@ -1211,10 +1223,6 @@ dendrogramViewer.prototype.setupListeners = function() {
 						     'Secondary Selection', selectionMetadata);
 			}); // getCellOrder();
 		    } // else
-
-
-
-
 
 
 		}); // getReducedDendrogram
