@@ -29,6 +29,13 @@ function dendrogramViewer() {
 	    top: 0, left: 0, width: 100, height: 100
     };
 
+    var extJsContainer = Ext.getCmp('dendrogramPanel');
+    extJsContainer.onResize = function() {
+    	var o = new dendrogramViewer();
+    	o.updateCanvasSize();
+    	o.redrawDendrogram();
+    };
+
     this.currentConfiguration = {
     	zoomNode: undefined,
     	currentSelectedNode: undefined,
@@ -102,7 +109,7 @@ dendrogramViewer.prototype.generatePalettesMenu = function() {
 dendrogramViewer.prototype.initializeButtons =  function() {
 
 
-    var mainPanel = Ext.getCmp('mainViewPanel');
+    var mainPanel = Ext.getCmp('dendrogramPanel');
     var mainPanelHeader =  mainPanel.getHeader();
 
     var toolbar = Ext.create('Ext.Toolbar');
@@ -630,7 +637,7 @@ dendrogramViewer.prototype.getCurrentDisplayCellsIndexes = function() {
 }
 
 dendrogramViewer.prototype.getHeight = function() {
-    return Ext.getCmp('mainViewPanel').getHeight()  - 50;
+    return Ext.getCmp('dendrogramPanel').getHeight()  - 50;
 }
 
 /**

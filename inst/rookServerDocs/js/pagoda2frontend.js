@@ -109,7 +109,7 @@ function generateExtJsLayout() {
 	    }]
     });
 /*
-    var mainViewPanel = Ext.create('Ext.panel.Panel', );
+    var dendrogramPanel = Ext.create('Ext.panel.Panel', );
 */
     var livelogPanel =  Ext.create('Ext.panel.Panel', {
 	id: 'information-app-container',
@@ -293,7 +293,7 @@ function generateExtJsLayout() {
         layout: 'fit',
         id: 'leftColumnBottomPanel',
         title: 'leftColumnBottomPanel',
-	header: false,
+	      header: false,
         height: '50%',
         split: true,
         minHeight: 100,
@@ -306,7 +306,7 @@ function generateExtJsLayout() {
         id: 'leftColumnPanel',
         collapsible: true,
         split: true,
-	header: false,
+	      header: false,
         layout: 'border',
         width: '33%',
         heigth: '100%',
@@ -323,28 +323,17 @@ function generateExtJsLayout() {
         width: '33%',
         title: 'Main Data Viewer',
         items: [
-
-
-          {
-          	id: 'mainViewPanel',
-          	layout: 'fit',
-          	width: '100%',
-          	height: '10%',
-          	title: 'Main View',
-          	padding: 0,
-          	glyph: 0xf1fe,
-          	bodyPadding: 0,
-          	split: true,
-          	html: '<div id="dendrogram-area-container"></div>'
-          	/*
-          	items:  [
-          	  {
-                id: 'dendrogram-heatmap-app-container',
-                html: '<div id="main-window"></div>'
-              }
-              ],
-
-              */
+            {
+            	id: 'dendrogramPanel',
+            	layout: 'fit',
+            	width: '100%',
+            	height: '10%',
+            	title: 'Main View',
+            	padding: 0,
+            	glyph: 0xf1fe,
+            	bodyPadding: 0,
+            	split: true,
+            	html: '<div id="dendrogram-area-container"></div>'
             },
             {
               id: 'metadataPanel',

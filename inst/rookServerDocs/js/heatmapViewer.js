@@ -17,7 +17,7 @@ function heatmapViewer() {
     // NOTE: Actual init is done by parent object
 
 
-    var extJsContainer = Ext.getCmp('mainViewPanel');
+    var extJsContainer = Ext.getCmp('heatmapPanel');
     extJsContainer.onResize = function() {
     	var heatView = new heatmapViewer();
     	heatView.updateCanvasSize();
