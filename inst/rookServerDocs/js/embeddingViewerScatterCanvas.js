@@ -66,7 +66,7 @@ function embeddingViewerScatterCanvas() {
     this.generateStructure();
 }
 
-/**
+/**var
  * Return a dataURL string the the contents of the main canvas
  * rendered as an image
  */

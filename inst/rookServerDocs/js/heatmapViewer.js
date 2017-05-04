@@ -185,6 +185,18 @@ var paletteMenu = this.generatePalettesMenu();
 	] // items
     });
 
+toolbar.add({
+          text: "",
+        type: "button",
+        tooltip: 'Download current view',
+        glyph: 0xf0ed,
+        handler: function(){
+            var canvas = document.getElementById('heatmap-area');
+            var imageURL = canvas.toDataURL('image/png');
+            imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+            window.open(imageURL);
+        } // handler
+});
 
       // Add plot configuration menu button
     toolbar.add({
