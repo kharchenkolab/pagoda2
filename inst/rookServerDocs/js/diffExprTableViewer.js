@@ -88,7 +88,9 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     singleSelect: false,
     empty: 'No differentially expressed genes to show.',
     columns: [
-        {text: 'Name', dataIndex: 'name'},
+        {text: 'Name', dataIndex: 'name', renderer: function(value) {
+		      return Ext.String.format(p2globalParams.misc.jaxGeneQueryFormatString ,value,value)
+		  },},
         {text: 'M', dataIndex: 'M'},
         {text: 'Z', dataIndex: 'Z'},
         {text: 'fe', dataIndex: 'fe'},
