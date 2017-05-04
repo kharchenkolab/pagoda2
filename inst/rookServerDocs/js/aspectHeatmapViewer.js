@@ -91,7 +91,7 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
 
     // Add plot configuration menu button
     toolbar.add({
-    	text: 'Settings',
+    	text: '',
     	xtype: 'button',
     	tooltip: 'Configure aspect heatmap plot settings',
     	glyph: 0xf013,
@@ -104,7 +104,7 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
 }
 
 aspectHeatmapViewer.prototype.getHeight = function() {
-  return Ext.getCmp('aspectPanel').getHeight() - 50;
+  return Ext.getCmp('aspectPanel').getHeight() - 40;
 }
 
 aspectHeatmapViewer.prototype.getWidth = function() {

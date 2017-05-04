@@ -545,7 +545,7 @@ dendrogramViewer.prototype.getCurrentDisplayCellsIndexes = function() {- p2globa
 }
 
 dendrogramViewer.prototype.getHeight = function() {
-    return Ext.getCmp('dendrogramPanel').getHeight()  - 50;
+    return Ext.getCmp('dendrogramPanel').getHeight()  - 45;
 }
 
 dendrogramViewer.prototype.getWidth = function() {

@@ -30,7 +30,7 @@ function metaDataHeatmapViewer() {
 }
 
 metaDataHeatmapViewer.prototype.getHeight  = function() {
-  return Ext.getCmp('metadataPanel').getHeight() - 50;
+  return Ext.getCmp('metadataPanel').getHeight() - 30;
 }
 
 metaDataHeatmapViewer.prototype.getWidth  = function() {

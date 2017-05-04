@@ -180,7 +180,7 @@ var paletteMenu = this.generatePalettesMenu();
 
       // Add plot configuration menu button
     toolbar.add({
-    	text: 'Settings',
+    	text: '',
     	xtype: 'button',
     	tooltip: 'Configure heatmap plot settings',
     	glyph: 0xf013,
