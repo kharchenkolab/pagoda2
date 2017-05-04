@@ -16,6 +16,7 @@ function heatmapViewer() {
 
     // NOTE: Actual init is done by parent object
 
+    this.generateMenu();
 
     var extJsContainer = Ext.getCmp('heatmapPanel');
     extJsContainer.onResize = function() {
@@ -55,8 +56,8 @@ heatmapViewer.prototype.initialize = function() {
     heatmapContainer.css({position: 'relative'});
 
     heatmapContainer.append(
-	'<canvas id="heatmap-area" ></canvas>' +
-	'<canvas id="heatmap-area-overlay"></canvas>'
+    	'<canvas id="heatmap-area" ></canvas>' +
+    	'<canvas id="heatmap-area-overlay"></canvas>'
     );
 
     var heatmapArea = $('#heatmap-area');
@@ -93,6 +94,112 @@ heatmapViewer.prototype.initialize = function() {
 
     this.setRowReordering(p2globalParams.heatmapViewer.defaultRowReordering);
 };
+
+
+
+/**
+ * Generate the palettes menu
+ * @private
+ * @returns palette menu extjs object
+ */
+heatmapViewer.prototype.generatePalettesMenu = function() {
+
+    var palettes = p2globalParams.heatmapViewer.availablePalettes;
+    var paletteMenu = Ext.create('Ext.menu.Menu');
+    for (i in palettes)    {
+        paletteMenu.add({
+            text: palettes[i].displayName,
+	          value: palettes[i].name,
+            handler: function(item) {
+		            var heatView = new heatmapViewer();
+
+		            heatView.palManager.setPalette(item.value);
+
+            		// NOTE: WE are getting  the number of colors because the
+            		// Manger will have sorted out any issues with exceeing the
+            		// new palette limits
+            		var curNoColours = heatView.palManager.getNumberOfColors();
+            		console.log(curNoColours);
+
+            		// TODO: Set the value to the menu
+
+            		heatView.drawHeatmap();
+	            }
+	    }); // paletteMenu.add
+    } // for
+    return paletteMenu;
+}
+
+
+
+/**
+ * Generates the heatmap configuration menu
+ */
+heatmapViewer.prototype.generateMenu = function() {
+  var toolbar = Ext.create('Ext.Toolbar');
+
+
+var paletteMenu = this.generatePalettesMenu();
+
+ var heatmapSettingsMenu = Ext.create('Ext.menu.Menu', {
+	id: 'heatmapSettingsMenu',
+	items: [
+	    {
+		text: 'Palette Name',
+		menu: paletteMenu
+	    },
+	    {
+		fieldLabel: 'Palette Levels',
+		id: 'paletteLevelsField',
+		xtype: 'numberfield',
+		tooltip: 'Number of colors for the palette',
+		value: p2globalParams.heatmapViewer.defaultPaletteLevels, // FIXME
+		disabled: false,
+		maxValue: 100,
+		minValue: 2,
+		listeners: {
+		    change: {buffer: 800, fn: function(f,v) {
+			var heatView = new heatmap1Viewer();
+			heatView.setNumberOfColors(v);
+			heatView.drawHeatmap();
+
+		    }} // buffer of change listener
+		}
+	    },
+	    {
+		text: 'Reorder rows',
+		checked: p2globalParams.heatmapViewer.defaultRowReordering,
+		checkHandler: function(e, checked, eOpts) {
+		    var heatV =  new heatmapViewer();
+		    heatV.setRowReordering(checked);
+		    heatV.drawHeatmap();
+		}
+	    }
+
+	] // items
+    });
+
+
+
+
+
+
+
+
+      // Add plot configuration menu button
+    toolbar.add({
+    	text: 'Settings',
+    	xtype: 'button',
+    	tooltip: 'Configure heatmap plot settings',
+    	glyph: 0xf013,
+    	menu: heatmapSettingsMenu
+    });
+
+
+    var heatmapPanel = Ext.getCmp('heatmapPanel');
+    heatmapPanel.getHeader().add(toolbar);
+    //mainPanelHeader.add(toolbar);
+}
 
 /**
  * Setup all the overlay canvas events

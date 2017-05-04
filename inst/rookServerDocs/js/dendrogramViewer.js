@@ -10,7 +10,7 @@
  */
 function dendrogramViewer() {
     if (typeof dendrogramViewer.instance === 'object') {
-	return dendrogramViewer.instance;
+	    return dendrogramViewer.instance;
     };
 
     // Click regions
@@ -67,39 +67,6 @@ dendrogramViewer.prototype.clearCurrentSelectedNode = function() {
 }
 
 
-// This should not be here
-/**
- * Generate the palettes menu
- * @private
- * @returns palette menu extjs object
- */
-dendrogramViewer.prototype.generatePalettesMenu = function() {
-
-    var palettes     = p2globalParams.heatmapViewer.availablePalettes;
-    var paletteMenu = Ext.create('Ext.menu.Menu');
-    for (i in palettes)    {
-        paletteMenu.add({
-            text: palettes[i].displayName,
-	    value: palettes[i].name,
-            handler: function(item) {
-		var heatView = new heatmapViewer();
-
-		heatView.palManager.setPalette(item.value);
-
-		// NOTE: WE are getting  the number of colors because the
-		// Manger will have sorted out any issues with exceeing the
-		// new palette limits
-		var curNoColours = heatView.palManager.getNumberOfColors();
-		console.log(curNoColours);
-
-		// TODO: Set the value to the menu
-
-		heatView.drawHeatmap();
-	    }
-	});
-    } // for
-    return paletteMenu;
-}
 
 // Config for the dendrogram and other things should be split
 /**
@@ -107,58 +74,54 @@ dendrogramViewer.prototype.generatePalettesMenu = function() {
  * listeners.
  */
 dendrogramViewer.prototype.initializeButtons =  function() {
-
-
     var mainPanel = Ext.getCmp('dendrogramPanel');
     var mainPanelHeader =  mainPanel.getHeader();
 
     var toolbar = Ext.create('Ext.Toolbar');
-    toolbar.add({
-	text: 'Parent',
-	xtype: 'button',
-	tooltip: 'View Parent',
-	glyph: 0xf062,
-	handler: function() {
+      toolbar.add({
+    	text: 'Parent',
+    	xtype: 'button',
+    	tooltip: 'View Parent',
+    	glyph: 0xf062,
+    	handler: function() {
 
 	    var selCntr = new cellSelectionController();
 	    var dendView = new dendrogramViewer();
 
-	    // CONTNUE: We want to zoom to the parent of the current _zoom_ node
-//	    var selectedNode = dendView.getCurrentSelectedNode();
 	    var selectedNode = dendView.getZoomNode();
 
 	    if (typeof selectedNode !== 'undefined') {
-		var updateHeatmapOnce = function() {
-		    var heatmapV = new heatmapViewer();
-		    heatmapV.drawHeatmap();
+    		var updateHeatmapOnce = function() {
+    		    var heatmapV = new heatmapViewer();
+    		    heatmapV.drawHeatmap();
 
-		    var metaV = new metaDataHeatmapViewer();
-		    metaV.drawMetadata();
+    		    var metaV = new metaDataHeatmapViewer();
+    		    metaV.drawMetadata();
 
-		    var aspHeatV = new aspectHeatmapViewer();
-		    aspHeatV.drawHeatmap();
+    		    var aspHeatV = new aspectHeatmapViewer();
+    		    aspHeatV.drawHeatmap();
 
-		    var evtBus = new eventBus();
-		    evtBus.unregister("dendrogram-cell-order-updated", null, updateHeatmapOnce);
-		}
-		var evtBus = new eventBus();
-		evtBus.register("dendrogram-cell-order-updated", null, updateHeatmapOnce);
+    		    var evtBus = new eventBus();
+    		    evtBus.unregister("dendrogram-cell-order-updated", null, updateHeatmapOnce);
+    		}
+    		var evtBus = new eventBus();
+    		evtBus.register("dendrogram-cell-order-updated", null, updateHeatmapOnce);
 
-		// Set config to zoom -- for correct redraw
-		dendView.currentConfiguration.view = "zoom";
+    		// Set config to zoom -- for correct redraw
+    		dendView.currentConfiguration.view = "zoom";
 
-		// Set the zoom node to be the parent of the currently selected zoomed one
-		dendView.getInternalNodeParent(dendView.getZoomNode(), function(id) {
-		    dendView.setZoomNode(id);
+    		// Set the zoom node to be the parent of the currently selected zoomed one
+    		dendView.getInternalNodeParent(dendView.getZoomNode(), function(id) {
+    		    dendView.setZoomNode(id);
 
-		    // Redraw the dendrogram from the selected node
-		    dendView.redrawDendrogram();
-		});
-	    } else  {
-		Ext.MessageBox.alert('Warning',
-				     'Please click on the dendrogram to select a node before zooming in',function(){});
-	    }
-	}
+    		    // Redraw the dendrogram from the selected node
+    		    dendView.redrawDendrogram();
+    		});
+    	    } else  {
+    		Ext.MessageBox.alert('Warning',
+    				     'Please click on the dendrogram to select a node before zooming in',function(){});
+    	    }
+    	}
     });
 
    toolbar.add({
@@ -256,63 +219,6 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 	    };
 
 	}
-    });
-
-    // Add a separator
-    toolbar.add({xtype: 'tbseparator'});
-
-    // Generate palette menu
-    var paletteMenu =  this.generatePalettesMenu();
-
-    // This shouldn't be here at alll!!!
-    // The settings  menu for the dendrogramand heatmap
-    var dendHeatSettingsMenu = Ext.create('Ext.menu.Menu', {
-	id: 'dendHeatSettingsMenu',
-	items: [
-	    {
-		text: 'Palette Name',
-		menu: paletteMenu
-	    },
-	    {
-		fieldLabel: 'Palette Levels',
-		id: 'paletteLevelsField',
-		xtype: 'numberfield',
-		tooltip: 'Number of colors for the palette',
-		value: p2globalParams.heatmapViewer.defaultPaletteLevels, // FIXME
-		disabled: false,
-		maxValue: 100,
-		minValue: 2,
-		listeners: {
-		    change: {buffer: 800, fn: function(f,v) {
-			var heatView = new heatmap1Viewer();
-			heatView.setNumberOfColors(v);
-			heatView.drawHeatmap();
-
-		    }} // buffer of change listener
-		}
-	    },
-	    {
-		text: 'Reorder rows',
-		checked: p2globalParams.heatmapViewer.defaultRowReordering,
-		checkHandler: function(e, checked, eOpts) {
-		    var heatV =  new heatmapViewer();
-		    heatV.setRowReordering(checked);
-		    heatV.drawHeatmap();
-		}
-	    }
-
-	] // items
-    });
-
-
-    // Add plot configuration menu button
-    toolbar.add({
-	text: '',
-	xtype: 'button',
-	tooltip: 'Configure dendrogram and heatmap plot settings',
-	glyph: 0xf013,
-	menu: dendHeatSettingsMenu
-
     });
 
     mainPanelHeader.add(toolbar);
