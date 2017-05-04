@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: clickableRegions.js
  * Author: Nikolas Barkas

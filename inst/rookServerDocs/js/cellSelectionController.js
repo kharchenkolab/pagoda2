@@ -1,16 +1,16 @@
-
+"use strict";
 /*
  *
- * The selection cotroller is responsible for keeping 
- * track of cell selections. The selections are kept as 
- * names objects in an array and they are themselves arrays of 
+ * The selection cotroller is responsible for keeping
+ * track of cell selections. The selections are kept as
+ * names objects in an array and they are themselves arrays of
  * text labels of cells
  *
  * Some selection names have special meanings, but this is
  * not otherwise enforced:
- * 
+ *
  * currentPrimarySel -- the current selection of cells
- * currentSecondarySel -- the current secondary selection of cells 
+ * currentSecondarySel -- the current secondary selection of cells
  *                        when one is needed, such as when selecting
  *                        two dendrogram branches
  *
@@ -25,7 +25,7 @@ function cellSelectionController() {
 	return cellSelectionController.instance;
     }
 
-    // Generat the array to keep the selections in 
+    // Generat the array to keep the selections in
     this.selections = new Object();
 
     cellSelectionController.instance = this;
@@ -42,7 +42,7 @@ cellSelectionController.prototype.setSelection = function(selectionName, cells, 
      if (typeof displayName === 'undefined') {
 	displayName = selectionName;
     }
-    
+
     this.selections[selectionName] = {
 	'name': selectionName,
 	'cells': cells,
@@ -62,7 +62,7 @@ cellSelectionController.prototype.raiseSelectionChangedEvent = function() {
     // TODO: buffer this
       // Notify the world that a new selection has been set
     var evtBus = new eventBus();
-    evtBus.publish("cell-selection-updated");  
+    evtBus.publish("cell-selection-updated");
 }
 
 /**
@@ -88,7 +88,7 @@ cellSelectionController.prototype.deleteSelection = function(selectionName) {
 /**
  * Get a cell selection
  * @param {string} selectionName the internal name of the cell selection
- * @returns {Array[]} Identifiers of the cells in this selection 
+ * @returns {Array[]} Identifiers of the cells in this selection
  */
 cellSelectionController.prototype.getSelection = function(selectionName) {
     var sel =  this.selections[selectionName];
@@ -128,7 +128,7 @@ cellSelectionController.prototype.duplicateSelection = function(selectionName,
     sel.displayName = newSelectionDisplayName;
 
     sel.cells = JSON.parse(JSON.stringify(oldSelection.cells));
-    
+
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }

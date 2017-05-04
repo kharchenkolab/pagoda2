@@ -1,4 +1,3 @@
-
 /*
  * Filename: dataController.js
  * Author: Nikolas Barkas

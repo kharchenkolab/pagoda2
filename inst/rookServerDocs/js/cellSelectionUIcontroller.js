@@ -1,4 +1,4 @@
-
+"use strict";
 /**
  * Manages the cell selection interface
  * @constructor
@@ -6,7 +6,7 @@
 function cellSelectionUIcontroller() {
     if (typeof cellSelectionUIcontroller.instance === 'object') {
 	return cellSelectionUIcontroller.instance;
-    }   
+    }
 
     cellSelectionUIcontroller.instance = this;
 
@@ -33,7 +33,7 @@ cellSelectionUIcontroller.prototype.syncCellSelectionStore = function() {
     // Repopulate the store
     var cellSelCntr =  new cellSelectionController();
     var availSelections = cellSelCntr.getAvailableSelections();
-    
+
     for (sel in availSelections) {
 	var selName = availSelections[sel];
 	var selCount =  cellSelCntr.getSelection(selName).length;
@@ -43,7 +43,7 @@ cellSelectionUIcontroller.prototype.syncCellSelectionStore = function() {
     }// for
 }
 
-/** 
+/**
  * Generate the cell selection store
  */
 cellSelectionUIcontroller.prototype.generateCellSelectionStore = function() {
@@ -64,7 +64,7 @@ cellSelectionUIcontroller.prototype.generateCellSelectionStore = function() {
  */
 cellSelectionUIcontroller.prototype.generateUI = function() {
     var uipanel = Ext.getCmp('cellselection-app-container');
-    
+
     var cellSelectionTable = Ext.create('Ext.grid.Panel',{
 	title: 'Available Cell Selections',
 	id: 'cellSelectionTable',
@@ -75,7 +75,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	],
 	emptyText: "No cell selections are currently available"
     });
-    
+
 
     var formPanel = Ext.create('Ext.form.Panel', {
     height: '100%',
@@ -94,7 +94,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		if (selectedItems.length === 1) {
 		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
 		    var oldDisplayName = selectedItems.getAt(0).getData().displayname;
-		    
+
 		    Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
 			if ( btn === 'ok') {
 
@@ -102,14 +102,14 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
 			    var newSelectionName = text;
 			    var newSelectionDisplayName = text;
-			    
+
 			    var re = new RegExp('[^A-Za-z0-9_]');
 			    if (newSelectionName.length === 0) {
 				Ext.MessageBox.alert('Error',
 						     'You must enter a selection name');
 			    }
 			    else if (newSelectionName.match(re) ) {
-				Ext.MessageBox.alert('Error', 
+				Ext.MessageBox.alert('Error',
                                   'The name must only contain letters, numbers and underscores (_)');
 			    } else {
 				if (cellSelCntr.getSelection(newSelectionName)) {
@@ -130,7 +130,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		} else {
 		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
 		}
-		
+
 	    }
         },
 	{
@@ -166,13 +166,13 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		if (selectedItems.length === 1) {
 		    var selectionName = selectedItems.getAt(0).getData().selectionname;
 		    var cellSelCntr = new cellSelectionController();
-		    var selection = cellSelCntr.getSelection(selectionName);		    
+		    var selection = cellSelCntr.getSelection(selectionName);
 		    var selectionFormatted = selection.join("\n");
 		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
 
 		} else {
 		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
-		}		    
+		}
 	    }
 	}
     ]
@@ -181,4 +181,4 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     uipanel.add(formPanel);
 
 }
-   
+

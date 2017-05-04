@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: actionPanelUIcontroller.js
  * Author: Nikolas Barkas
@@ -73,7 +75,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     var availableMethods = calcCntr.getAvailableDEmethods();
 
 
-    for (i in availableMethods) {
+    for (var i in availableMethods) {
 	    deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
     }
 
@@ -141,8 +143,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
       		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
                   // Get the cell names in the selection for storing
       		        var cellSelCntr = new cellSelectionController();
-      		        selAcells = cellSelCntr.getSelection(selectionA);
-      		        selBcells = cellSelCntr.getSelection(selectionB);
+      		        var selAcells = cellSelCntr.getSelection(selectionA);
+      		        var selBcells = cellSelCntr.getSelection(selectionB);
 
                   // Make a deResult set for saving the results
                   // and save metadata related to this de result

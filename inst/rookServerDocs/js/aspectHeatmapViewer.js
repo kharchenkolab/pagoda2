@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: aspectHeatmapViewer.js
  * Author: Nikolas Barkas
@@ -338,9 +340,9 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	var aspHeatView = this;
   var heatDendView = new heatmapDendrogramViewer();
 	var dendV = new dendrogramViewer();
-	ctx = this.getDrawingContext();
+	var ctx = this.getDrawingContext();
 
-	drawConsts = this.getDrawConstants();
+	var drawConsts = this.getDrawConstants();
 	var top = drawConsts.top;
 	var left = drawConsts.left;
 	var heatmapWidth  = drawConsts.width - heatDendView.getPlotAreaRightPadding();

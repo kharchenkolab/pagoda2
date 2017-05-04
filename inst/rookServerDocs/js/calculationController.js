@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Perform compulations on the data
  * @constructor
@@ -47,8 +49,8 @@ calculationController.prototype.calculateDEbySelection = function(selectionA, se
  */
 calculationController.prototype.calculateDEbySelectionRemote = function(selectionA, selectionB, callback) {
   var cellSelCntr = new cellSelectionController();
-  selAcells = cellSelCntr.getSelection(selectionA);
-  selBcells = cellSelCntr.getSelection(selectionB);
+  var selAcells = cellSelCntr.getSelection(selectionA);
+  var selBcells = cellSelCntr.getSelection(selectionB);
 
   // Alot of cell identifiers to send, send by POST
 	$.ajax({
