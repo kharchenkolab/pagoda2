@@ -33,6 +33,12 @@ metaDataHeatmapViewer.prototype.getHeight  = function() {
   return Ext.getCmp('metadataPanel').getHeight() - 50;
 }
 
+metaDataHeatmapViewer.prototype.getWidth  = function() {
+  heatDendV =  new heatmapDendrogramViewer();
+  return (Ext.getCmp('metadataPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
+}
+
+
 /**
  * Initialise the metadata heatmap viewer
  * @description this is separate from the constructor
@@ -180,7 +186,7 @@ metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
 
     heatDendV = new heatmapDendrogramViewer();
 
-    var curWidth =  heatDendV.getCurrentWidth();
+    var curWidth =  this.getWidth();
     var curHeight = this.getHeight();
 
     this.canvasElementWidth = curWidth;
@@ -205,7 +211,7 @@ metaDataHeatmapViewer.prototype.getDrawConstants = function() {
     return {
 	top: 1,
 	left: heatDendView.getPlotAreaLeftPadding(),
-	width: heatDendView.getPlotAreaWidth(),
+	width: this.getWidth(),
 	height: this.getHeight(),
 
     };
@@ -227,9 +233,11 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
     var bottomPadding = 2;
 
+
+heatDendView = new heatmapDendrogramViewer();
     var top = plotConsts.top;
     var left = plotConsts.left;
-    var metaWidth = plotConsts.width;
+    var metaWidth = plotConsts.width - heatDendView.getPlotAreaRightPadding();
     var metaHeight = plotConsts.height - bottomPadding;
 
 

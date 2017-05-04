@@ -458,7 +458,12 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
 }
 
 heatmapViewer.prototype.getHeight = function() {
-  return Ext.getCmp('heatmapPanel').getHeight() - 50;
+  return Ext.getCmp('heatmapPanel').getHeight() - 60;
+}
+
+heatmapViewer.prototype.getWidth = function() {
+  heatDendV =  new heatmapDendrogramViewer();
+  return (Ext.getCmp('heatmapPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
 }
 
 /**
@@ -468,9 +473,7 @@ heatmapViewer.prototype.updateCanvasSize = function() {
     var heatmapArea = $('#heatmap-area')[0];
     var heatmapAreaOverlay = $('#heatmap-area-overlay')[0];
 
-    heatDendV =  new heatmapDendrogramViewer();
-
-    var curWidth =  heatDendV.getCurrentWidth();
+    var curWidth =  this.getWidth();
     var curHeight =  this.getHeight();
 
     this.canvasElementWidth = curWidth;
@@ -545,7 +548,7 @@ heatmapViewer.prototype.drawHeatmap = function() {
 	var heatDendView = new heatmapDendrogramViewer();
 
 	var left = heatDendView.getPlotAreaLeftPadding();
-	var heatmapWidth = heatDendView.getPlotAreaWidth();
+	var heatmapWidth = this.getWidth() - heatDendView.getPlotAreaRightPadding();
 	var heatmapHeight = this.getHeight();
 
 	const text = 'No Genes selected';
@@ -588,12 +591,12 @@ heatmapViewer.prototype.getDrawConstants = function() {
 
     // TODO: values here should be in global params
     return {
-	top: 5,
-	left:  heatDendView.getPlotAreaLeftPadding(),
-	width: heatDendView.getPlotAreaWidth(),
-	height: this.getHeight(),
-	paddingBottom: 10,
-	maxCellHeight: 30,
+    	top: 5,
+    	left:  heatDendView.getPlotAreaLeftPadding(),
+    	width: this.getWidth() - heatDendView.getPlotAreaRightPadding(),
+    	height: this.getHeight() ,
+    	paddingBottom: 10,
+    	maxCellHeight: 30,
     }
 }
 

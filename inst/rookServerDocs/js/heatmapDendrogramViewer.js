@@ -62,7 +62,8 @@ heatmapDendrogramViewer.prototype.updateContainerSize = function() {
  * @returns the width of all the elements
  */
 heatmapDendrogramViewer.prototype.getCurrentWidth = function() {
-    return this.viewerWidth;
+  return 300;
+  //  return this.viewerWidth;
 };
 
 /**
@@ -74,6 +75,16 @@ heatmapDendrogramViewer.prototype.getPlotAreaLeftPadding = function() {
 };
 
 /**
+ * Returns the padding that the dendrogram/heatmap/metadata heatmap
+ * should be drawn at WITHIN the canvas area.
+ */
+heatmapDendrogramViewer.prototype.getPlotAreaRightPadding = function() {
+    return p2globalParams.dendrogramHeatmapViewer.paddingRight;
+};
+
+
+
+/**
  * Returns the width that the dendrogram/heatmap/metadata heatmap
  * should be drawn at WITHIN the canvas area.
  * @description Returns the width that the dendrogram/heatmap/metadata heatmap
@@ -82,7 +93,8 @@ heatmapDendrogramViewer.prototype.getPlotAreaLeftPadding = function() {
  * for the dendrogram and heatmap. Does not include labels
  */
 heatmapDendrogramViewer.prototype.getPlotAreaWidth = function() {
-    return this.viewerWidth - p2globalParams.dendrogramHeatmapViewer.paddingRight;
+    console.log('getPlotAreaWidth() is deprecated')
+    return this.getCurrentWidth() - p2globalParams.dendrogramHeatmapViewer.paddingRight;
 };
 
 

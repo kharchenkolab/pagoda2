@@ -107,6 +107,11 @@ aspectHeatmapViewer.prototype.getHeight = function() {
   return Ext.getCmp('aspectPanel').getHeight() - 50;
 }
 
+aspectHeatmapViewer.prototype.getWidth = function() {
+  heatDendV =  new heatmapDendrogramViewer();
+  return (Ext.getCmp('aspectPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
+}
+
 /**
  * Perform initialization of the aspect heatmap viewer
  * @description This is called by the parent heatmapDendrogram object
@@ -290,7 +295,7 @@ aspectHeatmapViewer.prototype.updateCanvasSize = function() {
 
   // Get and store current height
   heatDendV = new heatmapDendrogramViewer();
-  var curWidth = heatDendV.getCurrentWidth();
+  var curWidth = this.getWidth();
   var curHeight = this.getHeight();
 
   var containerDiv = $('#aspect-heatmap-container');
@@ -330,7 +335,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	drawConsts = this.getDrawConstants();
 	var top = drawConsts.top;
 	var left = drawConsts.left;
-	var heatmapWidth  = drawConsts.width;
+	var heatmapWidth  = drawConsts.width - heatDendView.getPlotAreaRightPadding();
 	var heatmapHeight = drawConsts.height - drawConsts.paddingBottom;
 
 	// Get the cells to plot
@@ -344,7 +349,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	// Show centered waiting icon
 	$('#aspect-heatmap-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
 	var loadingDomItem =  $('#aspect-heatmap-container > .loadingIcon');
-  var lpad = heatDendView.getCurrentWidth()  / 2;
+  var lpad = this.getWidth()  / 2;
   var tpad = this.getHeight() /2;
   loadingDomItem.css({'padding-left': lpad + 'px', 'padding-top': tpad + 'px'});
 
@@ -443,7 +448,7 @@ aspectHeatmapViewer.prototype.getDrawConstants = function() {
     return {
     	top: 5,
     	left:  heatDendView.getPlotAreaLeftPadding(),
-    	width: heatDendView.getPlotAreaWidth(),
+    	width: this.getWidth(),
     	height: this.getHeight(),
     	paddingBottom: 10,
     	maxCellHeight: 30,

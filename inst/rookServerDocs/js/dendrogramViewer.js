@@ -502,17 +502,17 @@ dendrogramViewer.prototype.getClusterPositionRanges =  function (data) {
     var coordInOrder = [];
     var lastPos =0;
     for (var i =0; i < memCountInOrder.length; i++) {
-	var start = lastPos + 1;
-	var end = start + memCountInOrder[i] - 1;
-	coordInOrder[i] = [start, end];
-	lastPos = end;
+    	var start = lastPos + 1;
+    	var end = start + memCountInOrder[i] - 1;
+    	coordInOrder[i] = [start, end];
+    	lastPos = end;
     }
 
     // Put the coordinates back in order
     var coordOfNodes = [];
     for (var i = 1; i<= data.order.length; i++) {
-	var indx = data.order.indexOf(i);
-	coordOfNodes[i] = coordInOrder[indx];
+    	var indx = data.order.indexOf(i);
+    	coordOfNodes[i] = coordInOrder[indx];
     }
 
     return coordOfNodes;
@@ -522,10 +522,10 @@ dendrogramViewer.prototype.updateCurrentDisplayCells = function(callback) {
     var dataCntr = new dataController();
     var dendV = this;
     dataCntr.getCellOrder(function(cellnames) {
-	var range = dendV.getCurrentDisplayCellsIndexes();
-	dendV.currentConfiguration.currentDisplayCells = cellnames.slice(range[0], range[1]);
-	// Callback is just for notification here
-	callback();
+    	var range = dendV.getCurrentDisplayCellsIndexes();
+    	dendV.currentConfiguration.currentDisplayCells = cellnames.slice(range[0], range[1]);
+    	// Callback is just for notification here
+    	callback();
     });
 }
 
@@ -539,13 +539,18 @@ dendrogramViewer.prototype.getCurrentDisplayCells = function(callback) {
 /**
  * Return the cell indexes that are to be plotted
  */
-dendrogramViewer.prototype.getCurrentDisplayCellsIndexes = function() {
+dendrogramViewer.prototype.getCurrentDisplayCellsIndexes = function() {- p2globalParams.dendrogramHeatmapViewer.paddingRight
     return [this.currentConfiguration.startCellIndex,
 	    this.currentConfiguration.endCellIndex];
 }
 
 dendrogramViewer.prototype.getHeight = function() {
     return Ext.getCmp('dendrogramPanel').getHeight()  - 50;
+}
+
+dendrogramViewer.prototype.getWidth = function() {
+  var heatDendV =  new heatmapDendrogramViewer();
+  return (Ext.getCmp('dendrogramPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
 }
 
 /**
@@ -581,7 +586,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
     ctx.lineWidth = this.currentConfiguration.lineWidth;
 
     // Clear the canvas
-    ctx.clearRect(0,0,heatDendView.getCurrentWidth(), this.getHeight())
+    ctx.clearRect(0,0, this.getWidth(), this.getHeight())
 
     // Calculating leaf positions
     var coordOfNodes = dendV.getClusterPositionRanges(data);
@@ -619,7 +624,8 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
     });
 
     // Calculate the scallings for the transformation
-    var horizontalScaling = heatDendView.getPlotAreaWidth() / (scaleMax - scaleMin + 1);
+    var heatDendV = new heatmapDendrogramViewer();
+    var horizontalScaling = (this.getWidth() - heatDendV.getPlotAreaRightPadding()) / (scaleMax - scaleMin + 1);
     var horizontalShift = -1 * scaleMin * horizontalScaling +
 	heatDendView.getPlotAreaLeftPadding();
 
@@ -916,7 +922,8 @@ dendrogramViewer.prototype.getZoomNode = function() {
 dendrogramViewer.prototype.updateCanvasSize = function() {
     // Get current dimentions
     var heatDendV = new heatmapDendrogramViewer();
-    var curWidth = heatDendV.getCurrentWidth();
+    var curWidth = this.getWidth();
+
     var curHeight = this.getHeight();
 
     // Keep track within the object
@@ -1278,10 +1285,10 @@ dendrogramViewer.prototype.redrawDendrogram = function() {
     var config = this.currentConfiguration.view;
 
     if ( config  === "zoom" ) {
-	this.drawDendrogram( this.getZoomNode() );
+	    this.drawDendrogram( this.getZoomNode() );
     } else if ( config === "full" ) {
-	this.drawDendrogram();
+	    this.drawDendrogram();
     } else {
-	console.error("Unknown dendrogram configuration: ", config);
+	    console.error("Unknown dendrogram configuration: ", config);
     }
 }

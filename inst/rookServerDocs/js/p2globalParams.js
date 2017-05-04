@@ -28,7 +28,7 @@ var p2globalParams = {
    // Heatmap and dendrogram viewer plotting parameters
     dendrogramHeatmapViewer: {
 	paddingLeft: 10,
-	paddingRight: 150, // Space for the labels
+	paddingRight: 100, // Space for the labels
 
     },
 
