@@ -549,8 +549,7 @@ dendrogramViewer.prototype.getHeight = function() {
 }
 
 dendrogramViewer.prototype.getWidth = function() {
-  var heatDendV =  new heatmapDendrogramViewer();
-  return (Ext.getCmp('dendrogramPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
+  return (Ext.getCmp('dendrogramPanel').getWidth());
 }
 
 /**

@@ -462,8 +462,7 @@ heatmapViewer.prototype.getHeight = function() {
 }
 
 heatmapViewer.prototype.getWidth = function() {
-  heatDendV =  new heatmapDendrogramViewer();
-  return (Ext.getCmp('heatmapPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
+  return (Ext.getCmp('heatmapPanel').getWidth() );
 }
 
 /**

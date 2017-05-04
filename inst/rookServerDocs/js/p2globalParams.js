@@ -28,11 +28,10 @@ var p2globalParams = {
   dendrogramHeatmapViewer: {
     paddingLeft: 10,
     paddingRight: 100, // Space for the labels
-
   },
 
   aspectViewer: {
-    defaultPaletteName: 'tol-dv',
+    defaultPaletteName: 'tol-rainbow',
     defaultPaletteLevels: 20,
   },
 

@@ -34,8 +34,7 @@ metaDataHeatmapViewer.prototype.getHeight  = function() {
 }
 
 metaDataHeatmapViewer.prototype.getWidth  = function() {
-  heatDendV =  new heatmapDendrogramViewer();
-  return (Ext.getCmp('metadataPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
+  return (Ext.getCmp('metadataPanel').getWidth());
 }
 
 

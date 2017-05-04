@@ -108,8 +108,7 @@ aspectHeatmapViewer.prototype.getHeight = function() {
 }
 
 aspectHeatmapViewer.prototype.getWidth = function() {
-  heatDendV =  new heatmapDendrogramViewer();
-  return (Ext.getCmp('aspectPanel').getWidth() - heatDendV.getPlotAreaRightPadding());
+  return (Ext.getCmp('aspectPanel').getWidth());
 }
 
 /**
