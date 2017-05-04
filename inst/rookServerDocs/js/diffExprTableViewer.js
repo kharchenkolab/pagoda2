@@ -104,6 +104,29 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 		prependButtons: true,
 
 		items: [
+		  {
+			emptyText: 'Search...',
+			xtype: 'textfield',
+			width: 100,
+			listeners: {
+			    'change': {buffer: 50, fn: function(f, newValue, oldValues, eOpts) {
+				var g = Ext.getCmp('deResultsGenes');
+				var store = g.getStore();
+				store.clearFilter();
+				if (newValue !== '') {
+				    store.filterBy(function(rec) {
+					if (rec.get('name').match(new RegExp(newValue,'i'))) {
+					    return true;
+					} else {
+					    return false;
+					} // if genename
+				    }); // store filter by
+				} // if new values
+			    }} //change listener and buffer
+			} // listeners
+		    },
+
+
 		    {
 			type: "button",
 			text: 'Show selected',
