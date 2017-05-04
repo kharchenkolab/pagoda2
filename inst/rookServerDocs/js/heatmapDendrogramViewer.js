@@ -53,18 +53,6 @@ heatmapDendrogramViewer.prototype.updateContainerSize = function() {
     this.viewerWidth = extJsContainer.body.getWidth(true);
 };
 
-/**
- * Get the width of all the elements in the dendrogram and heatmap areas
- * @description Provides the width at which the two
- * components should be drawn. It is maintained here to ensure
- * that alignments between the dendrogram and the heatmap are
- * centrally managed.
- * @returns the width of all the elements
- */
-heatmapDendrogramViewer.prototype.getCurrentWidth = function() {
-  return 300;
-  //  return this.viewerWidth;
-};
 
 /**
  * Returns the padding that the dendrogram/heatmap/metadata heatmap
@@ -83,19 +71,6 @@ heatmapDendrogramViewer.prototype.getPlotAreaRightPadding = function() {
 };
 
 
-
-/**
- * Returns the width that the dendrogram/heatmap/metadata heatmap
- * should be drawn at WITHIN the canvas area.
- * @description Returns the width that the dendrogram/heatmap/metadata heatmap
- * should be drawn at WITHIN the canvas area. The size of the canvas
- * areas is returned by a different function of the same obj. This is the same
- * for the dendrogram and heatmap. Does not include labels
- */
-heatmapDendrogramViewer.prototype.getPlotAreaWidth = function() {
-    console.log('getPlotAreaWidth() is deprecated')
-    return this.getCurrentWidth() - p2globalParams.dendrogramHeatmapViewer.paddingRight;
-};
 
 
 /**
