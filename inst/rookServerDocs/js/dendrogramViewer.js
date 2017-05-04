@@ -26,16 +26,16 @@ function dendrogramViewer() {
 
     this.currentHoverHighlight;
     this.currentPermanentHighlight = {
-	top: 0, left: 0, width: 100, height: 100
+	    top: 0, left: 0, width: 100, height: 100
     };
 
     this.currentConfiguration = {
-	zoomNode: undefined,
-	currentSelectedNode: undefined,
-	view: "full", // full or zoom
-	lineWidth: '2',
-	highlightColor: '#FF0000', // hover
-	highlightColor2: '#0000FF' // selection
+    	zoomNode: undefined,
+    	currentSelectedNode: undefined,
+    	view: "full", // full or zoom
+    	lineWidth: '2',
+    	highlightColor: '#FF0000', // hover
+    	highlightColor2: '#0000FF' // selection
     };
 
     // This is a hidden canvas for the copy

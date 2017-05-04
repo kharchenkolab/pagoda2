@@ -30,55 +30,6 @@ var p2globalParams = {
 	paddingLeft: 10,
 	paddingRight: 150, // Space for the labels
 
-	// winsorizeDefault: false,
-	// winsorizeTrim: 0.1,
-
-	defaultLayoutName: "default",
-	// Different layout options for the menu
-	// Specify the % height of different canvas elements
-	layoutSettings: {
-	    default: {
-		name: "default",
-		displayName: "Default",
-		dendrogramHeight: 0.3,
-		metadataHeight: 0.05,
-		heatmapHeight: 0.55,
-		aspectHeatmapHeight: 0.10
-	    },
-	    equal: {
-		name: "equal",
-		displayName: "Equal",
-		dendrogramHeight: 0.25,
-		metadataHeight: 0.25,
-		heatmapHeight: 0.25,
-		aspectHeatmapHeight: 0.25
-	    },
-	    heatmapFocus: {
-		name: "heatmapFocus",
-		displayName: "Heatmap Focus",
-		dendrogramHeight: 0.10,
-		metadataHeight: 0.05,
-		heatmapHeight: 0.75,
-		aspectHeatmapHeight: 0.10
-	    },
-	    dendrogramFocus: {
-		name: "dendrogramFocus",
-		displayName: "Dendrogram Focus",
-		dendrogramHeight: 0.85,
-		metadataHeight: 0.05,
-		heatmapHeight: 0.05,
-		aspectHeatmapHeight: 0.05
-
-	    },
-	    metadataFocus: {
-		name: "metadataFocus",
-		displayName: "Metadata Focus",
-		dendrogramHeight: 0.05,
-		metadataHeight: 0.85,
-		heatmapHeight: 0.05	,
-		aspectHeatmapHeight: 0.05
-	    }
-	}
     },
 
     heatmapViewer: {

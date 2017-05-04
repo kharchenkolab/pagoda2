@@ -32,21 +32,18 @@ function heatmapDendrogramViewer() {
     heatmapDendrogramViewer.instance = this;
 
     // Set defaults here
-    this.currentLayoutName = p2globalParams.dendrogramHeatmapViewer.defaultLayoutName;
+   // this.currentLayoutName = p2globalParams.dendrogramHeatmapViewer.defaultLayoutName;
 
 
     this.updateContainerSize();
 
-    // Generate the divs and initalise them
-    this.generateDrawAreas();
     this.initializeComponents();
 
-    // TODO: Fix me, add listener don't replace
-    var extJsContainer = Ext.getCmp('mainViewPanel');
+    // Keep track of the main container horizontatl size
+    var extJsContainer = Ext.getCmp('centreColumnPanel');
     extJsContainer.onResize = function() {
     	var heatDendView = new heatmapDendrogramViewer();
     	heatDendView.updateContainerSize();
-    	//heatDendView.updateView();
     };
 };
 
@@ -55,9 +52,7 @@ function heatmapDendrogramViewer() {
  * in the object so that the children can access it
  */
 heatmapDendrogramViewer.prototype.updateContainerSize = function() {
-    var extJsContainer = Ext.getCmp('mainViewPanel');
-    // TODO: move the -30 to some centralised configration
-    //this.viewerHeight = extJsContainer.body.getHeight(true) - 30 ;
+    var extJsContainer = Ext.getCmp('centreColumnPanel');
     this.viewerWidth = extJsContainer.body.getWidth(true);
 }
 
@@ -110,21 +105,6 @@ heatmapDendrogramViewer.prototype.getPlotAreaWidth = function() {
     return this.viewerWidth - p2globalParams.dendrogramHeatmapViewer.paddingRight;
 };
 
-/**
- * Generates two canvas elements for plotting the
- * dendrogram and the heatmap. We are using separate
- * elements because as cell numbers increase the limits
- * of individual canvas elements will be reached.
- */
-heatmapDendrogramViewer.prototype.generateDrawAreas = function() {
-    $("#main-window").append(
-	     '<div id="dendrogram-area-container"></div>'
-	    //'<div id="metadata-area-container"></div>' +
-	    // '<div id="aspect-heatmap-container"></div>'
-	   // '<div id="heatmap-area-container"></div>'
-
-    );
-};
 
 /**
  * Call the component initializers and do a view update

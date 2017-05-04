@@ -335,12 +335,16 @@ function generateExtJsLayout() {
           	glyph: 0xf1fe,
           	bodyPadding: 0,
           	split: true,
+          	html: '<div id="dendrogram-area-container"></div>'
+          	/*
           	items:  [
           	  {
                 id: 'dendrogram-heatmap-app-container',
                 html: '<div id="main-window"></div>'
               }
               ],
+
+              */
             },
             {
               id: 'metadataPanel',
