@@ -37,7 +37,7 @@ function initialise() {
     var evtBus = new eventBus();
     var stsBar = new statusBar();
     var selCntr = new cellSelectionController();
-    var infoBxCntr = new infoboxController();
+    //var infoBxCntr = new infoboxController();
     var geneSelCntr = new geneSelectionController();
 
     // Controller for cell selection UI
@@ -108,15 +108,6 @@ function generateExtJsLayout() {
 		'</div></div>'
 	    }]
     });
-/*
-    var dendrogramPanel = Ext.create('Ext.panel.Panel', );
-*/
-    var livelogPanel =  Ext.create('Ext.panel.Panel', {
-	id: 'information-app-container',
-	layout: 'fit',
-	height: '100%',
-	width: '100%',
-    });
 
     var cellSelectionPanel =  Ext.create('Ext.panel.Panel', {
 	id: 'cellselection-app-container',
@@ -174,20 +165,6 @@ function generateExtJsLayout() {
 		    glyph: 0xf0e7,
 		    tooltip: 'Run differential expression and other actions between selected sets',
 		    items: actionsPanel
-		},
-		{
-		    layout: 'fit',
-		    title: 'Session Log',
-		    glyph: 0xf129,
-		    tooltip: 'The session log displays messages generated during the dataset exploration',
-		    height: '100%',
-		    width: '100%',
-		    items: livelogPanel
-		},
-		{
-		    title: 'Settings',
-		    tooltip: 'Application settings',
-		    glyph: 0xf1de
 		}
 	    ],
 	    bbar: statusBar
