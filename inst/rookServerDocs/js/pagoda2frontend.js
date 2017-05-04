@@ -108,23 +108,9 @@ function generateExtJsLayout() {
 		'</div></div>'
 	    }]
     });
-
-    var mainViewPanel = Ext.create('Ext.panel.Panel', {
-	region: 'north',
-	id: 'mainViewPanel',
-	layout: 'fit',
-	width: '100%',
-	height: '100%',
-	title: 'Main View',
-	padding: 0,
-	glyph: 0xf1fe,
-	bodyPadding: 0,
-	items:  [{
-            id: 'dendrogram-heatmap-app-container',
-            html: '<div id="main-window"></div>'
-        }],
-    });
-
+/*
+    var mainViewPanel = Ext.create('Ext.panel.Panel', );
+*/
     var livelogPanel =  Ext.create('Ext.panel.Panel', {
 	id: 'information-app-container',
 	layout: 'fit',
@@ -332,11 +318,63 @@ function generateExtJsLayout() {
     var centerColumnPanel = Ext.create('Ext.panel.Panel',{
         region: 'center',
         id: 'centreColumnPanel',
-	header: false,
-        layout: 'border',
+	      header: false,
+        layout: 'vbox',
         width: '33%',
         title: 'Main Data Viewer',
-        items: [mainViewPanel]
+        items: [
+
+
+          {
+          	id: 'mainViewPanel',
+          	layout: 'fit',
+          	width: '100%',
+          	height: '10%',
+          	title: 'Main View',
+          	padding: 0,
+          	glyph: 0xf1fe,
+          	bodyPadding: 0,
+          	split: true,
+          	items:  [
+          	  {
+                id: 'dendrogram-heatmap-app-container',
+                html: '<div id="main-window"></div>'
+              }
+              ],
+            },
+            {
+              id: 'metadataPanel',
+              layout: 'fit',
+              width: '100%',
+              height: '10%',
+              padding: 0,
+              split: true,
+              title: 'Metadata View',
+              html: '<div id="metadata-area-container"></div>'
+            },
+            {
+              id: 'aspectPanel',
+              layout: 'fit',
+              width: '100%',
+              height: '25%',
+              padding: 0,
+              split: true,
+              title: 'Aspect View',
+              html: '<div id="aspect-heatmap-container"></div>'
+            },
+            {
+              id: 'heatmapPanel',
+              layout: 'fit',
+              width: '100%',
+              height: '55%',
+              padding: 0,
+              split: true,
+              title: 'Heatmap View',
+              html: '<div id="heatmap-area-container"></div>'
+            }
+
+
+          ]
     });
 
     var rightColumnPanel = Ext.create('Ext.panel.Panel', {

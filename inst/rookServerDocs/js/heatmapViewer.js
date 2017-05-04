@@ -16,6 +16,14 @@ function heatmapViewer() {
 
     // NOTE: Actual init is done by parent object
 
+
+    var extJsContainer = Ext.getCmp('mainViewPanel');
+    extJsContainer.onResize = function() {
+    	var heatView = new heatmapViewer();
+    	heatView.updateCanvasSize();
+    	heatView.drawHeatmap();
+    };
+
     heatmapViewer.instance =  this;
 };
 
@@ -349,6 +357,9 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
     }
 }
 
+heatmapViewer.prototype.getHeight = function() {
+  return Ext.getCmp('heatmapPanel').getHeight() - 50;
+}
 
 /**
  * Update the canvas size given the size from heatmapDendrogram
@@ -360,7 +371,7 @@ heatmapViewer.prototype.updateCanvasSize = function() {
     heatDendV =  new heatmapDendrogramViewer();
 
     var curWidth =  heatDendV.getCurrentWidth();
-    var curHeight =  heatDendV.getCurrentHeatmapHeight();
+    var curHeight =  this.getHeight();
 
     this.canvasElementWidth = curWidth;
     this.canvasElementHeight =  curHeight;
@@ -435,7 +446,7 @@ heatmapViewer.prototype.drawHeatmap = function() {
 
 	var left = heatDendView.getPlotAreaLeftPadding();
 	var heatmapWidth = heatDendView.getPlotAreaWidth();
-	var heatmapHeight = heatDendView.getCurrentHeatmapHeight();
+	var heatmapHeight = this.getHeight();
 
 	const text = 'No Genes selected';
 
@@ -480,7 +491,7 @@ heatmapViewer.prototype.getDrawConstants = function() {
 	top: 5,
 	left:  heatDendView.getPlotAreaLeftPadding(),
 	width: heatDendView.getPlotAreaWidth(),
-	height: heatDendView.getCurrentHeatmapHeight(),
+	height: this.getHeight(),
 	paddingBottom: 10,
 	maxCellHeight: 30,
     }
@@ -549,7 +560,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     $('#heatmap-area-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
     var loadingDomItem =  $('#heatmap-area-container > .loadingIcon')
     var lpad = heatDendView.getCurrentWidth()  / 2;
-    var tpad = heatDendView.getCurrentHeatmapHeight() /2;
+    var tpad = this.getHeight() /2;
     loadingDomItem.css({'padding-left': lpad + 'px', 'padding-top': tpad + 'px'});
 
     var dataCntr = new dataController();

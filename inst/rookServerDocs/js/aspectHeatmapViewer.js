@@ -13,9 +13,21 @@ function aspectHeatmapViewer() {
   }
   console.log('Initializing aspect heatmap viewer...');
 
+    var extJsContainer = Ext.getCmp('aspectPanel');
+    extJsContainer.onResize = function() {
+    	var o = new aspectHeatmapViewer();
+    	o.updateCanvasSize();
+    	o.drawHeatmap();
+    };
+
+
+
   aspectHeatmapViewer.instance = this;
 }
 
+aspectHeatmapViewer.prototype.getHeight = function() {
+  return Ext.getCmp('aspectPanel').getHeight() - 50;
+}
 
 /**
  * Perform initialization of the aspect heatmap viewer
@@ -197,7 +209,7 @@ aspectHeatmapViewer.prototype.updateCanvasSize = function() {
   // Get and store current height
   heatDendV = new heatmapDendrogramViewer();
   var curWidth = heatDendV.getCurrentWidth();
-  var curHeight = heatDendV.getCurrentAspectHeatmapHeight();
+  var curHeight = this.getHeight();
 
   var containerDiv = $('#aspect-heatmap-container');
   containerDiv.css({
@@ -251,7 +263,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	$('#aspect-heatmap-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
 	var loadingDomItem =  $('#aspect-heatmap-container > .loadingIcon');
   var lpad = heatDendView.getCurrentWidth()  / 2;
-  var tpad = heatDendView.getCurrentHeatmapHeight() /2;
+  var tpad = this.getHeight() /2;
   loadingDomItem.css({'padding-left': lpad + 'px', 'padding-top': tpad + 'px'});
 
 	var dataCntr = new dataController();
@@ -350,7 +362,7 @@ aspectHeatmapViewer.prototype.getDrawConstants = function() {
     	top: 5,
     	left:  heatDendView.getPlotAreaLeftPadding(),
     	width: heatDendView.getPlotAreaWidth(),
-    	height: heatDendView.getCurrentAspectHeatmapHeight(),
+    	height: this.getHeight(),
     	paddingBottom: 10,
     	maxCellHeight: 30,
     }

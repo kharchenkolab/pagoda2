@@ -94,41 +94,6 @@ dendrogramViewer.prototype.generatePalettesMenu = function() {
     return paletteMenu;
 }
 
-// This should not be here
-/**
- * Generate the layout menu
- * @private
- * @returns layout menu extjs object
- */
-dendrogramViewer.prototype.generateLayoutOptionsMenu = function() {
-    var layoutOptionsMenu = Ext.create('Ext.menu.Menu');
-    for (layoutName in p2globalParams.dendrogramHeatmapViewer.layoutSettings ) {
-	var layout =  p2globalParams.dendrogramHeatmapViewer.layoutSettings[layoutName];
-	var checked = false;
-	if (layout.name === p2globalParams.dendrogramHeatmapViewer.defaultLayoutName){
-	    checked = true;
-	}
-
-	layoutOptionsMenu.add({
-	    text: layout.displayName,
-	    name: layout.name,
-	    group: 'layout',
-	    checked: checked,
-	    checkHandler: function(e, checked, eOpts) {
-		var heatDendView = new heatmapDendrogramViewer();
-		// Events fire on check change for both the previous and current
-		if (checked) {
-		    heatDendView.setCurrentLayout(e.name);
-		    heatDendView.updateView();
-		}
-		//heatDendView.setCurrentLayout()
-	    }
-	});
-
-    };
-    return layoutOptionsMenu;
-}
-
 // Config for the dendrogram and other things should be split
 /**
  * Setup the buttons for the dendrogram control and the  associated
@@ -292,9 +257,6 @@ dendrogramViewer.prototype.initializeButtons =  function() {
     // Generate palette menu
     var paletteMenu =  this.generatePalettesMenu();
 
-    // Generate layout options menu
-    var layoutOptionsMenu = this.generateLayoutOptionsMenu();
-
     // This shouldn't be here at alll!!!
     // The settings  menu for the dendrogramand heatmap
     var dendHeatSettingsMenu = Ext.create('Ext.menu.Menu', {
@@ -321,10 +283,6 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 
 		    }} // buffer of change listener
 		}
-	    },
-	    {
-		text: 'Layout',
-		menu: layoutOptionsMenu
 	    },
 	    {
 		text: 'Reorder rows',
@@ -671,6 +629,10 @@ dendrogramViewer.prototype.getCurrentDisplayCellsIndexes = function() {
 	    this.currentConfiguration.endCellIndex];
 }
 
+dendrogramViewer.prototype.getHeight = function() {
+    return Ext.getCmp('mainViewPanel').getHeight()  - 50;
+}
+
 /**
  * Draw a dendrogram that only includes everything under the specified node
  * @param data the data as received from the dataController
@@ -692,8 +654,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
     var maxHeight = data.height[topnode - 1];
 
     // Vertical scaling
-    var vscale = heatDendView.getCurrentDendHeight() / maxHeight *
-	p2globalParams.dendrogram.scaleFactor;
+    var vscale = this.getHeight() / maxHeight *	p2globalParams.dendrogram.scaleFactor;
 
     // Get the canvas object
     var dendAreaOuter = $('#dendrogram-area');
@@ -705,7 +666,7 @@ dendrogramViewer.prototype.drawDendrogramSubsetWithData = function (data, topnod
     ctx.lineWidth = this.currentConfiguration.lineWidth;
 
     // Clear the canvas
-    ctx.clearRect(0,0,heatDendView.getCurrentWidth(),heatDendView.getCurrentDendHeight())
+    ctx.clearRect(0,0,heatDendView.getCurrentWidth(), this.getHeight())
 
     // Calculating leaf positions
     coordOfNodes = dendV.getClusterPositionRanges(data);
@@ -1041,7 +1002,7 @@ dendrogramViewer.prototype.updateCanvasSize = function() {
     // Get current dimentions
     heatDendV = new heatmapDendrogramViewer();
     var curWidth = heatDendV.getCurrentWidth();
-    var curHeight = heatDendV.getCurrentDendHeight();
+    var curHeight = this.getHeight();
 
     // Keep track within the object
     this.canvasElementWidth = curWidth;

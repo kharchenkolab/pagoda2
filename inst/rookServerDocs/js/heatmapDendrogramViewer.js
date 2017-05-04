@@ -46,7 +46,7 @@ function heatmapDendrogramViewer() {
     extJsContainer.onResize = function() {
     	var heatDendView = new heatmapDendrogramViewer();
     	heatDendView.updateContainerSize();
-    	heatDendView.updateView();
+    	//heatDendView.updateView();
     };
 };
 
@@ -57,71 +57,10 @@ function heatmapDendrogramViewer() {
 heatmapDendrogramViewer.prototype.updateContainerSize = function() {
     var extJsContainer = Ext.getCmp('mainViewPanel');
     // TODO: move the -30 to some centralised configration
-    this.viewerHeight = extJsContainer.body.getHeight(true) - 30 ;
+    //this.viewerHeight = extJsContainer.body.getHeight(true) - 30 ;
     this.viewerWidth = extJsContainer.body.getWidth(true);
 }
 
-/**
- * Get the element skipping value
- * @param n {number} number of elements to plot
- * @description Get the element skipping value given the
- * number of elements we are plotting. We keep this in this object
- * so that it exists in a centralised place and the skipping is
- * consistent between different components. Currently not used
- * @todo Improve this
- */
-heatmapDendrogramViewer.prototype.getSkipping = function(n) {
-    var k =  1000;
-    var p = 4 ;
-
-    var skipping;
-    if ( n < k) {
-	skipping = 1;
-    } else {
-	skipping = p;
-    }
-    return skipping;
-};
-
-/**
- * Get the current height of the canvas area for the dendrogram.
- * @description get the current height of the canvas area for the dendrogram
- * @returns current canvas height for the dendrogram. This is currently fixed
- */
-heatmapDendrogramViewer.prototype.getCurrentDendHeight = function() {
-    var layout = this.getCurrentLayoutName();
-    return this.viewerHeight * p2globalParams.dendrogramHeatmapViewer.layoutSettings[layout].dendrogramHeight;
-};
-
-/**
- * Get the current height of the canvas area used for the heatmap.
- * @description get the current height of the canvas area used for the heatmap
- * @returns Current height of the canvas for the heatmap
- */
-heatmapDendrogramViewer.prototype.getCurrentHeatmapHeight = function() {
-    var layout = this.getCurrentLayoutName();
-    return this.viewerHeight * p2globalParams.dendrogramHeatmapViewer.layoutSettings[layout].heatmapHeight;
-
-};
-
-/**
- * Get the current height of the canvas area used for tthe aspect heatmap
- * @description get the current height of the canvas area fo the the aspect heatmap
- * @returns Current height of the canvas for the aspect heatmap
- */
- heatmapDendrogramViewer.prototype.getCurrentAspectHeatmapHeight = function() {
-    var layout = this.getCurrentLayoutName();
-    return this.viewerHeight * p2globalParams.dendrogramHeatmapViewer.layoutSettings[layout].aspectHeatmapHeight;
-}
-
-/**
- * Get current height of the canvas for the metadata heatmap
- * @returns The current metadata heatmap height
- */
-heatmapDendrogramViewer.prototype.getCurrentMetadataHeight =  function() {
-    var layout = this.getCurrentLayoutName();
-    return this.viewerHeight * p2globalParams.dendrogramHeatmapViewer.layoutSettings[layout].metadataHeight;
-};
 
 /**
  * Returns the name of the current layout
@@ -179,10 +118,10 @@ heatmapDendrogramViewer.prototype.getPlotAreaWidth = function() {
  */
 heatmapDendrogramViewer.prototype.generateDrawAreas = function() {
     $("#main-window").append(
-	     '<div id="dendrogram-area-container"></div>' +
-	    '<div id="metadata-area-container"></div>' +
-	    '<div id="aspect-heatmap-container"></div>' +
-	    '<div id="heatmap-area-container"></div>'
+	     '<div id="dendrogram-area-container"></div>'
+	    //'<div id="metadata-area-container"></div>' +
+	    // '<div id="aspect-heatmap-container"></div>'
+	   // '<div id="heatmap-area-container"></div>'
 
     );
 };
@@ -215,7 +154,9 @@ heatmapDendrogramViewer.prototype.initializeComponents = function() {
 
 
 /**
- * Do a view update given the current object settings
+ * Update the view of the dendrogram (usually to apply new subsetting)
+ * followed by updating the 3 heatmaps that depend on the cell ordering
+ * provided by the dendrogram (metadata, aspects and expression heatmap)
  */
 heatmapDendrogramViewer.prototype.updateView = function() {
     // Initialize heatmap after dendrogram
@@ -223,28 +164,27 @@ heatmapDendrogramViewer.prototype.updateView = function() {
 
     // Use a named function so we can remove it from the listeners
     var dendrogramInitListener = function() {
-	var heatView = new heatmapViewer();
-	var metaView = new metaDataHeatmapViewer();
-	var aspectHeatView = new aspectHeatmapViewer();
+    	var heatView = new heatmapViewer();
+    	var metaView = new metaDataHeatmapViewer();
+    	var aspectHeatView = new aspectHeatmapViewer();
 
-	heatView.updateCanvasSize();
-	heatView.drawHeatmap();
+    	heatView.updateCanvasSize();
+    	heatView.drawHeatmap();
 
-	metaView.updateCanvasSize();
-	metaView.drawMetadata();
+    	metaView.updateCanvasSize();
+    	metaView.drawMetadata();
 
-	aspectHeatView.updateCanvasSize();
-	aspectHeatView.drawHeatmap();
+    	aspectHeatView.updateCanvasSize();
+    	aspectHeatView.drawHeatmap();
 
-	// Unregister this handler
-	var evtBus = new eventBus();
-	evtBus.unregister("dendrogram-cell-order-updated", null, dendrogramInitListener);
-  }
+    	// Unregister this handler
+    	var evtBus = new eventBus();
+    	evtBus.unregister("dendrogram-cell-order-updated", null, dendrogramInitListener);
+    };
 
     // Listen for first dendrogram initialization
     evtBus.register("dendrogram-cell-order-updated", null,dendrogramInitListener);
 
     var dendView = new dendrogramViewer();
     dendView.redrawDendrogram();
-//    dendView.updateOverlay();
 };

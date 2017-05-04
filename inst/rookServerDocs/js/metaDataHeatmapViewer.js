@@ -17,7 +17,20 @@ function metaDataHeatmapViewer() {
     // dendrogram (which will provide the order)
     // is ready
 
+
+
+    var extJsContainer = Ext.getCmp('metadataPanel');
+    extJsContainer.onResize = function() {
+    	var metaView = new metaDataHeatmapViewer();
+    	metaView.updateCanvasSize();
+    	metaView.drawMetadata();
+    };
+
     metaDataHeatmapViewer.instance = this;
+}
+
+metaDataHeatmapViewer.prototype.getHeight  = function() {
+  return Ext.getCmp('metadataPanel').getHeight() - 50;
 }
 
 /**
@@ -168,7 +181,7 @@ metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
     heatDendV = new heatmapDendrogramViewer();
 
     var curWidth =  heatDendV.getCurrentWidth();
-    var curHeight =   heatDendV.getCurrentMetadataHeight();
+    var curHeight = this.getHeight();
 
     this.canvasElementWidth = curWidth;
     this.canvasElementHeight =  curHeight;
@@ -193,7 +206,7 @@ metaDataHeatmapViewer.prototype.getDrawConstants = function() {
 	top: 1,
 	left: heatDendView.getPlotAreaLeftPadding(),
 	width: heatDendView.getPlotAreaWidth(),
-	height: heatDendV.getCurrentMetadataHeight(),
+	height: this.getHeight(),
 
     };
 }
