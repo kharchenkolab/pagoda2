@@ -122,6 +122,7 @@ differentialExpressionStore.prototype.getResultSetByInternalName = function(inte
 differentialExpressionStore.prototype.addResultSet = function(deset) {
   var newid = this.getUniqueId();
   this.deSets[newid] = deset;
+  return newid;
 };
 
 

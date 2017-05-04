@@ -108,7 +108,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 	    xtype: 'combo',
 	    fieldLabel: 'Method', // TODO add help pane
 	    queryMode: 'local',
-	    editable: 'false',
+	    editable: false,
 	    store: Ext.data.StoreManager.lookup('availableDEmethodStore'),
 	    displayField: 'displayname',
 	    valueField: 'name'
@@ -128,9 +128,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
       		    .findField('selectionMethod').getValue();
           var resultName = Ext.getCmp("formPanelDE").getForm()
               .findField("resultName").getValue();
-
-  console.log(method);
-
 
       		if (selectionA === selectionB) {
       		    Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
@@ -157,11 +154,13 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 
                   // Save this de result set in the differentialExpresionStore
                   var diffExprStore = new differentialExpressionStore();
-                  diffExprStore.addResultSet(resultSet);
+                  var setId = diffExprStore.addResultSet(resultSet);
 
                   // Notify the DE results table to updata from the store
                   var diffExpreTblView = new diffExprTableViewer();
                   diffExpreTblView.update();
+
+                  diffExpreTblView.showSelectedSet(setId);
 
                   // TODO: Change focus to the table and hightlight new de set
 

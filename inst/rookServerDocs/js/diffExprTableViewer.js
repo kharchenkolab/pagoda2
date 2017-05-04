@@ -238,3 +238,18 @@ diffExprTableViewer.prototype.update = function() {
     this.enableChangeListener();
 
 }
+
+diffExprTableViewer.prototype.showSelectedSet = function(internalName) {
+  this.raiseTab();
+
+  var table = Ext.getCmp('deResultSetsTableExtJS');
+  var index = table.getStore().find('name', internalName);
+  table.getSelectionModel().select(index);
+
+}
+
+diffExprTableViewer.prototype.raiseTab = function() {
+  var tablesTab = Ext.getCmp('tablesTabExtJS');
+  // FIXME: The tab order is hard-wired here
+  tablesTab.setActiveTab(3);
+}
