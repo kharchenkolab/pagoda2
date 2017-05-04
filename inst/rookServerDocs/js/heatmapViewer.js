@@ -16,7 +16,7 @@ function heatmapViewer() {
 
     // NOTE: Actual init is done by parent object
 
-    this.generateMenu();
+
 
     var extJsContainer = Ext.getCmp('heatmapPanel');
     extJsContainer.onResize = function() {
@@ -93,6 +93,8 @@ heatmapViewer.prototype.initialize = function() {
     this.drawHeatmap();
 
     this.setRowReordering(p2globalParams.heatmapViewer.defaultRowReordering);
+
+    this.generateMenu();
 };
 
 
@@ -103,6 +105,26 @@ heatmapViewer.prototype.initialize = function() {
  * @returns palette menu extjs object
  */
 heatmapViewer.prototype.generatePalettesMenu = function() {
+    var paletteChangeHandler = function(item) {
+        var heatView = new heatmapViewer();
+
+        heatView.palManager.setPalette(item.value);
+
+    		// NOTE: We are getting  the number of colors because the
+    		// Manger will have sorted out any issues with exceeeding the
+    		// new palette limits
+    		var curNoColours = heatView.palManager.getNumberOfColors();
+
+        // Set the actual value to the menu
+        Ext.getCmp('paletteLevelsField').setValue(curNoColours);
+
+        // Impose the new limits of this palette
+        Ext.getCmp('paletteLevelsField').setMinValue(heatView.palManager.getMinNumberOfColors());
+        Ext.getCmp('paletteLevelsField').setMaxValue(heatView.palManager.getMaxNumberOfColors());
+
+    		heatView.drawHeatmap();
+    };
+
 
     var palettes = p2globalParams.heatmapViewer.availablePalettes;
     var paletteMenu = Ext.create('Ext.menu.Menu');
@@ -110,19 +132,7 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
         paletteMenu.add({
             text: palettes[i].displayName,
 	          value: palettes[i].name,
-            handler: function(item) {
-		            var heatView = new heatmapViewer();
-
-		            heatView.palManager.setPalette(item.value);
-
-            		// NOTE: WE are getting  the number of colors because the
-            		// Manger will have sorted out any issues with exceeing the
-            		// new palette limits
-            		var curNoColours = heatView.palManager.getNumberOfColors();
-            		// TODO: Set the value to the menu
-
-            		heatView.drawHeatmap();
-	            }
+            handler: paletteChangeHandler
 	    }); // paletteMenu.add
     } // for
     return paletteMenu;
@@ -135,7 +145,7 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
  */
 heatmapViewer.prototype.generateMenu = function() {
   var toolbar = Ext.create('Ext.Toolbar');
-
+var heatView = this;
 
 var paletteMenu = this.generatePalettesMenu();
 
@@ -153,13 +163,13 @@ var paletteMenu = this.generatePalettesMenu();
 		tooltip: 'Number of colors for the palette',
 		value: p2globalParams.heatmapViewer.defaultPaletteLevels, // FIXME
 		disabled: false,
-		maxValue: 100,
-		minValue: 2,
+		maxValue: heatView.palManager.getMaxNumberOfColors(),
+		minValue: heatView.palManager.getMinNumberOfColors(),
 		listeners: {
 		    change: {buffer: 800, fn: function(f,v) {
-			var heatView = new heatmap1Viewer();
-			heatView.setNumberOfColors(v);
-			heatView.drawHeatmap();
+      			var heatView = new heatmapViewer();
+      			heatView.palManager.setNumberOfColors(v);
+      			heatView.drawHeatmap();
 
 		    }} // buffer of change listener
 		}

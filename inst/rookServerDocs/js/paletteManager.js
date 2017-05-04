@@ -20,19 +20,19 @@ function paletteManager() {
  * Get the available palettes
  */
 paletteManager.prototype.getAvailablePalettes = function() {
-    
+
     return this.availablePalettes;
 }
 
 /**
  * Set the current palette name
- * @descriptions verifies and updates the number of colors 
+ * @descriptions verifies and updates the number of colors
  */
 paletteManager.prototype.setPalette = function(newPal) {
 
     // TODO: Check it  is a valid palette
     this.currentPaletteName = newPal;
-    
+
     // Set the number of colors again to ensure
     // it is valid for this palette
     var n = this.getNumberOfColors();
@@ -48,7 +48,7 @@ paletteManager.prototype.getPaletteName = function() {
 
 
 /**
- * Returns a function that will do color mapping from 
+ * Returns a function that will do color mapping from
  * a specified range to a palette index
  */
 paletteManager.prototype.getMeanClampedColorMapper = function(rowMean, maxAbsValue, palSize) {
@@ -76,14 +76,30 @@ paletteManager.prototype.setNumberOfColors = function(v) {
 
     var palName = this.getPaletteName();
     // TODO: Fix me
-    var palEntry = this.availablePalettes[palName]; 
+    var palEntry = this.availablePalettes[palName];
     if (v > palEntry.maxColors) {
-	v = palEntry.maxColors;
+	    v = palEntry.maxColors;
     } else if ( v < palEntry.minColors ) {
-	v = palEntry.minColors;
+	    v = palEntry.minColors;
     }
 
     this.currentNumberOfColors =  v;
+}
+
+/**
+ * Get teh maximum number fo colors for the current palette
+ */
+paletteManager.prototype.getMaxNumberOfColors = function() {
+  var palName = this.getPaletteName();
+  return this.availablePalettes[palName].maxColors
+}
+
+/**
+ * Get the minimum number fo colors for the current palette
+ */
+paletteManager.prototype.getMinNumberOfColors = function() {
+  var palName = this.getPaletteName();
+  return this.availablePalettes[palName].minColors
 }
 
 /**
@@ -100,7 +116,7 @@ paletteManager.prototype.getNumberOfColors = function() {
 paletteManager.prototype.getPaletteColors = function() {
     var palName = this.getPaletteName();
     var palSize = this.getNumberOfColors();
-    
+
     // TODO: Move this out of heatmap viewer and also make a in object copy
     var palEntry = this.availablePalettes[palName];
 
