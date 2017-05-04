@@ -32,6 +32,11 @@ var p2globalParams = {
 
     },
 
+    aspectViewer: {
+      defaultPaletteName: 'tol-dv',
+      defaultPaletteLevels: 20,
+    },
+
     heatmapViewer: {
 	fontBaseSize:  20,
 	defaultPaletteLevels: 15,

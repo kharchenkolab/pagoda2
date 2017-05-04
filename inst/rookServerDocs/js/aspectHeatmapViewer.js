@@ -13,16 +13,94 @@ function aspectHeatmapViewer() {
   }
   console.log('Initializing aspect heatmap viewer...');
 
-    var extJsContainer = Ext.getCmp('aspectPanel');
-    extJsContainer.onResize = function() {
-    	var o = new aspectHeatmapViewer();
-    	o.updateCanvasSize();
-    	o.drawHeatmap();
-    };
+  // Handle extjs resize
+  var extJsContainer = Ext.getCmp('aspectPanel');
+  extJsContainer.onResize = function() {
+  	var o = new aspectHeatmapViewer();
+  	o.updateCanvasSize();
+  	o.drawHeatmap();
+  };
 
 
 
   aspectHeatmapViewer.instance = this;
+}
+
+/**
+ * Generate the palettes menu
+ * @private
+ * @returns palette menu extjs object
+ */
+aspectHeatmapViewer.prototype.generatePalettesMenu = function() {
+  var paletteChangeHandler = function(item) {
+      var aspHeatView = new aspectHeatmapViewer();
+
+      aspHeatView.palManager.setPalette(item.value);
+
+    	// NOTE: WE are getting  the number of colors because the
+    	// Manger will have sorted out any issues with exceeing the
+    	// new palette limits
+    	var curNoColours = aspHeatView.palManager.getNumberOfColors();
+
+    	// TODO: Set the value to the menu
+
+    	aspHeatView.drawHeatmap();
+  };
+
+
+    var palettes = p2globalParams.heatmapViewer.availablePalettes; // CHANGE
+    var paletteMenu = Ext.create('Ext.menu.Menu');
+    for (var i in palettes)    {
+        paletteMenu.add({
+            text: palettes[i].displayName,
+	          value: palettes[i].name,
+            handler: paletteChangeHandler
+	    }); // paletteMenu.add
+    } // for
+    return paletteMenu;
+}
+
+
+
+aspectHeatmapViewer.prototype.generateMenu = function(){
+  var toolbar = Ext.create('Ext.Toolbar');
+
+  var paletteMenu = this.generatePalettesMenu();
+
+
+  var settingsMenu = Ext.create('Ext.menu.Menu', {
+    id: 'aspectSettingsMenu',
+    items: [
+      {
+          text: 'Palette Name',
+          menu: paletteMenu
+
+      },
+      {
+        fieldLabel: 'Palette Levels',
+        xtype: 'numberfield',
+        tooltip: 'Number of colors for the palette',
+        value: 10, // FIXME
+    		disabled: false,
+    		maxValue: 100,
+    		minValue: 2
+      } // numberfield
+    ] // items
+
+  });
+
+    // Add plot configuration menu button
+    toolbar.add({
+    	text: 'Settings',
+    	xtype: 'button',
+    	tooltip: 'Configure aspect heatmap plot settings',
+    	glyph: 0xf013,
+    	menu: settingsMenu
+    });
+
+    var aspectPanel = Ext.getCmp('aspectPanel');
+    aspectPanel.getHeader().add(toolbar);
+
 }
 
 aspectHeatmapViewer.prototype.getHeight = function() {
@@ -68,9 +146,13 @@ aspectHeatmapViewer.prototype.initialize = function() {
   this.updateCanvasSize();
 
   // TODO: Update this with an apsect specific palette
-      this.palManager = new paletteManager();
-    this.palManager.setPalette(p2globalParams.heatmapViewer.defaultPaletteName);
-    this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);
+  this.palManager = new paletteManager();
+  this.palManager.setPalette(p2globalParams.aspectViewer.defaultPaletteName);
+  this.palManager.setNumberOfColors(p2globalParams.aspectViewer.defaultPaletteLevels);
+
+  // Make the menu
+  this.generateMenu();
+
 
   // Draw the heatmap
   this.drawHeatmap();

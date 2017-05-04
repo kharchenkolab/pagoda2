@@ -180,12 +180,6 @@ var paletteMenu = this.generatePalettesMenu();
     });
 
 
-
-
-
-
-
-
       // Add plot configuration menu button
     toolbar.add({
     	text: 'Settings',
@@ -198,7 +192,6 @@ var paletteMenu = this.generatePalettesMenu();
 
     var heatmapPanel = Ext.getCmp('heatmapPanel');
     heatmapPanel.getHeader().add(toolbar);
-    //mainPanelHeader.add(toolbar);
 }
 
 /**
