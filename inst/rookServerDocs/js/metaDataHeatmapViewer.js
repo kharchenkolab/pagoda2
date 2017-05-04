@@ -27,10 +27,16 @@ function metaDataHeatmapViewer() {
     metaDataHeatmapViewer.instance = this;
 }
 
+/**
+ * Get the height
+ */
 metaDataHeatmapViewer.prototype.getHeight  = function() {
-  return Ext.getCmp('metadataPanel').getHeight() - 30;
+  return Ext.getCmp('metadataPanel').getHeight() - 40;
 }
 
+/**
+ * Get the width
+ */
 metaDataHeatmapViewer.prototype.getWidth  = function() {
   return (Ext.getCmp('metadataPanel').getWidth());
 }
@@ -127,6 +133,23 @@ metaDataHeatmapViewer.prototype.initialize = function () {
      (metadataAreaOverlay[0]).addEventListener('mouseout', function(e) {
 	document.body.style.cursor = "default";
     });
+
+  // Make the menu
+
+  var toolbar = Ext.create('Ext.Toolbar');
+  toolbar.add({
+          text: "",
+        type: "button",
+        tooltip: 'Download current view',
+        glyph: 0xf0ed,
+        handler: function(){
+            var canvas = document.getElementById('metadata-area');
+            var imageURL = canvas.toDataURL('image/png');
+            imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+            window.open(imageURL);
+        } // handler
+  });
+  var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
 
 
 
