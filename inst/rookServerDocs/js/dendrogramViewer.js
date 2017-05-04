@@ -1083,7 +1083,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 		// Vertical node
 		var dataCntr = new dataController();
 		dataCntr.getReducedDendrogram(function(data) {
-		    descendants = dendV.getNodeDescendents(data, nodeId);
+		    var descendants = dendV.getNodeDescendents(data, nodeId);
 
 		    // Get the start end positions of the clusters
 		    var clusterPositions = dendV.getClusterPositionRanges(data);

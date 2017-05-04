@@ -659,7 +659,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     // Show centered waiting icon
     $('#heatmap-area-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
     var loadingDomItem =  $('#heatmap-area-container > .loadingIcon')
-    var lpad = heatDendView.getCurrentWidth()  / 2;
+    var lpad = this.getWidth()  / 2;
     var tpad = this.getHeight() /2;
     loadingDomItem.css({'padding-left': lpad + 'px', 'padding-top': tpad + 'px'});
 
