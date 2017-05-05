@@ -201,17 +201,13 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
  * @param selectionName the name of the cell selection as registered int he cellSelectionController
  */
 embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selectionName) {
-  console.log('hightligh selection emeb');
-
   var cellSelCntr = new cellSelectionController();
   var cells = cellSelCntr.getSelection(selectionName);
 
-  console.log(cells);
-
   var embViewer = new embeddingViewer();
   var thisViewer = this;
-  var config =  embViewer.getConfig();
 
+  var config =  embViewer.getConfig();
   var dataCntr = new dataController();
   var type = config.type;
   var embeddingType = config.embeddingType;
@@ -220,7 +216,6 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 
   dataCntr.getEmbedding(type, embeddingType, function(data){
     var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
-
 
 	    // Make the xscale
 	    thisViewer.xScaleDomainMin = +Infinity;
@@ -249,6 +244,28 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 							 thisViewer.yScaleDomainMax,
 							 thisViewer.yScaleRangeMin,
 							 thisViewer.yScaleRangeMax);
+
+
+	    var pointsize = embViewer.getCurrentPointSize();
+
+	    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
+	    ctx.clearRect(0,0,5000,5000);
+
+	    ctx.strokeStyle = 'red';
+
+	    for (var i = 0; i < plotData.length; i++) {
+    		var point = plotData[i];
+
+        // If in selection
+    		if ( cells.indexOf(point[0]) > -1 ) {
+    		    var xs = xScale(point[1]);
+    		    var ys = yScale(point[2]);
+
+    		    ctx.beginPath();
+    		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+    		    ctx.stroke();
+    		}
+	    } // for
 
       // CONTINUE HERE
   });
