@@ -204,7 +204,7 @@ toolbar.add({
             if (canvas.width > maxSize | canvas.height >maxSize){
                 Ext.Msg.show({
                   title: 'Warning',
-                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimension.' +
                    'This may cause problems during exporting. Do you want to continue?',
                    buttons: Ext.Msg.OKCANCEL,
                    fn: function(s) {
