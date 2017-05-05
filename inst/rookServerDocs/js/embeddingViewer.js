@@ -207,9 +207,31 @@ embeddingViewer.prototype.generateToolbar = function() {
         glyph: 0xf0ed,
         handler: function(){
               var embV = new embeddingViewer();
-              var dataURL = embV.currentViewer.getImageDataURL();
-              window.open(dataURL);
-              //console.log(dataURL);
+              var canvas = embV.currentViewer.getMainCanvasElement();
+
+               const maxSize = 2000;
+                if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                          var imageURL = canvas.toDataURL('image/png');
+                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                          window.open(imageURL);
+                     } //if
+                   } //fn
+                }) // Ext.Msg.show
+            } else {
+                                        var imageURL = canvas.toDataURL('image/png');
+                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                          window.open(imageURL);
+
+
+            }// if
+
         } // handler
         });
 

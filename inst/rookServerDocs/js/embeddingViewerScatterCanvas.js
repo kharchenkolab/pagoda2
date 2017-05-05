@@ -66,15 +66,12 @@ function embeddingViewerScatterCanvas() {
     this.generateStructure();
 }
 
-/**var
- * Return a dataURL string the the contents of the main canvas
- * rendered as an image
+
+/**
+ * Returns the main canvas element for this embedding view
  */
-embeddingViewerScatterCanvas.prototype.getImageDataURL = function() {
-  var canvas = document.getElementById('embedding-canvas');
-  var imageURL = canvas.toDataURL('image/png');
-  imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-  return imageURL;
+embeddingViewerScatterCanvas.prototype.getMainCanvasElement = function() {
+  return document.getElementById('embedding-canvas');
 }
 
 /**
