@@ -249,14 +249,12 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 	    var pointsize = embViewer.getCurrentPointSize();
 
 	    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
+	    ctx.save();
 	    ctx.clearRect(0,0,5000,5000);
-
 	    ctx.strokeStyle = 'red';
 
 	    for (var i = 0; i < plotData.length; i++) {
     		var point = plotData[i];
-
-        // If in selection
     		if ( cells.indexOf(point[0]) > -1 ) {
     		    var xs = xScale(point[1]);
     		    var ys = yScale(point[2]);
@@ -266,8 +264,8 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
     		    ctx.stroke();
     		}
 	    } // for
+	    ctx.restore();
 
-      // CONTINUE HERE
   });
 
 }
@@ -309,33 +307,36 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     var dragStartY = 0;
     var ctx = overlayCanvasElement.getContext('2d');
 
+    var lastCursorPositionX = 0;
+    var lastCursorPositionY = 0;
+
     overlayCanvasElement.addEventListener('mouseover', function(e) {
-	document.body.style.cursor = 'crosshair';
+    	document.body.style.cursor = 'crosshair';
     });
 
     overlayCanvasElement.addEventListener('mousedown', function(e) {
-	dragStartX = e.layerX;
-	dragStartY = e.layerY;
-	dragging = true;
+    	dragStartX = e.layerX;
+    	dragStartY = e.layerY;
+    	dragging = true;
     });
 
     overlayCanvasElement.addEventListener('mouseup', function(e) {
-	if (dragging) {
-	    // Dragging complete
-	    var dragEndX = e.layerX;
-	    var dragEndY = e.layerY;
+    	if (dragging) {
+    	    // Dragging complete
+    	    var dragEndX = e.layerX;
+    	    var dragEndY = e.layerY;
 
-
-
-	    thisViewer.generateDragSelection(dragStartX, dragStartY, dragEndX, dragEndY);
-	}
-	dragging = false;
+    	    thisViewer.generateDragSelection(dragStartX, dragStartY, dragEndX, dragEndY);
+    	}
+    	dragging = false;
     });
 
     overlayCanvasElement.addEventListener('mousemove', function(e) {
-	var dragEndX =  e.layerX;
-	var dragEndY = e.layerY;
+  	var dragEndX =  e.layerX;
+  	var dragEndY = e.layerY;
 
+    lastCursorPositionX = e.layerX;
+    lastCursorPositionY = e.layerY;
 
 	if (dragging) {
 	    // TODO: clear the correct coordinates
@@ -352,11 +353,12 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 
     overlayCanvasElement.addEventListener('mouseleave', function(e) {
 
-	if (dragging) {
-	    ctx.clearRect(0,0,4000,4000);
-	}
-	dragging = false;
-	document.body.style.cursor = 'default';
+        	if (dragging) {
+        	    ctx.clearRect(0,0,4000,4000);
+        	    thisViewer.generateDragSelection(dragStartX, dragStartY, lastCursorPositionX, lastCursorPositionY);
+        	}
+        	dragging = false;
+        	document.body.style.cursor = 'default';
     });
 
 }
