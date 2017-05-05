@@ -160,7 +160,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                      } //if
                    } //fn
                 }) // Ext.Msg.show
-            } // if
+            } else {
+                                        var imageURL = canvas.toDataURL('image/png');
+                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                          window.open(imageURL);
+
+            }
 
 
         } // handler
