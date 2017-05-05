@@ -22,53 +22,57 @@ Ext.onReady(function() {
 ///////////////////////////////////////////////////////
 
 /**
- * Initialise the application components
+ * Check browser version and initialise app if OK
  */
 function initialise() {
-    // Generate the overall layout
-    generateExtJsLayout();
+    if (!pagHelpers.checkBrowser()) {
+        pagHelpers.showNotSupportedBrowserWarning();
+    } else {
+      // Generate the overall layout
+      generateExtJsLayout();
 
-    // Initialize internal components
-    var dataCntr = new dataController('remote');
+      // Initialize internal components
+      var dataCntr = new dataController('remote');
 
-    // Calculation controllers are init from a factory that is singleton
-    var calcCntr = new calculationController(true, true);// Both local and remote
+      // Calculation controllers are init from a factory that is singleton
+      var calcCntr = new calculationController(true, true);// Both local and remote
 
-    var evtBus = new eventBus();
-    var stsBar = new statusBar();
-    var selCntr = new cellSelectionController();
-    //var infoBxCntr = new infoboxController();
-    var geneSelCntr = new geneSelectionController();
+      var evtBus = new eventBus();
+      var stsBar = new statusBar();
+      var selCntr = new cellSelectionController();
+      //var infoBxCntr = new infoboxController();
+      var geneSelCntr = new geneSelectionController();
 
-    // Controller for cell selection UI
-    var cellSelUICntr = new cellSelectionUIcontroller();
-    var geneSelUICntr = new geneSelectionUIcontroller();
-    var actionPanelUICntr = new actionPanelUIcontroller();
+      // Controller for cell selection UI
+      var cellSelUICntr = new cellSelectionUIcontroller();
+      var geneSelUICntr = new geneSelectionUIcontroller();
+      var actionPanelUICntr = new actionPanelUIcontroller();
 
-    // Set the page title
-    document.title = p2globalParams.generalParams.applicationName;
+      // Set the page title
+      document.title = p2globalParams.generalParams.applicationName;
 
-    // Initialize page components
-    embView = new embeddingViewer();
-    // Load the default embedding
-    embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
-			  p2globalParams.embedding.defaultEmbedding.embedding);
+      // Initialize page components
+      embView = new embeddingViewer();
+      // Load the default embedding
+      embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
+  			  p2globalParams.embedding.defaultEmbedding.embedding);
 
 
-    // Generate the tables
-    var geneTable = new geneTableViewer();
+      // Generate the tables
+      var geneTable = new geneTableViewer();
 
-    var geneSetsTable = new geneSetsTableViewer();
-    var heatDendView = new heatmapDendrogramViewer();
-    var aspTableView = new aspectsTableViewer();
+      var geneSetsTable = new geneSetsTableViewer();
+      var heatDendView = new heatmapDendrogramViewer();
+      var aspTableView = new aspectsTableViewer();
 
-    var diffExprTableView = new diffExprTableViewer();
+      var diffExprTableView = new diffExprTableViewer();
 
-    // Not used
-    //  var odGeneTable = new odGeneTableViewer();
+      // Not used
+      //  var odGeneTable = new odGeneTableViewer();
 
-    // Update status bar
-    stsBar.showMessage("Ready");
+      // Update status bar
+      stsBar.showMessage("Ready");
+    }
 };
 
 

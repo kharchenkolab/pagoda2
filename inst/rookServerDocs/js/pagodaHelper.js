@@ -9,6 +9,54 @@
  * @namespace
  */
 pagHelpers = {
+  showNotSupportedBrowserWarning: function() {
+    Ext.create('Ext.window.Window', {
+        height: 200,
+        width: 400,
+        title: 'Not supported browser',
+        scrollable: true,
+        bodyPadding: 10,
+        html: '<p>You are using an unsupported browser. Please use Firefox or Chrome. Supported versions are: Chrome (>57) and Firefox (>53).</p>',
+        constrain: true,
+        closable: false
+    }).show();
+  },
+
+  checkBrowser: function() {
+    	var firefox_detect = navigator.userAgent.match(/Firefox\/(\S+)/);
+    	var chrome_detect = navigator.userAgent.match(/Chrome\/(\S+)/);
+
+    	if (firefox_detect !== null) {
+    		var version = firefox_detect[1];
+    		var version_split = version.split('.');
+    		var version_major = parseInt(version_split[0]);
+    		var version_minor = parseInt(version_split[1]);
+
+    		if (version_major >= 53) {
+    			return true;
+    		} else {
+    			return false;
+    		}
+    	} else if (chrome_detect !== null) {
+    		var version = chrome_detect[1];
+    		var version_split = version.split('.');
+    		var version_major = parseInt(version_split[0]);
+    		var version_minor = parseInt(version_split[1]);
+
+    		if (version_major >= 57) {
+    			return true;
+    		} else {
+    			return false;
+    		}
+
+    	} else {
+    		// Some other browser
+    		return false;
+    	}
+  },
+
+
+
     /**
      * Get the min and max values of a 2 d array
      */
@@ -30,7 +78,7 @@ pagHelpers = {
      * Map an input  range to an output range and discritize
      */
     mapRangeToIntervalDiscrete: function (value, inputMin, inputMax, outputMin, outputMax) {
-	    return Math.floor(((value - inputMin) / (inputMax - inputMin)) * 
+	    return Math.floor(((value - inputMin) / (inputMax - inputMin)) *
 			      (outputMax) + outputMin)
     },
 
@@ -54,7 +102,7 @@ pagHelpers = {
     jsonSerialisedToArrayOfArrays: function(data) {
 	// TODO: Reimplement with serialisedArrayTo2D() -- cleaner
 	var a = [];
-	
+
 	var rowCount = data.dim[0];
 	var colCount = data.dim[1];
 
@@ -81,7 +129,7 @@ pagHelpers = {
      */
     serialisedArrayTo2D: function(data, nrow, ncol) {
 	var a = [];
-	
+
 	var rowCount = nrow;
 	var colCount = ncol;
 
@@ -122,10 +170,10 @@ pagHelpers = {
     // and or map
     transpose2dArray: function(array) {
 
-	// Get the length of the second dimention from 
+	// Get the length of the second dimention from
 	// the first elemetns
 	arrayLength = array[0].length;
-	
+
 	var newArray = [];
 	for (var i = 0; i < arrayLength; i++) {
 	    newArray.push([]);
@@ -181,25 +229,25 @@ pagHelpers = {
 	// The merge steps
 	var s = pagHelpers.seq(0, N-2);
 	for (let j of s ) {
-	    // Find the smallest distance and between 
+	    // Find the smallest distance and between
 	    // which elements it occurs
 
 	    // returns distance, index1, index2
 	    minElement = pagHelpers.minElementAndPosition2d(d);
-	    
+
 	    // Save the distance in the height for this step
 	    h[j] = minElement[0];
 
 	    // The groups in which the two merges belong
 	    p = [ Number(n[minElement[1]]), Number(n[minElement[2]]) ];
 
-	    // Sort so if we are merging an element and a group 
+	    // Sort so if we are merging an element and a group
 	    // the group will be second
 	    p.sort();
 
 	    // Save the merge step
 	    m[j] = p;
-	   
+
 	    // Get the current membership of the elements we are merging
 	    var elem1membership = n[minElement[1]];
 	    var elem2membership = n[minElement[2]];
@@ -216,7 +264,7 @@ pagHelpers = {
 	    n[minElement[2]] = j;
 
 
-	    // Update distances 
+	    // Update distances
 
 	    // This is a vector of the updated memberships
 	    // Get the mean of the distances ignoring infinities
@@ -261,7 +309,7 @@ pagHelpers = {
 
     },
 
-    /** 
+    /**
      * Obtain an ordering for a given merge matrix
      * this is going to be slow...
      */
@@ -277,20 +325,20 @@ pagHelpers = {
 
 	// This is the position in the iorder array up to which we are using
 	var loc = 1;
-	
+
 	// For all the merges (except one) from the end backwards
 	var i_seq = pagHelpers.seq(N - 3, 0, -1);
 
 	for ( var i in i_seq ) {
 	    i = i_seq[i];
-	
+
 	    var j_seq = pagHelpers.seq(0, loc);
 	    for ( var j in j_seq) {
 		j = j_seq[j];
 
 		if (iorder[j] === i) {
 		    iorder[j] = m[i][0];
-		    
+
 		    if (j === loc) {
 			// At the end of the inner loop
 			loc = loc + 1;
@@ -307,7 +355,7 @@ pagHelpers = {
 
 	    }
 	};
-	
+
 	//return iorder;
 
 	// Return order of elements
@@ -324,7 +372,7 @@ pagHelpers = {
 
 	var nrow = array.length;
 	var ncol = array[0].length;
-	
+
 	var curMin = Infinity;
 
 	for (var i = 0; i < nrow; i++) {
@@ -368,7 +416,7 @@ pagHelpers = {
      */
     getSortOrder: function(array) {
 	var tarray = [];
-	
+
 	for ( var i = 0; i < array.length; i++) {
 	    tarray[i] = { originalPos: i, item: array[i] };
 	}
@@ -430,10 +478,10 @@ pagHelpers = {
     /**
      * Calculate the pearson correlation between a and b.
      * a and b are two 1d arrays of equal length
-     */ 
+     */
     correlation: function(a, b) {
 	// NOTE: using math.js
-	
+
 	a_mean = math.mean(a);
 	b_mean = math.mean(b);
 
@@ -446,11 +494,11 @@ pagHelpers = {
 			  math.subtract(b, b_mean))
 	);
 
-	// rho = cov(x,y) / ( rho_x * rho_y 
+	// rho = cov(x,y) / ( rho_x * rho_y
 	var correlation = covariance / (a_std * b_std);
 
 	return correlation;
-    }, 
+    },
 
     /**
      * Generate a sequence of integers
@@ -461,7 +509,7 @@ pagHelpers = {
      */
     seq: function(start, end, step = 1) {
 	var r = [];
-	
+
 	if ( step > 0) {
 	    var j =0;
 	    for (var i = start; i <= end; i = i + step){
@@ -479,5 +527,5 @@ pagHelpers = {
 	}
 
 	return r;
-    }   
+    }
 }
