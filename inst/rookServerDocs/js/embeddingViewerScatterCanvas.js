@@ -600,7 +600,7 @@ embeddingViewerScatterCanvas.prototype.updateColorAlpha = function(colors, newAl
     // Prepare the palette with our alpha
     var retVals = [];
     for (var k = 0; k < colors.length; k++) {
-	color = colors[k];
+	var color = colors[k];
 
 	// Split the channels
 	var r = parseInt(color.substring(1,3),16);
@@ -686,8 +686,8 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
     var metadataName = metadataColorInfo.metadataName;
 
     dataCntr.getCellMetadata(function(metadata) {
-	colorData = metadata[metadataName].data;
-	colorPalette = metadata[metadataName].palette;
+	var colorData = metadata[metadataName].data;
+	var colorPalette = metadata[metadataName].palette;
 
 	for (var i = 0; i < plotdata.length; i++) {
 	    var cellId = plotdata[i][0];
@@ -871,7 +871,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    		for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
 				    // Retrieve from cache
 //		    		    var index = cache[plotdata[j][0]];
-				    index = cache[j];
+				    var index = cache[j];
 		    		    if (index < 0) {
 		    			plotdata[j][3] = '#000000'; // default to black
 		    		    } else {
