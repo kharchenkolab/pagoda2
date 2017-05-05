@@ -91,7 +91,7 @@ diffExprTableViewer.prototype.generateTables = function() {
         '<p>The tables in this panel display the results of differential expression analyses run in the Actions Tab. ' +
         'Every result set is identified by the name provided at the time of the analysis and by an internal unique identifier.' +
         'Click on one of the result entries on the top table to view the results in the bottom panel. Some differential expression ' +
-        'analysis may to a all-vs-all comparison and result in the same gene reported multiple time. This is not an error.' + '</p>',
+        'analysis may do a all-vs-all comparison and result in the same gene reported multiple time. This is not an error.' + '</p>',
         constrain: true,
         closable: true,
         resizable: false
