@@ -364,6 +364,17 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 }
 
 /**
+ * Clear hightlight selection
+ */
+embeddingViewerScatterCanvas.prototype.clearHighlight = function() {
+  var overlayCanvasElement = document.getElementById('embedding-canvas-overlay');
+  var ctx = overlayCanvasElement.getContext('2d');
+  ctx.clearRect(0,0,4000,4000);
+}
+
+
+
+/**
  * Generated the necessary html structure for this viewer
  */
 embeddingViewerScatterCanvas.prototype.generateStructure = function() {

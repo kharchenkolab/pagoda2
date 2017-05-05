@@ -235,6 +235,18 @@ embeddingViewer.prototype.generateToolbar = function() {
         } // handler
         });
 
+toolbar.add(
+  {
+    text: '',
+    type: 'button',
+    tooltip: 'Clear selection',
+    glyph: 0xf12d,
+    handler: function() {
+      var embV = new embeddingViewer();
+      embV.clearHighlight();
+    }
+  }
+  );
 
     toolbar.add(
 	{
@@ -255,6 +267,14 @@ embeddingViewer.prototype.generateToolbar = function() {
     setTimeout(this.populateMenu, 2000)
 
 }; // generateToolbar
+
+
+/**
+ * Clear the highlight
+ */
+embeddingViewer.prototype.clearHighlight = function() {
+   this.currentViewer.clearHighlight();
+}
 
 /**
  * Populates the available embeddings menu
