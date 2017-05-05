@@ -72,21 +72,48 @@ diffExprTableViewer.prototype.generateTables = function() {
   }; // resultSetChangeSelectionListener
 
 
+  var resultSelectionTbar = Ext.create('Ext.Toolbar');
+  resultSelectionTbar.add(
+      		    {
+			type: "button",
+			text: 'Help',
+			tooltip: 'Display Help',
+			glyph: 0xf128,
+			handler: function() {
+
+    Ext.create('Ext.window.Window', {
+        height: 200,
+        width: 400,
+        title: 'Help: Differential Expression',
+        scrollable: true,
+        bodyPadding: 10,
+        html: '<p>The tables in this panel display the results of differential expression analyses run in the Actions Tab. ' +
+        'Every result set is identified by the name provided at the time of the analysis and by an internal unique identifier.' +
+        'Click on one of the result entries on the top table to view the results in the bottom panel. Some differential expression ' +
+        'analysis may to a all-vs-all comparison and result in the same gene reported multiple time. This is not an error.' + '</p>',
+        constrain: true,
+        closable: true
+    }).show();
+
+
+
+  }});
+
   // Table for the result sets
   var resultSetSelectionGrid = Ext.create('Ext.grid.Panel',{
     title: 'Differential Expression Result sets',
     id: 'deResultSetsTableExtJS',
     columns: [
-      {text: 'Name', dataIndex: 'displayName', width: '80%' },
-      {text: 'Internal name', dataIndex: 'name', width: '20%' }
+      {text: 'Name', dataIndex: 'displayName', width: '70%' },
+      {text: 'Internal name', dataIndex: 'name', width: '30%' }
       ],
     emptyText: 'No differential expression results are available',
     singleSelect: true,
     listeners: {
       'selectionchange': resultSetChangeSelectionListener
-    }
+    },
+    tbar: resultSelectionTbar
   });
-
 
 var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
   // Table for the contents of the result sets
