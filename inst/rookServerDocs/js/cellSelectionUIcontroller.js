@@ -161,19 +161,34 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	    xtype: 'button',
 	    text: 'Export CSV',
 	    handler: function() {
-		var selectionTable = Ext.getCmp('cellSelectionTable');
-		var selectedItems = selectionTable.getSelectionModel().getSelected();
-		if (selectedItems.length === 1) {
-		    var selectionName = selectedItems.getAt(0).getData().selectionname;
-		    var cellSelCntr = new cellSelectionController();
-		    var selection = cellSelCntr.getSelection(selectionName);
-		    var selectionFormatted = selection.join("\n");
-		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
+    		var selectionTable = Ext.getCmp('cellSelectionTable');
+    		var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		if (selectedItems.length === 1) {
+    		    var selectionName = selectedItems.getAt(0).getData().selectionname;
+    		    var cellSelCntr = new cellSelectionController();
+    		    var selection = cellSelCntr.getSelection(selectionName);
+    		    var selectionFormatted = selection.join("\n");
+    		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
 
-		} else {
-		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
-		}
+    		} else {
+    		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
+    		}
 	    }
+	},
+	{
+	  xtype: 'button',
+	  text: 'Hightlight',
+	  handler: function() {
+	    	var selectionTable = Ext.getCmp('cellSelectionTable');
+    		var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		if (selectedItems.length === 1) {
+            var selectionName = selectedItems.getAt(0).getData().selectionname;
+            var heatV = new heatmapViewer();
+            heatV.highlightCellSelectionByName(selectionName);
+    		} else {
+    		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
+    		}
+	  }
 	}
     ]
     });
