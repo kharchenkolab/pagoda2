@@ -83,7 +83,7 @@ embeddingViewerScatterCanvas.prototype.getMainCanvasElement = function() {
  * and set the cell selection
  */
 embeddingViewerScatterCanvas.prototype.generateDragSelection =
-    function(dragStartX, dragStartY, dragEndX, dragEndY) {
+  function(dragStartX, dragStartY, dragEndX, dragEndY) {
 	if (dragStartX > dragEndX) {
 	    var t = dragEndX;
 	    dragEndX =  dragStartX;
@@ -162,25 +162,29 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    var cellsForSelection = new Array();
 	    ctx.strokeStyle = 'red';
 
+      // quick highlight
 	    for (var i = 0; i < plotData.length; i++) {
-		var point = plotData[i];
+    		var point = plotData[i];
 
-		if ( point[1] > x1 && point[1] < x2 && point[2] > y1 && point[2] < y2) {
-		    // Point in selection
-		    cellsForSelection.push(point[0]);
+    		if ( point[1] > x1 && point[1] < x2 && point[2] > y1 && point[2] < y2) {
+    		    // Point in selection
+    		    cellsForSelection.push(point[0]);
 
-		    var xs = xScale(point[1]);
-		    var ys = yScale(point[2]);
+    		    var xs = xScale(point[1]);
+    		    var ys = yScale(point[2]);
 
-		    ctx.beginPath();
-		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
-		    ctx.stroke();
-		}
+    		    ctx.beginPath();
+    		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+    		    ctx.stroke();
+    		}
 	    } // for
 
 	    var cellSelCntr = new cellSelectionController();
 	    cellSelCntr.setSelection('embSelection', cellsForSelection, 'Embedding Selection', new Object());
 
+      // TODO: Make this optional
+      var heatView = new heatmapViewer();
+      heatView.highlightCellSelectionByName('embSelection');
 	});
 
 

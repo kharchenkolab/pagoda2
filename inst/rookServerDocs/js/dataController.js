@@ -186,8 +186,6 @@ dataController.prototype.getAvailableGenesetsInAspectStore = function(aspectId, 
 
       callback(pagingStore);
 
-
-
     }
   })
 

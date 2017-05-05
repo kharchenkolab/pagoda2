@@ -55,6 +55,7 @@ heatmapViewer.prototype.initialize = function() {
 
     heatmapContainer.append(
     	'<canvas id="heatmap-area" ></canvas>' +
+    	'<canvas id="heatmap-area-selection"></canvas>' +
     	'<canvas id="heatmap-area-overlay"></canvas>'
     );
 
@@ -64,6 +65,13 @@ heatmapViewer.prototype.initialize = function() {
     	position: 'absolute',
     	top: 0,
     	left: 0
+    });
+
+    var heatmapAreaSelection = $('#heatmap-area-selection');
+    heatmapAreaSelection.css({
+      position: 'absolute',
+      top: 0,
+      left: 0
     });
 
     var heatmapAreaOverlay = $('#heatmap-area-overlay');
@@ -260,23 +268,23 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     // Mouse  move listener for the cross hairs and tooltip
     heatmapAreaOverlay.addEventListener('mousemove', function(e) {
-	var x = e.layerX;
-	var y = e.layerY;
+    	var x = e.layerX;
+    	var y = e.layerY;
 
-	var heatV = new heatmapViewer();
-	var metaV = new metaDataHeatmapViewer();
-	var aspeV = new aspectHeatmapViewer();
+    	var heatV = new heatmapViewer();
+    	var metaV = new metaDataHeatmapViewer();
+    	var aspeV = new aspectHeatmapViewer();
 
-	var label;
+    	var label;
 
-	var regionData = heatV.geneRegions.resolveClick(x, y);
-	if  (typeof regionData !== 'undefined') {
-	    label = 'Gene: ' + regionData.geneId;
-	}
+    	var regionData = heatV.geneRegions.resolveClick(x, y);
+    	if  (typeof regionData !== 'undefined') {
+    	    label = 'Gene: ' + regionData.geneId;
+    	}
 
-	heatV.showOverlay(e.layerX, e.layerY, label);
-	metaV.showOverlay(e.layerX);
-	aspeV.showOverlay(e.layerX);
+    	heatV.showOverlay(e.layerX, e.layerY, label);
+    	metaV.showOverlay(e.layerX);
+    	aspeV.showOverlay(e.layerX);
 
 
     });
@@ -420,13 +428,21 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
  * Clear the overlay
  */
 heatmapViewer.prototype.clearOverlay = function() {
-  	var overlayArea = document.getElementById('heatmap-area-overlay');
+  var overlayArea = document.getElementById('heatmap-area-overlay');
 	var ctx = overlayArea.getContext('2d');
 
 	var width = overlayArea.width;
 	var height = overlayArea.height;
 
 	ctx.clearRect(0,0,width, height);
+}
+
+heatmapViewer.prototype.clearSelectionOverlay = function() {
+  var canvas = document.getElementById('heatmap-area-selection');
+  var ctx = canvas.getContext('2d');
+  var width = canvas.width;
+  var height = canvas.height;
+  ctx.clearRect(0,0,width, height);
 }
 
 /**
@@ -521,6 +537,12 @@ heatmapViewer.prototype.updateCanvasSize = function() {
     // Update the  size of the overlay
     heatmapAreaOverlay.width = curWidth;
     heatmapAreaOverlay.height = curHeight;
+
+    // Resize the selection canvas
+    var heatmapAreaSelection = $('#heatmap-area-selection')[0];
+    heatmapAreaSelection.width = curWidth;
+    heatmapAreaSelection.height = curHeight;
+
 }
 
 /**
@@ -580,6 +602,7 @@ heatmapViewer.prototype.drawHeatmap = function() {
 	ctx = this.getDrawingContext();
 	this.clearHeatmap(ctx);
 
+
 	var heatDendView = new heatmapDendrogramViewer();
 
 	var left = heatDendView.getPlotAreaLeftPadding();
@@ -615,12 +638,36 @@ heatmapViewer.prototype.drawHeatmap = function() {
  */
 heatmapViewer.prototype.getDrawingContext = function() {
     // Get the plotting context
-    var canvas = $('#heatmap-area')[0];
+    var canvas = document.getElementById('heatmap-area');
     var ctx = canvas.getContext("2d");
 
     return ctx;
 }
 
+/**
+ * Get 2d drawing context for the mouse overlay canvas
+ * @private
+ */
+heatmapViewer.prototype.getOverlayDrawingContext = function() {
+  var canvas = document.getElementById('heatmap-area-overlay');
+  var ctx = canvs.getContext('2d');
+  return ctx;
+}
+
+/**
+ * Get 2d drawing context for the selection canvas
+ * @private
+ */
+heatmapViewer.prototype.getSelectionDrawingContext = function() {
+  var canvas = document.getElementById('heatmap-area-selection');
+  var ctx = canvas.getContext('2d');
+  return ctx;
+}
+
+
+/**
+ * Get drawing constant values
+ */
 heatmapViewer.prototype.getDrawConstants = function() {
     var heatDendView = new heatmapDendrogramViewer();
 
@@ -646,7 +693,7 @@ heatmapViewer.prototype.setActualPlotHeight = function(val) {
  * Get the plot height that was actually used
  */
 heatmapViewer.prototype.getActualPlotHeight = function() {
-    return this.actualPlotHeight;
+    return this.actualPlotHeight + this.getDrawConstants().top;
 }
 
 
@@ -659,6 +706,60 @@ heatmapViewer.prototype.doDrawHeatmap = function() {
     this.doDrawHeatmapSparseMatrix();
 }
 
+/**
+ * Given a cell selection name hightlight it on the heatmap with vertical lines
+ */
+heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
+  var heatV = this;
+  var dendV = new dendrogramViewer();
+
+  // Get the cells in the cell selection to highlight
+  var cellSelCntr = new cellSelectionController();
+  cellSelection = cellSelCntr.getSelection(selectionName);
+
+  // Get the cell order
+  var dataCntr = new dataController();
+  dataCntr.getCellOrder(function(cellorder) {
+    // Currently displayed cells
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+    var ctx = heatV.getSelectionDrawingContext();
+    ctx.clearRect(0,0,3000,3000);
+
+    // Get and calculate plotting values
+    var drawConsts = heatV.getDrawConstants();
+    var heatmapWidth = drawConsts.width;
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+    var actualPlotHeight = heatV.getActualPlotHeight();
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+
+    // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+
+  }); // get the cell order
+}
 
 /**
  * Internal function for drawing the heatmap using the sparse matrix directly
@@ -693,6 +794,9 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     // Clear heatmap
     var ctx = heatView.getDrawingContext();
     heatView.clearHeatmap(ctx);
+
+    // Clear selection heatmap
+    heatView.clearSelectionOverlay();
 
     // Show centered waiting icon
     $('#heatmap-area-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
@@ -758,17 +862,17 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
 	    // Plot row
 	    for (var k = rsi; k < rei; k++) {
-//		var plotValue = (data.x[k] - rowMean) / (maxAbsValue * 2) + 0.5;
-//		var palIndex = Math.floor(plotValue * (palSize)) - 1;
+      //		var plotValue = (data.x[k] - rowMean) / (maxAbsValue * 2) + 0.5;
+      //		var palIndex = Math.floor(plotValue * (palSize)) - 1;
 
-		var palIndex = colorMapper(data.x[k]);
-		ctx.fillStyle = pal[palIndex];
+      		var palIndex = colorMapper(data.x[k]);
+      		ctx.fillStyle = pal[palIndex];
 
-		var x = data.i[k] * cellWidth + left;
-		var y = rowOrder[j] * cellHeight + top; // reorder on the fly
+      		var x = data.i[k] * cellWidth + left;
+      		var y = rowOrder[j] * cellHeight + top; // reorder on the fly
 
-		ctx.fillRect(x,y,
-		    cellWidth, cellHeight);
+      		ctx.fillRect(x,y,
+  		    cellWidth, cellHeight);
 	    } // for k
 
 	} // for j
