@@ -192,9 +192,22 @@ toolbar.add({
         glyph: 0xf0ed,
         handler: function(){
             var canvas = document.getElementById('heatmap-area');
-            var imageURL = canvas.toDataURL('image/png');
-            imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-            window.open(imageURL);
+            const maxSize = 2000;
+            if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                          var imageURL = canvas.toDataURL('image/png');
+                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                          window.open(imageURL);
+                     }
+                   }
+                })
+            }
         } // handler
 });
 
