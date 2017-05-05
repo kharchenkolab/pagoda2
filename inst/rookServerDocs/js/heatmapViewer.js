@@ -224,6 +224,19 @@ toolbar.add({
         } // handler
 });
 
+toolbar.add({
+  text: '',
+  xtype: 'button',
+  tooltip: 'Clear selection overlay',
+  glyph: 0xf12d,
+  handler: function() {
+    var heatV = new heatmapViewer();
+    heatV.clearSelectionOverlay();
+
+  }
+
+});
+
       // Add plot configuration menu button
     toolbar.add({
     	text: '',
