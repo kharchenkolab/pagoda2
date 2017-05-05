@@ -719,6 +719,8 @@ heatmapViewer.prototype.doDrawHeatmap = function() {
     this.doDrawHeatmapSparseMatrix();
 }
 
+
+
 /**
  * Given a cell selection name hightlight it on the heatmap with vertical lines
  */

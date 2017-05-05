@@ -183,8 +183,15 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     		var selectedItems = selectionTable.getSelectionModel().getSelected();
     		if (selectedItems.length === 1) {
             var selectionName = selectedItems.getAt(0).getData().selectionname;
+
+            // Highlight on heatmap
             var heatV = new heatmapViewer();
             heatV.highlightCellSelectionByName(selectionName);
+
+            // Highlight on embedding
+            var embCntr = new embeddingViewer();
+            embCntr.highlightSelectionByName(selectionName);
+
     		} else {
     		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
     		}

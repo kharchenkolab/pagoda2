@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: embeddingViewerScatterCanvas.js
  * Author: Nikolas Barkas
@@ -11,6 +13,8 @@
  */
 function embeddingViewerScatterCanvas() {
     console.log('Initializing scatterEmbeddingCanvas...');
+
+
 
     // Here we need to tap into the extjs container
     // component resize function
@@ -64,6 +68,7 @@ function embeddingViewerScatterCanvas() {
 
     // Generates the html structure required for the viewer
     this.generateStructure();
+
 }
 
 
@@ -96,9 +101,9 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	}
 
 
-	thisViewer = this;
+	var thisViewer = this;
 	var embViewer = new embeddingViewer();
-	config = embViewer.getConfig();
+	var config = embViewer.getConfig();
 
 	// Reversed scales
 	var xScaleRev = pagHelpers.linearScaleGenerator(
@@ -122,14 +127,16 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	var type = config.type;
 	var embeddingType = config.embeddingType;
 
+	var size = this.size;
+
 	dataCntr.getEmbedding(type, embeddingType, function(data) {
-	    plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+	    var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
 
 
 	    // Make the xscale
 	    thisViewer.xScaleDomainMin = +Infinity;
 	    thisViewer.xScaleDomainMax = -Infinity;
-	    for (j = 0; j < plotData.length; j++) {
+	    for (var j = 0; j < plotData.length; j++) {
 		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
 		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
 	    }
@@ -143,9 +150,9 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    // Make the y scale
 	    thisViewer.yScaleDomainMin = +Infinity;
 	    thisViewer.yScaleDomainMax = -Infinity;
-	    for (j = 0; j < plotData.length; j++) {
-		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
-		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+	    for (var j = 0; j < plotData.length; j++) {
+    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
 	    }
 	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
@@ -187,8 +194,67 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
       heatView.highlightCellSelectionByName('embSelection');
 	});
 
+}
 
-    }
+/**
+ * Highlight cells by selection name
+ * @param selectionName the name of the cell selection as registered int he cellSelectionController
+ */
+embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selectionName) {
+  console.log('hightligh selection emeb');
+
+  var cellSelCntr = new cellSelectionController();
+  var cells = cellSelCntr.getSelection(selectionName);
+
+  console.log(cells);
+
+  var embViewer = new embeddingViewer();
+  var thisViewer = this;
+  var config =  embViewer.getConfig();
+
+  var dataCntr = new dataController();
+  var type = config.type;
+  var embeddingType = config.embeddingType;
+
+  var size = this.size;
+
+  dataCntr.getEmbedding(type, embeddingType, function(data){
+    var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+
+
+	    // Make the xscale
+	    thisViewer.xScaleDomainMin = +Infinity;
+	    thisViewer.xScaleDomainMax = -Infinity;
+	    for (var j = 0; j < plotData.length; j++) {
+    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+	    }
+	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+							 thisViewer.xScaleDomainMax,
+							 thisViewer.xScaleRangeMin,
+							 thisViewer.xScaleRangeMax);
+
+	    // Make the y scale
+	    thisViewer.yScaleDomainMin = +Infinity;
+	    thisViewer.yScaleDomainMax = -Infinity;
+	    for (var j = 0; j < plotData.length; j++) {
+    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+	    }
+	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
+							 thisViewer.yScaleDomainMax,
+							 thisViewer.yScaleRangeMin,
+							 thisViewer.yScaleRangeMax);
+
+      // CONTINUE HERE
+  });
+
+}
+
 
 /**
  * Update the colors, delegated to draw()
@@ -290,7 +356,7 @@ embeddingViewerScatterCanvas.prototype.generateStructure = function() {
     embeddingContainer.empty();
 
     embeddingContainer.append('<div id="embedding-draw-inner" style="position: relative" />');
-    embeddingContainerInner = $('#embedding-draw-inner');
+    var embeddingContainerInner = $('#embedding-draw-inner');
 
     // Add a canvas
     embeddingContainerInner.append('<canvas id="embedding-canvas"></canvas>');
@@ -312,16 +378,16 @@ embeddingViewerScatterCanvas.prototype.resizeElements = function() {
     var plotWidth = extJsContainer.body.getWidth(true);
 
     // Which dim is limiting?
-    size = Math.min(plotWidth, plotHeight);
+    this.size = Math.min(plotWidth, plotHeight);
 
 
     var embCanvasOverlay = document.getElementById('embedding-canvas-overlay');
-    embCanvasOverlay.width = size;
-    embCanvasOverlay.height = size;
+    embCanvasOverlay.width = this.size;
+    embCanvasOverlay.height = this.size;
 
     var embCanvas = document.getElementById('embedding-canvas');
-    embCanvas.width = size;
-    embCanvas.height = size;
+    embCanvas.width = this.size;
+    embCanvas.height = this.size;
 
 
     // Center it in x and y
@@ -329,9 +395,9 @@ embeddingViewerScatterCanvas.prototype.resizeElements = function() {
     var hpad = 0;
 
     if (plotHeight < plotWidth) {
-	hpad = (plotWidth - size)/2
+	hpad = (plotWidth - this.size)/2
     } else {
-	vpad = (plotHeight - size) /2
+	vpad = (plotHeight - this.size) /2
     }
 
     // Setup the css for the containers
@@ -378,9 +444,11 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
     // Show the wait window
     embViewer.showWait();
 
+    var size = this.size;
+
     // Embeddings are cached
     dataCntr.getEmbedding(type, embeddingType, function(data) {
-	plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+	var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
 
 	// Generate the colors for the data points -- async
 	thisViewer.generateFillStyles(plotData, function(plotData, fillInfo) {
@@ -391,7 +459,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	    // Make the xscale
 	    thisViewer.xScaleDomainMin = +Infinity;
 	    thisViewer.xScaleDomainMax = -Infinity;
-	    for (j = 0; j < plotData.length; j++) {
+	    for (var j = 0; j < plotData.length; j++) {
 		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
 		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
 	    }
@@ -434,7 +502,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	    // Get 2d context and plot
 	    var ctx = embCanvas.getContext('2d');
 	    ctx.clearRect(0,0,5000,5000);
-	    t0 = performance.now()
+
 	    // Main plot loop
 	    for (var i = 0; i < plotData.length; i++) {
 		var point = plotData[i];

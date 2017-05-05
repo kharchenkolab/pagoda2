@@ -505,3 +505,10 @@ embeddingViewer.prototype.getCurrentPointSize = function() {
 embeddingViewer.prototype.setCurrentPointSize = function (sz) {
     this.currentConfiguration.pointsize = sz;
 }
+
+/**
+ * Highlight the selection specified by name, delegates to current viewer
+ */
+embeddingViewer.prototype.highlightSelectionByName = function(selectionName) {
+  this.currentViewer.highlightSelectionByName(selectionName);
+}
