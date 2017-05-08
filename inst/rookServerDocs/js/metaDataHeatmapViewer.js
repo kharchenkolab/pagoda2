@@ -61,6 +61,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
     metadataContainerInner.append(
 	'<canvas id="metadata-area"></canvas>' +
+	'<canvas id="metadata-area-selection"></canvas>' +
 	'<canvas id="metadata-area-overlay"></canvas>'
     );
 
@@ -69,6 +70,13 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 	position: 'absolute',
 	top: 0,
 	left: 0
+    });
+
+    var metadataAreaSelection = $('#metadata-area-selection');
+    metadataAreaSelection.css({
+      position: 'absolute',
+      top: 0,
+      left: 0
     });
 
     var metadataAreaOverlay = $('#metadata-area-overlay');
@@ -170,6 +178,20 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
         } // handler
   });
+
+  toolbar.add({
+  text: '',
+  xtype: 'button',
+  tooltip: 'Clear selection overlay',
+  glyph: 0xf12d,
+  handler: function() {
+    var obj = new metaDataHeatmapViewer();
+    obj.clearSelectionOverlay();
+
+  }
+
+});
+
   var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
 
 
@@ -214,6 +236,17 @@ metaDataHeatmapViewer.prototype.clearOverlay = function() {
 }
 
 /**
+ * Clears the selection overlay
+ */
+metaDataHeatmapViewer.prototype.clearSelectionOverlay = function() {
+  var canvas = document.getElementById('metadata-area-selection');
+  var ctx = canvas.getContext('2d');
+  var width = canvas.width;
+  var height = canvas.height;
+  ctx.clearRect(0,0,width, height);
+}
+
+/**
  * Update the canvas size of this element with the
  * sized provided by thhe heatmapDendrogramViewer
  */
@@ -236,6 +269,12 @@ metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
 
     metadataAreaOverlay.width = curWidth;
     metadataAreaOverlay.height = curHeight;
+
+
+    var metadataAreaSelection = $('#metadata-area-selection')[0];
+    metadataAreaSelection.width = curWidth;
+    metadataAreaSelection.height = curHeight;
+
 
     metadataContainer.css({width: curWidth+'px', height: curHeight+'px'});
 }
@@ -398,3 +437,72 @@ heatDendView = new heatmapDendrogramViewer();
 
     });
 }
+
+/**
+ * get 2d drawing context for selection
+ */
+metaDataHeatmapViewer.prototype.getSelectionDrawingContext = function() {
+  var canvas = document.getElementById('metadata-area-selection');
+  var ctx = canvas.getContext('2d');
+  return ctx;
+}
+
+/**
+ * Highlight a cell selection given it's name
+ */
+metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
+  var metadataHeatV = this;
+  var dendV = new dendrogramViewer();
+
+    // Get the cells in the cell selection to highlight
+  var cellSelCntr = new cellSelectionController();
+  cellSelection = cellSelCntr.getSelection(selectionName);
+
+
+  // Get the cell order
+  var dataCntr = new dataController();
+  dataCntr.getCellOrder(function(cellorder) {
+    // Currently displayed cells
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+    var ctx = metadataHeatV.getSelectionDrawingContext();
+    ctx.clearRect(0,0,3000,3000);
+
+
+    // Get and calculate plotting values
+    var drawConsts = metadataHeatV.getDrawConstants();
+    var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+     var actualPlotHeight = drawConsts.height;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+
+
+        // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+
+  }); // get the cell order
+}
+
+

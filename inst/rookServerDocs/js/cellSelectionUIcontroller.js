@@ -196,6 +196,10 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             var aspHeatView = new aspectHeatmapViewer();
       aspHeatView.highlightCellSelectionByName(selectionName);
 
+            //Highlight on Metadata
+            var metaView = new metaDataHeatmapViewer();
+            metaView.highlightCellSelectionByName(selectionName);
+
 
     		} else {
     		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
