@@ -42,7 +42,7 @@ function embeddingViewerScatterCanvas() {
     // This variable hold the last ajax request for expression values
     // The purpose of this is to be able to cancel this request
     // If the user makes a new request while the current one is running
-    this.expressionValuesAJAXrequest;
+    this.colorAJAXrequest;
 
     // We use this to cache the cell order as calculated by getExpression
     // and avoid recalculating every time. We need to cache this for
@@ -588,14 +588,16 @@ embeddingViewerScatterCanvas.prototype.generateFillStyles = function(plotdata, c
     var colconfig = config.colors;
 
     if (colconfig === 'dendrogram') {
-	this.generateFillStylesDendrogram(plotdata, callback);
+	    this.generateFillStylesDendrogram(plotdata, callback);
     } else if (colconfig === 'metadata') {
-	this.generateFillStylesMetadata(plotdata, callback);
+	    this.generateFillStylesMetadata(plotdata, callback);
     } else if (colconfig === 'geneexpression')  {
-	// Type and embedding type is passed here for caching the matches correctly
-	this.generateFillStylesGeneExpression(plotdata, callback, type, embeddingType);
+	    // Type and embedding type is passed here for caching the matches correctly
+	    this.generateFillStylesGeneExpression(plotdata, callback, type, embeddingType);
+    } else if(colconfig === 'aspect') {
+      this.generateFillStylesAspect(plotdata, callback, type, embeddingType);
     } else {
-	this.generateDefaultFill(plotdata,callback);
+	    this.generateDefaultFill(plotdata,callback);
     }
 }
 
@@ -636,6 +638,8 @@ embeddingViewerScatterCanvas.prototype.updateColorAlpha = function(colors, newAl
     return retVals;
 
 }
+
+
 
 /**
  * Annotate the plotdata with color from the dendrogram selections and
@@ -765,27 +769,20 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
     var dataCntr = new dataController();
     var alpha = ev.getCurrentAlpha();
 
-    // Check if there is a request running already
-    if (typeof evSC.expressionValuesAJAXrequest !== 'undefined') {
-
-	if (evSC.expressionValuesAJAXrequest.readyState != 4) {  //Not DONE
-	    // A previous request exists and is still running
-	    // cancel it
-	    evSC.expressionValuesAJAXrequest.abort();
-	}
-    }
+    evSC.abortPendingRequest();
 
     // We only end up using this for the number of cell
     // which is a complete waste, but it takes less than 1ms so not worth removing
     dataCntr.getCellOrder (function(data) {
+
+
 	var cellIndexStart = 0;
 	var cellIndexEnd = data.length;
 	var geneSelection = [config.geneexpressionColorInfo.geneid];
 
-	evSC.expressionValuesAJAXrequest =
+	evSC.colorAJAXrequest =
 	    dataCntr.getExpressionValuesSparseByCellIndex(
 		geneSelection, cellIndexStart, cellIndexEnd, function(data) {
-
 		    var heatView = new heatmapViewer();
 		    // Get palette
 		    var palSize = heatView.palManager.getNumberOfColors();
@@ -798,9 +795,9 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    var rowMax = data.array[0][0];
 		    var rowMin = data.array[0][0];
 		    for (var j = 0; j < data.array.length; j++) {
-			rowMax = Math.max(rowMax, data.array[j][0]);
-			rowMin = Math.min(rowMin, data.array[j][0]);
-			rowSum += data.array[j][0];
+    			rowMax = Math.max(rowMax, data.array[j][0]);
+    			rowMin = Math.min(rowMin, data.array[j][0]);
+    			rowSum += data.array[j][0];
 		    }
 
 		    var rowMean = rowSum / data.array.length;
@@ -952,4 +949,209 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		});
     });
 }
+
+embeddingViewerScatterCanvas.prototype.abortPendingRequest = function() {
+    var evSC = this;
+    // Check if there is a request running already
+    if (typeof evSC.colorAJAXrequest !== 'undefined') {
+      	if (evSC.colorAJAXrequest.readyState != 4) {  //Not DONE
+      	    // A previous request exists and is still running
+      	    // cancel it
+      	    evSC.colorAJAXrequest.abort();
+      	}
+    }
+
+}
+
+/**
+ * Generate fill styles by aspect
+ * @param plotdata the plotdata to augment with colors
+ * @param callback the callback function
+ * @param type the embedding type, used for caching the match indexes
+ * @param embeddingType the embedding type, used for caching the match indexes
+ */
+embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotdata, callback, type, embeddingType){
+  var evSC = this;
+  var ev = new embeddingViewer();
+  var config = ev.getConfig();
+  var dataCntr = new dataController();
+  var alpha = ev.getCurrentAlpha();
+  var aspectId = [ev.getAspectColorInfo().aspectid];
+
+  evSC.abortPendingRequest();
+  dataCntr.getCellOrder (function(data) {
+  	var cellIndexStart = 0;
+  	var cellIndexEnd = data.length;
+
+	  evSC.colorAJAXrequest = dataCntr.getAspectMatrixByAspect(cellIndexStart, cellIndexEnd, aspectId, function(data) {
+
+
+		    var heatView = new aspectHeatmapViewer();
+		    // Get palette
+		    var palSize = heatView.palManager.getNumberOfColors();
+		    var pal = heatView.palManager.getPaletteColors();
+
+		    // Calculate normalisation values
+		    // Copy-paste from heatmap plot
+		    // TODO: We need a better abstraction form palettes
+		    var rowSum = 0;
+		    var rowMax = data.array[0][0];
+		    var rowMin = data.array[0][0];
+		    for (var j = 0; j < data.array.length; j++) {
+    			rowMax = Math.max(rowMax, data.array[j][0]);
+    			rowMin = Math.min(rowMin, data.array[j][0]);
+    			rowSum += data.array[j][0];
+		    }
+
+
+		    var rowMean = rowSum / data.array.length;
+		    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
+
+		    // Update the palette colors with our alpha
+		    var palAlpha = evSC.updateColorAlpha(pal, alpha);
+
+		    // colorMapper is a function
+		    // use it for consistency with heatmap
+		    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
+
+
+		    var cacheId = type + '_' + embeddingType;
+
+		     if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
+
+
+
+			// We don't have the cache for the order matching for this embedding saved
+			// So we need to calculate it and cache it on the way
+			evSC.fillStylesGeneExpressionOrder[cacheId] = [];
+
+			// NOTE: The following construction ensures that
+			// The interfact doesn't lock up during the long
+			// calculation time of the color matching
+			function doMatching(plotdata, i) {
+		    	    if (i == undefined) {
+		    		i = 0;
+		    	    }
+		    	    if (i < plotdata.length) {
+				// The size of the batch is a trade off between slowing the
+				// processing and maintaining responsiveness
+		    		var batchSize = 500;
+		    		for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
+				    var cellId = plotdata[j][0];
+		    		    var index = data.rownames.indexOf(cellId);
+
+				    // Cache
+//				    evSC.fillStylesGeneExpressionOrder[cacheId][cellId] = index;
+				    evSC.fillStylesGeneExpressionOrder[cacheId][j] = index;
+
+		    		    var color;
+		    		    if (index < 0) {
+		    			console.warn('Embedding plotter found a cell that does not' +
+						     'have and entry in the expression matrix. Cellid: "' +
+						     cellId +
+		    				     '. This is an error with the data provided by server.');
+		    			color = '#000000'; // default to black
+		    		    } else {
+		    			var palIndex = colorMapper(data.array[index][0]);
+		    			color = palAlpha[palIndex];
+		    		    }
+		    		    plotdata[j][3] = color;
+		    		}
+
+				if (j == plotdata.length) {
+				    callback(plotdata);
+				}
+
+		    		var nextBatch = function()
+				{
+				    // Here we can optionaly update the
+				    // inteface with a progress bar
+				    doMatching(plotdata, i + batchSize);
+				}
+				// Process the next batch immediately,
+				// Allowing other pending event to run in the meanwhile
+		    		setTimeout(nextBatch, 0);
+		    	    }
+			}
+			doMatching(plotdata);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		     } else {
+
+
+	// The data were cached
+
+			var cache = evSC.fillStylesGeneExpressionOrder[cacheId];
+
+			// Use much larger batches here
+		    	var batchSize = 50000;
+
+			// NOTE: The following construction ensures that
+			// The interfact doesn't lock up during the long
+			// calculation time of the color matching
+			function doMatching(plotdata, i) {
+		    	    if (i == undefined) {
+		    		i = 0;
+		    	    }
+		    	    if (i < plotdata.length) {
+				// The size of the batch is a trade off between slowing the
+				// processing and maintaining responsiveness
+
+		    		for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
+				    // Retrieve from cache
+//		    		    var index = cache[plotdata[j][0]];
+				    var index = cache[j];
+		    		    if (index < 0) {
+		    			plotdata[j][3] = '#000000'; // default to black
+		    		    } else {
+		    			var palIndex = colorMapper(data.array[index][0]);
+		    			plotdata[j][3] = palAlpha[palIndex];
+		    		    }
+
+		    		}
+
+				if (j == plotdata.length) {
+
+				    callback(plotdata);
+				}
+
+		    		var nextBatch = function()
+				{
+				    // Here we can optionaly update the
+				    // inteface with a progress bar
+				    doMatching(plotdata, i + batchSize);
+				}
+				// Process the next batch immediately,
+				// Allowing other pending event to run in the meanwhile
+		    		setTimeout(nextBatch, 0);
+		    	    }
+			}
+			doMatching(plotdata);
+
+
+
+		     } // if ... else
+
+
+
+
+    }); //dataCntr.getAspectMatrixByAspect
+  });   // dataCntr.getCellOrder
+} //generateFillStylesAspect
 

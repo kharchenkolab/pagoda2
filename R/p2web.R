@@ -422,6 +422,57 @@ pagoda2WebApp <- setRefClass(
                                           return(response$finish());
                                       },
 
+                                      'aspectmatrixbyaspect' = {
+
+                                        serverLog("Data request: aspectmatrixbyaspect");
+
+                                        postArgs <- request$POST();
+
+                                        aspectIds <- postArgs[['aspectids']];
+                                        cellIndexStart <- postArgs[['cellindexstart']];
+                                        cellIndexEnd <- postArgs[['cellindexend']];
+
+                                        cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
+                                        matrixToSend <- pathways$xv[aspectIds,cellIndices,drop=F];
+
+                                        # Discard values < 1/50 of the max
+                                        trimPoint <-  max(abs(matrixToSend)) / 50;
+                                        matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
+
+                                        # Transpose and make sparse
+                                        matrixToSend <- Matrix(t(matrixToSend), sparse = T);
+
+                                        # Bit pack and compress arrays
+                                        xSend <- .self$packCompressFloat64Array(matrixToSend@x);
+                                        iSend <- .self$packCompressInt32Array(matrixToSend@i);
+                                        pSend <- .self$packCompressInt32Array(matrixToSend@p);
+
+                                        #Dimnames1Send <- "";
+                                        #if (getCellNames) {
+                                          Dimnames1Send <- matrixToSend@Dimnames[[1]];
+                                        #};
+
+                                        # Convert the attributes to list for JSON packing
+                                        objToSend <- list(
+                                          i = iSend,
+                                          p = pSend,
+                                          Dim = matrixToSend@Dim,
+                                          Dimnames1 = Dimnames1Send,
+                                          Dimnames2 = matrixToSend@Dimnames[[2]],
+                                          x = xSend
+                                        )
+
+                                        response$header("Content-type", "application/javascript" );
+                                        response$write(toJSON(objToSend));
+
+                                        return(response$finish());
+
+
+
+
+
+                                        },
+
                                       'aspectmatrixsparsebyindexbinary' = {
                                           # Example query
                                           # http://127.0.0.1:24403/custom/myPagoda2WebApp/getData.php?dataidentifier=aspectmatrixsparsebyindexbinary&cellindexstart=1&cellindexend=100&getCellNames=F

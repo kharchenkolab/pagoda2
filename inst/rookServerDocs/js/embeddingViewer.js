@@ -427,6 +427,20 @@ embeddingViewer.prototype.setGeneExpressionColorInfo = function(colorInfo) {
 }
 
 /**
+ * Set the extra information required for plottting aspect colors
+ */
+embeddingViewer.prototype.setAspectColorInfo = function(colorInfo) {
+  this.currentConfiguration.aspectColorInfo = colorInfo;
+}
+
+/**
+ * Get the extra information required for plotting aspect colors
+ */
+embeddingViewer.prototype.getAspectColorInfo = function() {
+  return this.currentConfiguration.aspectColorInfo;
+}
+
+/**
  * Set the extra information required for plotting dendrogram colors
  */
 embeddingViewer.prototype.setDendrogramColorInfo = function(colorInfo) {
