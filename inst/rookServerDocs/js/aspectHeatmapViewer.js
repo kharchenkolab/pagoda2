@@ -142,6 +142,20 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
         } // handler
 });
 
+toolbar.add({
+  text: '',
+  xtype: 'button',
+  tooltip: 'Clear selection overlay',
+  glyph: 0xf12d,
+  handler: function() {
+    var obj = new aspectHeatmapViewer();
+    obj.clearSelectionOverlay();
+
+  }
+
+});
+
+
     // Add plot configuration menu button
     toolbar.add({
     	text: '',
@@ -186,6 +200,7 @@ aspectHeatmapViewer.prototype.initialize = function() {
 
   aspectHeatmapContainer.append(
     '<canvas id="aspect-heatmap-area"></canvas>' +
+    '<canvas id="aspect-heatmap-area-selection"></canvas>' +
     '<canvas id="aspect-heatmap-area-overlay"></canvas>'
   );
 
@@ -195,6 +210,13 @@ aspectHeatmapViewer.prototype.initialize = function() {
     top: 0,
     left: 0
   });
+
+  var aspectHeatmapAreaSelection = $('#aspect-heatmap-area-selection');
+  aspectHeatmapAreaSelection.css({
+    position: 'absolute',
+    top: 0,
+    left: 0
+  })
 
   var aspectHeatmapAreaOverlay = $('#aspect-heatmap-area-overlay');
   aspectHeatmapAreaOverlay.css({
@@ -291,6 +313,14 @@ aspectHeatmapViewer.prototype.clearOverlay = function() {
   ctx.clearRect(0,0,width,height);
 }
 
+aspectHeatmapViewer.prototype.clearSelectionOverlay = function(){
+  var canvas = document.getElementById('aspect-heatmap-area-selection');
+  var ctx = canvas.getContext('2d');
+  var height = canvas.height;
+  var width = canvas.width;
+  ctx.clearRect(0,0,width, height);
+}
+
 /**
  * Show overlay for specific coordinates
  */
@@ -349,6 +379,7 @@ aspectHeatmapViewer.prototype.setActualPlotHeight = function(val) {
  */
 aspectHeatmapViewer.prototype.updateCanvasSize = function() {
 
+
   var aspectHeatmapArea = $('#aspect-heatmap-area')[0];
   var aspectHeatmapAreaOverlay = $('#aspect-heatmap-area-overlay')[0];
 
@@ -373,6 +404,12 @@ aspectHeatmapViewer.prototype.updateCanvasSize = function() {
   // Update the size of the overaly
   aspectHeatmapAreaOverlay.width = curWidth;
   aspectHeatmapAreaOverlay.height = curHeight;
+
+
+  // Resize the selection canvas
+  var heatmapAreaSelection = $('#aspect-heatmap-area-selection')[0];
+  heatmapAreaSelection.width = curWidth;
+  heatmapAreaSelection.height = curHeight;
 }
 
 /**
@@ -497,6 +534,13 @@ aspectHeatmapViewer.prototype.getDrawingContext = function() {
   return document.getElementById('aspect-heatmap-area').getContext('2d');
 }
 
+aspectHeatmapViewer.prototype.getSelectionDrawingContext = function() {
+  var canvas = document.getElementById('aspect-heatmap-area-selection');
+  var ctx = canvas.getContext('2d');
+  return ctx;
+}
+
+
 /**
  * Get drawing constants for drawing
  */
@@ -512,5 +556,57 @@ aspectHeatmapViewer.prototype.getDrawConstants = function() {
     	paddingBottom: 10,
     	maxCellHeight: 30,
     }
+}
+
+aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
+  var aspHeatView = this;
+  var dendV = new dendrogramViewer();
+
+  var cellSelCntr = new cellSelectionController();
+  cellSelection = cellSelCntr.getSelection(selectionName);
+
+  var dataCntr = new dataController();
+  dataCntr.getCellOrder(function(cellorder) {
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+    var ctx = aspHeatView.getSelectionDrawingContext();
+    ctx.clearRect(0,0,3000,3000);
+
+    // Get and calculate plotting values
+    var drawConsts = aspHeatView.getDrawConstants();
+    var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+    var actualPlotHeight = aspHeatView.getActualPlotHeight() + 10;
+
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+
+    // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+
+
+  })
+
 }
 

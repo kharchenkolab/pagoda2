@@ -192,6 +192,11 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             var embCntr = new embeddingViewer();
             embCntr.highlightSelectionByName(selectionName);
 
+            // Highlight on Aspects
+            var aspHeatView = new aspectHeatmapViewer();
+      aspHeatView.highlightCellSelectionByName(selectionName);
+
+
     		} else {
     		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
     		}

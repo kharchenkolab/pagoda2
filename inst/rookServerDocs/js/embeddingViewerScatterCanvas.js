@@ -192,6 +192,10 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
       // TODO: Make this optional
       var heatView = new heatmapViewer();
       heatView.highlightCellSelectionByName('embSelection');
+
+      var aspHeatView = new aspectHeatmapViewer();
+      aspHeatView.highlightCellSelectionByName('embSelection');
+
 	});
 
 }
