@@ -195,8 +195,10 @@ dataController.prototype.getAvailableGenesetsInAspectStore = function(aspectId, 
 }
 
 
+
 /**
- * Get a dgCMatrixReader with the cell aspect weights
+ * Get a dgCMatrixReader with the cell aspect weights for the specified
+ * cell index range and all aspects
  */
 dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
   var dataCntr = this;
@@ -403,6 +405,8 @@ dataController.prototype.getExpressionValuesSparseByCellIndex = function(geneIds
        return this.getExpressionValuesSparseByCellIndexBinary(geneIds, cellIndexStart, cellIndexEnd,callback)
 }
 
+
+
 /**
  * Get part of the main expression matrix in sparse format
  * with the genes specified as an array of strings and the cells
@@ -488,8 +492,8 @@ dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(g
 
 	    //Convert to full matrix and return
 	    var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1, data.Dimnames2, x);
-	    callback(m.getFullMatrix());
-	}
+	      callback(m.getFullMatrix());
+	    }
     });
 
     return request;
@@ -978,6 +982,93 @@ dataController.prototype.getGeneInformation =  function(callback) {
 
 
 
+/**
+ * Get part of the aspect matrix specifying both the aspects to get and the cell start/end indices
+ * @cellIndexStart start cell index
+ * @cellIndexEnd end cell index
+ * @aspectIds the ids of the aspect to get
+ * @getCellNames logical flag denoting if the cell names are to be received
+ * @callback callback function
+ */
+dataController.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
+    // Check input
+    if (!Array.isArray(aspectIds)) {
+	    throw new Error("aspectIds must be an array of strings");
+    }
 
+    if (!Number.isInteger(cellIndexStart)) {
+	    throw new Error("cellIndexStart must be an integer");
+    }
+
+    if (!Number.isInteger(cellIndexEnd)) {
+	    throw new Error("cellIndexEnd must be an interger");
+    }
+
+
+
+        // Setup the request data
+    var requestData = {
+    	"dataidentifier": "aspectmatrixbyaspect",
+    	"aspectids": aspectIds,
+    	"cellindexstart": cellIndexStart,
+    	"cellindexend": cellIndexEnd,
+    };
+
+    var request = $.ajax({
+    	type: "POST",
+    	dataType: "json",
+    	url: "getData.php?dataidentifier=aspectmatrixbyaspect",
+    	data: requestData,
+    	success: function(data) {
+
+
+	    // Check if the returned data are valid
+	    if (typeof data !== 'object') {
+		    throw new Error('Returned data is not of type object');
+	    }
+	    if (! data.hasOwnProperty('i') ){
+		    throw new Error('data object does not have an i field');
+	    }
+	    if (! data.hasOwnProperty('p')) {
+		    throw new Error('data object does not have a p field');
+	    }
+	    if (! data.hasOwnProperty('Dim')) {
+		    throw new Error('data object does not have a Dim field');
+	    }
+	    if (! data.hasOwnProperty('Dimnames1')) {
+		    throw new Error('data object does not have Dimnames1 field');
+	    }
+	    if (! data.hasOwnProperty('Dimnames2')){
+		    throw new Error('data object does not have Dimnames2 field');
+	    }
+	    if (! data.hasOwnProperty('x')) {
+		    throw new Error('data object does not have x field');
+	    }
+
+	    var dataCntr = new dataController();
+	    var x = dataCntr.unpackCompressedBase64Float64Array(data.x);
+	    var i = dataCntr.unpackCompressedBase64Int32Array(data.i);
+	    var p = dataCntr.unpackCompressedBase64Int32Array(data.p);
+
+	    // This is a fix for the way R toJSON encodes one element arrays
+	    if (typeof data.Dimnames1 === 'string') {
+		    data.Dimnames1 = [ data.Dimnames1 ];
+	    }
+
+	    if (typeof data.Dimnames2 === 'string') {
+		    data.Dimnames2 = [ data.Dimnames2 ]
+	    }
+
+
+	    //Convert to full matrix and return
+	    var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1, data.Dimnames2, x);
+	      callback(m.getFullMatrix());
+	    }
+    });
+
+    // For allowing cancellation
+    return request;
+
+}
 
 

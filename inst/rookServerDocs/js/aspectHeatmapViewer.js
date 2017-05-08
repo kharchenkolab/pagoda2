@@ -262,13 +262,10 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
       var aspTable = new aspectsTableViewer();
       aspTable.showSelectedAspect(regionData.aspectId);
 
-      // TODO: Uncomment when embedding viewer supports this
-      /*
       var embV = new embeddingViewer();
 	    embV.setColorConfiguration('aspect');
 	    embV.setAspectColorInfo({aspectid: regionData.aspectId});
 	    embV.updateColors();
-	    */
     };
   }); // click listener
 
