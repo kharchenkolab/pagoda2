@@ -381,8 +381,8 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
     	    // Plot the label
     	    // Cap at 16 and don't plot if smaller than 6
-    	    var fontSize = Math.min(cellHeight, 16);
-    	    if (fontSize >= 6) {
+    	    var fontSize = Math.min(cellHeight * 0.7, 16);
+    	    if (fontSize >= 8) {
       	    ctx.font = fontSize + 'px Arial';
       	    ctx.fillStyle = 'black';
       	    var labelx = cellSelection.length * cellWidth + left + labelXpad;
