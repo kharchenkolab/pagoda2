@@ -220,10 +220,10 @@ metaDataHeatmapViewer.prototype.showOverlay = function(x) {
 
     // Within the heatmap area
     if ( x > drawConsts.left & x < drawConsts.width + drawConsts.left) {
-	ctx.beginPath();
-	ctx.moveTo(x, drawConsts.top);
-	ctx.lineTo(x, drawConsts.height + drawConsts.top);
-	ctx.stroke();
+    	ctx.beginPath();
+    	ctx.moveTo(x, drawConsts.top);
+    	ctx.lineTo(x, drawConsts.height + drawConsts.top);
+    	ctx.stroke();
     }
 }
 
@@ -300,8 +300,6 @@ metaDataHeatmapViewer.prototype.getDrawConstants = function() {
 /**
  * Draw an updated metadata heatmap
  *
- * @todo This function should be broken up into a data prep and
- * data plot step
  */
 metaDataHeatmapViewer.prototype.drawMetadata = function() {
     // Get cells currently displayed in the dendrogram
@@ -310,134 +308,114 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
     // Some parameters to control the  drawing of the heatmap
     var plotConsts = this.getDrawConstants();
-
     var bottomPadding = 2;
-
-
     var heatDendView = new heatmapDendrogramViewer();
     var top = plotConsts.top;
     var left = plotConsts.left;
     var metaWidth = plotConsts.width - heatDendView.getPlotAreaRightPadding();
     var metaHeight = plotConsts.height - bottomPadding;
 
-
     // Request the data
     var dataCntr = new dataController();
     dataCntr.getCellMetadata(function(data) {
-     // debugger;
 
-	// Get the canvas
-	var canvas = $('#metadata-area')[0];
-	var ctx =  canvas.getContext("2d");
+    	// Get the canvas
+    	var canvas = $('#metadata-area')[0];
+    	var ctx =  canvas.getContext("2d");
 
-	// Clear the canvas
-	// FIXME: Clear the proper area
-	ctx.clearRect(0,0,5000,5000);
+    	// Clear the canvas
+    	// FIXME: Clear the proper area
+    	ctx.clearRect(0,0,5000,5000);
 
-	// Generate two full arrays with the things that were requested
-	// One has the actual values and the other the plot colors
-	// We will need the actual values for the rollovers later
+      // Get number of cells and calculate cell size
+    	var nCells = cellSelection.length;
+      var nrows = Object.keys(data).length;
 
-	// Prepare the data for plotting
-	var renderedArrayColors = Array();
-	var renderedArrayValues = Array();
-	var labels = Array();
+      // Calculate cell size
+    	var cellWidth = metaWidth / (nCells);
+    	var cellHeight = metaHeight / nrows;
 
-	var j = 0;
-	for (var key in data) {
-	    // Skip if object property
-	    if (! data.hasOwnProperty(key) ) continue;
+      // Calculate label position
+    	var labelYpad = cellHeight / 2 + 5;
+    	var labelXpad = 20;
 
-	    labels[j] = key; // This is the label next to the row -- replace with a name field
+      // Get  and clear the click areas
+    	var mdhv = new metaDataHeatmapViewer();
+    	mdhv.clickRegions.clearClickAreas();
 
-	    // TODO: Implement a hidden property
-	    // TODO: Implement metadata row selection by the user
-	    // TODO: Implement provided palette override by the user
-	    // TODO: Implement default palette provision if one is not specified
-	    // TODO: Add some futher checks --providing inconsistent data from server side will break this
+      // For each metadata row
+      var j =0; // row counter
+    	for (var key in data) {
 
-	    var curEntry =  data[key];
+    	    debugger;
 
-	    var curRow = new Array();
-	    for (var i = 0; i < cellSelection.length; i++) {
-    		var curCell =  cellSelection[i];
-    		curRow[i] = curEntry.data[curCell];
-	    }
-	    renderedArrayValues[j] = curRow;
+    	    // Skip if object property
+    	    if (! data.hasOwnProperty(key) ) continue;
 
-	    // The palette from R has an alpha channel that we
-	    // have to discard
-	    var fixedPalette = curEntry.palette.map(function(x) {
-	    	return x.substring(0,7);
-	    });
+          // Current plotting information
+          var curLabel = data[key].displayname;
+          if (typeof curLabel === 'undefined') {curLabel = ''}; // default to empty
 
-	    // Map to colours with provided palette
-	    renderedArrayColors[j] = renderedArrayValues[j].map(function(x) {
-		    return (fixedPalette)[x-1];
-	    });
+    	    var curData =  data[key].data;
+          var curPal = data[key].palette;
 
-	    j++; // Output row counter
-	} // dataCntr.getCellMetadata(
+          // Get the y coordinate
+          var y = j * cellHeight + top;
 
 
-	//// Plot stage
-	// Computed plotting param
-	var nCells = renderedArrayColors[0].length;
+    	    // Plot the row in the order provided by the dendrogram
+    	    for (var i = 0; i < cellSelection.length; i++) {
+        		var curCell =  cellSelection[i];
 
-	// TODO: should be subtracting left and top here ( and
-	//  later for the click regions as well)
-	var cellWidth = metaWidth / (nCells);
-	var cellHeight = metaHeight / (renderedArrayColors.length);
+        		// value to plot
+        		var val = curData[curCell]; // value
+            var col = curPal[val];
 
-	var labelYpad = cellHeight / 2 + 5;
-	var labelXpad = 20;
+            if (typeof col == 'undefined') {
+                console.warn('Level without a corresponding color found');
+                col = 'red';
+                debugger;
+            }
 
-	var mdhv = new metaDataHeatmapViewer();
-	mdhv.clickRegions.clearClickAreas();
 
-	for(var i = 0; i < renderedArrayColors.length; i++) {
-	    var row = renderedArrayColors[i];
-	    var y = i * cellHeight + top;
-	    for (var j = 0; j < row.length; j++) {
-		    var x = (j) * cellWidth + left;
-		    ctx.fillStyle =  row[j];
-		    ctx.fillRect(x,y, cellWidth, cellHeight);
-	    }
+            var x = i * cellWidth + left;
+		        ctx.fillStyle = col.substr(0,7); // color w/o alpha
+		        ctx.fillRect(x,y, cellWidth, cellHeight);
+    	    }
 
-	    // Print names
-	    var name = labels[i];
+    	    // Plot the label
+    	    // Cap at 16 and don't plot if smaller than 6
+    	    var fontSize = Math.min(cellHeight, 16);
+    	    if (fontSize >= 6) {
+      	    ctx.font = fontSize + 'px Arial';
+      	    ctx.fillStyle = 'black';
+      	    var labelx = cellSelection.length * cellWidth + left + labelXpad;
+      	    ctx.fillText(curLabel, labelx , y + labelYpad);
+    	    }
 
-      // Cap at 16 and don't plot if smaller than 6
-	    var fontSize = Math.min(cellHeight, 16);
-	    if (fontSize >= 6) {
-  	    ctx.font = fontSize + 'px Arial';
-  	    ctx.fillStyle = 'black';
-  	    var labelx = (j) * cellWidth + left + labelXpad;
-  	    ctx.fillText(name, labelx , y + labelYpad);
-	    }
+    	    // Register a click region for this metadata row
+    	    var y1 = j * cellHeight + top;
+    	    var y2 = (j + 1) * cellHeight + top;
 
-	    // Register a click region for this metadata row
-	    var y1 = i * cellHeight + top;
-	    var y2 = (i + 1) * cellHeight + top;
+    	    var x1 = left;
+    	    var x2 = left + metaWidth;
 
-	    var x1 = left;
-	    var x2 = left + metaWidth;
+    	    mdhv.clickRegions.addClickArea(
+        		x1, y1,
+        		x1, y2,
+        		x2, y2,
+        		x2, y1,
+        		{ metadataName: key }
+    	    );
 
-	    mdhv.clickRegions.addClickArea(
-		x1, y1,
-		x1, y2,
-		x2, y2,
-		x2, y1,
-		// TODO: Is there an internal name to svae here? NOPE -- but there should be
-		{ metadataName: labels[i] }
-	    );
+          // Increment row counter
+    	    j++
+    	} // dataCntr.getCellMetadata
 
-	}
-
-	// Plot a bounding box
-	ctx.beginPath();
-	ctx.rect(left, top, metaWidth, metaHeight);
-	ctx.stroke();
+    	// Plot a bounding box
+    	ctx.beginPath();
+    	ctx.rect(left, top, metaWidth, metaHeight);
+    	ctx.stroke();
 
     });
 }

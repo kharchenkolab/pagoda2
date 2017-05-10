@@ -59,27 +59,38 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
             dpt <- log10(r@.xData$depth+0.00001)
             max <- max(dpt)
             min <- min(dpt)
-            dptnorm <- floor((dpt - min) / (max - min) * levels) + 1
+            dptnorm <- floor((dpt - min) / (max - min) * levels)
             metadata$depth <- list(
                 data = dptnorm,
-                palette = colorRampPalette(c('white','black'))(levels+1)
+                palette = colorRampPalette(c('white','black'))(levels+1),
+                displayname = 'Depth'
             )
 
 
         }
     }
+
+
+    batchData <- as.numeric(r$batch) - 1;
+    names(batchData) <- names(r$batch);
     if ( "batch" %in% names(r@.xData) ) {
         if ( !is.null(r@.xData$batch)  ) {
             metadata$batch <- list(
-                data = r$batch,
-                palette = rainbow(n = length(levels(r$batch)))
+                data = ,
+                palette = rainbow(n = length(levels(r$batch))),
+                displayname = 'Batch'
             )
         }
     }
+
+    clusterData <- as.numeric(dendrogramCellGroups) -1;
+    names(clusterData) <- names(dendrogramCellGroups);
     metadata$clusters <- list(
-            data = dendrogramCellGroups,
-            palette = rainbow(n =  length(levels(dendrogramCellGroups)))
+            data = clusterData,
+            palette = rainbow(n =  length(levels(dendrogramCellGroups))),
+            displayname = 'Clusters'
     )
+
     # Append the additional metadata
     for ( itemName in names(additionalMetadata)) {
         metadata[[itemName]] <- additionalMetadata[[itemName]]
