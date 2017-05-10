@@ -410,13 +410,6 @@ pagoda2WebApp <- setRefClass(
 
                                       # Get cell metadata information
                                       'cellmetadata' = {
-                                          # cat("Request for cell metadata received");
-                                          # str(cellmetadata);
-
-                                          # Implemented clientside
-                                          # postArgs <- request$POST();
-                                          # cellIdentifiers <- postArgs[['cellids']];
-
                                           response$header("Content-type", "application/javascript");
                                           response$write(toJSON(cellmetadata));
                                           return(response$finish());
