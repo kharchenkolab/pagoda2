@@ -30,8 +30,42 @@ generate.p2.human.go <- function(hgenes) {
   geneSets
 }
 
+#' @title Generate a metadata structure for a p2 web object from a named factor
+#' @description This function will genereate a metadata structure that can be passed to
+#' p2 web object constructor as additional metadata from a named factor of arbitrary values
+#' @param metadata named factor with metadata for individual cells, names must correspond to cells
+#' @param displayname name to display for the metadata
+#' @param s s value for rainbow palette
+#' @param v v value for rainbow palette
+#' @export p2.metadata.from.factor
+p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v =1) {
+  # Check input
+  if ( !is.factor(metadata) | is.null(names(metadata))) {
+    stop('metadata parameter has to be a named factor');
+  }
 
+  # Convert input factor to named number vector
+  data <- as.numeric(metadata);
+  names(data) <- names(metadata);
 
+  # Get the labels
+  labs <- levels(metadata);
+
+  # Genereate palette
+  pal <- rainbow(n = nlevels(metadata), s = s, v = v);
+
+  ret <- list(
+    data = data,
+    levels = labs,
+    palette = pal
+  );
+
+  if (!is.null(displayname)) {
+    ret$displayname <- displayname;
+  }
+
+  invisible(ret);
+}
 
 
 
