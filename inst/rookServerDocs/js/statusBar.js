@@ -5,7 +5,7 @@
  * to display things. Other object can directly call its showMessage()
  * function to display items.
  * @constructor
- * @todo Minimum time that the displayed item will stay on screen 
+ * @todo Minimum time that the displayed item will stay on screen
  * @todo implement icons (i.e. cell, warning, error, ...)
  */
 function statusBar() {
@@ -14,14 +14,6 @@ function statusBar() {
     };
 
     console.log('Initialising status bar...');
-
-    // Respond to various events
-    var evtBus = new eventBus();
-    evtBus.register("embedding-mouseover-plotpoint", null, function(e,p){
-
-	var stsBar =  new statusBar();
-	stsBar.showMessage("Cell Id: " + p.cellId);
-    });
 
     statusBar.instance = this;
 };

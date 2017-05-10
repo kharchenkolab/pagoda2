@@ -88,8 +88,11 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     	left: 0
     });
 
-    // Get a new clickable regions object for this heatmap
-    this.clickRegions = new clickableRegions();
+    // Clickable regions that are used for identifying the row
+    this.clickRegionsRows = new clickableRegions();
+
+    // clickableRegions that are used to identify each individual entry
+    this.clickRegionsEntries = new clickableRegions();
 
     // Setup the click listener
     // NOTE: At this point we are only interested in resoving
@@ -99,12 +102,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     // For clicking on contigious chucks (e.g. clusters) we
     // will need a propery that says the the data is guaranteed to be
     // contigious with the default ordering
-    (metadataAreaOverlay[0]).addEventListener('click', function(e) {
+    (metadataAreaOverlay[0]).addEventListener('dblclick', function(e) {
     	var x = e.layerX;
     	var y = e.layerY;
 
     	var mdhv = new metaDataHeatmapViewer();
-    	mdhv.clickRegions.resolveClick(x,y, function(params) {
+    	mdhv.clickRegionsRows.resolveClick(x,y, function(params) {
     	    var embV = new embeddingViewer();
     	    embV.setColorConfiguration('metadata');
     	    // Here  we are just passing the params from the
@@ -113,7 +116,33 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     	    embV.setMetadataColorInfo(params);
     	    embV.updateColors();
     	});
+
+
+
     });
+
+    // For preventing selection on double click
+    (metadataAreaOverlay[0]).addEventListener('mousedown', function(e) {
+      e.preventDefault();
+    });
+
+
+    (metadataAreaOverlay[0]).addEventListener('click', function(e) {
+      e.preventDefault();
+
+      var x = e.layerX;
+    	var y = e.layerY;
+
+      var mdhv = new metaDataHeatmapViewer();
+    	mdhv.clickRegionsEntries.resolveClick(x,y, function(params) {
+    	    var stsBar = new statusBar();
+    	    var msg = 'Cell: ' + params.cellid + ' ' + '(' + params.keyLabel + ': ' + params.valueLabel +')';
+    	    stsBar.showMessage(msg);
+
+    	});
+    });
+
+
 
     (metadataAreaOverlay[0]).addEventListener('mousemove', function(e) {
     	var x = e.layerX;
@@ -190,9 +219,32 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     var obj = new metaDataHeatmapViewer();
     obj.clearSelectionOverlay();
 
-  }
+  }});
 
-});
+  toolbar.add({
+    text: '',
+    xtype: 'button',
+    tooltip: 'Help',
+    glyph: 0xf128,
+    handler: function() {
+          Ext.create('Ext.window.Window', {
+            height: 300,
+            width: 400,
+            title: 'Help: Differential Expression',
+            scrollable: true,
+            bodyPadding: 10,
+            html: '<h2>Help: Metadata heatmap</h2>' +
+              'The heatmap displays metadata information about the cells. Single click to identify '+
+              'the cell and metadata entry. Double click to color the embedding by the metadata.',
+            constrain: true,
+            closable: true,
+            resizable: false
+          }).show();
+    } // handler
+  }); // toolbar add
+
+
+
 
   var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
 
@@ -341,7 +393,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
       // Get  and clear the click areas
     	var mdhv = new metaDataHeatmapViewer();
-    	mdhv.clickRegions.clearClickAreas();
+    	mdhv.clickRegionsRows.clearClickAreas();
 
       // For each metadata row
       var j =0; // row counter
@@ -355,10 +407,11 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
     	    var curData =  data[key].data;
           var curPal = data[key].palette;
+          var curLevels = data[key].levels;
+          if (typeof curLevels === 'undefined'){curLevels = curPal}; //Use colors if levels unavailable
 
           // Get the y coordinate
           var y = j * cellHeight + top;
-
 
     	    // Plot the row in the order provided by the dendrogram
     	    for (var i = 0; i < cellSelection.length; i++) {
@@ -370,13 +423,21 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
             if (typeof col == 'undefined') {
                 console.warn('Level without a corresponding color found');
-                col = '#FFFFFFFF'; // Leave a gap
+                col = '#FFFFFFFF'; // Leave a white gap
             }
-
 
             var x = i * cellWidth + left;
 		        ctx.fillStyle = col.substr(0,7); // color w/o alpha
 		        ctx.fillRect(x,y, cellWidth, cellHeight);
+
+		        // Register a click region for the particular entry
+		        mdhv.clickRegionsEntries.addClickArea(
+                x, y,
+                x, y + cellHeight,
+                x + cellWidth, y + cellHeight,
+                x + cellWidth, y,
+                { 'key': key, 'keyLabel': curLabel , cellid: curCell, value: val, valueLabel: curLevels[val] }
+		        );
     	    }
 
     	    // Plot the label
@@ -396,7 +457,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
     	    var x1 = left;
     	    var x2 = left + metaWidth;
 
-    	    mdhv.clickRegions.addClickArea(
+    	    mdhv.clickRegionsRows.addClickArea(
         		x1, y1,
         		x1, y2,
         		x2, y2,
