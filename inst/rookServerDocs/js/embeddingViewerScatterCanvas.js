@@ -727,7 +727,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
 			     metadataName + '". This is an error with the data provided by server.');
 		clusterColor = '#000000'; // default to black
 	    } else {
-		clusterColor = colorPalette[clusterId-1];
+		clusterColor = colorPalette[clusterId];
 	    }
 
 	    if (typeof clusterColor == 'undefined') {

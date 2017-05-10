@@ -45,7 +45,7 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v =1) {
   }
 
   # Convert input factor to named number vector
-  data <- as.numeric(metadata);
+  data <- as.numeric(metadata) - 1; # because it's 0-indexed on js
   names(data) <- names(metadata);
 
   # Get the labels

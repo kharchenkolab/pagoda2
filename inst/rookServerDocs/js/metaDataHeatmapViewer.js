@@ -346,9 +346,6 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
       // For each metadata row
       var j =0; // row counter
     	for (var key in data) {
-
-    	    debugger;
-
     	    // Skip if object property
     	    if (! data.hasOwnProperty(key) ) continue;
 
@@ -373,8 +370,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
             if (typeof col == 'undefined') {
                 console.warn('Level without a corresponding color found');
-                col = 'red';
-                debugger;
+                col = '#FFFFFFFF'; // Leave a gap
             }
 
 
