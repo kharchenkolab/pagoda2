@@ -165,6 +165,31 @@ toolbar.add({
     	menu: settingsMenu
     });
 
+
+
+      toolbar.add({
+    text: '',
+    xtype: 'button',
+    tooltip: 'Help',
+    glyph: 0xf128,
+    handler: function() {
+          Ext.create('Ext.window.Window', {
+            height: 300,
+            width: 400,
+            title: 'Help: Aspect heatmap',
+            scrollable: true,
+            bodyPadding: 10,
+            html: '<h2>Aspect heatmap</h2>' +
+              'The heatmap displays aspect information about the cells. ' +
+              'Double click to color the embedding the aspect values.',
+            constrain: true,
+            closable: true,
+            resizable: false
+          }).show();
+    } // handler
+  }); // toolbar add
+
+
     var aspectPanel = Ext.getCmp('aspectPanel');
     aspectPanel.getHeader().add(toolbar);
 
@@ -252,7 +277,12 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
   var heatmapOverlayArea = $('#aspect-heatmap-area-overlay')[0];
   var aspHeatView = this;
 
-  heatmapOverlayArea.addEventListener('click', function(e) {
+    // For preventing selection on double click
+    heatmapOverlayArea.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+    });
+
+  heatmapOverlayArea.addEventListener('dblclick', function(e) {
     var x = e.layerX;
     var y = e.layerY;
 

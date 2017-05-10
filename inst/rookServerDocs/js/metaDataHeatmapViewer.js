@@ -185,21 +185,21 @@ metaDataHeatmapViewer.prototype.initialize = function () {
             var canvas = document.getElementById('metadata-area');
 
                         const maxSize = 2000;
-            if (canvas.width > maxSize | canvas.height >maxSize){
-                Ext.Msg.show({
-                  title: 'Warning',
-                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
-                   'This may cause problems during exporting. Do you want to continue?',
-                   buttons: Ext.Msg.OKCANCEL,
-                   fn: function(s) {
-                     if (s == 'ok') {
-                          var imageURL = canvas.toDataURL('image/png');
-                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                          window.open(imageURL);
-                     } //if
-                   } //fn
-                }) // Ext.Msg.show
-            } else {
+                if (canvas.width > maxSize | canvas.height >maxSize){
+                    Ext.Msg.show({
+                      title: 'Warning',
+                      msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                       'This may cause problems during exporting. Do you want to continue?',
+                       buttons: Ext.Msg.OKCANCEL,
+                       fn: function(s) {
+                         if (s == 'ok') {
+                              var imageURL = canvas.toDataURL('image/png');
+                              imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                              window.open(imageURL);
+                         } //if
+                       } //fn
+                    }) // Ext.Msg.show
+                } else {
                                         var imageURL = canvas.toDataURL('image/png');
                           imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
                           window.open(imageURL);
@@ -233,7 +233,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
             title: 'Help: Differential Expression',
             scrollable: true,
             bodyPadding: 10,
-            html: '<h2>Help: Metadata heatmap</h2>' +
+            html: '<h2>Metadata heatmap</h2>' +
               'The heatmap displays metadata information about the cells. Single click to identify '+
               'the cell and metadata entry. Double click to color the embedding by the metadata.',
             constrain: true,

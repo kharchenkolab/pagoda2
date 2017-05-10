@@ -224,6 +224,8 @@ toolbar.add({
         } // handler
 });
 
+
+
 toolbar.add({
   text: '',
   xtype: 'button',
@@ -247,6 +249,29 @@ toolbar.add({
     });
 
 
+      toolbar.add({
+    text: '',
+    xtype: 'button',
+    tooltip: 'Help',
+    glyph: 0xf128,
+    handler: function() {
+          Ext.create('Ext.window.Window', {
+            height: 300,
+            width: 400,
+            title: 'Help: Main Heatmap',
+            scrollable: true,
+            bodyPadding: 10,
+            html: '<h2>Main heatmap</h2>' +
+              'The heatmap displays expression values for the selected genes. '+
+              'Double click to color the embedding by the selected gene expression.',
+            constrain: true,
+            closable: true,
+            resizable: false
+          }).show();
+    } // handler
+  }); // toolbar add
+
+
     var heatmapPanel = Ext.getCmp('heatmapPanel');
     heatmapPanel.getHeader().add(toolbar);
 }
@@ -261,8 +286,14 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     var heatmapAreaOverlay = $('#heatmap-area-overlay')[0];
 
+    // For preventing selection on double click
+    heatmapAreaOverlay.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+    });
+
+
     // Click listener for setting gene color to embedding
-    heatmapAreaOverlay.addEventListener('click', function(e) {
+    heatmapAreaOverlay.addEventListener('dblclick', function(e) {
 	var x = e.layerX;
 	var y = e.layerY;
 
