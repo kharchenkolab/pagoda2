@@ -346,9 +346,6 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
       // For each metadata row
       var j =0; // row counter
     	for (var key in data) {
-
-    	    debugger;
-
     	    // Skip if object property
     	    if (! data.hasOwnProperty(key) ) continue;
 
@@ -373,8 +370,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
             if (typeof col == 'undefined') {
                 console.warn('Level without a corresponding color found');
-                col = 'red';
-                debugger;
+                col = '#FFFFFFFF'; // Leave a gap
             }
 
 
@@ -451,7 +447,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectio
     var ctx = metadataHeatV.getSelectionDrawingContext();
     ctx.clearRect(0,0,3000,3000);
 
-
+var heatDendView = new heatmapDendrogramViewer();
     // Get and calculate plotting values
     var drawConsts = metadataHeatV.getDrawConstants();
     var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();

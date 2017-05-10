@@ -559,6 +559,8 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
   var aspHeatView = this;
   var dendV = new dendrogramViewer();
 
+  var heatDendView = new heatmapDendrogramViewer();
+
   var cellSelCntr = new cellSelectionController();
   cellSelection = cellSelCntr.getSelection(selectionName);
 

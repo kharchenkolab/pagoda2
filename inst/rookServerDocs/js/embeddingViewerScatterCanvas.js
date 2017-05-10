@@ -20,8 +20,8 @@ function embeddingViewerScatterCanvas() {
     // component resize function
     var element = Ext.getCmp('embedding-app-container');
     element.onResize = function(){
-	embView = new embeddingViewer();
-	embView.redraw();
+    	embView = new embeddingViewer();
+    	embView.redraw();
     };
 
     var evtBus = new eventBus();
@@ -29,14 +29,14 @@ function embeddingViewerScatterCanvas() {
     // Set the coloring scheme to dendrogram ( which uses the selection controller )
     // and call updateColors
     evtBus.register("dendrogram-node-click", null, function(e,p) {
-	var embV = new embeddingViewer();
+    	var embV = new embeddingViewer();
 
-	// Update  configuration of embedding
-	// The actual selected node is passed by the cell selection
-	embV.setColorConfiguration('dendrogram');
-	embV.setDendrogramColorInfo({nodeType: p.type});
+    	// Update  configuration of embedding
+    	// The actual selected node is passed by the cell selection
+    	embV.setColorConfiguration('dendrogram');
+    	embV.setDendrogramColorInfo({nodeType: p.type});
 
-	embV.updateColors();
+    	embV.updateColors();
     });
 
     // This variable hold the last ajax request for expression values
@@ -137,8 +137,8 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    thisViewer.xScaleDomainMin = +Infinity;
 	    thisViewer.xScaleDomainMax = -Infinity;
 	    for (var j = 0; j < plotData.length; j++) {
-		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
-		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
 	    }
 	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
@@ -311,7 +311,7 @@ embeddingViewerScatterCanvas.prototype.plotEmbedding = function() {
 embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanvasElement) {
     var thisViewer = this;
 
-    var dragging = false;
+    thisViewer.dragging = false;
     var dragStartX = 0;
     var dragStartY = 0;
     var ctx = overlayCanvasElement.getContext('2d');
@@ -326,18 +326,18 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     overlayCanvasElement.addEventListener('mousedown', function(e) {
     	dragStartX = e.layerX;
     	dragStartY = e.layerY;
-    	dragging = true;
+    	thisViewer.dragging = true;
     });
 
     overlayCanvasElement.addEventListener('mouseup', function(e) {
-    	if (dragging) {
+    	if (thisViewer.dragging) {
     	    // Dragging complete
     	    var dragEndX = e.layerX;
     	    var dragEndY = e.layerY;
 
     	    thisViewer.generateDragSelection(dragStartX, dragStartY, dragEndX, dragEndY);
     	}
-    	dragging = false;
+    	thisViewer.dragging = false;
     });
 
     overlayCanvasElement.addEventListener('mousemove', function(e) {
@@ -347,7 +347,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     lastCursorPositionX = e.layerX;
     lastCursorPositionY = e.layerY;
 
-	if (dragging) {
+	if (thisViewer.dragging) {
 	    // TODO: clear the correct coordinates
 	    ctx.clearRect(0,0,4000,4000);
 	    ctx.save();
@@ -362,11 +362,11 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 
     overlayCanvasElement.addEventListener('mouseleave', function(e) {
 
-        	if (dragging) {
+        	if (thisViewer.dragging) {
         	    ctx.clearRect(0,0,4000,4000);
         	    thisViewer.generateDragSelection(dragStartX, dragStartY, lastCursorPositionX, lastCursorPositionY);
         	}
-        	dragging = false;
+        	thisViewer.dragging = false;
         	document.body.style.cursor = 'default';
     });
 
@@ -727,7 +727,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
 			     metadataName + '". This is an error with the data provided by server.');
 		clusterColor = '#000000'; // default to black
 	    } else {
-		clusterColor = colorPalette[clusterId-1];
+		clusterColor = colorPalette[clusterId];
 	    }
 
 	    if (typeof clusterColor == 'undefined') {
