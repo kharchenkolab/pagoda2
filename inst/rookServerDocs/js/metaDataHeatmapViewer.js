@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: metaDataHeatmapViewer.js
  * Author: Nikolas Barkas
@@ -67,9 +69,9 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
     var metadataArea = $('#metadata-area');
     metadataArea.css({
-	position: 'absolute',
-	top: 0,
-	left: 0
+    	position: 'absolute',
+    	top: 0,
+    	left: 0
     });
 
     var metadataAreaSelection = $('#metadata-area-selection');
@@ -81,9 +83,9 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
     var metadataAreaOverlay = $('#metadata-area-overlay');
     metadataAreaOverlay.css({
-	position:'absolute',
-	top: 0,
-	left: 0
+    	position:'absolute',
+    	top: 0,
+    	left: 0
     });
 
     // Get a new clickable regions object for this heatmap
@@ -98,39 +100,39 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     // will need a propery that says the the data is guaranteed to be
     // contigious with the default ordering
     (metadataAreaOverlay[0]).addEventListener('click', function(e) {
-	var x = e.layerX;
-	var y = e.layerY;
+    	var x = e.layerX;
+    	var y = e.layerY;
 
-	var mdhv = new metaDataHeatmapViewer();
-	mdhv.clickRegions.resolveClick(x,y, function(params) {
-	    var embV = new embeddingViewer();
-	    embV.setColorConfiguration('metadata');
-	    // Here  we are just passing the params from the
-	    // click region registration, we might want to change this
-	    // later, but in any case keep processin in here to the minimum
-	    embV.setMetadataColorInfo(params);
-	    embV.updateColors();
-	});
+    	var mdhv = new metaDataHeatmapViewer();
+    	mdhv.clickRegions.resolveClick(x,y, function(params) {
+    	    var embV = new embeddingViewer();
+    	    embV.setColorConfiguration('metadata');
+    	    // Here  we are just passing the params from the
+    	    // click region registration, we might want to change this
+    	    // later, but in any case keep processin in here to the minimum
+    	    embV.setMetadataColorInfo(params);
+    	    embV.updateColors();
+    	});
     });
 
     (metadataAreaOverlay[0]).addEventListener('mousemove', function(e) {
-	var x = e.layerX;
-	var metaV = new metaDataHeatmapViewer();
-	metaV.showOverlay(x);
-	var heatV = new heatmapViewer();
-	heatV.showOverlay(x);
-	var aspeV = new aspectHeatmapViewer();
-	aspeV.showOverlay(x);
+    	var x = e.layerX;
+    	var metaV = new metaDataHeatmapViewer();
+    	metaV.showOverlay(x);
+    	var heatV = new heatmapViewer();
+    	heatV.showOverlay(x);
+    	var aspeV = new aspectHeatmapViewer();
+    	aspeV.showOverlay(x);
     });
 
     (metadataAreaOverlay[0]).addEventListener('mouseout', function(e) {
-	var metaV = new metaDataHeatmapViewer();
-	var heatV = new heatmapViewer();
+    	var metaV = new metaDataHeatmapViewer();
+    	var heatV = new heatmapViewer();
 
-	metaV.clearOverlay();
-	heatV.clearOverlay();
-	var aspeV = new aspectHeatmapViewer();
-	aspeV.clearOverlay()
+    	metaV.clearOverlay();
+    	heatV.clearOverlay();
+    	var aspeV = new aspectHeatmapViewer();
+    	aspeV.clearOverlay()
     });
 
     // Pointer change to cross hairs when over the heatmap
@@ -139,7 +141,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     });
 
      (metadataAreaOverlay[0]).addEventListener('mouseout', function(e) {
-	document.body.style.cursor = "default";
+    	document.body.style.cursor = "default";
     });
 
   // Make the menu
@@ -256,7 +258,7 @@ metaDataHeatmapViewer.prototype.updateCanvasSize = function() {
 
     var metadataContainer = $('#metadata-area-container');
 
-    heatDendV = new heatmapDendrogramViewer();
+    var heatDendV = new heatmapDendrogramViewer();
 
     var curWidth =  this.getWidth();
     var curHeight = this.getHeight();
@@ -312,7 +314,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
     var bottomPadding = 2;
 
 
-heatDendView = new heatmapDendrogramViewer();
+    var heatDendView = new heatmapDendrogramViewer();
     var top = plotConsts.top;
     var left = plotConsts.left;
     var metaWidth = plotConsts.width - heatDendView.getPlotAreaRightPadding();
@@ -322,6 +324,8 @@ heatDendView = new heatmapDendrogramViewer();
     // Request the data
     var dataCntr = new dataController();
     dataCntr.getCellMetadata(function(data) {
+     // debugger;
+
 	// Get the canvas
 	var canvas = $('#metadata-area')[0];
 	var ctx =  canvas.getContext("2d");
@@ -344,7 +348,7 @@ heatDendView = new heatmapDendrogramViewer();
 	    // Skip if object property
 	    if (! data.hasOwnProperty(key) ) continue;
 
-	    labels[j] = key;
+	    labels[j] = key; // This is the label next to the row -- replace with a name field
 
 	    // TODO: Implement a hidden property
 	    // TODO: Implement metadata row selection by the user
@@ -352,24 +356,24 @@ heatDendView = new heatmapDendrogramViewer();
 	    // TODO: Implement default palette provision if one is not specified
 	    // TODO: Add some futher checks --providing inconsistent data from server side will break this
 
-	    curEntry =  data[key];
+	    var curEntry =  data[key];
 
 	    var curRow = new Array();
 	    for (var i = 0; i < cellSelection.length; i++) {
-		var curCell =  cellSelection[i];
-		curRow[i] = curEntry.data[curCell];
+    		var curCell =  cellSelection[i];
+    		curRow[i] = curEntry.data[curCell];
 	    }
 	    renderedArrayValues[j] = curRow;
 
 	    // The palette from R has an alpha channel that we
 	    // have to discard
 	    var fixedPalette = curEntry.palette.map(function(x) {
-		return x.substring(0,7);
+	    	return x.substring(0,7);
 	    });
 
 	    // Map to colours with provided palette
 	    renderedArrayColors[j] = renderedArrayValues[j].map(function(x) {
-		return (fixedPalette)[x-1];
+		    return (fixedPalette)[x-1];
 	    });
 
 	    j++; // Output row counter
@@ -393,9 +397,9 @@ heatDendView = new heatmapDendrogramViewer();
 
 	for(var i = 0; i < renderedArrayColors.length; i++) {
 	    var row = renderedArrayColors[i];
-	    y = i * cellHeight + top;
+	    var y = i * cellHeight + top;
 	    for (var j = 0; j < row.length; j++) {
-		    x = (j) * cellWidth + left;
+		    var x = (j) * cellWidth + left;
 		    ctx.fillStyle =  row[j];
 		    ctx.fillRect(x,y, cellWidth, cellHeight);
 	    }

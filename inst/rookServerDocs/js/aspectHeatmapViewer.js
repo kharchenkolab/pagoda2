@@ -381,7 +381,7 @@ aspectHeatmapViewer.prototype.updateCanvasSize = function() {
   var aspectHeatmapAreaOverlay = $('#aspect-heatmap-area-overlay')[0];
 
   // Get and store current height
-  heatDendV = new heatmapDendrogramViewer();
+  var heatDendV = new heatmapDendrogramViewer();
   var curWidth = this.getWidth();
   var curHeight = this.getHeight();
 
