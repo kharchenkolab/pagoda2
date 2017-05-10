@@ -803,7 +803,7 @@ pagoda2WebApp <- setRefClass(
                                     v1 <- factor(v1)
 
                                     # run de with factor
-                                    de <- myPagoda2Object$getDifferentialGenes(groups=v1)
+                                    de <- originalP2object$getDifferentialGenes(groups=v1)
 
 
                                     de$selectionA$name <- rownames(de$selectionA)
