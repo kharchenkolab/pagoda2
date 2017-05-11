@@ -106,28 +106,29 @@ pagoda2WebApp <- setRefClass(
 
             # This Uses Middleware to process all the requests that
             # our class doesn't process
-            callSuper(app = Builder$new(
-                          # JS and CSS that are NOT part of ExtJS
-                          Static$new(
-                              urls = c('/js','/css','/img'),
-                              root = c(rookRoot)
-                          ),
-
-                          # Unhandled requests go here
-                          App$new(function(env){
-                              # everything else end here
-                              res <- Response$new();
-                              res$header('Content-Type', 'text/html');
-                              cat("Unhandled request for: ");
-                              cat(env[['PATH_INFO']]);
-                              cat("\n");
-                              res$finish();
-                          })
-
-                      ));
+            # callSuper(app = Builder$new(
+            #               # JS and CSS that are NOT part of ExtJS
+            #               Static$new(
+            #                   urls = c('/js','/css','/img'),
+            #                   root = c(rookRoot)
+            #               ),
+            #
+            #               # Unhandled requests go here
+            #               App$new(function(env){
+            #                   # everything else end here
+            #                   res <- Response$new();
+            #                   res$header('Content-Type', 'text/html');
+            #                   cat("Unhandled request for: ");
+            #                   cat(env[['PATH_INFO']]);
+            #                   cat("\n");
+            #                   res$finish();
+            #               })
+            #
+            #           ));
 
             # Update the rook file location
             .self$updateRookRoot();
+
 
         },
 
@@ -137,7 +138,7 @@ pagoda2WebApp <- setRefClass(
 
            # Updates the rook root of the the static server
            #.self@.xData$app$app$file_server@.xData$root <- .self$rookRoot
-           .self$app$app$file_server$root <- .self$rookRoot;
+           #.self$app$app$file_server$root <- .self$rookRoot;
         },
 
         generateDendrogramOfGroups = function(r, dendrogramCellGroups){
@@ -834,9 +835,20 @@ pagoda2WebApp <- setRefClass(
 
                    # Default
                    {
-                       # TODO: Fix the path here, redirects to root
-                       #response$redirect('index.html');
-                       app$call(env);
+
+                       cat(path);
+                       if (grepl(pattern = 'js$', path)) {
+                         response$header('Content-Type', 'application/javascript') ;
+                       } else if (grepl(pattern = 'css$', path)) {
+                         response$header('Content-Type', 'text/css') ;
+                       } else {
+                         response$header('Content-Type', 'text/html');
+                       }
+
+                       response$write(readStaticFile(path));
+                       return(response$finish());
+
+
                    }
             ) # switch(path
 
@@ -855,9 +867,9 @@ pagoda2WebApp <- setRefClass(
 
         # TODO: Switch to content type autodetect
         readStaticFile =  function(filename) {
-            serverLog(paste("readStaticFile", filename));
+
 	          filename <- paste0(rookRoot,filename);
-	          serverLog(paste("readStaticFile-->", filename));
+
             content <- NULL;
                        tryCatch({
                            content <- readChar(filename, file.info(filename)$size);
