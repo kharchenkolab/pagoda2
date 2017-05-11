@@ -39,7 +39,8 @@ pagoda2WebApp <- setRefClass(
         "geneSets",
         "varinfo",
         "pathways",
-        "originalP2object"
+        "originalP2object",
+        "rookRoot"
     ),
 
 
@@ -55,7 +56,7 @@ pagoda2WebApp <- setRefClass(
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
                               verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE) {
 
-            serverLog('Initialising server...');
+
 
             if (keepOriginal) {
               originalP2object <<- pagoda2obj
@@ -103,12 +104,6 @@ pagoda2WebApp <- setRefClass(
             # The cell metadata
             cellmetadata <<- metadata;
 
-# PACKAGE NAME
-            # Rook sever root directory to be changed to package subdirectory
-            # this holds all the static files required by the app
-            rookRoot <- file.path(system.file(package='pagoda2'),'rookServerDocs');
-
-
             # This Uses Middleware to process all the requests that
             # our class doesn't process
             callSuper(app = Builder$new(
@@ -131,8 +126,18 @@ pagoda2WebApp <- setRefClass(
 
                       ));
 
+            # Update the rook file location
+            .self$updateRookRoot();
+
         },
 
+        updateRookRoot = function() {
+           # PACKAGE NAME GOES HERE
+           rookRoot <<- paste0(system.file(package='pagoda2'),'/rookServerDocs');
+
+           # Updates the rook root of the the static server
+           .self@.xData$app$app$file_server@.xData$root <- .self$rookRoot
+        },
 
         generateDendrogramOfGroups = function(r, dendrogramCellGroups){
             cl0 <- dendrogramCellGroups
@@ -208,7 +213,7 @@ pagoda2WebApp <- setRefClass(
                    # Get the main script
                    '/index.html' = {
                        response$header('Content-Type', 'text/html');
-                       response$write(readStaticFile('rookServerDocs/index.html'));
+                       response$write(readStaticFile('/index.html'));
                        return(response$finish());
                    },
 
@@ -217,7 +222,7 @@ pagoda2WebApp <- setRefClass(
                    # It should also be minified
                    '/js/pagoda2frontend.js' = {
                        response$header('Content-Type', 'application/javascript');
-                       response$write(readStaticFile('rookServerDocs/js/pagoda2frontend.js'));
+                       response$write(readStaticFile('/js/pagoda2frontend.js'));
                        return(response$finish());
                    },
 
@@ -231,7 +236,7 @@ pagoda2WebApp <- setRefClass(
                        response$header('Expires', 'Tue, 24 Jan 2017 00:00:00 GMT');
 
 
-                       response$write(readStaticFile('rookServerDocs/css/pagodaMain.css'));
+                       response$write(readStaticFile('/css/pagodaMain.css'));
                        return(response$finish());
                    },
 
@@ -416,9 +421,6 @@ pagoda2WebApp <- setRefClass(
                                       },
 
                                       'aspectmatrixbyaspect' = {
-
-                                        serverLog("Data request: aspectmatrixbyaspect");
-
                                         postArgs <- request$POST();
 
                                         aspectIds <- postArgs[['aspectids']];
@@ -470,7 +472,6 @@ pagoda2WebApp <- setRefClass(
                                           # Example query
                                           # http://127.0.0.1:24403/custom/myPagoda2WebApp/getData.php?dataidentifier=aspectmatrixsparsebyindexbinary&cellindexstart=1&cellindexend=100&getCellNames=F
 
-                                          serverLog("Data request: aspectmatrixsparsebyindexbinary");
 
                                           postArgs <- request$GET();
 
@@ -517,7 +518,6 @@ pagoda2WebApp <- setRefClass(
                                       },
 
                                       'expressionmatrixsparsebyindexbinary' = {
-                                          serverLog("Data request: expressionmatrixsparsebyindexbinary");
 
                                           postArgs <- request$POST();
 
@@ -526,7 +526,7 @@ pagoda2WebApp <- setRefClass(
                                           cellIndexEnd <- postArgs[['cellindexend']];
                                           getCellNames <- postArgs[['getCellNames']];
 
-                                          serverLog(paste0('Cell index range ', cellIndexStart, ' ', cellIndexEnd));
+
 
                                           if (!all(c(geneIdentifiers %in% colnames(matsparse)))) {
                                               serverLog("Error: The request contains gene names that are not in matsparse!");
@@ -537,7 +537,7 @@ pagoda2WebApp <- setRefClass(
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)]
                                           matrixToSend <- matsparse[cellIndices,geneIdentifiers,drop=F];
 
-#                                          serverLog(paste0('matrixToSend dim:', dim(matrixToSend)[1], ' ', dim(matrixToSend)[2])) #
+#
 
 
                                           # FOR DEBUGGING HEATMAP
@@ -853,9 +853,10 @@ pagoda2WebApp <- setRefClass(
         # @return content to display or error page
 
         # TODO: Switch to content type autodetect
-#PACKAGE NAME
         readStaticFile =  function(filename) {
-	    filename <- file.path(system.file(package='pagoda2'),filename);
+            serverLog(paste("readStaticFile", filename));
+	          filename <- paste0(rookRoot,filename);
+	          serverLog(paste("readStaticFile-->", filename));
             content <- NULL;
                        tryCatch({
                            content <- readChar(filename, file.info(filename)$size);
