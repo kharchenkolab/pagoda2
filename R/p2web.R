@@ -838,6 +838,8 @@ pagoda2WebApp <- setRefClass(
                          response$header('Content-Type', 'application/javascript') ;
                        } else if (grepl(pattern = 'css$', path)) {
                          response$header('Content-Type', 'text/css') ;
+                       } else if (grepl(pattern = 'gif$', path)) {
+                         response$header('Content-Type', 'image/gif') ;
                        } else {
                          response$header('Content-Type', 'text/html');
                        }
