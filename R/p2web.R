@@ -834,8 +834,6 @@ pagoda2WebApp <- setRefClass(
 
                    # Default
                    {
-
-                       cat(path);
                        if (grepl(pattern = 'js$', path)) {
                          response$header('Content-Type', 'application/javascript') ;
                        } else if (grepl(pattern = 'css$', path)) {
@@ -846,8 +844,6 @@ pagoda2WebApp <- setRefClass(
 
                        response$write(readStaticFile(path));
                        return(response$finish());
-
-
                    }
             ) # switch(path
 
