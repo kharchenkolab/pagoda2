@@ -520,8 +520,7 @@ pagoda2WebApp <- setRefClass(
                                       },
 
                                       'expressionmatrixsparsebyindexbinary' = {
-
-                                          postArgs <- request$POST();
+                                          postArgs <- request$GET();
 
                                           geneIdentifiers <- postArgs[['geneids']];
                                           cellIndexStart <- postArgs[['cellindexstart']];

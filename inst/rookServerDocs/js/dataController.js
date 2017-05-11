@@ -347,7 +347,7 @@ dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 	};
 
 	var ajaxRequest = $.ajax({
-	    type: "POST",
+	    type: "GET",
 	    dataType: "json",
 	    url: "getData.php?dataidentifier=expressionmatrixsparsebyindexbinary",
 	    data: requestData,
@@ -445,7 +445,7 @@ dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(g
     };
 
     var request = $.ajax({
-	type: "POST",
+	type: "GET",
 	dataType: "json",
 	url: "getData.php?dataidentifier=expressionmatrixsparsebyindexbinary",
 	data: requestData,
