@@ -136,7 +136,8 @@ pagoda2WebApp <- setRefClass(
            rookRoot <<- paste0(system.file(package='pagoda2'),'/rookServerDocs');
 
            # Updates the rook root of the the static server
-           .self@.xData$app$app$file_server@.xData$root <- .self$rookRoot
+           #.self@.xData$app$app$file_server@.xData$root <- .self$rookRoot
+           .self$app$app$file_server$root <- .self$rookRoot;
         },
 
         generateDendrogramOfGroups = function(r, dendrogramCellGroups){
