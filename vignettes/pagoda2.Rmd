@@ -1,0 +1,236 @@
+---
+  title: "Example pagoda2 usage"
+  author: "Peter Kharchenko, Nikolas Barkas"
+  output: rmarkdown::html_vignette
+  vignette: >
+    %\VignetteIndexEntry{Example pagoda2 usage}
+    %\VignetteEngine{knitr::rmarkdown}
+    \usepackage[utf8]{inputenc}
+---
+  
+# Analysis of single cell data with pagoda
+
+```
+library('pagoda2')
+library(Matrix)
+
+##############################
+# Data preparation
+##############################
+
+# Read data from your file, rows as genes colums as cells
+myCountMatrix <- read.table('mySCdata.txt');
+
+# Make the gene name uniquye
+rownames(myCountMatrix) <- make.unique(rownames(myCountMatrix))
+
+# Conver the matrix to a sparse matrix
+myCountMatrixSparse <- Matrix(myCountMatrix, sparse = T)
+
+# Remove the original matrix
+rm(myCountMatrix); 
+
+
+
+
+##############################
+# Process the data
+##############################
+
+# Generate a new pagoda2 object
+myPagoda2Object <- Pagoda2$new(x = myCountMatrixSparse, n.cores = 4)
+
+# Adjust the variance
+myPagoda2Object$adjustVariance(plot = T, gam.k = 10)
+
+
+# Calculate a PCA reduction with the number of PCs specified by nPCs
+# and using only the n.odgenes overdispersed genes -- in this case 2000
+myPagoda2Object$calculatePcaReduction(nPcs = 100, n.odgenes = 2.e3)
+
+# Generate K-nearest neighbour graph
+myPagoda2Object$makeKnnGraph(k = 20, type = 'PCA', center = T,
+    weight.type = 'none', n.cores = 30, distance = 'cosine')
+
+
+##############################
+# Identify clusters
+##############################
+
+# Identify clusters using the infomap.community method
+# on the basis of the reduction called 'PCA' (generated above)
+# Save the resulting clustering as 'infomap'
+myPagoda2Object$getKnnClusters(method = infomap.community,
+                               type = 'PCA', name = 'infomap')
+                               
+# Do an independent identification of clusters using the
+# multilevel community algorithm again using the PCA reduction
+# and save it as 'multilevel'. This does not overwrite the 
+# previous clustering
+myPagoda2Object$getKnnClusters(method = multilevel.community,
+                               type = 'PCA', name='multilevel')
+                               
+# Do yet another clustering
+myPagoda2Object$getKnnClusters(method = walktrap.community,
+                               type = 'PCA', name='walktrap')
+
+
+
+##############################
+# Generate embeddings
+##############################
+# Generate an embedding with largeVis on the basis of the PCA reduction
+M <- 30
+myPagoda2Object$getEmbedding(
+  type = 'PCA',
+  embeddingType = 'largeVis',
+  M = M,
+  perplexity = 30,
+  gamma = 1 / M,
+  alpha = 1
+)
+
+# Generate an embedding with tSNE on the basis of the PCA
+# reduction
+myPagoda2Object$getEmbedding(type = 'PCA', embeddingType = 'tSNE')
+
+##############################
+# Plot the generated embeddings
+##############################
+myPagoda2Object$plotEmbedding(type = 'PCA',
+                              embedding = 'largeVis',
+                              mark.clusters = T,
+                              clusterType = 'infomap')
+                              
+                              
+myPagoda2Object$plotEmbedding(type = 'PCA',
+                              embedding = 'largeVis',
+                              mark.clusters = T,
+                              clusterType = 'multilevel')
+myPagoda2Object$plotEmbedding(type = 'PCA',
+                              embedding = 'largeVis',
+                              mark.clusters = T,
+                              clusterType = 'walktrap')
+
+
+myPagoda2Object$plotEmbedding(type = 'PCA',
+                              clusterType = 'infomap',
+                              embeddingType = 'tSNE',
+                              mark.clusters = T)
+
+##############################
+# Differential Gene expression
+##############################
+
+# Calculate the differential gene expression of each cluster
+# defined in multilevel clustring on the basis of the PCA reduction
+myPagoda2Object$getDifferentialGenes(type='PCA',clusterType = 'multilevel')
+
+# Plot a differential expression heatmap using the differentially expressed genes
+# above
+myPagoda2Object$plotDiffGeneHeatmap(type = 'PCA', clusterType = 'multilevel')
+
+
+##############################
+# Differential Gene expression
+##############################
+
+require(org.Hs.eg.db)
+require(GO.db)
+
+# Generate the GO annotation ( in the case for human )
+generate.human.go <- function(r) {
+   # Generate GO environment
+   require(org.Hs.eg.db)
+   # translate gene names to ids
+   ids <- unlist(lapply(mget(colnames(r$counts),org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+   # reverse map
+   rids <- names(ids); names(rids) <- ids;
+   # list all the ids per GO category
+   go.env <- eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
+   go.env <- go.env[unlist(lapply(go.env,length))>5];
+   go.env <- list2env(go.env);
+   go.env
+}
+go.env <- generate.human.go(myPagoda2Object)
+
+# Test path way overdispersion for the GO annotation generated above
+# This takes a while
+myPagoda2Object$testPathwayOverdispersion(
+  setenv = go.env, 
+  verbose = T, 
+  correlation.distance.threshold = 0.9, 
+  recalculate.pca = F,
+  min.pathway.size = 500,
+  max.pathway.size = 1000)
+
+# Generate GO set annotations for pagoda web, 
+# these are currently slightly different that the annotations generate above
+myGeneNames <- colnames(myPagoda2Object$counts)
+
+
+ids <- unlist(lapply(mget(myGeneNames, org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
+rids <- names(ids)
+names(rids) <- ids
+go.env <- eapply(org.Hs.egGO2ALLEGS, function(x) as.character(na.omit(rids[x])))
+go.env <- go.env[unlist(lapply(go.env, length)) > 5]
+
+
+# Put the GO Term annotation generated in a format suitable for the web interface
+geneSets <- lapply(names(go.env), function(x) {
+  list(
+    properties = list(
+      locked = T,
+      genesetname = x,
+      shortdescription = GOTERM[[x]]@Term
+    ),
+    genes = c(go.env[[x]])
+  )
+})
+names(geneSets) <- names(go.env)
+
+
+# Generate differental expression between each cluster and everything else
+de <- myPagoda2Object$getDifferentialGenes(type='counts', groups = myPagoda2Object$clusters$PCA[[1]], upregulated.only = T)
+# Convert the differential expression gene lists into a format for the web app
+deSets <- lapply(names(de), function(x) {
+  resT <- de[[x]];
+  list(
+    properties = list(
+      locked =T,
+      genesetname=paste0('DiffExpr_', x),
+      shortdescription = paste0('Cluster ', x, ' differentially expressed genes')
+    ),
+    genes = c(rownames(resT))
+  );
+});
+names(deSets) <- unlist(lapply(deSets, function(x){x$properties$genesetname}))
+
+# Genereate geneSets from the gene sets from the GO Terms and
+# the differentially expressed genes
+geneSets2 <- c(geneSets, deSets)
+
+# Generate metadata fro the web application
+# Start with an empty list
+additionalMetadata <- list()
+# and append metadata as required
+# check ?p2.metadata.from.factor documentation for more information
+additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[2]], displayname = 'Clusters 2', s = 0.8)
+additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Clusters 3', s = 0.5)
+
+# Generate the web application
+# dendrogramCellGroups specifies the clustering that will be
+# used to generate the main dendrogram
+myPagoda2WebObject <-
+  make.p2.app(
+    myPagoda2Object,
+    dendrogramCellGroups = myPagoda2Object$clusters$PCA[[1]],
+    additionalMetadata = additionalMetadata,
+    geneSets = geneSets2
+  );
+
+# Finally display the app in the browser
+show.app(app=myPagoda2WebObject,name='myFirstPagodaApp')
+
+
+```
