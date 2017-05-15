@@ -324,6 +324,8 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     });
 
     overlayCanvasElement.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+
     	dragStartX = e.offsetX;
     	dragStartY = e.offsetY;
 
@@ -1081,22 +1083,6 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
 			doMatching(plotdata);
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 		     } else {
 
 
@@ -1152,9 +1138,6 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
 
 
 		     } // if ... else
-
-
-
 
     }); //dataCntr.getAspectMatrixByAspect
   });   // dataCntr.getCellOrder
