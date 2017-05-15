@@ -1079,8 +1079,8 @@ dendrogramViewer.prototype.setupListeners = function() {
 
     // Mouse move for node hightlighting
     $('#dendrogram-area-overlay').mousemove(function(e) {
-    	var x = e.originalEvent.layerX;
-    	var y = e.originalEvent.layerY;
+    	var x = e.originalEvent.offsetX;
+    	var y = e.originalEvent.offsetY;
 
     	var dendV = new dendrogramViewer();
 
@@ -1107,8 +1107,8 @@ dendrogramViewer.prototype.setupListeners = function() {
     // Click listener
     $('#dendrogram-area-overlay').click(function(e) {
 	// TODO: This is probably not the best way to get the coordinates
-	var x = e.originalEvent.layerX;
-	var y = e.originalEvent.layerY;
+	var x = e.originalEvent.offsetX;
+	var y = e.originalEvent.offsetY;
 
 	var dendV = new dendrogramViewer();
 

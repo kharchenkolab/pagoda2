@@ -294,8 +294,8 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     // Click listener for setting gene color to embedding
     heatmapAreaOverlay.addEventListener('dblclick', function(e) {
-	var x = e.layerX;
-	var y = e.layerY;
+	var x = e.offsetX;
+	var y = e.offsetY;
 
 	var heatView = new heatmapViewer();
 	var regionData = heatView.geneRegions.resolveClick(x, y);
@@ -312,8 +312,8 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     // Mouse  move listener for the cross hairs and tooltip
     heatmapAreaOverlay.addEventListener('mousemove', function(e) {
-    	var x = e.layerX;
-    	var y = e.layerY;
+    	var x = e.offsetX;
+    	var y = e.offsetY;
 
     	var heatV = new heatmapViewer();
     	var metaV = new metaDataHeatmapViewer();
@@ -326,9 +326,9 @@ heatmapViewer.prototype.setupOverlays = function() {
     	    label = 'Gene: ' + regionData.geneId;
     	}
 
-    	heatV.showOverlay(e.layerX, e.layerY, label);
-    	metaV.showOverlay(e.layerX);
-    	aspeV.showOverlay(e.layerX);
+    	heatV.showOverlay(e.offsetX, e.offsetY, label);
+    	metaV.showOverlay(e.offsetX);
+    	aspeV.showOverlay(e.offsetX);
 
 
     });

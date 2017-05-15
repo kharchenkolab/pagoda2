@@ -103,8 +103,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     // will need a propery that says the the data is guaranteed to be
     // contigious with the default ordering
     (metadataAreaOverlay[0]).addEventListener('dblclick', function(e) {
-    	var x = e.layerX;
-    	var y = e.layerY;
+    	var x = e.offsetX;
+    	var y = e.offsetY;
 
     	var mdhv = new metaDataHeatmapViewer();
     	mdhv.clickRegionsRows.resolveClick(x,y, function(params) {
@@ -130,8 +130,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     (metadataAreaOverlay[0]).addEventListener('click', function(e) {
       e.preventDefault();
 
-      var x = e.layerX;
-    	var y = e.layerY;
+      var x = e.offsetX;
+    	var y = e.offsetY;
 
       var mdhv = new metaDataHeatmapViewer();
     	mdhv.clickRegionsEntries.resolveClick(x,y, function(params) {
@@ -145,7 +145,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
 
     (metadataAreaOverlay[0]).addEventListener('mousemove', function(e) {
-    	var x = e.layerX;
+    	var x = e.offsetX;
     	var metaV = new metaDataHeatmapViewer();
     	metaV.showOverlay(x);
     	var heatV = new heatmapViewer();

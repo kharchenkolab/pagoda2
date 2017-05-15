@@ -324,16 +324,18 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     });
 
     overlayCanvasElement.addEventListener('mousedown', function(e) {
-    	dragStartX = e.layerX;
-    	dragStartY = e.layerY;
+    	dragStartX = e.offsetX;
+    	dragStartY = e.offsetY;
+
     	thisViewer.dragging = true;
     });
 
     overlayCanvasElement.addEventListener('mouseup', function(e) {
+
     	if (thisViewer.dragging) {
     	    // Dragging complete
-    	    var dragEndX = e.layerX;
-    	    var dragEndY = e.layerY;
+    	    var dragEndX = e.offsetX;
+    	    var dragEndY = e.offsetY;
 
     	    thisViewer.generateDragSelection(dragStartX, dragStartY, dragEndX, dragEndY);
     	}
@@ -341,11 +343,11 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     });
 
     overlayCanvasElement.addEventListener('mousemove', function(e) {
-  	var dragEndX =  e.layerX;
-  	var dragEndY = e.layerY;
+  	var dragEndX =  e.offsetX;
+  	var dragEndY = e.offsetY;
 
-    lastCursorPositionX = e.layerX;
-    lastCursorPositionY = e.layerY;
+    lastCursorPositionX = dragEndX;
+    lastCursorPositionY = dragEndY;
 
 	if (thisViewer.dragging) {
 	    // TODO: clear the correct coordinates

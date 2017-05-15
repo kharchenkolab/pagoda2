@@ -283,8 +283,8 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
     });
 
   heatmapOverlayArea.addEventListener('dblclick', function(e) {
-    var x = e.layerX;
-    var y = e.layerY;
+    var x = e.offsetX;
+    var y = e.offsetY;
 
     var regionData = aspHeatView.aspectRegions.resolveClick(x,y);
     if (typeof regionData !== 'undefined') {
@@ -303,8 +303,8 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
     var aspHeatView =  new aspectHeatmapViewer();
 
-    var x = e.layerX;
-    var y = e.layerY;
+    var x = e.offsetX;
+    var y = e.offsetY;
 
   	var heatV = new heatmapViewer();
   	var metaV = new metaDataHeatmapViewer();
