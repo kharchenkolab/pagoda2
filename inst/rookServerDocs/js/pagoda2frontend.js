@@ -151,12 +151,7 @@ function generateExtJsLayout() {
 	    tabBarPosition: 'top',
 	    activeTab: 0,
 	    items: [
-		{
-		    title: 'Gene Selections',
-		    glyph: 0xf03a,
-		    tooltip: 'View and manage available gene selections',
-		    items: geneSelectionPanel,
-		},
+
 		{
 		    title: 'Cell Selections',
 		    glyph: 0xf03a,
@@ -169,6 +164,12 @@ function generateExtJsLayout() {
 		    glyph: 0xf0e7,
 		    tooltip: 'Run differential expression and other actions between selected sets',
 		    items: actionsPanel
+		},
+				{
+		    title: 'Gene Selections',
+		    glyph: 0xf03a,
+		    tooltip: 'View and manage available gene selections',
+		    items: geneSelectionPanel,
 		}
 	    ],
 	    bbar: statusBar
