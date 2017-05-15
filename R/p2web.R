@@ -55,8 +55,6 @@ pagoda2WebApp <- setRefClass(
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
                               verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE) {
 
-            serverLog('Initialising server...');
-
             if (keepOriginal) {
               originalP2object <<- pagoda2obj
             }
