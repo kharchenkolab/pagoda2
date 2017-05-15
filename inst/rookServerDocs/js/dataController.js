@@ -668,14 +668,15 @@ dataController.prototype.getAvailableReductionTypes = function(callback) {
 /**
  * Get the cell metadata
  * @param callback callback funciton
+ * @param callbackParameters data to pass to the callback function
  */
-dataController.prototype.getCellMetadata = function(callback) {
+dataController.prototype.getCellMetadata = function(callback, callbackParameters) {
     var dataCntr = new dataController();
 
 
     if (dataCntr.cache["cellmetadata"] !== null) {
-	// If the data is in the  cache don't make another request
-	callback(dataCntr.cache["cellmetadata"]);
+    	// If the data is in the  cache don't make another request
+    	callback(dataCntr.cache["cellmetadata"], callbackParameters);
     } else {
 	$.ajax({
 	    dataType: "json",
@@ -709,7 +710,7 @@ dataController.prototype.getCellMetadata = function(callback) {
 		// TODO: Check that all the values have a palette match
 
 		dataCntr.cache["cellmetadata"] = data;
-		callback(data);
+		callback(data,callbackParameters);
 	    }
 	});
     }

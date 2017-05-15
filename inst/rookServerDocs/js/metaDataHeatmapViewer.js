@@ -126,6 +126,66 @@ metaDataHeatmapViewer.prototype.initialize = function () {
       e.preventDefault();
     });
 
+     (metadataAreaOverlay[0]).addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        var x = e.offsetX;
+        var y = e.offsetY;
+
+        var mdhv = new metaDataHeatmapViewer();
+        mdhv.clickRegionsEntries.resolveClick(x,y, function(params) {
+        // params.cellid
+        // params.keyLabel params.valueLabel
+
+        var contextMenu = new Ext.menu.Menu({
+          items: [
+            {
+              text: 'Generate selection from cluster',
+              handler: function() {
+                Ext.MessageBox.prompt('New name', 'Name for new selection:',
+					      function(btn, text) {
+                    // Make new selection
+                    if (btn === 'ok')  {
+    						      var geneSelCntr = new geneSelectionController();
+
+    						      var newSelectionName = text;
+    						      var newSelectionDisplayName = text;
+
+    						      var re = new RegExp('[^A-Za-z0-9_]');
+    						      if (newSelectionName.length === 0) {
+    							      Ext.MessageBox.alert('Error', 'You must enter a selection name');
+    						      } else if ( newSelectionName.match(re) ) {
+    							      Ext.MessageBox.alert('Error',
+    									       'The name must only contain letters, numbers and underscores (_)');
+    						      } else {
+    							      if (geneSelCntr.getSelection(newSelectionName)) {
+    							        Ext.MessageBox.alert(
+    								        'Error',
+    								        'A selection with this name already exists!');
+    							      } else {
+                            // Make the slection here
+                            debugger;
+                            var key =params.key;
+                            var value = params.value;
+
+
+                            mdhv.makeCellSelectionFromMetadata(key, value, newSelectionName, true, true);
+    							      }
+    						      } // if lenth == 0
+  						      } // if btn == ok
+					      }); // Message box handler
+              }
+            } //Item 1
+          ] //items
+        }); //context menu
+
+        contextMenu.showAt(e.clientX, e.clientY);
+
+        return false;
+        }); // resolve click
+
+     });// contextmenu event listener
+
+
 
     (metadataAreaOverlay[0]).addEventListener('click', function(e) {
       e.preventDefault();
@@ -254,6 +314,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     this.updateCanvasSize();
     this.drawMetadata();
 }
+
+
 
 /**
  * Show an overlay vertical line
@@ -545,3 +607,53 @@ var heatDendView = new heatmapDendrogramViewer();
 }
 
 
+/**
+ * Make a cell selection from metadata
+ * @param metadataName name of the metdata data entry on the basis of which to select (e.g clusters or batch)
+ * @param metadataValue the value we are looking for (e.g. cluster 1, batch 2)
+ * @param selectionName name to give to the new selection, assumed not to exist already
+ * @param focus logical, give focus to the selection in the cell selection pane afterwards?
+ * @param highlight logical, hightlight the selection on the heatmaps and embedding?
+ */
+metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight) {
+  // Generate a cell selection
+
+  var dataCntr = new dataController();
+  dataCntr.getCellMetadata(function(data, callbackParameters) {
+    // data[callbackParameters.metadataName].data
+    var val =  callbackParameters.metadataValue;
+
+    var cellSelectionNames = [];
+
+    var keys = Object.keys(data[callbackParameters.metadataName].data);
+
+    for (var kn = 0;  kn < keys.length; kn++) {
+      var cellid = keys[kn];
+      if(data[callbackParameters.metadataName].data[cellid] == val)  {
+        cellSelectionNames.push(cellid);
+      }
+    }
+
+    var cellSel = new cellSelectionController();
+    cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName);
+
+    if (highlight) {
+      var heatView = new heatmapViewer();
+      heatView.highlightCellSelectionByName(callbackParameters.selectionName);
+
+      var aspHeatView = new aspectHeatmapViewer();
+      aspHeatView.highlightCellSelectionByName(callbackParameters.selectionName);
+
+      var metaHeatView = new metaDataHeatmapViewer();
+      metaHeatView.highlightCellSelectionByName(callbackParameters.selectionName);
+
+      // Highlight on embedding
+      var embCntr = new embeddingViewer();
+      embCntr.highlightSelectionByName(callbackParameters.selectionName);
+
+    }
+
+  }, {metadataName: metadataName,metadataValue: metadataValue, selectionName: selectionName, focus: focus,highlight: highlight});
+
+
+}
