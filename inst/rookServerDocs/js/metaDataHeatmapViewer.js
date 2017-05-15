@@ -295,7 +295,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
             bodyPadding: 10,
             html: '<h2>Metadata heatmap</h2>' +
               'The heatmap displays metadata information about the cells. Single click to identify '+
-              'the cell and metadata entry. Double click to color the embedding by the metadata.',
+              'the cell and metadata entry. Double click to color the embedding by the metadata.' +
+              'Right click to select all cells in the group under your cursor.',
             constrain: true,
             closable: true,
             resizable: false
