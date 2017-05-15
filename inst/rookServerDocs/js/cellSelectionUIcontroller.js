@@ -84,7 +84,30 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     defaultType: 'textfield',
     items: [
 	cellSelectionTable,
+{
+  xtype: 'button',
+  text: 'Delete',
+  handler: function() {
+    var selectionTable = Ext.getCmp('cellSelectionTable');
+		var selectedItems = selectionTable.getSelectionModel().getSelected();
+		if (selectedItems.length === 1) {
+		    var selName = selectedItems.getAt(0).getData().selectionname;
+  		   Ext.Msg.show({
+             title:'Delete Selection',
+             msg: 'Delete ' + selectedItems.getAt(0).getData().displayname + '?',
+             buttons:  Ext.Msg.OKCANCEL,
+             fn: function(btn, text) {
+               if (btn === 'ok') {
+                 var cellSel = new cellSelectionController();
+                 cellSel.deleteSelection(selName);
+               }
+             }
+          });
+		}
 
+  }
+
+},
         {
             xtype: 'button',
             text: 'Duplicate',

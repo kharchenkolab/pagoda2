@@ -82,7 +82,9 @@ cellSelectionController.prototype.getAvailableSelections = function() {
  * @param {string} selectionName the name of the selection to delete
  */
 cellSelectionController.prototype.deleteSelection = function(selectionName) {
+
     delete this.selections[selectionName];
+this.raiseSelectionChangedEvent();
 }
 
 /**
