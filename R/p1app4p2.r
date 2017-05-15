@@ -1,6 +1,6 @@
 #' @import Rook
 #' @import rjson
-#' @import scde
+# @import scde
 
 #' @export p2.make.pagoda1.app
 p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
@@ -24,7 +24,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
     }
   }
   groups <- as.factor(groups[rownames(x)]);
-  groups <- droplevels(groups); 
+  groups <- droplevels(groups);
 
   if(is.null(embedding)) {
     if(is.null(p2$embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
@@ -35,7 +35,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
       embedding <- p2$embeddings[[type]][[embeddingType]]
     }
   }
-  
+
   # cluster groups
   if(type=='counts') { # sparse matrix
     rowFac <- rep(-1,nrow(x)); names(rowFac) <- rownames(x);
@@ -47,7 +47,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
   }
   d <- 1-cor(t(tc))
   hc <- hclust(as.dist(d),method='ward.D')
-  
+
   # get overall cell clustering
   if(inner.clustering) {
     # determine refined cell order
@@ -100,7 +100,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
     row.clustering$order <- as.integer(or);
   }
 
-  
+
   if(!is.null(embedding)) {
     if(is.null(rownames(embedding))) { stop("provided 2D embedding lacks cell names") }
     vi <- rownames(embedding) %in% colnames(tamr$xv);
@@ -116,7 +116,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
   }
 
   # cleanup colcols
-  if(!is.null(col.cols)) { 
+  if(!is.null(col.cols)) {
     if(is.list(col.cols)) {
       # look up the cells
       col.cols <- lapply(col.cols,function(x) {
@@ -155,8 +155,8 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
     acol <- c(acol,list('batch'=list(data=p2$batch,colors=as.character(batch.colors$palette),text=as.character(p2$batch))))
   }
   col.cols <- rev(c(acol,col.cols))
-  
-  
+
+
   #fct - which tam row in which tamr$xv cluster.. remap tamr$cnams
   cn <- tamr$cnam
   fct <- rep(1:length(cn), lapply(cn, length))
@@ -171,7 +171,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
   gdf <- p2$misc[['varinfo']]
   gene.df <- data.frame(var = gdf$qv,gene=rownames(gdf))
   gene.df <- gene.df[order(gene.df$var, decreasing = TRUE), ]
-  
+
   # prepare pathway df
   df <- data.frame(name = vdf$name, npc = vdf$npc, n = vdf$n, score = vdf$oe, z = vdf$z, adj.z = vdf$cz, stringsAsFactors = FALSE)
   if(exists("myGOTERM", envir = globalenv())) {
@@ -183,12 +183,12 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
   df$z[df$z<min.z] <- min.z
   df$adj.z[df$adj.z<min.z] <- min.z
   df <- data.frame(id = paste("#PC", df$npc, "# ", df$name, sep = ""), npc = df$npc, n = df$n, score = df$score, Z = df$z, aZ = df$adj.z, sh.Z = 0, sh.aZ = 0, name = paste(df$name, df$desc))
-  
+
   df <- df[order(df$score, decreasing = TRUE), ]
-  
+
   # merge go.env
   sa <- p2ViewPagodaApp$new(results=fres, pathways=df, genes=gene.df, goenv=env, batch=NULL, name = title, trim = 0, embedding=embedding,type=type)
- 
+
 }
 
 # modified PAGODA1 app for browsing p2 results
@@ -226,7 +226,7 @@ p2ViewPagodaApp <- setRefClass(
           gc()
         }
       },
-      
+
       getgenecldata = function(genes = NULL, gcl = NULL, ltrim = 0) { # helper function to get the heatmap data for a given set of genes
         if(is.null(gcl)) {
           gcl <- t.p2c.view.pathways(genes,results$p2,goenv=goenv,vhc=results$hvc,plot=FALSE,trim=ltrim,n.genes=Inf)
@@ -241,7 +241,7 @@ p2ViewPagodaApp <- setRefClass(
                        colors = gcl$col,
                        zlim = as.numeric(gcl$zlim)
                        )
-        
+
         ol <- list(matrix = matrix)
         if(!is.null(gcl$rotation)) {
           rcmvar <- matrix(gcl$rotation[rownames(gcl$vmap)[rev(gcl$row.order)], , drop = FALSE], ncol = 1)
@@ -250,7 +250,7 @@ p2ViewPagodaApp <- setRefClass(
                           colors = gcl$oc.col,
                           zlim = c(-1,1)*max(abs(rcmvar))
                           )
-          
+
           colcols <- matrix(gcl$oc[results$hvc$order], nrow = 1)
           colcols <- list(data = as.numeric(t(colcols)),
                           dim = dim(colcols),
@@ -261,7 +261,7 @@ p2ViewPagodaApp <- setRefClass(
         }
         ol
       },
-      
+
       call = function(env){
             path <- env[['PATH_INFO']]
             req <- Request$new(env)
@@ -294,7 +294,7 @@ p2ViewPagodaApp <- setRefClass(
                    '/pathcl.json' = { # report pathway clustering heatmap data
                      # column dendrogram
                      treeg <- list(merge=as.vector(t(results$hvc$merge)),height=results$hvc$height,order=results$hvc$plotting.order)
-                     
+
                      matrix <- results$rcm[rev(results$tvc$order), results$hvc$order]
                      matrix <- list(data = as.numeric(t(matrix)),
                                     dim = dim(matrix),
@@ -303,7 +303,7 @@ p2ViewPagodaApp <- setRefClass(
                                     colors = results$cols,
                                     zlim = as.numeric(results$zlim2)
                                     )
-                     
+
                      icols <- colorRampPalette(c("white", "black"), space = "Lab")(256)
                      rcmvar <- matrix(apply(results$rcm[rev(results$tvc$order), , drop = FALSE], 1, var), ncol = 1)
                      rowcols <- list(data = as.numeric(t(rcmvar)),
@@ -397,13 +397,13 @@ p2ViewPagodaApp <- setRefClass(
                      twosided <- ifelse(is.null(req$params()$twosided), FALSE, as.logical(req$params()$twosided))
                      ltrim <- ifelse(is.null(req$params()$trim), 0, as.numeric(req$params()$trim))
                      pws <- fromJSON(URLdecode(req$POST()$genes))
-                       
+
                      n.pcs <- as.integer(gsub("^#PC(\\d+)# .*", "\\1", pws))
                      n.pcs[is.na(n.pcs)]<-1
                      x <- t.p2c.view.pathways(gsub("^#PC\\d+# ", "", pws), results$p2, goenv = goenv, n.pc = n.pcs, n.genes = ngenes, two.sided = twosided, vhc = results$hvc, plot = FALSE, trim = ltrim, batch = batch)
                      ol <- getgenecldata(genes = NULL, gcl = x, ltrim = ltrim)
                      s <- toJSON(ol)
-                     
+
                      res$header('Content-Type', 'application/javascript')
                      if(!is.null(req$params()$callback)) {
                        res$write(paste(req$params()$callback, "(", s, ")", sep = ""))
@@ -462,7 +462,7 @@ p2ViewPagodaApp <- setRefClass(
                      } else {
                        tpn <- nams;
                      }
-                     
+
                      lgt <- data.frame(do.call(rbind, lapply(seq_along(tpn), function(i) c(id = names(ii[tpi[i]]), name = tpn[i], npc = npc[i], od = as.numeric(results$matvar[ii[tpi[i]]])/max(results$matvar), sign = as.numeric(results$matrcmcor[ii[tpi[i]]]), initsel = as.integer(results$matvar[ii[tpi[i]]] >= results$matvar[ii[tpi[1]]]*0.8)))))
 
                      # process additional filters
@@ -488,7 +488,7 @@ p2ViewPagodaApp <- setRefClass(
                      ol <- apply(lgt, 1, function(x) as.list(x))
                      names(ol) <- NULL
                      s <- toJSON(list(totalCount = trows, genes = ol))
-                     
+
                      res$header('Content-Type', 'application/javascript')
                      if(!is.null(req$params()$callback)) {
                        res$write(paste(req$params()$callback, "(", s, ")", sep = ""))
@@ -570,7 +570,7 @@ p2ViewPagodaApp <- setRefClass(
                          lgt$name <- lgt$t
                        }
                        lgt <- data.frame(id = paste("#PC1#", lgt$t), name = lgt$nam, o = lgt$o, u = lgt$u, Z = lgt$Z, Za = lgt$Za, fe = lgt$fe, stringsAsFactors = FALSE)
-                       
+
                        if(!is.null(req$params()$filter)) {
                          fl <- fromJSON(URLdecode(req$params()$filter))
                          for( fil in fl) {
@@ -640,10 +640,10 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
   gvi <- colnames(p2$counts) %in% unlist(p.genes)
   lab <- colnames(p2$counts)[gvi]
 
-    
+
   if(length(lab) == 0){  return(NULL) }
   #if(length(lab)<3) { return(NULL) }
-  
+
   d <- p2$counts[,gvi,drop=F]
   d <- t(t(d)*p2$misc[['varinfo']][colnames(d),'gsf'])
   if(trim > 0) {
@@ -690,7 +690,7 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
   d <- t(d);
   lab <- rownames(d)
   names(lab) <- lab;
-  
+
   d <- d-rowMeans(d)
   dd <- as.dist(1-abs(cor(t(as.matrix(d)))))
   dd[is.na(dd)] <- 1
@@ -712,7 +712,7 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
         attributes(hc[[1]]) <- list(members=1,height=0,label=lab[1],leaf=T)
         hc[[2]] <- list();
         attributes(hc[[2]]) <- list(members=1,height=0,label=lab[2],leaf=T)
-      } else { 
+      } else {
         hc <- list(); attributes(hc) <- list(members=1,height=0,label=lab[1],leaf=T); class(hc) <- "dendrogram";
       }
     }
@@ -744,16 +744,16 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
     ld <- colorRampPalette(c("darkgreen", "white", "darkorange"), space = "Lab")(100)[round(ld/max(abs(ld))*49)+50]
   } else {
     oc <- ld <- z <- NULL;
-    
+
   }
 
   if((!showPC) || length(lab)<= 1 || is.null(xp$scores)) {
     z <- NULL
   }
-  
-  
+
+
   col <- colorRampPalette(c("blue", "white", "red"), space = "Lab")(256)
-  
+
   if(!is.null(colcols)) {
     if(is.null(z)) {
       z <- colcols;
@@ -768,7 +768,7 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
     } else {
       my.heatmap2(vmap[row.order, vhc$order, drop = FALSE], Rowv = NA, Colv = NA, zlim = zlim, col = col, scale = "none", RowSideColors = ld, ColSideColors = z[,vhc$order], labRow = labRow, cexCol = cexCol, cexRow = cexRow, ...)
         }
-    
+
   }
   xp$vhc <- vhc
   xp$lab <- lab
@@ -781,7 +781,7 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
   xp$oc.col <- colorRampPalette(c("darkgreen", "white", "darkorange"), space = "Lab")(256)
   xp$vmap <- vmap
   xp$zlim <- zlim
-  
+
   #xp$consensus.pc <- consensus.npc
   return(invisible(xp))
 }

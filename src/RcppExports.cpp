@@ -194,6 +194,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// winsorizeMatrix
+SEXP winsorizeMatrix(SEXP Mat, SEXP Trim);
+RcppExport SEXP pagoda2_winsorizeMatrix(SEXP MatSEXP, SEXP TrimSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Mat(MatSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type Trim(TrimSEXP);
+    rcpp_result_gen = Rcpp::wrap(winsorizeMatrix(Mat, Trim));
+    return rcpp_result_gen;
+END_RCPP
+}
 // avg_rank
 Rcpp::NumericVector avg_rank(Rcpp::NumericVector x);
 RcppExport SEXP pagoda2_avg_rank(SEXP xSEXP) {

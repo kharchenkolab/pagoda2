@@ -9,7 +9,7 @@
 #' @importFrom irlba irlba
 #' @importFrom mgcv gam
 #' @importFrom parallel mclapply
-#' @importFrom scde pagoda.reduce.loading.redundancy pagoda.reduce.redundancy
+# @importFrom scde pagoda.reduce.loading.redundancy pagoda.reduce.redundancy
 #' @importFrom RMTstat WishartMaxPar
 #' @importFrom Rcpp sourceCpp
 NULL

@@ -53,6 +53,10 @@ hnswKnn3test <- function(m, k = 5L, multiplex = 1L, nqueries = 1000L, nThreads =
     .Call('pagoda2_hnswKnn3test', PACKAGE = 'pagoda2', m, k, multiplex, nqueries, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose)
 }
 
+winsorizeMatrix <- function(Mat, Trim) {
+    .Call('pagoda2_winsorizeMatrix', PACKAGE = 'pagoda2', Mat, Trim)
+}
+
 avg_rank <- function(x) {
     .Call('pagoda2_avg_rank', PACKAGE = 'pagoda2', x)
 }
