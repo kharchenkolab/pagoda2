@@ -163,7 +163,6 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     								        'A selection with this name already exists!');
     							      } else {
                             // Make the slection here
-                            debugger;
                             var key =params.key;
                             var value = params.value;
 
