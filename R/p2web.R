@@ -39,7 +39,8 @@ pagoda2WebApp <- setRefClass(
         "geneSets",
         "varinfo",
         "pathways",
-        "originalP2object"
+        "originalP2object",
+        "rookRoot"
     ),
 
 
@@ -101,10 +102,9 @@ pagoda2WebApp <- setRefClass(
             # The cell metadata
             cellmetadata <<- metadata;
 
-# PACKAGE NAME
             # Rook sever root directory to be changed to package subdirectory
             # this holds all the static files required by the app
-            rookRoot <- file.path(system.file(package='pagoda2'),'rookServerDocs');
+            rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
 
 
             # This Uses Middleware to process all the requests that
@@ -206,7 +206,7 @@ pagoda2WebApp <- setRefClass(
                    # Get the main script
                    '/index.html' = {
                        response$header('Content-Type', 'text/html');
-                       response$write(readStaticFile('rookServerDocs/index.html'));
+                       response$write(readStaticFile('/index.html'));
                        return(response$finish());
                    },
 
@@ -215,7 +215,7 @@ pagoda2WebApp <- setRefClass(
                    # It should also be minified
                    '/js/pagoda2frontend.js' = {
                        response$header('Content-Type', 'application/javascript');
-                       response$write(readStaticFile('rookServerDocs/js/pagoda2frontend.js'));
+                       response$write(readStaticFile('/js/pagoda2frontend.js'));
                        return(response$finish());
                    },
 
@@ -229,7 +229,7 @@ pagoda2WebApp <- setRefClass(
                        response$header('Expires', 'Tue, 24 Jan 2017 00:00:00 GMT');
 
 
-                       response$write(readStaticFile('rookServerDocs/css/pagodaMain.css'));
+                       response$write(readStaticFile('/css/pagodaMain.css'));
                        return(response$finish());
                    },
 
@@ -851,9 +851,8 @@ pagoda2WebApp <- setRefClass(
         # @return content to display or error page
 
         # TODO: Switch to content type autodetect
-#PACKAGE NAME
         readStaticFile =  function(filename) {
-	    filename <- file.path(system.file(package='pagoda2'),filename);
+	          filename <- file.path(rookRoot,filename);
             content <- NULL;
                        tryCatch({
                            content <- readChar(filename, file.info(filename)$size);
@@ -863,6 +862,17 @@ pagoda2WebApp <- setRefClass(
                                content <- paste0("File not found: ", filename);
                        })
 
+        },
+
+        # Update the rook server root directory
+        # This is useful if the app is generated on one machine and
+        # then moved to another with a different installation configuration
+        updateRookRoot = function(newRoot) {
+          # Update the object variable
+          rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
+
+          # Update the middleware static server
+          .self$app$app$file_server$root <- rookRoot;
         },
 
         # Serialise an R array to a JSON object
