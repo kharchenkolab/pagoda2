@@ -485,7 +485,10 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
     // Show the wait window
     embViewer.showWait();
 
-    var size = this.size;
+
+
+    //var size = this.size;
+    var size = Math.min(plotHeight, plotWidth);
 
     // Embeddings are cached
     dataCntr.getEmbedding(type, embeddingType, function(data) {
