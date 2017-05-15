@@ -29,6 +29,8 @@ Imports: rjson,
     GO.db,
     RMTstat,
     org.Hs.eg.db
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
 RoxygenNote: 6.0.1
 LinkingTo: Rcpp, RcppArmadillo
 NeedsCompilation: yes
