@@ -212,8 +212,6 @@ actionPanelUIcontroller.prototype.showDEhelpDialog = function() {
 
 actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
-
-
   var form = Ext.getCmp("formPanelDE").getForm();
 
   var analysisType = form.findField("analysisType").getValue();

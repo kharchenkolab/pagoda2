@@ -138,11 +138,17 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
       ///
       tbar: Ext.create('Ext.PagingToolbar', {
 		//store: geneTableEntryStore,
-		displayInfo: true,
+        listeners: {
+  		    afterrender: function() {
+            this.child('#refresh').hide()
+  		    }
+        },
+
+		displayInfo: false,
 		prependButtons: true,
 
 		items: [
-		  {
+{
 			emptyText: 'Search...',
 			xtype: 'textfield',
 			width: 100,
@@ -166,19 +172,75 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 
 
 		    {
-			type: "button",
-			text: 'Show selected',
-			tooltip: 'Show selected genes in main heatmap',
-			glyph: 0xf0ce,
-			handler: function() {
-			    var heatmapV = new heatmapViewer();
-			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
-			    heatmapV.drawHeatmap();
-			} //handler
+    			type: "button",
+    			text: 'Show selected',
+    			tooltip: 'Show selected genes in main heatmap',
+    			glyph: 0xf0ce,
+    			handler: function() {
+    			    var heatmapV = new heatmapViewer();
+    			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+    			    heatmapV.drawHeatmap();
+    			} //handler
 		    }, //button
+		    {
+		      type: 'button',
+		      text: 'Export',
+		      tooltip: 'Download results as CSV file',
+		      glyph:  0xf0ed,
+		      handler: function() {
+
+            var grid = Ext.getCmp('deResultsGenes');
+
+            var sep =',';
+
+            var csvFile = '';
+
+            // Generate Header
+            var cols = grid.getColumns();
+            var colN = cols.length;
+            for (var i = 0; i < colN; i++) {
+              csvFile += cols[i].text;
+              if (i != colN - 1) {
+                csvFile += sep;
+              }
+            }
+            csvFile += '\r\n';
+
+            var rows = grid.store.data.items;
+            var rowN = rows.length;
+            for (var i = 0; i < rowN; i++) {
+              var row = rows[i].data;
+              for (var j = 0; j < colN; j++) {
+                csvFile += row[cols[j].dataIndex];
+                if (j != colN -1){
+                  csvFile += sep;
+                }
+              }
+
+              csvFile += '\r\n';
+            }
+
+            //Generate the file to download
+            var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+
+            var link = document.createElement("a");
+            if (link.download !== undefined) { // feature detection
+                var url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", 'diffExpr.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+
+
+		      }
+		    },
 		    {xtype: 'tbseparator'},
 
-		]
+	  	]
 	    }), //tbar
 
 
