@@ -293,9 +293,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
             scrollable: true,
             bodyPadding: 10,
             html: '<h2>Metadata heatmap</h2>' +
-              'The heatmap displays metadata information about the cells. Single click to identify '+
-              'the cell and metadata entry. Double click to color the embedding by the metadata.' +
-              'Right click to select all cells in the group under your cursor.',
+              '<p>The heatmap displays metadata information about the cells, such as batch of origin and sequencing depth.</p>' +
+              '<p>Single click to identify individuals cell and corresponding metadata entry. The information can be seen in the status bar at the bottom left. Double click to color the embedding by the metadata row under your cursor. You can right-click on a cell for more options. This will allow you to select all the cells that belong to the same cluster as the given cell. The new cell selection will appear in the cell selections panel with the name you specify</p>' +
+
+              '<p>You can download the current view using the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon. In some cases the downloaded file will not have the correct extension, please rename it to end in ".png" if that happens. You can clear highlighting of cells using the <span style="font-family: FontAwesome">&#xf12d</span> (clear) icon.</p>',
+
+
             constrain: true,
             closable: true,
             resizable: false

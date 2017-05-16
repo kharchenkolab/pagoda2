@@ -262,8 +262,12 @@ toolbar.add({
             scrollable: true,
             bodyPadding: 10,
             html: '<h2>Main heatmap</h2>' +
-              'The heatmap displays expression values for the selected genes. '+
-              'Double click to color the embedding by the selected gene expression.',
+              '<p>The heatmap displays expression values for the selected genes.' +
+              ' Genes are shown as rows and cells as columns</p>'+
+              '<p>Double click to color the embedding by the selected gene expression.' +
+              'You can hover with your mouse to identify genes and see the correspondence '+
+              ' of the underlying cell in other heatmaps.</p>' +
+              '<p>You can download the current view using the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon. In some cases the downloaded file will not have the correct extension, please rename it to end in ".png" if that happens. You can clear highlighting of cells using the <span style="font-family: FontAwesome">&#xf12d</span> (clear) icon. Finally, you can use the <span style="font-family: FontAwesome">&#xf013</span> (settings) icon to adjust the view of the heatmap. Specifically you can adjust the color palette used for plotting and the number of colours available. Some palettes only support a limited range or a fixed number of colours and this may limit the number of values you can enter. The reorder rows option (default: on) enabled reordering of the gene rows. When the checkbox is selected the genes will appear in the order that they appear in the table used to select them. When the checkbox is selected the genes will be reordered on the fly. Reordering is performed by kmeans clustering of the rows.</p>',
             constrain: true,
             closable: true,
             resizable: false
