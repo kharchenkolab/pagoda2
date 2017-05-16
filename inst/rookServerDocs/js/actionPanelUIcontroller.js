@@ -155,6 +155,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	},{
     	    xtype: 'button',
     	    text: 'Run differential expression',
+    	    name: 'runDEbutton',
+    	    id: 'runDEbutton',
     	    handler: UIcontroller.runAnalysisClickHandler
     	}] //items
     });
@@ -163,7 +165,26 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     actionsTab.add(actionsInnerTab);
 };
 
+actionPanelUIcontroller.prototype.disableRunButton = function() {
+  var form = Ext.getCmp("formPanelDE").getForm();
+  var button = Ext.getCmp('runDEbutton');
+  button.setText('Please wait...');
+  button.disable();
+}
+
+actionPanelUIcontroller.prototype.enableRunButton = function() {
+  var form = Ext.getCmp("formPanelDE").getForm();
+  var button = Ext.getCmp('runDEbutton');
+  button.setText('Run differential expression...');
+  button.enable();
+}
+
+
+
 actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
+
+
+
   var form = Ext.getCmp("formPanelDE").getForm();
 
   var analysisType = form.findField("analysisType").getValue();
@@ -181,9 +202,16 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
       if (selectionA === selectionB) {
           Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
       } else {
-          //TODO: Some kind of visual wait indicator
+
+          var actionUI = new actionPanelUIcontroller();
+          actionUI.disableRunButton();
+
           var calcCntr = new calculationController();
+
           calcCntr.calculateDEfor2selections(selectionA, selectionB, 'remoteDefault',  function(results) {
+            actionUI.enableRunButton();
+
+
               // Get the cell names in the selection for storing
               var cellSelCntr = new cellSelectionController();
               var selAcells = cellSelCntr.getSelection(selectionA);
@@ -211,9 +239,11 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
           } );
       }  // if .. else
     } else if (analysisType.analysisTypeSelection == 'vsBackground') {
-
+  var actionUI = new actionPanelUIcontroller();
+          actionUI.disableRunButton();
           var calcCntr = new calculationController();
           calcCntr.calculateDEfor1selection(selectionA, 'remoteDefault',  function(results) {
+            actionUI.enableRunButton();
               // Get the cell names in the selection for storing
               var cellSelCntr = new cellSelectionController();
               var selAcells = cellSelCntr.getSelection(selectionA);
