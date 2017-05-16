@@ -39,6 +39,7 @@ pagoda2WebApp <- setRefClass(
         "geneSets",
         "varinfo",
         "pathways",
+        "pathwayODInfo", # Information about the pathways
         "originalP2object",
         "rookRoot"
     ),
@@ -65,6 +66,8 @@ pagoda2WebApp <- setRefClass(
                 cat("We have an error");
                 stop("ERROR: The provided object is not a pagoda 2 object")
             }
+
+
 
             # Keep the name for later (consistent) use
             name <<- appName;
@@ -106,6 +109,8 @@ pagoda2WebApp <- setRefClass(
             # this holds all the static files required by the app
             rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
 
+
+            pathwayODInfo <<- pagoda2obj$misc$pathwayODInfo;
 
             # This Uses Middleware to process all the requests that
             # our class doesn't process
@@ -354,9 +359,25 @@ pagoda2WebApp <- setRefClass(
                                       'genesetsinaspect' = {
                                           requestArguments <- request$GET();
                                           aspectId <- URLdecode(requestArguments[['aspectId']]);
+
+                                          # Genesets in this aspect
                                           genesets <- unname(pathways$cnam[[aspectId]]);
+
+                                          # Get the metadata for these gene sets
+                                          colOfInterest <- c("name","n","cz");
+                                          retTable <- pathwayODInfo[genesets, colOfInterest];
+
+                                          # Convert to JSON friendly format
+                                          retObj <- unname(apply(retTable, 1, function(x) {
+                                            list(name = x[[1]], n = x[[2]], cz = x[[3]]);
+                                          }))
+
                                           response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(genesets));
+                                          #response$write(toJSON(genesets));
+
+
+                                          response$write(toJSON(retObj));
+
                                           return(response$finish());
                                       },
 

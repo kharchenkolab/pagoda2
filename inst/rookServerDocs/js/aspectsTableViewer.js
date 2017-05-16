@@ -39,6 +39,7 @@ aspectsTableViewer.prototype.updateGeneSetsInAspectTable = function(selectedAspe
       var dataCntr = new dataController();
       dataCntr.getAvailableGenesetsInAspectStore(selectedAspect, function(store) {
           var table = Ext.getCmp('genesetsAspectTable');
+          store.sort({property: 'cz', direction: 'DESC'});
           table.bindStore(store);
 
 
@@ -93,7 +94,11 @@ aspectsTableViewer.prototype.generateTables = function() {
     title: 'Gene sets in Aspect',
     id: 'genesetsAspectTable',
     empty: 'No sets available',
-    columns: [{text:'Name', dataIndex:'name', width:'100%'}],
+    columns: [
+      {text: 'Name', dataIndex:'name', width:'40%'},
+      {text: 'Gene count', dataIndex: 'n', width: '20%'},
+      {text: 'Corrected Score', dataIndex: 'cz', width: '40%'}
+    ],
     listeners: {
       'selectionchange': genesetSelectionChangeListener
     }
