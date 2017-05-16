@@ -33,9 +33,9 @@ function calculationController(localAvailable, remoteAvailable) {
  * Calculate differential expression between two cell sets
  * given a specific (local or remote method)
  */
-calculationController.prototype.calculateDEbySelection = function(selectionA, selectionB, method, callback) {
+calculationController.prototype.calculateDEfor2selections = function(selectionA, selectionB, method, callback) {
   if (method === 'remoteDefault') {
-    this.calculateDEbySelectionRemote(selectionA, selectionB, callback);
+    this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
   } else {
     callback('Not implemented');
   }
@@ -43,11 +43,43 @@ calculationController.prototype.calculateDEbySelection = function(selectionA, se
 
 
 /**
+ * Calculate differential expression between one cell set and everything else
+ * given a specific (local or remote method)
+ */
+calculationController.prototype.calculateDEfor1selection = function(selectionA, method, callback) {
+  if (method === 'remoteDefault') {
+    this.calculateDEfor1selectionbyRemote(selectionA, callback);
+  } else {
+    callback('Not implemented');
+  }
+}
+
+
+calculationController.prototype.calculateDEfor1selectionbyRemote = function(selectionA, callback) {
+  var cellSelCntr = new cellSelectionController();
+  var selAcells = cellSelCntr.getSelection(selectionA);
+
+  // Alot of cell identifiers to send, send by POST
+	$.ajax({
+	    type: "POST",
+	    dataType: 'json',
+	    data: {
+	      "compidentifier": "doDifferentialExpression1selection",
+	      "selectionA": Ext.util.JSON.encode(selAcells)
+	    },
+	    url: "doComputation.php?compidentifier=doDifferentialExpression1selection",
+	    success: function(data) {
+		    callback(data);
+	    }
+	});
+}
+
+/**
  * Calculate differential expression between two groups of cells via connection to a remote server
  * @param selectionA the name of the first cell selection as registered in the cell selection controller
  * @param selectionB the name of the second cell selection as registered in the cell selection controller
  */
-calculationController.prototype.calculateDEbySelectionRemote = function(selectionA, selectionB, callback) {
+calculationController.prototype.calculateDEfor2selectionsbyRemote = function(selectionA, selectionB, callback) {
   var cellSelCntr = new cellSelectionController();
   var selAcells = cellSelCntr.getSelection(selectionA);
   var selBcells = cellSelCntr.getSelection(selectionB);
@@ -57,11 +89,11 @@ calculationController.prototype.calculateDEbySelectionRemote = function(selectio
 	    type: "POST",
 	    dataType: 'json',
 	    data: {
-	      "compidentifier": "doDifferentialExpression",
+	      "compidentifier": "doDifferentialExpression2selections",
 	      "selectionA": Ext.util.JSON.encode(selAcells),
 	      "selectionB": Ext.util.JSON.encode(selBcells),
 	    },
-	    url: "doComputation.php?compidentifier=doDifferentialExpression",
+	    url: "doComputation.php?compidentifier=doDifferentialExpression2selections",
 	    success: function(data) {
 		    callback(data);
 	    }

@@ -36,6 +36,7 @@ function actionPanelUIcontroller() {
  */
 actionPanelUIcontroller.prototype.generateUI = function() {
     var actionsTab = Ext.getCmp('actions-ui-tab');
+    var UIcontroller = this;
 
     var actionsInnerTab = Ext.create('Ext.TabPanel', {
 	layout: 'fit',
@@ -82,100 +83,171 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     var deTab = Ext.getCmp('differentialExpressionTab');
 
     var formPanelDE =  Ext.create('Ext.form.Panel', {
-	id: 'formPanelDE',
-	height: '100%',
-	width: '100%',
-	bodyPadding: 10,
-	items: [{
-	    id: 'selectionA',
-	    xtype: 'combo',
-	    fieldLabel: 'Cell Selection A',
-	    queryMode: 'local',
-	    editable: false,
-	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
-	    displayField: 'displayname',
-	    valueField: 'selectionname'
-	},
-	{
-	    id: 'selectionB',
-	    xtype: 'combo',
-	    fieldLabel: 'Cell Selection B',
-	    queryMode: 'local',
-	    editable: false,
-	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
-	    displayField: 'displayname',
-	    valueField: 'selectionname'
-	},{
-	    id: 'selectionMethod',
-	    xtype: 'combo',
-	    fieldLabel: 'Method', // TODO add help pane
-	    queryMode: 'local',
-	    editable: false,
-	    store: Ext.data.StoreManager.lookup('availableDEmethodStore'),
-	    displayField: 'displayname',
-	    valueField: 'name'
-	},{
-	  id: 'resultName',
-	  xtype: 'textfield',
-	  fieldLabel: 'Name for results'
-	},{
-	    xtype: 'button',
-	    text: 'Run differential expression',
-	    handler: function() {
-      		var selectionA = Ext.getCmp("formPanelDE").getForm()
-      		    .findField("selectionA").getValue();
-      		var selectionB = Ext.getCmp("formPanelDE").getForm()
-      		    .findField("selectionB").getValue();
-      		var method = Ext.getCmp("formPanelDE").getForm()
-      		    .findField('selectionMethod').getValue();
-          var resultName = Ext.getCmp("formPanelDE").getForm()
-              .findField("resultName").getValue();
+    	id: 'formPanelDE',
+    	height: '100%',
+    	width: '100%',
+    	bodyPadding: 10,
+    	items: [
+        {
+          xtype: 'radiogroup',
+          name: 'analysisType',
+          fieldLabel: 'Analysis Type',
+          items: [
+            {
+              boxLabel: 'Selection vs Selection',
+              name: 'analysisTypeSelection',
+              inputValue: 'vsSelection',
+              checked: true
+            },
+            {
+              boxLabel: 'Selection vs Background',
+              name: 'analysisTypeSelection',
+              inputValue: 'vsBackground'
+            }
+          ],
 
-      		if (selectionA === selectionB) {
-      		    Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
-      		} else if (method === null) {
-                Ext.MessageBox.alert('Warning', 'Please enter a method for the differential expression',function(){});
-      		} else if (resultName === '') {
-      		      Ext.MessageBox.alert('Warning', 'Please enter a name for the results',function(){});
-      	  } else {
-      		    //TODO: Some kind of visual wait indicator
-      		    var calcCntr = new calculationController();
-      		    calcCntr.calculateDEbySelection(selectionA, selectionB, 'remoteDefault',  function(results) {
-                  // Get the cell names in the selection for storing
-      		        var cellSelCntr = new cellSelectionController();
-      		        var selAcells = cellSelCntr.getSelection(selectionA);
-      		        var selBcells = cellSelCntr.getSelection(selectionB);
-
-                  // Make a deResult set for saving the results
-                  // and save metadata related to this de result
-                  var resultSet = new deResultSet();
-                  resultSet.setResults(results);
-                  resultSet.setName(resultName);
-                  resultSet.setSelectionA(selAcells);
-                  resultSet.setSelectionB(selBcells);
-
-                  // Save this de result set in the differentialExpresionStore
-                  var diffExprStore = new differentialExpressionStore();
-                  var setId = diffExprStore.addResultSet(resultSet);
-
-                  // Notify the DE results table to updata from the store
-                  var diffExpreTblView = new diffExprTableViewer();
-                  diffExpreTblView.update();
-
-                  diffExpreTblView.showSelectedSet(setId);
-
-                  // TODO: Change focus to the table and hightlight new de set
-
-      		    } );
-      		}  // if .. else
-	    } // handler function
-	}] //items
+          listeners: {
+            change: function(obj, newValue, oldValue, eOpts) {
+              var selectionBcontrol = Ext.getCmp('selectionB');
+              //debugger;
+              if (newValue.analysisTypeSelection == 'vsSelection') {
+                selectionBcontrol.enable();
+              } else if (newValue.analysisTypeSelection == 'vsBackground') {
+                selectionBcontrol.disable();
+              } else {
+                //Something is wrong
+              }
+            }
+          }
+        },
+    	  {
+    	    id: 'selectionA',
+    	    xtype: 'combo',
+    	    fieldLabel: 'Cell Selection A',
+    	    queryMode: 'local',
+    	    editable: false,
+    	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
+    	    displayField: 'displayname',
+    	    valueField: 'selectionname'
+    	},
+    	{
+    	    id: 'selectionB',
+    	    xtype: 'combo',
+    	    fieldLabel: 'Cell Selection B',
+    	    queryMode: 'local',
+    	    editable: false,
+    	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
+    	    displayField: 'displayname',
+    	    valueField: 'selectionname'
+    	},{
+    	    id: 'selectionMethod',
+    	    xtype: 'combo',
+    	    fieldLabel: 'Method', // TODO add help pane
+    	    queryMode: 'local',
+    	    editable: false,
+    	    store: Ext.data.StoreManager.lookup('availableDEmethodStore'),
+    	    displayField: 'displayname',
+    	    valueField: 'name'
+    	},{
+    	  id: 'resultName',
+    	  xtype: 'textfield',
+    	  fieldLabel: 'Name for results'
+    	},{
+    	    xtype: 'button',
+    	    text: 'Run differential expression',
+    	    handler: UIcontroller.runAnalysisClickHandler
+    	}] //items
     });
     deTab.add(formPanelDE);
 
-
     actionsTab.add(actionsInnerTab);
 };
+
+actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
+  var form = Ext.getCmp("formPanelDE").getForm();
+
+  var analysisType = form.findField("analysisType").getValue();
+  var selectionA = form.findField("selectionA").getValue();
+  var selectionB = form.findField("selectionB").getValue();
+  var method = form.findField('selectionMethod').getValue();
+  var resultName = form.findField("resultName").getValue();
+
+  if (method === null) {
+        Ext.MessageBox.alert('Warning', 'Please enter a method for the differential expression',function(){});
+  } else if (resultName === '') {
+        Ext.MessageBox.alert('Warning', 'Please enter a name for the results',function(){});
+  } else {
+    if (analysisType.analysisTypeSelection == 'vsSelection') {
+      if (selectionA === selectionB) {
+          Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
+      } else {
+          //TODO: Some kind of visual wait indicator
+          var calcCntr = new calculationController();
+          calcCntr.calculateDEfor2selections(selectionA, selectionB, 'remoteDefault',  function(results) {
+              // Get the cell names in the selection for storing
+              var cellSelCntr = new cellSelectionController();
+              var selAcells = cellSelCntr.getSelection(selectionA);
+              var selBcells = cellSelCntr.getSelection(selectionB);
+
+              // Make a deResult set for saving the results
+              // and save metadata related to this de result
+              var resultSet = new deResultSet();
+              resultSet.setResults(results);
+              resultSet.setName(resultName);
+              resultSet.setSelectionA(selAcells);
+              resultSet.setSelectionB(selBcells);
+
+              // Save this de result set in the differentialExpresionStore
+              var diffExprStore = new differentialExpressionStore();
+              var setId = diffExprStore.addResultSet(resultSet);
+
+              // Notify the DE results table to updata from the store
+              var diffExpreTblView = new diffExprTableViewer();
+              diffExpreTblView.update();
+
+              diffExpreTblView.showSelectedSet(setId);
+
+              // TODO: Change focus to the table and hightlight new de set
+          } );
+      }  // if .. else
+    } else if (analysisType.analysisTypeSelection == 'vsBackground') {
+
+          var calcCntr = new calculationController();
+          calcCntr.calculateDEfor1selection(selectionA, 'remoteDefault',  function(results) {
+              // Get the cell names in the selection for storing
+              var cellSelCntr = new cellSelectionController();
+              var selAcells = cellSelCntr.getSelection(selectionA);
+
+              // Make a deResult set for saving the results
+              // and save metadata related to this de result
+              var resultSet = new deResultSet();
+              resultSet.setResults(results);
+              resultSet.setName(resultName);
+              resultSet.setSelectionA(selAcells);
+
+              // Save this de result set in the differentialExpresionStore
+              var diffExprStore = new differentialExpressionStore();
+              var setId = diffExprStore.addResultSet(resultSet);
+
+              // Notify the DE results table to updata from the store
+              var diffExpreTblView = new diffExprTableViewer();
+              diffExpreTblView.update();
+
+              diffExpreTblView.showSelectedSet(setId);
+
+              // TODO: Change focus to the table and hightlight new de set
+          } );
+
+
+
+    } // else.. if
+  }
+
+
+
+
+} // runAnalysisClickHandler
+
 
 /**
  * Generate the cell selection store for populating the dropdowns

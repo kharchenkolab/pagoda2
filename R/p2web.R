@@ -782,9 +782,55 @@ pagoda2WebApp <- setRefClass(
 
                       if (!is.null(compIdentifier)) {
                         switch(compIdentifier,
-                               'doDifferentialExpression' = {
-                                    cat('doDifferentialExpression request');
+                               'doDifferentialExpression1selection' = {
+                                  cat('doDifferentialExpression1selection\n');
 
+                                 postArguments <- request$POST();
+
+                                 selAarg <- postArguments[['selectionA']];
+
+                                 selectionA <- fromJSON(selAarg);
+
+                                 # TODO: check that the originalP2object field is populated, as this is optional
+
+                                 allcells <- rownames(myPagoda2Object$counts)
+                                 cat('All cells length: ', length(allcells));
+                                 othercells <- allcells[!allcells %in% selectionA]
+                                 cat('Other cells length: ', length(othercells));
+                                 cat('Selection length: ', length(selectionA));
+
+                                 # Generate factor for de
+                                 v1 <- c(rep('selectionA',length(selectionA)),rep('othercells',length(othercells)))
+                                 names(v1) <- c(selectionA, othercells)
+                                 v1 <- factor(v1)
+
+                                 # run de with factor
+                                 de <- originalP2object$getDifferentialGenes(groups=v1)
+
+
+                                 de$selectionA$name <- rownames(de$selectionA)
+                                 results <- de$selectionA
+
+
+                                 # Convert to JSON-suitable format
+                                 # For performance this best done client side, or the resulting string is compressed
+                                 p <- lapply(c(1:dim(results)[1]), function(x) {
+                                   list(Z = results[x,][[1]],
+                                        M = results[x,][[2]],
+                                        highest=results[x,][[3]],
+                                        fe=results[x,][[4]],
+                                        name=results[x,][[5]])
+                                 });
+
+                                 response$write(toJSON(p));
+
+
+                                 #originalP2object
+                                 return(response$finish());
+
+                               }, # doDifferentialExpression1selectoin
+
+                               'doDifferentialExpression2selections' = {
                                     postArguments <- request$POST();
 
                                     selAarg <- postArguments[['selectionA']];
