@@ -209,31 +209,29 @@ embeddingViewer.prototype.generateToolbar = function() {
               var embV = new embeddingViewer();
               var canvas = embV.currentViewer.getMainCanvasElement();
 
+
                const maxSize = 2000;
                 if (canvas.width > maxSize | canvas.height >maxSize){
-                Ext.Msg.show({
-                  title: 'Warning',
-                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
-                   'This may cause problems during exporting. Do you want to continue?',
-                   buttons: Ext.Msg.OKCANCEL,
-                   fn: function(s) {
-                     if (s == 'ok') {
-                          var imageURL = canvas.toDataURL('image/png');
-                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                          window.open(imageURL);
-                     } //if
-                   } //fn
-                }) // Ext.Msg.show
-            } else {
-                                        var imageURL = canvas.toDataURL('image/png');
-                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                          window.open(imageURL);
-
-
-            }// if
-
+                    Ext.Msg.show({
+                      title: 'Warning',
+                      msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                       'This may cause problems during exporting. Do you want to continue?',
+                       buttons: Ext.Msg.OKCANCEL,
+                       fn: function(s) {
+                         if (s == 'ok') {
+                              var imageURL = canvas.toDataURL('image/png');
+                              imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                              window.open(imageURL,'embeddingWindow');
+                         } //if
+                       } //fn
+                    }) // Ext.Msg.show
+                } else {
+                    var imageURL = canvas.toDataURL('image/png');
+                    imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+                    window.open(imageURL);
+                }// if
         } // handler
-        });
+      }); // toolbar add
 
 toolbar.add(
   {
@@ -249,15 +247,47 @@ toolbar.add(
   );
 
     toolbar.add(
-	{
-	    text: "",
-	    type: "button",
-	    tooltip: "Customize embedding view",
-	    glyph: 0xf013,
-	    menu: embeddingSettingsMenu
-	}
-
+    	{
+    	    text: "",
+    	    type: "button",
+    	    tooltip: "Customize embedding view",
+    	    glyph: 0xf013,
+    	    menu: embeddingSettingsMenu
+    	}
     );
+
+
+    toolbar.add({
+      text: '',
+      xtype: 'button',
+      tooltip: 'Help',
+      glyph: 0xf128,
+      handler: function() {
+            Ext.create('Ext.window.Window', {
+              height: 300,
+              width: 400,
+              title: 'Help: Embedding',
+              scrollable: true,
+              bodyPadding: 10,
+              html: '<h2>Embedding </h2>' +
+                '<p>The embedding displays the cells as points in a 2d or 3d layout.</p>'  +
+                '<p>Pagoda2 allows you to switch between multiple embeddings using the drop-down box at the top.' +
+                'You can select cells on the current embedding by dragging with your mouse.' +
+                'This will highlight the selected cells in the embedding and other windows. ' +
+                'You can download the embedding you are currently viewing by ' +
+                'clicking on the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon.' +
+                'You can clear the selection by clicking on the <span style="font-family: FontAwesome">&#xf12d</span> (clear) icon.' +
+                'You can use the <span style="font-family: FontAwesome">&#xf013</span> (settings) icon to change the viewing settings of the current embedding. ' +
+                'This allows you to customize point size, opacity and border color and width.' +
+                'In addition the embedding can be colored using the heatmaps on the right. See the ' +
+                'help windows of those panels for more information.</p>',
+              constrain: true,
+              closable: true,
+              resizable: false
+            }).show();
+      } // handler
+    }); // toolbar add
+
 
     embeddingPanelHeader.add(toolbar);
 
