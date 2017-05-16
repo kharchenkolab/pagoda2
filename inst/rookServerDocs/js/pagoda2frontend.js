@@ -104,7 +104,7 @@ function generateExtJsLayout() {
 	border: 0,
 	height: '100%',
 	bodyPadding: 0,
-	glyph: 0xf096,
+	glyph: 0xf1cb,
 	items: [{
 	    id: 'embedding-app-container',
 	    html: '<div id="embedding-draw-outer" style="position: relative;">' +
