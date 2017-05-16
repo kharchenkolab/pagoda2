@@ -84,7 +84,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
 
     var toolbar = Ext.create('Ext.Toolbar');
       toolbar.add({
-    	text: 'Parent',
+    	text: '',
     	xtype: 'button',
     	tooltip: 'View Parent',
     	glyph: 0xf062,
@@ -130,7 +130,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
     });
 
    toolbar.add({
-	text: 'Zoom',
+	text: '',
 	xtype: 'button',
 	tooltip: 'Zoom to current selection',
 	glyph: 0xf00e, //fa-search-plus
@@ -183,7 +183,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
     });
 
     toolbar.add({
-	text: 'Full View',
+	text: '',
 	xtype: 'button',
 	tooltip: 'Switch to full view mode',
 	glyph: 0xf010, // fa-search-minus
@@ -254,6 +254,30 @@ canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'dendrogram.png')})
 
         } // handler
 });
+
+
+
+    toolbar.add({
+      text: '',
+      xtype: 'button',
+      tooltip: 'Help',
+      glyph: 0xf128,
+      handler: function() {
+            Ext.create('Ext.window.Window', {
+              height: 300,
+              width: 400,
+              title: 'Help: Dendrogram',
+              scrollable: true,
+              bodyPadding: 10,
+              html: '<h2>Dendrogram </h2>' +
+                '<p>The dendrogram view allows to you see and navigate the relationships between your populations.</p><p>You can click on the dendrogram to select specific portions of your cells. By clicking on a vertical line you will set all the cells below that point as the \'Primary Selection\'. By clicking on a horizontal line you will set the cells on the left subtree below the current position as the \'Primary Selection\' and cells in the left subtree as the \'Secondary selection\'. You can then use the generated selections to perform differential expression between the left and right subtrees at any given position.</p><p>In addition to selecting cells you can use the dendrogram to zoom in specific subpopulations in your data. After making a selection you can click on the <span style="font-family: FontAwesome">&#xf00e</span> (Zoom) button to only display these cells on all the heatmaps. When you are in zoom mode you can zoom back to the original view by clicking on the <span style="font-family: FontAwesome">&#xf010</span> (Full View) button. Alternatively you can zoom out one level at a time by clicking on the <span style="font-family: FontAwesome">&#xf063</span> (Parent) button. Finally, you can download the current view by clicking on the <span style="font-family: FontAwesome">&#xf0ed</span> (Download) button.</p>',
+              constrain: true,
+              closable: true,
+              resizable: false
+            }).show();
+      } // handler
+    }); // toolbar add
+
 
     mainPanelHeader.add(toolbar);
 };

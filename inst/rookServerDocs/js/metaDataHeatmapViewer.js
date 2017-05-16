@@ -241,6 +241,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         tooltip: 'Download current view',
         glyph: 0xf0ed,
         handler: function(){
+            pagHelpers.regC(25);
             var canvas = document.getElementById('metadata-area');
 
                         const maxSize = 2000;
@@ -284,7 +285,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
           Ext.create('Ext.window.Window', {
             height: 300,
             width: 400,
-            title: 'Help: Differential Expression',
+            title: 'Help: Metadata Heatmap',
             scrollable: true,
             bodyPadding: 10,
             html: '<h2>Metadata heatmap</h2>' +

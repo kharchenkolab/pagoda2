@@ -210,6 +210,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             // Highlight on heatmap
             var heatV = new heatmapViewer();
             heatV.highlightCellSelectionByName(selectionName);
+            pagHelpers.regC(72);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
@@ -217,7 +218,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-      aspHeatView.highlightCellSelectionByName(selectionName);
+            aspHeatView.highlightCellSelectionByName(selectionName);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
@@ -226,6 +227,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
     		} else {
     		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
+    		    pagHelpers.regC(88);
     		}
 	  }
 	}

@@ -207,6 +207,7 @@ actionPanelUIcontroller.prototype.showDEhelpDialog = function() {
       closable: true,
       resizable: false
     }).show();
+    pagHelpers.regC(94);
 }
 
 

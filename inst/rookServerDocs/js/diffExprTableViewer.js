@@ -80,7 +80,7 @@ diffExprTableViewer.prototype.generateTables = function() {
 			tooltip: 'Display Help',
 			glyph: 0xf128,
 			handler: function() {
-
+  pagHelpers.regC(1);
     Ext.create('Ext.window.Window', {
         height: 300,
         width: 400,

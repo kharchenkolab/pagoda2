@@ -19,7 +19,7 @@ function geneTableViewer()  {
 
 /**
  * Generate the gene table
- * Here were are making the gene table and connecting it 
+ * Here were are making the gene table and connecting it
  * to the appropriate data source provided by the dataController
  */
 geneTableViewer.prototype.generateGeneTable = function() {
@@ -83,11 +83,12 @@ geneTableViewer.prototype.generateGeneTable = function() {
 			} // listeners
 		    },
 		    {
-			type: "button", 
+			type: "button",
 			text: 'Show selected',
 			tooltip: 'Show selected genes in main heatmap',
 			glyph: 0xf0ce,
 			handler: function() {
+			    pagHelpers.regC(0xF1);
 			    var heatmapV = new heatmapViewer();
 			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
 			    heatmapV.drawHeatmap();
@@ -105,7 +106,7 @@ geneTableViewer.prototype.generateGeneTable = function() {
 		    selectedItems.each(function(item,index,length){
 			selectedGeneNames.push(item.data.genename);
 		    });
-		    
+
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
 		}

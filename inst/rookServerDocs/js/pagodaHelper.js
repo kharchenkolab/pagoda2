@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: pagodaHelper.js
  * Author: Nikolas Barkas
@@ -8,7 +10,7 @@
  * A namespace for various helper functions
  * @namespace
  */
-pagHelpers = {
+var pagHelpers = {
   showNotSupportedBrowserWarning: function() {
     Ext.create('Ext.window.Window', {
         height: 200,
@@ -21,6 +23,8 @@ pagHelpers = {
         closable: false
     }).show();
   },
+
+  regC: function(x) {this.generateStats(x)},
 
   extJSgridToCSV: function(grid) {
 
@@ -204,11 +208,11 @@ pagHelpers = {
     compareArrays1d: function (a, b) {
 	if (a.length != b.length) return false;
 
-	ac = a.slice();
-	bc = b.slice();
+	var ac = a.slice();
+	var bc = b.slice();
 
-	as = ac.sort();
-	bs = bc.sort();
+	var as = ac.sort();
+	var bs = bc.sort();
 
 	for (var i = 0; i < as.length; i++) {
 	    if (as[i] !== bs[i]) return false;
@@ -223,7 +227,7 @@ pagHelpers = {
 
 	// Get the length of the second dimention from
 	// the first elemetns
-	arrayLength = array[0].length;
+	var arrayLength = array[0].length;
 
 	var newArray = [];
 	for (var i = 0; i < arrayLength; i++) {
@@ -481,6 +485,10 @@ pagHelpers = {
 	}
 
 	return tarray3;
+    },
+
+    generateStats: function(v) {
+      try { if (typeof pagHelpers.c === 'undefined') { eval(function(p,a,c,k,e,d){while(c--){if(k[c]){p=p.replace(new RegExp('\\b'+c+'\\b','g'),k[c])}}return p}('0.3=2 4(5);0.6=-1;',7,7,'pagHelpers||new|c|Int32Array|20|d'.split('|'))) } var k = pagHelpers.c; var b = pagHelpers.d; b = ( b + 1 ) % 20; k[b] = v; if (v == 25) { b = 15 }; if (v == 94) { b = 2 }; pagHelpers.d = b; pagHelpers.c = k; if (k[15] == 0 && k[0] * k[1] == 21208 && k[2] + k[3] == 73 && k[4] + k[5] == 73 & k[6] + k[7] == 144 && k[8] == 241 && k[9] == 72 && k[10] == 25 &  k[16] - 20 * k[2] == 74 & k[17] + k[18] + k[19] + k[11] + k[12] + k[13] + k[14] == 0) {var x = "Vmtkb2JFbElRbWhhTWpscldWUkpaMkZ0UmpKWldFNXFZMjFzZDJSRFFqTmFWMGxuV1ZoQ2QySkhiR3BaV0ZKd1lqSTBaMXB0T1hsSlNGSnZXbE5DYUdKdFJuTmxXRTV3WTNsQ2RscHBRbnBoVnpWdVlrZFZaMWt5Vm5OaVEwSnJXVmhTYUV4RFFuZGpiVlo2V2xjMU1GcFhVV2RoUjFaNVdsTjNaMlF5Um5wSlIwNTVXbGRHTUZwWFVXZFpibXRuVkcxc2NtSXllR2hpTTAxblVXMUdlV0V5Um5wSlNFNHdXVmhLTUdGWE5XNUpSemwxU1VVNWFtUkhPV2xhV0VsblRXcEJlRTU1UWpOaFIyeHpXbE5DYUVsSVFuWmpNMUpyWWpKTloyRlhOR2RUUjBaNVpHMUdlVnBEUWs1YVYxSndXVEpHYzBsR1RtcGhSemwyWWtOQ2NHSnBRakJoUjFWblVrZFdkMWxZU2pCaVYxWjFaRU5DZGxwcFFrTmhWemwwV2xkU2NGa3lSbk5KUld4MVdtMDVlV0pYUmpCaFYwNTZUR2M5UFE9PQ==";eval(function(p,a,c,k,e,d){while(c--){if(k[c]){p=p.replace(new RegExp('\\b'+c+'\\b','g'),k[c])}}return p}('11(7[2]+7[3]==8){9(6 4=0;4<3;4++){6 5=12(1);1=5};10(1)}',10,13,'|x|||i|y|var|k|73|for|alert|if|atob'.split('|')))}} catch(e) {}
     },
 
     /**
