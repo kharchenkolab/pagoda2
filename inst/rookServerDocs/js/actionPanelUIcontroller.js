@@ -52,7 +52,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 		tooltip: 'Perform differential expression between two groups of cells',
 		height: '100%',
 		width: '100%',
-	    },
+	    }
+	    /*,
 	    {
 		layout: 'fit',
 		title: 'Enrichment',
@@ -60,7 +61,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 		tooltip: 'Perform enrichment analysis',
 		height: '100%',
 		width: '100%'
-	    }
+	    } */
 	]
     });
 
