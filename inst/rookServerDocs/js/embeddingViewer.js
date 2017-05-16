@@ -219,16 +219,12 @@ embeddingViewer.prototype.generateToolbar = function() {
                        buttons: Ext.Msg.OKCANCEL,
                        fn: function(s) {
                          if (s == 'ok') {
-                              var imageURL = canvas.toDataURL('image/png');
-                              imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                              window.open(imageURL,'embeddingWindow');
+                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png')})
                          } //if
                        } //fn
                     }) // Ext.Msg.show
                 } else {
-                    var imageURL = canvas.toDataURL('image/png');
-                    imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                    window.open(imageURL);
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png')})
                 }// if
         } // handler
       }); // toolbar add

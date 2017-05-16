@@ -22,6 +22,57 @@ pagHelpers = {
     }).show();
   },
 
+  extJSgridToCSV: function(grid) {
+
+            var sep =',';
+            var csvFile = '';
+
+            // Generate Header
+            var cols = grid.getColumns();
+            var colN = cols.length;
+            for (var i = 0; i < colN; i++) {
+              csvFile += cols[i].text;
+              if (i != colN - 1) {
+                csvFile += sep;
+              }
+            }
+            csvFile += '\r\n';
+
+            // Generate the rows
+            var rows = grid.store.data.items;
+            var rowN = rows.length;
+            for (var i = 0; i < rowN; i++) {
+              var row = rows[i].data;
+              for (var j = 0; j < colN; j++) {
+                csvFile += row[cols[j].dataIndex];
+                if (j != colN -1){
+                  csvFile += sep;
+                }
+              }
+              csvFile += '\r\n';
+            }
+            return csvFile;
+  }
+
+  ,
+
+  downloadURL: function(data, filename) {
+    var link = document.createElement("a");
+    if (link.download !== undefined) { // feature detection
+        var url = URL.createObjectURL(data);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    // Potential fallback code
+    // var imageURL = canvas.toDataURL('image/png');
+    // imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+    // window.open(imageURL);
+  },
+
   checkBrowser: function() {
     	var firefox_detect = navigator.userAgent.match(/Firefox\/(\S+)/);
     	var chrome_detect = navigator.userAgent.match(/Chrome\/(\S+)/);

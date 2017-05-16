@@ -124,21 +124,13 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
                    buttons: Ext.Msg.OKCANCEL,
                    fn: function(s) {
                      if (s == 'ok') {
-                          var imageURL = canvas.toDataURL('image/png');
-                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                          window.open(imageURL);
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png')})
                      } //if
                    } //fn
                 }) // Ext.Msg.show
             } else {
-                                        var imageURL = canvas.toDataURL('image/png');
-                          imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-                          window.open(imageURL);
-
-
+                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png')})
             } // if
-
-
         } // handler
 });
 
