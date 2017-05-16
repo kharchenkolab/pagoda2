@@ -1,3 +1,4 @@
+
 /*
  * Filename: dataController.js
  * Author: Nikolas Barkas
@@ -16,7 +17,7 @@
  */
 function dataController(repository) {
     if (typeof dataController.instance === 'object') {
-	return dataController.instance;
+    	return dataController.instance;
     };
 
     // Init variables here
@@ -58,27 +59,27 @@ dataController.prototype.getHierarchy =  function(name, callback) {
 	// It's in the cache already
 	callback(dataCntr.cache["hierarchies"][name]);
     } else {
-	$.ajax({
-	    dataType: "json",
-	    url: "getData.php",
-	    data: {'dataidentifier': 'hierarchy', 'type': name },
-	    success: function(data) {
-		var dataCntr = new dataController();
+    	$.ajax({
+    	    dataType: "json",
+    	    url: "getData.php",
+    	    data: {'dataidentifier': 'hierarchy', 'type': name },
+    	    success: function(data) {
+        		var dataCntr = new dataController();
 
-		// The merge array values refer to a 1 indexed table
-		// fix this as the js tables are 0 indexed
-		for (var i =0; i < data.merge.length; i++) {
-		    // This is the case only for internal nodes
-		    if (data.merge[i] > 0) {
-			data.merge[i] = data.merge[i] - 1;
-		    }
-		}
+        		// The merge array values refer to a 1 indexed table
+        		// fix this as the js tables are 0 indexed
+        		for (var i =0; i < data.merge.length; i++) {
+        		    // This is the case only for internal nodes
+        		    if (data.merge[i] > 0) {
+        			    data.merge[i] = data.merge[i] - 1;
+        		    }
+        		}
 
-		dataCntr.cache["hierarchies"][name] = data;
+        		dataCntr.cache["hierarchies"][name] = data;
 
-		callback(data);
-	    }
-	});
+        		callback(data);
+    	    }
+    	});
     };
 };
 
@@ -88,16 +89,15 @@ dataController.prototype.getHierarchy =  function(name, callback) {
  */
 dataController.prototype.getReducedDendrogram = function(callback) {
     if (this.cache['reduceddendrogram'] === null) {
-
-	$.ajax({
-	    type: "GET",
-	    dataType: "json",
-	    data: { "dataidentifer": "reduceddendrogram" },
-	    url: "getData.php?dataidentifier=reduceddendrogram",
-	    success: function(data) {
-		callback(data);
-	    }
-	});
+    	$.ajax({
+    	    type: "GET",
+    	    dataType: "json",
+    	    data: { "dataidentifer": "reduceddendrogram" },
+    	    url: "getData.php?dataidentifier=reduceddendrogram",
+    	    success: function(data) {
+    		callback(data);
+    	    }
+    	});
     } else {
 	callback(this.cache['reduceddendrogram']);
     }
@@ -109,15 +109,15 @@ dataController.prototype.getReducedDendrogram = function(callback) {
  */
 dataController.prototype.getCellOrder = function(callback) {
     if (this.cache["cellorder"] === null) {
-	$.ajax({
-	    type: "GET",
-	    dataType: "json",
-	    url: "getData.php",
-	    data: { "dataidentifier": "cellorder" },
-	    success: function(data) {
-		var dataCntr = new dataController();
-		dataCntr.cache["cellorder"] = data;
-		callback(data);
+    	$.ajax({
+    	    type: "GET",
+    	    dataType: "json",
+    	    url: "getData.php",
+    	    data: { "dataidentifier": "cellorder" },
+    	    success: function(data) {
+    		var dataCntr = new dataController();
+    		dataCntr.cache["cellorder"] = data;
+    		callback(data);
 	    } // success
 	}); //ajax
     } else {
@@ -328,12 +328,12 @@ dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 	// Check the cache
 	if(this.cache.lastexpressionmatrix !== null ) {
 	    if ( this.cache.lastexpressionmatrix.cellindexstart === cellIndexStart &
-		 this.cache.lastexpressionmatrix.cellindexend === cellIndexEnd &
-		 this.cache.lastexpressionmatrix.getCellNames === getCellNames &
-		 pagHelpers.compareArrays1d(geneIds, this.cache.lastexpressionmatrix.geneIds)) {
+    		 this.cache.lastexpressionmatrix.cellindexend === cellIndexEnd &
+    		 this.cache.lastexpressionmatrix.getCellNames === getCellNames &
+    		 pagHelpers.compareArrays1d(geneIds, this.cache.lastexpressionmatrix.geneIds)) {
 
-		doReturn(this.cache.lastexpressionmatrix.data);
-		return null;
+    		doReturn(this.cache.lastexpressionmatrix.data);
+    		return null;
 	    }
 	}
 
@@ -424,24 +424,24 @@ dataController.prototype.getExpressionValuesSparseByCellIndexBinary = function(g
 
     // Check input
     if (!Array.isArray(geneIds)) {
-	throw new Error("geneIds must be an array of strings");
+	    throw new Error("geneIds must be an array of strings");
     }
 
     if (!Number.isInteger(cellIndexStart)) {
-	throw new Error("cellIndexStart must be an integer");
+	    throw new Error("cellIndexStart must be an integer");
     }
 
     if (!Number.isInteger(cellIndexEnd)) {
-	throw new Error("cellIndexEnd must be an interger");
+	    throw new Error("cellIndexEnd must be an interger");
     }
 
     // Setup the request data
     var requestData = {
-	"dataidentifier": "expressionmatrixsparsebyindexbinary",
-	"geneids": geneIds,
-	"cellindexstart": cellIndexStart,
-	"cellindexend": cellIndexEnd,
-	"getCellNames": true
+    	"dataidentifier": "expressionmatrixsparsebyindexbinary",
+    	"geneids": geneIds,
+    	"cellindexstart": cellIndexStart,
+    	"cellindexend": cellIndexEnd,
+    	"getCellNames": true
     };
 
     var request = $.ajax({
@@ -881,23 +881,22 @@ dataController.prototype.defineExtJsObjects = function() {
     // store to allow sorting and pagination at the
     // same time
     Ext.define('LocalJsonStore', {
-	extend: 'Ext.data.Store',
-	constructor: function(config) {
-	    config.autoLoad = true;
-	    config.remoteSort = true;
-	    config.remoteFilter = true;
-	    config.proxy = {
-		type: 'memory',
-		enablePaging: true,
-		data: config.localData,
-		reader: {
-		    type: 'json'
-		},
-		writer: config.writerConfig ? config.writerConfig : { type: 'json', allowSingle: false, nameProperty: 'mapping' }
-	    };
-	    this.callParent(arguments);
-
-	}
+    	extend: 'Ext.data.Store',
+    	constructor: function(config) {
+    	    config.autoLoad = true;
+    	    config.remoteSort = true;
+    	    config.remoteFilter = true;
+    	    config.proxy = {
+        		type: 'memory',
+        		enablePaging: true,
+        		data: config.localData,
+        		reader: {
+        		    type: 'json'
+        		},
+        		writer: config.writerConfig ? config.writerConfig : { type: 'json', allowSingle: false, nameProperty: 'mapping' }
+        	    };
+    	    this.callParent(arguments);
+    	}
     });
 
     // Define a data.model  for the gene table
