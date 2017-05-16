@@ -16,13 +16,14 @@ function calculationController(localAvailable, remoteAvailable) {
         displayName: 'Remote Default',
         help: 'Remote Default Method',
         repos: 'remote'
-      },
+      }
+    /*  ,
       {
         name: 'localDefault',
         displayName: 'Local Default',
         help: 'Local default method',
         repos: 'T-test'
-      }
+      } */
     ];
 
     calculationController.instance = this;
