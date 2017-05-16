@@ -290,7 +290,7 @@ toolbar.add(
 
     // Delay populating the menu above as this will not be used
     // as soon as the app loads and it helps reduce the inital swarm of requests
-    setTimeout(this.populateMenu, 2000)
+    setTimeout(this.populateMenu, 500)
 
 }; // generateToolbar
 
