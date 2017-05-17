@@ -436,8 +436,6 @@ pagoda2WebApp <- setRefClass(
 
                                       'aspectmatrixbyaspect' = {
 
-                                        serverLog("Data request: aspectmatrixbyaspect");
-
                                         postArgs <- request$POST();
 
                                         aspectIds <- postArgs[['aspectids']];
@@ -486,10 +484,6 @@ pagoda2WebApp <- setRefClass(
                                         },
 
                                       'aspectmatrixsparsebyindexbinary' = {
-                                          # Example query
-                                          # http://127.0.0.1:24403/custom/myPagoda2WebApp/getData.php?dataidentifier=aspectmatrixsparsebyindexbinary&cellindexstart=1&cellindexend=100&getCellNames=F
-
-                                          serverLog("Data request: aspectmatrixsparsebyindexbinary");
 
                                           postArgs <- request$GET();
 
@@ -536,8 +530,6 @@ pagoda2WebApp <- setRefClass(
                                       },
 
                                       'expressionmatrixsparsebyindexbinary' = {
-                                          serverLog("Data request: expressionmatrixsparsebyindexbinary");
-
                                           postArgs <- request$POST();
 
                                           geneIdentifiers <- postArgs[['geneids']];
@@ -545,7 +537,7 @@ pagoda2WebApp <- setRefClass(
                                           cellIndexEnd <- postArgs[['cellindexend']];
                                           getCellNames <- postArgs[['getCellNames']];
 
-                                          serverLog(paste0('Cell index range ', cellIndexStart, ' ', cellIndexEnd));
+
 
                                           if (!all(c(geneIdentifiers %in% colnames(matsparse)))) {
                                               serverLog("Error: The request contains gene names that are not in matsparse!");
@@ -555,8 +547,6 @@ pagoda2WebApp <- setRefClass(
                                           # Ordering of the matrix according to the hclust
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)]
                                           matrixToSend <- matsparse[cellIndices,geneIdentifiers,drop=F];
-
-#                                          serverLog(paste0('matrixToSend dim:', dim(matrixToSend)[1], ' ', dim(matrixToSend)[2])) #
 
 
                                           # FOR DEBUGGING HEATMAP
