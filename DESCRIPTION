@@ -1,6 +1,6 @@
 Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: c( person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = c("aut", "cre")), person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut")) 
 Description: What the package does (one paragraph).
 Depends: R (>= 3.2.5)
