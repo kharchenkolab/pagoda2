@@ -98,7 +98,7 @@ var pagHelpers = {
     		var version_major = parseInt(version_split[0]);
     		var version_minor = parseInt(version_split[1]);
 
-    		if (version_major >= 57) {
+    		if (version_major >= 47) {
     			return true;
     		} else {
     			return false;
