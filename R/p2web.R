@@ -215,28 +215,28 @@ pagoda2WebApp <- setRefClass(
                        return(response$finish());
                    },
 
-                   # Get the pagoda frontend javascript
-                   # In production this can be static or cached
-                   # It should also be minified
-                   '/js/pagoda2frontend.js' = {
-                       response$header('Content-Type', 'application/javascript');
-                       response$write(readStaticFile('/js/pagoda2frontend.js'));
-                       return(response$finish());
-                   },
+                  #  # Get the pagoda frontend javascript
+                  #  # In production this can be static or cached
+                  #  # It should also be minified
+                  # '/js/pagoda2frontend.js' = {
+                  #      response$header('Content-Type', 'application/javascript');
+                  #      response$write(readStaticFile('/js/pagoda2frontend.js'));
+                  #      return(response$finish());
+                  #  },
 
                    # This CSS is not handled like the rest
                    # We deliver it manually so that we can set the cache expiration
-                   '/css/pagodaMain.css' = {
-                       response$header('Content-Type', 'text/css; charset=utf-8');
-
-                       # Don't cache
-                       response$header('Cache-control', 'no-cache,must-revalidate');
-                       response$header('Expires', 'Tue, 24 Jan 2017 00:00:00 GMT');
-
-
-                       response$write(readStaticFile('/css/pagodaMain.css'));
-                       return(response$finish());
-                   },
+                   # '/css/pagodaMain.css' = {
+                   #     response$header('Content-Type', 'text/css; charset=utf-8');
+                   #
+                   #     # Don't cache
+                   #     response$header('Cache-control', 'no-cache,must-revalidate');
+                   #     response$header('Expires', 'Tue, 24 Jan 2017 00:00:00 GMT');
+                   #
+                   #
+                   #     response$write(readStaticFile('/css/pagodaMain.css'));
+                   #     return(response$finish());
+                   # },
 
 
 
