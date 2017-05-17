@@ -804,11 +804,9 @@ pagoda2WebApp <- setRefClass(
 
                                  # TODO: check that the originalP2object field is populated, as this is optional
 
-                                 allcells <- rownames(myPagoda2Object$counts)
-                                 cat('All cells length: ', length(allcells));
+                                 allcells <- rownames(originalP2object$counts)
                                  othercells <- allcells[!allcells %in% selectionA]
-                                 cat('Other cells length: ', length(othercells));
-                                 cat('Selection length: ', length(selectionA));
+
 
                                  # Generate factor for de
                                  v1 <- c(rep('selectionA',length(selectionA)),rep('othercells',length(othercells)))
