@@ -566,7 +566,8 @@ var pagHelpers = {
      * @param step
      * @return array of sequence
      */
-    seq: function(start, end, step = 1) {
+    seq: function(start, end, step) {
+       step = (typeof step !== 'undefined') ?  step : 1;
 	var r = [];
 
 	if ( step > 0) {

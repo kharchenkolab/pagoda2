@@ -293,7 +293,7 @@ dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd
  * @return a jQuery ajax request object
  */
 dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
-    function(geneIds, cellIndexStart, cellIndexEnd, getCellNames = true, callback) {
+    function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback) {
 	var dataCntr = this;
 
 	// Does the function return via callback, factored out to avoid duplication
