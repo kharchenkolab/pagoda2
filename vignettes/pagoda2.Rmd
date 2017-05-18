@@ -191,20 +191,7 @@ names(geneSets) <- names(go.env)
 
 
 # Generate differental expression between each cluster and everything else
-de <- myPagoda2Object$getDifferentialGenes(type='counts', groups = myPagoda2Object$clusters$PCA[[1]], upregulated.only = T)
-# Convert the differential expression gene lists into a format for the web app
-deSets <- lapply(names(de), function(x) {
-  resT <- de[[x]];
-  list(
-    properties = list(
-      locked =T,
-      genesetname=paste0('DiffExpr_', x),
-      shortdescription = paste0('Cluster ', x, ' differentially expressed genes')
-    ),
-    genes = c(rownames(resT))
-  );
-});
-names(deSets) <- unlist(lapply(deSets, function(x){x$properties$genesetname}))
+deSets <- function(myPagoda2Object, groups = myPagoda2Object$clusters$PCA[[1]], prefix = 'de_')
 
 # Genereate geneSets from the gene sets from the GO Terms and
 # the differentially expressed genes
