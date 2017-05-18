@@ -289,3 +289,35 @@ calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mi
         return(list(over = data.frame(t = rownames(cv)[ovi], o = cv$s[ovi], u = cv$u[ovi], p.raw = exp(lpr[ovi]), fdr = exp(lpra)[ovi], Z = z[ovi], Za = za[ovi], fe = cv$s[ovi]/(ns*cv$u[ovi]/us), fer = cv$s[ovi]/(length(genelist)*cv$u[ovi]/length(universe))), under = data.frame(t = rownames(cv)[uvi], o = cv$s[uvi], u = cv$u[uvi], p.raw = exp(lpr[uvi]), fdr = exp(lpra)[uvi], Z = z[uvi], Za = za[uvi], fe = cv$s[uvi]/(ns*cv$u[uvi]/us))))
     }
 }
+
+
+
+#' @title Generate differential expression genesets for the web app given a cell grouping
+#' @description Generate differential expression genesets for the web app given a cell grouping by
+#' Calculating de sets between every cell set and everything else individually
+#' @param pagObj pagoda object
+#' @param groups a named factor to do the de by
+#' @param prefix a character  prefix to assign to genesets generated
+#' @export get.de.geneset
+get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
+
+  deResults <- pagObj$getDifferentialGenes(
+    type='counts', groups = groups, upregulated.only = T)
+
+  deSets <- lapply(names(deResults), function(x) {
+    resT <- deResults[[x]];
+    list(
+      properties = list(
+        locked =T,
+        genesetname=paste0(prefix, x),
+        shortdescription = paste0('Cluster ', x, ' differentially expressed genes')
+      ),
+      genes = c(rownames(resT))
+    );
+  });
+
+  names(deSets) <- unlist(lapply(deSets, function(x){x$properties$genesetname}));
+
+  deSets
+}
+
