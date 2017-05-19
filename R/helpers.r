@@ -289,3 +289,15 @@ calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mi
         return(list(over = data.frame(t = rownames(cv)[ovi], o = cv$s[ovi], u = cv$u[ovi], p.raw = exp(lpr[ovi]), fdr = exp(lpra)[ovi], Z = z[ovi], Za = za[ovi], fe = cv$s[ovi]/(ns*cv$u[ovi]/us), fer = cv$s[ovi]/(length(genelist)*cv$u[ovi]/length(universe))), under = data.frame(t = rownames(cv)[uvi], o = cv$s[uvi], u = cv$u[uvi], p.raw = exp(lpr[uvi]), fdr = exp(lpra)[uvi], Z = z[uvi], Za = za[uvi], fe = cv$s[uvi]/(ns*cv$u[uvi]/us))))
     }
 }
+
+
+# fater matrix correlations wtih armadillo
+#' @title armaCor - matrix column correlations
+#' @description similar to cor() call, will calculate correlation between matrix columns
+#' @param mat matrix, whose columns will be 
+#' @export armaCor
+armaCor <- function(mat) {
+  cd <- arma_mat_cor(mat);
+  rownames(cd) <- colnames(cd) <- colnames(mat);
+  return(cd)
+}

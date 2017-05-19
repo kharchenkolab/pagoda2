@@ -289,3 +289,9 @@ arma::vec smatColVecCorr(SEXP sY,  SEXP sv, bool parallel=true) {
   }
   return r;
 }
+
+// fast(er) matrix correlation calculatiosn using arma
+// [[Rcpp::export]]
+arma::mat arma_mat_cor(const arma::mat& m) {
+  return(cor(m));
+}

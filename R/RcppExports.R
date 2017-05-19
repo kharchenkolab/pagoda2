@@ -33,6 +33,10 @@ smatColVecCorr <- function(sY, sv, parallel = TRUE) {
     .Call('pagoda2_smatColVecCorr', PACKAGE = 'pagoda2', sY, sv, parallel)
 }
 
+arma_mat_cor <- function(m) {
+    .Call('pagoda2_arma_mat_cor', PACKAGE = 'pagoda2', m)
+}
+
 hnswKnn <- function(m, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L) {
     .Call('pagoda2_hnswKnn', PACKAGE = 'pagoda2', m, efConstruction, indexThreadQty, searchMethod)
 }

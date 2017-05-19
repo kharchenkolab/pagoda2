@@ -106,6 +106,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// arma_mat_cor
+arma::mat arma_mat_cor(const arma::mat& m);
+RcppExport SEXP pagoda2_arma_mat_cor(SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::mat& >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(arma_mat_cor(m));
+    return rcpp_result_gen;
+END_RCPP
+}
 // hnswKnn
 vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction, int indexThreadQty, int searchMethod);
 RcppExport SEXP pagoda2_hnswKnn(SEXP mSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP) {
