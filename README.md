@@ -49,14 +49,8 @@ $ git clone https://github.com/barkasn/pagoda2.git
 
 Install pagoda2
 ```
-# Specify the NMSLIB_PATH enviroment to the location that you installed
-# and built nmslib above
-$ export NMSLIB_PATH=/path/to/nmslib-1.5.3/
-
-# Install pagoda2
-$ R
 > library(devtools)
-> install('pagoda2')
+> install_github("hms-dbmi/pagoda2")
 > library('pagoda2')
 # Pagoda2 is now ready to use
 ```
