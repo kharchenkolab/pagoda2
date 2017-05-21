@@ -970,7 +970,7 @@ Pagoda2 <- setRefClass(
     },
 
     # run PCA analysis on the overdispersed genes
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=FALSE, n.odgenes=2e3, odgenes=NULL, scale=F,center=T, cells=NULL) {
+    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=FALSE, n.odgenes=2e3, odgenes=NULL, scale=F,center=T, cells=NULL,fastpath=TRUE,maxit=100) {
 
       if(type=='counts') {
         x <- counts;
@@ -1002,13 +1002,13 @@ Pagoda2 <- setRefClass(
       if(!is.null(cells)) {
         # cell subset is just for PC determination
         cm <- Matrix::colMeans(x[cells,])
-        pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=T,reorth=T)
+        pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
       } else {
         if(center) {
           cm <- Matrix::colMeans(x)
-          pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=T,reorth=T)
+          pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
         } else {
-          pcs <- irlba(x, nv=nPcs, nu=0, right_only=FALSE,fastpath=T,reorth=T)
+          pcs <- irlba(x, nv=nPcs, nu=0, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
         }
       }
       rownames(pcs$v) <- colnames(x);
