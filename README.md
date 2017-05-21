@@ -39,16 +39,14 @@ $ R
 > q()
 ```
 
- Get a copy of the pagoda2 package
-```
-# Clone a copy from git from git into a
-# temporary directory (e.g. ~/tmp/pagoda2/)
-$ cd /another/temp/dir/
-$ git clone https://github.com/barkasn/pagoda2.git
-```
-
 Install pagoda2
+# Specify the NMSLIB_PATH enviroment to the location that you installed
+# and built nmslib above
+$ export NMSLIB_PATH=/path/to/nmslib-1.5.3/
+# Start R
+$ R
 ```
+# Install pagoda
 > library(devtools)
 > install_github("hms-dbmi/pagoda2")
 > library('pagoda2')
