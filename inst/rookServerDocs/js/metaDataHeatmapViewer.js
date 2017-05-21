@@ -455,6 +455,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
       // Get  and clear the click areas
     	var mdhv = new metaDataHeatmapViewer();
     	mdhv.clickRegionsRows.clearClickAreas();
+      mdhv.clickRegionsEntries.clearClickAreas()
 
       // For each metadata row
       var j =0; // row counter
