@@ -329,10 +329,23 @@ heatmapViewer.prototype.setupOverlays = function() {
         var endPC = (e.offsetX - drawConsts.left) / drawConsts.width;
 
 
+        // For left to right drag
+        if (startPC > endPC) {
+          var tmp = startPC;
+          startPC = endPC;
+          endPC = tmp;
+        };
+
+        // Avoid out of bounds issues
+        if (endPC > 1) { endPC =1};
+        if (startPC < 0) { startPC = 0};
+
         var ncells = curDisplayIdxs[1] - curDisplayIdxs[0];
 
         var startIndex = Math.floor(curDisplayIdxs[0] + (startPC * ncells));
         var endIndex = Math.floor(curDisplayIdxs[0] + (endPC * ncells));
+
+
 
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
@@ -356,11 +369,6 @@ heatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
 
-
-        // convert range to heatmap range
-        // Map to cell ids
-        // Set selection
-        // Get everything else to display the selection
 
       }
 
