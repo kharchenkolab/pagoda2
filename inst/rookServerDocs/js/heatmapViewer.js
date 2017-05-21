@@ -23,6 +23,11 @@ function heatmapViewer() {
     	heatView.drawHeatmap();
     };
 
+    // Keep track of what selection we are showing so
+    // we can persist accross redraws
+    this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionShown = false;
+
     heatmapViewer.instance =  this;
 };
 
@@ -481,12 +486,19 @@ heatmapViewer.prototype.clearOverlay = function() {
 }
 
 heatmapViewer.prototype.clearSelectionOverlay = function() {
+  this.clearSelectionOverlayInternal();
+  this.currentOverlaySelectionShown = false;
+}
+
+heatmapViewer.prototype.clearSelectionOverlayInternal = function() {
   var canvas = document.getElementById('heatmap-area-selection');
   var ctx = canvas.getContext('2d');
   var width = canvas.width;
   var height = canvas.height;
   ctx.clearRect(0,0,width, height);
 }
+
+
 
 /**
  * Show the overlay crosshairs and tooltip
@@ -746,6 +758,7 @@ heatmapViewer.prototype.getActualPlotHeight = function() {
  */
 heatmapViewer.prototype.doDrawHeatmap = function() {
     // TODO: Left over, remove
+
     this.doDrawHeatmapSparseMatrix();
 }
 
@@ -756,6 +769,11 @@ heatmapViewer.prototype.doDrawHeatmap = function() {
  */
 heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   var heatV = this;
+
+  this.currentOverlaySelectionName = selectionName;
+  this.currentOverlaySelectionShown = true;
+
+
   var dendV = new dendrogramViewer();
 
   // Get the cells in the cell selection to highlight
@@ -841,7 +859,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     heatView.clearHeatmap(ctx);
 
     // Clear selection heatmap
-    heatView.clearSelectionOverlay();
+   // heatView.clearSelectionOverlayInternal();
 
     // Show centered waiting icon
     $('#heatmap-area-container').append("<img class='loadingIcon' src='img/loading.gif'/>");
@@ -964,6 +982,10 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    );
 	} // for
 
+    heatView.clearSelectionOverlayInternal();
+    if (heatView.currentOverlaySelectionShown === true) {
+      heatView.highlightCellSelectionByName(heatView.currentOverlaySelectionName);
+    }
 
     }); // dataCntr.getExpressionValuesSparseTransposedByCellIndexUnpacked callback
 } // doDrawHeatmapSparseMatrix

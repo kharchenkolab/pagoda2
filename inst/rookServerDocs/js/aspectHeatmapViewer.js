@@ -24,6 +24,12 @@ function aspectHeatmapViewer() {
   	o.drawHeatmap();
   };
 
+    // Keep track of what selection we are showing so
+    // we can persist accross redraws
+    this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionShown = false;
+
+
   aspectHeatmapViewer.instance = this;
 }
 
@@ -340,12 +346,18 @@ aspectHeatmapViewer.prototype.clearOverlay = function() {
 }
 
 aspectHeatmapViewer.prototype.clearSelectionOverlay = function(){
+  this.clearSelectionOverlayInternal();
+  this.currentOverlaySelectionShown = false;
+}
+
+aspectHeatmapViewer.prototype.clearSelectionOverlayInternal = function(){
   var canvas = document.getElementById('aspect-heatmap-area-selection');
   var ctx = canvas.getContext('2d');
   var height = canvas.height;
   var width = canvas.width;
   ctx.clearRect(0,0,width, height);
 }
+
 
 /**
  * Show overlay for specific coordinates
@@ -547,6 +559,11 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	    );
     }
 
+        aspHeatView.clearSelectionOverlayInternal();
+    if (aspHeatView.currentOverlaySelectionShown === true) {
+      aspHeatView.highlightCellSelectionByName(aspHeatView.currentOverlaySelectionName);
+    }
+
 
 	}); // dataController callback
 
@@ -587,6 +604,9 @@ aspectHeatmapViewer.prototype.getDrawConstants = function() {
 aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   var aspHeatView = this;
   var dendV = new dendrogramViewer();
+
+    this.currentOverlaySelectionName = selectionName;
+  this.currentOverlaySelectionShown = true;
 
   var heatDendView = new heatmapDendrogramViewer();
 
@@ -632,6 +652,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
     } // for
 
     ctx.restore();
+
 
 
   })

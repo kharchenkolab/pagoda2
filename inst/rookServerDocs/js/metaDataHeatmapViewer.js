@@ -26,6 +26,12 @@ function metaDataHeatmapViewer() {
     	metaView.drawMetadata();
     };
 
+    // Keep track of what selection we are showing so
+    // we can persist accross redraws
+    this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionShown = false;
+
+
     metaDataHeatmapViewer.instance = this;
 }
 
@@ -354,12 +360,18 @@ metaDataHeatmapViewer.prototype.clearOverlay = function() {
  * Clears the selection overlay
  */
 metaDataHeatmapViewer.prototype.clearSelectionOverlay = function() {
+  this.clearSelectionOverlayInternal();
+  this.currentOverlaySelectionShown = false;
+}
+
+metaDataHeatmapViewer.prototype.clearSelectionOverlayInternal = function() {
   var canvas = document.getElementById('metadata-area-selection');
   var ctx = canvas.getContext('2d');
   var width = canvas.width;
   var height = canvas.height;
   ctx.clearRect(0,0,width, height);
 }
+
 
 /**
  * Update the canvas size of this element with the
@@ -536,6 +548,12 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
     	ctx.rect(left, top, metaWidth, metaHeight);
     	ctx.stroke();
 
+
+    	    mdhv.clearSelectionOverlayInternal();
+    if (mdhv.currentOverlaySelectionShown === true) {
+      mdhv.highlightCellSelectionByName(mdhv.currentOverlaySelectionName);
+    }
+
     });
 }
 
@@ -553,6 +571,10 @@ metaDataHeatmapViewer.prototype.getSelectionDrawingContext = function() {
  */
 metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   var metadataHeatV = this;
+
+    this.currentOverlaySelectionName = selectionName;
+  this.currentOverlaySelectionShown = true;
+
   var dendV = new dendrogramViewer();
 
     // Get the cells in the cell selection to highlight
