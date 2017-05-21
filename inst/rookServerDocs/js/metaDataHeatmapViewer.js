@@ -142,6 +142,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         // params.cellid
         // params.keyLabel params.valueLabel
 
+        var defaultLabel = params.keyLabel + '_' + params.valueLabel;
+
         var contextMenu = new Ext.menu.Menu({
           items: [
             {
@@ -169,6 +171,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     								        'A selection with this name already exists!');
     							      } else {
                             // Make the slection here
+
                             var key =params.key;
                             var value = params.value;
 
@@ -177,7 +180,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     							      }
     						      } // if lenth == 0
   						      } // if btn == ok
-					      }); // Message box handler
+					      }, this, false, defaultLabel); // Message box prompthandler
               }
             } //Item 1
           ] //items
