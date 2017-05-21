@@ -290,28 +290,102 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     var heatmapAreaOverlay = $('#heatmap-area-overlay')[0];
 
+    this.primaryMouseButtonDown = false;
+    this.dragging = false;
+    this.dragStartX = null;
+
     // For preventing selection on double click
     heatmapAreaOverlay.addEventListener('mousedown', function(e) {
       e.preventDefault();
+
+      var heatView = new heatmapViewer();
+      heatView.primaryMouseButtonDown = true;
+      heatView.dragStartX = e.offsetX;
+
+      console.log('down');
+
     });
+
+    heatmapAreaOverlay.addEventListener('mouseup', function(e) {
+      var heatView = new heatmapViewer();
+      heatView.primaryMouseButtonDown = false;
+
+      if(heatView.dragging) {
+        // End of drag
+        heatView.dragging = false;
+        // Generate selection
+        console.log('generating selection')
+
+        // Range of X is heatView.dragStartX  to e.offsetX
+
+        var drawConsts = heatView.getDrawConstants();
+
+        var dendV = new dendrogramViewer();
+        var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
+
+
+        // Start and end as percent of current display cell range
+        var startPC = (heatView.dragStartX - drawConsts.left) / drawConsts.width;
+        var endPC = (e.offsetX - drawConsts.left) / drawConsts.width;
+
+
+        var ncells = curDisplayIdxs[1] - curDisplayIdxs[0];
+
+        var startIndex = Math.floor(curDisplayIdxs[0] + (startPC * ncells));
+        var endIndex = Math.floor(curDisplayIdxs[0] + (endPC * ncells));
+
+        var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
+
+	      var cellSelCntr = new cellSelectionController();
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object());
+
+            // Highlight on heatmap
+            var heatV = new heatmapViewer();
+            heatV.highlightCellSelectionByName('heatmapSelection');
+            pagHelpers.regC(72);
+
+            // Highlight on embedding
+            var embCntr = new embeddingViewer();
+            embCntr.highlightSelectionByName('heatmapSelection');
+
+            // Highlight on Aspects
+            var aspHeatView = new aspectHeatmapViewer();
+            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+
+            //Highlight on Metadata
+            var metaView = new metaDataHeatmapViewer();
+            metaView.highlightCellSelectionByName('heatmapSelection');
+
+
+        // convert range to heatmap range
+        // Map to cell ids
+        // Set selection
+        // Get everything else to display the selection
+
+      }
+
+
+    });
+
+
 
 
     // Click listener for setting gene color to embedding
     heatmapAreaOverlay.addEventListener('dblclick', function(e) {
-	var x = e.offsetX;
-	var y = e.offsetY;
+    	var x = e.offsetX;
+    	var y = e.offsetY;
 
-	var heatView = new heatmapViewer();
-	var regionData = heatView.geneRegions.resolveClick(x, y);
+    	var heatView = new heatmapViewer();
+    	var regionData = heatView.geneRegions.resolveClick(x, y);
 
-	// Draw tooltip
-	if (typeof regionData !== 'undefined') {
-	    // Tell the embedding to update
-	    var embV = new embeddingViewer();
-	    embV.setColorConfiguration('geneexpression');
-	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
-	    embV.updateColors();
-	}
+    	// Draw tooltip
+    	if (typeof regionData !== 'undefined') {
+    	    // Tell the embedding to update
+    	    var embV = new embeddingViewer();
+    	    embV.setColorConfiguration('geneexpression');
+    	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
+    	    embV.updateColors();
+    	}
     });
 
     // Mouse  move listener for the cross hairs and tooltip
@@ -334,25 +408,53 @@ heatmapViewer.prototype.setupOverlays = function() {
     	metaV.showOverlay(e.offsetX);
     	aspeV.showOverlay(e.offsetX);
 
+      if(heatV.primaryMouseButtonDown) {
+        if (!heatV.dragging) {
+          // The first mouse move after the mouse down
+          // Initiate dragging process
+          heatV.clearSelectionOverlay();
+          heatV.dragging = true;
+        }
+
+        // Clear the canvas
+        var canvas = document.getElementById('heatmap-area-selection');
+        var ctx = canvas.getContext('2d');
+        var width = canvas.width;
+        var height = canvas.height;
+        ctx.clearRect(0,0,width, height);
+
+
+        var drawConsts = heatV.getDrawConstants();
+        var actualPlotHeight = heatV.getActualPlotHeight();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.fillRect(heatV.dragStartX, drawConsts.top, x - heatV.dragStartX, actualPlotHeight);
+        ctx.restore();
+
+
+
+      }
 
     });
 
     // Remove the cursor when done
     heatmapAreaOverlay.addEventListener('mouseout', function(e) {
-	var metaV = new metaDataHeatmapViewer();
-	var heatV = new heatmapViewer();
+    	var metaV = new metaDataHeatmapViewer();
+    	var heatV = new heatmapViewer();
 
-	heatV.clearOverlay();
-	metaV.clearOverlay();
+    	heatV.clearOverlay();
+    	metaV.clearOverlay();
     });
 
     // Pointer change to cross hairs when over the heatmap
     heatmapAreaOverlay.addEventListener('mouseenter', function(e) {
-	document.body.style.cursor = "crosshair";
+    	document.body.style.cursor = "crosshair";
     });
 
     heatmapAreaOverlay.addEventListener('mouseout', function(e) {
-	document.body.style.cursor = "default";
+    	document.body.style.cursor = "default";
     });
 }
 
