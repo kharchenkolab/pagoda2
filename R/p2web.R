@@ -446,8 +446,8 @@ pagoda2WebApp <- setRefClass(
                                         matrixToSend <- pathways$xv[aspectIds,cellIndices,drop=F];
 
                                         # Discard values < 1/50 of the max
-                                        trimPoint <-  max(abs(matrixToSend)) / 50;
-                                        matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
+                                        #trimPoint <-  max(abs(matrixToSend)) / 50;
+                                        #matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
 
                                         # Transpose and make sparse
                                         matrixToSend <- Matrix(t(matrixToSend), sparse = T);
