@@ -200,7 +200,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	},
 	{
 	  xtype: 'button',
-	  text: 'Hightlight',
+	  text: 'Highlight',
 	  handler: function() {
 	    	var selectionTable = Ext.getCmp('cellSelectionTable');
     		var selectedItems = selectionTable.getSelectionModel().getSelected();
