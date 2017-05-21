@@ -229,6 +229,48 @@ embeddingViewer.prototype.generateToolbar = function() {
         } // handler
       }); // toolbar add
 
+      toolbar.add(
+        {
+          text: "",
+          tooltip: "Current Display Information",
+          glyph: 0xf0f6,
+          handler: function() {
+
+          var ev = new embeddingViewer();
+          var colorConfig = ev.getColorConfiguration();
+
+          var colorConfigHtml;
+          if (colorConfig == 'metadata') {
+              colorConfigHtml =  " coloured by metadata of type " + ev.getMetadataColorInfo().metadataName + ".";
+          } else if (colorConfig == 'aspect') {
+              colorConfigHtml = "coloured by aspect of type '" + ev.getAspectColorInfo().aspectid + "'.";
+          } else if (colorConfig == 'geneexpression') {
+            colorConfigHtml = "coloured by expression of gene '" + ev.getGeneExpressionColorInfo().geneid + "'.";
+          } else {
+            colorConfigHtml = '.'
+          }
+
+
+          var config = ev.getConfig();
+          var html = "<p>You are currently viewing embedding " + config.type + "-->" + config.embeddingType +
+            colorConfigHtml + "</p>";
+
+          Ext.create('Ext.window.Window', {
+                    height: 150,
+                    width: 400,
+                    title: 'Embedding Info',
+                    scrollable: true,
+                    bodyPadding: 10,
+                    html: html,
+                    constrain: true,
+                    closable: true,
+                    resizable: false
+                  }).show();
+
+          }
+        }
+        ); // toolbar add
+
 toolbar.add(
   {
     text: '',
