@@ -313,7 +313,7 @@ toolbar.add(
                 'You can select cells on the current embedding by dragging with your mouse.' +
                 'This will highlight the selected cells in the embedding and other windows. ' +
                 'You can download the embedding you are currently viewing by ' +
-                'clicking on the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon. In some cases the downloaded file will not have the correct extension, please rename it to end in ".png" if that happens.' +
+                'clicking on the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon. In some cases the downloaded file will not have the correct extension, please rename it to end in ".png" if that happens. You can check the what colors you have currently applied to the embedding by clicking on the <span style="font-family: FontAwesome">&#xf0f6</span>  (Current Display Information) icon.' +
                 'You can clear the selection by clicking on the <span style="font-family: FontAwesome">&#xf12d</span> (clear) icon.' +
                 'You can use the <span style="font-family: FontAwesome">&#xf013</span> (settings) icon to change the viewing settings of the current embedding. ' +
                 'This allows you to customize point size, opacity and border color and width.' +
