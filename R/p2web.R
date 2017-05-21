@@ -154,7 +154,7 @@ pagoda2WebApp <- setRefClass(
             # We now need to derive a cell order compatible with the order
             # of the above dendrogram
             cellorder <- unlist(lapply(hcGroups$labels[hcGroups$order], function(x) {
-                names(cl0)[cl0 == x]
+                base::sample(names(cl0)[cl0 == x]) # Sample for random order
             }))
 
             # We need the cell order cluster sizes
