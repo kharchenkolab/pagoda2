@@ -161,7 +161,33 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, 
 
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
-
 }
+
+/**
+ * Genereate a new cell selection by intersecting two cell selections
+ */
+cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName){
+    var selA = this.selections[selectionA].cells;
+    var selB = this.selections[selectionB].cells;
+
+    var sel = {};
+    sel.name = newSelectionName;
+    sel.displayName = newSelectionDisplayName;
+    sel.cells = [];
+
+    // TODO: There might be performance benefits in looping over shortere array
+    var l = selA.length;
+    for (var i = 0; i < l; i++){
+      if (selB.indexOf(selA[i]) != -1) {
+        sel.cells.push(selA[i]);
+      }
+    }
+
+    this.selections[newSelectionName] = sel;
+    this.raiseSelectionChangedEvent();
+}
+
+
+
 
 
