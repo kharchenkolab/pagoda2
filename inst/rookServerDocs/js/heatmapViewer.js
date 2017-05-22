@@ -356,7 +356,6 @@ heatmapViewer.prototype.setupOverlays = function() {
             // Highlight on heatmap
             var heatV = new heatmapViewer();
             heatV.highlightCellSelectionByName('heatmapSelection');
-            pagHelpers.regC(72);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
@@ -549,7 +548,7 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
     	// This is probably not requried
     }
 
-    d = binsSumArray;
+    var d = binsSumArray;
 
     for (var j = 0; j < d.length; j++) {
 	var maxAbsValue = 0;
@@ -565,7 +564,7 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
     }
 
     // Do hierarchical clustering
-    hc = hcluster(d, pagHelpers.seq(0, d.length - 1), 'corrdist', 'average')
+    var hc = hcluster(d, pagHelpers.seq(0, d.length - 1), 'corrdist', 'average')
     // Do a depth first search on the tree
     function getOrder(hc) {
 	var order = [];
@@ -577,7 +576,7 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
 	}
 	return order;
     }
-    order = getOrder(hc);
+    var order = getOrder(hc);
 
     // Change into the required format
     var order2 = [];
@@ -897,7 +896,7 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
 
   // Get the cells in the cell selection to highlight
   var cellSelCntr = new cellSelectionController();
-  cellSelection = cellSelCntr.getSelection(selectionName);
+  var cellSelection = cellSelCntr.getSelection(selectionName);
 
   // Get the cell order
   var dataCntr = new dataController();
@@ -957,7 +956,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 // heatDendView.getCurrentHeatmapHeight()
 
     // Get the drawing params
-    drawConsts = this.getDrawConstants();
+    var drawConsts = this.getDrawConstants();
     var top = drawConsts.top;
     var left = drawConsts.left;
     var heatmapWidth = drawConsts.width;
@@ -988,7 +987,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     loadingDomItem.css({'padding-left': lpad + 'px', 'padding-top': tpad + 'px'});
 
     var dataCntr = new dataController();
-    dataCntr.getExpressionValuesSparseByCellIndexUnpacked(geneIds = geneSelection, cellIndexStart = cellIndexStart, cellIndexEnd = cellIndexEnd, getCellNames = false, callback =  function(data) {
+    dataCntr.getExpressionValuesSparseByCellIndexUnpacked(geneSelection, cellIndexStart, cellIndexEnd, false, function(data) {
         loadingDomItem.remove();
 
 	// Get the dimensions

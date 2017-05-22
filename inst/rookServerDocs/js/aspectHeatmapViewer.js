@@ -611,7 +611,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
   var heatDendView = new heatmapDendrogramViewer();
 
   var cellSelCntr = new cellSelectionController();
-  cellSelection = cellSelCntr.getSelection(selectionName);
+  var cellSelection = cellSelCntr.getSelection(selectionName);
 
   var dataCntr = new dataController();
   dataCntr.getCellOrder(function(cellorder) {
