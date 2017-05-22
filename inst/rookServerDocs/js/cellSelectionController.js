@@ -145,3 +145,23 @@ cellSelectionController.prototype.renameSelection = function(selectionName, newS
 }
 
 
+/**
+ * Generate a new cell selection from two existing cell selections
+ */
+cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName)  {
+    var selA = this.selections[selectionA].cells;
+    var selB = this.selections[selectionB].cells;
+
+    var sel = {};
+    sel.name = newSelectionName;
+    sel.displayName = newSelectionDisplayName;
+
+    // Concatenate arrays into a new one
+    sel.cells = selA.concat(selB);
+
+    this.selections[newSelectionName] = sel;
+    this.raiseSelectionChangedEvent();
+
+}
+
+

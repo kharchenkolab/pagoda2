@@ -115,45 +115,85 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
         }
 
       },
+      {
+        xtype: 'button',
+        text: 'Merge',
+        handler: function() {
+          var selectionTable = Ext.getCmp('cellSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length == 2) {
+            var selectionA = selectedItems.getAt(0).getData().selectionname;
+            var selectionB = selectedItems.getAt(1).getData().selectionname;
+
+            Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
+              if ( btn === 'ok') {
+                var cellSelCntr =  new cellSelectionController();
+
+                var newSelectionName = text;
+                var newSelectionDisplayName = text;
+
+                var re = new RegExp('[^A-Za-z0-9_]');
+                if (newSelectionName.length === 0) {
+                  Ext.MessageBox.alert('Error', 'You must enter a selection name');
+                }
+                else if (newSelectionName.match(re) ) {
+                  Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
+                } else {
+                if (cellSelCntr.getSelection(newSelectionName)) {
+                  Ext.MessageBox.alert('Error','A selection with this name already exists!');
+                } else {
+                  cellSelCntr.mergeSelectionsIntoNew(selectionA, selectionB,
+                    newSelectionName, newSelectionDisplayName);
+                }
+              } // if btn ok
+            }
+          });
+    		  } else {
+            Ext.MessageBox.alert('Warning', 'Please pick two cell selection to merge first.');
+    		  }
+
+        }
+
+      },
         {
             xtype: 'button',
             text: 'Duplicate',
 	    handler: function() {
-		var selectionTable = Ext.getCmp('cellSelectionTable');
-		var selectedItems = selectionTable.getSelectionModel().getSelected();
-		if (selectedItems.length === 1) {
-		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
-		    var oldDisplayName = selectedItems.getAt(0).getData().displayname;
+    		var selectionTable = Ext.getCmp('cellSelectionTable');
+    		var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		if (selectedItems.length === 1) {
+    		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
+    		    var oldDisplayName = selectedItems.getAt(0).getData().displayname;
 
-		    Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
-			if ( btn === 'ok') {
+    		    Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
+    			if ( btn === 'ok') {
 
-			    var cellSelCntr =  new cellSelectionController();
+    			    var cellSelCntr =  new cellSelectionController();
 
-			    var newSelectionName = text;
-			    var newSelectionDisplayName = text;
+    			    var newSelectionName = text;
+    			    var newSelectionDisplayName = text;
 
-			    var re = new RegExp('[^A-Za-z0-9_]');
-			    if (newSelectionName.length === 0) {
-				Ext.MessageBox.alert('Error',
-						     'You must enter a selection name');
-			    }
-			    else if (newSelectionName.match(re) ) {
-				Ext.MessageBox.alert('Error',
-                                  'The name must only contain letters, numbers and underscores (_)');
-			    } else {
-				if (cellSelCntr.getSelection(newSelectionName)) {
-				    Ext.MessageBox.alert(
-					'Error',
-					'A selection with this name already exists!');
-				} else {
-				    cellSelCntr.duplicateSelection(oldSelectionName,
-								   newSelectionName,
-								   newSelectionDisplayName);
-				}
+    			    var re = new RegExp('[^A-Za-z0-9_]');
+    			    if (newSelectionName.length === 0) {
+    				Ext.MessageBox.alert('Error',
+    						     'You must enter a selection name');
+    			    }
+    			    else if (newSelectionName.match(re) ) {
+    				Ext.MessageBox.alert('Error',
+                                      'The name must only contain letters, numbers and underscores (_)');
+    			    } else {
+    				if (cellSelCntr.getSelection(newSelectionName)) {
+    				    Ext.MessageBox.alert(
+    					'Error',
+    					'A selection with this name already exists!');
+    				} else {
+    				    cellSelCntr.duplicateSelection(oldSelectionName,
+    								   newSelectionName,
+    								   newSelectionDisplayName);
+    				}
 
-			    }
-			}
+    			    }
+    			}
 		    });
 
 
