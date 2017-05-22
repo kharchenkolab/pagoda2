@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: heatmapViewer.js
  * Author: Nikolas Barkas
@@ -139,7 +141,7 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
 
     var palettes = p2globalParams.heatmapViewer.availablePalettes;
     var paletteMenu = Ext.create('Ext.menu.Menu');
-    for (i in palettes)    {
+    for (var i in palettes)    {
         paletteMenu.add({
             text: palettes[i].displayName,
 	          value: palettes[i].name,
@@ -299,7 +301,7 @@ heatmapViewer.prototype.setupOverlays = function() {
       e.preventDefault();
 
       var heatView = new heatmapViewer();
-
+      var drawConsts = heatView.getDrawConstants();
       if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
         heatView.primaryMouseButtonDown = true;
         heatView.dragStartX =  e.offsetX;
@@ -771,7 +773,7 @@ heatmapViewer.prototype.drawHeatmap = function() {
     if (typeof this.displayGenes === 'undefined' || this.displayGenes.length === 0) {
 	// No gene selected
 
-	ctx = this.getDrawingContext();
+	var ctx = this.getDrawingContext();
 	this.clearHeatmap(ctx);
 
 
