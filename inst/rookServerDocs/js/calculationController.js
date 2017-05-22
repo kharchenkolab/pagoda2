@@ -137,7 +137,7 @@ differentialExpressionStore.prototype.getAvailableDEsets = function() {
   var availKeys = Object.keys(this.deSets);
 
   // Push key/display name pairs on an array
-  for (i = 0; i < availKeys.length; i++) {
+  for (var i = 0; i < availKeys.length; i++) {
     var curKey = availKeys[i];
     var name = curKey;
     var displayName = this.deSets[curKey].getName();
