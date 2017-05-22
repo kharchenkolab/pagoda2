@@ -232,8 +232,8 @@ embeddingViewer.prototype.generateToolbar = function() {
       toolbar.add(
         {
           text: "",
-          tooltip: "Current Display Information",
-          glyph: 0xf0f6,
+          tooltip: "Information about View",
+          glyph: 0xf05a,
           handler: function() {
 
           var ev = new embeddingViewer();
