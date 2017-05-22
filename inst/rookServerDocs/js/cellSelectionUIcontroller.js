@@ -65,15 +65,18 @@ cellSelectionUIcontroller.prototype.generateCellSelectionStore = function() {
 cellSelectionUIcontroller.prototype.generateUI = function() {
     var uipanel = Ext.getCmp('cellselection-app-container');
 
+var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     var cellSelectionTable = Ext.create('Ext.grid.Panel',{
-	title: 'Available Cell Selections',
-	id: 'cellSelectionTable',
-	store: Ext.data.StoreManager.lookup('cellSelectionStoreForSelectionTable'),
-	columns: [
-	    {text: 'Name', dataIndex: 'displayname', width: '70%'},
-	    {text: 'Count', dataIndex: 'cellcount', width: '29%'}
-	],
-	emptyText: "No cell selections are currently available"
+    	title: 'Available Cell Selections',
+    	id: 'cellSelectionTable',
+    	store: Ext.data.StoreManager.lookup('cellSelectionStoreForSelectionTable'),
+    	columns: [
+    	    {text: 'Name', dataIndex: 'displayname', width: '70%'},
+    	    {text: 'Count', dataIndex: 'cellcount', width: '29%'}
+    	],
+    	emptyText: "No cell selections are currently available",
+    	singleSelect: false,
+    	selModel: geneTableSelectionModel
     });
 
 
@@ -83,31 +86,35 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     bodyPadding: 10,
     defaultType: 'textfield',
     items: [
-	cellSelectionTable,
-{
-  xtype: 'button',
-  text: 'Delete',
-  handler: function() {
-    var selectionTable = Ext.getCmp('cellSelectionTable');
-		var selectedItems = selectionTable.getSelectionModel().getSelected();
-		if (selectedItems.length === 1) {
-		    var selName = selectedItems.getAt(0).getData().selectionname;
-  		   Ext.Msg.show({
-             title:'Delete Selection',
-             msg: 'Delete ' + selectedItems.getAt(0).getData().displayname + '?',
-             buttons:  Ext.Msg.OKCANCEL,
-             fn: function(btn, text) {
-               if (btn === 'ok') {
-                 var cellSel = new cellSelectionController();
-                 cellSel.deleteSelection(selName);
-               }
-             }
-          });
-		}
+  	cellSelectionTable,
+      {
+        xtype: 'button',
+        text: 'Delete',
+        handler: function() {
+          var selectionTable = Ext.getCmp('cellSelectionTable');
+      		var selectedItems = selectionTable.getSelectionModel().getSelected();
+      		if (selectedItems.length === 1) {
+      		    var selName = selectedItems.getAt(0).getData().selectionname;
+        		   Ext.Msg.show({
+                   title:'Delete Selection',
+                   msg: 'Delete ' + selectedItems.getAt(0).getData().displayname + '?',
+                   buttons:  Ext.Msg.OKCANCEL,
+                   fn: function(btn, text) {
+                     if (btn === 'ok') {
+                       var cellSel = new cellSelectionController();
+                       cellSel.deleteSelection(selName);
+                     }
+                   }
+                });
+      		} else if (selectedItems.length === 0) {
+      		  Ext.MessageBox.alert('Warning', 'Please a cell selection first');
+      		} else {
+      		  Ext.MessageBox.alert('Warning', 'Only one cell selection can be deleted at a time.');
+      		}
 
-  }
+        }
 
-},
+      },
         {
             xtype: 'button',
             text: 'Duplicate',
@@ -151,7 +158,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
 
 		} else {
-		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
+		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
 		}
 
 	    }
@@ -174,7 +181,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		    });
 
 		} else {
-		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
+		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
 		}
 
 
@@ -194,7 +201,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
 
     		} else {
-    		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
+    		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
     		}
 	    }
 	},
@@ -226,7 +233,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
 
     		} else {
-    		    Ext.MessageBox.alert('Warning', 'Please choose a cell selection first');
+    		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
     		    pagHelpers.regC(88);
     		}
 	  }
