@@ -17,7 +17,46 @@ Ext.onReady(function() {
     Ext.setGlyphFontFamily('FontAwesome');
 
     initialise();
+
+    initialise2();
 });
+
+/**
+ * Second step of initialisation.
+ * @description This function contains extjs operations that need to
+ * be performed after the basic element hierarchy has been established.
+ */
+function initialise2() {
+
+
+var tableViewToolbar = Ext.create('Ext.Toolbar');
+
+
+    tableViewToolbar.add({
+      text: "",
+      type: 'button',
+      tooltip: 'Help',
+      glyph: 0xf128,
+        handler: function() {
+          Ext.create('Ext.window.Window', {
+            height: 300,
+            width: 400,
+            title: 'Help: Aspect heatmap',
+            scrollable: true,
+            bodyPadding: 10,
+            html: '<h2>Help: Table View</h2>' +
+              '<p>The table view allows you to view and search tabular data.</p><p>The All Genes view displays all gene in the loaded dataset. Genesets of interest displays pre-loaded genesets that usually include GO Terms and may include pre-calculated differential expression results. Aspects provides information about each set of genesets in each aspect and allows you to browse the indivual genes. Differential expression displays the results of differential expression that you can calculated during this session.</p><p>All search boxes support the use of case-insensitive regular expressions. You can learn more about regular expressions <a href="http://www.regular-expressions.info/" target="_blank">here</a> and <a href="https://en.wikipedia.org/wiki/Regular_expression">here</a>. For example if you want to search for multiple genes at once you can enter: "^geneA$|^geneB$|^geneC$" (without quotes).</p><p>Most tables support selection of multiple elements. In order to select a range click on the first item and then while holding the Shift key click on the last. In order to select only specific items you can use the Control key (or Cmd in Mac).</p>',
+            constrain: true,
+            closable: true,
+            resizable: false
+          }).show();
+    } // handler
+    });
+
+
+  Ext.getCmp('tableExtJSWrapper').getHeader().add(tableViewToolbar);
+
+}
 
 ///////////////////////////////////////////////////////
 
@@ -249,7 +288,9 @@ function generateExtJsLayout() {
 	    ] // Items of TabPanel
 	   }) // TabPanel
 	       ] // items of Panel
-    }) // Panel
+    }); // Panel
+
+
 
 
     // These are the layout panels
@@ -359,9 +400,10 @@ function generateExtJsLayout() {
         layout: 'fit',
         width: '33%',
         title: 'Table View',
-	header: false,
+	      header: false,
         items: [ tableViewerPanel ]
     });
+
 
     // The main Viewport layout
     var viewport = Ext.create('Ext.Viewport', {
