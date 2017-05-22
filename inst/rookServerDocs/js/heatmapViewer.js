@@ -314,8 +314,6 @@ heatmapViewer.prototype.setupOverlays = function() {
       if(heatView.dragging) {
         // End of drag
         heatView.dragging = false;
-        // Generate selection
-        console.log('generating selection')
 
         // Range of X is heatView.dragStartX  to e.offsetX
 
