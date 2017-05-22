@@ -299,10 +299,11 @@ heatmapViewer.prototype.setupOverlays = function() {
       e.preventDefault();
 
       var heatView = new heatmapViewer();
-      heatView.primaryMouseButtonDown = true;
-      heatView.dragStartX = e.offsetX;
 
-      console.log('down');
+      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
+        heatView.primaryMouseButtonDown = true;
+        heatView.dragStartX =  e.offsetX;
+      }
 
     });
 
@@ -368,8 +369,6 @@ heatmapViewer.prototype.setupOverlays = function() {
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
-
-
       }
 
 
@@ -420,7 +419,7 @@ heatmapViewer.prototype.setupOverlays = function() {
         if (!heatV.dragging) {
           // The first mouse move after the mouse down
           // Initiate dragging process
-          heatV.clearSelectionOverlay();
+          heatV.clearSelectionOverlay(); // This is for resetting the current selection params not for the actual clear
           heatV.dragging = true;
         }
 
@@ -435,10 +434,20 @@ heatmapViewer.prototype.setupOverlays = function() {
         var drawConsts = heatV.getDrawConstants();
         var actualPlotHeight = heatV.getActualPlotHeight();
 
+        var boundedX;
+        if (x < drawConsts.left) {
+          boundedX = drawConsts.left;
+        } else if (x > drawConsts.left + drawConsts.width) {
+          boundedX = drawConsts.left + drawConsts.width;
+        } else {
+          boundedX = x;
+        }
+
+
         ctx.save();
         ctx.beginPath();
         ctx.fillStyle = 'rgba(255,0,0,0.5)';
-        ctx.fillRect(heatV.dragStartX, drawConsts.top, x - heatV.dragStartX, actualPlotHeight);
+        ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
 
 
