@@ -3,32 +3,57 @@
 #' @import Rook
 NULL
 
-#' @export generate.p2.human.go
-generate.p2.human.go <- function(hgenes) {
-  library(org.Hs.eg.db)
-  library(GO.db)
-  library(BiocGenerics)
 
-  ids <- unlist(lapply(mget(hgenes, org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-  rids <- names(ids);
-  names(rids) <- ids;
-  go.env <- eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
+## @export generate.p2.human.go
+# generate.p2.human.go <- function(hgenes) {
+#   library(org.Hs.eg.db)
+#
+#   library(BiocGenerics)
+#
+#   ids <- unlist(lapply(mget(hgenes, org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+#   rids <- names(ids);
+#   names(rids) <- ids;
+#   go.env <- eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
+#   go.env <- go.env[unlist(lapply(go.env,length))>5];
+#
+#   geneSets <- lapply(names(go.env), function(x) {
+#     list(
+#       properties = list(
+#         locked =T,
+#         genesetname = x,
+#         shortdescription = GOTERM[[x]]@Term
+#       ),
+#       genes = c(go.env[[x]])
+#     )
+#   });
+#
+#   names(geneSets) <- names(go.env);
+#   geneSets
+# }
+
+#' @export p2.generate.human.go
+p2.generate.human.go <- function(r) {
+  # Generate GO environment
+  require(org.Hs.eg.db)
+  require(GO.db)
+  require(BiocGenerics)
+  require(AnnotationDbi)
+
+  # translate gene names to ids
+  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts),org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+
+  # reverse map
+  rids <- names(ids); names(rids) <- ids;
+
+  # list all the ids per GO category
+  go.env <- AnnotationDbi::eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
   go.env <- go.env[unlist(lapply(go.env,length))>5];
+  go.env <- list2env(go.env);
 
-  geneSets <- lapply(names(go.env), function(x) {
-    list(
-      properties = list(
-        locked =T,
-        genesetname = x,
-        shortdescription = GOTERM[[x]]@Term
-      ),
-      genes = c(go.env[[x]])
-    )
-  });
-
-  names(geneSets) <- names(go.env);
-  geneSets
+  go.env
 }
+
+
 
 #' @title Generate a metadata structure for a p2 web object from a named factor
 #' @description This function will genereate a metadata structure that can be passed to
@@ -294,7 +319,7 @@ calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mi
 # fater matrix correlations wtih armadillo
 #' @title armaCor - matrix column correlations
 #' @description similar to cor() call, will calculate correlation between matrix columns
-#' @param mat matrix, whose columns will be 
+#' @param mat matrix, whose columns will be
 #' @export armaCor
 armaCor <- function(mat) {
   cd <- arma_mat_cor(mat);
