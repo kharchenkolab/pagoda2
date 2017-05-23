@@ -124,7 +124,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	  {
     	    id: 'selectionA',
     	    xtype: 'combo',
-    	    fieldLabel: 'Cell Selection A',
+    	    fieldLabel: 'Main Cell Selection',
     	    queryMode: 'local',
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
@@ -134,7 +134,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	{
     	    id: 'selectionB',
     	    xtype: 'combo',
-    	    fieldLabel: 'Cell Selection B',
+    	    fieldLabel: 'Reference Cell Selection',
     	    queryMode: 'local',
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),

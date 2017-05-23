@@ -67,6 +67,7 @@ diffExprTableViewer.prototype.generateTables = function() {
       });
 
       var table = Ext.getCmp('deResultsGenes');
+      pagingStore.sort({property: 'absZ', direction: 'DESC'});
       table.bindStore(pagingStore);
     }
   }; // resultSetChangeSelectionListener
@@ -129,9 +130,10 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
         {text: 'Name', dataIndex: 'name', renderer: function(value) {
 		      return Ext.String.format(p2globalParams.misc.jaxGeneQueryFormatString ,value,value)
 		  },},
-        {text: 'M', dataIndex: 'M'},
-        {text: 'Z', dataIndex: 'Z'},
-        {text: 'fe', dataIndex: 'fe'},
+        {text: 'Mean', dataIndex: 'M'},
+        {text: 'Z-score', dataIndex: 'Z'},
+        {text: 'absolute Z-score', dataIndex: 'absZ'},
+        {text: 'Fold Enrichment', dataIndex: 'fe'},
         {text: 'highest', dataIndex: 'highest'}
       ],
 
@@ -265,6 +267,7 @@ diffExprTableViewer.prototype.declareExtJStypes = function() {
         {name: 'name', type: 'string'},
         {name: 'M', type: 'number'},
         {name: 'Z', type: 'number'},
+        {name: 'absZ', type: 'number'},
         {name: 'fe', type: 'number'},
         {name: 'highest', type: 'boolean' }
       ]

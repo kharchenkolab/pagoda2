@@ -825,6 +825,7 @@ pagoda2WebApp <- setRefClass(
                                  # For performance this best done client side, or the resulting string is compressed
                                  p <- lapply(c(1:dim(results)[1]), function(x) {
                                    list(Z = results[x,][[1]],
+                                        absZ = abs(results[x,][[1]]),
                                         M = results[x,][[2]],
                                         highest=results[x,][[3]],
                                         fe=results[x,][[4]],
@@ -860,14 +861,15 @@ pagoda2WebApp <- setRefClass(
 
 
                                     de$selectionA$name <- rownames(de$selectionA)
-                                    de$selectionB$name <- rownames(de$selectionB)
-                                    results <- rbind(de$selectionA, de$selectionB)
-
+                                    # de$selectionB$name <- rownames(de$selectionB)
+                                    # results <- rbind(de$selectionA, de$selectionB)
+                                    results <- de$selectionA;
 
                                     # Convert to JSON-suitable format
                                     # For performance this best done client side, or the resulting string is compressed
                                     p <- lapply(c(1:dim(results)[1]), function(x) {
                                       list(Z = results[x,][[1]],
+                                           absZ = abs(results[x,][[1]]),
                                            M = results[x,][[2]],
                                            highest=results[x,][[3]],
                                            fe=results[x,][[4]],
