@@ -156,106 +156,60 @@ myPagoda2Object$getDifferentialGenes(type='PCA',clusterType = 'multilevel')
 myPagoda2Object$plotDiffGeneHeatmap(type = 'PCA', clusterType = 'multilevel')
 
 
-##############################
-# Differential Gene expression
-##############################
 
-require(org.Hs.eg.db)
-require(GO.db)
+# Pathway overdispersion -- required for web
+go.env &lt;- p2.generate.human.go(myPagoda2Object)
+myPagoda2Object$testPathwayOverdispersion(setenv = go.env, verbose = T, correlation.distance.threshold = 0.9, 
+                                          recalculate.pca = F,
+                                          min.pathway.size = 100, max.pathway.size = 1000)
 
-# Generate the GO annotation ( in the case for human )
-generate.human.go &lt;- function(r) {
-   # Generate GO environment
-   require(org.Hs.eg.db)
-   # translate gene names to ids
-   ids &lt;- unlist(lapply(mget(colnames(r$counts),org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-   # reverse map
-   rids &lt;- names(ids); names(rids) &lt;- ids;
-   # list all the ids per GO category
-   go.env &lt;- eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-   go.env &lt;- go.env[unlist(lapply(go.env,length))&gt;5];
-   go.env &lt;- list2env(go.env);
-   go.env
-}
-go.env &lt;- generate.human.go(myPagoda2Object)
 
-# Test path way overdispersion for the GO annotation generated above
-# This takes a while
-myPagoda2Object$testPathwayOverdispersion(
-  setenv = go.env, 
-  verbose = T, 
-  correlation.distance.threshold = 0.9, 
-  recalculate.pca = F,
-  min.pathway.size = 500,
-  max.pathway.size = 1000)
 
-# Generate GO set annotations for pagoda web, 
-# these are currently slightly different that the annotations generate above
+
+################################
+# Generate the web application
+################################
+
+# Generate GO genesets for the web app
 myGeneNames &lt;- colnames(myPagoda2Object$counts)
-
-
-ids &lt;- unlist(lapply(mget(myGeneNames, org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
-rids &lt;- names(ids)
-names(rids) &lt;- ids
-go.env &lt;- eapply(org.Hs.egGO2ALLEGS, function(x) as.character(na.omit(rids[x])))
-go.env &lt;- go.env[unlist(lapply(go.env, length)) &gt; 5]
-
-
-# Put the GO Term annotation generated in a format suitable for the web interface
-geneSets &lt;- lapply(names(go.env), function(x) {
-  list(
-    properties = list(
-      locked = T,
-      genesetname = x,
-      shortdescription = GOTERM[[x]]@Term
-    ),
-    genes = c(go.env[[x]])
-  )
-})
-names(geneSets) &lt;- names(go.env)
-
+goSets &lt;- p2.generate.human.go.web(myGeneNames)
 
 # Generate differental expression between each cluster and everything else
-de &lt;- myPagoda2Object$getDifferentialGenes(type='counts', groups = myPagoda2Object$clusters$PCA[[1]], upregulated.only = T)
-# Convert the differential expression gene lists into a format for the web app
-deSets &lt;- lapply(names(de), function(x) {
-  resT &lt;- de[[x]];
-  list(
-    properties = list(
-      locked =T,
-      genesetname=paste0('DiffExpr_', x),
-      shortdescription = paste0('Cluster ', x, ' differentially expressed genes')
-    ),
-    genes = c(rownames(resT))
-  );
-});
-names(deSets) &lt;- unlist(lapply(deSets, function(x){x$properties$genesetname}))
+# Load these clusters as pre-defined gene sets with the given prefix
+deSets &lt;- get.de.geneset(myPagoda2Object, groups = myPagoda2Object$clusters$PCA[[1]], prefix = 'de_')
 
-# Genereate geneSets from the gene sets from the GO Terms and
-# the differentially expressed genes
-geneSets2 &lt;- c(geneSets, deSets)
+# Merge Genesets
+geneSets &lt;- c(goSets, deSets)
 
-# Generate metadata fro the web application
-# Start with an empty list
+# Additional metadata generation
 additionalMetadata &lt;- list()
-# and append metadata as required
-# check ?p2.metadata.from.factor documentation for more information
 additionalMetadata$altCluster &lt;- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[2]], displayname = 'Clusters 2', s = 0.8)
-additionalMetadata$altCluster2 &lt;- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Clusters 3', s = 0.5)
+additionalMetadata$altCluster2 &lt;- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Clusters 3', s=0.5)
 
-# Generate the web application
-# dendrogramCellGroups specifies the clustering that will be
-# used to generate the main dendrogram
+# Generate and display web app
 myPagoda2WebObject &lt;-
   make.p2.app(
     myPagoda2Object,
     dendrogramCellGroups = myPagoda2Object$clusters$PCA[[1]],
     additionalMetadata = additionalMetadata,
-    geneSets = geneSets2
+    geneSets = geneSets
   );
 
-# Finally display the app in the browser
-show.app(app=myPagoda2WebObject,name='myFirstPagodaApp')
+# For matching server env
+rm(myPagoda2Object); # The origiinal object is no longer required
+
+# This step is optional, it is required if the app is loaded from 
+# disk on another machine where the installation of the R package
+# is on another directory
+myPagoda2WebObject$updateRookRoot();
+
+# Show the app
+show.app(app=myPagoda2WebObject,name='p2Sample1')
+
+
+# Save the app as an RDS for deploying
+saveRDS(myPagoda2WebObject, file = '~/p2Sample1.rds') # This object will now support DE
+
 
 </code></pre>
 </div>
