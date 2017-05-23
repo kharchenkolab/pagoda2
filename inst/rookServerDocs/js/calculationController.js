@@ -36,7 +36,7 @@ function calculationController(localAvailable, remoteAvailable) {
  */
 calculationController.prototype.calculateDEfor2selections = function(selectionA, selectionB, method, callback) {
   if (method === 'remoteDefault') {
-    this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
+    return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
   } else {
     callback('Not implemented');
   }
@@ -49,7 +49,7 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
  */
 calculationController.prototype.calculateDEfor1selection = function(selectionA, method, callback) {
   if (method === 'remoteDefault') {
-    this.calculateDEfor1selectionbyRemote(selectionA, callback);
+    return this.calculateDEfor1selectionbyRemote(selectionA, callback);
   } else {
     callback('Not implemented');
   }
@@ -61,7 +61,7 @@ calculationController.prototype.calculateDEfor1selectionbyRemote = function(sele
   var selAcells = cellSelCntr.getSelection(selectionA);
 
   // Alot of cell identifiers to send, send by POST
-	$.ajax({
+	var ajaxObj = $.ajax({
 	    type: "POST",
 	    dataType: 'json',
 	    data: {
@@ -73,6 +73,8 @@ calculationController.prototype.calculateDEfor1selectionbyRemote = function(sele
 		    callback(data);
 	    }
 	});
+
+	return ajaxObj;
 }
 
 /**
@@ -86,7 +88,7 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
   var selBcells = cellSelCntr.getSelection(selectionB);
 
   // Alot of cell identifiers to send, send by POST
-	$.ajax({
+	var ajaxObj =  $.ajax({
 	    type: "POST",
 	    dataType: 'json',
 	    data: {
@@ -99,6 +101,8 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
 		    callback(data);
 	    }
 	});
+
+	return ajaxObj;
 }
 
 /**

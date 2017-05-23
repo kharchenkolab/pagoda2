@@ -22,11 +22,16 @@ function actionPanelUIcontroller() {
     // Setup listener for selection change
     var evtBus = new eventBus();
     evtBus.register("cell-selection-updated", null, function() {
-	var actPaneUICntr = new actionPanelUIcontroller();
-	actPaneUICntr.syncCellSelectionStore();
+	    var actPaneUICntr = new actionPanelUIcontroller();
+	    actPaneUICntr.syncCellSelectionStore();
     });
 
+
+    this.currentDErequest = null;
     actionPanelUIcontroller.instance = this;
+
+
+
 };
 
 
@@ -162,6 +167,14 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	},
     	{
     	  xtype: 'button',
+    	  text: 'Stop',
+    	  name: 'stopDEbutton',
+    	  id: 'stopDEbutton',
+    	  handler: UIcontroller.stopAnalysisClickHandler,
+    	  disabled: true
+    	},
+    	{
+    	  xtype: 'button',
     	  glyph: 0xf128,
     	  text: 'Help',
     	  handler: UIcontroller.showDEhelpDialog
@@ -176,22 +189,39 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     actionsTab.add(actionsInnerTab);
 };
 
+
+/**
+ * Disable the run button (and enable the stop button) for de analysis
+ */
 actionPanelUIcontroller.prototype.disableRunButton = function() {
   var form = Ext.getCmp("formPanelDE").getForm();
   var button = Ext.getCmp('runDEbutton');
   button.setText('Please wait...');
   button.disable();
+
+  var stopButton = Ext.getCmp('stopDEbutton');
+  stopButton.enable();
+
 }
 
+/**
+ * Enable the run button (and disable the stop button) for de analysis
+ */
 actionPanelUIcontroller.prototype.enableRunButton = function() {
   var form = Ext.getCmp("formPanelDE").getForm();
   var button = Ext.getCmp('runDEbutton');
   button.setText('Run differential expression...');
   button.enable();
+
+  var stopButton = Ext.getCmp('stopDEbutton');
+  stopButton.disable();
 }
 
 
 
+/**
+ * Show help dialog for differential analysis
+ */
 actionPanelUIcontroller.prototype.showDEhelpDialog = function() {
     Ext.create('Ext.window.Window', {
       height: 300,
@@ -210,7 +240,22 @@ actionPanelUIcontroller.prototype.showDEhelpDialog = function() {
     pagHelpers.regC(94);
 }
 
+/**
+ * Click handler for stop button of DE analysis
+ * @private
+ */
+actionPanelUIcontroller.prototype.stopAnalysisClickHandler = function() {
+ var actionUI = new actionPanelUIcontroller();
+ actionUI.currentDErequest.abort();
+ actionUI.currentDErequest = null;
+ actionUI.enableRunButton();
+}
 
+
+/**
+ * Click handler for run button of DE analysis
+ * @private
+ */
 actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
   var form = Ext.getCmp("formPanelDE").getForm();
@@ -236,9 +281,10 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
           var calcCntr = new calculationController();
 
-          calcCntr.calculateDEfor2selections(selectionA, selectionB, 'remoteDefault',  function(results) {
-            actionUI.enableRunButton();
 
+          actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, 'remoteDefault',  function(results) {
+            actionUI.enableRunButton();
+              actionUI.currentDErequest = null;
 
               // Get the cell names in the selection for storing
               var cellSelCntr = new cellSelectionController();
@@ -267,11 +313,12 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
           } );
       }  // if .. else
     } else if (analysisType.analysisTypeSelection == 'vsBackground') {
-  var actionUI = new actionPanelUIcontroller();
+          var actionUI = new actionPanelUIcontroller();
           actionUI.disableRunButton();
           var calcCntr = new calculationController();
-          calcCntr.calculateDEfor1selection(selectionA, 'remoteDefault',  function(results) {
-            actionUI.enableRunButton();
+          actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, 'remoteDefault',  function(results) {
+              actionUI.enableRunButton();
+              actionUI.currentDErequest = null;
               // Get the cell names in the selection for storing
               var cellSelCntr = new cellSelectionController();
               var selAcells = cellSelCntr.getSelection(selectionA);
@@ -292,18 +339,9 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
               diffExpreTblView.update();
 
               diffExpreTblView.showSelectedSet(setId);
-
-              // TODO: Change focus to the table and hightlight new de set
           } );
-
-
-
     } // else.. if
   }
-
-
-
-
 } // runAnalysisClickHandler
 
 
