@@ -12,7 +12,7 @@ var p2globalParams = {
   },
 
   misc: {
-    jaxGeneQueryFormatString: '<a href="http://www.informatics.jax.org/searchtool/Search.do?query={0}" target="_blank">{1}</a>'
+    jaxGeneQueryFormatString: '<a href="http://www.genecards.org/cgi-bin/carddisp.pl?gene={0}" target="_blank">{1}</a>'
   },
 
   embedding: {
