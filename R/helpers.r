@@ -1,35 +1,11 @@
 #' @import org.Hs.eg.db
 #' @import GO.db
 #' @import Rook
+#' @importFrom parallel mclapply
+#'
 NULL
 
 
-## @export generate.p2.human.go
-# generate.p2.human.go <- function(hgenes) {
-#   library(org.Hs.eg.db)
-#
-#   library(BiocGenerics)
-#
-#   ids <- unlist(lapply(mget(hgenes, org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-#   rids <- names(ids);
-#   names(rids) <- ids;
-#   go.env <- eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-#   go.env <- go.env[unlist(lapply(go.env,length))>5];
-#
-#   geneSets <- lapply(names(go.env), function(x) {
-#     list(
-#       properties = list(
-#         locked =T,
-#         genesetname = x,
-#         shortdescription = GOTERM[[x]]@Term
-#       ),
-#       genes = c(go.env[[x]])
-#     )
-#   });
-#
-#   names(geneSets) <- names(go.env);
-#   geneSets
-# }
 
 #' @export p2.generate.human.go
 p2.generate.human.go <- function(r) {
@@ -53,36 +29,36 @@ p2.generate.human.go <- function(r) {
   go.env
 }
 
+
 #' @export p2.generate.human.go.web
 p2.generate.human.go.web <- function(myGeneNames) {
-
   require(org.Hs.eg.db)
   require(GO.db)
   require(BiocGenerics)
   require(AnnotationDbi)
+  require(parallel)
 
-  ids <- unlist(lapply(BiocGenerics::mget(myGeneNames, org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
+  ids <- unlist(mclapply(BiocGenerics::mget(myGeneNames, org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
   rids <- names(ids)
-
   names(rids) <- ids
 
-  go.env <-
-    AnnotationDbi::eapply(org.Hs.egGO2ALLEGS, function(x)
-      as.character(na.omit(rids[x])))
+  go.env <- AnnotationDbi::eapply(org.Hs.egGO2ALLEGS, function(x) as.character(na.omit(rids[x])))
+
   go.env <- go.env[unlist(lapply(go.env, length)) > 5]
 
+  # TODO make this parallel with mcmapply
   geneSets <- lapply(names(go.env), function(x) {
     list(
       properties = list(
         locked = T,
         genesetname = x,
-        shortdescription = GOTERM[[x]]@Term
+        shortdescription = GO.db::GOTERM[[x]]@Term
       ),
       genes = c(go.env[[x]])
     )
   })
-  names(geneSets) <- names(go.env)
 
+  names(geneSets) <- names(go.env)
 
   geneSets
 }

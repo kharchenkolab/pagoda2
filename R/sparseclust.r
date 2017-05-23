@@ -7,6 +7,7 @@
 #' @import Rook
 #' @import igraph
 #' @importFrom irlba irlba
+#' @import pcaMethods
 #' @importFrom mgcv gam
 #' @importFrom parallel mclapply
 # @importFrom scde pagoda.reduce.loading.redundancy pagoda.reduce.redundancy

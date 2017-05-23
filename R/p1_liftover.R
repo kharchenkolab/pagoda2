@@ -1,6 +1,7 @@
 # Functions from pagoda1
 
-#' @import pcaMethods
+#' @importFrom pcaMethods pca
+#' @importFrom pcaMethods scores
 NULL
 
 ##' Collapse aspects driven by the same combinations of genes
