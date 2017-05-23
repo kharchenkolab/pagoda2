@@ -1240,11 +1240,11 @@ Pagoda2 <- setRefClass(
       if(verbose) {
         message("clustering aspects based on gene loading")
       }
-      tam2 <- scde::pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=F,n.cores=n.cores)
+      tam2 <- pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=F,n.cores=n.cores)
       if(verbose) {
         message("clustering aspects based on pattern similarity")
       }
-      tam3 <- scde::pagoda.reduce.redundancy(tam2,distance.threshold=correlation.distance.threshold,top=top.aspects)
+      tam3 <- pagoda.reduce.redundancy(tam2,distance.threshold=correlation.distance.threshold,top=top.aspects)
 
       tam2$xvw <- tam3$xvw <- NULL; # to save space
       misc[['pathwayOD']] <<- tam3;

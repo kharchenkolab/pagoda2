@@ -1,5 +1,8 @@
 # Functions from pagoda1
 
+#' @import pcaMethods
+NULL
+
 ##' Collapse aspects driven by the same combinations of genes
 ##'
 ##' Examines PC loading vectors underlying the identified aspects and clusters aspects based
@@ -71,9 +74,11 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 
 
 
-
+##' @export
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   xvm <- do.call(rbind, tapply(seq_len(nrow(d)), factor(ct, levels = sort(unique(ct))), function(ii) {
+    require(pcaMethods);
+
     if(length(ii) == 1) return(d[ii, ])
     if(pick.top) {
       return(d[ii[which.max(apply(d[ii, ], 1, var))], ])
@@ -141,7 +146,8 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 pagoda.reduce.redundancy <- function(tamr, distance.threshold = 0.2, cluster.method = "complete", distance = NULL, weighted.correlation = TRUE, plot = FALSE, top = Inf, trim = 0, abs = FALSE, ...) {
   if(is.null(distance)) {
     if(weighted.correlation) {
-      distance <- .Call("matWCorr", t(tamr$xv), t(tamr$xvw), PACKAGE = "scde")
+      #distance <- .Call("matWCorr", t(tamr$xv), t(tamr$xvw), PACKAGE = "pagoda2")
+      distance <- matWCorr(t(tamr$xv), t(tamr$xvw))
       rownames(distance) <- colnames(distance) <- rownames(tamr$xv)
       if(abs) {
         distance <- stats::as.dist(1-abs(distance), upper = TRUE)
@@ -211,9 +217,52 @@ pagoda.reduce.redundancy <- function(tamr, distance.threshold = 0.2, cluster.met
 ##' @export
 winsorize.matrix <- function(mat, trim) {
   if(trim  >  0.5) { trim <- trim/ncol(mat)  }
-  wm <- .Call("winsorizeMatrix", mat, trim, PACKAGE = "pagoda2")
+  #wm <- .Call("winsorizeMatrix", mat, trim, PACKAGE = "pagoda2")
+  wm <- winsorizeMatrix(mat, trim)
   rownames(wm) <- rownames(mat)
   colnames(wm) <- colnames(mat)
   return(wm)
 }
 
+
+##' @export
+pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = NULL) {
+  # all relevant gene names
+  rotn <- unique(unlist(lapply(pcc[gsub("^#PC\\d+# ", "", rownames(xv))], function(d) rownames(d$xp$rotation))))
+  # prepare an ordered (in terms of genes) and centered version of each component
+  pl <- papply(rownames(xv), function(nam) {
+    pnam <- gsub("^#PC\\d+# ", "", nam)
+    pn <- as.integer(gsub("^#PC(\\d+)# .*", "\\1", nam))
+    rt <- pcc[[pnam]]$xp$rotation[, pn]
+    # order names/values according to increasing name match index
+    mi <- match(names(rt), rotn)
+    mo <- order(mi, decreasing = FALSE)
+    rt <- as.numeric(rt)-mean(rt)
+    return(list(i = mi[mo], v = rt[mo]))
+  }, n.cores = n.cores)
+
+  #x <- .Call("plSemicompleteCor2", pl, PACKAGE = "pagoda2")
+  x <- plSemicompleteCor2(pl)
+
+  if(!is.null(target.ndf)) {
+    r <- x$r[upper.tri(x$r)]
+    n <- x$n[upper.tri(x$n)]
+    suppressWarnings(tv <- r*sqrt((n-2)/(1-r^2)))
+    z <- pt(tv, df = n-2, lower.tail = FALSE, log.p = TRUE)
+    nr <- qt(z, df = target.ndf-2, lower.tail = FALSE, log.p = TRUE)
+    nr <- nr/sqrt(target.ndf-2+nr^2)
+    nr[is.nan(nr)] <- r[is.nan(nr)]
+
+    cr <- x$r
+    cr[upper.tri(cr)] <- nr
+    cr[lower.tri(cr)] <- t(cr)[lower.tri(cr)]
+  } else {
+    cr <- x$r
+  }
+
+  rownames(cr) <- colnames(cr) <- rownames(xv)
+  d <- stats::as.dist(1-abs(cr))
+  d[d<0] <- 0
+  d
+
+}
