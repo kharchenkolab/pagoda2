@@ -927,7 +927,8 @@ dataController.prototype.defineExtJsObjects = function() {
       fields: [
         {name: 'name', type: 'string'},
         {name: 'n', type: 'number'},
-        {name: 'cz', type: 'number'}
+        {name: 'cz', type: 'number'},
+        {name: 'shortdescription', type: 'string'}
       ]
     })
 

@@ -95,9 +95,10 @@ aspectsTableViewer.prototype.generateTables = function() {
     id: 'genesetsAspectTable',
     empty: 'No sets available',
     columns: [
-      {text: 'Name', dataIndex:'name', width:'40%'},
-      {text: 'Gene count', dataIndex: 'n', width: '20%'},
-      {text: 'Corrected Score', dataIndex: 'cz', width: '40%'}
+      {text: 'Name', dataIndex:'name', width:'20%'},
+      {text: 'Description', dataIndex: 'shortdescription', width: '50%'},
+      {text: 'Corrected Score', dataIndex: 'cz', width: '20%'},
+      {text: 'Count', dataIndex: 'n', width: '10%'},
     ],
     listeners: {
       'selectionchange': genesetSelectionChangeListener

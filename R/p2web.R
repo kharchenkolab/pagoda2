@@ -366,10 +366,15 @@ pagoda2WebApp <- setRefClass(
                                           # Get the metadata for these gene sets
                                           colOfInterest <- c("name","n","cz");
                                           retTable <- pathwayODInfo[genesets, colOfInterest];
+                                          saveRDS(retTable,'~/refTable.rds')
+
 
                                           # Convert to JSON friendly format
                                           retObj <- unname(apply(retTable, 1, function(x) {
-                                            list(name = x[[1]], n = x[[2]], cz = x[[3]]);
+                                            # Must be in genesets for short description
+                                            desc <- geneSets[[x[[1]]]]$properties$shortdescription;
+
+                                            list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
                                           }))
 
                                           response$header("Content-type", "application/javascript");
