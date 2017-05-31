@@ -8,7 +8,7 @@
 #' @import igraph
 #' @importFrom irlba irlba
 #' @import pcaMethods
-#' @importFrom mgcv gam
+#' @importFrom mgcv gam s
 #' @importFrom parallel mclapply
 # @importFrom scde pagoda.reduce.loading.redundancy pagoda.reduce.redundancy
 #' @importFrom RMTstat WishartMaxPar
