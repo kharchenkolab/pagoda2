@@ -50,6 +50,9 @@ Install pagoda2
 $ export NMSLIB_PATH=/path/to/nmslib-1.5.3/
 # Start R
 $ R
+# Install Bioconductor dependencies
+> source("http://bioconductor.org/biocLite.R")
+> biocLite(c("GO.db", "org.Hs.eg.db"), suppressUpdates=TRUE)
 # Install pagoda
 > library(devtools)
 > install_github("hms-dbmi/pagoda2")
