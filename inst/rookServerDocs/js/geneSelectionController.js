@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: geneSelectionController.js
  * Author: Nikolas Barkas
@@ -27,10 +29,10 @@ geneSelectionController.prototype.setSelection = function(selectionName, genes, 
     if ( typeof displayName === 'undefined') {
 	displayName = selectionName;
     }
-    
+
     this.selections[selectionName] = ({
 	'name': selectionName,
-	'genes': genes, 
+	'genes': genes,
 	'displayName': displayName
     });
 
@@ -39,7 +41,7 @@ geneSelectionController.prototype.setSelection = function(selectionName, genes, 
 };
 
 /**
- * Get the display name for this selection  
+ * Get the display name for this selection
  * @param selectionName the internal name fo the selection
  */
 geneSelectionController.prototype.getSelectionDisplayName = function(selectionName) {
@@ -85,15 +87,15 @@ geneSelectionController.prototype.clearSelection = function(selectionname) {
 geneSelectionController.prototype.getAvailableSelections = function() {
     var names = [];
 
-    for (sel in this.selections) {
+    for (var sel in this.selections) {
 	names.push(this.selections[sel].name);
     }
 
     return names;
 };
 
-/** 
- * Duplicate an existing selection 
+/**
+ * Duplicate an existing selection
  */
 geneSelectionController.prototype.duplicateSelection = function(selectionName,
 								newSelectionName,
@@ -102,9 +104,9 @@ geneSelectionController.prototype.duplicateSelection = function(selectionName,
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    
+
     sel.genes = JSON.parse(JSON.stringify(oldSelection.genes));
-    
+
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }

@@ -1,3 +1,4 @@
+/* Don't seem to be able to use strict here because of ExtJS */
 
 /*
  * Filename: dataController.js

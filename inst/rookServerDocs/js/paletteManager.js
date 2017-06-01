@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: paletteManager.js
  * Author: Nikolas Barkas

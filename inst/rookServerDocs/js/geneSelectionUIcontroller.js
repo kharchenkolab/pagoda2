@@ -1,5 +1,5 @@
-
-/** 
+"use strict";
+/**
  * Manages the gene selection interface
  * @constructor
  */
@@ -26,12 +26,12 @@ function geneSelectionUIcontroller() {
 geneSelectionUIcontroller.prototype.syncGeneSelectionStore = function() {
     var store = Ext.data.StoreManager.lookup('geneSelectionStoreForSelectionTable');
     store.removeAll();
-    
+
     // Repopulate
     var geneSelCntr = new geneSelectionController();
     var availSelections = geneSelCntr.getAvailableSelections();
-    
-    for (sel in availSelections) {
+
+    for (var sel in availSelections) {
 	var selName = availSelections[sel];
 	var selCount = geneSelCntr.getSelection(selName).genes.length;
 	var selDisplayName = geneSelCntr.getSelectionDisplayName(selName);
@@ -61,12 +61,12 @@ geneSelectionUIcontroller.prototype.generateGeneSelectionStore = function() {
 }
 
 /**
- * Generate the user interface, assumes existence 
+ * Generate the user interface, assumes existence
  * of 'geneselection-app-container' extjs component
  */
 geneSelectionUIcontroller.prototype.generateUI = function() {
     var uipanel = Ext.getCmp('geneselection-app-container');
-    
+
     var geneSelectionTable = Ext.create('Ext.grid.Panel', {
 	title: 'Available Gene Selections',
 	id: 'geneSelectionTable',
@@ -74,7 +74,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	columns: [
 	    {text: 'Name', dataIndex: 'displayname', width: '70%'},
 	    {text: 'Count', dataIndex: 'cellcount', width: '29%'}
-	], 
+	],
 	emptyText: 'No gene selections are currently available'
     });
 
@@ -98,7 +98,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 
 			var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
 			var oldDisplayName = selectedItems.getAt(0).getData().displayname;
-			
+
 			Ext.MessageBox.prompt('New name', 'Name for new selection:',
 					      function(btn, text) {
 						  if (btn === 'ok')  {
@@ -131,10 +131,10 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 		    } // selectedItems == 1
 		} // handler
 	    },
-	    { 
+	    {
 		xtype: 'button',
 		text: 'Rename',
-		handler: function() { 
+		handler: function() {
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
 		    var selectedItems =  selectionTable.getSelectionModel().getSelected();
 		    if (selectedItems.length === 1) {
@@ -157,7 +157,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	    {
 		xtype: 'button',
 		text: 'Export CSV',
-		handler: function() { 
+		handler: function() {
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
 		    var selectedItems = selectionTable.getSelectionModel().getSelected();
 		    if (selectedItems.length === 1) {

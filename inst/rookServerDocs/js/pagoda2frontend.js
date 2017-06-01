@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: pagoda2frontend.js
  * Author: Nikolas Barkas
@@ -91,7 +93,7 @@ function initialise() {
       document.title = p2globalParams.generalParams.applicationName;
 
       // Initialize page components
-      embView = new embeddingViewer();
+      var embView = new embeddingViewer();
       // Load the default embedding
       embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
   			  p2globalParams.embedding.defaultEmbedding.embedding);

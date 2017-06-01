@@ -1,3 +1,4 @@
+"use strict";
 
 /**
  * Responsible for the status bar display item.

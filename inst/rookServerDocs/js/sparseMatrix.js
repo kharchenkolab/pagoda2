@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Filename: sparseMatrix.js
  * Author: Nikolas Barkas
@@ -22,7 +24,7 @@ function dgCMatrixReader(i, p, Dim, Dimnames1, Dimnames2, x, factors) {
 /**
  * Get a full js matrix out of the sparse matrix representation
  */
-dgCMatrixReader.prototype.getFullMatrix = function() {   
+dgCMatrixReader.prototype.getFullMatrix = function() {
 
     // Make a zero filled array
     var out = Array(this.Dim[0]);
@@ -45,7 +47,7 @@ dgCMatrixReader.prototype.getFullMatrix = function() {
 	for (var k = rsi; k < rei; k++) {
 	    // row number
 	    var rn = this.i[k];
-	    
+
 	    // x[k] is the value for the element in rn, j
 	    out[rn][j] = this.x[k];
 	}
@@ -64,7 +66,7 @@ dgCMatrixReader.prototype.getFullMatrix = function() {
 /**
  * Get a full js matrix out of the sparse matrix representation
  */
-dgCMatrixReader.prototype.getFullMatrixTransposed = function() {   
+dgCMatrixReader.prototype.getFullMatrixTransposed = function() {
 
     // Make a zero filled array
     var out = Array(this.Dim[1]);
@@ -87,7 +89,7 @@ dgCMatrixReader.prototype.getFullMatrixTransposed = function() {
 	for (var k = rsi; k < rei; k++) {
 	    // row number
 	    var rn = this.i[k];
-	    
+
 	    // x[k] is the value for the element in rn, j
 	    out[j][rn] = this.x[k];
 	}

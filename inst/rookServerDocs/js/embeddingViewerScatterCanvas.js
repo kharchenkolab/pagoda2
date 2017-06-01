@@ -20,7 +20,7 @@ function embeddingViewerScatterCanvas() {
     // component resize function
     var element = Ext.getCmp('embedding-app-container');
     element.onResize = function(){
-    	embView = new embeddingViewer();
+    	var embView = new embeddingViewer();
     	embView.redraw();
     };
 

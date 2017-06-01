@@ -1,4 +1,4 @@
-
+"use strict";
 
 /**
  * Responsible for for handling the embedding panel
@@ -122,7 +122,7 @@ embeddingViewer.prototype.generateToolbar = function() {
     comboBox.addListener('change', function(e) {
 	var value =  e.value;
 	var embeddingIds = value.split(':');
-	embView = new embeddingViewer();
+	var embView = new embeddingViewer();
 	embView.showEmbedding(embeddingIds[0],embeddingIds[1]);
     });
 
@@ -363,7 +363,7 @@ embeddingViewer.prototype.populateMenu = function() {
 
 	    datCntr.getAvailableEmbeddings(currReduction, function(embeddings, currReduction) {
 
-		embeddingOptionstore =  Ext.data.StoreManager.lookup('embeddingOptionsStore');
+		var embeddingOptionstore =  Ext.data.StoreManager.lookup('embeddingOptionsStore');
 
 		if (embeddings !== null) {
 
