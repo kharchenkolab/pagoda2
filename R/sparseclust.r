@@ -191,7 +191,6 @@ Pagoda2 <- setRefClass(
       } else {
         if(verbose) cat(" using gam ")
         require(mgcv)
-        s <- mgcv::s
         m <- mgcv::gam(v ~ s(m, k = gam.k), data = df[vi,])
       }
       df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
