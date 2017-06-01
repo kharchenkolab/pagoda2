@@ -169,7 +169,6 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         var startPC = (metaView.dragStartX - drawConsts.left) / metaWidth;
         var endPC = (e.offsetX - drawConsts.left) / metaWidth;
 
-        console.log(startPC, endPC);
 
         // For left to right drag
         if (startPC > endPC) {
@@ -184,8 +183,9 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
         var ncells = curDisplayIdxs[1] - curDisplayIdxs[0];
 
-        var startIndex = Math.floor(curDisplayIdxs[0] + (startPC * ncells));
-        var endIndex = Math.floor(curDisplayIdxs[0] + (endPC * ncells));
+
+        var startIndex = Math.floor(startPC * ncells)
+        var endIndex = Math.floor(endPC * ncells);
 
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 

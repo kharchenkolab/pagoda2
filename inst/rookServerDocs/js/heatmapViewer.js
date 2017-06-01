@@ -29,7 +29,6 @@ function heatmapViewer() {
     // we can persist accross redraws
     this.currentOverlaySelectionName = null;
     this.currentOverlaySelectionShown = false;
-
     heatmapViewer.instance =  this;
 };
 
@@ -343,8 +342,8 @@ heatmapViewer.prototype.setupOverlays = function() {
 
         var ncells = curDisplayIdxs[1] - curDisplayIdxs[0];
 
-        var startIndex = Math.floor(curDisplayIdxs[0] + (startPC * ncells));
-        var endIndex = Math.floor(curDisplayIdxs[0] + (endPC * ncells));
+        var startIndex = Math.floor(startPC * ncells);
+        var endIndex = Math.floor(endPC * ncells);
 
 
 
