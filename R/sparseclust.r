@@ -192,7 +192,9 @@ Pagoda2 <- setRefClass(
         if(verbose) cat(" using gam ")
         require(mgcv)
         formul <- as.formula(v~s(m,k=gam.k))
-        environment(formul) <- asNamespace("mgcv")
+        eformul <- new.env(parent=as.environment("package:mgcv"))
+        assign("gam.k",gam.k,envir=eformul)
+        environment(formul) <- eformul
         m <- mgcv::gam(formula=formul, data = df[vi,])
       }
       df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
