@@ -41,48 +41,6 @@ function dataController(repository) {
     dataController.instance = this;
 };
 
-/**
- * Returns the named hierarchy in the hclust format
- * @description This is currently a partial implementation as it will
- * just return the 'dummy' hierarchy. Can simply change this to be called main
- * if we want to use only one hierarchy
- * @param name Name of the hierarchy to return
- * @param callback a callback function to call when the data is back
- */
-dataController.prototype.getHierarchy =  function(name, callback) {
-    console.error('Deprecated function dataController.getHierarchy called, use getReducedDendrogram()');
-
-    // TODO: Implement function in full to support multiple hierarchies
-    var dataCntr = new dataController();
-
-    // Cache hierarchies
-    if (name in dataCntr.cache["hierarchies"]) {
-	// It's in the cache already
-	callback(dataCntr.cache["hierarchies"][name]);
-    } else {
-    	$.ajax({
-    	    dataType: "json",
-    	    url: "getData.php",
-    	    data: {'dataidentifier': 'hierarchy', 'type': name },
-    	    success: function(data) {
-        		var dataCntr = new dataController();
-
-        		// The merge array values refer to a 1 indexed table
-        		// fix this as the js tables are 0 indexed
-        		for (var i =0; i < data.merge.length; i++) {
-        		    // This is the case only for internal nodes
-        		    if (data.merge[i] > 0) {
-        			    data.merge[i] = data.merge[i] - 1;
-        		    }
-        		}
-
-        		dataCntr.cache["hierarchies"][name] = data;
-
-        		callback(data);
-    	    }
-    	});
-    };
-};
 
 /**
  * Get the reduced dendrogram and the number  of cells in each group (required for plotting)
@@ -295,6 +253,7 @@ dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd
  */
 dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
     function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback) {
+
 	var dataCntr = this;
 
 	// Does the function return via callback, factored out to avoid duplication
@@ -717,104 +676,48 @@ dataController.prototype.getCellMetadata = function(callback, callbackParameters
  * @param name the name of the geneset the list of which to retrieve
  */
 dataController.prototype.getGeneSetStoreByName = function(name, callback) {
-    if (this.repository === 'remote') {
-	return this.getGeneSetStoreByNameRemote(name, callback);
-    } else if (this.repository === 'local'){
-	return this.getGeneSetStoreByNameLocal(name, callback);
-    } else {
-	console.error('Unknown repository');
-    }
-}
-
-/**
- * Get an extjs memory store that contains all the genes
- * that belong to the specified gene set
- * @param name the name of the geneset
- * @private
- */
-dataController.prototype.getGeneSetStoreByNameLocal = function(name, callback) {
-    console.error('dataController.getGeneSetStoreByNameLocal() not implemented');
-}
-
-/**
- * Get an extjs memory store that contrains all the genes
- * that belong to the specified gene set from a remote repos
- * @param name name of the geneset
- * @private
- */
-dataController.prototype.getGeneSetStoreByNameRemote = function(name, callback) {
-
     $.ajax({
-	dataType: 'json',
-	url: 'getData.php?dataidentifier=genesetgeneinformation&genesetname='+name,
-	success: function(data) {
-	    var pagingStore = Ext.create('LocalJsonStore', {
-		autoLoad: true,
-		model: 'geneTableEntry',
-		pageSize: 100,
-		localData: data
-	    });
-	    callback(pagingStore);
-	}
+    	dataType: 'json',
+    	url: 'getData.php?dataidentifier=genesetgeneinformation&genesetname='+name,
+    	success: function(data) {
+    	    var pagingStore = Ext.create('LocalJsonStore', {
+    		autoLoad: true,
+    		model: 'geneTableEntry',
+    		pageSize: 100,
+    		localData: data
+    	    });
+    	    callback(pagingStore);
+    	}
     });
 }
+
 
 /**
  * get an extjs information store for the
  * genesets
  */
 dataController.prototype.getGeneSetInformationStore = function(callback) {
-    if (this.repository === 'remote') {
-	return this.getGeneSetInformationStoreRemote(callback);
-    } else if (this.repository === 'local'){
-	return this.getGeneSetInformationStoreLocal(callback);
-    } else {
-	console.error('Unknown repository');
-    }
-}
-
-/**
- * Get an extjs information store for the
- * gene sets table using the server backedn
- */
-dataController.prototype.getGeneSetInformationStoreRemote = function(callback) {
     $.ajax({
-	dataType: 'json',
-	url: 'getData.php?dataidentifier=availablegenesets',
-	success: function(data) {
-	    var pagingStore = Ext.create('LocalJsonStore', {
-		autoLoad: true,
-		model: 'geneSetTableEntry',
-		pageSize: 100,
-		localData: data
-	    });
-	    callback(pagingStore);
-	}
+    	dataType: 'json',
+    	url: 'getData.php?dataidentifier=availablegenesets',
+    	success: function(data) {
+    	    var pagingStore = Ext.create('LocalJsonStore', {
+    		autoLoad: true,
+    		model: 'geneSetTableEntry',
+    		pageSize: 100,
+    		localData: data
+    	    });
+    	    callback(pagingStore);
+    	}
     });
-
 }
+
 
 /**
  * Get a custom extJS object of type LocalJsonStore
  * with the overdispersed genes. Return via callback
  */
 dataController.prototype.getOdGeneInformationStore = function(callback) {
-    if (this.repository === 'remote') {
-	return this.getRemoteOdGeneInformationStore(callback);
-    } else if (this.repository === 'local') {
-	return this.getLocalOdGeneInformationStore(callback);
-    } else {
-	console.error('Unknown repository');
-    }
-};
-
-/**
- * Get a custom extJS object of type LocalJsonStore
- * with the overdispersed genes, with data from a remote server.
- * Return via callback
- * @private
- */
-dataController.prototype.getRemoteOdGeneInformationStore = function(callback) {
     $.ajax({
 	dataType: "json",
 	url:'getData.php?dataidentifier=odgeneinformation',
@@ -828,15 +731,9 @@ dataController.prototype.getRemoteOdGeneInformationStore = function(callback) {
 	    callback(pagingStore);
 	}
     });
-}
+};
 
-/**
- * Get a local store for the od genes table
- * @private
- */
-dataController.prototype.getLocalOdGeneInformationStore = function() {
-    console.error('getLocalOdGeneInformationStore not implemented!');
-}
+
 
 /**
  * Get an ExtJS proxy object for connecting to the GeneTable.
@@ -844,23 +741,20 @@ dataController.prototype.getLocalOdGeneInformationStore = function() {
  * information data
  */
 dataController.prototype.getGeneInformationStore = function(callback) {
-    if (this.repository === 'remote') {
-	return this.getRemoteGeneInformationStore(callback);
-    } else if (this.repositor === 'local') {
-	return this.getLocalGeneInformationStore(callback);
-    } else {
-	console.error('Unknown repository');
-    }
-};
-
-/**
- * Return a ExtJS store object configured to get data from a local
- * file store
- * @private
- */
-dataController.prototype.getLocalGeneInformationStore =  function() {
-    // TODO: Implement me
-    console.error("dataController.getLocalGeneInformationStore not implemented!");
+    $.ajax({
+    	dataType: 'json',
+    	url: 'getData.php?dataidentifier=geneinformation',
+    	success: function(data) {
+    	    var pagingStore = Ext.create('LocalJsonStore', {
+    		autoLoad: true,
+    		model: 'geneTableEntry',
+    		pageSize: 100,
+    		localData: data,
+    	    });
+    	    pagingStore.sort('dispersion', 'DESC');
+    	    callback(pagingStore);
+    	}
+    });
 };
 
 /**
@@ -935,28 +829,6 @@ dataController.prototype.defineExtJsObjects = function() {
 
 } // dataController.prototype.defineExtJsObjects
 
-/**
- * Get an ExtJS information store configured to get
- * data from a server via ajax calls
- * @private
- */
-dataController.prototype.getRemoteGeneInformationStore = function(callback) {
-    $.ajax({
-	dataType: 'json',
-	url: 'getData.php?dataidentifier=geneinformation',
-	success: function(data) {
-	    var pagingStore = Ext.create('LocalJsonStore', {
-		autoLoad: true,
-		model: 'geneTableEntry',
-		pageSize: 100,
-		localData: data,
-	    });
-	    pagingStore.sort('dispersion', 'DESC');
-	    callback(pagingStore);
-	}
-    });
-}
-
 
 /**
  * Retrieves gene information for all genes in JSON
@@ -973,11 +845,6 @@ dataController.prototype.getGeneInformation =  function(callback) {
   	}
   });
 }
-
-
-
-
-
 
 
 /**
@@ -1001,8 +868,6 @@ dataController.prototype.getAspectMatrixByAspect = function(cellIndexStart, cell
     if (!Number.isInteger(cellIndexEnd)) {
 	    throw new Error("cellIndexEnd must be an interger");
     }
-
-
 
         // Setup the request data
     var requestData = {
@@ -1068,5 +933,3 @@ dataController.prototype.getAspectMatrixByAspect = function(cellIndexStart, cell
     return request;
 
 }
-
-
