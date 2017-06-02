@@ -3,7 +3,7 @@
 /*
  * Filename: dataController.js
  * Author: Nikolas Barkas
- * Date: March 2017
+ * Date: June 2017
  * Description: dataController object for pagoda2
  */
 
@@ -21,15 +21,92 @@ function dataController(repository) {
     	return dataController.instance;
     };
 
+    // Define global extJS objects
     this.defineExtJsObjects();
 
     // TODO: Make conditional on repository
     this.internalController = new DataControllerServer();
 
-
-
     dataController.instance = this;
 };
+
+
+/**
+ * Define extJS models and objects required by the data controller.
+ * All data models that involve the data controller should
+ * be defined here
+ * @description called once during the singleton constructor
+ * @private
+ */
+dataController.prototype.defineExtJsObjects = function() {
+
+    // NOTE: We use this extension of the memory
+    // store to allow sorting and pagination at the
+    // same time
+    Ext.define('LocalJsonStore', {
+    	extend: 'Ext.data.Store',
+    	constructor: function(config) {
+    	    config.autoLoad = true;
+    	    config.remoteSort = true;
+    	    config.remoteFilter = true;
+    	    config.proxy = {
+        		type: 'memory',
+        		enablePaging: true,
+        		data: config.localData,
+        		reader: {
+        		    type: 'json'
+        		},
+        		writer: config.writerConfig ? config.writerConfig : { type: 'json', allowSingle: false, nameProperty: 'mapping' }
+        	    };
+    	    this.callParent(arguments);
+    	}
+    });
+
+    // Define a data.model  for the gene table
+    Ext.define('geneTableEntry', {
+	extend: 'Ext.data.Model',
+	fields: [
+	    {name: 'genename', type: 'string'},
+	    {name: 'dispersion', type: 'number'},
+	    {name: 'score', type: 'number'}
+	]
+    });
+
+    // Define a data.modle for the geneSets table
+    Ext.define('geneSetTableEntry', {
+	extend: 'Ext.data.Model',
+	fields: [
+	    {name: 'locked', type: 'boolean'},
+	    {name: 'genesetname', type: 'string'},
+	    {name: 'shortdescription', type: 'string'}
+
+	]
+    });
+
+    Ext.define('aspectTableEntry', {
+      extend: 'Ext.data.Model',
+      fields: [
+        {name: 'name', type: 'string'}
+      ]
+
+    });
+
+    Ext.define('genesetInAspectEntry', {
+      extend: 'Ext.data.Model',
+      fields: [
+        {name: 'name', type: 'string'},
+        {name: 'n', type: 'number'},
+        {name: 'cz', type: 'number'},
+        {name: 'shortdescription', type: 'string'}
+      ]
+    })
+
+} // dataController.prototype.defineExtJsObjects
+
+
+/*
+ * Wrapper functions that must be implemented by individual controllers follow
+ */
 
 /**
  * Get the reduced dendrogram and the number  of cells in each group (required for plotting)
@@ -38,7 +115,6 @@ function dataController(repository) {
 dataController.prototype.getReducedDendrogram = function(callback) {
    return this.internalController.getReducedDendrogram(callback);
 }
-
 
 /**
  * Get the cell identifiers in the default order
@@ -162,8 +238,6 @@ dataController.prototype.getOdGeneInformationStore = function(callback) {
   return this.internalController.getOdGeneInformationStore(callback);
 };
 
-
-
 /**
  * Get an ExtJS proxy object for connecting to the GeneTable.
  * @description return a extjs store object with the gene table
@@ -182,7 +256,6 @@ dataController.prototype.getGeneInformation =  function(callback) {
   return this.internalController.getGeneInformation(callback);
 }
 
-
 /**
  * Get part of the aspect matrix specifying both the aspects to get and the cell start/end indices
  * @cellIndexStart start cell index
@@ -194,75 +267,3 @@ dataController.prototype.getGeneInformation =  function(callback) {
 dataController.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
   return this.internalController.getAspectMatrixByAspect(cellIndexStart, cellIndexEnd, aspectIds, callback);
 }
-
-/**
- * Define extJS models and objects required by the data controller.
- * All data models that involve the data controller should
- * be defined here
- * @description called once during the singleton constructor
- * @private
- */
-dataController.prototype.defineExtJsObjects = function() {
-
-    // NOTE: We use this extension of the memory
-    // store to allow sorting and pagination at the
-    // same time
-    Ext.define('LocalJsonStore', {
-    	extend: 'Ext.data.Store',
-    	constructor: function(config) {
-    	    config.autoLoad = true;
-    	    config.remoteSort = true;
-    	    config.remoteFilter = true;
-    	    config.proxy = {
-        		type: 'memory',
-        		enablePaging: true,
-        		data: config.localData,
-        		reader: {
-        		    type: 'json'
-        		},
-        		writer: config.writerConfig ? config.writerConfig : { type: 'json', allowSingle: false, nameProperty: 'mapping' }
-        	    };
-    	    this.callParent(arguments);
-    	}
-    });
-
-    // Define a data.model  for the gene table
-    Ext.define('geneTableEntry', {
-	extend: 'Ext.data.Model',
-	fields: [
-	    {name: 'genename', type: 'string'},
-	    {name: 'dispersion', type: 'number'},
-	    {name: 'score', type: 'number'}
-	]
-    });
-
-    // Define a data.modle for the geneSets table
-    Ext.define('geneSetTableEntry', {
-	extend: 'Ext.data.Model',
-	fields: [
-	    {name: 'locked', type: 'boolean'},
-	    {name: 'genesetname', type: 'string'},
-	    {name: 'shortdescription', type: 'string'}
-
-	]
-    });
-
-    Ext.define('aspectTableEntry', {
-      extend: 'Ext.data.Model',
-      fields: [
-        {name: 'name', type: 'string'}
-      ]
-
-    });
-
-    Ext.define('genesetInAspectEntry', {
-      extend: 'Ext.data.Model',
-      fields: [
-        {name: 'name', type: 'string'},
-        {name: 'n', type: 'number'},
-        {name: 'cz', type: 'number'},
-        {name: 'shortdescription', type: 'string'}
-      ]
-    })
-
-} // dataController.prototype.defineExtJsObjects

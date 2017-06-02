@@ -12,14 +12,8 @@
  * @constructor
  */
 function DataControllerServer() {
-    if (typeof DataControllerServer.instance === 'object') {
-    	return DataControllerServer.instance;
-    };
-
     // Init the cache
     this.initCache();
-
-    DataControllerServer.instance = this;
 };
 
 /**
@@ -33,7 +27,6 @@ DataControllerServer.prototype.initCache = function() {
     this.cache["embeddings"] = [];
     this.cache["lastexpressionmatrix"] = null;
     this.cache["lastaspectmatrix"] = null;
-
 }
 
 /**
@@ -60,21 +53,22 @@ DataControllerServer.prototype.getReducedDendrogram = function(callback) {
  * Get the cell identifiers in the default order
  */
 DataControllerServer.prototype.getCellOrder = function(callback) {
-    if (this.cache["cellorder"] === null) {
-    	$.ajax({
-    	    type: "GET",
-    	    dataType: "json",
-    	    url: "getData.php",
-    	    data: { "dataidentifier": "cellorder" },
-    	    success: function(data) {
-    		var dataCntr = new DataControllerServer();
-    		dataCntr.cache["cellorder"] = data;
-    		callback(data);
-	    } // success
-	}); //ajax
-    } else {
-	callback(this.cache["cellorder"]);
-    }
+  var dataCntr = this;
+
+  if (this.cache["cellorder"] === null) {
+  	$.ajax({
+  	    type: "GET",
+  	    dataType: "json",
+  	    url: "getData.php",
+  	    data: { "dataidentifier": "cellorder" },
+  	    success: function(data) {
+    		  dataCntr.cache["cellorder"] = data;
+    		  callback(data);
+	      } // success
+    }); //ajax
+  } else {
+    callback(this.cache["cellorder"]);
+  }
 }
 
 /**
@@ -397,10 +391,9 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndex = function(g
 		throw new Error('data object does not have x field');
 	    }
 
-	    var dataCntr = new DataControllerServer();
-	    var x = dataCntr.unpackCompressedBase64Float64Array(data.x);
-	    var i = dataCntr.unpackCompressedBase64Int32Array(data.i);
-	    var p = dataCntr.unpackCompressedBase64Int32Array(data.p);
+	    var x = DataControllerServer.prototype.unpackCompressedBase64Float64Array(data.x);
+	    var i = DataControllerServer.prototype.npackCompressedBase64Int32Array(data.i);
+	    var p = DataControllerServer.prototype.unpackCompressedBase64Int32Array(data.p);
 
 	    // This is a fix for the way R toJSON encodes one element arrays
 	    if (typeof data.Dimnames1 === 'string') {
@@ -475,60 +468,48 @@ DataControllerServer.prototype.getEmbedding = function(type, embeddingType, call
     var cacheId =  type + '_' + embeddingType;
 
     if (typeof this.cache.embeddings[cacheId] !== 'undefined') {
-	var data = this.cache.embeddings[cacheId];
-
-	// NOTE: We dont' need to decompress here because the object was not a deep copy when
-	// created. We would like it to have been a deep copy so that we conserve memory
-	// in the cache.
-
-	// var dataCntr = new DataControllerServer();
-	// var unpackedValues = dataCntr.unpackCompressedBase64Float64Array(data.values);
-	// data.values = unpackedValues;
-
-	callback(data);
+	    var data = this.cache.embeddings[cacheId];
+	    callback(data);
     } else {
-	$.ajax({
-	    dataType: "json",
-	    url: "getData.php",
-	    data: {'dataidentifier': 'embedding', 'type': type, 'embeddingtype': embeddingType },
-	    success: function(data) {
+      	var dataCntr = this;
+    	$.ajax({
+    	    dataType: "json",
+    	    url: "getData.php",
+    	    data: {'dataidentifier': 'embedding', 'type': type, 'embeddingtype': embeddingType },
+    	    success: function(data) {
+        		// The data is returned in serialised array format
+        		// Do some checks to ensure we got what we wanted
+        		if (! data.hasOwnProperty('values')) {
+        		    throw new Error('data does not have a values field');
+        		}
+        		if (! data.hasOwnProperty('dim')) {
+        		    throw new Error('data does not have dim field');
+        		}
+        		if (! data.hasOwnProperty('rownames')) {
+        		    throw new Error('data does not have a rownames field');
+        		}
+        		if (!data.hasOwnProperty('colnames')) {
+        		    throw new Error('data does not have colnames field');
+        		}
+        		// if (!Array.isArray(data.values)) {
+        		// 	throw new Error('data.values is not an array');
+        		// }
+        		if (!Array.isArray(data.dim)) {
+        		    throw new Error('data.dim is not an array');
+        		}
+        		if (data.dim.length !== 2) {
+        		    throw new Error('data.dim is not of length 2');
+        		}
 
-		// The data is returned in serialised array format
-		// Do some checks to ensure we got what we wanted
-		if (! data.hasOwnProperty('values')) {
-		    throw new Error('data does not have a values field');
-		}
-		if (! data.hasOwnProperty('dim')) {
-		    throw new Error('data does not have dim field');
-		}
-		if (! data.hasOwnProperty('rownames')) {
-		    throw new Error('data does not have a rownames field');
-		}
-		if (!data.hasOwnProperty('colnames')) {
-		    throw new Error('data does not have colnames field');
-		}
-		// if (!Array.isArray(data.values)) {
-		// 	throw new Error('data.values is not an array');
-		// }
-		if (!Array.isArray(data.dim)) {
-		    throw new Error('data.dim is not an array');
-		}
-		if (data.dim.length !== 2) {
-		    throw new Error('data.dim is not of length 2');
-		}
+    		    dataCntr.cache.embeddings[cacheId] = data;
 
-		var dataCntr = new DataControllerServer();
+    		    // TODO: Check that the arrays contain numbers
+        		var unpackedValues = dataCntr.unpackCompressedBase64Float64Array(data.values);
+        		data.values = unpackedValues;
 
-		dataCntr.cache.embeddings[cacheId] = data;
-
-		// TODO: Check that the arrays contain numbers
-
-		var unpackedValues = dataCntr.unpackCompressedBase64Float64Array(data.values);
-		data.values = unpackedValues;
-
-		callback(data);
-	    }
-	}); // ajax
+    		    callback(data);
+    	    }
+    	}); // ajax
     }
 };
 
@@ -559,7 +540,7 @@ DataControllerServer.prototype.getAvailableReductionTypes = function(callback) {
  * @param callbackParameters data to pass to the callback function
  */
 DataControllerServer.prototype.getCellMetadata = function(callback, callbackParameters) {
-    var dataCntr = new DataControllerServer();
+    var dataCntr = this;
 
 
     if (dataCntr.cache["cellmetadata"] !== null) {
