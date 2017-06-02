@@ -235,14 +235,6 @@ dataController.prototype.getGeneInformationStore = function(callback) {
   return this.internalController.getGeneInformationStore(callback);
 };
 
-/**
- * Retrieves gene information for all genes in JSON
- * format
- * @param callback the callback function
- */
-dataController.prototype.getGeneInformation =  function(callback) {
-  return this.internalController.getGeneInformation(callback);
-}
 
 dataController.prototype.getGeneSetInformationStore = function(callback) {
   return this.internalController.getGeneSetInformationStore(callback);

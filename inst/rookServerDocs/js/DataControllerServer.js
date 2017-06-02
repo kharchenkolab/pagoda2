@@ -562,22 +562,6 @@ DataControllerServer.prototype.getGeneInformationStore = function(callback) {
 };
 
 /**
- * Retrieves gene information for all genes in JSON
- * format
- * @param callback the callback function
- */
-DataControllerServer.prototype.getGeneInformation =  function(callback) {
-  $.ajax({
-  	dataType: "json",
-  	url: "getData.php",
-  	data: {'dataidentifier': 'geneinformation' },
-  	success: function(data) {
-  	    callback(data);
-  	}
-  });
-}
-
-/**
  * Get part of the aspect matrix specifying both the aspects to get and the cell start/end indices
  * @cellIndexStart start cell index
  * @cellIndexEnd end cell index
