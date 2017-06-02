@@ -1,4 +1,4 @@
-/* Don't seem to be able to use strict here because of ExtJS */
+"use strict";
 
 /*
  * Filename: DataControllerServer.js
@@ -8,13 +8,8 @@
  */
 
 /**
- * Handles all data requests
+ * Implementation fo data controller for rook server backed interaction
  * @constructor
- * @description At the moment these will be simple callbacks to the backend
- * Rook server. In the future this will be loaded from a local
- * file or it can be requested from an external resource database (cross-site
- * scripting security issues may arise). It can also cache requests.
- * @param repository this is the data source currently only remote is supported this can alternatively be a local
  */
 function DataControllerServer() {
     if (typeof DataControllerServer.instance === 'object') {
@@ -27,6 +22,9 @@ function DataControllerServer() {
     DataControllerServer.instance = this;
 };
 
+/**
+ * Initialize the cache
+ */
 DataControllerServer.prototype.initCache = function() {
     this.cache = {};
     this.cache["cellmetadata"] = null;
@@ -37,7 +35,6 @@ DataControllerServer.prototype.initCache = function() {
     this.cache["lastaspectmatrix"] = null;
 
 }
-
 
 /**
  * Get the reduced dendrogram and the number  of cells in each group (required for plotting)
@@ -58,7 +55,6 @@ DataControllerServer.prototype.getReducedDendrogram = function(callback) {
 	callback(this.cache['reduceddendrogram']);
     }
 }
-
 
 /**
  * Get the cell identifiers in the default order
@@ -425,10 +421,6 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndex = function(g
     return request;
 }
 
-
-
-
-
 /**
  * Get the available embeddings for the data reduction type
  * @param type the reduction type for which to get embeddings
@@ -483,7 +475,7 @@ DataControllerServer.prototype.getEmbedding = function(type, embeddingType, call
     var cacheId =  type + '_' + embeddingType;
 
     if (typeof this.cache.embeddings[cacheId] !== 'undefined') {
-	data = this.cache.embeddings[cacheId];
+	var data = this.cache.embeddings[cacheId];
 
 	// NOTE: We dont' need to decompress here because the object was not a deep copy when
 	// created. We would like it to have been a deep copy so that we conserve memory
@@ -675,8 +667,6 @@ DataControllerServer.prototype.getOdGeneInformationStore = function(callback) {
     });
 };
 
-
-
 /**
  * Get an ExtJS proxy object for connecting to the GeneTable.
  * @description return a extjs store object with the gene table
@@ -714,7 +704,6 @@ DataControllerServer.prototype.getGeneInformation =  function(callback) {
   	}
   });
 }
-
 
 /**
  * Get part of the aspect matrix specifying both the aspects to get and the cell start/end indices
@@ -791,7 +780,6 @@ DataControllerServer.prototype.getAspectMatrixByAspect = function(cellIndexStart
 		    data.Dimnames2 = [ data.Dimnames2 ]
 	    }
 
-
 	    //Convert to full matrix and return
 	    var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1, data.Dimnames2, x);
 	      callback(m.getFullMatrix());
@@ -800,7 +788,6 @@ DataControllerServer.prototype.getAspectMatrixByAspect = function(cellIndexStart
 
     // For allowing cancellation
     return request;
-
 }
 
 /**
@@ -826,7 +813,6 @@ DataControllerServer.prototype.unpackCompressedBase64Int32Array = function(encod
  * @private
  * @return Float64Array with decoded values
  */
-
 DataControllerServer.prototype.unpackCompressedBase64Float64Array =  function (encoded) {
     // Unpack base 64
     var compressed = atob(encoded);
