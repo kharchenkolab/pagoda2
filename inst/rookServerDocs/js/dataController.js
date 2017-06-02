@@ -222,23 +222,6 @@ dataController.prototype.getGeneSetStoreByName = function(name, callback) {
 }
 
 /**
- * get an extjs information store for the
- * genesets
- */
-dataController.prototype.getGeneSetInformationStore = function(callback) {
-   return this.internalController.getGeneSetInformationStore(callback);
-}
-
-
-/**
- * Get a custom extJS object of type LocalJsonStore
- * with the overdispersed genes. Return via callback
- */
-dataController.prototype.getOdGeneInformationStore = function(callback) {
-  return this.internalController.getOdGeneInformationStore(callback);
-};
-
-/**
  * Get an ExtJS proxy object for connecting to the GeneTable.
  * @description return a extjs store object with the gene table
  * information data
@@ -254,6 +237,10 @@ dataController.prototype.getGeneInformationStore = function(callback) {
  */
 dataController.prototype.getGeneInformation =  function(callback) {
   return this.internalController.getGeneInformation(callback);
+}
+
+dataController.prototype.getGeneSetInformationStore = function(callback) {
+  return this.internalController.getGeneSetInformationStore(callback);
 }
 
 /**

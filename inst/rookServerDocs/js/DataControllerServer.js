@@ -392,7 +392,7 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndex = function(g
 	    }
 
 	    var x = DataControllerServer.prototype.unpackCompressedBase64Float64Array(data.x);
-	    var i = DataControllerServer.prototype.npackCompressedBase64Int32Array(data.i);
+	    var i = DataControllerServer.prototype.unpackCompressedBase64Int32Array(data.i);
 	    var p = DataControllerServer.prototype.unpackCompressedBase64Int32Array(data.p);
 
 	    // This is a fix for the way R toJSON encodes one element arrays
@@ -627,26 +627,6 @@ DataControllerServer.prototype.getGeneSetInformationStore = function(callback) {
     });
 }
 
-
-/**
- * Get a custom extJS object of type LocalJsonStore
- * with the overdispersed genes. Return via callback
- */
-DataControllerServer.prototype.getOdGeneInformationStore = function(callback) {
-    $.ajax({
-	dataType: "json",
-	url:'getData.php?dataidentifier=odgeneinformation',
-	success: function(data) {
-	    var pagingStore = Ext.create('LocalJsonStore', {
-		autoLoad: true,
-		model: "geneTableEntry", // Use the same model as in gene table for themoment
-		pageSize: 100,
-		localData: data
-	    });
-	    callback(pagingStore);
-	}
-    });
-};
 
 /**
  * Get an ExtJS proxy object for connecting to the GeneTable.
