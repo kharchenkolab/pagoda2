@@ -156,8 +156,9 @@ dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd
  * @param callback callback function
  * @return a jQuery ajax request object
  */
-dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
-    function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback) {
+dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked = function(geneIds, cellIndexStart, cellIndexEnd,
+                                                                                 getCellNames, callback) {
+
       return this.internalController.getExpressionValuesSparseByCellIndexUnpacked(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
 }
 
@@ -172,7 +173,11 @@ dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked =
  * @return the jQuery ajax object
  */
 dataController.prototype.getExpressionValuesSparseByCellIndex = function(geneIds, cellIndexStart, cellIndexEnd, callback) {
-    return this.internalController.getExpressionValuesSparseByCellIndex(geneIds, cellIndexStart, cellIndexEnd, callback);
+    return this.internalController.getExpressionValuesSparseByCellIndexUnpacked(geneIds, cellIndexStart, cellIndexEnd, true,
+      function(data) {
+        callback(data.getFullMatrix());
+      }
+    );
 }
 
 /**

@@ -239,7 +239,6 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 
 	// Does the function return via callback, factored out to avoid duplication
 	function doReturn(data) {
-
 		// Unpack the data
 		var x = dataCntr.unpackCompressedBase64Float64Array(data.x);
 		var i = dataCntr.unpackCompressedBase64Int32Array(data.i);
@@ -320,99 +319,11 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 		dataCntr.cache.lastexpressionmatrix.data = data;
 
 		doReturn(data);
-	    }
+	 }
 	});
 
 	return ajaxRequest;
 } // function
-
-/**
- * Get part of the main expression matrix in sparse format
- * with the genes specified as an array of strings and the cells
- * specifies as start and end indeces on the default order
- * @geneIds array of cell indexes
- * @cellIndexStart start index for cells
- * @cellIndexEnd end index for cells
- * @callback callback function
- * @return the jQuery ajax object
- */
-DataControllerServer.prototype.getExpressionValuesSparseByCellIndex = function(geneIds, cellIndexStart, cellIndexEnd, callback) {
-
-    // Check input
-    if (!Array.isArray(geneIds)) {
-	    throw new Error("geneIds must be an array of strings");
-    }
-
-    if (!Number.isInteger(cellIndexStart)) {
-	    throw new Error("cellIndexStart must be an integer");
-    }
-
-    if (!Number.isInteger(cellIndexEnd)) {
-	    throw new Error("cellIndexEnd must be an interger");
-    }
-
-    // Setup the request data
-    var requestData = {
-    	"dataidentifier": "expressionmatrixsparsebyindexbinary",
-    	"geneids": geneIds,
-    	"cellindexstart": cellIndexStart,
-    	"cellindexend": cellIndexEnd,
-    	"getCellNames": true
-    };
-
-    var request = $.ajax({
-	type: "POST",
-	dataType: "json",
-	url: "getData.php?dataidentifier=expressionmatrixsparsebyindexbinary",
-	data: requestData,
-	success: function(data) {
-
-
-	    // Check if the returned data are valid
-	    if (typeof data !== 'object') {
-		throw new Error('Returned data is not of type object');
-	    }
-	    if (! data.hasOwnProperty('i') ){
-		throw new Error('data object does not have an i field');
-	    }
-	    if (! data.hasOwnProperty('p')) {
-		throw new Error('data object does not have a p field');
-	    }
-	    if (! data.hasOwnProperty('Dim')) {
-		throw new Error('data object does not have a Dim field');
-	    }
-	    if (! data.hasOwnProperty('Dimnames1')) {
-		throw new Error('data object does not have Dimnames1 field');
-	    }
-	    if (! data.hasOwnProperty('Dimnames2')){
-		throw new Error('data object does not have Dimnames2 field');
-	    }
-	    if (! data.hasOwnProperty('x')) {
-		throw new Error('data object does not have x field');
-	    }
-
-	    var x = DataControllerServer.prototype.unpackCompressedBase64Float64Array(data.x);
-	    var i = DataControllerServer.prototype.unpackCompressedBase64Int32Array(data.i);
-	    var p = DataControllerServer.prototype.unpackCompressedBase64Int32Array(data.p);
-
-	    // This is a fix for the way R toJSON encodes one element arrays
-	    if (typeof data.Dimnames1 === 'string') {
-		data.Dimnames1 = [ data.Dimnames1 ];
-	    }
-
-	    if (typeof data.Dimnames2 === 'string') {
-		data.Dimnames2 = [ data.Dimnames2 ]
-	    }
-
-
-	    //Convert to full matrix and return
-	    var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1, data.Dimnames2, x);
-	      callback(m.getFullMatrix());
-	    }
-    });
-
-    return request;
-}
 
 /**
  * Get the available embeddings for the data reduction type
