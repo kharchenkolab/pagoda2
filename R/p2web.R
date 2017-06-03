@@ -275,37 +275,8 @@ pagoda2WebApp <- setRefClass(
                                       # but only returns information for the genes that belong
                                       # to the specified geneset
                                       'genesetgeneinformation' = {
-
-                                          # FIXME: to work with genelistnames not
-                                          # gene names
-
-                                          geneListName <- URLdecode(requestArguments[['genesetname']]);
-
-                                          # TODO: Check that the specified gene set actually
-                                          # exists
-
-                                          # Get the genes in this geneset
-                                          geneList <- geneSets[[geneListName]]$genes
-
-                                          # Subset to genes that exist
-                                          geneList <- geneList[geneList %in% rownames(varinfo)];
-
-                                          # Generate dataset
-                                          dataset <-  varinfo[geneList, c("m","v")];
-                                          dataset$name <-  rownames(dataset);
-
-                                          # Convert to row format
-                                          retd <-  apply(dataset,
-                                                         1, function(x) {
-                                                             list(genename = x[["name"]],
-                                                                  dispersion =x[["v"]],
-                                                                  meanExpr = x[["m"]])
-                                                         });
-                                          retd <- unname(retd);
-
-
                                           response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(retd));
+                                          response$write(geneInformationJSON());
                                           return(response$finish());
 
                                       },
@@ -361,18 +332,16 @@ pagoda2WebApp <- setRefClass(
                                       # cell partitioning, this returns an hcluse object
                                       # as well as the number of cells in each cluster
                                       'reduceddendrogram' = {
-                                          h <- mainDendrogram$hc
-                                          l <- unclass(h)[c("merge", "height", "order","labels")];
-                                          l$clusterMemberCount <-  mainDendrogram$cluster.sizes;
-
                                           response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(l));
+                                          response$write(reducedDendrogramJSON());
                                           return(response$finish());
                                       },
 
                                       'cellorder' = {
+
+
                                           response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(mainDendrogram$cellorder));
+                                          response$write(cellOrderJSON());
                                           return(response$finish());
                                       },
                                       # This returns the full hierarchy -- deprecated
@@ -916,7 +885,66 @@ pagoda2WebApp <- setRefClass(
         # Logging function for console
         serverLog = function(message) {
             print(message);
-        }
+        },
+
+        reducedDendrogramJSON = function() {
+            h <- mainDendrogram$hc
+            l <- unclass(h)[c("merge", "height", "order","labels")];
+            l$clusterMemberCount <-  mainDendrogram$cluster.sizes;
+            return(toJSON(l));
+        },
+
+	      cellOrderJSON = function() {
+	        toJSON(mainDendrogram$cellorder);
+	      },
+
+		    availableAspectsJSON = function() {
+		      toJSON(rownames(pathways$xv));
+		    },
+
+		    cellmetadataJSON = function() {
+		      toJSON(cellmetadata);
+		    },
+
+		    geneInformationJSON = function() {
+		      dataset <- varinfo[,c("m","v")];
+		      dataset$name <- rownames(dataset);
+
+		      # Convert to row format
+		      retd <-  apply(dataset,
+		                     1, function(x) {
+		                       list(genename = x[["name"]],
+		                            dispersion =x[["v"]],
+		                            meanExpr = x[["m"]])
+		                     });
+		      retd <- unname(retd);
+
+		      toJSON(retd);
+		    },
+
+		    serialiseToDirectory = function(dir = null) {
+		      if (is.null(dir)) {
+		        stop('Please specify a directory');
+		      }
+
+		      # Simple save function for text data
+          writeDataToFile <- function(dir, filename, data) {
+             filename <- file.path(dir, filename);
+             conn <- file(filename);
+             writeChar(data, conn);
+             close(conn);
+          }
+
+          # Content that is delivered as JSON on Server backed up -- unchanged
+          writeDataToFile(dir, 'reduceddendrogram.json', reducedDendrogramJSON());
+          writeDataToFile(dir, 'cellorder.json', cellOrderJSON());
+          writeDataToFile(dir, 'cellmetadata.json', cellmetadataJSON());
+          writeDataToFile(dir, 'geneinformation.json', geneInformationJSON());
+
+          # TODO: Continue
+
+
+		    }
 
     ) # methods list
 ) # setRefClass
