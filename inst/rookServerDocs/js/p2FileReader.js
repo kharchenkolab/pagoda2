@@ -1,10 +1,4 @@
 "use strict";
-/*
- * Filename: p2FileReader.js
- * Author: Nikolaos Barkas
- * Date: June 2016
- */
-
 
 /**
  * Pagoda2 file local or remote reader
@@ -42,6 +36,11 @@ p2FileReader.prototype.readRange = function(start, end, callback) {
     this.internalReader.readRange(start,end, callback);
 }
 
+p2FileReader.prototype.readRangeAsText = function(start, end, callback) {
+    this.internalReader.readRangeAsText(start,end, callback);
+}
+
+
 /**
  * Pagoda2 remote file reader
  * @description implements remote file reading
@@ -52,8 +51,6 @@ function RemoteFileReader(opt_url) {
     // TODO: Check Browser Suport
     this.url = opt_url;
 }
-
-
 
 /**
  * Read range of specified file
@@ -75,6 +72,10 @@ RemoteFileReader.prototype.readRange = function(start, end, callback) {
     xhr.setRequestHeader('Range', bytesArg);
     xhr.responseType = "arraybuffer";
     xhr.send(null);
+}
+
+RemoteFileReader.prototype.readRangeAsText = function(start, end, callback) {
+    throw new Error('Not implemented');
 }
 
 
@@ -126,6 +127,18 @@ LocalFileReader.prototype.readRange = function(start, end, callback) {
     var blob = this.file.slice(start,end);
     reader.readAsArrayBuffer(blob);
 }
+
+LocalFileReader.prototype.readRangeAsText = function(start, end, callback) {
+    var reader = new FileReader();
+    reader.onloadend = function(evt) {
+	if(evt.target.readyState == FileReader.DONE) {
+	    callback(evt.target.result);
+	}
+    }
+    var blob = this.file.slice(start,end);
+    reader.readAsText(blob);
+}
+
 
 /**
  * Check if the browser supports access to files via the FileReader
@@ -317,6 +330,23 @@ p2FormatReader.prototype.getEntry = function(entryKey, callback, context) {
 
 }
 
+
+/**
+ *  Read a file entry as text data
+ */
+p2FormatReader.prototype.getEntryAsText = function(entryKey, callback, context) {
+    if (typeof context === 'undefined') { context = this; }
+
+    var entryIndexInfo = context.index[entryKey];
+    var start = context.dataOffset + entryIndexInfo.offset * context.blockSize;
+    var end = context.dataOffset + (entryIndexInfo.offset + entryIndexInfo.size) * context.blockSize;
+
+    context.filereader.readRangeAsText(start,end, function(data) {
+	    callback(data);
+    });
+
+}
+
 /**
  * Get the specified byte range from the indicated variable size block
  */
@@ -332,63 +362,3 @@ p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, end, callba
 	callback(data);
     });
 }
-
-
-
-//////////
-// DRiver Code
-
-var exec = function() {
-    console.log('Running..');
-
-    function handleFileSelect(evt) {
-	console.log('handle file select...');
-	var target = evt.target
-	// target.files is now a FileList
-
-	// we are only working with 1 file here
-	var file = target.files[0];
-	// we can use the cFile object to get the filename, size, last modified and type
-
-
-	// Example of Local Access
-	var fileReader = new p2FileReader('local', null, file);
-	var formatReader = new p2FormatReader(fileReader);
-	formatReader.onReady = function(context) {
-	    formatReader.getEntry('entry1', function(data) {
-		var a = new Uint8Array(data);
-		console.log(a)
-	    }, formatReader);
-	}
-	formatReader.readHeaderIndex();
-
-
-    }
-    document.getElementById('files').addEventListener('change', handleFileSelect, false);
-
-
-    // Example of remote access
-
-    var url = " http://pklab.med.harvard.edu/nikolas/p2demo.bin";
-    var rfr = new p2FileReader('remote',url);
-    var formatReader = new p2FormatReader(rfr);
-	formatReader.onReady = function(context) {
-	    formatReader.getBytesInEntry('entry3', 0, 1024, function(data) {
-		var a = new Uint8Array(data);
-		console.log(a)
-	    }, formatReader);
-	}
-	formatReader.readHeaderIndex();
-
-
-
-    rfr.readRange(0,8,function(d) {
-    	var a = new Uint8Array(d);
-    	console.log('Remote Data: ', a);
-    });
-
-
-}
-
-// Equivalent to onload in jQuery
-setTimeout(exec,0);

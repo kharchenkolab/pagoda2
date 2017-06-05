@@ -16,7 +16,7 @@
  * scripting security issues may arise). It can also cache requests.
  * @param repository this is the data source currently only remote is supported this can alternatively be a local
  */
-function dataController(repository) {
+function dataController(loadParams) {
     if (typeof dataController.instance === 'object') {
     	return dataController.instance;
     };
@@ -25,14 +25,26 @@ function dataController(repository) {
     this.defineExtJsObjects();
 
     // TODO: Make conditional on repository
-    this.internalController = new DataControllerServer();
+
+    this.internalController = null;
+
+    if (loadParams.connectionType == 'remoteServer') {
+      this.internalController = new DataControllerServer();
+    } else if (loadParams.connectionType == 'localFile') {
+      // TODO
+    } else if (loadParams.connectionType == 'remoteFile') {
+      this.internalController = new DataControllerFile(loadParams);
+    } else {
+      // Fatal error
+    }
 
     dataController.instance = this;
 };
 
 
 /**
- * Define extJS models and objects required by the data controller.
+ * Define extJS models and objects required by the data control;
+ler.
  * All data models that involve the data controller should
  * be defined here
  * @description called once during the singleton constructor
