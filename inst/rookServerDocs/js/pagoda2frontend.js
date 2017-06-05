@@ -62,17 +62,24 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
 
 function getLoadingParamsFromUser() {
 
-// For standard pagoda server backed
-//  return {
-//    connectionType: 'remoteServer'
-//  }
+  // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
 
-// 'remoteServer', 'remoteFile', or 'localFile',
+  var developmentMode = false;
 
-  return {
-    connectionType: 'remoteFile',
-    remoteFileUrl: 'http://pklab.med.harvard.edu/nikolas/p2demo.bin'
+  var params = null;
+  if (developmentMode) {
+    params = {
+      connectionType: 'remoteFile',
+      remoteFileUrl: 'http://pklab.med.harvard.edu/nikolas/p2demo.bin'
+    }
+  } else {
+   params = {
+      connectionType: 'remoteServer'
+   }
   }
+
+  return params;
+
 }
 
 ///////////////////////////////////////////////////////
