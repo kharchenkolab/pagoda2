@@ -23,9 +23,7 @@ DataControllerFile.prototype.getReducedDendrogram = function(callback) {
   // Assume format reader is ready here
   var fr = this.formatReader;
 
-  // Actually get dendrogram
   var fn = function() {
-
         fr.getEntryAsText('reduceddendrogram', function(text) {
       		// Find lenght of null terminated string
       		var dataLength;
@@ -39,6 +37,34 @@ DataControllerFile.prototype.getReducedDendrogram = function(callback) {
       		var textTrimmed = text.slice(0, dataLength);
       		callback(JSON.parse(textTrimmed));
 
+  	 }, fr);
+  }
+
+
+  // Call immediately or defer to when the object is ready
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
+}
+
+DataControllerFile.prototype.getCellOrder = function(callback) {
+  var fr = this.formatReader;
+
+  var fn = function() {
+        fr.getEntryAsText('cellorder', function(text) {
+      		// Find lenght of null terminated string
+      		var dataLength;
+      		for (dataLength = 0; dataLength < text.length; dataLength++) {
+      		    var c = text.slice(dataLength, dataLength + 1);
+      		    if (c.charCodeAt(0) === 0) {
+      		      // Found zero
+      			    break;
+      		    }
+      		}
+      		var textTrimmed = text.slice(0, dataLength);
+      		callback(JSON.parse(textTrimmed));
 
   	 }, fr);
   }
@@ -48,12 +74,8 @@ DataControllerFile.prototype.getReducedDendrogram = function(callback) {
   if (fr.state == fr.READY) {
     fn();
   } else {
-    fr.onReady = fn;
+    fr.addEventListener('onready',fn);
   }
-}
-
-DataControllerFile.prototype.getCellOrder = function(callback) {
-
 }
 
 DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
@@ -85,7 +107,32 @@ DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
 }
 
 DataControllerFile.prototype.getCellMetadata = function(callback) {
+  var fr = this.formatReader;
 
+  var fn = function() {
+        fr.getEntryAsText('cellmetadata', function(text) {
+      		// Find lenght of null terminated string
+      		var dataLength;
+      		for (dataLength = 0; dataLength < text.length; dataLength++) {
+      		    var c = text.slice(dataLength, dataLength + 1);
+      		    if (c.charCodeAt(0) === 0) {
+      		      // Found zero
+      			    break;
+      		    }
+      		}
+      		var textTrimmed = text.slice(0, dataLength);
+      		callback(JSON.parse(textTrimmed));
+
+  	 }, fr);
+  }
+
+
+  // Call immediately or defer to when the object is ready
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
 }
 
 DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
@@ -93,7 +140,45 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 }
 
 DataControllerFile.prototype.getGeneInformationStore = function(callback) {
+  var fr = this.formatReader;
 
+  var fn = function() {
+        fr.getEntryAsText('geneinformation', function(text) {
+
+      		// Find lenght of null terminated string
+      		var dataLength;
+      		for (dataLength = 0; dataLength < text.length; dataLength++) {
+      		    var c = text.slice(dataLength, dataLength + 1);
+      		    if (c.charCodeAt(0) === 0) {
+      		      // Found zero
+      			    break;
+      		    }
+      		}
+      		var textTrimmed = text.slice(0, dataLength);
+
+      		var data = JSON.parse(textTrimmed);
+
+      		var pagingStore = Ext.create('LocalJsonStore', {
+        		autoLoad: true,
+        		model: 'geneTableEntry',
+        		pageSize: 100,
+        		localData: data,
+    	    });
+    	    pagingStore.sort('dispersion', 'DESC');
+    	    callback(pagingStore);
+
+
+
+  	 }, fr);
+  }
+
+
+  // Call immediately or defer to when the object is ready
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
 }
 
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {

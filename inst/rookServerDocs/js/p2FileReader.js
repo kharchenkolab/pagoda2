@@ -132,9 +132,9 @@ LocalFileReader.prototype.readBlock = function(blockSize, blockNumber, callback)
 LocalFileReader.prototype.readRange = function(start, end, callback) {
     var reader = new FileReader();
     reader.onloadend = function(evt) {
-	if(evt.target.readyState == FileReader.DONE) {
-	    callback(evt.target.result);
-	}
+    	if(evt.target.readyState == FileReader.DONE) {
+    	    callback(evt.target.result);
+    	}
     }
     var blob = this.file.slice(start,end);
     reader.readAsArrayBuffer(blob);
@@ -143,9 +143,9 @@ LocalFileReader.prototype.readRange = function(start, end, callback) {
 LocalFileReader.prototype.readRangeAsText = function(start, end, callback) {
     var reader = new FileReader();
     reader.onloadend = function(evt) {
-	if(evt.target.readyState == FileReader.DONE) {
-	    callback(evt.target.result);
-	}
+    	if(evt.target.readyState == FileReader.DONE) {
+    	    callback(evt.target.result);
+    	}
     }
     var blob = this.file.slice(start,end);
     reader.readAsText(blob);
@@ -200,8 +200,36 @@ function p2FormatReader(opt_FileReader) {
 
     this.state = this.INITIALIZING;
 
-    this.onReady = null;
+    // Hash array of listeners
+    this.listeners = {};
 
+}
+
+p2FormatReader.prototype.dispatchEvent = function(eventName) {
+  if (Array.isArray(this.listeners[eventName])) {
+      var f = this.listeners[eventName].pop();
+      while(typeof f !== 'undefined') {
+        if (typeof f === 'function') {
+          f();
+        } else {
+          console.error('Non function event listener found');
+        }
+        f = this.listeners[eventName].pop();
+      }
+  }
+}
+
+p2FormatReader.prototype.addEventListener = function(eventName, fn) {
+  if (!Array.isArray(this.listeners[eventName])) {
+    // First listener for this event
+    this.listeners[eventName] = [];
+  }
+
+  this.listeners[eventName].push(fn);
+}
+
+p2FormatReader.prototype.removeEventListener = function(eventName, fn) {
+  // TODO
 }
 
 /**
@@ -327,6 +355,9 @@ p2FormatReader.prototype.readHeaderIndex = function() {
 	    context.state = context.READY; // Mark object as ready
 	    if (typeof context.onReady === 'function') { context.onReady(context) };
 
+      // Fire onready event
+	    context.dispatchEvent('onready');
+
 	    // DEBUG
 	    console.log('Index structure: ', context.index);
 	});
@@ -382,6 +413,6 @@ p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, end, callba
     var end = start + end;
 
     context.filereader.readRange(start,end, function(data) {
-	callback(data);
+	    callback(data);
     });
 }
