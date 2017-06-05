@@ -10,18 +10,20 @@
  * @constructor
  */
 function p2FileReader(opt_Type, opt_Url, opt_File) {
+    this.internalReader  = null;
+
     if (opt_Type === 'local') {
-	if (typeof opt_File === 'undefined') {
-	    throw new Error('p2FileReader type is local and file is undefined');
-	} else {
-	    this.internalReader = new LocalFileReader(opt_File);
-	}
+    	if (typeof opt_File === 'undefined') {
+    	    throw new Error('p2FileReader type is local and file is undefined');
+    	} else {
+    	    this.internalReader = new LocalFileReader(opt_File);
+    	}
     } else if ( opt_Type === 'remote' ) {
-	if (typeof url === 'undefined' || url === '') {
-	    this.internalReader = new RemoteFileReader(opt_Url);
-	}
+    	if (typeof url === 'undefined' || url === '') {
+    	    this.internalReader = new RemoteFileReader(opt_Url);
+    	}
     } else {
-	throw new Error('Unknown p2FileReader type: ', opt_Type);
+	    throw new Error('Unknown p2FileReader type: ', opt_Type);
     }
 }
 
@@ -36,10 +38,10 @@ p2FileReader.prototype.readRange = function(start, end, callback) {
     this.internalReader.readRange(start,end, callback);
 }
 
+
 p2FileReader.prototype.readRangeAsText = function(start, end, callback) {
     this.internalReader.readRangeAsText(start,end, callback);
 }
-
 
 /**
  * Pagoda2 remote file reader
@@ -62,9 +64,9 @@ function RemoteFileReader(opt_url) {
 RemoteFileReader.prototype.readRange = function(start, end, callback) {
     var xhr = new XMLHttpRequest;
     xhr.onreadystatechange = function(evt) {
-	if (xhr.readyState == XMLHttpRequest.DONE) {
-	    callback(evt.target.response);
-	}
+    	if (xhr.readyState == XMLHttpRequest.DONE) {
+    	    callback(evt.target.response);
+    	}
     }
 
     xhr.open('GET', this.url, true);
@@ -75,7 +77,18 @@ RemoteFileReader.prototype.readRange = function(start, end, callback) {
 }
 
 RemoteFileReader.prototype.readRangeAsText = function(start, end, callback) {
-    throw new Error('Not implemented');
+    var xhr = new XMLHttpRequest;
+    xhr.onreadystatechange = function(evt) {
+      if (xhr.readyState == XMLHttpRequest.DONE) {
+        callback(evt.target.response);
+      }
+    }
+
+    xhr.open('GET', this.url, true);
+    var bytesArg = "bytes=".concat(start,'-',end-1);
+    xhr.setRequestHeader('Range', bytesArg);
+    xhr.responseType = "text";
+    xhr.send(null);
 }
 
 
@@ -105,7 +118,6 @@ function LocalFileReader(opt_file) {
 LocalFileReader.prototype.readBlock = function(blockSize, blockNumber, callback) {
     var start = blockSize * blockNumber;
     var end = blockSize * (blockNumber + 1);
-    console.log(start, end);
     this.readRange(start, end, callback);
 }
 
@@ -152,7 +164,11 @@ LocalFileReader.prototype.checkBrowserSupport = function() {
 }
 
 
-///////////////////////
+//////////////////////////////////////////////
+// p2FormatReader
+//////////////////////////////////////////////
+
+
 
 /**
  * Low-level reader from the pagoda file format
@@ -255,57 +271,64 @@ p2FormatReader.prototype.readHeaderIndex = function() {
 	    var nIndexEntries = (context.indexSize) / INDEX_ENTRY_SIZE;
 
 	    if (nIndexEntries - Math.round(nIndexEntries) > 1e-16) {
-		throw new Error('Internal Error invalid number of index entries');
-	    }
+    	  throw new Error('Internal Error invalid number of index entries');
+    	 }
 
 
-	    for (var i = 0; i < nIndexEntries; i++) {
-		// Offset within the index data
-		var indexEntryOffset = i * INDEX_ENTRY_SIZE;
+    	 for (var i = 0; i < nIndexEntries; i++) {
+    		// Offset within the index data
+    		var indexEntryOffset = i * INDEX_ENTRY_SIZE;
 
-		const KEY_OFFSET = 0;
-		const KEY_SIZE = 128;
+    		const KEY_OFFSET = 0;
+    		const KEY_SIZE = 128;
 
-		var keyUint8Array = new Uint8Array(data.slice(KEY_OFFSET +  indexEntryOffset, KEY_OFFSET + KEY_SIZE + indexEntryOffset));
+    		var keyUint8Array = new Uint8Array(data.slice(KEY_OFFSET +  indexEntryOffset,
+    		            KEY_OFFSET + KEY_SIZE + indexEntryOffset));
 
-		// Find lenght of null terminated string
-		var keyLength = 0;
-		for (; keyLength < KEY_SIZE; keyLength++) {
-		    var c = new Uint8Array(data.slice(keyLength, keyLength + 1))[0];
-		    if (c === 0) break;
-		}
-
-		// Get just the key entry
-		var c_key = String.fromCharCode.apply(null, keyUint8Array.slice(0,keyLength));
-
-
-		// Read the size in  blocks
-		const OFFSET_SIZE_BLOCKS = 128;
-		const SIZE_SIZE_BLOCKS = 4;
-		var offsetUint32Array = new Uint32Array(data.slice(OFFSET_SIZE_BLOCKS + indexEntryOffset,
-								   OFFSET_SIZE_BLOCKS + SIZE_SIZE_BLOCKS + indexEntryOffset));
-		var c_size = offsetUint32Array[0];
-
-		// Read the offset
-		const OFFSET_OFFSET = 132; // offset of the offset field within the index entry
-		const OFFSET_SIZE = 4; // Uint32
-		var offsetUint32Array = new Uint32Array(data.slice(OFFSET_OFFSET + indexEntryOffset,
-								   OFFSET_OFFSET + OFFSET_SIZE + indexEntryOffset));
-		var c_offset = offsetUint32Array[0];
-
-		// TODO: Read the flags -- not currenly used
-		//const OFFSET_FLAGS ...
+        // Find length of null temrminated string
+    		var keyLength;
+    		for (keyLength = 0; keyLength < KEY_SIZE; keyLength++) {
+    		    var c = new Uint8Array(keyUint8Array.slice(keyLength, keyLength + 1));
+    		    if (c[0] === 0) {
+    		      // Found zero
+    			    break;
+    		    }
+    		}
 
 
-		// Add the index entry, offset is in blocks
-		context.index[c_key] = {'key': c_key, 'offset': c_offset, 'size': c_size};
+    		////
+
+    		// Get just the key entry
+    		var c_key = String.fromCharCode.apply(null, keyUint8Array.slice(0,keyLength));
+
+
+    		// Read the size in  blocks
+    		const OFFSET_SIZE_BLOCKS = 128;
+    		const SIZE_SIZE_BLOCKS = 4;
+    		var offsetUint32Array = new Uint32Array(data.slice(OFFSET_SIZE_BLOCKS + indexEntryOffset,
+    								   OFFSET_SIZE_BLOCKS + SIZE_SIZE_BLOCKS + indexEntryOffset));
+    		var c_size = offsetUint32Array[0];
+
+    		// Read the offset
+    		const OFFSET_OFFSET = 132; // offset of the offset field within the index entry
+    		const OFFSET_SIZE = 4; // Uint32
+    		var offsetUint32Array = new Uint32Array(data.slice(OFFSET_OFFSET + indexEntryOffset,
+    								   OFFSET_OFFSET + OFFSET_SIZE + indexEntryOffset));
+    		var c_offset = offsetUint32Array[0];
+
+    		// TODO: Read the flags -- not currenly used
+    		//const OFFSET_FLAGS ...
+
+
+    		// Add the index entry, offset is in blocks
+    		context.index[c_key] = {'key': c_key, 'offset': c_offset, 'size': c_size};
 	    }
 
 	    context.state = context.READY; // Mark object as ready
 	    if (typeof context.onReady === 'function') { context.onReady(context) };
 
 	    // DEBUG
-	    console.log(context.index);
+	    console.log('Index structure: ', context.index);
 	});
     });
 
@@ -325,7 +348,7 @@ p2FormatReader.prototype.getEntry = function(entryKey, callback, context) {
     var end = context.dataOffset + (entryIndexInfo.offset + entryIndexInfo.size) * context.blockSize;
 
     context.filereader.readRange(start,end, function(data) {
-	callback(data);
+	    callback(data);
     });
 
 }

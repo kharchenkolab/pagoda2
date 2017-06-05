@@ -60,16 +60,18 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
 
 }
 
-function getLoadingParamsFromUser() = {
+function getLoadingParamsFromUser() {
 
 // For standard pagoda server backed
 //  return {
-//    connectionType = 'remoteServer'
+//    connectionType: 'remoteServer'
 //  }
 
+// 'remoteServer', 'remoteFile', or 'localFile',
+
   return {
-    connectionType = 'remoteFile' // 'remoteServer', 'remoteFile', or 'localFile',
-    remoteFileUrl = 'http://pklab.med.harvard.edu/nikolas/p2demo.bin'
+    connectionType: 'remoteFile',
+    remoteFileUrl: 'http://pklab.med.harvard.edu/nikolas/p2demo.bin'
   }
 }
 
@@ -87,10 +89,7 @@ function initialise() {
 
       // Show dialog to user that allows selecting data source
       // alternatively this could be in p2Params in some configs
-      loadParams = getLoadingParamsFromUser();
-
-
-
+      var loadParams = getLoadingParamsFromUser();
       var dataCntr = new dataController(loadParams);
 
 

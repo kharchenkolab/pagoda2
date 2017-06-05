@@ -21,23 +21,26 @@ function dataController(loadParams) {
     	return dataController.instance;
     };
 
-    // Define global extJS objects
+    // Define global extJS objects (datatype etc)
     this.defineExtJsObjects();
 
-    // TODO: Make conditional on repository
-
+    // Initialise the controller that will serve the data
     this.internalController = null;
 
     if (loadParams.connectionType == 'remoteServer') {
+      // Standard Server Backed
       this.internalController = new DataControllerServer();
     } else if (loadParams.connectionType == 'localFile') {
-      // TODO
+      // Local file with user drag drop
+      throw new Error('localFile access not implemented')
     } else if (loadParams.connectionType == 'remoteFile') {
+      // Remote file url
       this.internalController = new DataControllerFile(loadParams);
     } else {
-      // Fatal error
+      throw new Error('Unknown connectionType')
     }
 
+    // Sigleton
     dataController.instance = this;
 };
 
