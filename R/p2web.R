@@ -965,7 +965,16 @@ pagoda2WebApp <- setRefClass(
             for (embed in names(embStructure[[reduc]])) {
               id <- embStructure[[reduc]][[embed]][[1]];
               filename <- paste0(id, '.json');
-              e <- toJSON(originalP2object$embeddings[[reduc]][[embed]])
+
+              a <- embeddings[[reduc]][[embed]];
+              ret <- list(
+                values = .self$packCompressFloat64Array(as.vector(a)),
+                dim =  dim(a),
+                rownames = rownames(a),
+                colnames = colnames(a)
+              );
+              e <- toJSON(ret);
+
               writeDataToFile(dir, filename, e);
             }
           }
