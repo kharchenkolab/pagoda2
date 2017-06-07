@@ -25,6 +25,9 @@ function heatmapViewer() {
     	heatView.drawHeatmap();
     };
 
+    // How to show missing values
+    this.missingDisplay = 'mean';
+
     // Keep track of what selection we are showing so
     // we can persist accross redraws
     this.currentOverlaySelectionName = null;
@@ -157,27 +160,67 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
  */
 heatmapViewer.prototype.generateMenu = function() {
   var toolbar = Ext.create('Ext.Toolbar');
-var heatView = this;
+  var heatView = this;
 
-var paletteMenu = this.generatePalettesMenu();
+  var paletteMenu = this.generatePalettesMenu();
+
+  // Menu for displaying missing values
+  var missingValueChangeHandler = function(item) {
+     var heatView = new heatmapViewer();
+     heatView.setMissingDisplay(item.value);
+     heatView.drawHeatmap();
+  }
+  var missingValueDisplayMenu = Ext.create('Ext.menu.Menu', {
+    id: 'missingValueDisplayMenu',
+    items: [{
+      text: 'Mean',
+      value: 'mean',
+      handler: missingValueChangeHandler
+    },
+    {
+      text: 'Min',
+      value: 'min',
+      handler: missingValueChangeHandler
+    },
+    {
+      text: 'White',
+      value: 'white',
+      handler: missingValueChangeHandler
+    },
+    {
+      text: 'Grey',
+      value: 'grey',
+      handler: missingValueChangeHandler
+    },
+    {
+      text: 'Black',
+      value: 'black',
+      handler: missingValueChangeHandler
+    }
+    ]
+  })
 
  var heatmapSettingsMenu = Ext.create('Ext.menu.Menu', {
 	id: 'heatmapSettingsMenu',
 	items: [
 	    {
-		text: 'Palette Name',
-		menu: paletteMenu
+    		text: 'Palette Name',
+    		menu: paletteMenu
 	    },
 	    {
-		fieldLabel: 'Palette Levels',
-		id: 'paletteLevelsField',
-		xtype: 'numberfield',
-		tooltip: 'Number of colors for the palette',
-		value: p2globalParams.heatmapViewer.defaultPaletteLevels, // FIXME
-		disabled: false,
-		maxValue: heatView.palManager.getMaxNumberOfColors(),
-		minValue: heatView.palManager.getMinNumberOfColors(),
-		listeners: {
+	      text: 'Show missing as',
+	      menu: missingValueDisplayMenu
+	    },
+	    {
+    		fieldLabel: 'Palette Levels',
+    		id: 'paletteLevelsField',
+    		xtype: 'numberfield',
+    		tooltip: 'Number of colors for the palette',
+    		value: p2globalParams.heatmapViewer.defaultPaletteLevels, // FIXME
+    		disabled: false,
+    		maxValue: heatView.palManager.getMaxNumberOfColors(),
+    		minValue: heatView.palManager.getMinNumberOfColors(),
+    		listeners: {
 		    change: {buffer: 800, fn: function(f,v) {
       			var heatView = new heatmapViewer();
       			heatView.palManager.setNumberOfColors(v);
@@ -941,6 +984,11 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   }); // get the cell order
 }
 
+heatmapViewer.prototype.setMissingDisplay = function(value) {
+  this.missingDisplay = value;
+
+}
+
 /**
  * Internal function for drawing the heatmap using the sparse matrix directly
  * @description assumes that the displayGenes in is not empty
@@ -1019,8 +1067,18 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	var palSize = heatView.palManager.getNumberOfColors();
 	var pal = heatView.palManager.getPaletteColors();
 
-	// Plot background
-	ctx.fillStyle = pal[Math.floor(palSize/2)];
+	// Plot background according the missing value setting
+	if (heatView.missingDisplay == 'mean') {
+	  ctx.fillStyle = pal[Math.floor(palSize/2)];
+	} else if (heatView.missingDisplay == 'white') {
+	  ctx.fillStyle = 'white';
+	} else if (heatView.missingDisplay == 'black') {
+	  ctx.fillStyle = 'black';
+	} else if (heatView.missingDisplay == 'grey') {
+	  ctx.fillStyle = '#666666';
+	} else if (heatView.missingDisplay == 'min') {
+	  ctx.fillStyle = pal[0];
+	}
 	ctx.fillRect(left,top,heatmapWidth,actualPlotHeight);
 
 	for ( var j = 0; j < data.p.length - 1; j++) {
