@@ -17,8 +17,9 @@ function DataControllerFile(loadParams) {
   this.formatReader.onReady = function() { console.log('On ready fired'); }
   this.formatReader.readHeaderIndex();
 
-}
+  this.embeddingStructure = null;
 
+}
 
 
 DataControllerFile.prototype.getReducedDendrogram = function(callback) {
@@ -121,6 +122,60 @@ DataControllerFile.prototype.getGeneInformationStore = function(callback) {
   }
 }
 
+DataControllerFile.prototype.getEmbeddingStructure = function(callback) {
+  var fr = this.formatReader;
+
+  var fn = function() {
+        fr.getEntryAsText('embeddingstructure', function(text) {
+      		var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+
+      		var textTrimmed = text.slice(0, dataLength);
+      		callback(JSON.parse(textTrimmed));
+
+  	 }, fr);
+  }
+
+
+  // Call immediately or defer to when the object is ready
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
+}
+
+
+/**
+ * Loads the embedding structure that provides information
+ * about the reduction and embedding hierarchy
+ */
+DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
+  this.getEmbeddingStructure(function(data) {
+    var ret = [];
+    for(i in data) {
+      ret.push(i);
+    }
+    callback(ret);
+  });
+}
+
+DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callback) {
+
+}
+
+DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, callbackParams) {
+  this.getEmbeddingStructure(function(data) {
+    var ret = [];
+    for(i in data[type]) {
+      ret.push(i);
+    }
+    callback(ret);
+  });
+}
+
+
+
+
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
 
 }
@@ -155,17 +210,7 @@ DataControllerFile.prototype.getExpressionValuesByCellIndexUnpacked = function(g
                                                                                getCellNames, callback) {
 }
 
-DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, callbackParams) {
 
-}
-
-DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callback) {
-
-}
-
-DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
-
-}
 
 /**
  * Helper function that returns the length of a null terminated string
