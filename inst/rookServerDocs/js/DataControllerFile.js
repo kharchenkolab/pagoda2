@@ -19,17 +19,7 @@ function DataControllerFile(loadParams) {
 
 }
 
-DataControllerFile.prototype.getNullTerminatedStringLength = function(text) {
-  		var dataLength;
-  		for (dataLength = 0; dataLength < text.length; dataLength++) {
-  		    var c = text.slice(dataLength, dataLength + 1);
-  		    if (c.charCodeAt(0) === 0) {
-  		      // Found zero
-  			    break;
-  		    }
-  		}
-  		return dataLength;
-}
+
 
 DataControllerFile.prototype.getReducedDendrogram = function(callback) {
   // Assume format reader is ready here
@@ -175,4 +165,18 @@ DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callba
 
 DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
 
+}
+
+/**
+ * Helper function that returns the length of a null terminated string
+ */
+DataControllerFile.prototype.getNullTerminatedStringLength = function(text) {
+  		var dataLength = 0;
+  		var textLength = text.length;
+  		for (; dataLength < textLength; dataLength++) {
+  		    if (text.charCodeAt(dataLength) === 0) {
+  			    break;
+  		    }
+  		}
+  		return dataLength;
 }
