@@ -26,6 +26,8 @@
 #include "methodfactory.h"
 #include "spacefactory.h"
 #include "ztimer.h"
+#include "lshkit.h"
+
 
 using namespace std;
 using namespace Rcpp;
