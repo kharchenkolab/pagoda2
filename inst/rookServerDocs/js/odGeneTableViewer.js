@@ -1,6 +1,7 @@
+"use strict";
 
 /**
- * Responsible for handling the overdispersed 
+ * Responsible for handling the overdispersed
  * gene table creation and any required updates. Singtenton
  * @constructor
  */
@@ -12,7 +13,7 @@ function odGeneTableViewer() {
     console.log('Initializing odGeneTableViewer...');
 
     this.generateTable();
-    
+
     odGeneTableViewer.instance = this;
 }
 
@@ -36,7 +37,7 @@ odGeneTableViewer.prototype.generateTable = function() {
 		{ text: 'Name', dataIndex: 'genename', width: '60%',
 		  // Custom render for links of gene names
 		  renderer: function(value) {
-		      return Ext.String.format('<a href="http://www.informatics.jax.org/searchtool/' + 
+		      return Ext.String.format('<a href="http://www.informatics.jax.org/searchtool/' +
 					       'Search.do?query={0}" target="_blank">{1}</a>',value,value)
 		  },
 		},
@@ -52,7 +53,7 @@ odGeneTableViewer.prototype.generateTable = function() {
 		    var selectedItems = selected.getSelected();
 		    selectedItems.each(function(item,index,length){
 			selectedGeneNames.push(item.data.genename);
-		    });		    
+		    });
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames, 'Current Selected Genes');
 		}
@@ -95,7 +96,7 @@ odGeneTableViewer.prototype.generateTable = function() {
 			} // handler
 		    }, //button item
 		    {
-			xtype: 'tbseparator' 
+			xtype: 'tbseparator'
 		    },
 		]
 	    }) //tbar

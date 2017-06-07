@@ -8,7 +8,7 @@
 #' @import igraph
 #' @importFrom irlba irlba
 #' @import pcaMethods
-#' @importFrom mgcv gam s
+#' @importFrom mgcv gam
 #' @importFrom parallel mclapply
 # @importFrom scde pagoda.reduce.loading.redundancy pagoda.reduce.redundancy
 #' @importFrom RMTstat WishartMaxPar
@@ -191,9 +191,13 @@ Pagoda2 <- setRefClass(
       } else {
         if(verbose) cat(" using gam ")
         require(mgcv)
+<<<<<<< HEAD
         formul <- as.formula(v~s(m,k=gam.k))
         environment(formul) <- asNamespace("mgcv")
         m <- mgcv::gam(formula=formul, data = df[vi,])
+=======
+        m <- mgcv::gam(v ~ s(m, k = gam.k), data = df[vi,])
+>>>>>>> hms-dbmi/master
       }
       df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
       n.obs <- df$nobs; #diff(counts@p)

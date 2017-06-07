@@ -1,5 +1,9 @@
 # Overview of pagoda 2
 
+# Demo Web Application
+http://pklab.med.harvard.edu/pagoda2apps/demo_app/custom/demo/index.html
+(Requires latest firefox)
+
 # Installation Instructions
 
 Installation of pagoda2 requires installation of the Non-metric space library (nmslib)
@@ -46,6 +50,9 @@ Install pagoda2
 $ export NMSLIB_PATH=/path/to/nmslib-1.5.3/
 # Start R
 $ R
+# Install Bioconductor dependencies
+> source("http://bioconductor.org/biocLite.R")
+> biocLite(c("GO.db", "org.Hs.eg.db"), suppressUpdates=TRUE)
 # Install pagoda
 > library(devtools)
 > install_github("hms-dbmi/pagoda2")

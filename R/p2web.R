@@ -215,30 +215,6 @@ pagoda2WebApp <- setRefClass(
                        return(response$finish());
                    },
 
-                  #  # Get the pagoda frontend javascript
-                  #  # In production this can be static or cached
-                  #  # It should also be minified
-                  # '/js/pagoda2frontend.js' = {
-                  #      response$header('Content-Type', 'application/javascript');
-                  #      response$write(readStaticFile('/js/pagoda2frontend.js'));
-                  #      return(response$finish());
-                  #  },
-
-                   # This CSS is not handled like the rest
-                   # We deliver it manually so that we can set the cache expiration
-                   # '/css/pagodaMain.css' = {
-                   #     response$header('Content-Type', 'text/css; charset=utf-8');
-                   #
-                   #     # Don't cache
-                   #     response$header('Cache-control', 'no-cache,must-revalidate');
-                   #     response$header('Expires', 'Tue, 24 Jan 2017 00:00:00 GMT');
-                   #
-                   #
-                   #     response$write(readStaticFile('/css/pagodaMain.css'));
-                   #     return(response$finish());
-                   # },
-
-
 
                    ### Dynamic Request Handling
 
@@ -299,37 +275,8 @@ pagoda2WebApp <- setRefClass(
                                       # but only returns information for the genes that belong
                                       # to the specified geneset
                                       'genesetgeneinformation' = {
-
-                                          # FIXME: to work with genelistnames not
-                                          # gene names
-
-                                          geneListName <- requestArguments[['genesetname']];
-
-                                          # TODO: Check that the specified gene set actually
-                                          # exists
-
-                                          # Get the genes in this geneset
-                                          geneList <- geneSets[[geneListName]]$genes
-
-                                          # Subset to genes that exist
-                                          geneList <- geneList[geneList %in% rownames(varinfo)];
-
-                                          # Generate dataset
-                                          dataset <-  varinfo[geneList, c("m","v")];
-                                          dataset$name <-  rownames(dataset);
-
-                                          # Convert to row format
-                                          retd <-  apply(dataset,
-                                                         1, function(x) {
-                                                             list(genename = x[["name"]],
-                                                                  dispersion =x[["v"]],
-                                                                  meanExpr = x[["m"]])
-                                                         });
-                                          retd <- unname(retd);
-
-
                                           response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(retd));
+                                          response$write(geneInformationJSON());
                                           return(response$finish());
 
                                       },
@@ -344,10 +291,6 @@ pagoda2WebApp <- setRefClass(
                                           return(response$finish());
                                       },
 
-                                      # Get the genes in a gene set
-                                      'geneset' = {
-                                          # TODO
-                                      },
 
                                       'availableaspects' = {
                                         # /getData.php?dataidentifier=availableaspects
@@ -384,26 +327,21 @@ pagoda2WebApp <- setRefClass(
                                           return(response$finish());
                                       },
 
-                                      'genesinaspectgeneset' = {
-
-                                      },
 
                                       # Request for reduced dendrogram, down to some
                                       # cell partitioning, this returns an hcluse object
                                       # as well as the number of cells in each cluster
                                       'reduceddendrogram' = {
-                                          h <- mainDendrogram$hc
-                                          l <- unclass(h)[c("merge", "height", "order","labels")];
-                                          l$clusterMemberCount <-  mainDendrogram$cluster.sizes;
-
                                           response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(l));
+                                          response$write(reducedDendrogramJSON());
                                           return(response$finish());
                                       },
 
                                       'cellorder' = {
+
+
                                           response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(mainDendrogram$cellorder));
+                                          response$write(cellOrderJSON());
                                           return(response$finish());
                                       },
                                       # This returns the full hierarchy -- deprecated
@@ -441,9 +379,9 @@ pagoda2WebApp <- setRefClass(
 
                                         postArgs <- request$POST();
 
-                                        aspectIds <- postArgs[['aspectids']];
-                                        cellIndexStart <- postArgs[['cellindexstart']];
-                                        cellIndexEnd <- postArgs[['cellindexend']];
+                                        aspectIds <- URLdecode(postArgs[['aspectids']]);
+                                        cellIndexStart <- URLdecode(postArgs[['cellindexstart']]);
+                                        cellIndexEnd <- URLdecode(postArgs[['cellindexend']]);
 
                                         cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
                                         matrixToSend <- pathways$xv[aspectIds,cellIndices,drop=F];
@@ -480,19 +418,15 @@ pagoda2WebApp <- setRefClass(
 
                                         return(response$finish());
 
-
-
-
-
                                         },
 
                                       'aspectmatrixsparsebyindexbinary' = {
 
                                           postArgs <- request$GET();
 
-                                          cellIndexStart <- postArgs[['cellindexstart']];
-                                          cellIndexEnd <- postArgs[['cellindexend']];
-                                          getCellNames <- postArgs[['getcellnames']];
+                                          cellIndexStart <- URLdecode(postArgs[['cellindexstart']]);
+                                          cellIndexEnd <- URLdecode(postArgs[['cellindexend']]);
+                                          getCellNames <- URLdecode(postArgs[['getcellnames']]);
 
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
                                           matrixToSend <- pathways$xv[,cellIndices,drop=F];
@@ -535,10 +469,10 @@ pagoda2WebApp <- setRefClass(
                                       'expressionmatrixsparsebyindexbinary' = {
                                           postArgs <- request$POST();
 
-                                          geneIdentifiers <- postArgs[['geneids']];
-                                          cellIndexStart <- postArgs[['cellindexstart']];
-                                          cellIndexEnd <- postArgs[['cellindexend']];
-                                          getCellNames <- postArgs[['getCellNames']];
+                                          geneIdentifiers <- (postArgs[['geneids']]); # DONT decode it's an array
+                                          cellIndexStart <- URLdecode(postArgs[['cellindexstart']]);
+                                          cellIndexEnd <- URLdecode(postArgs[['cellindexend']]);
+                                          getCellNames <- URLdecode(postArgs[['getCellNames']]);
 
 
 
@@ -592,7 +526,7 @@ pagoda2WebApp <- setRefClass(
                                       # GET Arguments accepted
                                       # type -- the reduction type (e.g. mat, odgenes, PCA)
                                       'availableclusterings' = {
-                                          reductionname <- requestArguments[['type']];
+                                          reductionname <- URLdecode(requestArguments[['type']]);
 
                                           if (!is.null(reductionname) &&
                                               reductionname %in% c("mat", names(reductions))) {
@@ -629,7 +563,7 @@ pagoda2WebApp <- setRefClass(
                                       #                  if rows or columns that do not exist have
                                       #                  been specified
                                       'reduction' = {
-                                           reductionname <- requestArguments[['type']];
+                                           reductionname <- URLdecode(requestArguments[['type']]);
 
                                            # Is the requested reduction available?
                                            if (!is.null(reductionname) &&
@@ -691,7 +625,7 @@ pagoda2WebApp <- setRefClass(
                                       #         from the 'availablereductiontypes' call
                                       'availableembeddings' = {
 
-                                          type <- requestArguments[['type']];
+                                          type <- URLdecode(requestArguments[['type']]);
 
                                           if (!is.null(type)) {
                                               if( type %in% c( names(embeddings), "mat") ) {
@@ -721,14 +655,14 @@ pagoda2WebApp <- setRefClass(
                                       #                  values for this parameter are returned
                                       #                  by doing an 'availableembeddings' request
                                       'embedding' = {
-                                          type <- requestArguments[['type']];
+                                          type <- URLdecode(requestArguments[['type']]);
 
                                           if (!is.null(type)) {
                                               if ( type %in% c( names(embeddings), "mat") ) {
                                                   response$header('Content-type', "application/javascript");
 
                                                   # Which embedding?
-                                                  embeddingType <- requestArguments[['embeddingtype']];
+                                                  embeddingType <- URLdecode(requestArguments[['embeddingtype']]);
 
                                                   if ( (!is.null(embeddingType)) &&
                                                        embeddingType %in% names(embeddings[[type]]) ) {
@@ -792,7 +726,7 @@ pagoda2WebApp <- setRefClass(
 
 
                       requestArguments <- request$GET();
-                      compIdentifier <- requestArguments[['compidentifier']];
+                      compIdentifier <- URLdecode(requestArguments[['compidentifier']]);
 
                       if (!is.null(compIdentifier)) {
                         switch(compIdentifier,
@@ -801,9 +735,7 @@ pagoda2WebApp <- setRefClass(
 
                                  postArguments <- request$POST();
 
-                                 selAarg <- postArguments[['selectionA']];
-
-                                 selectionA <- fromJSON(selAarg);
+                                 selectionA <- fromJSON(URLdecode(postArguments[['selectionA']]));
 
                                  # TODO: check that the originalP2object field is populated, as this is optional
 
@@ -849,8 +781,8 @@ pagoda2WebApp <- setRefClass(
                                     selAarg <- postArguments[['selectionA']];
                                     selBarg <- postArguments[['selectionB']];
 
-                                    selectionA <- fromJSON(selAarg);
-                                    selectionB <- fromJSON(selBarg);
+                                    selectionA <- fromJSON(URLdecode(selAarg));
+                                    selectionB <- fromJSON(URLdecode(selBarg));
 
                                     # TODO: check that the originalP2object field is populated, as this is optional
 
@@ -953,7 +885,66 @@ pagoda2WebApp <- setRefClass(
         # Logging function for console
         serverLog = function(message) {
             print(message);
-        }
+        },
+
+        reducedDendrogramJSON = function() {
+            h <- mainDendrogram$hc
+            l <- unclass(h)[c("merge", "height", "order","labels")];
+            l$clusterMemberCount <-  mainDendrogram$cluster.sizes;
+            return(toJSON(l));
+        },
+
+	      cellOrderJSON = function() {
+	        toJSON(mainDendrogram$cellorder);
+	      },
+
+		    availableAspectsJSON = function() {
+		      toJSON(rownames(pathways$xv));
+		    },
+
+		    cellmetadataJSON = function() {
+		      toJSON(cellmetadata);
+		    },
+
+		    geneInformationJSON = function() {
+		      dataset <- varinfo[,c("m","v")];
+		      dataset$name <- rownames(dataset);
+
+		      # Convert to row format
+		      retd <-  apply(dataset,
+		                     1, function(x) {
+		                       list(genename = x[["name"]],
+		                            dispersion =x[["v"]],
+		                            meanExpr = x[["m"]])
+		                     });
+		      retd <- unname(retd);
+
+		      toJSON(retd);
+		    },
+
+		    serialiseToDirectory = function(dir = null) {
+		      if (is.null(dir)) {
+		        stop('Please specify a directory');
+		      }
+
+		      # Simple save function for text data
+          writeDataToFile <- function(dir, filename, data) {
+             filename <- file.path(dir, filename);
+             conn <- file(filename);
+             writeChar(data, conn);
+             close(conn);
+          }
+
+          # Content that is delivered as JSON on Server backed up -- unchanged
+          writeDataToFile(dir, 'reduceddendrogram.json', reducedDendrogramJSON());
+          writeDataToFile(dir, 'cellorder.json', cellOrderJSON());
+          writeDataToFile(dir, 'cellmetadata.json', cellmetadataJSON());
+          writeDataToFile(dir, 'geneinformation.json', geneInformationJSON());
+
+          # TODO: Continue
+
+
+		    }
 
     ) # methods list
 ) # setRefClass

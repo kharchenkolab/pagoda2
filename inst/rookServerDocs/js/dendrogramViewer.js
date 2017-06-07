@@ -1155,7 +1155,7 @@ dendrogramViewer.prototype.setupListeners = function() {
 
 		    var selectedCellIdentifiers = new Array();
 		    dataCntr.getCellOrder(function(cellorder) {
-			for (i = 0; i < descendants.length; i++) {
+			for (var i = 0; i < descendants.length; i++) {
 			    var currDesc = descendants[i];
 			    var currPos = clusterPositions[currDesc];
 			    var cellsInCluster = cellorder.slice(currPos[0] - 1, currPos[1] - 1 );

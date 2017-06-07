@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: eventBus.js
  * Author: Nikolas Barkas
@@ -13,9 +15,9 @@
  * @example
      // Example usage
      var evtBus = new eventBus();
-     
+
      // Register an event handler
-     evtBus.register("customEventIdentifier", 
+     evtBus.register("customEventIdentifier",
                      {info: "Some information From Registration Time"},
 		     function(event, params) {
 		           // Registation information in e.data
@@ -61,12 +63,12 @@ eventBus.prototype.publish = function(event, params) {
  *
  *    genetable-item-selected
  *    genetable-item-deselected
- * 
+ *
  *    pathwaytable-item-selected
  *    pathwaytable-item-deselected
  *
  *    dendrogram-node-click
- * 
+ *
  *    cell-selection-updated
  *    cell-selection-cleared
  *

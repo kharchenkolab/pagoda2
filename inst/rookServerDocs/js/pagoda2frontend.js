@@ -1,3 +1,5 @@
+"use strict";
+
 /*
  * Filename: pagoda2frontend.js
  * Author: Nikolas Barkas
@@ -58,6 +60,28 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
 
 }
 
+function getLoadingParamsFromUser() {
+
+  // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
+
+  var developmentMode = false;
+
+  var params = null;
+  if (developmentMode) {
+    params = {
+      connectionType: 'remoteFile',
+      remoteFileUrl: 'http://pklab.med.harvard.edu/nikolas/p2demo.bin'
+    }
+  } else {
+   params = {
+      connectionType: 'remoteServer'
+   }
+  }
+
+  return params;
+
+}
+
 ///////////////////////////////////////////////////////
 
 /**
@@ -70,8 +94,14 @@ function initialise() {
       // Generate the overall layout
       generateExtJsLayout();
 
+      // Show dialog to user that allows selecting data source
+      // alternatively this could be in p2Params in some configs
+      var loadParams = getLoadingParamsFromUser();
+      var dataCntr = new dataController(loadParams);
+
+
       // Initialize internal components
-      var dataCntr = new dataController('remote');
+
 
       // Calculation controllers are init from a factory that is singleton
       var calcCntr = new calculationController(true, true);// Both local and remote
@@ -91,7 +121,7 @@ function initialise() {
       document.title = p2globalParams.generalParams.applicationName;
 
       // Initialize page components
-      embView = new embeddingViewer();
+      var embView = new embeddingViewer();
       // Load the default embedding
       embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
   			  p2globalParams.embedding.defaultEmbedding.embedding);

@@ -70,7 +70,7 @@ cellSelectionController.prototype.raiseSelectionChangedEvent = function() {
  */
 cellSelectionController.prototype.getAvailableSelections = function() {
     var names = [];
-    for (sel in this.selections) {
+    for (var sel in this.selections) {
 	names.push(this.selections[sel].name);
     }
 

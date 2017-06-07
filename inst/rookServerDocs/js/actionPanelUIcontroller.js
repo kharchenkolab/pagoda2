@@ -375,7 +375,7 @@ actionPanelUIcontroller.prototype.syncCellSelectionStore = function() {
     var cellSelCntr =  new cellSelectionController();
     var availSelections = cellSelCntr.getAvailableSelections();
 
-    for (sel in availSelections) {
+    for (var sel in availSelections) {
     	var selName = availSelections[sel];
     	var selDisplayName =  cellSelCntr.getSelectionDisplayName(selName);
 
