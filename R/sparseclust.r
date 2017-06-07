@@ -8,7 +8,7 @@
 #' @import igraph
 #' @importFrom irlba irlba
 #' @import pcaMethods
-#' @importFrom mgcv gam
+#' @importFrom mgcv gam s
 #' @importFrom parallel mclapply
 # @importFrom scde pagoda.reduce.loading.redundancy pagoda.reduce.redundancy
 #' @importFrom RMTstat WishartMaxPar
@@ -23,7 +23,7 @@ Pagoda2 <- setRefClass(
   "Pagoda2",
   fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes','pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat'),
   methods = list(
-    initialize=function(x, ..., modelType='plain',batchNorm='glm',n.cores=30,verbose=TRUE,min.cells.per.gene=30,trim=round(min.cells.per.gene/2),lib.sizes=NULL,log.scale=FALSE) {
+    initialize=function(x, ..., modelType='plain',batchNorm='glm',n.cores=parallel::detectCores(),verbose=TRUE,min.cells.per.gene=30,trim=round(min.cells.per.gene/2),lib.sizes=NULL,log.scale=FALSE) {
       # # init all the output lists
       embeddings <<- list();
       graphs <<- list();
@@ -191,7 +191,11 @@ Pagoda2 <- setRefClass(
       } else {
         if(verbose) cat(" using gam ")
         require(mgcv)
-        m <- mgcv::gam(v ~ s(m, k = gam.k), data = df[vi,])
+        formul <- as.formula(v~s(m,k=gam.k))
+        eformul <- new.env(parent=as.environment("package:mgcv"))
+        assign("gam.k",gam.k,envir=eformul)
+        environment(formul) <- eformul
+        m <- mgcv::gam(formula=formul, data = df[vi,])
       }
       df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
       n.obs <- df$nobs; #diff(counts@p)

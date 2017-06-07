@@ -548,4 +548,3 @@ DataFrame hnswKnn3test(NumericMatrix m, int k=5, int multiplex=1, int nqueries=1
                            _["e"] = endV,
                            _["d"] = distV);
 }
-
