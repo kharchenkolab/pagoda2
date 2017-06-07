@@ -191,7 +191,11 @@ Pagoda2 <- setRefClass(
       } else {
         if(verbose) cat(" using gam ")
         require(mgcv)
-        m <- mgcv::gam(v ~ s(m, k = gam.k), data = df[vi,])
+        formul <- as.formula(v~s(m,k=gam.k))
+        eformul <- new.env(parent=as.environment("package:mgcv"))
+        assign("gam.k",gam.k,envir=eformul)
+        environment(formul) <- eformul
+        m <- mgcv::gam(formula=formul,data=df[vi,])
       }
       df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
       n.obs <- df$nobs; #diff(counts@p)
