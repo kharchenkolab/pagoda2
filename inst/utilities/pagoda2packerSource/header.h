@@ -69,7 +69,7 @@ string readWholeFile(string filename);
 void make_file_from_payload(list<entry> &entries, string &filename);
 
 template <typename T> inline T intDivRoundUP(T a, T b) {
-  return(a + b -1) /b;
+return(a + b -1) /b;
 }
 
 #endif

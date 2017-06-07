@@ -15,7 +15,7 @@ int main( int argc, char *argv[] ) {
   make_file(indir, outfile);
 
   return 0;
-
+  
 }
 
 void make_dummy_file() {
@@ -24,13 +24,13 @@ void make_dummy_file() {
   ///////////////////////////////////////////////////////////
   // HEADER
   //////////////////////////////////////////////////////////
-
+  
   // Generate a header
   struct fileHeader header;
 
   // Clear the memory to avoid confusion
   memset(&header, 0, sizeof(header));
-
+  
   strcpy(header.identifier, "pagoda2datafile");
   header.versionMajor = 1;
   header.versionMinor = 0;
@@ -45,9 +45,9 @@ void make_dummy_file() {
   // Generating dummy entries
   //////////////////////////////////////////////////////////
 
-
+  
   list<entry> entries;
-
+  
   struct entry e1;
   memset(&e1, 0, sizeof(entry));
   strcpy(e1.key, "entry1");
@@ -56,7 +56,7 @@ void make_dummy_file() {
   e1.size = 100; // bytes
   e1.blockSize = 1;
   entries.push_back(e1);
-
+  
   struct entry e2;
   memset(&e2, 0, sizeof(entry));
   strcpy(e2.key, "entry2");
@@ -90,11 +90,11 @@ void make_dummy_file() {
   uint32_t curOffset = 0; // in blocks
   for(list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator) {
     struct indexEntry ie;
-
+    
     memcpy(ie.key, iterator->key, 128);
 
     ie.sizeBlocks = iterator-> blockSize;
-
+      
     // Update the offset
     ie.offset = curOffset;
 
@@ -133,7 +133,7 @@ void make_dummy_file() {
 
     memset(entry,  0, s); // fill with 0s
     memcpy(entry, (const char*) iterator->payload, iterator->size); // copy the payload
-
+    
     // Write to file
     fs.write( (const char*) entry, s);
 
@@ -155,7 +155,7 @@ struct entry* make_entry_from_string(char const *key, string &data) {
   struct entry *e;
   e = (struct entry*) malloc(sizeof(struct entry));
   //malloc
-
+  
   memset(e, 0, sizeof(entry));
   strcpy(e-> key, key);
   uint64_t entryLengthBytes = data.length();
@@ -168,25 +168,27 @@ struct entry* make_entry_from_string(char const *key, string &data) {
 }
 
 /**
-* Pack the contents of the specified indir
-* into the outfile. The indir must contain files
-* exported by the pagoga2 disk serializer
-*/
+ * Pack the contents of the specified indir
+ * into the outfile. The indir must contain files
+ * exported by the pagoga2 disk serializer
+ */
 void make_file(string &indir, string &outfile) {
   // Generate file names
   string cellmetadataFile = indir + "cellmetadata.json";
   string cellorderFile = indir + "cellorder.json";
   string geneinformationFile = indir + "geneinformation.json";
   string reduceddendrogramFile = indir + "reduceddendrogram.json";
+  string embeddingstructureFile = indir + "embeddingstructure.json";
 
   string cellmetadataData = readWholeFile(cellmetadataFile);
   string cellorderData = readWholeFile(cellorderFile);
   string geneinformationData = readWholeFile(geneinformationFile);
   string reduceddendrogramData = readWholeFile(reduceddendrogramFile);
+  string embeddingstructureData = readWholeFile(embeddingstructureFile);
 
 
   list<entry> entries;
-
+  
   // struct entry is for the program only
   /*
   struct entry e;
@@ -212,9 +214,23 @@ void make_file(string &indir, string &outfile) {
   struct entry* reduceddendrogramEntry = make_entry_from_string("reduceddendrogram", reduceddendrogramData);
   entries.push_back(*reduceddendrogramEntry);
 
+  struct entry* embeddingstructureEntry = make_entry_from_string("embeddingstructure", embeddingstructureData);
+  entries.push_back(*embeddingstructureEntry);
   // CONTINUE HERE WITH GENERATION OF OTHER ENTRIES
 
 
+  // Doing the embeddings here  -- this needs to be dynamic of a list of files staring with emb*
+  // Alternatively it could be a command line argument
+  string embPCAlargeVisFile = indir + "emb_PCA_largeVis.json";
+  string embPCAlargeVisData = readWholeFile(embPCAlargeVisFile);
+  struct entry* embPCAlargeVisEntry = make_entry_from_string("emb_PCA_largeVis", embPCAlargeVisData);
+  entries.push_back(*embPCAlargeVisEntry);
+  
+  string embPCAtSNEFile = indir + "emb_PCA_tSNE.json";
+  string embPCAtSNEData = readWholeFile(embPCAtSNEFile);
+  struct entry* embPCAtSNEEntry = make_entry_from_string("emb_PCA_tSNE", embPCAtSNEData);
+  entries.push_back(*embPCAtSNEEntry);
+  
   make_file_from_payload(entries, outfile);
 
 }
@@ -244,7 +260,7 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
 
   // Clear the memory to avoid confusion
   memset(&header, 0, sizeof(header));
-
+  
   strcpy(header.identifier, "pagoda2datafile");
   header.versionMajor = 1;
   header.versionMinor = 0;
@@ -267,7 +283,7 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
     memcpy(ie.key, iterator->key, 128);
 
     ie.sizeBlocks = iterator-> blockSize;
-
+      
     // Update the offset
     ie.offset = curOffset;
 
@@ -301,7 +317,7 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
 
     memset(entry,  0, s); // fill with 0s
     memcpy(entry, (const char*) iterator->payload, iterator->size); // copy the payload
-
+    
     // Write to file
     fs.write( (const char*) entry, s);
 
@@ -309,5 +325,5 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
   }
 
   fs.close();
-
+  
 }
