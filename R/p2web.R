@@ -922,6 +922,21 @@ pagoda2WebApp <- setRefClass(
 		      toJSON(retd);
 		    },
 
+		    generateEmbeddingStructure = function() {
+		      resp <- list();
+		      i <- 0;
+		      for( r in names(originalP2object$reductions)) {
+		        resp[[r]] <- list();
+		        for ( n in names(originalP2object$embeddings[[r]])) {
+		          id <- paste('emb',r,n,sep='_')
+		          resp[[r]][[n]] <- id;
+		          i <- i+1
+		        }
+		      }
+		      resp
+		    }
+		    ,
+
 		    serialiseToDirectory = function(dir = null) {
 		      if (is.null(dir)) {
 		        stop('Please specify a directory');
@@ -940,6 +955,21 @@ pagoda2WebApp <- setRefClass(
           writeDataToFile(dir, 'cellorder.json', cellOrderJSON());
           writeDataToFile(dir, 'cellmetadata.json', cellmetadataJSON());
           writeDataToFile(dir, 'geneinformation.json', geneInformationJSON());
+
+          # Reduction and embedding hierarchy two different calls into one data structure
+          embStructure <- generateEmbeddingStructure()
+          writeDataToFile(dir, 'embeddingstructure.json', toJSON(embStructure));
+
+          # Now serialise the embeddings
+          for (reduc in names(embStructure)) {
+            for (embed in names(embStructure[[reduc]])) {
+              id <- embStructure[[reduc]][[embed]][[1]];
+              filename <- paste0(id, '.json');
+              e <- toJSON(originalP2object$embeddings[[reduc]][[embed]])
+              writeDataToFile(dir, filename, e);
+            }
+          }
+
 
           # TODO: Continue
 
