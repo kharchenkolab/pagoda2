@@ -304,34 +304,3 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-
-static const R_CallMethodDef CallEntries[] = {
-    {"pagoda2_non0LogColLmS", (DL_FUNC) &pagoda2_non0LogColLmS, 4},
-    {"pagoda2_colMeanVarS", (DL_FUNC) &pagoda2_colMeanVarS, 2},
-    {"pagoda2_colSumByFac", (DL_FUNC) &pagoda2_colSumByFac, 2},
-    {"pagoda2_inplaceColMult", (DL_FUNC) &pagoda2_inplaceColMult, 3},
-    {"pagoda2_inplaceWinsorizeSparseCols", (DL_FUNC) &pagoda2_inplaceWinsorizeSparseCols, 2},
-    {"pagoda2_jsDist", (DL_FUNC) &pagoda2_jsDist, 1},
-    {"pagoda2_orderColumnRows", (DL_FUNC) &pagoda2_orderColumnRows, 2},
-    {"pagoda2_smatColVecCorr", (DL_FUNC) &pagoda2_smatColVecCorr, 3},
-    {"pagoda2_arma_mat_cor", (DL_FUNC) &pagoda2_arma_mat_cor, 1},
-    {"pagoda2_hnswKnn", (DL_FUNC) &pagoda2_hnswKnn, 4},
-    {"pagoda2_hnswKnn2", (DL_FUNC) &pagoda2_hnswKnn2, 8},
-    {"pagoda2_hnswKnnJS", (DL_FUNC) &pagoda2_hnswKnnJS, 7},
-    {"pagoda2_hnswKnnLp", (DL_FUNC) &pagoda2_hnswKnnLp, 9},
-    {"pagoda2_hnswKnn3test", (DL_FUNC) &pagoda2_hnswKnn3test, 10},
-    {"pagoda2_matWCorr", (DL_FUNC) &pagoda2_matWCorr, 2},
-    {"pagoda2_winsorizeMatrix", (DL_FUNC) &pagoda2_winsorizeMatrix, 2},
-    {"pagoda2_plSemicompleteCor2", (DL_FUNC) &pagoda2_plSemicompleteCor2, 1},
-    {"pagoda2_avg_rank", (DL_FUNC) &pagoda2_avg_rank, 1},
-    {"pagoda2_sparse_matrix_column_ranks", (DL_FUNC) &pagoda2_sparse_matrix_column_ranks, 1},
-    {"pagoda2_nearbyPointsGreedyCluster", (DL_FUNC) &pagoda2_nearbyPointsGreedyCluster, 2},
-    {"pagoda2_closestNPointsToSegments", (DL_FUNC) &pagoda2_closestNPointsToSegments, 5},
-    {"pagoda2_closestNSegmentsToPoints", (DL_FUNC) &pagoda2_closestNSegmentsToPoints, 5},
-    {NULL, NULL, 0}
-};
-
-RcppExport void R_init_pagoda2(DllInfo *dll) {
-    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
-    R_useDynamicSymbols(dll, FALSE);
-}
