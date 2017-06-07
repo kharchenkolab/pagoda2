@@ -8,7 +8,6 @@
  *    analysis of large single cell datasets.
  */
 
-// Test
 
 Ext.require(['*']);
 Ext.onReady(function() {
