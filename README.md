@@ -60,4 +60,4 @@ $ R
 # Pagoda2 is now ready to use
 ```
 # Basic analysis walkthrough
-http://pklab.med.harvard.edu/peterk/p2.walkthrough.html
+[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
