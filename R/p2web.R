@@ -978,12 +978,6 @@ pagoda2WebApp <- setRefClass(
           }
 
           # Serialise the matsparse array
-          # i int32 array
-          # p int32 array
-          # Dim int32[2]
-          # Dimnames JSON String
-          # Dimnames JSON String
-          # x Float32 array
 
           # Functions for serialising sparse arrays
           simpleSerializeArrayToFile <- function(array, dir, filename) {
@@ -1010,7 +1004,6 @@ pagoda2WebApp <- setRefClass(
             writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(array@Dimnames[[1]]));
             cat('Serialising Dimnames2...\n')
             writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(array@Dimnames[[2]]));
-
           }
 
           # Serialise the main sparse matrix
