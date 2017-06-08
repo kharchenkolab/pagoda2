@@ -243,9 +243,9 @@ embeddingViewer.prototype.generateToolbar = function() {
           if (colorConfig == 'metadata') {
               colorConfigHtml =  " coloured by metadata of type " + ev.getMetadataColorInfo().metadataName + ".";
           } else if (colorConfig == 'aspect') {
-              colorConfigHtml = "coloured by aspect of type '" + ev.getAspectColorInfo().aspectid + "'.";
+              colorConfigHtml = " coloured by aspect of type '" + ev.getAspectColorInfo().aspectid + "'.";
           } else if (colorConfig == 'geneexpression') {
-            colorConfigHtml = "coloured by expression of gene '" + ev.getGeneExpressionColorInfo().geneid + "'.";
+            colorConfigHtml = " coloured by expression of gene '" + ev.getGeneExpressionColorInfo().geneid + "'.";
           } else {
             colorConfigHtml = '.'
           }
