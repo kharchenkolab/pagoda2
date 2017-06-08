@@ -1007,13 +1007,25 @@ pagoda2WebApp <- setRefClass(
             cat('Serialising Dim...\n')
             simpleSerializeArrayToFile(array@Dim, dir,  paste0(filename,'Dim.txt'))
             cat('Serialising Dimnames1...\n')
+<<<<<<< HEAD
             writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(array@Dimnames[[1]]));
             cat('Serialising Dimnames2...\n')
             writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(array@Dimnames[[2]]));
+=======
+            simpleSerializeArrayToFile(array@Dimnames[[1]], dir,  paste0(filename,'Dimnames1.txt'))
+            cat('Serialising Dimnames2...\n')
+            simpleSerializeArrayToFile(array@Dimnames[[2]], dir,  paste0(filename,'Dimnames2.txt'))
+>>>>>>> 4c9cddd330a945a34a1723f8f24f982cb6860d70
           }
 
           # Serialise the main sparse matrix
           serialiseSparseArray(matsparse, dir, 'matsparse_');
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 4c9cddd330a945a34a1723f8f24f982cb6860d70
 
           # TODO: Continue here
 
