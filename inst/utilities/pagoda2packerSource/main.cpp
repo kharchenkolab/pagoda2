@@ -230,13 +230,121 @@ void make_file(string &indir, string &outfile) {
   string embPCAtSNEData = readWholeFile(embPCAtSNEFile);
   struct entry* embPCAtSNEEntry = make_entry_from_string("emb_PCA_tSNE", embPCAtSNEData);
   entries.push_back(*embPCAtSNEEntry);
+
+
+
+
+  
+  // Make the main sparse matrix
+  // Read the p
+  string matsparsePFile = indir + "matsparse_p.txt";
+  list<uint32_t> *pData;
+  pData = readNumberArrayFromFile<uint32_t>(matsparsePFile);
+  cout << "p array size: " << pData->size() << endl;
+  cout << "p first entry: " << pData->front() << endl;
+
+  // Read the i
+  string matsparseIFile = indir + "matsparse_i.txt";
+  list<uint32_t> *iData;
+  iData = readNumberArrayFromFile<uint32_t>(matsparseIFile);
+  cout << "i array size: " << iData->size() << endl;
+  cout << "i first entry: " << iData->front() << endl;
+
+  // Read the x
+  string matsparseXFile = indir + "matsparse_x.txt";
+  list<float> *xData;
+  xData = readNumberArrayFromFile<float>(matsparseXFile);
+  cout << "x array size: " << xData->size() << endl;
+  cout << "x first entry: " << xData->front() << endl;
+
+  // Read dim names 1
+  string matsparseDimnames1File = indir + "matsparse_Dimnames1.json";
+  string matsparseDimnames1 = readWholeFile(matsparseDimnames1File);
+
+  // Read dimnames 2
+  string matsparseDimnames2File = indir + "matsparse_Dimnames2.json";
+  string matsparseDimnames2 = readWholeFile(matsparseDimnames2File);
+
+  string dimFile = indir + "matsparse_Dim.txt";
+  list<uint32_t> *Dim;
+  Dim = readNumberArrayFromFile<uint32_t>(dimFile);
+   
+  // Now serialise
+  struct sparseMatrixHeader smh;
+  list<uint32_t>::iterator li = Dim->begin();
+  smh.dim1 = *li;
+  li++;
+  smh.dim2 = *li;
+
+  // Always 2
+  smh.pStartOffset = sizeof(struct sparseMatrixHeader) + 2;
+  smh.iStartOffset = smh.pStartOffset + sizeof(uint32_t) * pData->size();
+  smh.xStartOffset = smh.iStartOffset + sizeof(uint32_t) * iData->size();
+  smh.dimname1StartOffset = smh.xStartOffset + xData->size();
+  smh.dimname2StartOffset = smh.dimname1StartOffset + matsparseDimnames1.size();
+  smh.dimname2StartOffset = smh.dimname2StartOffset + matsparseDimnames2.size();
+
+  // Make a memory holder for the data
+  stringstream smhData(stringstream::in|stringstream::out|stringstream::binary);
+  // Write the header
+  smhData.write((const char*) &smh, sizeof(smh));
+
+  // Write the p object
+  for(list<uint32_t>::const_iterator iter = pData->begin(); iter != pData->end(); ++iter) {
+    smhData << *iter;
+  }
+
+  // Write the i object
+  for(list<uint32_t>::const_iterator iter = iData->begin(); iter != iData->end(); ++iter) {
+    smhData << *iter;
+  }
+
+  // Write the x object
+  for(list<float>::const_iterator iter = xData->begin(); iter != xData->end(); ++iter) {
+    smhData << *iter;
+  }
+
+  // Write the Dimnames as JSON string
+  smhData << matsparseDimnames1;
+  smhData << matsparseDimnames2;
+
+  // Convert the buffer to a string
+  string smhDataString = smhData.str();
+
+  struct entry* sparseMatrixEntry = make_entry_from_string("sparseMatrix", smhDataString);
+  entries.push_back(*sparseMatrixEntry);
+  
+  //smhData << smh;
   
   make_file_from_payload(entries, outfile);
 
 }
 
+template<class T>
+list<T>* readNumberArrayFromFile(string &filename) {
+  list<T>* pData;
+  pData = new list<T>;
+  
+  string matsparsePFile = filename;
+  
+  //cout << "Sparse matrix file: " << matsparsePFile << endl;
+  
+  ifstream fs;
+  fs.open(matsparsePFile, ios::in | ios::binary);
+  
+  T number;
+  while(fs >> number) {
+    pData->push_back(number);
+  }
+  
+  //cout << "pData size is :" << pData.size() << endl;
+  fs.close();
 
-string readWholeFile(string filename) {
+  return pData;
+}
+
+
+string readWholeFile(string &filename) {
   ifstream in;
   in.open(filename, ifstream::in);
   // https://stackoverflow.com/questions/116038/what-is-the-best-way-to-read-an-entire-file-into-a-stdstring-in-c

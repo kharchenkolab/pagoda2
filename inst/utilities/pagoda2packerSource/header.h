@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 
+
 using namespace std;
 
 
@@ -44,6 +45,20 @@ struct indexEntry {
   uint32_t flags;
 };
 
+
+struct sparseMatrixHeader {
+  // Offsets with respect to the beginning of the beginning of the
+  // First block
+  uint32_t dim1;
+  uint32_t dim2;
+  uint32_t pStartOffset;
+  uint32_t iStartOffset;
+  uint32_t xStartOffset;
+  uint32_t dimname1StartOffset;
+  uint32_t dimname2StartOffset;
+  uint32_t dimname2EndOffset;
+};
+
 // Program structs
 // Program structs
 // Keeping track of entries
@@ -65,8 +80,11 @@ struct entry {
 void print_file_format_info();
 void make_dummy_file();
 void make_file(string &indir, string &outfile);
-string readWholeFile(string filename);
+string readWholeFile(string &filename);
 void make_file_from_payload(list<entry> &entries, string &filename);
+
+template<class T>
+list<T>* readNumberArrayFromFile(string &filename);
 
 template <typename T> inline T intDivRoundUP(T a, T b) {
 return(a + b -1) /b;
