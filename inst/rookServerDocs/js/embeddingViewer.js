@@ -357,38 +357,35 @@ embeddingViewer.prototype.populateMenu = function() {
     // Populate the menu using the data controller -- async
     var datCntr = new dataController();
     datCntr.getAvailableReductionTypes(function(reductions){
-	for ( var i = 0; i < reductions.length; i++ ) {
-	    var currReduction = reductions[i];
 
+	    for ( var i = 0; i < reductions.length; i++ ) {
+  	    var currReduction = reductions[i];
 
-	    datCntr.getAvailableEmbeddings(currReduction, function(embeddings, currReduction) {
+  	    datCntr.getAvailableEmbeddings(currReduction, function(embeddings, currReduction) {
+      		var embeddingOptionstore =  Ext.data.StoreManager.lookup('embeddingOptionsStore');
 
-		var embeddingOptionstore =  Ext.data.StoreManager.lookup('embeddingOptionsStore');
+      		if (embeddings !== null) {
+     		    for (var j = 0; j < embeddings.length; j++) {
 
-		if (embeddings !== null) {
+        			var embeddingIdentifier =  currReduction + ':' + embeddings[j];
+        			var embeddingLabel =  currReduction + ' --> ' + embeddings[j];
 
- 		    for (var j = 0; j < embeddings.length; j++) {
-			var embeddingIdentifier =  currReduction + ':' + embeddings[j];
-			var embeddingLabel =  currReduction + ' --> ' + embeddings[j];
+        			if (currReduction === p2globalParams.embedding.defaultEmbedding.reduction &&
+        			    embeddings[j] === p2globalParams.embedding.defaultEmbedding.embedding) {
+        			    // The default
+        			}
 
-			if (currReduction === p2globalParams.embedding.defaultEmbedding.reduction &&
-			    embeddings[j] === p2globalParams.embedding.defaultEmbedding.embedding) {
-			    // The default
-			}
-
-			embeddingOptionstore.add({
-			    'reduction': currReduction,
-			    'embedding':  embeddings[j],
-			    "label": embeddingLabel,
-			    "value": embeddingIdentifier
-			});
-
-		    } // for
-
-		}
-	    }, currReduction // For the callback extra information
-					  ) // getAvailableEmbeddings
-	} //for
+        			embeddingOptionstore.add({
+        			    'reduction': currReduction,
+        			    'embedding':  embeddings[j],
+        			    "label": embeddingLabel,
+        			    "value": embeddingIdentifier
+        			});
+    		    } // for j
+    		  } // if
+  	    }, currReduction // For the callback extra information
+     ) // getAvailableEmbeddings
+  	} //for
     }); // getAvailableReductionTypes
 }
 

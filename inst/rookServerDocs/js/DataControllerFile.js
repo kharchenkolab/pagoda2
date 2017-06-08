@@ -161,6 +161,36 @@ DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
 
 DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callback) {
 
+  var fr = this.formatReader;
+
+  this.getEmbeddingStructure(function(data) {
+    var embRecordId = data[type][embeddingType];
+
+    var fn = function() {
+          fr.getEntryAsText(embRecordId, function(text) {
+        		var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+
+        		var textTrimmed = text.slice(0, dataLength);
+        		var data = JSON.parse(textTrimmed);
+
+        		// TODO: Check that the arrays contain numbers
+        		var unpackedValues = DataControllerServer.prototype.unpackCompressedBase64Float64Array(data.values);
+        		data.values = unpackedValues;
+
+    		    callback(data);
+
+    	 }, fr);
+    }
+
+
+    // Call immediately or defer to when the object is ready
+    if (fr.state == fr.READY) {
+      fn();
+    } else {
+      fr.addEventListener('onready',fn);
+    }
+    //callback(ret);
+  });
 }
 
 DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, callbackParams) {
@@ -169,7 +199,7 @@ DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, c
     for(i in data[type]) {
       ret.push(i);
     }
-    callback(ret);
+    callback(ret, callbackParams);
   });
 }
 
