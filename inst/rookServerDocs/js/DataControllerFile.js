@@ -329,10 +329,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
 
   for(var geneIndexInRequest in geneIds) {
     var geneName = geneIds[geneIndexInRequest];
-    console.log('geneName: ', geneName);
-
     var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
-    console.log('geneIndexInSparse: ', geneIndexInSparse);
 
     var csi = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse]; // CHECK: is -/+ required
     var cei = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse + 1];
@@ -346,13 +343,9 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
     var csiBytes = xArrayOffset + csi * 4; // 4 bytes per float
     var ceiBytes = xArrayOffset + cei * 4;
     var xRowLength = ceiBytes - csiBytes;
-    console.log("csiBytes:", csiBytes);
-    console.log("xRowLength:",xRowLength);
-
 
     fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
       var rowXArray = new Float32Array(buffer);
-
       var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset;
       var csiBytesI = iArrayOffset + csi * 4; // 4 bytes per float
       var ceiBytesI = iArrayOffset + cei * 4;
@@ -360,17 +353,12 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
 
       fr.getBytesInEntry('sparseMatrix', csiBytesI, xRowLengthI, function(buffer2) {
         var rowIArray = new Uint32Array(buffer2);
-        console.log(rowIArray);
-
         for (k in rowIArray) {
           fullRowArray[k] = rowXArray[k];
         }
 
         console.log(fullRowArray);
       });
-
-
-      console.log(rowXArray);
     });
 
 
