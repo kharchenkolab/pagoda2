@@ -65,7 +65,7 @@ function getLoadingParamsFromUser() {
 
   // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
 
-  var developmentMode = true;
+  var developmentMode = false;
 
   var params = null;
   if (developmentMode) {
