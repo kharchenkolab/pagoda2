@@ -281,8 +281,7 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
           var calcCntr = new calculationController();
 
-
-          actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, 'remoteDefault',  function(results) {
+          actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, 'remoteDefault',  function(results,start) {
             actionUI.enableRunButton();
               actionUI.currentDErequest = null;
 
@@ -293,12 +292,15 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
               // Make a deResult set for saving the results
               // and save metadata related to this de result
+              
+              var end = new Date();
               var resultSet = new deResultSet();
               resultSet.setResults(results);
               resultSet.setName(resultName);
               resultSet.setSelectionA(selAcells);
               resultSet.setSelectionB(selBcells);
-
+              resultSet.setStartTime(start);
+              resultSet.setEndTime(end);
               // Save this de result set in the differentialExpresionStore
               var diffExprStore = new differentialExpressionStore();
               var setId = diffExprStore.addResultSet(resultSet);
@@ -316,7 +318,7 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
           var actionUI = new actionPanelUIcontroller();
           actionUI.disableRunButton();
           var calcCntr = new calculationController();
-          actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, 'remoteDefault',  function(results) {
+          actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, 'remoteDefault',  function(results,start) {
               actionUI.enableRunButton();
               actionUI.currentDErequest = null;
               // Get the cell names in the selection for storing
@@ -325,11 +327,13 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
               // Make a deResult set for saving the results
               // and save metadata related to this de result
+              var end = new Date();
               var resultSet = new deResultSet();
               resultSet.setResults(results);
               resultSet.setName(resultName);
               resultSet.setSelectionA(selAcells);
-
+              resultSet.setStartTime(start);
+              resultSet.setEndTime(end);
               // Save this de result set in the differentialExpresionStore
               var diffExprStore = new differentialExpressionStore();
               var setId = diffExprStore.addResultSet(resultSet);
