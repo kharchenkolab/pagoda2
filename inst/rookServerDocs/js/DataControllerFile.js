@@ -287,11 +287,12 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
 
 DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked = function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
 console.log('getExpressionValuesSparseByCellIndexUnpacked DataControllerFile');
+  // CONTINUE HERE
+
   if(this.sparseArrayPreloadInfo === null) {
     // Neet to preload
     var dcf = this;
     this.getSparseArrayPreloadInformation('sparseMatrix',function() {
-
     })
   }
 
