@@ -327,6 +327,9 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
   var dcf = this;
   var fr = this.formatReader;
 
+  // Array to track progess of row generation with the async calls
+  var progressArray = new Uint32Array(geneIds.length);
+
   for(var geneIndexInRequest in geneIds) {
     var geneName = geneIds[geneIndexInRequest];
     var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
@@ -344,7 +347,9 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
     var ceiBytes = xArrayOffset + cei * 4;
     var xRowLength = ceiBytes - csiBytes;
 
+    // TODO: fix the contexts and allow asyng generation of whole table
     fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
+      var geneIndexInRequest = geneIndexInRequest;
       var rowXArray = new Float32Array(buffer);
       var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset;
       var csiBytesI = iArrayOffset + csi * 4; // 4 bytes per float
@@ -357,11 +362,14 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
           fullRowArray[k] = rowXArray[k];
         }
 
-        console.log(fullRowArray);
+        console.log('gene done:', geneIndexInRequest)
+        //progressArray[geneIndexInRequest] = 1;
+
+        // DEBUG
+        //console.log("progressArray", progressArray);
+        //console.log("fullRowArray", fullRowArray);
       });
     });
-
-
 
     // TODO:
     // Get corresponding slice of the i and x arrays
@@ -369,13 +377,10 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
     // push the whole array onto a main array to be returned
     // confirm t() is not required
 
-
-
-
     // We will need  to return a new dgCMatrixReader,so I should be building an array for this
     // or write a method to do make a dgCMatrixReader from a full array (better)
 
-}
+  } // for each gene
 }
 
 
