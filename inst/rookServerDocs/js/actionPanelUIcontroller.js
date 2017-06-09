@@ -301,8 +301,6 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
               resultSet.setSelectionB(selBcells);
               resultSet.setStartTime(start);
               resultSet.setEndTime(end);
-              console.log(start);//Test
-              console.log(end);//Test
               // Save this de result set in the differentialExpresionStore
               var diffExprStore = new differentialExpressionStore();
               var setId = diffExprStore.addResultSet(resultSet);
@@ -336,8 +334,6 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
               resultSet.setSelectionA(selAcells);
               resultSet.setStartTime(start);
               resultSet.setEndTime(end);
-              console.log(start);//Test
-              console.log(end);//Test
               // Save this de result set in the differentialExpresionStore
               var diffExprStore = new differentialExpressionStore();
               var setId = diffExprStore.addResultSet(resultSet);
