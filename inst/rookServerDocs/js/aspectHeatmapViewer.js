@@ -364,7 +364,7 @@ aspectHeatmapViewer.prototype.clearSelectionOverlayInternal = function(){
  */
 aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   var aspHeatView = new aspectHeatmapViewer()
-
+  
   var overlayArea = document.getElementById('aspect-heatmap-area-overlay');
   var ctx = overlayArea.getContext('2d');
 
@@ -628,7 +628,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
     var left = drawConsts.left;
     var n = cellSelection.length;
 
-    var actualPlotHeight = aspHeatView.getActualPlotHeight() + 10;
+    var actualPlotHeight = aspHeatView.getActualPlotHeight() + 6;
 
 
     ctx.save();
