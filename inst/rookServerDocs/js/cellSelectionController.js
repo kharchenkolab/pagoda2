@@ -158,7 +158,12 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, 
 
     // Concatenate arrays into a new one
     sel.cells = selA.concat(selB);
-
+    for(var i=0; i<sel.cells.length; ++i) {
+        for(var j=i+1; j<sel.cells.length; ++j) {
+            if(sel.cells[i] === sel.cells[j])
+                sel.cells.splice(j--, 1);
+        }
+    }
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }

@@ -95,6 +95,15 @@ geneSelectionController.prototype.getAvailableSelections = function() {
 };
 
 /**
+ * Delete a gene selection
+ * @param {string} selectionName the name of the selection to delete
+ */
+geneSelectionController.prototype.deleteSelection = function(selectionName) {
+    delete this.selections[selectionName];
+    this.raiseSelectionChangedEvent();
+}
+
+/**
  * Duplicate an existing selection
  */
 geneSelectionController.prototype.duplicateSelection = function(selectionName,
@@ -112,10 +121,56 @@ geneSelectionController.prototype.duplicateSelection = function(selectionName,
 }
 
 /**
- * Change the display name of the given cell selection
+ * Change the display name of the given gene selection
  */
 geneSelectionController.prototype.renameSelection = function(selectionName, newSelectionName) {
     this.selections[selectionName].displayName = newSelectionName;
     this.raiseSelectionChangedEvent();
 }
 
+/**
+ * Generate a new gene selection from two existing gene selections
+ */
+geneSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName)  {
+    var selA = this.selections[selectionA].genes;
+    var selB = this.selections[selectionB].genes;
+
+    var sel = {};
+    sel.name = newSelectionName;
+    sel.displayName = newSelectionDisplayName;
+
+    // Concatenate arrays into a new one
+    sel.genes = selA.concat(selB);
+    for(var i=0; i<sel.genes.length; ++i) {
+        for(var j=i+1; j<sel.genes.length; ++j) {
+            if(sel.genes[i] === sel.genes[j])
+                sel.genes.splice(j--, 1);
+        }
+    }
+    this.selections[newSelectionName] = sel;
+    this.raiseSelectionChangedEvent();
+}
+
+/**
+ * Genereate a new gene selection by intersecting two gene selections
+ */
+geneSelectionController.prototype.intersectSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName){
+    var selA = this.selections[selectionA].genes;
+    var selB = this.selections[selectionB].genes;
+
+    var sel = {};
+    sel.name = newSelectionName;
+    sel.displayName = newSelectionDisplayName;
+    sel.genes = [];
+
+    // TODO: There might be performance benefits in looping over shortere array
+    var l = selA.length;
+    for (var i = 0; i < l; i++){
+      if (selB.indexOf(selA[i]) != -1) {
+        sel.genes.push(selA[i]);
+      }
+    }
+
+    this.selections[newSelectionName] = sel;
+    this.raiseSelectionChangedEvent();
+}

@@ -65,7 +65,7 @@ cellSelectionUIcontroller.prototype.generateCellSelectionStore = function() {
 cellSelectionUIcontroller.prototype.generateUI = function() {
     var uipanel = Ext.getCmp('cellselection-app-container');
 
-var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
+    var cellTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     var cellSelectionTable = Ext.create('Ext.grid.Panel',{
     	title: 'Available Cell Selections',
     	id: 'cellSelectionTable',
@@ -76,7 +76,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     	],
     	emptyText: "No cell selections are currently available",
     	singleSelect: false,
-    	selModel: geneTableSelectionModel
+    	selModel: cellTableSelectionModel
     });
 
 
@@ -86,7 +86,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     bodyPadding: 10,
     defaultType: 'textfield',
     items: [
-  	cellSelectionTable,
+  	  cellSelectionTable,
       {
         xtype: 'button',
         text: 'Delete',
@@ -107,7 +107,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
                    }
                 });
       		} else if (selectedItems.length === 0) {
-      		  Ext.MessageBox.alert('Warning', 'Please a cell selection first');
+      		  Ext.MessageBox.alert('Warning', 'Please select a cell selection first');
       		} else {
       		  Ext.MessageBox.alert('Warning', 'Only one cell selection can be deleted at a time.');
       		}
@@ -149,7 +149,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two cell selection to merge first.');
+            Ext.MessageBox.alert('Warning', 'Please pick two cell selections to merge first.');
     		  }
 
         }
@@ -190,7 +190,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two cell selection to intersect first.');
+            Ext.MessageBox.alert('Warning', 'Please pick two cell selections to intersect first.');
     		  }
 
         }
