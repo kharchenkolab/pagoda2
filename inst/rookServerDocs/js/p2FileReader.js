@@ -404,6 +404,23 @@ p2FormatReader.prototype.getEntryAsText = function(entryKey, callback, context) 
 /**
  * Get the specified byte range from the indicated variable size block
  */
+p2FormatReader.prototype.getBytesInEntryAsText = function(entryKey, start, end, callback, context) {
+    // TODO
+    if (typeof context === 'undefined') {context = this;}
+
+    var entryIndexInfo = context.index[entryKey];
+    var start = context.dataOffset + entryIndexInfo.offset * context.blockSize + start;
+    var end = start + end;
+
+    context.filereader.readRangeAsText(start,end, function(data) {
+	    callback(data);
+    });
+}
+
+
+/**
+ * Get the specified byte range from the indicated variable size block
+ */
 p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, end, callback, context) {
     // TODO
     if (typeof context === 'undefined') {context = this;}
