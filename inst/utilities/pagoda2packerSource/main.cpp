@@ -277,39 +277,60 @@ void make_file(string &indir, string &outfile) {
   smh.dim2 = *li;
 
   // Always 2
-  smh.pStartOffset = sizeof(struct sparseMatrixHeader) + 2;
+  smh.pStartOffset = sizeof(struct sparseMatrixHeader);
   smh.iStartOffset = smh.pStartOffset + sizeof(uint32_t) * pData->size();
   smh.xStartOffset = smh.iStartOffset + sizeof(uint32_t) * iData->size();
-  smh.dimname1StartOffset = smh.xStartOffset + xData->size();
+  smh.dimname1StartOffset = smh.xStartOffset + sizeof(uint32_t) * xData->size();
   smh.dimname2StartOffset = smh.dimname1StartOffset + matsparseDimnames1.size();
-  smh.dimname2StartOffset = smh.dimname2StartOffset + matsparseDimnames2.size();
+  smh.dimname2EndOffset = smh.dimname2StartOffset + matsparseDimnames2.size();
+  
 
+  cout << "matsparse header information" << endl;
+  cout << "dim1 " << smh.dim1 << endl;
+  cout << "dim2 " << smh.dim2 << endl;
+  cout << "pStartOffset " << smh.pStartOffset << endl;
+  cout << "iStartOffset " << smh.iStartOffset << endl;
+  cout << "xStartOffset " << smh.xStartOffset << endl;
+  cout << "dimnames1StartOffset " << smh.dimname1StartOffset << endl;
+  cout << "dimnames2StartOffset " << smh.dimname2StartOffset << endl;
+  cout << "dimnames2EndOffset " << smh.dimname2EndOffset << endl;
+
+  cout << endl << "dimnames1 size" <<  matsparseDimnames1.size() << endl;
+
+  //cout << "Test " << matsparseDimnames1 << endl;
   // Make a memory holder for the data
   stringstream smhData(stringstream::in|stringstream::out|stringstream::binary);
   // Write the header
   smhData.write((const char*) &smh, sizeof(smh));
-
+  //cout << "Size of sparse header " << sizeof(smh) << endl;
+  
+  
   // Write the p object
   for(list<uint32_t>::const_iterator iter = pData->begin(); iter != pData->end(); ++iter) {
-    smhData << *iter;
+    smhData.write((const char*) &*iter, sizeof(uint32_t));
   }
 
   // Write the i object
   for(list<uint32_t>::const_iterator iter = iData->begin(); iter != iData->end(); ++iter) {
-    smhData << *iter;
+    smhData.write((const char*) &*iter, sizeof(uint32_t));
   }
 
   // Write the x object
   for(list<float>::const_iterator iter = xData->begin(); iter != xData->end(); ++iter) {
-    smhData << *iter;
+    //smhData << *iter;
+    smhData.write((const char*) &*iter, sizeof(uint32_t));
   }
 
   // Write the Dimnames as JSON string
-  smhData << matsparseDimnames1;
-  smhData << matsparseDimnames2;
+  // HERE
+  smhData.write( matsparseDimnames1.c_str(), matsparseDimnames1.size());
+  smhData.write( matsparseDimnames2.c_str(), matsparseDimnames2.size());
 
+  //cout << matsparseDimnames1.c_str();
+  
   // Convert the buffer to a string
   string smhDataString = smhData.str();
+
 
   struct entry* sparseMatrixEntry = make_entry_from_string("sparseMatrix", smhDataString);
   entries.push_back(*sparseMatrixEntry);
