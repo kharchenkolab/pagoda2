@@ -89,7 +89,7 @@ DataControllerFile.prototype.getCellMetadata = function(callback) {
     fr.addEventListener('onready',fn);
   }
 
-}
+};
 
 
 
@@ -122,7 +122,7 @@ DataControllerFile.prototype.getGeneInformationStore = function(callback) {
   } else {
     fr.addEventListener('onready',fn);
   }
-}
+};
 
 DataControllerFile.prototype.getEmbeddingStructure = function(callback) {
   var fr = this.formatReader;
@@ -144,7 +144,7 @@ DataControllerFile.prototype.getEmbeddingStructure = function(callback) {
   } else {
     fr.addEventListener('onready',fn);
   }
-}
+};
 
 
 /**
@@ -159,7 +159,7 @@ DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
     }
     callback(ret);
   });
-}
+};
 
 DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callback) {
 
@@ -193,7 +193,7 @@ DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callba
     }
     //callback(ret);
   });
-}
+};
 
 DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, callbackParams) {
   this.getEmbeddingStructure(function(data) {
@@ -203,10 +203,7 @@ DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, c
     }
     callback(ret, callbackParams);
   });
-}
-
-
-
+};
 
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
 
@@ -257,7 +254,6 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
   // Get the sparse matrix index and cache it. This is 8 uint32_t long (32 bytes)
   fr.getBytesInEntry(entryName, 0, 32, function(data){
 
-
     var dataArray = new Uint32Array(data);
 
     dcf.sparseArrayPreloadInfo = {};
@@ -294,7 +290,7 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
 
     }, fr);
 
-    var dimnames1length = dcf.sparseArrayPreloadInfo.dimname2StartOffset - dcf.sparseArrayPreloadInfo.dimname1StartOffset - 1;
+    var dimnames1length = dcf.sparseArrayPreloadInfo.dimname2StartOffset - dcf.sparseArrayPreloadInfo.dimname1StartOffset - 1; // -1 for null
     fr.getBytesInEntryAsText(entryName, dcf.sparseArrayPreloadInfo.dimname1StartOffset, dimnames1length,
       function(data){
         dcf.sparseArrayPreloadInfo.dimnames1Data = JSON.parse(data);
@@ -308,7 +304,7 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
         callCallbackIfReady();
     },fr);
 
-    var dimnames2length = dcf.sparseArrayPreloadInfo.dimnames2EndOffset - dcf.sparseArrayPreloadInfo.dimname2StartOffset - 1;
+    var dimnames2length = dcf.sparseArrayPreloadInfo.dimnames2EndOffset - dcf.sparseArrayPreloadInfo.dimname2StartOffset - 1; // -1 for null
     fr.getBytesInEntryAsText(entryName, dcf.sparseArrayPreloadInfo.dimname2StartOffset, dimnames2length,
       function(data){
         dcf.sparseArrayPreloadInfo.dimnames2Data = JSON.parse(data);
@@ -323,26 +319,75 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
     },fr);
 
   }, fr);
-}
-
-
+};
 
 DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInternal =
   function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
 
   var dcf = this;
+  var fr = this.formatReader;
 
-  for(geneIndexInRequest in geneIds) {
+  for(var geneIndexInRequest in geneIds) {
     var geneName = geneIds[geneIndexInRequest];
     console.log('geneName: ', geneName);
 
     var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
     console.log('geneIndexInSparse: ', geneIndexInSparse);
 
+    var csi = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse]; // CHECK: is -/+ required
+    var cei = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse + 1];
+    console.log('cse/cei:', csi, cei);
+
+    // Zero filled array with the data for all the cells
+    var fullRowArray = new Uint32Array(dcf.sparseArrayPreloadInfo.dim1);
+
+    // Get csi to cei for the x array
+    var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset;
+    var csiBytes = xArrayOffset + csi * 4; // 4 bytes per float
+    var ceiBytes = xArrayOffset + cei * 4;
+    var xRowLength = ceiBytes - csiBytes;
+    console.log("csiBytes:", csiBytes);
+    console.log("xRowLength:",xRowLength);
 
 
-  }
+    fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
+      var rowXArray = new Float32Array(buffer);
 
+      var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset;
+      var csiBytesI = iArrayOffset + csi * 4; // 4 bytes per float
+      var ceiBytesI = iArrayOffset + cei * 4;
+      var xRowLengthI = ceiBytes - csiBytes;
+
+      fr.getBytesInEntry('sparseMatrix', csiBytesI, xRowLengthI, function(buffer2) {
+        var rowIArray = new Uint32Array(buffer2);
+        console.log(rowIArray);
+
+        for (k in rowIArray) {
+          fullRowArray[k] = rowXArray[k];
+        }
+
+        console.log(fullRowArray);
+      });
+
+
+      console.log(rowXArray);
+    });
+
+
+
+    // TODO:
+    // Get corresponding slice of the i and x arrays
+    // Initialise an empty array filled with 0s and put the values in it
+    // push the whole array onto a main array to be returned
+    // confirm t() is not required
+
+
+
+
+    // We will need  to return a new dgCMatrixReader,so I should be building an array for this
+    // or write a method to do make a dgCMatrixReader from a full array (better)
+
+}
 }
 
 
