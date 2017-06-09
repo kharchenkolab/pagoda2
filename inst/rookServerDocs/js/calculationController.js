@@ -69,8 +69,9 @@ calculationController.prototype.calculateDEfor1selectionbyRemote = function(sele
 	      "selectionA": Ext.util.JSON.encode(selAcells)
 	    },
 	    url: "doComputation.php?compidentifier=doDifferentialExpression1selection",
+	    startTime: new Date(),
 	    success: function(data) {
-		    callback(data);
+		    callback(data,this.startTime);
 	    }
 	});
 
@@ -86,7 +87,6 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
   var cellSelCntr = new cellSelectionController();
   var selAcells = cellSelCntr.getSelection(selectionA);
   var selBcells = cellSelCntr.getSelection(selectionB);
-
   // Alot of cell identifiers to send, send by POST
 	var ajaxObj =  $.ajax({
 	    type: "POST",
@@ -97,8 +97,9 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
 	      "selectionB": Ext.util.JSON.encode(selBcells),
 	    },
 	    url: "doComputation.php?compidentifier=doDifferentialExpression2selections",
+	    startTime: new Date(),
 	    success: function(data) {
-		    callback(data);
+		    callback(data,this.startTime);
 	    }
 	});
 
@@ -145,8 +146,8 @@ differentialExpressionStore.prototype.getAvailableDEsets = function() {
     var curKey = availKeys[i];
     var name = curKey;
     var displayName = this.deSets[curKey].getName();
-
-    result.push({'name': name, 'displayName': displayName});
+    var date = this.deSets[curKey].getStartTime().toUTCString();
+    result.push({'name': name, 'date': date, 'displayName': displayName});
   }
 
   return result;
@@ -195,6 +196,8 @@ function deResultSet() {
   this.selectionB = null;
   this.results = null;
   this.name = null;
+  this.startTime = null;
+  this.endTime = null;
 };
 
 
@@ -210,6 +213,34 @@ deResultSet.prototype.getName = function() {
  */
 deResultSet.prototype.setName = function(val) {
   this.name = val;
+};
+
+/**
+ * get the startTime
+ */
+deResultSet.prototype.getStartTime = function() {
+  return this.startTime;
+};
+
+/**
+ * set the startTime
+ */
+deResultSet.prototype.setStartTime = function(val) {
+  this.startTime = val;
+};
+
+/**
+ * get the endTime
+ */
+deResultSet.prototype.getEndTime = function() {
+  return this.endTime;
+};
+
+/**
+ * set the endTime
+ */
+deResultSet.prototype.setEndTime = function(val) {
+  this.endTime = val;
 };
 
 
