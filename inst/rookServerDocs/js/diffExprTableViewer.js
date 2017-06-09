@@ -107,8 +107,9 @@ diffExprTableViewer.prototype.generateTables = function() {
     title: 'Differential Expression Result sets',
     id: 'deResultSetsTableExtJS',
     columns: [
-      {text: 'Name', dataIndex: 'displayName', width: '70%' },
-      {text: 'Internal name', dataIndex: 'name', width: '30%' }
+      {text: 'Name', dataIndex: 'displayName', flex: 4.5 },
+      {text: 'Date', dataIndex: 'date', flex: 3.5 },
+      {text: 'Internal name', dataIndex: 'name', flex: 2, hidden:true}
       ],
     emptyText: 'No differential expression results are available',
     singleSelect: true,
@@ -256,6 +257,7 @@ diffExprTableViewer.prototype.declareExtJStypes = function() {
     	extend: 'Ext.data.Model',
     	fields: [
     	    {name: 'name', type: 'string'},
+    	    {name: 'date', type: 'string'},
     	    {name: 'displayName', type: 'string'}
     	]
     });

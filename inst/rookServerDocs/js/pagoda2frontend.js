@@ -44,7 +44,7 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
           Ext.create('Ext.window.Window', {
             height: 300,
             width: 400,
-            title: 'Help: Aspect heatmap',
+            title: 'Help: Table View',
             scrollable: true,
             bodyPadding: 10,
             html: '<h2>Help: Table View</h2>' +
