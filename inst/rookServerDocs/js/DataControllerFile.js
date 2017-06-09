@@ -82,13 +82,13 @@ DataControllerFile.prototype.getCellMetadata = function(callback) {
   	 }, fr);
   }
 
-
   // Call immediately or defer to when the object is ready
   if (fr.state == fr.READY) {
     fn();
   } else {
     fr.addEventListener('onready',fn);
   }
+
 }
 
 
@@ -270,41 +270,97 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
     dcf.sparseArrayPreloadInfo.dimname2StartOffset = dataArray[6];
     dcf.sparseArrayPreloadInfo.dimnames2EndOffset  = dataArray[7];
 
+    dcf.sparseArrayPreloadInfo.dimnames1Data = null;
+    dcf.sparseArrayPreloadInfo.dimnames2Data = null;
+    dcf.sparseArrayPreloadInfo.parray = null;
+
+    var callCallbackIfReady = function() {
+      var ready = false;
+      if (dcf.sparseArrayPreloadInfo.dimnames1Data !== null &&
+       dcf.sparseArrayPreloadInfo.dimnames2Data !== null &&
+       dcf.sparseArrayPreloadInfo.parray !== null) {
+         ready = true;
+       }
+
+      if (ready) {
+        callback();
+      }
+    }
+
+    var parraylength =  dcf.sparseArrayPreloadInfo.iStartOffset -  dcf.sparseArrayPreloadInfo.pStartOffset;
+    fr.getBytesInEntry(entryName, dcf.sparseArrayPreloadInfo.pStartOffset, parraylength, function(buffer){
+        dcf.sparseArrayPreloadInfo.parray = new Uint32Array(buffer);
+        callCallbackIfReady();
+
+    }, fr);
+
     var dimnames1length = dcf.sparseArrayPreloadInfo.dimname2StartOffset - dcf.sparseArrayPreloadInfo.dimname1StartOffset - 1;
     fr.getBytesInEntryAsText(entryName, dcf.sparseArrayPreloadInfo.dimname1StartOffset, dimnames1length,
       function(data){
         dcf.sparseArrayPreloadInfo.dimnames1Data = JSON.parse(data);
+
+        // Build reverse map
+        dcf.sparseArrayPreloadInfo.dimnames1DataReverse = {};
+        for (var i in dcf.sparseArrayPreloadInfo.dimnames1Data) {
+          dcf.sparseArrayPreloadInfo.dimnames1DataReverse[dcf.sparseArrayPreloadInfo.dimnames1Data[i]] = parseInt(i);
+        }
+
+        callCallbackIfReady();
     },fr);
 
     var dimnames2length = dcf.sparseArrayPreloadInfo.dimnames2EndOffset - dcf.sparseArrayPreloadInfo.dimname2StartOffset - 1;
     fr.getBytesInEntryAsText(entryName, dcf.sparseArrayPreloadInfo.dimname2StartOffset, dimnames2length,
       function(data){
         dcf.sparseArrayPreloadInfo.dimnames2Data = JSON.parse(data);
+
+        // Build reverse map
+        dcf.sparseArrayPreloadInfo.dimnames2DataReverse = {};
+        for (var i in dcf.sparseArrayPreloadInfo.dimnames2Data) {
+          dcf.sparseArrayPreloadInfo.dimnames2DataReverse[dcf.sparseArrayPreloadInfo.dimnames2Data[i]] = parseInt(i);
+        }
+
+        callCallbackIfReady();
     },fr);
 
   }, fr);
 }
 
-DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked = function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
-console.log('getExpressionValuesSparseByCellIndexUnpacked DataControllerFile');
-  // CONTINUE HERE
 
-  if(this.sparseArrayPreloadInfo === null) {
-    // Neet to preload
-    var dcf = this;
-    this.getSparseArrayPreloadInformation('sparseMatrix',function() {
-    })
+
+DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInternal =
+  function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
+
+  var dcf = this;
+
+  for(geneIndexInRequest in geneIds) {
+    var geneName = geneIds[geneIndexInRequest];
+    console.log('geneName: ', geneName);
+
+    var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
+    console.log('geneIndexInSparse: ', geneIndexInSparse);
+
+
+
   }
 
+}
 
-/*
 
-  1) Make sure we have preload information
-    a) Index of the actual array we are access in the file
-    b) The header of the file with the coordinates of the individual elements
-    c) Dimnames1 and Dimnames2
-    (We are therefore dynamically accessing x and i as required)
-  */
+DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
+  function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
+
+  var dcf = this;
+
+  if(this.sparseArrayPreloadInfo === null) {
+    // Need to preload
+    var dcf = this;
+    this.getSparseArrayPreloadInformation('sparseMatrix',function() {
+      console.log('In the callback:', dcf.sparseArrayPreloadInfo);
+      dcf.getExpressionValuesSparseByCellIndexUnpackedInternal(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
+    })
+  } else {
+    dcf.getExpressionValuesSparseByCellIndexUnpackedInternal(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
+  }
 
 }
 
