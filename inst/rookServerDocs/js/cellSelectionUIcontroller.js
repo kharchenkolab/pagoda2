@@ -288,6 +288,26 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	    }
 	},
 	{
+        xtype: 'button',
+        text: 'Export Selected',
+        handler: function(){
+          var selectionTable = Ext.getCmp('cellSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 1) {
+            var selectionFormatted = [];
+            var cellSelCntr = new cellSelectionController();
+            for(var index = 0; index < selectedItems.length; index++){
+      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
+    	  	    var selection = cellSelCntr.getSelection(selectionName);
+      		    selectionFormatted.push(selectionName+ "," + selection.join(","));
+      		  }
+    		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
+    		  } else {
+    		    Ext.MessageBox.alert('Warning', 'Please choose one or more cell selections first');
+    		  }
+        }
+	},
+	{
 	  xtype: 'button',
 	  text: 'Highlight',
 	  handler: function() {

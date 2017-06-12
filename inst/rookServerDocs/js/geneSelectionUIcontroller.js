@@ -203,7 +203,6 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
 		    var selectedItems = selectionTable.getSelectionModel().getSelected();
-		    console.log(selectionTable, selectedItems);
 
 		    if (selectedItems.length === 1) {
 
@@ -272,16 +271,36 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
 		    var selectedItems = selectionTable.getSelectionModel().getSelected();
 		    if (selectedItems.length === 1) {
-			var selectionName = selectedItems.getAt(0).getData().selectionname;
-			var geneSelCntr = new geneSelectionController();
-			var selection = geneSelCntr.getSelection(selectionName).genes;
-
-			var selectionFormatted = selection.join("\n");
-			window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
+			    var selectionName = selectedItems.getAt(0).getData().selectionname;
+			    var geneSelCntr = new geneSelectionController();
+			    var selection = geneSelCntr.getSelection(selectionName).genes;
+			    var selectionFormatted = selection.join("\n");
+			    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
 		    } else  {
-			Ext.MessageBox.alert('Warning', 'Please choose a gene selection first');
+		  	  Ext.MessageBox.alert('Warning', 'Please choose a gene selection first');
 		    }
 		}
+	    },
+	    {
+        xtype: 'button',
+        text: 'Export Selected',
+        handler: function(){
+          var selectionTable = Ext.getCmp('geneSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 1) {
+            var selectionFormatted = [];
+            var geneSelCntr = new geneSelectionController();
+            for(var index = 0; index < selectedItems.length; index++){
+      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
+    	  	    var selection = geneSelCntr.getSelection(selectionName).genes;
+    	  	    console.log(selection)
+      		    selectionFormatted.push(selectionName+ "," + selection.join(","));
+      		  }
+    		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
+    		  } else {
+    		    Ext.MessageBox.alert('Warning', 'Please choose one or more gene selections first');
+    		  }
+        }
 	    }
 	]
     });
