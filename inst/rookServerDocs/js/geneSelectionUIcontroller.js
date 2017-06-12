@@ -301,7 +301,68 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
     		    Ext.MessageBox.alert('Warning', 'Please choose one or more gene selections first');
     		  }
         }
+	    },
+	    {
+	  xtype: 'button',
+	  text: 'Import Selections',
+  	  handler: function(){
+	     if(!Ext.getCmp('geneFileSelectionWindow')){
+	      Ext.create('Ext.window.Window',{
+	        title:'Gene File Selection',
+	        id: 'geneFileSelectionWindow',
+	        height:100,
+	        width:500,
+	        align:"center",
+	        items:[
+	         {
+	            height: "12px",
+	            html: '<input type="file" id="selectedGeneFile"><br>'
+	          },
+	          {
+	            xtype: 'button',
+	            text: 'cancel',
+  	          width:"10%",
+	            height:"40%",
+	            align: "center",
+	            handler: function(){
+	              Ext.getCmp('geneFileSelectionWindow').close();
+	            }
+	          },
+  	        {
+  	          xtype: 'button',
+	            text: 'ok',
+	            width:"10%",
+	            height:"40%",
+	            align: "center",
+	            handler: function(){
+	              var geneSelFile = document.getElementById("selectedGeneFile").files[0];
+	              var geneSelFileName = geneSelFile.name;
+	              var reader = new FileReader();
+	              reader.onload = function(progressEvent){
+	                var lines = this.result.split("\n");
+	                var geneSelCntrl = new geneSelectionController();
+	                for(var line = 0; line < lines.length; line++){
+	                  var selection = lines[line].split(",");
+	                  var selName = selection.shift();
+	                  if(geneSelCntrl.getSelection(selName)){
+	                    selName = selName  + "~RecentlyLoaded"
+	                  }
+	                  geneSelCntrl.setSelection(selName,selection,selName,"loaded from " + geneSelFileName);
+	                }
+	                Ext.MessageBox.alert('info',lines.length + " selections were loaded from " + geneSelFileName)
+	              };
+	              reader.readAsText(geneSelFile);
+	              
+	              Ext.getCmp('geneFileSelectionWindow').close();
+	            }
+	          }
+	        ],
+	      }).show();
 	    }
+	    Ext.getCmp('geneFileSelectionWindow').focus();
+	    
+	  }
+	},
 	]
     });
 

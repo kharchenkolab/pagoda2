@@ -265,8 +265,6 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		} else {
 		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
 		}
-
-
 	    }
 	},
 	{
@@ -306,6 +304,67 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     		    Ext.MessageBox.alert('Warning', 'Please choose one or more cell selections first');
     		  }
         }
+	},
+	{
+	  xtype: 'button',
+	  text: 'Import Selections',
+  	  handler: function(){
+	     if(!Ext.getCmp('cellFileSelectionWindow')){
+	      Ext.create('Ext.window.Window',{
+	        title:'Cell File Selection',
+	        id: 'cellFileSelectionWindow',
+	        height:100,
+	        width:500,
+	        align:"center",
+	        items:[
+	         {
+	            height: "12px",
+	            html: '<input type="file" id="selectedCellFile"><br>'
+	          },
+	          {
+	            xtype: 'button',
+	            text: 'cancel',
+  	          width:"10%",
+	            height:"40%",
+	            align: "center",
+	            handler: function(){
+	              Ext.getCmp('cellFileSelectionWindow').close();
+	            }
+	          },
+  	        {
+  	          xtype: 'button',
+	            text: 'ok',
+	            width:"10%",
+	            height:"40%",
+	            align: "center",
+	            handler: function(){
+	              var cellSelFile = document.getElementById("selectedCellFile").files[0];
+	              var cellSelFileName = cellSelFile.name;
+	              var reader = new FileReader();
+	              reader.onload = function(progressEvent){
+	                var lines = this.result.split("\n");
+	                var cellSelCntrl = new cellSelectionController();
+	                for(var line = 0; line < lines.length; line++){
+	                  var selection = lines[line].split(",");
+	                  var selName = selection.shift();
+	                  if(cellSelCntrl.getSelection(selName)){
+	                    selName = selName  + "~RecentlyLoaded"
+	                  }
+	                  cellSelCntrl.setSelection(selName,selection,selName,"loaded from " + cellSelFileName);
+	                }
+	                Ext.MessageBox.alert('info',lines.length + " selections were loaded from " + cellSelFileName)
+	              };
+	              reader.readAsText(cellSelFile);
+	              
+	              Ext.getCmp('cellFileSelectionWindow').close();
+	            }
+	          }
+	        ],
+	      }).show();
+	    }
+	    Ext.getCmp('cellFileSelectionWindow').focus();
+	    
+	  }
 	},
 	{
 	  xtype: 'button',
