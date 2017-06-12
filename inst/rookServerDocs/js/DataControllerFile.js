@@ -321,7 +321,7 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
   }, fr);
 };
 
-DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, callback) {
+DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellIndexStart, cellIndexEnd, callback) {
   var dcf = this;
    var fr = this.formatReader;
 
@@ -355,7 +355,10 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, callb
         fullRowArray[k] = rowXArray[k];
       }
 
-      callback(geneName, geneindex, fullRowArray);
+      console.log(cellIndexStart, cellIndexEnd);
+      var retVal = fullRowArray.slice(cellIndexStart,cellIndexEnd); // Check need for +/-1
+
+      callback(geneName, geneindex, retVal);
     });
   });
 }
@@ -387,30 +390,23 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
 
   }
 
+  function handleComplete() {
+        console.log('done');
+        console.log(resultsArray)
+
+        // TODO: convert to sparse matrix and return
+  }
+
   // Initiate callbacks for each row
   for(var geneIndexInRequest in geneIds) {
     var geneName = geneIds[geneIndexInRequest];
-
-    dcf.getGeneColumn(geneName, geneIndexInRequest, function(genename, geneindex, row) {
+    dcf.getGeneColumn(geneName, geneIndexInRequest, cellIndexStart, cellIndexEnd, function(genename, geneindex, row) {
       progressArray[geneindex] = 1;
       resultsArray[geneindex] = row;
-      console.log(JSON.parse(JSON.stringify(progressArray)));
-      console.log(genename);
       checkIfDone(function(){
-        console.log(resultsArray);
-        console.log('done')
-
+        handleComplete();
       });
     });
-
-    // TODO:
-    // Get corresponding slice of the i and x arrays
-    // Initialise an empty array filled with 0s and put the values in it
-    // push the whole array onto a main array to be returned
-    // confirm t() is not required
-
-    // We will need  to return a new dgCMatrixReader,so I should be building an array for this
-    // or write a method to do make a dgCMatrixReader from a full array (better)
 
   } // for each gene
 }
