@@ -136,7 +136,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
       var heatView = new metaDataHeatmapViewer();
       var drawConsts = heatView.getDrawConstants();
-      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
+      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width & e.which == 1) {
         heatView.primaryMouseButtonDown = true;
         heatView.dragStartX =  e.offsetX;
       }
