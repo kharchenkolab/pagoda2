@@ -321,6 +321,45 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
   }, fr);
 };
 
+DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, callback) {
+  var dcf = this;
+   var fr = this.formatReader;
+
+  var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
+
+  var csi = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse]; // CHECK: is -/+ required
+  var cei = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse + 1];
+  console.log('cse/cei:', csi, cei);
+
+  // Zero filled array with the data for all the cells
+  var fullRowArray = new Float32Array(dcf.sparseArrayPreloadInfo.dim1);
+
+  // Get csi to cei for the x array
+  var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset;
+  var csiBytes = xArrayOffset + csi * 4; // 4 bytes per float
+  var ceiBytes = xArrayOffset + cei * 4;
+  var xRowLength = ceiBytes - csiBytes;
+
+  // TODO: fix the contexts and allow asyng generation of whole table
+  fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
+    var geneIndexInRequest = geneIndexInRequest;
+    var rowXArray = new Float32Array(buffer);
+    var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset;
+    var csiBytesI = iArrayOffset + csi * 4; // 4 bytes per float
+    var ceiBytesI = iArrayOffset + cei * 4;
+    var xRowLengthI = ceiBytes - csiBytes;
+
+    fr.getBytesInEntry('sparseMatrix', csiBytesI, xRowLengthI, function(buffer2) {
+      var rowIArray = new Uint32Array(buffer2);
+      for (k in rowIArray) {
+        fullRowArray[k] = rowXArray[k];
+      }
+
+      callback(geneName, geneindex, fullRowArray);
+    });
+  });
+}
+
 DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInternal =
   function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
 
@@ -329,45 +368,38 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
 
   // Array to track progess of row generation with the async calls
   var progressArray = new Uint32Array(geneIds.length);
+  var resultsArray = [];
 
+  // Check if all tasks are done and call backback if so
+  function checkIfDone(callback) {
+    var done = true;
+    for(var i = 0; i < progressArray.length; i++) {
+      if (progressArray[i] !==  1) {
+        done = false;
+        break;
+      }
+    }
+    if (done) {
+      if(typeof callback === 'function') {
+        callback();
+      }
+    }
+
+  }
+
+  // Initiate callbacks for each row
   for(var geneIndexInRequest in geneIds) {
     var geneName = geneIds[geneIndexInRequest];
-    var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
 
-    var csi = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse]; // CHECK: is -/+ required
-    var cei = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse + 1];
-    console.log('cse/cei:', csi, cei);
+    dcf.getGeneColumn(geneName, geneIndexInRequest, function(genename, geneindex, row) {
+      progressArray[geneindex] = 1;
+      resultsArray[geneindex] = row;
+      console.log(JSON.parse(JSON.stringify(progressArray)));
+      console.log(genename);
+      checkIfDone(function(){
+        console.log(resultsArray);
+        console.log('done')
 
-    // Zero filled array with the data for all the cells
-    var fullRowArray = new Uint32Array(dcf.sparseArrayPreloadInfo.dim1);
-
-    // Get csi to cei for the x array
-    var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset;
-    var csiBytes = xArrayOffset + csi * 4; // 4 bytes per float
-    var ceiBytes = xArrayOffset + cei * 4;
-    var xRowLength = ceiBytes - csiBytes;
-
-    // TODO: fix the contexts and allow asyng generation of whole table
-    fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
-      var geneIndexInRequest = geneIndexInRequest;
-      var rowXArray = new Float32Array(buffer);
-      var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset;
-      var csiBytesI = iArrayOffset + csi * 4; // 4 bytes per float
-      var ceiBytesI = iArrayOffset + cei * 4;
-      var xRowLengthI = ceiBytes - csiBytes;
-
-      fr.getBytesInEntry('sparseMatrix', csiBytesI, xRowLengthI, function(buffer2) {
-        var rowIArray = new Uint32Array(buffer2);
-        for (k in rowIArray) {
-          fullRowArray[k] = rowXArray[k];
-        }
-
-        console.log('gene done:', geneIndexInRequest)
-        //progressArray[geneIndexInRequest] = 1;
-
-        // DEBUG
-        //console.log("progressArray", progressArray);
-        //console.log("fullRowArray", fullRowArray);
       });
     });
 
