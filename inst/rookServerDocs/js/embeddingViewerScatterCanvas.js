@@ -960,14 +960,13 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 embeddingViewerScatterCanvas.prototype.abortPendingRequest = function() {
     var evSC = this;
     // Check if there is a request running already
-    if (typeof evSC.colorAJAXrequest !== 'undefined') {
-      	if (evSC.colorAJAXrequest.readyState != 4) {  //Not DONE
-      	    // A previous request exists and is still running
-      	    // cancel it
-      	    evSC.colorAJAXrequest.abort();
-      	}
+    if ((typeof evSC.colorAJAXrequest !== 'undefined') && evSC.colorAJAXrequest !== null) {
+        	if (evSC.colorAJAXrequest.readyState != 4) {  //Not DONE
+        	    // A previous request exists and is still running
+        	    // cancel it
+        	    evSC.colorAJAXrequest.abort();
+        	}
     }
-
 }
 
 /**
