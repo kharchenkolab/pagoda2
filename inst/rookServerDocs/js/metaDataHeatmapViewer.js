@@ -223,7 +223,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         // params.keyLabel params.valueLabel
 
         var defaultLabel = params.keyLabel + '_' + params.valueLabel;
-
+        defaultLabel = defaultLabel.split(/\ |\#/).join("");
         var contextMenu = new Ext.menu.Menu({
           items: [
             {
