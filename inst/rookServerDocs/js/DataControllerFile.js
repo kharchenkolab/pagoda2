@@ -615,9 +615,33 @@ DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
   }
 };
 
-DataControllerFile.prototype.getAvailableGenesetsInAspectsStore = function(aspectId, callback) {
 
-}
+/**
+ * Implements getAvailableGenesetsInAspectStore
+ */
+DataControllerFile.prototype.getAvailableGenesetsInAspectStore = function(aspectId, callback) {
+  var dcf = this;
+
+  var handleComplete = function() {
+    var data = dcf.aspectInformation[aspectId];
+
+      var pagingStore = Ext.create('LocalJsonStore', {
+        autoLoad: true,
+        model: 'genesetInAspectEntry',
+        pageSize: 100,
+        localData: data
+      });
+
+      callback(pagingStore);
+
+  };
+
+  if (dcf.aspectInformation === null) {
+    this.loadAspectInformation(handleComplete);
+  } else {
+    handleComplete();
+  }
+};
 
 
 
