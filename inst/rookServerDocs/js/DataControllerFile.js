@@ -334,18 +334,18 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellI
   var fullRowArray = new Float32Array(dcf.sparseArrayPreloadInfo.dim1);
 
   // Get csi to cei for the x array
-  var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset + 4;
-  var csiBytes = xArrayOffset + csi * 4; // 4 bytes per float
-  var ceiBytes = xArrayOffset + cei * 4;
+  const BYTES_PER_FLOAT32 = 4;
+  var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset + BYTES_PER_FLOAT32;
+  var csiBytes = xArrayOffset + csi * BYTES_PER_FLOAT32;
+  var ceiBytes = xArrayOffset + cei * BYTES_PER_FLOAT32;
   var xRowLength = ceiBytes - csiBytes;
-
 
   fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
     var geneIndexInRequest = geneIndexInRequest;
     var rowXArray = new Float32Array(buffer);
-    var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset + 4;
-    var csiBytesI = iArrayOffset + csi * 4; // 4 bytes per float
-    var ceiBytesI = iArrayOffset + cei * 4;
+    var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset + BYTES_PER_FLOAT32;
+    var csiBytesI = iArrayOffset + csi * BYTES_PER_FLOAT32;
+    var ceiBytesI = iArrayOffset + cei * BYTES_PER_FLOAT32;
     var xRowLengthI = ceiBytes - csiBytes;
 
     fr.getBytesInEntry('sparseMatrix', csiBytesI, xRowLengthI, function(buffer2) {
@@ -355,7 +355,7 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellI
         fullRowArray[ki] = rowXArray[k];
       }
 
-      var retVal = fullRowArray.slice(cellIndexStart,cellIndexEnd); // Check need for +/-1
+      var retVal = fullRowArray.slice(cellIndexStart,cellIndexEnd);
 
       callback(geneName, geneindex, retVal);
     });
