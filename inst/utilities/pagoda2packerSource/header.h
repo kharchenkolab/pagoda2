@@ -82,6 +82,9 @@ void make_dummy_file();
 void make_file(string &indir, string &outfile);
 string readWholeFile(string &filename);
 void make_file_from_payload(list<entry> &entries, string &filename);
+void makeMainSparseMatrix(list<entry> &entries, string &indir);
+
+void makeAspectSparseMatrix(list<entry> &entries, string &indir);
 
 template<class T>
 list<T>* readNumberArrayFromFile(string &filename);

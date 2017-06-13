@@ -187,6 +187,8 @@ void make_file(string &indir, string &outfile) {
   string embeddingstructureData = readWholeFile(embeddingstructureFile);
 
 
+					       
+
   list<entry> entries;
   
   // struct entry is for the program only
@@ -231,10 +233,21 @@ void make_file(string &indir, string &outfile) {
   struct entry* embPCAtSNEEntry = make_entry_from_string("emb_PCA_tSNE", embPCAtSNEData);
   entries.push_back(*embPCAtSNEEntry);
 
+  makeMainSparseMatrix(entries, indir);
+  makeAspectSparseMatrix(entries, indir);
 
-
-
+  string aspectInformationFile = indir + "aspectInformation.json";
+  string aspectInformationData = readWholeFile(aspectInformationFile);
+  struct entry* aspectInformationEntry = make_entry_from_string("aspectinformation", aspectInformationData);
+  entries.push_back(*aspectInformationEntry);
+								
+		
   
+  make_file_from_payload(entries, outfile);
+
+}
+
+void makeMainSparseMatrix(list<entry> &entries, string& indir) {
   // Make the main sparse matrix
   // Read the p
   string matsparsePFile = indir + "matsparse_p.txt";
@@ -331,13 +344,9 @@ void make_file(string &indir, string &outfile) {
   // Convert the buffer to a string
   string smhDataString = smhData.str();
 
-
   struct entry* sparseMatrixEntry = make_entry_from_string("sparseMatrix", smhDataString);
   entries.push_back(*sparseMatrixEntry);
-  
-  //smhData << smh;
-  
-  make_file_from_payload(entries, outfile);
+
 
 }
 
@@ -455,4 +464,109 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
 
   fs.close();
   
+}
+
+
+
+void makeAspectSparseMatrix(list<entry> &entries, string& indir) {
+  // Make the main sparse matrix
+  // Read the p
+  string mataspectPFile = indir + "mataspect_p.txt";
+  list<uint32_t> *pData;
+  pData = readNumberArrayFromFile<uint32_t>(mataspectPFile);
+  cout << "p array size: " << pData->size() << endl;
+  cout << "p first entry: " << pData->front() << endl;
+
+  // Read the i
+  string mataspectIFile = indir + "mataspect_i.txt";
+  list<uint32_t> *iData;
+  iData = readNumberArrayFromFile<uint32_t>(mataspectIFile);
+  cout << "i array size: " << iData->size() << endl;
+  cout << "i first entry: " << iData->front() << endl;
+
+  // Read the x
+  string mataspectXFile = indir + "mataspect_x.txt";
+  list<float> *xData;
+  xData = readNumberArrayFromFile<float>(mataspectXFile);
+  cout << "x array size: " << xData->size() << endl;
+  cout << "x first entry: " << xData->front() << endl;
+
+  // Read dim names 1
+  string mataspectDimnames1File = indir + "mataspect_Dimnames1.json";
+  string mataspectDimnames1 = readWholeFile(mataspectDimnames1File);
+
+  // Read dimnames 2
+  string mataspectDimnames2File = indir + "mataspect_Dimnames2.json";
+  string mataspectDimnames2 = readWholeFile(mataspectDimnames2File);
+
+  string dimFile = indir + "mataspect_Dim.txt";
+  list<uint32_t> *Dim;
+  Dim = readNumberArrayFromFile<uint32_t>(dimFile);
+   
+  // Now serialise
+  struct sparseMatrixHeader smh;
+  list<uint32_t>::iterator li = Dim->begin();
+  smh.dim1 = *li;
+  li++;
+  smh.dim2 = *li;
+
+  // Always 2
+  smh.pStartOffset = sizeof(struct sparseMatrixHeader);
+  smh.iStartOffset = smh.pStartOffset + sizeof(uint32_t) * pData->size();
+  smh.xStartOffset = smh.iStartOffset + sizeof(uint32_t) * iData->size();
+  smh.dimname1StartOffset = smh.xStartOffset + sizeof(uint32_t) * xData->size();
+  smh.dimname2StartOffset = smh.dimname1StartOffset + mataspectDimnames1.size();
+  smh.dimname2EndOffset = smh.dimname2StartOffset + mataspectDimnames2.size();
+  
+
+  cout << "aspectsparse header information" << endl;
+  cout << "dim1 " << smh.dim1 << endl;
+  cout << "dim2 " << smh.dim2 << endl;
+  cout << "pStartOffset " << smh.pStartOffset << endl;
+  cout << "iStartOffset " << smh.iStartOffset << endl;
+  cout << "xStartOffset " << smh.xStartOffset << endl;
+  cout << "dimnames1StartOffset " << smh.dimname1StartOffset << endl;
+  cout << "dimnames2StartOffset " << smh.dimname2StartOffset << endl;
+  cout << "dimnames2EndOffset " << smh.dimname2EndOffset << endl;
+
+  cout << endl << "dimnames1 size" <<  mataspectDimnames1.size() << endl;
+
+  //cout << "Test " << matsparseDimnames1 << endl;
+  // Make a memory holder for the data
+  stringstream smhData(stringstream::in|stringstream::out|stringstream::binary);
+  // Write the header
+  smhData.write((const char*) &smh, sizeof(smh));
+  //cout << "Size of sparse header " << sizeof(smh) << endl;
+  
+  
+  // Write the p object
+  for(list<uint32_t>::const_iterator iter = pData->begin(); iter != pData->end(); ++iter) {
+    smhData.write((const char*) &*iter, sizeof(uint32_t));
+  }
+
+  // Write the i object
+  for(list<uint32_t>::const_iterator iter = iData->begin(); iter != iData->end(); ++iter) {
+    smhData.write((const char*) &*iter, sizeof(uint32_t));
+  }
+
+  // Write the x object
+  for(list<float>::const_iterator iter = xData->begin(); iter != xData->end(); ++iter) {
+    //smhData << *iter;
+    smhData.write((const char*) &*iter, sizeof(uint32_t));
+  }
+
+  // Write the Dimnames as JSON string
+  // HERE
+  smhData.write( mataspectDimnames1.c_str(), mataspectDimnames1.size());
+  smhData.write( mataspectDimnames2.c_str(), mataspectDimnames2.size());
+
+  //cout << matsparseDimnames1.c_str();
+  
+  // Convert the buffer to a string
+  string smhDataString = smhData.str();
+
+  struct entry* sparseMatrixEntry = make_entry_from_string("aspectMatrix", smhDataString);
+  entries.push_back(*sparseMatrixEntry);
+
+
 }
