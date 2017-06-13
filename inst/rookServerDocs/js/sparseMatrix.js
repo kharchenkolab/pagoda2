@@ -29,28 +29,28 @@ dgCMatrixReader.prototype.getFullMatrix = function() {
     // Make a zero filled array
     var out = Array(this.Dim[0]);
     for (var k = 0; k < this.Dim[0]; k++) {
-	var row = Array(this.Dim[1]);
-	for (var j = 0; j < this.Dim[1]; j++) {
-	    row[j] = 0;
-	}
-	out[k] = row;
+    	var row = Array(this.Dim[1]);
+    	for (var j = 0; j < this.Dim[1]; j++) {
+    	    row[j] = 0;
+    	}
+    	out[k] = row;
     }
 
 
     // index in p (the column number)
     for (var j = 0; j < this.p.length - 1; j++) {
-	// row start index, row end index (in x and i)
-	var rsi = this.p[j];
-	var rei = this.p[j+1] - 1;
+    	// row start index, row end index (in x and i)
+    	var rsi = this.p[j];
+    	var rei = this.p[j+1] - 1;
 
-	// k is an index in x and i with the current column
-	for (var k = rsi; k < rei; k++) {
-	    // row number
-	    var rn = this.i[k];
+    	// k is an index in x and i with the current column
+    	for (var k = rsi; k < rei; k++) {
+    	    // row number
+    	    var rn = this.i[k];
 
-	    // x[k] is the value for the element in rn, j
-	    out[rn][j] = this.x[k];
-	}
+    	    // x[k] is the value for the element in rn, j
+    	    out[rn][j] = this.x[k];
+    	}
     }
 
     var retVal = {

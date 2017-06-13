@@ -390,11 +390,32 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
 
   }
 
+  // TODO: Debug
   function handleComplete() {
-        console.log('done');
-        console.log(resultsArray)
+        // Convert to sparse matrix and return to callback
+        var x = new Array();
+        var i = new Array();
+        var p = new Array()
 
-        // TODO: convert to sparse matrix and return
+        var dim1Length = resultsArray.length;
+        var dim2Length = resultsArray[0].length;
+
+        var pos = 0;
+        for (k = 0; k < dim1Length; k++) {
+          p.push(pos); // Start of the column
+          for (j =0; j < dim2Length; j++) {
+              if (resultsArray[k][j] != 0) { // TODO: perhaps 1e-16
+                x.push(resultsArray[k][j]); // The value
+                i.push(j); // corresponding index j or K?
+                pos++;
+              }
+          }
+        }
+        p.push(pos); // p push number of elements
+
+        var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], [""], geneIds, x, null);
+
+        callback(retVal);
   }
 
   // Initiate callbacks for each row
@@ -404,10 +425,9 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
       progressArray[geneindex] = 1;
       resultsArray[geneindex] = row;
       checkIfDone(function(){
-        handleComplete();
-      });
-    });
-
+        handleComplete(callback);
+      }); // checkIfDone
+    }); // getGeneColumn
   } // for each gene
 }
 

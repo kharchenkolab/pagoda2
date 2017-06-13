@@ -251,6 +251,8 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 		//Convert to matrix reader and return
 		var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1,
 					    data.Dimnames2, x);
+	  console.log(m);
+
 		callback(m);
 	}
 
