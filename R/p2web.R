@@ -273,9 +273,42 @@ pagoda2WebApp <- setRefClass(
                                       # but only returns information for the genes that belong
                                       # to the specified geneset
                                       'genesetgeneinformation' = {
-                                          response$header("Content-type", "application/javascript");
-                                          response$write(geneInformationJSON());
-                                          return(response$finish());
+
+
+                                        # FIXME: to work with genelistnames not
+                                        # gene names
+
+                                        geneListName <- requestArguments[['genesetname']];
+
+                                        # TODO: Check that the specified gene set actually
+                                        # exists
+
+                                        # Get the genes in this geneset
+                                        geneList <- geneSets[[geneListName]]$genes
+
+                                        # Subset to genes that exist
+                                        geneList <- geneList[geneList %in% rownames(varinfo)];
+
+                                        # Generate dataset
+                                        dataset <-  varinfo[geneList, c("m","v")];
+                                        dataset$name <-  rownames(dataset);
+
+                                        # Convert to row format
+                                        retd <-  apply(dataset,
+                                                       1, function(x) {
+                                                         list(genename = x[["name"]],
+                                                              dispersion =x[["v"]],
+                                                              meanExpr = x[["m"]])
+                                                       });
+                                        retd <- unname(retd);
+
+
+                                        response$header("Content-type", "application/javascript");
+                                        response$write(toJSON(retd));
+                                        return(response$finish());
+
+
+
 
                                       },
 
