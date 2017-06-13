@@ -207,7 +207,7 @@ DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callba
     		    callback(data);
 
     	 }, fr);
-    }
+    };
 
 
     // Call immediately or defer to when the object is ready
@@ -365,7 +365,7 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellI
       callback(geneName, geneindex, retVal);
     });
   });
-}
+};
 
 /**
  * Performs the getExpressionValuesSparseByCellIndexUnpacked
@@ -400,7 +400,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
         callback();
       }
     }
-  }
+  };
 
   // Runs when all the data is available
   function handleComplete(callback, dcf, cellIndexStart, cellIndexEnd) {
@@ -447,8 +447,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
       }); // checkIfDone
     }); // getGeneColumn
   } // for each gene
-
-} // getExpressionValuesSparseByCellIndexUnpackedInternal
+}; // getExpressionValuesSparseByCellIndexUnpackedInternal
 
 /**
  * Gets the expression values sparse
@@ -468,8 +467,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
     } else {
       dcf.getExpressionValuesSparseByCellIndexUnpackedInternal(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
     }
-
-}
+};
 
 /**
  * Helper function that returns the length of a null terminated string
@@ -483,7 +481,7 @@ DataControllerFile.prototype.getNullTerminatedStringLength = function(text) {
   		    }
   		}
   		return dataLength;
-}
+};
 
 /**
  * Get the available embeddings for a reduction
@@ -503,7 +501,7 @@ DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, c
  */
 DataControllerFile.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
   this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, aspectIds, callback);
-}
+};
 
 /**
  * Implements getAspectMatrix
@@ -522,7 +520,7 @@ DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellInde
   } else {
     handleComplete();
   }
-}
+};
 
 /**
  * Internal implementeation of getAspectMatrix (full or by aspect)
@@ -541,8 +539,7 @@ DataControllerFile.prototype.getAspectMatrixByAspectInternal = function(cellInde
     } else {
       dcf.getAspectMatrixByAspectInternal2(cellIndexStart, cellIndexEnd, aspectIds, callback);
     }
-
-}
+};
 
 /**
  * Second level internal function that does the job
@@ -553,7 +550,7 @@ DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellInd
   var fr = this.formatReader;
 
   // CONTINUE HERE
-}
+};
 
 /**
  * Loads the aspect information
@@ -573,7 +570,7 @@ DataControllerFile.prototype.loadAspectInformation = function(callback) {
       		dcf.aspectInformation = JSON.parse(textTrimmed)
       		callback();
   	 }, fr);
-  }
+  };
 
   // Call immediately or defer to when the object is ready
   if (fr.state == fr.READY) {
@@ -581,7 +578,7 @@ DataControllerFile.prototype.loadAspectInformation = function(callback) {
   } else {
     fr.addEventListener('onready',fn);
   }
-}
+};
 
 /**
  * Implements getAvailableAspectsStore
@@ -615,7 +612,6 @@ DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
   }
 };
 
-
 /**
  * Implements getAvailableGenesetsInAspectStore
  */
@@ -646,8 +642,7 @@ DataControllerFile.prototype.getAvailableGenesetsInAspectStore = function(aspect
 
 
 
-
-
+// Not implmented
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
 
 }
