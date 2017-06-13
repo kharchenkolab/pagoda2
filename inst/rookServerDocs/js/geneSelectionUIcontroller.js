@@ -313,6 +313,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	        height:100,
 	        width:500,
 	        align:"center",
+	        modal: true,
 	        items:[
 	         {
 	            height: "12px",
