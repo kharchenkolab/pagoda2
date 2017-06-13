@@ -323,19 +323,20 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
 
 DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellIndexStart, cellIndexEnd, callback) {
   var dcf = this;
-   var fr = this.formatReader;
+  var fr = this.formatReader;
 
   var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
+  console.log('geneIndexInSparse', geneIndexInSparse);
 
-  var csi = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse]; // CHECK: is -/+ required
-  var cei = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse + 1];
+  var csi = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse] - 1;
+  var cei = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse + 1]  - 1;
   console.log('cse/cei:', csi, cei);
 
   // Zero filled array with the data for all the cells
   var fullRowArray = new Float32Array(dcf.sparseArrayPreloadInfo.dim1);
 
   // Get csi to cei for the x array
-  var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset;
+  var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset + 4;
   var csiBytes = xArrayOffset + csi * 4; // 4 bytes per float
   var ceiBytes = xArrayOffset + cei * 4;
   var xRowLength = ceiBytes - csiBytes;
@@ -355,7 +356,7 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellI
         fullRowArray[k] = rowXArray[k];
       }
 
-      console.log(cellIndexStart, cellIndexEnd);
+      console.log('Row for gene:', fullRowArray);
       var retVal = fullRowArray.slice(cellIndexStart,cellIndexEnd); // Check need for +/-1
 
       callback(geneName, geneindex, retVal);
@@ -392,6 +393,10 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
 
   // TODO: Debug
   function handleComplete() {
+
+        console.log("resultsArray", resultsArray);
+        //return;
+
         // Convert to sparse matrix and return to callback
         var x = new Array();
         var i = new Array();
