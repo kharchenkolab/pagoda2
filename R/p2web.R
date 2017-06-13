@@ -1009,6 +1009,7 @@ pagoda2WebApp <- setRefClass(
           aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
           trimPoint <- max(abs(aspectMatrixToSave)) / 50;
           aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
+          aspectMatrixToSave <- t(aspectMatrixToSave);
           aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
           serialiseSparseArray(aspectMatrixToSave, dir, 'mataspect_');
 
