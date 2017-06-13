@@ -498,8 +498,6 @@ DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, c
   });
 };
 
-// Unimplemented
-
 /**
  * Implements getAspectMatrixByAspect
  */
@@ -546,6 +544,10 @@ DataControllerFile.prototype.getAspectMatrixByAspectInternal = function(cellInde
 
 }
 
+/**
+ * Second level internal function that does the job
+ * @private
+ */
 DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
   var dcf = this;
   var fr = this.formatReader;
@@ -581,6 +583,47 @@ DataControllerFile.prototype.loadAspectInformation = function(callback) {
   }
 }
 
+/**
+ * Implements getAvailableAspectsStore
+ */
+DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
+  var dcf = this;
+
+  var handleComplete = function() {
+    var data = Object.keys(dcf.aspectInformation);
+
+        // Data needs to be converted into an array
+        // of objects with named properties
+        var dataStructured = [];
+        for (var i = 0; i < data.length; i++) {
+          dataStructured[i] = {'name': data[i]}
+        };
+
+	      var pagingStore = Ext.create('LocalJsonStore', {
+	        autoLoad: true,
+	        model: 'aspectTableEntry',
+	        pageSize: 20,
+	        localData: dataStructured
+	      });
+	      callback(pagingStore);
+  };
+
+  if (dcf.aspectInformation === null) {
+    this.loadAspectInformation(handleComplete);
+  } else {
+    handleComplete();
+  }
+};
+
+DataControllerFile.prototype.getAvailableGenesetsInAspectsStore = function(aspectId, callback) {
+
+}
+
+
+
+
+
+
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
 
 }
@@ -589,12 +632,5 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 
 }
 
-DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
-
-}
-
-DataControllerFile.prototype.getAvailableGenesetsInAspectsStore = function(aspectId, callback) {
-
-}
 
 
