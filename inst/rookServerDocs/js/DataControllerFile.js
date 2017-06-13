@@ -389,7 +389,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
   }
 
   // Runs when all the data is available
-  function handleComplete() {
+  function handleComplete(callback, dcf, cellIndexStart, cellIndexEnd) {
         // Convert to sparse matrix and return to callback
         var x = new Array();
         var i = new Array();
@@ -411,8 +411,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
         }
         p.push(pos); // p push number of elements
 
-        var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], [""], geneIds, x, null);
-
+        var cellNames = dcf.sparseArrayPreloadInfo.dimnames1Data.slice(cellIndexStart, cellIndexEnd);
+        var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], cellNames, geneIds, x, null);
         callback(retVal);
   }
 
@@ -423,7 +423,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
       progressArray[geneindex] = 1;
       resultsArray[geneindex] = row;
       checkIfDone(function(){
-        handleComplete(callback);
+        handleComplete(callback, dcf, cellIndexStart, cellIndexEnd);
       }); // checkIfDone
     }); // getGeneColumn
   } // for each gene

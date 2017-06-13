@@ -790,6 +790,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 	evSC.colorAJAXrequest =
 	    dataCntr.getExpressionValuesSparseByCellIndex(
 		geneSelection, cellIndexStart, cellIndexEnd, function(data) {
+
 		    var heatView = new heatmapViewer();
 		    // Get palette
 		    var palSize = heatView.palManager.getNumberOfColors();
@@ -850,7 +851,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    			console.warn('Embedding plotter found a cell that does not' +
 						     'have and entry in the expression matrix. Cellid: "' +
 						     cellId +
-		    				     '. This is an error with the data provided by server.');
+		    				     '". This is an error with the data provided by server.');
 		    			color = '#000000'; // default to black
 		    		    } else {
 		    			var palIndex = colorMapper(data.array[index][0]);
