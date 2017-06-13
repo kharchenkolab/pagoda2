@@ -506,11 +506,6 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 
 }
 
-DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
-  function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback) {
-
-
-}
 
 DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
 
