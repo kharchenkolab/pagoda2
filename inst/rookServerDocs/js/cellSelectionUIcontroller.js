@@ -295,7 +295,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             var selectionFormatted = [];
             var cellSelCntr = new cellSelectionController();
             for(var index = 0; index < selectedItems.length; index++){
-      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
+      		    var selectionName = selectedItems.getAt(index).getData().displayname;
     	  	    var selection = cellSelCntr.getSelection(selectionName);
       		    selectionFormatted.push(selectionName+ "," + selection.join(","));
       		  }
@@ -339,25 +339,51 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	            height:"40%",
 	            align: "center",
 	            handler: function(){
+	              var dataCntr = new dataController();
 	              var cellSelFile = document.getElementById("selectedCellFile").files[0];
 	              var cellSelFileName = cellSelFile.name;
 	              var reader = new FileReader();
 	              reader.onload = function(progressEvent){
 	                var lines = this.result.split("\n");
+	                dataCntr.getCellOrder(function(cellOrder){
 	                var cellSelCntrl = new cellSelectionController();
+	                var total = 0;
+	                var removedCells = {};
 	                for(var line = 0; line < lines.length; line++){
-	                  var selection = lines[line].split(",");
-	                  var selName = selection.shift();
-	                  if(cellSelCntrl.getSelection(selName)){
-	                    selName = selName  + "~RecentlyLoaded"
+	                  if(lines[line].length !== 0){
+	                    var selection = lines[line].split(",");
+	                    var selName = selection.shift();
+	                    removedCells[selName] = 0;
+	                    var pureSelection = [];
+	                    for(var elem = 0; elem < selection.length; elem++){
+	                      if(cellOrder.includes(selection[elem])){
+	                        pureSelection.push(selection[elem]);
+	                      }
+	                      else{
+	                        removedCells[selName]++;
+	                      }
+	                    }// ensure all cells are rightfully containers
+	                    
+	                    if(cellSelCntrl.getSelection(selName)){
+  	                    selName = selName  + "~RecentlyLoaded"
+	                    }
+	                    if(removedCells[selName] !== selection.length){
+	                      cellSelCntrl.setSelection(selName,pureSelection,selName,"loaded from " + cellSelFileName);
+	                      total++;
+	                    }//confirm
 	                  }
-	                  cellSelCntrl.setSelection(selName,selection,selName,"loaded from " + cellSelFileName);
 	                }
-	                Ext.MessageBox.alert('info',lines.length + " selections were loaded from " + cellSelFileName)
-	              };
-	              reader.readAsText(cellSelFile);
-	              
-	              Ext.getCmp('cellFileSelectionWindow').close();
+	                var extraInfo = "";
+	                for(var selName in removedCells){
+	                  if(removedCells[selName] > 0){
+	                    extraInfo += "<br>" + removedCells[selName] + " cell(s) could not be loaded from selection " + selName;
+	                  }
+	                }
+	                Ext.MessageBox.alert('Load Cell Selections Complete', total + " selections were generated from the data within " + cellSelFileName + extraInfo)
+	                });
+  	           };
+	             reader.readAsText(cellSelFile);
+	             Ext.getCmp('cellFileSelectionWindow').close();
 	            }
 	          }
 	        ],

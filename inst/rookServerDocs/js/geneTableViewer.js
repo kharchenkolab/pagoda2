@@ -24,8 +24,9 @@ function geneTableViewer()  {
  */
 geneTableViewer.prototype.generateGeneTable = function() {
     var dataCntr = new dataController();
+    
     dataCntr.getGeneInformationStore(function(geneTableEntryStore) {
-
+      
 	// For checkboxes on table
 	var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 
