@@ -873,7 +873,6 @@ pagoda2WebApp <- setRefClass(
             }
         },
 
-
         # Logging function for console
         serverLog = function(message) {
             print(message);
@@ -1012,6 +1011,30 @@ pagoda2WebApp <- setRefClass(
           aspectMatrixToSave <- t(aspectMatrixToSave);
           aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
           serialiseSparseArray(aspectMatrixToSave, dir, 'mataspect_');
+
+          # Serialise the aspect information
+
+
+          cat('Serialising aspects..\n');
+          aspectInformation <- list();
+          for (curAspect in rownames(pathways$xv)) {
+            # Genesets in this aspect
+            genesets <- unname(pathways$cnam[[curAspect]]);
+
+            # Get the metadata for these gene sets
+            colOfInterest <- c("name","n","cz");
+            retTable <- pathwayODInfo[genesets, colOfInterest];
+
+            # Convert to JSON friendly format
+            aspectInformation[[curAspect]]  <- unname(apply(retTable, 1, function(x) {
+              # Must be in genesets for short description
+              desc <- geneSets[[x[[1]]]]$properties$shortdescription;
+
+              list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
+            }));
+          }
+          writeDataToFile(dir, 'aspectInformation.json', toJSON(aspectInformation));
+
 
           # TODO: Continue here
 
