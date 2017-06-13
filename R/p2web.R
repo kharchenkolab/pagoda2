@@ -991,19 +991,22 @@ pagoda2WebApp <- setRefClass(
           }
 
           serialiseSparseArray <- function(array, dir, filename) {
+            # Reorder Sparse Matrix
+            orderedSparseMatrix <- array[mainDendrogram$cellorder,];
+
             # Serialise the i
             cat('Serialising i...\n')
-            simpleSerializeArrayToFile(array@i, dir, paste0(filename,'i.txt'))
+            simpleSerializeArrayToFile(orderedSparseMatrix@i, dir, paste0(filename,'i.txt'))
             cat('Serialising p...\n')
-            simpleSerializeArrayToFile(array@p, dir,  paste0(filename,'p.txt'))
+            simpleSerializeArrayToFile(orderedSparseMatrix@p, dir,  paste0(filename,'p.txt'))
             cat('Serialising x...\n')
-            simpleSerializeArrayToFile(array@x, dir,  paste0(filename,'x.txt'))
+            simpleSerializeArrayToFile(orderedSparseMatrix@x, dir,  paste0(filename,'x.txt'))
             cat('Serialising Dim...\n')
-            simpleSerializeArrayToFile(array@Dim, dir,  paste0(filename,'Dim.txt'))
+            simpleSerializeArrayToFile(orderedSparseMatrix@Dim, dir,  paste0(filename,'Dim.txt'))
             cat('Serialising Dimnames1...\n')
-            writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(array@Dimnames[[1]]));
+            writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(orderedSparseMatrix@Dimnames[[1]]));
             cat('Serialising Dimnames2...\n')
-            writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(array@Dimnames[[2]]));
+            writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(orderedSparseMatrix@Dimnames[[2]]));
           }
 
           # Serialise the main sparse matrix
