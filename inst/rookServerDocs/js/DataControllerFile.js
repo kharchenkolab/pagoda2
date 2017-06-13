@@ -341,19 +341,20 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellI
   var ceiBytes = xArrayOffset + cei * 4;
   var xRowLength = ceiBytes - csiBytes;
 
-  // TODO: fix the contexts and allow asyng generation of whole table
+
   fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
     var geneIndexInRequest = geneIndexInRequest;
     var rowXArray = new Float32Array(buffer);
-    var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset;
+    var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset + 4;
     var csiBytesI = iArrayOffset + csi * 4; // 4 bytes per float
     var ceiBytesI = iArrayOffset + cei * 4;
     var xRowLengthI = ceiBytes - csiBytes;
 
     fr.getBytesInEntry('sparseMatrix', csiBytesI, xRowLengthI, function(buffer2) {
       var rowIArray = new Uint32Array(buffer2);
-      for (k in rowIArray) {
-        fullRowArray[k] = rowXArray[k];
+      for (k =0; k < rowIArray.length; k++) {
+        var ki = rowIArray[k];
+        fullRowArray[ki] = rowXArray[k];
       }
 
       console.log('Row for gene:', fullRowArray);
