@@ -1035,6 +1035,8 @@ pagoda2WebApp <- setRefClass(
           }
           writeDataToFile(dir, 'aspectInformation.json', toJSON(aspectInformation));
 
+          cat('Serialising gene sets...\n');
+          writeDataToFile(dir, 'genesets.json',toJSON(unname(lapply(geneSets, function(x) {x$properties}))));
 
           # TODO: Continue here
 
