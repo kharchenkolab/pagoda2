@@ -227,12 +227,17 @@ p2FormatReader.prototype.getEntryAsText = function(entryKey, callback, context) 
     if (typeof context === 'undefined') { context = this; }
 
     var entryIndexInfo = context.index[entryKey];
-    var start = context.dataOffset + entryIndexInfo.offset * context.blockSize;
-    var end = context.dataOffset + (entryIndexInfo.offset + entryIndexInfo.size) * context.blockSize;
 
-    context.filereader.readRangeAsText(start,end, function(data) {
-	    callback(data);
-    });
+    if (typeof entryIndexInfo !== 'undefined') {
+      var start = context.dataOffset + entryIndexInfo.offset * context.blockSize;
+      var end = context.dataOffset + (entryIndexInfo.offset + entryIndexInfo.size) * context.blockSize;
+
+      context.filereader.readRangeAsText(start,end, function(data) {
+  	    callback(data);
+      });
+    } else {
+      console.error('Unknown index: ', entryKey);
+    }
 
 }
 
