@@ -240,8 +240,12 @@ void make_file(string &indir, string &outfile) {
   string aspectInformationData = readWholeFile(aspectInformationFile);
   struct entry* aspectInformationEntry = make_entry_from_string("aspectinformation", aspectInformationData);
   entries.push_back(*aspectInformationEntry);
-								
-		
+
+  string genesetsFile = indir + "genesets.json";
+  string genesetsData = readWholeFile(genesetsFile);
+  struct entry* genesetsEntry = make_entry_from_string("genesets", genesetsData);
+  entries.push_back(*genesetsEntry);
+							       
   
   make_file_from_payload(entries, outfile);
 

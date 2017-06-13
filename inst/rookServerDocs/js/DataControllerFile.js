@@ -629,7 +629,6 @@ DataControllerFile.prototype.getAvailableGenesetsInAspectStore = function(aspect
       });
 
       callback(pagingStore);
-
   };
 
   if (dcf.aspectInformation === null) {
@@ -640,11 +639,38 @@ DataControllerFile.prototype.getAvailableGenesetsInAspectStore = function(aspect
 };
 
 
-
-
-// Not implmented
+/**
+ * Get gene information store
+ */
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
+  var fr = this.formatReader;
+  var dcf = this;
 
+  var fn = function() {
+        fr.getEntryAsText('genesets', function(text) {
+          var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+      		var textTrimmed = text.slice(0, dataLength);
+      		var data = JSON.parse(textTrimmed);
+
+      		console.log("getGeneSetInformationStore: ", data);
+
+        	var pagingStore = Ext.create('LocalJsonStore', {
+        		autoLoad: true,
+        		model: 'geneSetTableEntry',
+        		pageSize: 100,
+        		localData: data
+    	    });
+    	    callback(pagingStore);
+
+  	 }, fr);
+  };
+
+  // Call immediately or defer to when the object is ready
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
 }
 
 DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
