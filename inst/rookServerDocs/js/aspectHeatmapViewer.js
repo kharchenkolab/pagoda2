@@ -130,12 +130,12 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
                    buttons: Ext.Msg.OKCANCEL,
                    fn: function(s) {
                      if (s == 'ok') {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png')})
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
                      } //if
                    } //fn
                 }) // Ext.Msg.show
             } else {
-                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png')})
+                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
             } // if
         } // handler
 });

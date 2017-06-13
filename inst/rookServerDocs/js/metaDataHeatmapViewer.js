@@ -374,8 +374,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         handler: function(){
             pagHelpers.regC(25);
             var canvas = document.getElementById('metadata-area');
-
-                        const maxSize = 2000;
+                const maxSize = 2000;
                 if (canvas.width > maxSize | canvas.height >maxSize){
                     Ext.Msg.show({
                       title: 'Warning',
@@ -384,12 +383,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                        buttons: Ext.Msg.OKCANCEL,
                        fn: function(s) {
                          if (s == 'ok') {
-                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png')})
+                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png', canvas)})
                          } //if
                        } //fn
                     }) // Ext.Msg.show
                 } else {
-                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png')})
+                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png', canvas)})
             }
 
 

@@ -206,6 +206,100 @@ embeddingViewer.prototype.generateToolbar = function() {
         tooltip: 'Download current view',
         glyph: 0xf0ed,
         handler: function(){
+          
+              /*Ext.create("Ext.window.Window",{
+                title:"Embedding Download Preview",
+                id: "EmbeddingEditor",
+                height: 550,
+                width: 600,
+                items: [
+                  {
+                    xtype: 'container',
+                    title: 'Display Options',
+                    items: [
+                      {
+                        xtype: 'checkbox',
+                        boxLabel: 'Include Title',
+                        id: 'includeTitle',
+                        listeners:{
+                          change: function(){
+                            var me = Ext.getCmp('includeTitle');
+                            if(Ext.getCmp('includeTitle').getValue()){
+                              Ext.getCmp('embTitle').enable();
+                            }
+                            else{
+                              Ext.getCmp('embTitle').disable();
+                            }
+                          } 
+                        }
+                      },
+                      {
+                        xtype: 'textfield',
+                        id: 'embTitle',
+                        fieldLabel:'Title',
+                        disabled: true
+                      },//title
+                      {
+                        xtype: 'checkbox',
+                        boxLabel: 'Include X-Axis',
+                        id: 'includeX',
+                        listeners:{
+                          change: function(){
+                            var me = Ext.getCmp('includeX');
+                            if(Ext.getCmp('includeX').getValue()){
+                              Ext.getCmp('xAxisTitle').enable();
+                            }
+                            else{
+                              Ext.getCmp('xAxisTitle').disable();
+                            }
+                          } 
+                        }
+                      },
+                      {
+                        xtype: 'textfield',
+                        id: 'xAxisTitle',
+                        fieldLabel:'X-Axis Title',
+                        disabled: true
+                      },
+                      {
+                        xtype: 'checkbox',
+                        boxLabel: 'Include Y-Axis',
+                        id: 'includeY',
+                        listeners:{
+                          change: function(){
+                            var me = Ext.getCmp('includeY');
+                            if(Ext.getCmp('includeY').getValue()){
+                              Ext.getCmp('yAxisTitle').enable();
+                            }
+                            else{
+                              Ext.getCmp('yAxisTitle').disable();
+                            }
+                          } 
+                        }
+                      },
+                      {
+                        xtype: 'textfield',
+                        id: 'yAxisTitle',
+                        fieldLabel:'Y-Axis Title',
+                        disabled: true
+                      },
+                      {
+                        xtype: 'checkbox',
+                        boxLabel: 'Include Highlights',
+                        id: 'enableHighlights'
+                      }
+                    ]
+                  },
+                  {
+                    xtype: 'container',
+                    title: 'Preview',
+                    items:[
+                      
+                    ]
+                  }
+                ]
+              }).show()*/
+          
               var embV = new embeddingViewer();
               var canvas = embV.currentViewer.getMainCanvasElement();
 
@@ -219,12 +313,12 @@ embeddingViewer.prototype.generateToolbar = function() {
                        buttons: Ext.Msg.OKCANCEL,
                        fn: function(s) {
                          if (s == 'ok') {
-                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png')})
+                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png', canvas)})
                          } //if
                        } //fn
                     }) // Ext.Msg.show
                 } else {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png')})
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png', canvas)})
                 }// if
         } // handler
       }); // toolbar add
