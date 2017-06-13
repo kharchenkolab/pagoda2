@@ -673,12 +673,6 @@ pagoda2WebApp <- setRefClass(
                                                           colnames = colnames(a)
                                                       );
                                                       response$write(toJSON(ret));
-
-
-
-
-
-
                                                       return(response$finish());
                                                   } else {
                                                       response$write(paste0("Error: Unknown embedding specified: ",embeddingType));
@@ -991,26 +985,32 @@ pagoda2WebApp <- setRefClass(
           }
 
           serialiseSparseArray <- function(array, dir, filename) {
-            # Reorder Sparse Matrix
-            orderedSparseMatrix <- array[mainDendrogram$cellorder,];
-
             # Serialise the i
             cat('Serialising i...\n')
-            simpleSerializeArrayToFile(orderedSparseMatrix@i, dir, paste0(filename,'i.txt'))
+            simpleSerializeArrayToFile(array@i, dir, paste0(filename,'i.txt'))
             cat('Serialising p...\n')
-            simpleSerializeArrayToFile(orderedSparseMatrix@p, dir,  paste0(filename,'p.txt'))
+            simpleSerializeArrayToFile(array@p, dir,  paste0(filename,'p.txt'))
             cat('Serialising x...\n')
-            simpleSerializeArrayToFile(orderedSparseMatrix@x, dir,  paste0(filename,'x.txt'))
+            simpleSerializeArrayToFile(array@x, dir,  paste0(filename,'x.txt'))
             cat('Serialising Dim...\n')
-            simpleSerializeArrayToFile(orderedSparseMatrix@Dim, dir,  paste0(filename,'Dim.txt'))
+            simpleSerializeArrayToFile(array@Dim, dir,  paste0(filename,'Dim.txt'))
             cat('Serialising Dimnames1...\n')
-            writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(orderedSparseMatrix@Dimnames[[1]]));
+            writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(array@Dimnames[[1]]));
             cat('Serialising Dimnames2...\n')
-            writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(orderedSparseMatrix@Dimnames[[2]]));
+            writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(array@Dimnames[[2]]));
           }
 
           # Serialise the main sparse matrix
-          serialiseSparseArray(matsparse, dir, 'matsparse_');
+          matsparseToSave <- matsparse[mainDendrogram$cellorder,]
+          serialiseSparseArray(matsparseToSave, dir, 'matsparse_');
+
+          # Serialise aspect matrix
+          cellIndices <- mainDendrogram$cellorder;
+          aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
+          trimPoint <- max(abs(aspectMatrixToSave)) / 50;
+          aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
+          aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
+          serialiseSparseArray(aspectMatrixToSave, dir, 'mataspect_');
 
           # TODO: Continue here
 
