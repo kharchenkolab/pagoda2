@@ -433,17 +433,17 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
 DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
   function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
 
-  var dcf = this;
-
-  if(this.sparseArrayPreloadInfo === null) {
-    // Need to preload
     var dcf = this;
-    this.getSparseArrayPreloadInformation('sparseMatrix',function() {
+
+    if(this.sparseArrayPreloadInfo === null) {
+      // Need to preload
+      var dcf = this;
+      this.getSparseArrayPreloadInformation('sparseMatrix',function() {
+        dcf.getExpressionValuesSparseByCellIndexUnpackedInternal(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
+      })
+    } else {
       dcf.getExpressionValuesSparseByCellIndexUnpackedInternal(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
-    })
-  } else {
-    dcf.getExpressionValuesSparseByCellIndexUnpackedInternal(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
-  }
+    }
 
 }
 
