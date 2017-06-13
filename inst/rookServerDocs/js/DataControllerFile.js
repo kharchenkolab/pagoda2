@@ -1,3 +1,4 @@
+"use strict";
 
 /**
  * Handles data access to pagoda2 files
@@ -25,6 +26,8 @@ function DataControllerFile(loadParams) {
   // object for storing the preloaded information for the sparse array
   // this includes offsets and the p vector
   this.sparseArrayPreloadInfo = null;
+
+  this.aspectArrayPreloadInfo = null;
 }
 
 /**
@@ -171,7 +174,7 @@ DataControllerFile.prototype.getEmbeddingStructure = function(callback) {
 DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
   this.getEmbeddingStructure(function(data) {
     var ret = [];
-    for(i in data) {
+    for(var i in data) {
       ret.push(i);
     }
     callback(ret);
@@ -224,7 +227,9 @@ DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callba
  * (3) The dimnames (that are stored as json string) (Dimname1 and Dimname2)
  * (4) The full p array
  */
-DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryName, callback) {
+DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryName, storageVariableName,callback) {
+  console.log('getSparseArrayPreloadInformation called ',entryName, storageVariableName,this)
+
   var fr = this.formatReader;
   var dcf = this;
 
@@ -233,25 +238,25 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
 
     var dataArray = new Uint32Array(data);
 
-    dcf.sparseArrayPreloadInfo = {};
-    dcf.sparseArrayPreloadInfo.dim1 = dataArray[0];
-    dcf.sparseArrayPreloadInfo.dim2 = dataArray[1];
-    dcf.sparseArrayPreloadInfo.pStartOffset = dataArray[2];
-    dcf.sparseArrayPreloadInfo.iStartOffset = dataArray[3];
-    dcf.sparseArrayPreloadInfo.xStartOffset = dataArray[4];
-    dcf.sparseArrayPreloadInfo.dimname1StartOffset = dataArray[5];
-    dcf.sparseArrayPreloadInfo.dimname2StartOffset = dataArray[6];
-    dcf.sparseArrayPreloadInfo.dimnames2EndOffset  = dataArray[7];
+    dcf[storageVariableName] = {};
+    dcf[storageVariableName].dim1 = dataArray[0];
+    dcf[storageVariableName].dim2 = dataArray[1];
+    dcf[storageVariableName].pStartOffset = dataArray[2];
+    dcf[storageVariableName].iStartOffset = dataArray[3];
+    dcf[storageVariableName].xStartOffset = dataArray[4];
+    dcf[storageVariableName].dimname1StartOffset = dataArray[5];
+    dcf[storageVariableName].dimname2StartOffset = dataArray[6];
+    dcf[storageVariableName].dimnames2EndOffset  = dataArray[7];
 
-    dcf.sparseArrayPreloadInfo.dimnames1Data = null;
-    dcf.sparseArrayPreloadInfo.dimnames2Data = null;
-    dcf.sparseArrayPreloadInfo.parray = null;
+    dcf[storageVariableName].dimnames1Data = null;
+    dcf[storageVariableName].dimnames2Data = null;
+    dcf[storageVariableName].parray = null;
 
     var callCallbackIfReady = function() {
       var ready = false;
-      if (dcf.sparseArrayPreloadInfo.dimnames1Data !== null &&
-       dcf.sparseArrayPreloadInfo.dimnames2Data !== null &&
-       dcf.sparseArrayPreloadInfo.parray !== null) {
+      if (dcf[storageVariableName].dimnames1Data !== null &&
+       dcf[storageVariableName].dimnames2Data !== null &&
+       dcf[storageVariableName].parray !== null) {
          ready = true;
        }
 
@@ -260,36 +265,36 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
       }
     }
 
-    var parraylength =  dcf.sparseArrayPreloadInfo.iStartOffset -  dcf.sparseArrayPreloadInfo.pStartOffset;
-    fr.getBytesInEntry(entryName, dcf.sparseArrayPreloadInfo.pStartOffset, parraylength, function(buffer){
-        dcf.sparseArrayPreloadInfo.parray = new Uint32Array(buffer);
+    var parraylength =  dcf[storageVariableName].iStartOffset -  dcf[storageVariableName].pStartOffset;
+    fr.getBytesInEntry(entryName, dcf[storageVariableName].pStartOffset, parraylength, function(buffer){
+        dcf[storageVariableName].parray = new Uint32Array(buffer);
         callCallbackIfReady();
 
     }, fr);
 
-    var dimnames1length = dcf.sparseArrayPreloadInfo.dimname2StartOffset - dcf.sparseArrayPreloadInfo.dimname1StartOffset - 1; // -1 for null
-    fr.getBytesInEntryAsText(entryName, dcf.sparseArrayPreloadInfo.dimname1StartOffset, dimnames1length,
+    var dimnames1length = dcf[storageVariableName].dimname2StartOffset - dcf[storageVariableName].dimname1StartOffset - 1; // -1 for null
+    fr.getBytesInEntryAsText(entryName, dcf[storageVariableName].dimname1StartOffset, dimnames1length,
       function(data){
-        dcf.sparseArrayPreloadInfo.dimnames1Data = JSON.parse(data);
+        dcf[storageVariableName].dimnames1Data = JSON.parse(data);
 
         // Build reverse map
-        dcf.sparseArrayPreloadInfo.dimnames1DataReverse = {};
-        for (var i in dcf.sparseArrayPreloadInfo.dimnames1Data) {
-          dcf.sparseArrayPreloadInfo.dimnames1DataReverse[dcf.sparseArrayPreloadInfo.dimnames1Data[i]] = parseInt(i);
+        dcf[storageVariableName].dimnames1DataReverse = {};
+        for (var i in dcf[storageVariableName].dimnames1Data) {
+          dcf[storageVariableName].dimnames1DataReverse[dcf[storageVariableName].dimnames1Data[i]] = parseInt(i);
         }
 
         callCallbackIfReady();
     },fr);
 
-    var dimnames2length = dcf.sparseArrayPreloadInfo.dimnames2EndOffset - dcf.sparseArrayPreloadInfo.dimname2StartOffset - 1; // -1 for null
-    fr.getBytesInEntryAsText(entryName, dcf.sparseArrayPreloadInfo.dimname2StartOffset, dimnames2length,
+    var dimnames2length = dcf[storageVariableName].dimnames2EndOffset - dcf[storageVariableName].dimname2StartOffset - 1; // -1 for null
+    fr.getBytesInEntryAsText(entryName, dcf[storageVariableName].dimname2StartOffset, dimnames2length,
       function(data){
-        dcf.sparseArrayPreloadInfo.dimnames2Data = JSON.parse(data);
+        dcf[storageVariableName].dimnames2Data = JSON.parse(data);
 
         // Build reverse map
-        dcf.sparseArrayPreloadInfo.dimnames2DataReverse = {};
-        for (var i in dcf.sparseArrayPreloadInfo.dimnames2Data) {
-          dcf.sparseArrayPreloadInfo.dimnames2DataReverse[dcf.sparseArrayPreloadInfo.dimnames2Data[i]] = parseInt(i);
+        dcf[storageVariableName].dimnames2DataReverse = {};
+        for (var i in dcf[storageVariableName].dimnames2Data) {
+          dcf[storageVariableName].dimnames2DataReverse[dcf[storageVariableName].dimnames2Data[i]] = parseInt(i);
         }
 
         callCallbackIfReady();
@@ -343,7 +348,7 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellI
       var rowIArray = new Uint32Array(buffer2);
 
       // Expand the array to a full array
-      for (k =0; k < rowIArray.length; k++) {
+      for (var k =0; k < rowIArray.length; k++) {
         var ki = rowIArray[k];
         fullRowArray[ki] = rowXArray[k];
       }
@@ -408,9 +413,9 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
         // Pack the subsetted array back into a sparse array
         // That the downstream functions expect
         var pos = 0;
-        for (k = 0; k < dim1Length; k++) {
+        for (var k = 0; k < dim1Length; k++) {
           p.push(pos); // Start of the column
-          for (j =0; j < dim2Length; j++) {
+          for (var j =0; j < dim2Length; j++) {
               if (resultsArray[k][j] != 0) { // TODO: perhaps 1e-16
                 x.push(resultsArray[k][j]); // The value
                 i.push(j); // corresponding index j or K?
@@ -455,7 +460,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
     if(this.sparseArrayPreloadInfo === null) {
       // Need to preload
       var dcf = this;
-      this.getSparseArrayPreloadInformation('sparseMatrix',function() {
+      this.getSparseArrayPreloadInformation('sparseMatrix', 'sparseArrayPreloadInfo', function() {
         dcf.getExpressionValuesSparseByCellIndexUnpackedInternal(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
       })
     } else {
@@ -484,7 +489,7 @@ DataControllerFile.prototype.getNullTerminatedStringLength = function(text) {
 DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, callbackParams) {
   this.getEmbeddingStructure(function(data) {
     var ret = [];
-    for(i in data[type]) {
+    for(var i in data[type]) {
       ret.push(i);
     }
     callback(ret, callbackParams);
@@ -494,18 +499,61 @@ DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, c
 
 
 // Unimplemented
+
+/**
+ * Implements getAspectMatrixByAspect
+ */
+DataControllerFile.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
+  this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, aspectIds, callback, false)
+}
+
+/**
+ * Implements getAspectMatrix
+ */
+DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
+  this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, null, callback, true)
+}
+
+/**
+ * Internal implementeation of getAspectMatrix (full or by aspect)
+ * @private
+ * @description checks that the preload data exists and calls getAspectMatrixByAspectInternal2
+ */
+DataControllerFile.prototype.getAspectMatrixByAspectInternal = function(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects) {
+    var dcf = this;
+
+    if(this.aspectArrayPreloadInfo === null) {
+      // Need to preload
+      this.getSparseArrayPreloadInformation('aspectMatrix','aspectArrayPreloadInfo', function() {
+        dcf.getAspectMatrixByAspectInternal2(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects);
+      })
+    } else {
+      dcf.getAspectMatrixByAspectInternal2(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects);
+    }
+
+}
+
+DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects) {
+  // TODO
+}
+
+
+
+
+
+
+
+
+
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
 
 }
 
-DataControllerFile.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
 
-}
 
 DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 
 }
-
 
 DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
 
@@ -515,6 +563,4 @@ DataControllerFile.prototype.getAvailableGenesetsInAspectsStore = function(aspec
 
 }
 
-DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
 
-}
