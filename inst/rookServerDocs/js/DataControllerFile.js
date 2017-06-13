@@ -28,6 +28,8 @@ function DataControllerFile(loadParams) {
   this.sparseArrayPreloadInfo = null;
 
   this.aspectArrayPreloadInfo = null;
+
+  this.aspectInformation = null;
 }
 
 /**
@@ -496,22 +498,32 @@ DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, c
   });
 };
 
-
-
 // Unimplemented
 
 /**
  * Implements getAspectMatrixByAspect
  */
 DataControllerFile.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
-  this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, aspectIds, callback, false)
+  this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, aspectIds, callback);
 }
 
 /**
  * Implements getAspectMatrix
  */
 DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
-  this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, null, callback, true)
+  // Get all aspect names and call getAspectMatrixByAspectInternal with the aspect names
+  var dcf = this;
+
+  var handleComplete = function() {
+    var aspectIds = Object.keys(dcf.aspectInformation);
+    dcf.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, getCellNames, aspectIds, callback);
+  };
+
+  if (dcf.aspectInformation === null) {
+    this.loadAspectInformation(handleComplete);
+  } else {
+    handleComplete();
+  }
 }
 
 /**
@@ -519,37 +531,59 @@ DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellInde
  * @private
  * @description checks that the preload data exists and calls getAspectMatrixByAspectInternal2
  */
-DataControllerFile.prototype.getAspectMatrixByAspectInternal = function(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects) {
+DataControllerFile.prototype.getAspectMatrixByAspectInternal = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
     var dcf = this;
 
+    // Check if we have the preload data
     if(this.aspectArrayPreloadInfo === null) {
       // Need to preload
       this.getSparseArrayPreloadInformation('aspectMatrix','aspectArrayPreloadInfo', function() {
-        dcf.getAspectMatrixByAspectInternal2(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects);
+        dcf.getAspectMatrixByAspectInternal2(cellIndexStart, cellIndexEnd, aspectIds, callback);
       })
     } else {
-      dcf.getAspectMatrixByAspectInternal2(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects);
+      dcf.getAspectMatrixByAspectInternal2(cellIndexStart, cellIndexEnd, aspectIds, callback);
     }
 
 }
 
-DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellIndexStart, cellIndexEnd, aspectIds, callback, allaspects) {
-  // TODO
+DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
+  var dcf = this;
+  var fr = this.formatReader;
+
+  // CONTINUE HERE
 }
 
+/**
+ * Loads the aspect information
+ * the information includes the names of the availbale aspects
+ * and the genesets contained in each of them along with some
+ * information values
+ */
+DataControllerFile.prototype.loadAspectInformation = function(callback) {
+  // FIXME: Assume format reader is ready here
+  var fr = this.formatReader;
+  var dcf = this;
 
+  var fn = function() {
+        fr.getEntryAsText('aspectinformation', function(text) {
+          var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+      		var textTrimmed = text.slice(0, dataLength);
+      		dcf.aspectInformation = JSON.parse(textTrimmed)
+      		callback();
+  	 }, fr);
+  }
 
-
-
-
-
-
+  // Call immediately or defer to when the object is ready
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
+}
 
 DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
 
 }
-
-
 
 DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 
