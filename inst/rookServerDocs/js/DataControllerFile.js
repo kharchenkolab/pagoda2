@@ -1,6 +1,9 @@
 
 /**
- * Handles data access by File, either local or remote
+ * Handles data access to pagoda2 files
+ * @description provides a dataController interface backed by pagoda2 files
+ * The object can connect either to remove or local files using different filereader
+ * initialisation, according to the parameters provided by loadParams
  */
 function DataControllerFile(loadParams) {
   if(!(loadParams.connectionType == 'remoteFile')) {
@@ -12,20 +15,23 @@ function DataControllerFile(loadParams) {
   // Make a p2file reader with the appropriate settings and save it here
   var frTemp = new p2FileReader('remote', loadParams.remoteFileUrl,null);
 
-  // Generate format reader
+  // Generate format reader that will use the p2File Reader to access the data
+  // the format reader handles the top level index and resolution to file locations
+  // the file reader is responsible for obtaining the data in the requested range
   this.formatReader = new p2FormatReader(frTemp);
   this.formatReader.onReady = function() { console.log('On ready fired'); }
   this.formatReader.readHeaderIndex();
 
+  // object for storing the preloaded information for the sparse array
+  // this includes offsets and the p vector
   this.sparseArrayPreloadInfo = null;
-
-  this.embeddingStructure = null;
-
 }
 
-
+/**
+ * Returns the reduced dendrogram
+ */
 DataControllerFile.prototype.getReducedDendrogram = function(callback) {
-  // Assume format reader is ready here
+  // FIXME: Assume format reader is ready here
   var fr = this.formatReader;
 
   var fn = function() {
@@ -46,7 +52,12 @@ DataControllerFile.prototype.getReducedDendrogram = function(callback) {
   }
 }
 
+
+/**
+ * Get the cell order
+ */
 DataControllerFile.prototype.getCellOrder = function(callback) {
+  // FIXME: Assume format reader is ready here
   var fr = this.formatReader;
 
   var fn = function() {
@@ -58,7 +69,6 @@ DataControllerFile.prototype.getCellOrder = function(callback) {
   	 }, fr);
   }
 
-
   // Call immediately or defer to when the object is ready
   if (fr.state == fr.READY) {
     fn();
@@ -68,8 +78,11 @@ DataControllerFile.prototype.getCellOrder = function(callback) {
 }
 
 
-
+/**
+ * Get the cell metadata
+ */
 DataControllerFile.prototype.getCellMetadata = function(callback) {
+  // FIXME: Assume format reader is ready here
   var fr = this.formatReader;
 
   var fn = function() {
@@ -92,7 +105,9 @@ DataControllerFile.prototype.getCellMetadata = function(callback) {
 };
 
 
-
+/**
+ * Get the gene information store
+ */
 DataControllerFile.prototype.getGeneInformationStore = function(callback) {
   var fr = this.formatReader;
 
@@ -113,8 +128,7 @@ DataControllerFile.prototype.getGeneInformationStore = function(callback) {
     	    pagingStore.sort('dispersion', 'DESC');
     	    callback(pagingStore);
   	 }, fr);
-  }
-
+  };
 
   // Call immediately or defer to when the object is ready
   if (fr.state == fr.READY) {
@@ -124,6 +138,10 @@ DataControllerFile.prototype.getGeneInformationStore = function(callback) {
   }
 };
 
+/**
+ * Get the hierarchy of embeddings and reductions
+ * @private
+ */
 DataControllerFile.prototype.getEmbeddingStructure = function(callback) {
   var fr = this.formatReader;
 
@@ -136,7 +154,6 @@ DataControllerFile.prototype.getEmbeddingStructure = function(callback) {
 
   	 }, fr);
   }
-
 
   // Call immediately or defer to when the object is ready
   if (fr.state == fr.READY) {
@@ -161,6 +178,9 @@ DataControllerFile.prototype.getAvailableReductionTypes = function(callback) {
   });
 };
 
+/**
+ * Get the specified embedding
+ */
 DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callback) {
 
   var fr = this.formatReader;
@@ -194,49 +214,6 @@ DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callba
     //callback(ret);
   });
 };
-
-DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, callbackParams) {
-  this.getEmbeddingStructure(function(data) {
-    var ret = [];
-    for(i in data[type]) {
-      ret.push(i);
-    }
-    callback(ret, callbackParams);
-  });
-};
-
-DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
-
-}
-
-DataControllerFile.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
-
-}
-
-DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
-
-}
-
-DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
-  function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback) {
-
-
-
-}
-
-DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
-
-}
-
-DataControllerFile.prototype.getAvailableGenesetsInAspectsStore = function(aspectId, callback) {
-
-}
-
-DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
-
-}
-
-//DataControllerFile.prototype.getExpressionValuesByCellIndexUnpacked = function(geneIds, cellIndexStart, cellIndexEnd,getCellNames, callback) {}
 
 /**
  * Get a structure with the information locally required for doing requests to the array
@@ -321,12 +298,18 @@ DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryNa
   }, fr);
 };
 
+/**
+ * Get a single gene column from the file sparse matrix
+ * @private
+ */
 DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellIndexStart, cellIndexEnd, callback) {
   var dcf = this;
   var fr = this.formatReader;
 
+  // Index of the gene
   var geneIndexInSparse = dcf.sparseArrayPreloadInfo.dimnames2DataReverse[geneName];
 
+  // Column start and end index
   var csi = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse] - 1;
   var cei = dcf.sparseArrayPreloadInfo.parray[geneIndexInSparse + 1]  - 1;
 
@@ -336,40 +319,64 @@ DataControllerFile.prototype.getGeneColumn = function(geneName, geneindex, cellI
   // Get csi to cei for the x array
   const BYTES_PER_FLOAT32 = 4;
   var xArrayOffset = dcf.sparseArrayPreloadInfo.xStartOffset + BYTES_PER_FLOAT32;
+
+  // Byte position in the file that corresponds to the csi and cei indexes
   var csiBytes = xArrayOffset + csi * BYTES_PER_FLOAT32;
   var ceiBytes = xArrayOffset + cei * BYTES_PER_FLOAT32;
+
+  // Get the number of bytes to retrieve
   var xRowLength = ceiBytes - csiBytes;
 
+  // Get the x array bytes (the raw information)
   fr.getBytesInEntry('sparseMatrix', csiBytes, xRowLength, function(buffer) {
     var geneIndexInRequest = geneIndexInRequest;
     var rowXArray = new Float32Array(buffer);
+
+    // Calculate positions of i array entries in the file
     var iArrayOffset = dcf.sparseArrayPreloadInfo.iStartOffset + BYTES_PER_FLOAT32;
     var csiBytesI = iArrayOffset + csi * BYTES_PER_FLOAT32;
     var ceiBytesI = iArrayOffset + cei * BYTES_PER_FLOAT32;
     var xRowLengthI = ceiBytes - csiBytes;
 
+    // Get the p array bytes
     fr.getBytesInEntry('sparseMatrix', csiBytesI, xRowLengthI, function(buffer2) {
       var rowIArray = new Uint32Array(buffer2);
+
+      // Expand the array to a full array
       for (k =0; k < rowIArray.length; k++) {
         var ki = rowIArray[k];
         fullRowArray[ki] = rowXArray[k];
       }
 
+      // Slice to only get requested entries
+      // TODO: This can be optimised so that only values that are needed to begin with
+      // are stored. This can be done with an if in the inner loop, that check the ki index
+      // for being in range and offsetting as required
       var retVal = fullRowArray.slice(cellIndexStart,cellIndexEnd);
 
+      // Done, do the callback
       callback(geneName, geneindex, retVal);
     });
   });
 }
 
+/**
+ * Performs the getExpressionValuesSparseByCellIndexUnpacked
+ * @description this is to be called by the object only as it assumes that
+ * the correct initialisation is done
+ * @private
+ */
 DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInternal =
   function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
 
   var dcf = this;
   var fr = this.formatReader;
 
-  // Array to track progess of row generation with the async calls
+  // Array to track progress of row generation with the async calls
+  // Each request corresponds to the gene index
   var progressArray = new Uint32Array(geneIds.length);
+
+  // The array to store the results as they come back
   var resultsArray = [];
 
   // Check if all tasks are done and call backback if so
@@ -398,6 +405,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
         var dim1Length = resultsArray.length;
         var dim2Length = resultsArray[0].length;
 
+        // Pack the subsetted array back into a sparse array
+        // That the downstream functions expect
         var pos = 0;
         for (k = 0; k < dim1Length; k++) {
           p.push(pos); // Start of the column
@@ -411,8 +420,12 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
         }
         p.push(pos); // p push number of elements
 
+        // TODO: consider converting the arrays to typed
+
         var cellNames = dcf.sparseArrayPreloadInfo.dimnames1Data.slice(cellIndexStart, cellIndexEnd);
         var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], cellNames, geneIds, x, null);
+
+        // Done, do callback
         callback(retVal);
   }
 
@@ -427,9 +440,13 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpackedInterna
       }); // checkIfDone
     }); // getGeneColumn
   } // for each gene
-}
 
+} // getExpressionValuesSparseByCellIndexUnpackedInternal
 
+/**
+ * Gets the expression values sparse
+ *
+ */
 DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
   function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback){
 
@@ -459,4 +476,50 @@ DataControllerFile.prototype.getNullTerminatedStringLength = function(text) {
   		    }
   		}
   		return dataLength;
+}
+
+/**
+ * Get the available embeddings for a reduction
+ */
+DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, callbackParams) {
+  this.getEmbeddingStructure(function(data) {
+    var ret = [];
+    for(i in data[type]) {
+      ret.push(i);
+    }
+    callback(ret, callbackParams);
+  });
+};
+
+
+
+// Unimplemented
+DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
+
+}
+
+DataControllerFile.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
+
+}
+
+DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
+
+}
+
+DataControllerFile.prototype.getExpressionValuesSparseByCellIndexUnpacked =
+  function(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback) {
+
+
+}
+
+DataControllerFile.prototype.getAvailableAspectsStore = function(callback) {
+
+}
+
+DataControllerFile.prototype.getAvailableGenesetsInAspectsStore = function(aspectId, callback) {
+
+}
+
+DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd, getCellNames, callback) {
+
 }
