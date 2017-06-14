@@ -500,7 +500,8 @@ DataControllerFile.prototype.getAvailableEmbeddings = function(type, callback, c
  * Implements getAspectMatrixByAspect
  */
 DataControllerFile.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
-  this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, aspectIds, callback);
+  // Adapter for data formats
+  this.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, aspectIds, function(data){callback(data.getFullMatrix())});
 };
 
 /**
@@ -549,8 +550,6 @@ DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellInd
   var dcf = this;
   var fr = this.formatReader;
 
-  console.log("getAspectMatrixByAspectInternal2 Called with: ", cellIndexStart, cellIndexEnd, aspectIds);
-
   // Array to track progress of row generation
   var progressArray = new Uint32Array(aspectIds.length);
 
@@ -575,7 +574,6 @@ DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellInd
     console.log('COMPLETE HANDLE');
     console.log(resultsArray);
     // convert back to sparse matrix and return to callback
-    // TODO: Check if transposition is required
      var x = new Array();
      var i = new Array();
      var p = new Array();
