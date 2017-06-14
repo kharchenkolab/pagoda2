@@ -1058,7 +1058,7 @@ pagoda2WebApp <- setRefClass(
             # Convert to JSON friendly format
             aspectInformation[[curAspect]]  <- unname(apply(retTable, 1, function(x) {
               # Must be in genesets for short description
-              desc <- genesets[[x[[1]]]]$properties$shortdescription;
+              desc <- geneSets[[x[[1]]]]$properties$shortdescription;
 
               list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
             }));
@@ -1066,34 +1066,35 @@ pagoda2WebApp <- setRefClass(
           writeDataToFile(dir, 'aspectInformation.json', toJSON(aspectInformation));
 
           cat('Serialising gene sets...\n');
-          writeDataToFile(dir, 'genesets.json',toJSON(unname(lapply(genesets, function(x) {x$properties}))));
+          writeDataToFile(dir, 'genesets.json',toJSON(unname(lapply(geneSets, function(x) {x$properties}))));
 
           # TODO: Continue here
-          # cat('Serialise geneset genes...\n');
-          #
-          # geneListName <- requestArguments[['genesetname']];
-          #
-          # geneListGenes <- list();
-          # for(geneListName in names(geneSets)) {
-          #   # Get the genes in this geneset
-          #   geneList <- geneSets[[geneListName]]$genes
-          #   # Subset to genes that exist
-          #   geneList <- geneList[geneList %in% rownames(varinfo)];
-          #
-          #   # Generate dataset
-          #   dataset <-  varinfo[geneList, c("m","v")];
-          #   dataset$name <-  rownames(dataset);
-          #
-          #   # Convert to row format
-          #   retd <-  apply(dataset,
-          #                  1, function(x) {
-          #                    list(genename = x[["name"]],
-          #                         dispersion =x[["v"]],
-          #                         meanExpr = x[["m"]])
-          #                  });
-          #   geneListGenes[[geneListName]] <- unname(retd);
-          # }
-          # writeDataToFile(dir, 'genesetsgenes.json',toJSON(geneListGenes));
+          cat('Serialising geneset genes...\n');
+
+          geneListName <- names(geneSets);
+
+          geneListGenes <- list();
+          for(geneListName in names(geneSets)) {
+            # Get the genes in this geneset
+            geneList <- geneSets[[geneListName]]$genes
+            # Subset to genes that exist
+            geneList <- geneList[geneList %in% rownames(varinfo)];
+
+            # Generate dataset
+            dataset <-  varinfo[geneList, c("m","v")];
+            dataset$name <-  rownames(dataset);
+
+            # Convert to row format
+            retd <-  apply(dataset,
+                           1, function(x) {
+                             x[["name"]];
+                           #  list(genename = x[["name"]],
+                           #        dispersion =x[["v"]],
+                           #        meanExpr = x[["m"]])
+                           });
+            geneListGenes[[geneListName]] <- unname(retd);
+          }
+          writeDataToFile(dir, 'genesetsgenes.json',toJSON(geneListGenes));
 
 
 
