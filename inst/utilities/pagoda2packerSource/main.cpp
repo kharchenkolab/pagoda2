@@ -3,7 +3,7 @@
  * Date:  June 2017
  * Description: pagoda2 packer, packing program for pagoda2
  */
-#include "header.h"
+#include "p2pack.h"
 
 using namespace std;
 
@@ -15,136 +15,7 @@ int main( int argc, char *argv[] ) {
   make_file(indir, outfile);
 
   return 0;
-  
 }
-
-void make_dummy_file() {
-  print_file_format_info();
-
-  ///////////////////////////////////////////////////////////
-  // HEADER
-  //////////////////////////////////////////////////////////
-  
-  // Generate a header
-  struct fileHeader header;
-
-  // Clear the memory to avoid confusion
-  memset(&header, 0, sizeof(header));
-  
-  strcpy(header.identifier, "pagoda2datafile");
-  header.versionMajor = 1;
-  header.versionMinor = 0;
-  header.flags = 0xFFFF;
-
-  header.blockSize = FILE_BLOCK_SIZE;
-  header.headerSize = sizeof(struct fileHeader);
-
-  // We will need to come back to this later to update tin the index size
-
-  //////////////////////////////////////////////////////////
-  // Generating dummy entries
-  //////////////////////////////////////////////////////////
-
-  
-  list<entry> entries;
-  /*
-  struct entry e1;
-  memset(&e1, 0, sizeof(entry));
-  strcpy(e1.key, "entry1");
-  e1.payload = malloc(100);
-  memcpy(e1.payload, MANY_AS, 100);
-  e1.size = 100; // bytes
-  e1.blockSize = 1;
-  entries.push_back(e1);
-  
-  struct entry e2;
-  memset(&e2, 0, sizeof(entry));
-  strcpy(e2.key, "entry2");
-  e2.payload = malloc(20);
-  memcpy(e2.payload, MANY_BS, 20);
-  e2.size = 20; // byes
-  e2.blockSize = 2;
-  entries.push_back(e2);
-
-  struct entry e3;
-  memset(&e3, 0, sizeof(entry));
-  strcpy(e3.key, "entry3");
-  e3.payload = malloc(20);
-  memcpy(e3.payload, MANY_BS, 20);
-  e3.size = 20; // byes
-  e3.blockSize = 1;
-  entries.push_back(e3);
-  */
-
-  //////////////////////////////////////////////////////////
-  // Updata index size
-  //////////////////////////////////////////////////////////
-
-  // Size of index in bytes -- update in header
-  uint64_t indexSize = sizeof(indexEntry) * entries.size();
-  header.indexSize = indexSize;
-  cout << "The index size is: " << indexSize << endl;
-
-  // Construct the index in memory
-  list<indexEntry> indexEntries;
-  uint32_t curOffset = 0; // in blocks
-  for(list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator) {
-    struct indexEntry ie;
-    
-    memcpy(ie.key, iterator->key, 128);
-
-    ie.sizeBlocks = iterator-> blockSize;
-      
-    // Update the offset
-    ie.offset = curOffset;
-
-    // Flags are reserved for future use
-    ie.flags = 0;
-
-    // Put on the output list
-    indexEntries.push_back(ie);
-
-    // Increment the offset
-    curOffset += iterator->blockSize;
-  }
-
-
-  // Open the file
-  ofstream fs;
-  fs.open("p2demo.bin", ios::out | ios::binary);
-
-  // Write the header
-  fs.write((const char*) &header, sizeof(header));
-
-  // Write the index entries
-  for (list<indexEntry>::iterator iterator = indexEntries.begin(); iterator != indexEntries.end(); ++iterator) {
-    fs.write((const char*) &(*iterator), sizeof(indexEntry));
-  }
-
-  // Write the content
-  int i = 0;
-  for(list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator) {
-    cout << "Writing entry " << i++ << " ..." << endl;
-    size_t s = iterator-> blockSize * FILE_BLOCK_SIZE;
-
-    cout << "Entry size is " <<  iterator->blockSize << " blocks or " << s << " bytes" << endl;
-    void *entry = malloc(s); // memspace for entry as will be on disk
-    // TODO: Check entry != 0
-
-    memset(entry,  0, s); // fill with 0s
-    memcpy(entry, (const char*) iterator->payload, iterator->size); // copy the payload
-    
-    // Write to file
-    fs.write( (const char*) entry, s);
-
-    free(entry);
-  }
-
-  // Close the file
-  fs.close();
-
-}
-
 
 void print_file_format_info() {
   cout << "Size of indexEntry: " << sizeof(indexEntry) << endl;
@@ -187,21 +58,8 @@ void make_file(string &indir, string &outfile) {
   string embeddingstructureData = readWholeFile(embeddingstructureFile);
 
 
-					       
-
+					      
   list<entry> entries;
-  
-  // struct entry is for the program only
-  /*
-  struct entry e;
-  memset(&e, 0, sizeof(entry)); // clear mem
-  strcpy(e.key, "cellmetadata");
-  uint64_t entryLengthBytes = cellmetadataData.length();
-  e.payload = malloc(entryLengthBytes);
-  memcpy(e.payload, cellmetadataData.c_str(), entryLengthBytes);
-  e.size = entryLengthBytes; // bytes
-  e.blockSize = (uint32_t) intDivRoundUP(e.size, FILE_BLOCK_SIZE);
-  */
 
   // Cast required to avoid warning
   struct entry* metadataEntry =  make_entry_from_string("cellmetadata", cellmetadataData);
@@ -382,7 +240,9 @@ list<T>* readNumberArrayFromFile(string &filename) {
   return pData;
 }
 
-
+/**
+ * Read a whole file from the disk
+ */
 string readWholeFile(string &filename) {
   ifstream in;
   in.open(filename, ifstream::in);
@@ -392,8 +252,6 @@ string readWholeFile(string &filename) {
 
   return data;
 }
-
-
 
 void make_file_from_payload(list<entry> &entries, string &filename) {
   print_file_format_info();
@@ -474,8 +332,6 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
   fs.close();
   
 }
-
-
 
 void makeAspectSparseMatrix(list<entry> &entries, string& indir) {
   // Make the main sparse matrix
@@ -565,17 +421,13 @@ void makeAspectSparseMatrix(list<entry> &entries, string& indir) {
   }
 
   // Write the Dimnames as JSON string
-  // HERE
   smhData.write( mataspectDimnames1.c_str(), mataspectDimnames1.size());
   smhData.write( mataspectDimnames2.c_str(), mataspectDimnames2.size());
 
-  //cout << matsparseDimnames1.c_str();
-  
   // Convert the buffer to a string
   string smhDataString = smhData.str();
 
+  // Make the entry and add it to the list
   struct entry* sparseMatrixEntry = make_entry_from_string("aspectMatrix", smhDataString);
   entries.push_back(*sparseMatrixEntry);
-
-
 }
