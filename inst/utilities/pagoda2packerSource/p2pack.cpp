@@ -3,12 +3,32 @@
  * Date:  June 2017
  * Description: pagoda2 packer, packing program for pagoda2
  */
+
 #include "p2pack.h"
+#include <boost/program_options.hpp>
 
 using namespace std;
 
 
-int main( int argc, char *argv[] ) {
+int main( int ac, char *av[] ) {
+  namespace po = boost::program_options;
+
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help", "produce help message")
+    ("output-file", po::value<string>(), "output filename")
+    ("input-directory", po::value<string>(), "input directory where object has been serialised")
+    ;
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(ac, av, desc), vm);
+  po::notify(vm);
+
+  if (vm.count("help")) {
+    cout << desc << endl;
+    return 1;
+  }
+
   string indir = "/home/barkasn/testSerial/";
   string outfile = "./output.p2s";
 
