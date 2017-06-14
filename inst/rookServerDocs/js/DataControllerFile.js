@@ -652,8 +652,6 @@ DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
       		var textTrimmed = text.slice(0, dataLength);
       		var data = JSON.parse(textTrimmed);
 
-      		console.log("getGeneSetInformationStore: ", data);
-
         	var pagingStore = Ext.create('LocalJsonStore', {
         		autoLoad: true,
         		model: 'geneSetTableEntry',
@@ -674,7 +672,77 @@ DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
 }
 
 DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
+  var fr = this.formatReader;
+  var dcf = this;
 
+  var fn = function() {
+    fr.getEntryAsText('genesetsgenes', function(text) {
+          var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+      		var textTrimmed = text.slice(0, dataLength);
+      		var data = JSON.parse(textTrimmed);
+
+          if (Object.keys(data).indexOf(name) !== -1) {
+            var curGeneSet = data[name];
+            console.log(curGeneSet);
+
+
+            fr.getEntryAsText('geneinformation', function(text) {
+              var geneInformationDataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+      		    var geneInformationTextTrimmed = text.slice(0, geneInformationDataLength);
+
+              var geneInformationMap = {};
+      		    var geneInformationData = JSON.parse(geneInformationTextTrimmed);
+
+              // Gene information data is an array of object we would like a hash so we can look them up by name
+              for (var j = 0; j < geneInformationData.length; j++){
+                var u = geneInformationData[j];
+                if (typeof u !== 'undefined') { // This happens if the gene doesn't exist
+                  geneInformationMap[u["genename"]] = {};
+                  geneInformationMap[u["genename"]].genename = u.genename;
+                  geneInformationMap[u["genename"]].dispersion = parseFloat(u.dispersion);
+                  geneInformationMap[u["genename"]].score = 0; // TODO: pull this from the file
+                }
+              }
+
+              // Holder for the return value object
+              var retVal = [];
+
+              // For each gene set
+              for (var i = 0; i < curGeneSet.length; i++) {
+                // Look up the constituent genes and append variance and mean information
+                var curGeneName = curGeneSet[i];
+                var p = geneInformationMap[curGeneName];
+                if (typeof p !== 'undefined') {
+                  retVal.push(p);
+                }
+              }
+
+        	    var pagingStore = Ext.create('LocalJsonStore', {
+            		autoLoad: true,
+            		model: 'geneTableEntry',
+            		pageSize: 100,
+            		localData: retVal
+        	    });
+
+        	    callback(pagingStore);
+
+
+            });
+
+
+
+
+          } else {
+            console.error('Geneset: ', name, ' does not exist.');
+          }
+    }, fr);
+  }
+
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
 }
 
 
