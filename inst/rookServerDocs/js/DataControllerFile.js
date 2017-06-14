@@ -20,7 +20,7 @@ function DataControllerFile(loadParams) {
   // the format reader handles the top level index and resolution to file locations
   // the file reader is responsible for obtaining the data in the requested range
   this.formatReader = new p2FormatReader(frTemp);
-  this.formatReader.onReady = function() { console.log('On ready fired'); }
+  this.formatReader.onReady = function() { console.log('Format reader is ready.'); }
   this.formatReader.readHeaderIndex();
 
   // object for storing the preloaded information for the sparse array
@@ -230,8 +230,6 @@ DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callba
  * (4) The full p array
  */
 DataControllerFile.prototype.getSparseArrayPreloadInformation = function(entryName, storageVariableName,callback) {
-  console.log('getSparseArrayPreloadInformation called ',entryName, storageVariableName,this)
-
   var fr = this.formatReader;
   var dcf = this;
 
@@ -683,8 +681,6 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 
           if (Object.keys(data).indexOf(name) !== -1) {
             var curGeneSet = data[name];
-            console.log(curGeneSet);
-
 
             fr.getEntryAsText('geneinformation', function(text) {
               var geneInformationDataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
