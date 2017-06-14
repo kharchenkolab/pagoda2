@@ -30,6 +30,8 @@ function DataControllerFile(loadParams) {
   this.aspectArrayPreloadInfo = null;
 
   this.aspectInformation = null;
+
+  this.geneInformationMapCache = null;
 }
 
 /**
@@ -669,6 +671,49 @@ DataControllerFile.prototype.getGeneSetInformationStore = function(callback) {
   }
 }
 
+/**
+ * Generates, caches and returns via callback a map of genenames to entries that will be returned
+ * by getGeneSetStoreByName
+ */
+DataControllerFile.prototype.getGeneInformationMap = function(callback) {
+  var fr = this.formatReader;
+  var dcf = this;
+
+  // Check if we already have the result
+  if (dcf.geneInformationMapCache === null) {
+
+    fr.getEntryAsText('geneinformation', function(text) {
+      var geneInformationDataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+      var geneInformationTextTrimmed = text.slice(0, geneInformationDataLength);
+
+      var geneInformationMap = {};
+      var geneInformationData = JSON.parse(geneInformationTextTrimmed);
+
+      for (var j = 0; j < geneInformationData.length; j++){
+        var u = geneInformationData[j];
+
+        if (typeof u !== 'undefined') { // This happens if the gene doesn't exist
+          var t = {};
+          t.genename = u.genename;
+          t.dispersion = parseFloat(u.dispersion);
+          t.score = 0; // Not using this at the moment
+
+          geneInformationMap[u.genename] = t;
+        }
+      }
+      dcf.geneInformationMapCache = geneInformationMap;
+      callback(geneInformationMap);
+    });
+
+  } else {
+    callback(this.geneInformationMapCache);
+  }
+};
+
+
+/**
+ * Implement getGeneSetStoreByName
+ */
 DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
   var fr = this.formatReader;
   var dcf = this;
@@ -682,23 +727,7 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
           if (Object.keys(data).indexOf(name) !== -1) {
             var curGeneSet = data[name];
 
-            fr.getEntryAsText('geneinformation', function(text) {
-              var geneInformationDataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
-      		    var geneInformationTextTrimmed = text.slice(0, geneInformationDataLength);
-
-              var geneInformationMap = {};
-      		    var geneInformationData = JSON.parse(geneInformationTextTrimmed);
-
-              // Gene information data is an array of object we would like a hash so we can look them up by name
-              for (var j = 0; j < geneInformationData.length; j++){
-                var u = geneInformationData[j];
-                if (typeof u !== 'undefined') { // This happens if the gene doesn't exist
-                  geneInformationMap[u["genename"]] = {};
-                  geneInformationMap[u["genename"]].genename = u.genename;
-                  geneInformationMap[u["genename"]].dispersion = parseFloat(u.dispersion);
-                  geneInformationMap[u["genename"]].score = 0; // TODO: pull this from the file
-                }
-              }
+            dcf.getGeneInformationMap(function(geneInformationMap) {
 
               // Holder for the return value object
               var retVal = [];
@@ -721,12 +750,7 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
         	    });
 
         	    callback(pagingStore);
-
-
             });
-
-
-
 
           } else {
             console.error('Geneset: ', name, ' does not exist.');

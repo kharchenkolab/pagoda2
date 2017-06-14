@@ -506,13 +506,13 @@ DataControllerServer.prototype.getCellMetadata = function(callback, callbackPara
 DataControllerServer.prototype.getGeneSetStoreByName = function(name, callback) {
     $.ajax({
     	dataType: 'json',
-    	url: 'getData.php?dataidentifier=genesetgeneinformation&genesetname='+name,
+    	url: 'getData.php?dataidentifier=genesetgeneinformation&genesetname=' + name,
     	success: function(data) {
     	    var pagingStore = Ext.create('LocalJsonStore', {
-    		autoLoad: true,
-    		model: 'geneTableEntry',
-    		pageSize: 100,
-    		localData: data
+        		autoLoad: true,
+        		model: 'geneTableEntry',
+        		pageSize: 100,
+        		localData: data
     	    });
     	    callback(pagingStore);
     	}
