@@ -190,8 +190,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object());
-
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "rgba(0,0,255,1)");
+        
             // Highlight on heatmap
             var metaView = new heatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
@@ -337,7 +337,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.fillStyle = 'rgba(0,0,255,0.5)';
         ctx.fillRect(metaV.dragStartX, drawConsts.top, boundedX - metaV.dragStartX, actualPlotHeight);
         ctx.restore();
       }
@@ -728,7 +728,7 @@ var heatDendView = new heatmapDendrogramViewer();
      var actualPlotHeight = drawConsts.height;
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName).substring(0,cellSelCntr.getColor(selectionName).length-2) + "0.3)";
 
 
         // Draw vertical lines for selected cells

@@ -630,10 +630,10 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
 
     var actualPlotHeight = aspHeatView.getActualPlotHeight() + 6;
 
-
+    
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
-
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName).substring(0,cellSelCntr.getColor(selectionName).length-2) + "0.3)";
+    
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);

@@ -71,8 +71,8 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	id: 'cellSelectionTable',
     	store: Ext.data.StoreManager.lookup('cellSelectionStoreForSelectionTable'),
     	columns: [
-    	    {text: 'Name', dataIndex: 'displayname', width: '70%'},
-    	    {text: 'Count', dataIndex: 'cellcount', width: '29%'}
+    	    {text: 'Name', dataIndex: 'displayname', width: '69%'},
+    	    {text: 'Count', dataIndex: 'cellcount', width: '30%'}
     	],
     	emptyText: "No cell selections are currently available",
     	singleSelect: false,
@@ -90,7 +90,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
       {
         xtype: 'button',
         text: 'Delete',
-        handler: function() {
+        handler: function() { 
           var selectionTable = Ext.getCmp('cellSelectionTable');
       		var selectedItems = selectionTable.getSelectionModel().getSelected();
       		if (selectedItems.length === 1) {

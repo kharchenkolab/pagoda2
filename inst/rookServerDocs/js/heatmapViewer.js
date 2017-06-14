@@ -393,7 +393,7 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object());
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "rgba(0,255,0,1)");
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
@@ -487,7 +487,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.fillStyle = 'rgba(0,255,0,0.5)';
         ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
 
@@ -960,8 +960,8 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
     var actualPlotHeight = heatV.getActualPlotHeight();
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
-
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName).substring(0,cellSelCntr.getColor(selectionName).length-2) + "0.3)";
+    
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);
