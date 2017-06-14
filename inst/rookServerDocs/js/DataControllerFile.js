@@ -512,7 +512,7 @@ DataControllerFile.prototype.getAspectMatrix = function(cellIndexStart, cellInde
 
   var handleComplete = function() {
     var aspectIds = Object.keys(dcf.aspectInformation);
-    dcf.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, getCellNames, aspectIds, callback);
+    dcf.getAspectMatrixByAspectInternal(cellIndexStart, cellIndexEnd, aspectIds, callback);
   };
 
   if (dcf.aspectInformation === null) {
@@ -549,8 +549,127 @@ DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellInd
   var dcf = this;
   var fr = this.formatReader;
 
-  // CONTINUE HERE
-};
+  console.log("getAspectMatrixByAspectInternal2 Called with: ", cellIndexStart, cellIndexEnd, aspectIds);
+
+  // Array to track progress of row generation
+  var progressArray = new Uint32Array(aspectIds.length);
+
+  var resultsArray = [];
+
+  function checkIfDone(callback) {
+    var done = true;
+    for (var i = 0; i < progressArray.length; i++){
+      if (progressArray[i] !== 1) {
+        done = false;
+        break;
+      }
+    }
+    if (done) {
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }
+  };
+
+  function handleComplete(callback, dcf, cellIndexStart, cellIndexEnd) {
+    console.log('COMPLETE HANDLE');
+    console.log(resultsArray);
+    // convert back to sparse matrix and return to callback
+    // TODO: Check if transposition is required
+     var x = new Array();
+     var i = new Array();
+     var p = new Array();
+
+     var dim1Length = resultsArray.length;
+     var dim2Length = resultsArray[0].length; // From first elements
+
+     var pos = 0;
+     for (var k = 0; k < dim1Length; k++) {
+       p.push(pos); // column start
+       for (var j = 0; j < dim2Length; j++) {
+         if (resultsArray[k][j] != 0) {
+           x.push(resultsArray[k][j]);
+           i.push(j);
+           pos++;
+         }
+       }
+     }
+     p.push(pos);
+
+     var cellNames = dcf.aspectArrayPreloadInfo.dimnames1Data.slice(cellIndexStart, cellIndexEnd);
+     var retVal = new dgCMatrixReader(i, p, [dim2Length, dim1Length], cellNames, aspectIds, x, null);
+
+     callback(retVal);
+
+  }
+
+  var aspectColumnCallback = function(genename, aspectindex, row) {
+      progressArray[aspectindex] = 1;
+      resultsArray[aspectindex] = row;
+      checkIfDone(function() {
+        handleComplete(callback, dcf, cellIndexStart, cellIndexEnd);
+      });
+  };
+
+  // Initiate callbacks for each row
+  for (var aspectIndexInRequest in aspectIds) {
+    var aspectName = aspectIds[aspectIndexInRequest];
+    dcf.getAspectColumn(aspectName, aspectIndexInRequest, cellIndexStart, cellIndexEnd, aspectColumnCallback);
+  } // for each aspect
+}; //getAspectMatrixByAspectInternal2
+
+DataControllerFile.prototype.getAspectColumn = function(aspectName, aspectindex, cellIndexStart, cellIndexEnd, callback) {
+  var dcf = this;
+  var fr = this.formatReader;
+
+  //Index of the aspect
+  var aspectIndexInSparse = dcf.aspectArrayPreloadInfo.dimnames2DataReverse[aspectName];
+
+  //Column start and end index
+  var csi = dcf.aspectArrayPreloadInfo.parray[aspectIndexInSparse] -1;
+  var cei = dcf.aspectArrayPreloadInfo.parray[aspectIndexInSparse + 1] - 1;
+
+  // Zero filled array with data for all cells
+  var fullRowArray = new Float32Array(dcf.aspectArrayPreloadInfo.dim1);
+
+  const BYTES_PER_FLOAT32 = 4;
+  var xArrayOffset = dcf.aspectArrayPreloadInfo.xStartOffset + BYTES_PER_FLOAT32;
+
+  // Byte position in the file that corresponds to the csi and cei indexes
+  var csiBytes = xArrayOffset + csi * BYTES_PER_FLOAT32;
+  var ceiBytes = xArrayOffset + cei * BYTES_PER_FLOAT32;
+
+  // Get the number of bytes to retrieve
+  var xRowLength = ceiBytes - csiBytes;
+
+  // get the x array bytes
+  fr.getBytesInEntry('aspectMatrix', csiBytes, xRowLength, function(buffer) {
+    var aspectIndexInRequest = aspectIndexInRequest;
+    var rowXArray = new Float32Array(buffer);
+
+    // Calculate positions of i array entries in the file
+    var iArrayOffset = dcf.aspectArrayPreloadInfo.iStartOffset + BYTES_PER_FLOAT32;
+    var csiBytesI = iArrayOffset + csi * BYTES_PER_FLOAT32;
+    var ceiBytesI = iArrayOffset + cei * BYTES_PER_FLOAT32;
+    var xRowLengthI = ceiBytes - csiBytes;
+
+    // Get the p array bytes
+    fr.getBytesInEntry('aspectMatrix', csiBytesI, xRowLengthI, function(buffer2) {
+      var rowIArray = new Uint32Array(buffer2);
+
+      for (var k = 0; k < rowIArray.length; k++) {
+        var ki = rowIArray[k];
+        fullRowArray[ki] = rowXArray[k];
+      }
+
+      // TODO can avoid the slice in principle
+      var retVal = fullRowArray.slice(cellIndexStart, cellIndexEnd);
+
+      // Done, do the callback
+      callback(aspectName, aspectindex, retVal);
+    })
+  });
+};  // getAspectColumn
 
 /**
  * Loads the aspect information
