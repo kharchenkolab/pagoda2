@@ -47,7 +47,7 @@ void make_dummy_file() {
 
   
   list<entry> entries;
-  
+  /*
   struct entry e1;
   memset(&e1, 0, sizeof(entry));
   strcpy(e1.key, "entry1");
@@ -74,7 +74,7 @@ void make_dummy_file() {
   e3.size = 20; // byes
   e3.blockSize = 1;
   entries.push_back(e3);
-
+  */
 
   //////////////////////////////////////////////////////////
   // Updata index size
@@ -245,6 +245,11 @@ void make_file(string &indir, string &outfile) {
   string genesetsData = readWholeFile(genesetsFile);
   struct entry* genesetsEntry = make_entry_from_string("genesets", genesetsData);
   entries.push_back(*genesetsEntry);
+
+  string genesetsgenesFile = indir + "genesetsgenes.json";
+  string genesetsgenesData = readWholeFile(genesetsgenesFile);
+  struct entry* genesetsgenesEntry = make_entry_from_string("genesetsgenes", genesetsgenesData);
+  entries.push_back(*genesetsgenesEntry);
 							       
   
   make_file_from_payload(entries, outfile);
