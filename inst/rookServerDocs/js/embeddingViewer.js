@@ -206,16 +206,21 @@ embeddingViewer.prototype.generateToolbar = function() {
         tooltip: 'Download current view',
         glyph: 0xf0ed,
         handler: function(){
-          
-              /*Ext.create("Ext.window.Window",{
+              
+              var embV = new embeddingViewer();
+              var canvas = embV.currentViewer.getMainCanvasElement();
+              var overlay = document.getElementById('embedding-canvas-overlay');
+              Ext.create("Ext.window.Window",{
                 title:"Embedding Download Preview",
                 id: "EmbeddingEditor",
-                height: 550,
-                width: 600,
+                layout: 'hbox',
+                height: 275,
+                width: 520,
                 items: [
                   {
                     xtype: 'container',
                     title: 'Display Options',
+                    margin: '6 6 6 6',
                     items: [
                       {
                         xtype: 'checkbox',
@@ -230,6 +235,8 @@ embeddingViewer.prototype.generateToolbar = function() {
                             else{
                               Ext.getCmp('embTitle').disable();
                             }
+                            
+                            Ext.getCmp('EmbeddingEditor').refresh();
                           } 
                         }
                       },
@@ -237,7 +244,12 @@ embeddingViewer.prototype.generateToolbar = function() {
                         xtype: 'textfield',
                         id: 'embTitle',
                         fieldLabel:'Title',
-                        disabled: true
+                        disabled: true,
+                        listeners:{
+                          change: function(){
+                            Ext.getCmp('EmbeddingEditor').refresh();
+                          }
+                        } 
                       },//title
                       {
                         xtype: 'checkbox',
@@ -252,6 +264,8 @@ embeddingViewer.prototype.generateToolbar = function() {
                             else{
                               Ext.getCmp('xAxisTitle').disable();
                             }
+                            
+                            Ext.getCmp('EmbeddingEditor').refresh();
                           } 
                         }
                       },
@@ -259,7 +273,12 @@ embeddingViewer.prototype.generateToolbar = function() {
                         xtype: 'textfield',
                         id: 'xAxisTitle',
                         fieldLabel:'X-Axis Title',
-                        disabled: true
+                        disabled: true,
+                        listeners:{
+                          change: function(){
+                            Ext.getCmp('EmbeddingEditor').refresh();
+                          }
+                        } 
                       },
                       {
                         xtype: 'checkbox',
@@ -274,6 +293,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                             else{
                               Ext.getCmp('yAxisTitle').disable();
                             }
+                            Ext.getCmp('EmbeddingEditor').refresh();
                           } 
                         }
                       },
@@ -281,45 +301,142 @@ embeddingViewer.prototype.generateToolbar = function() {
                         xtype: 'textfield',
                         id: 'yAxisTitle',
                         fieldLabel:'Y-Axis Title',
-                        disabled: true
+                        disabled: true,
+                        listeners:{
+                          change: function(){
+                            Ext.getCmp('EmbeddingEditor').refresh();
+                          }
+                        } 
                       },
                       {
                         xtype: 'checkbox',
                         boxLabel: 'Include Highlights',
-                        id: 'enableHighlights'
-                      }
+                        id: 'includeHighlight',
+                        listeners:{
+                          change: function(){
+                            Ext.getCmp('EmbeddingEditor').refresh();
+                          }
+                        }                      
+                        
+                      },
+                      {
+                        xtype: 'button',
+                        text: 'Cancel',
+                        id: 'cancel-embedding-download',
+                        margin: '4 4 4 4',
+                        handler: function(){
+                          Ext.getCmp("EmbeddingEditor").close();
+                        }
+                      },
+                      {
+                        xtype: 'button',
+                        text: 'Save Image',
+                        id: 'saveImage-embedding-download',
+                        margin: '4 4 4 4',
+                        handler: 
+                          function(){
+                            var printCanvas = document.createElement("canvas")
+                            printCanvas.height = "1000";
+                            printCanvas.width = "1000";
+                            printCanvas.id = "print-embedding";
+                            Ext.getCmp("EmbeddingEditor").drawPlot(canvas,overlay,printCanvas,1000);
+                            const maxSize = 2000;
+                            if (printCanvas.width > maxSize | printCanvas.height >maxSize){
+                              Ext.Msg.show({
+                                title: 'Warning',
+                                msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                               'This may cause problems during exporting. Do you want to continue?',
+                               buttons: Ext.Msg.OKCANCEL,
+                               fn: function(s) {
+                                 if (s == 'ok') {
+                                    printCanvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png', printCanvas)})
+                                 } //if
+                              } //fn
+                            }) // Ext.Msg.show
+                            } else {
+                              printCanvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png', printCanvas)})
+                            }// if
+                            Ext.getCmp("EmbeddingEditor").close()
+                          }
+                      },
+                      
                     ]
                   },
                   {
                     xtype: 'container',
                     title: 'Preview',
+                    margin: '6 6 6 6',
                     items:[
-                      
+                      {
+                        html:'<canvas id="print-preview-canvas" height="225" width="225"></canvas>'
+                      }
                     ]
                   }
-                ]
-              }).show()*/
+                ],
+                refresh: function(){
+                  this.drawPlot(canvas,overlay,document.getElementById("print-preview-canvas"),225);
+                },
+                
+                drawPlot: function(canvas,overlay, destination, squareDim){
+                  var options = [Ext.getCmp('includeTitle').getValue(),Ext.getCmp('includeX').getValue(),Ext.getCmp('includeY').getValue(),Ext.getCmp('includeHighlight').getValue()];
+                  var text = [Ext.getCmp('embTitle').getValue(), Ext.getCmp('xAxisTitle').getValue(),Ext.getCmp('yAxisTitle').getValue()]
+                  var topOffset = (options[0]? Math.ceil(squareDim/9):0);
+                  var bottomOffset = (options[1]? Math.ceil(squareDim/12):0);
+                  var leftOffset = (options[2]? Math.ceil(squareDim/12):0);
+                  var plotDim = Math.min(squareDim-(topOffset+bottomOffset), squareDim-leftOffset);
+                  leftOffset = (leftOffset === 0? (squareDim-plotDim)/2: leftOffset)
+                  topOffset = (topOffset === 0? (squareDim-plotDim-bottomOffset)/2: topOffset)
+                  bottomOffset = (bottomOffset === 0? (squareDim-plotDim-topOffset)/2: bottomOffset)
+                  var targetContext = destination.getContext("2d");
+                  var readablePadding = 2;
+                  var titlePadding = 4;
+                  var graphPaddingLeft = 2;
+                  var graphPaddingRight = 10;
+                  var graphPaddingTop = 10;
+                  var graphPaddingBottom = 2;
+                  var lineThickness = 2;
+                  
+                  //clear the canvas
+                  targetContext.fillStyle = "#FFFFFF";
+                  targetContext.fillRect(0,0,squareDim,squareDim);
+                  
+                  //draw the plot
+                  targetContext.drawImage(canvas,leftOffset+graphPaddingLeft,topOffset+graphPaddingTop,plotDim-(graphPaddingLeft+graphPaddingRight),plotDim-(graphPaddingTop+graphPaddingBottom));
+                  
+                  targetContext.font = (Math.ceil(squareDim/9)-4) + "px Arial"
+                  targetContext.fillStyle = "#000000";
+                  targetContext.textAlign = "center";
+                  if(options[0]){
+                    targetContext.fillText(text[0],(leftOffset+plotDim/2), topOffset-2 * titlePadding);
+                  }
+                  
+                  //draw necessary axis
+                  targetContext.font = (Math.ceil(squareDim/12)-4) + "px Arial";
+                  targetContext.textAlign = "center"
+                  
+                  //draw X axis
+                  if(options[1]){
+                    targetContext.fillRect(leftOffset-lineThickness, squareDim-bottomOffset, plotDim + lineThickness, lineThickness);
+                    targetContext.fillText(text[1],leftOffset+plotDim/2, squareDim - readablePadding * 2);
+                  }
+                  //draw Y axis
+                  if(options[2]){
+                    targetContext.fillRect(leftOffset-lineThickness, topOffset, lineThickness,  plotDim + lineThickness);
+                    targetContext.rotate(-Math.PI/2);
+                    targetContext.fillText(text[2],-(squareDim - bottomOffset + topOffset)/2,leftOffset-lineThickness * 3);
+                    targetContext.rotate(Math.PI/2);
+                  }
+                  
+                  if(options[3]){
+                    targetContext.drawImage(overlay,leftOffset+graphPaddingLeft,topOffset+graphPaddingTop,plotDim-(graphPaddingLeft+graphPaddingRight),plotDim-(graphPaddingTop+graphPaddingBottom));
+                  }
+                }
+              }).show()
           
-              var embV = new embeddingViewer();
-              var canvas = embV.currentViewer.getMainCanvasElement();
+              document.getElementById('print-preview-canvas').getContext("2d").drawImage(canvas,0,0,225,225)
 
 
-               const maxSize = 2000;
-                if (canvas.width > maxSize | canvas.height >maxSize){
-                    Ext.Msg.show({
-                      title: 'Warning',
-                      msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
-                       'This may cause problems during exporting. Do you want to continue?',
-                       buttons: Ext.Msg.OKCANCEL,
-                       fn: function(s) {
-                         if (s == 'ok') {
-                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png', canvas)})
-                         } //if
-                       } //fn
-                    }) // Ext.Msg.show
-                } else {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'embedding.png', canvas)})
-                }// if
+               
         } // handler
       }); // toolbar add
 
