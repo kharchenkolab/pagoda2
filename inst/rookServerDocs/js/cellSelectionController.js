@@ -175,6 +175,7 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, 
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
+    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
 
     // Concatenate arrays into a new one
     sel.cells = selA.concat(selB);
@@ -199,6 +200,7 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
     sel.cells = [];
+    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
 
     // TODO: There might be performance benefits in looping over shortere array
     var l = selA.length;
