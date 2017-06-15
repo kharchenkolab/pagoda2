@@ -4,5 +4,5 @@ all: p2pack.o
 p2pack.o: p2pack.cpp p2pack.h
 	g++ -std=c++11 -I . -c p2pack.cpp
 clean:
-	rm -rf *.o
-	rm p2pack
+	-rm *.o
+	-rm p2pack
