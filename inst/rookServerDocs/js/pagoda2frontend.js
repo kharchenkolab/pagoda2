@@ -187,7 +187,7 @@ function generateExtJsLayout() {
 	id: 'cellselection-app-container',
 	layout: 'fit',
 	height: '100%',
-	width: '100%',
+	width: '100%'
     });
 
     var geneSelectionPanel =  Ext.create('Ext.panel.Panel', {

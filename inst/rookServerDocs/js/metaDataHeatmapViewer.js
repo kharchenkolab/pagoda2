@@ -221,7 +221,6 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         mdhv.clickRegionsEntries.resolveClick(x,y, function(params) {
         // params.cellid
         // params.keyLabel params.valueLabel
-
         var defaultLabel = params.keyLabel + '_' + params.valueLabel;
         defaultLabel = defaultLabel.split(/\ |\#/).join("");
         var contextMenu = new Ext.menu.Menu({
@@ -261,13 +260,35 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     						      } // if lenth == 0
   						      } // if btn == ok
 					      }, this, false, defaultLabel); // Message box prompthandler
+              },
+            }, //Item 1
+            {
+              text: "Generate selection from all clusters",
+              handler: function(){
+                Ext.MessageBox.prompt("Set Limit","Specify a lower limit for number of cells in a new selection.", 
+                function(btn,text){
+                  var rejectionFunction = function(selection){return true;};
+                  if(btn === "ok"){
+                    
+                    if(!isNaN(text)){
+                      var lowerLimit = parseInt(text);
+                      rejectionFunction = function(selection){
+                        return selection.length >= lowerLimit;
+                      }
+                    }
+                  }
+                  for(var i = 0; i< params.totalLevels; i++ ){
+                    mdhv.makeCellSelectionFromMetadata(params.key,i,(params.keyLabel+ "_" + (i+1)).split(/\ |\#/).join(""),false, false,rejectionFunction)
+                  }
+                },this,false, "50")
+                
               }
-            } //Item 1
+            }
           ] //items
         }); //context menu
 
         contextMenu.showAt(e.clientX, e.clientY);
-
+        
         return false;
         }); // resolve click
 
@@ -563,7 +584,6 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
     var left = plotConsts.left;
     var metaWidth = plotConsts.width - heatDendView.getPlotAreaRightPadding();
     var metaHeight = plotConsts.height - bottomPadding;
-
     // Request the data
     var dataCntr = new dataController();
     dataCntr.getCellMetadata(function(data) {
@@ -634,7 +654,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
                 x, y + cellHeight,
                 x + cellWidth, y + cellHeight,
                 x + cellWidth, y,
-                { 'key': key, 'keyLabel': curLabel , cellid: curCell, value: val, valueLabel: curLevels[val] }
+                { 'key': key, 'keyLabel': curLabel , cellid: curCell, value: val, valueLabel: curLevels[val], totalLevels: curPal.length}
 		        );
     	    }
 
@@ -762,7 +782,7 @@ var heatDendView = new heatmapDendrogramViewer();
  * @param focus logical, give focus to the selection in the cell selection pane afterwards?
  * @param highlight logical, hightlight the selection on the heatmaps and embedding?
  */
-metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight) {
+metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight, restriction = function(selection){return true;}) {
   // Generate a cell selection
 
   var dataCntr = new dataController();
@@ -782,7 +802,9 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
     var cellSel = new cellSelectionController();
-    cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName);
+    if(restriction(cellSelectionNames)){
+      cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName);
+    }
 
     if (highlight) {
       var heatView = new heatmapViewer();
