@@ -29,6 +29,7 @@ function metaDataHeatmapViewer() {
     // Keep track of what selection we are showing so
     // we can persist accross redraws
     this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
 
 
@@ -696,7 +697,12 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
     	    mdhv.clearSelectionOverlayInternal();
     if (mdhv.currentOverlaySelectionShown === true) {
-      mdhv.highlightCellSelectionByName(mdhv.currentOverlaySelectionName);
+      if(mdhv.currentOverlaySelectionName !== null){
+        mdhv.highlightCellSelectionByName(mdhv.currentOverlaySelectionName);
+      }
+      else{
+        mdhv.highlightCellSelectionsByNames(mdhv.currentOverlaySelectionNames);
+      }
     }
 
     });
@@ -718,6 +724,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectio
   var metadataHeatV = this;
 
     this.currentOverlaySelectionName = selectionName;
+    this.currentOverlaySelectionNames = null;
   this.currentOverlaySelectionShown = true;
 
   var dendV = new dendrogramViewer();
@@ -770,6 +777,70 @@ var heatDendView = new heatmapDendrogramViewer();
     ctx.restore();
 
   }); // get the cell order
+}
+
+/**
+ * Highlight a group of cell selections given a list of names
+ */
+metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames) {
+  var metadataHeatV = this;
+
+  this.currentOverlaySelectionNames = selectionNames;
+  this.currentOverlaySelectionName = null;
+  this.currentOverlaySelectionShown = true;
+
+  var dendV = new dendrogramViewer();
+  var ctx = metadataHeatV.getSelectionDrawingContext();
+  ctx.clearRect(0,0,3000,3000);
+  
+    // Get the cells in the cell selection to highlight
+  var cellSelCntr = new cellSelectionController();
+  
+  
+
+  // Get the cell order
+  var dataCntr = new dataController();
+  dataCntr.getCellOrder(function(cellorder) {
+    // Currently displayed cells
+    selectionNames.foreach(function(selectionName){
+    var cellSelection = cellSelCntr.getSelection(selectionName);
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+    var heatDendView = new heatmapDendrogramViewer();
+    // Get and calculate plotting values
+    var drawConsts = metadataHeatV.getDrawConstants();
+    var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+     var actualPlotHeight = drawConsts.height;
+
+    ctx.save();
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+
+    // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+
+  });
+  });// get the cell order
 }
 
 

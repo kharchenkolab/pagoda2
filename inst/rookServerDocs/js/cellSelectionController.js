@@ -16,7 +16,6 @@
  *
  */
 
-const highlights = ["#FF0097","#A200FF","#00ABA9","#8CBF26","#A05000","#E671B8","#F09609","#1BA1E2","#E51400","#339933","#FFFF00","#8F0012","#E30181","#B3773C","#C76306","#ABDBB0","#8F0012","#FADC50","#E490B5","#AFD0F4","#8ED0BB","#39FA61","#B56194","#8DDE06","#C1BC76"];
 /**
  * Keeps track of cell seletions
  * @constructor
@@ -28,7 +27,7 @@ function cellSelectionController() {
 
     // Generat the array to keep the selections in
     this.selections = new Object();
-
+    this.highlights = ["#FF0097","#A200FF","#00ABA9","#8CBF26","#A05000","#E671B8","#F09609","#1BA1E2","#E51400","#339933","#FFFF00","#8F0012","#E30181","#B3773C","#C76306","#ABDBB0","#8F0012","#FADC50","#E490B5","#AFD0F4","#8ED0BB","#39FA61","#B56194","#8DDE06","#C1BC76"];
     cellSelectionController.instance = this;
 };
 
@@ -40,8 +39,8 @@ function cellSelectionController() {
  * @param {object} metadata any kind of metadata we want to attach to this cell selection
  * @param {color} color of the cells when highlighted. If not specified random color is chosen 
  */
-cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata, color = null ) {
-    if(color === null){
+cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata, color ) {
+    if(typeof color === "undefined"){
       color = highlights[Math.floor(Math.random()*highlights.length)];
     }
      if (typeof displayName === 'undefined') {
@@ -55,7 +54,6 @@ cellSelectionController.prototype.setSelection = function(selectionName, cells, 
 	'metadata': metadata,
 	'color' : color
     };
-
     this.raiseSelectionChangedEvent();
 };
 
