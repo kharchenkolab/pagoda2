@@ -1,7 +1,8 @@
 /**
  * Author: Nikolas Barkas
  * Date:  June 2017
- * Description: pagoda2 packer, packing program for pagoda2
+ * Description: pagoda2 packer, a program that reads exported 
+ * pagoda2 object and serialises them into a indexable binary file
  */
 
 #include "p2pack.h"
@@ -9,8 +10,9 @@
 
 using namespace std;
 
-
 int main( int ac, char *av[] ) {
+
+  // Use boose to process command line arguments
   namespace po = boost::program_options;
 
   po::options_description desc("Allowed options");
@@ -45,18 +47,20 @@ int main( int ac, char *av[] ) {
     make_file(indir, outfile);
   }
   catch (int e) {
-    cout << "Fatal Exception: Could not allocate required memory" << endl;
-
+    if (e == EX_MEM_ALLOC_FAIL) {
+      cout << "Fatal Exception: Could not allocate required memory" << endl;
+      return 1;
+    } else {
+      cout << "Unknown Exception occured! Exception code: " << e << endl;
+      return 1;
+    }
+  } catch (exception& e) {
+    cout << "Standard exception occure: " << e.what() << endl;
+    return 1;
   }
+  
   return 0;
 }
-
-void print_file_format_info() {
-  cout << "Size of indexEntry: " << sizeof(indexEntry) << endl;
-  cout << "Size of fileHeader: " << sizeof(fileHeader) << endl;
-}
-
-
 
 struct entry* make_entry_from_string(char const *key, string &data) {
   struct entry *e;
@@ -87,40 +91,39 @@ struct entry* make_entry_from_string(char const *key, string &data) {
  * exported by the pagoga2 disk serializer
  */
 void make_file(string &indir, string &outfile) {
+  // List for all the entries
+  list<entry> entries;
+  
   // Generate file names
   string cellmetadataFile = indir + "cellmetadata.json";
-  string cellorderFile = indir + "cellorder.json";
-  string geneinformationFile = indir + "geneinformation.json";
-  string reduceddendrogramFile = indir + "reduceddendrogram.json";
-  string embeddingstructureFile = indir + "embeddingstructure.json";
-
+  cout << "Reading " << cellmetadataFile << endl;
   string cellmetadataData = readWholeFile(cellmetadataFile);
-  string cellorderData = readWholeFile(cellorderFile);
-  string geneinformationData = readWholeFile(geneinformationFile);
-  string reduceddendrogramData = readWholeFile(reduceddendrogramFile);
-  string embeddingstructureData = readWholeFile(embeddingstructureFile);
-
-
-					      
-  list<entry> entries;
-
-  // Cast required to avoid warning
   struct entry* metadataEntry =  make_entry_from_string("cellmetadata", cellmetadataData);
   entries.push_back(*metadataEntry);
 
+  string cellorderFile = indir + "cellorder.json";
+  cout << "Reading " << cellorderFile << endl;
+  string cellorderData = readWholeFile(cellorderFile);
   struct entry* cellorderEntry = make_entry_from_string("cellorder", cellorderData);
   entries.push_back(*cellorderEntry);
 
+  string geneinformationFile = indir + "geneinformation.json";
+  cout << "Reading " << geneinformationFile << endl;
+  string geneinformationData = readWholeFile(geneinformationFile);
   struct entry* geneinformationEntry = make_entry_from_string("geneinformation", geneinformationData);
   entries.push_back(*geneinformationEntry);
-
+  
+  string reduceddendrogramFile = indir + "reduceddendrogram.json";
+  cout << "Reading " << reduceddendrogramFile << endl;
+  string reduceddendrogramData = readWholeFile(reduceddendrogramFile);
   struct entry* reduceddendrogramEntry = make_entry_from_string("reduceddendrogram", reduceddendrogramData);
   entries.push_back(*reduceddendrogramEntry);
 
+  string embeddingstructureFile = indir + "embeddingstructure.json";
+  cout << "Reading " << embeddingstructureFile << endl;
+  string embeddingstructureData = readWholeFile(embeddingstructureFile);
   struct entry* embeddingstructureEntry = make_entry_from_string("embeddingstructure", embeddingstructureData);
   entries.push_back(*embeddingstructureEntry);
-  // CONTINUE HERE WITH GENERATION OF OTHER ENTRIES
-
 
   // Doing the embeddings here  -- this needs to be dynamic of a list of files staring with emb*
   // Alternatively it could be a command line argument
@@ -154,42 +157,46 @@ void make_file(string &indir, string &outfile) {
 							       
   
   make_file_from_payload(entries, outfile);
-
 }
 
 void makeMainSparseMatrix(list<entry> &entries, string& indir) {
+  cout << "Making expression sparse matrix entry..." << endl;
+  
   // Make the main sparse matrix
   // Read the p
   string matsparsePFile = indir + "matsparse_p.txt";
   list<uint32_t> *pData;
+  cout << "\tReading " << matsparsePFile << endl;
   pData = readNumberArrayFromFile<uint32_t>(matsparsePFile);
-  cout << "p array size: " << pData->size() << endl;
-  cout << "p first entry: " << pData->front() << endl;
-
+  cout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << " ]" << endl;
+  
   // Read the i
   string matsparseIFile = indir + "matsparse_i.txt";
   list<uint32_t> *iData;
+  cout << "\tReading " << matsparseIFile << endl;
   iData = readNumberArrayFromFile<uint32_t>(matsparseIFile);
-  cout << "i array size: " << iData->size() << endl;
-  cout << "i first entry: " << iData->front() << endl;
+  cout << "\t\ti array size: " << iData->size() << "[First entry value: " << iData->front() << " ] " << endl;
 
   // Read the x
   string matsparseXFile = indir + "matsparse_x.txt";
   list<float> *xData;
+  cout << "\tReading " << matsparseXFile << endl;
   xData = readNumberArrayFromFile<float>(matsparseXFile);
-  cout << "x array size: " << xData->size() << endl;
-  cout << "x first entry: " << xData->front() << endl;
-
+  cout << "\t\tx array size: " << xData->size() << "[First entry value: " << xData->front() << " ] " << endl;
+  
   // Read dim names 1
   string matsparseDimnames1File = indir + "matsparse_Dimnames1.json";
+  cout << "\tReading " << matsparseDimnames1File << endl;
   string matsparseDimnames1 = readWholeFile(matsparseDimnames1File);
 
   // Read dimnames 2
   string matsparseDimnames2File = indir + "matsparse_Dimnames2.json";
+  cout << "\tReading " << matsparseDimnames2File << endl;
   string matsparseDimnames2 = readWholeFile(matsparseDimnames2File);
 
   string dimFile = indir + "matsparse_Dim.txt";
   list<uint32_t> *Dim;
+  cout << "\tReading " << dimFile << endl;
   Dim = readNumberArrayFromFile<uint32_t>(dimFile);
    
   // Now serialise
@@ -208,17 +215,15 @@ void makeMainSparseMatrix(list<entry> &entries, string& indir) {
   smh.dimname2EndOffset = smh.dimname2StartOffset + matsparseDimnames2.size();
   
 
-  cout << "matsparse header information" << endl;
-  cout << "dim1 " << smh.dim1 << endl;
-  cout << "dim2 " << smh.dim2 << endl;
-  cout << "pStartOffset " << smh.pStartOffset << endl;
-  cout << "iStartOffset " << smh.iStartOffset << endl;
-  cout << "xStartOffset " << smh.xStartOffset << endl;
-  cout << "dimnames1StartOffset " << smh.dimname1StartOffset << endl;
-  cout << "dimnames2StartOffset " << smh.dimname2StartOffset << endl;
-  cout << "dimnames2EndOffset " << smh.dimname2EndOffset << endl;
-
-  cout << endl << "dimnames1 size" <<  matsparseDimnames1.size() << endl;
+  cout << "\tExpression matrix header information" << endl;
+  cout << "\t\tdim1=" << smh.dim1 << endl;
+  cout << "\t\tdim2=" << smh.dim2 << endl;
+  cout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
+  cout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
+  cout << "\t\txStartOffset=" << smh.xStartOffset << endl;
+  cout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
+  cout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
+  cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
 
   //cout << "Test " << matsparseDimnames1 << endl;
   // Make a memory holder for the data
@@ -245,19 +250,14 @@ void makeMainSparseMatrix(list<entry> &entries, string& indir) {
   }
 
   // Write the Dimnames as JSON string
-  // HERE
   smhData.write( matsparseDimnames1.c_str(), matsparseDimnames1.size());
   smhData.write( matsparseDimnames2.c_str(), matsparseDimnames2.size());
 
-  //cout << matsparseDimnames1.c_str();
-  
   // Convert the buffer to a string
   string smhDataString = smhData.str();
 
   struct entry* sparseMatrixEntry = make_entry_from_string("sparseMatrix", smhDataString);
   entries.push_back(*sparseMatrixEntry);
-
-
 }
 
 template<class T>
@@ -297,16 +297,22 @@ string readWholeFile(string &filename) {
 }
 
 void make_file_from_payload(list<entry> &entries, string &filename) {
-  print_file_format_info();
+  cout << "Making File from payload..." << endl;
+
+  cout << "\tFile format information" << endl;
+  cout << "\t\tIndex entry size is " << sizeof(indexEntry) << " bytes" << endl;
+  cout << "\t\tFile header size is " << sizeof(fileHeader) << " bytes" << endl;
+  
 
   // Open the file
   ofstream fs;
   fs.open(filename, ios::out | ios::binary);
 
+  cout << "\tPreparing header..." << endl;
   // Generate a header
   struct fileHeader header;
 
-  // Clear the memory to avoid confusion
+  // Clear the memory to avoid rubbish data writen to the file
   memset(&header, 0, sizeof(header));
   
   strcpy(header.identifier, "pagoda2datafile");
@@ -319,9 +325,11 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
   header.indexSize = sizeof(indexEntry) * entries.size();
 
   // TODO if verbose
-  cout << "The index size is: " << header.indexSize << endl;
+  cout << "\tTotal index size is: " << header.indexSize << " bytes" << endl;
 
   // Construct the index in memory
+  cout << "\tConstructing index..." << endl;
+  
   list<indexEntry> indexEntries;
   uint32_t curOffset = 0; // in blocks
   for(list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator) {
@@ -345,26 +353,28 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
     curOffset += iterator->blockSize;
   }
 
+  cout << "\tWriting header to file..." << endl;
   // Write the header
   fs.write((const char*) &header, sizeof(header));
 
+  cout << "\tWriting index enties to file..." << endl;
   // Write the index entries
   for (list<indexEntry>::iterator iterator = indexEntries.begin(); iterator != indexEntries.end(); ++iterator) {
     fs.write((const char*) &(*iterator), sizeof(indexEntry));
   }
 
   // Write the content
+  cout << "\tWriting the file contents..." << endl;
   int i = 0;
   for(list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator) {
-    cout << "Writing entry " << i++ << " ..." << endl;
+    cout << "\t\tWriting entry " << i++;
     size_t s = iterator-> blockSize * FILE_BLOCK_SIZE;
 
-    cout << "Entry size is " <<  iterator->blockSize << " blocks or " << s << " bytes" << endl;
+    cout << " of size " <<  iterator->blockSize << " blocks (or " << s << " bytes)" << endl;
     void *entry = malloc(s); // memspace for entry as will be on disk
     if (entry == 0) {
       throw EX_MEM_ALLOC_FAIL;
     }
-
     
     memset(entry,  0, s); // fill with 0s
     memcpy(entry, (const char*) iterator->payload, iterator->size); // copy the payload
@@ -372,46 +382,52 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
     // Write to file
     fs.write( (const char*) entry, s);
 
+    // Free the entry buffer allocated in the loop
     free(entry);
   }
 
+  cout << "Closing the output file" << endl;
   fs.close();
   
 }
 
 void makeAspectSparseMatrix(list<entry> &entries, string& indir) {
-  // Make the main sparse matrix
+  cout << "Making aspect sparse matrix entry" << endl;
+  
   // Read the p
   string mataspectPFile = indir + "mataspect_p.txt";
   list<uint32_t> *pData;
+  cout << "\tReading mataspect_p.txt..." << endl;
   pData = readNumberArrayFromFile<uint32_t>(mataspectPFile);
-  cout << "p array size: " << pData->size() << endl;
-  cout << "p first entry: " << pData->front() << endl;
-
+  cout << "\t\tp array size: " << pData->size() << " [First entry value: " <<  pData->front() << "]" << endl;
+  
   // Read the i
   string mataspectIFile = indir + "mataspect_i.txt";
   list<uint32_t> *iData;
+  cout << "\tReading mataspect_i.txt..." << endl;
   iData = readNumberArrayFromFile<uint32_t>(mataspectIFile);
-  cout << "i array size: " << iData->size() << endl;
-  cout << "i first entry: " << iData->front() << endl;
-
+  cout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
+  
   // Read the x
   string mataspectXFile = indir + "mataspect_x.txt";
   list<float> *xData;
+  cout << "\tReading " << mataspectXFile << endl;
   xData = readNumberArrayFromFile<float>(mataspectXFile);
-  cout << "x array size: " << xData->size() << endl;
-  cout << "x first entry: " << xData->front() << endl;
-
+  cout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
+  
   // Read dim names 1
   string mataspectDimnames1File = indir + "mataspect_Dimnames1.json";
+  cout << "\tReading " <<  mataspectDimnames1File << endl;
   string mataspectDimnames1 = readWholeFile(mataspectDimnames1File);
 
   // Read dimnames 2
   string mataspectDimnames2File = indir + "mataspect_Dimnames2.json";
+  cout << "\tReading " << mataspectDimnames2File << endl;
   string mataspectDimnames2 = readWholeFile(mataspectDimnames2File);
 
   string dimFile = indir + "mataspect_Dim.txt";
   list<uint32_t> *Dim;
+  cout << "\tReading " << dimFile << endl;
   Dim = readNumberArrayFromFile<uint32_t>(dimFile);
    
   // Now serialise
@@ -428,27 +444,21 @@ void makeAspectSparseMatrix(list<entry> &entries, string& indir) {
   smh.dimname1StartOffset = smh.xStartOffset + sizeof(uint32_t) * xData->size();
   smh.dimname2StartOffset = smh.dimname1StartOffset + mataspectDimnames1.size();
   smh.dimname2EndOffset = smh.dimname2StartOffset + mataspectDimnames2.size();
+
+  cout << "\tAspect matrix header information" << endl;
+  cout << "\t\tdim1=" << smh.dim1 << endl;
+  cout << "\t\tdim2=" << smh.dim2 << endl;
+  cout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
+  cout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
+  cout << "\t\txStartOffset=" << smh.xStartOffset << endl;
+  cout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
+  cout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
+  cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
   
-
-  cout << "aspectsparse header information" << endl;
-  cout << "dim1 " << smh.dim1 << endl;
-  cout << "dim2 " << smh.dim2 << endl;
-  cout << "pStartOffset " << smh.pStartOffset << endl;
-  cout << "iStartOffset " << smh.iStartOffset << endl;
-  cout << "xStartOffset " << smh.xStartOffset << endl;
-  cout << "dimnames1StartOffset " << smh.dimname1StartOffset << endl;
-  cout << "dimnames2StartOffset " << smh.dimname2StartOffset << endl;
-  cout << "dimnames2EndOffset " << smh.dimname2EndOffset << endl;
-
-  cout << endl << "dimnames1 size" <<  mataspectDimnames1.size() << endl;
-
-  //cout << "Test " << matsparseDimnames1 << endl;
-  // Make a memory holder for the data
+   // Make a memory holder for the data
   stringstream smhData(stringstream::in|stringstream::out|stringstream::binary);
   // Write the header
   smhData.write((const char*) &smh, sizeof(smh));
-  //cout << "Size of sparse header " << sizeof(smh) << endl;
-  
   
   // Write the p object
   for(list<uint32_t>::const_iterator iter = pData->begin(); iter != pData->end(); ++iter) {

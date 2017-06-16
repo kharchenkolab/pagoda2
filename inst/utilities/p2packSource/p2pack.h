@@ -13,7 +13,7 @@
 
 
 // Exception codes
-#define EX_MEM_ALLOC_FAIL 0x0001;
+#define EX_MEM_ALLOC_FAIL 0x0001
 
 
 using namespace std;
@@ -74,7 +74,7 @@ struct entry {
 
 
 // Function prototypes
-void print_file_format_info();
+
 void make_file(string &indir, string &outfile);
 string readWholeFile(string &filename);
 void make_file_from_payload(list<entry> &entries, string &filename);
