@@ -958,7 +958,9 @@ pagoda2WebApp <- setRefClass(
 		    }
 		    ,
 
-		    serialiseToDirectory = function(dir = null) {
+		    serialiseToStatic = function(text.file.directory = null, binary.filemame = null) {
+		      dir <- text.file.directory;
+
 		      if (is.null(dir)) {
 		        stop('Please specify a directory');
 		      }
@@ -1097,6 +1099,24 @@ pagoda2WebApp <- setRefClass(
           writeDataToFile(dir, 'genesetsgenes.json',toJSON(geneListGenes));
 
 
+          #We want to make a binary file as well
+          if (!is.null(binary.filemame)) {
+            p2packExec <- file.path(system.file(package='pagoda2'),'utilities','p2packSource','p2pack');
+
+            # Append trailing slash if missing
+            if (grepl('/$', text.file.directory)) {
+              dirVar = text.file.directory;
+            } else {
+              dirVar = paste0(text.file.directory, '/');
+            }
+
+            args <- paste0(' --input-directory ', dirVar, ' --output-file ', binary.filemame)
+            cmdRetVal <- system2(p2packExec, args)
+            if(cmdRetVal != 0) {
+              cat('Error conversion to binary failed! Have you built the conversion utility? Go to ',
+                  file.path(system.file(package='pagoda2'),'utilities','p2packSource'), 'and run "make".');
+            }
+          }
 
 		    }
 
