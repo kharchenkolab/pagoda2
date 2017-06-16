@@ -17,7 +17,7 @@ int main( int ac, char *av[] ) {
   desc.add_options()
     ("help", "produce help message")
     ("output-file", po::value<string>(), "output filename")
-    ("input-directory", po::value<string>(), "input directory where object has been serialised")
+    ("input-directory", po::value<string>(), "input directory where object has been serialised (with trailing slash)")
     ;
 
   po::variables_map vm;
@@ -29,9 +29,21 @@ int main( int ac, char *av[] ) {
     return 1;
   }
 
-  string indir = "/home/barkasn/testSerial/";
-  string outfile = "./output.p2s";
+  if (!vm.count("output-file")) {
+    cout << "You need to specify an output file" << endl;
+    return 0;
+  }
 
+  if (!vm.count("input-directory")) {
+    cout << "You need to specify an input directory" << endl;
+  }
+
+  //string indir = "/home/barkasn/testSerial/";
+  //string outfile = "./output.p2s";
+
+  string indir = vm["input-directory"].as< string >();
+  string outfile = vm["output-file"].as< string >();
+  
   make_file(indir, outfile);
 
   return 0;
