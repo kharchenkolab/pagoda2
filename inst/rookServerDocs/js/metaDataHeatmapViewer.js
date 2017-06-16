@@ -852,9 +852,13 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(select
  * @param focus logical, give focus to the selection in the cell selection pane afterwards?
  * @param highlight logical, hightlight the selection on the heatmaps and embedding?
  */
-metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight, restriction = function(selection){return true;}) {
+metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight, restriction) {
   // Generate a cell selection
-
+  
+  if(typeof restriction === "undefined"){
+    restriction = function(selection){return true;};
+  }
+  
   var dataCntr = new dataController();
   dataCntr.getCellMetadata(function(data, callbackParameters) {
     // data[callbackParameters.metadataName].data
@@ -892,6 +896,5 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
   }, {metadataName: metadataName,metadataValue: metadataValue, selectionName: selectionName, focus: focus,highlight: highlight});
-
-
+  
 }
