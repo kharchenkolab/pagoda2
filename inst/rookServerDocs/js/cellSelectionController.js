@@ -27,7 +27,7 @@ function cellSelectionController() {
 
     // Generat the array to keep the selections in
     this.selections = new Object();
-
+    this.highlights = ["#FF0097","#A200FF","#00ABA9","#8CBF26","#A05000","#E671B8","#F09609","#1BA1E2","#E51400","#339933","#FFFF00","#8F0012","#E30181","#B3773C","#C76306","#ABDBB0","#8F0012","#FADC50","#E490B5","#AFD0F4","#8ED0BB","#39FA61","#B56194","#8DDE06","#C1BC76"];
     cellSelectionController.instance = this;
 };
 
@@ -37,8 +37,12 @@ function cellSelectionController() {
  * @param {Array[]} cells identifiers of the cells for this selection
  * @param {string} displayName Name to show in the UI when refering to this selection
  * @param {object} metadata any kind of metadata we want to attach to this cell selection
+ * @param {color} color of the cells when highlighted. If not specified random color is chosen 
  */
-cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata ) {
+cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata, color ) {
+    if(typeof color === "undefined"){
+      color = highlights[Math.floor(Math.random()*highlights.length)];
+    }
      if (typeof displayName === 'undefined') {
 	displayName = selectionName;
     }
@@ -47,9 +51,9 @@ cellSelectionController.prototype.setSelection = function(selectionName, cells, 
 	'name': selectionName,
 	'cells': cells,
 	'displayName': displayName,
-	'metadata': metadata
+	'metadata': metadata,
+	'color' : color
     };
-
     this.raiseSelectionChangedEvent();
 };
 
@@ -102,6 +106,30 @@ cellSelectionController.prototype.getSelection = function(selectionName) {
 };
 
 /**
+ * Get a cell selection's highlight color
+ * @param {string} selectionName the internal name of the cell selection
+ * @returns {string} color corresponding to the selected selection
+ */
+cellSelectionController.prototype.getColor = function(selectionName){
+  var sel =  this.selections[selectionName];
+    if (typeof sel !== 'undefined') {
+	return sel.color;
+    } else {
+	return undefined;
+    }
+};
+/**
+ * Sets a cell selection's highlight color
+ * @param {string} selectionName the internal name of the cell selection
+ * @param {string} desired new highlight color
+ */
+cellSelectionController.prototype.setColor = function(selectionName, newColor){
+
+  this.selections[selectionName].color =  newColor;
+  this.raiseSelectionChangedEvent();
+  
+}
+/**
  * get the display name of a cell selection
  * @param selectionName the internal name of the selection
  * @retuns the display name of the selection
@@ -126,9 +154,10 @@ cellSelectionController.prototype.duplicateSelection = function(selectionName,
 								newSelectionDisplayName) {
     var oldSelection = this.selections[selectionName];
     var sel = {};
+    
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-
+    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
     sel.cells = JSON.parse(JSON.stringify(oldSelection.cells));
 
     this.selections[newSelectionName] = sel;
@@ -155,6 +184,7 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, 
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
+    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
 
     // Concatenate arrays into a new one
     sel.cells = selA.concat(selB);
@@ -179,6 +209,7 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
     sel.cells = [];
+    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
 
     // TODO: There might be performance benefits in looping over shortere array
     var l = selA.length;

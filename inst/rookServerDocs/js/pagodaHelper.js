@@ -60,7 +60,7 @@ var pagHelpers = {
 
   ,
 
-  downloadURL: function(data, filename) {
+  downloadURL: function(data, filename, canvas = null) {
     var link = document.createElement("a");
     if (link.download !== undefined) { // feature detection
         var url = URL.createObjectURL(data);
@@ -71,10 +71,15 @@ var pagHelpers = {
         link.click();
         document.body.removeChild(link);
     }
-    // Potential fallback code
-    // var imageURL = canvas.toDataURL('image/png');
-    // imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-    // window.open(imageURL);
+    else if(canvas !== null){// Fallback code
+      var imageURL = canvas.toDataURL('image/png');
+      imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+      window.open(imageURL);
+    }
+    else{
+      Ext.MessageBox.alert('Error','Browser does not support any valid download options for the specified request.')
+    }
+    
   },
 
   checkBrowser: function() {

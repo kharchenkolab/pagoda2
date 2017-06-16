@@ -8,7 +8,7 @@
  */
 
 /**
- * Implementation fo data controller for rook server backed interaction
+ * Implementation for data controller for rook server backed interaction
  * @constructor
  */
 function DataControllerServer() {

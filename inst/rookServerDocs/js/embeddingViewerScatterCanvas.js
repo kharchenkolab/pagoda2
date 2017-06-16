@@ -187,7 +187,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    } // for
 
 	    var cellSelCntr = new cellSelectionController();
-	    cellSelCntr.setSelection('embSelection', cellsForSelection, 'Embedding Selection', new Object());
+	    cellSelCntr.setSelection('embSelection', cellsForSelection, 'Embedding Selection', new Object(),'#ff0000');
 
       // TODO: Make this optional
 
@@ -260,8 +260,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 	    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
 	    ctx.save();
 	    ctx.clearRect(0,0,5000,5000);
-	    ctx.strokeStyle = 'red';
-
+	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
 	    for (var i = 0; i < plotData.length; i++) {
     		var point = plotData[i];
     		if ( cells.indexOf(point[0]) > -1 ) {
@@ -356,7 +355,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 	    ctx.clearRect(0,0,4000,4000);
 	    ctx.save();
 	    ctx.setLineDash([10,10]);
-	    ctx.strokeStyle = '#FF0000';
+	    ctx.strokeStyle = 'rgba(255,0,0,1)';
 	    ctx.lineWidth = 2;
 	    ctx.strokeRect(dragStartX, dragStartY, dragEndX - dragStartX, dragEndY - dragStartY);
 	    ctx.restore();
@@ -586,8 +585,6 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
  * Generate fill styles suitable for the given dataset
  */
 embeddingViewerScatterCanvas.prototype.generateFillStyles = function(plotdata, callback, type, embeddingType) {
-
-
 
     // Get the color config
     var ev = new embeddingViewer();

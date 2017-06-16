@@ -38,8 +38,9 @@ cellSelectionUIcontroller.prototype.syncCellSelectionStore = function() {
 	var selName = availSelections[sel];
 	var selCount =  cellSelCntr.getSelection(selName).length;
 	var selDisplayName =  cellSelCntr.getSelectionDisplayName(selName);
-
-	store.add({selectionname: selName, displayname: selDisplayName , cellcount: selCount});
+	var selColor = cellSelCntr.getColor(selName);
+  
+	store.add({selectionname: selName, displayname: selDisplayName , cellcount: selCount, color: selColor});
     }// for
 }
 
@@ -71,15 +72,34 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	id: 'cellSelectionTable',
     	store: Ext.data.StoreManager.lookup('cellSelectionStoreForSelectionTable'),
     	columns: [
-    	    {text: 'Name', dataIndex: 'displayname', width: '70%'},
-    	    {text: 'Count', dataIndex: 'cellcount', width: '29%'}
+    	    {text: 'Name', dataIndex: 'displayname', width: '67%'},
+    	    {text: 'Count', dataIndex: 'cellcount', width: '28%'},
+    	    {text: "&#x03DF;", dataIndex: 'color',width:'5%', renderer: 
+    	    function(value, meta){
+    	      meta.style = "background-color:"+value+";";
+    	    }}
     	],
     	emptyText: "No cell selections are currently available",
     	singleSelect: false,
     	selModel: cellTableSelectionModel
     });
 
+   Ext.define('PagodaColorPicker',{
+          extend: "Ext.ux.colorpick.Field ",
+          constructor: function (config) {
+                var me = this;
+                childViewModel = Ext.Factory.viewModel('colorpick-selectormodel');
 
+                // Since this component needs to present its value as a thing to which users can
+                // bind, we create an internal VM for our purposes.
+                me.childViewModel = childViewModel;
+                me.items = [
+                  me.getMapAndHexRGBFields(childViewModel),
+                  me.getSliderAndHField(childViewModel),
+                ];
+                
+          },
+    });
     var formPanel = Ext.create('Ext.form.Panel', {
     height: '100%',
     width: '100%',
@@ -90,7 +110,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
       {
         xtype: 'button',
         text: 'Delete',
-        handler: function() {
+        handler: function() { 
           var selectionTable = Ext.getCmp('cellSelectionTable');
       		var selectedItems = selectionTable.getSelectionModel().getSelected();
       		if (selectedItems.length === 1) {
@@ -295,7 +315,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             var selectionFormatted = [];
             var cellSelCntr = new cellSelectionController();
             for(var index = 0; index < selectedItems.length; index++){
-      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
+      		    var selectionName = selectedItems.getAt(index).getData().displayname;
     	  	    var selection = cellSelCntr.getSelection(selectionName);
       		    selectionFormatted.push(selectionName+ "," + selection.join(","));
       		  }
@@ -316,6 +336,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	        height:100,
 	        width:500,
 	        align:"center",
+	        modal: true,
 	        items:[
 	         {
 	            height: "12px",
@@ -338,25 +359,51 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	            height:"40%",
 	            align: "center",
 	            handler: function(){
+	              var dataCntr = new dataController();
 	              var cellSelFile = document.getElementById("selectedCellFile").files[0];
 	              var cellSelFileName = cellSelFile.name;
 	              var reader = new FileReader();
 	              reader.onload = function(progressEvent){
 	                var lines = this.result.split("\n");
+	                dataCntr.getCellOrder(function(cellOrder){
 	                var cellSelCntrl = new cellSelectionController();
+	                var total = 0;
+	                var removedCells = {};
 	                for(var line = 0; line < lines.length; line++){
-	                  var selection = lines[line].split(",");
-	                  var selName = selection.shift();
-	                  if(cellSelCntrl.getSelection(selName)){
-	                    selName = selName  + "~RecentlyLoaded"
+	                  if(lines[line].length !== 0){
+	                    var selection = lines[line].split(",");
+	                    var selName = selection.shift();
+	                    removedCells[selName] = 0;
+	                    var pureSelection = [];
+	                    for(var elem = 0; elem < selection.length; elem++){
+	                      if(cellOrder.includes(selection[elem])){
+	                        pureSelection.push(selection[elem]);
+	                      }
+	                      else{
+	                        removedCells[selName]++;
+	                      }
+	                    }// ensure all cells are rightfully containers
+	                    
+	                    if(cellSelCntrl.getSelection(selName)){
+  	                    selName = selName  + "~RecentlyLoaded"
+	                    }
+	                    if(removedCells[selName] !== selection.length){
+	                      cellSelCntrl.setSelection(selName,pureSelection,selName,"loaded from " + cellSelFileName);
+	                      total++;
+	                    }//confirm
 	                  }
-	                  cellSelCntrl.setSelection(selName,selection,selName,"loaded from " + cellSelFileName);
 	                }
-	                Ext.MessageBox.alert('info',lines.length + " selections were loaded from " + cellSelFileName)
-	              };
-	              reader.readAsText(cellSelFile);
-	              
-	              Ext.getCmp('cellFileSelectionWindow').close();
+	                var extraInfo = "";
+	                for(var selName in removedCells){
+	                  if(removedCells[selName] > 0){
+	                    extraInfo += "<br>" + removedCells[selName] + " cell(s) could not be loaded from selection " + selName;
+	                  }
+	                }
+	                Ext.MessageBox.alert('Load Cell Selections Complete', total + " selections were generated from the data within " + cellSelFileName + extraInfo)
+	                });
+  	           };
+	             reader.readAsText(cellSelFile);
+	             Ext.getCmp('cellFileSelectionWindow').close();
 	            }
 	          }
 	        ],
@@ -398,7 +445,77 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     		    pagHelpers.regC(88);
     		}
 	  }
+	},
+	{
+	  xtype: 'button',
+	  text: 'Change Highlight',
+	  handler: 
+	  function(){
+	    var selectionTable = Ext.getCmp('cellSelectionTable');
+		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+		  if (selectedItems.length === 1) {
+		    var cellSelCntrl = new cellSelectionController();
+		    var selectionName = selectedItems.getAt(0).getData().selectionname;
+		    var oldColor = cellSelCntrl.getColor(selectionName);
+        Ext.create('Ext.window.Window',{
+	        title:'Change Cell Selection Color',
+  	      id: 'cellSelectionColorWindow',
+	        align:"center",
+	        width: 300,
+	        modal: true,
+	        items:[
+              {
+                xtype:"colorfield",              
+                fieldLabel: 'Highlight Color',
+                id: "colorPicker",
+                labelWidth: 75,
+                value: oldColor,
+                listeners: {
+                  change: 'onChange'
+                }
+            },
+	          {
+	            xtype: 'button',
+	            text: 'cancel',
+  	          width:"20%",
+	            height:"30%",
+	            align: "center",
+	            margin: "10 10 10 10",
+	            handler: function(){
+	              Ext.getCmp('cellSelectionColorWindow').close();
+	            }
+	          },
+  	        {
+  	          xtype: 'button',
+	            text: 'ok',
+	            width:"20%",
+	            height:"30%",
+	            align: "center",
+	            margin: "10 10 10 10",
+	            handler: function(){
+	              
+	              cellSelCntrl.setColor(selectedItems.getAt(0).getData().selectionname, "#" + (Ext.getCmp("colorPicker").value))
+	              var heatView = new heatmapViewer();
+                var aspHeatView = new aspectHeatmapViewer();
+                var embCntr = new embeddingViewer();
+                var metaHeatView = new metaDataHeatmapViewer();
+                heatView.highlightCellSelectionByName(selectionName);
+                aspHeatView.highlightCellSelectionByName(selectionName);
+                metaHeatView.highlightCellSelectionByName(selectionName);
+                embCntr.highlightSelectionByName(selectionName);
+	          
+	              Ext.getCmp('cellSelectionColorWindow').close();
+	            }
+	          }
+	        ]
+  	    }).show();
+		} else {
+		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
+		}
+	   
+	  }
 	}
+	
     ]
     });
 

@@ -200,7 +200,7 @@ function generateExtJsLayout() {
 	id: 'cellselection-app-container',
 	layout: 'fit',
 	height: '100%',
-	width: '100%',
+	width: '100%'
     });
 
     var geneSelectionPanel =  Ext.create('Ext.panel.Panel', {
@@ -239,6 +239,7 @@ function generateExtJsLayout() {
 		    title: 'Cell Selections',
 		    glyph: 0xf03a,
 		    tooltip: 'View and manage available cell selections',
+		    scrollable: true,
 		    items: cellSelectionPanel
 		},
 		{

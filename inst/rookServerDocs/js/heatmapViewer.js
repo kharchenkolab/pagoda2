@@ -31,6 +31,7 @@ function heatmapViewer() {
     // Keep track of what selection we are showing so
     // we can persist accross redraws
     this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
     heatmapViewer.instance =  this;
 };
@@ -258,12 +259,12 @@ toolbar.add({
                    buttons: Ext.Msg.OKCANCEL,
                    fn: function(s) {
                      if (s == 'ok') {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png')})
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
                      } //if
                    } //fn
                 }) // Ext.Msg.show
             } else {
-                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png')})
+                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
             }// if
         } // handler
 });
@@ -393,7 +394,7 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object());
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#00FF00");//TODO green or blue?
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
@@ -487,7 +488,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.fillStyle = 'rgba(0,255,0,0.5)';
         ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
 
@@ -931,6 +932,7 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   var heatV = this;
 
   this.currentOverlaySelectionName = selectionName;
+  this.currentOverlaySelectionNames = null;
   this.currentOverlaySelectionShown = true;
 
 
@@ -960,8 +962,8 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
     var actualPlotHeight = heatV.getActualPlotHeight();
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
-
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+    
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);
@@ -983,6 +985,71 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
 
   }); // get the cell order
 }
+
+/**
+ * Given a group of cell selection names hightlight them on the heatmap with vertical lines
+ */
+heatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames) {
+  var heatV = this;
+
+  this.currentOverlaySelectionNames = selectionNames;
+  this.currentOverlaySelectionName = null;
+  this.currentOverlaySelectionShown = true;
+
+
+  var dendV = new dendrogramViewer();
+
+  // Get the cells in the cell selection to highlight
+  var cellSelCntr = new cellSelectionController();
+  
+  var ctx = heatV.getSelectionDrawingContext();
+  ctx.clearRect(0,0,3000,3000);
+  // Get the cell order
+  var dataCntr = new dataController();
+  dataCntr.getCellOrder(function(cellorder) {
+    // Currently displayed cells
+    
+    selectionNames.foreach(function(selectionName){
+    var cellSelection = cellSelCntr.getSelection(selectionName);
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+    
+
+    // Get and calculate plotting values
+    var drawConsts = heatV.getDrawConstants();
+    var heatmapWidth = drawConsts.width;
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+    var actualPlotHeight = heatV.getActualPlotHeight();
+
+    ctx.save();
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+    
+    // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+    });
+  }); // get the cell order
+}
+
 
 heatmapViewer.prototype.setMissingDisplay = function(value) {
   this.missingDisplay = value;
@@ -1159,7 +1226,12 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
     heatView.clearSelectionOverlayInternal();
     if (heatView.currentOverlaySelectionShown === true) {
-      heatView.highlightCellSelectionByName(heatView.currentOverlaySelectionName);
+      if(heatView.currentOverlaySelectionName !== null){
+        heatView.highlightCellSelectionByName(heatView.currentOverlaySelectionName);
+      }
+      else{
+        heatView.highlightCellSelectionsByNames(heatView.currentOverlaySelectionNames);
+      }
     }
 
     }); // dataCntr.getExpressionValuesSparseTransposedByCellIndexUnpacked callback

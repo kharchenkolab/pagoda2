@@ -291,7 +291,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
             var selectionFormatted = [];
             var geneSelCntr = new geneSelectionController();
             for(var index = 0; index < selectedItems.length; index++){
-      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
+      		    var selectionName = selectedItems.getAt(index).getData().displayname;
     	  	    var selection = geneSelCntr.getSelection(selectionName).genes;
     	  	    console.log(selection)
       		    selectionFormatted.push(selectionName+ "," + selection.join(","));
@@ -313,8 +313,9 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	        height:100,
 	        width:500,
 	        align:"center",
+	        modal: true,
 	        items:[
-	         {
+	          {
 	            height: "12px",
 	            html: '<input type="file" id="selectedGeneFile"><br>'
 	          },
@@ -335,25 +336,56 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	            height:"40%",
 	            align: "center",
 	            handler: function(){
+	              
 	              var geneSelFile = document.getElementById("selectedGeneFile").files[0];
 	              var geneSelFileName = geneSelFile.name;
 	              var reader = new FileReader();
 	              reader.onload = function(progressEvent){
 	                var lines = this.result.split("\n");
+	                var dataCntr = new dataController();
+	                dataCntr.getGeneInformationStore(function(geneInformationStore){
+	                var geneOrder = [];
+                  for(var i = 0; i < geneInformationStore.localData.length; i++){
+                      geneOrder.push(geneInformationStore.localData[i].genename)
+                  }
 	                var geneSelCntrl = new geneSelectionController();
+	                var total = 0;
+	                var removedGenes = {};
 	                for(var line = 0; line < lines.length; line++){
-	                  var selection = lines[line].split(",");
-	                  var selName = selection.shift();
-	                  if(geneSelCntrl.getSelection(selName)){
-	                    selName = selName  + "~RecentlyLoaded"
+	                  if(lines[line].length !== 0){
+	                    var selection = lines[line].split(",");
+	                    var selName = selection.shift();
+	                    removedGenes[selName] = 0;
+	                    var pureSelection = [];
+	                    for(var elem = 0; elem < selection.length; elem++){
+	                      if(geneOrder.includes(selection[elem])){
+	                        pureSelection.push(selection[elem]);
+	                      }
+	                      else{
+	                        removedGenes[selName]++;
+	                      }
+	                    }// ensure all genes are rightfully containers
+	                    
+	                    if(geneSelCntrl.getSelection(selName)){
+  	                    selName = selName  + "~RecentlyLoaded"
+	                    }
+	                    if(removedGenes[selName] !== selection.length){
+	                      geneSelCntrl.setSelection(selName,pureSelection,selName,"loaded from " + geneSelFileName);
+	                      total++;
+	                    }//confirm
 	                  }
-	                  geneSelCntrl.setSelection(selName,selection,selName,"loaded from " + geneSelFileName);
 	                }
-	                Ext.MessageBox.alert('info',lines.length + " selections were loaded from " + geneSelFileName)
-	              };
-	              reader.readAsText(geneSelFile);
-	              
-	              Ext.getCmp('geneFileSelectionWindow').close();
+	                var extraInfo = "";
+	                for(var selName in removedGenes){
+	                  if(removedGenes[selName] > 0){
+	                    extraInfo += "<br>" + removedGenes[selName] + " gene(s) could not be loaded from selection " + selName;
+	                  }
+	                }
+	                Ext.MessageBox.alert('Load Gene Selections Complete', total + " selections were generated from the data within " + geneSelFileName + extraInfo)
+	                });
+  	           };
+	             reader.readAsText(geneSelFile);
+	             Ext.getCmp('geneFileSelectionWindow').close();
 	            }
 	          }
 	        ],
