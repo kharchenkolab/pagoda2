@@ -187,7 +187,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    } // for
 
 	    var cellSelCntr = new cellSelectionController();
-	    cellSelCntr.setSelection('embSelection', cellsForSelection, 'Embedding Selection', new Object(),'rgba(255,0,0,1)');
+	    cellSelCntr.setSelection('embSelection', cellsForSelection, 'Embedding Selection', new Object(),'#ff0000');
 
       // TODO: Make this optional
 
@@ -585,8 +585,6 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
  * Generate fill styles suitable for the given dataset
  */
 embeddingViewerScatterCanvas.prototype.generateFillStyles = function(plotdata, callback, type, embeddingType) {
-
-
 
     // Get the color config
     var ev = new embeddingViewer();

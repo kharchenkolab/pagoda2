@@ -190,7 +190,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "rgba(0,0,255,1)");
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000ff");
         
             // Highlight on heatmap
             var metaView = new heatmapViewer();
@@ -263,7 +263,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
               },
             }, //Item 1
             {
-              text: "Generate selection from all clusters",
+              text: "Generate selection for each cluster",
               handler: function(){
                 Ext.MessageBox.prompt("Set Limit","Specify a lower limit for number of cells in a new selection.", 
                 function(btn,text){
@@ -748,10 +748,9 @@ var heatDendView = new heatmapDendrogramViewer();
      var actualPlotHeight = drawConsts.height;
 
     ctx.save();
-    ctx.strokeStyle = cellSelCntr.getColor(selectionName).substring(0,cellSelCntr.getColor(selectionName).length-2) + "0.3)";
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
 
-
-        // Draw vertical lines for selected cells
+    // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);
 
@@ -789,7 +788,6 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
   dataCntr.getCellMetadata(function(data, callbackParameters) {
     // data[callbackParameters.metadataName].data
     var val =  callbackParameters.metadataValue;
-
     var cellSelectionNames = [];
 
     var keys = Object.keys(data[callbackParameters.metadataName].data);
@@ -803,7 +801,7 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
 
     var cellSel = new cellSelectionController();
     if(restriction(cellSelectionNames)){
-      cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName);
+      cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
     }
 
     if (highlight) {

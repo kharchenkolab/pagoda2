@@ -751,7 +751,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
 
     
     ctx.save();
-    ctx.strokeStyle = cellSelCntr.getColor(selectionName).substring(0,cellSelCntr.getColor(selectionName).length-2) + "0.3)";
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
     
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {

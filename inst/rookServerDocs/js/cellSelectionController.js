@@ -16,7 +16,7 @@
  *
  */
 
-var highlights = ["rgba(255,0,151,1)","rgba(162,0,255,1)","rgba(0,171,169,1)","rgba(140,191,38,1)","rgba(160,80,0,1)","rgba(230,113,184,1)","rgba(240,150,9,1)","rgba(27,161,226,1)","rgba(229,20,0,1)","rgba(51,153,51,1)","rgba(255,255,0,1)","rgba(143,0,18,1)","rgba(227,1,129,1)","rgba(179,119,60,1)","rgba(199,99,6,1)","rgba(171, 219, 176,1)","rgba(143,0,18,1)","rgba(250,220,80,1)","rgba(228,144,181,1)","rgba(175,208,244,1)","rgba(142,208,187,1)","rgba(57,250,97,1)","rgba(181,97,148,1)","rgba(141,222,6,1)","rgba(193,188,118,1)"]
+const highlights = ["#FF0097","#A200FF","#00ABA9","#8CBF26","#A05000","#E671B8","#F09609","#1BA1E2","#E51400","#339933","#FFFF00","#8F0012","#E30181","#B3773C","#C76306","#ABDBB0","#8F0012","#FADC50","#E490B5","#AFD0F4","#8ED0BB","#39FA61","#B56194","#8DDE06","#C1BC76"];
 /**
  * Keeps track of cell seletions
  * @constructor
@@ -38,6 +38,7 @@ function cellSelectionController() {
  * @param {Array[]} cells identifiers of the cells for this selection
  * @param {string} displayName Name to show in the UI when refering to this selection
  * @param {object} metadata any kind of metadata we want to attach to this cell selection
+ * @param {color} color of the cells when highlighted. If not specified random color is chosen 
  */
 cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata, color = null ) {
     if(color === null){
@@ -119,7 +120,17 @@ cellSelectionController.prototype.getColor = function(selectionName){
 	return undefined;
     }
 };
+/**
+ * Sets a cell selection's highlight color
+ * @param {string} selectionName the internal name of the cell selection
+ * @param {string} desired new highlight color
+ */
+cellSelectionController.prototype.setColor = function(selectionName, newColor){
 
+  this.selections[selectionName].color =  newColor;
+  this.raiseSelectionChangedEvent();
+  
+}
 /**
  * get the display name of a cell selection
  * @param selectionName the internal name of the selection
