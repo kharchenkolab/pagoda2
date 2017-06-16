@@ -404,7 +404,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                   var graphPaddingRight = 10;
                   var graphPaddingTop = 10;
                   var graphPaddingBottom = 2;
-                  var lineThickness = Math.ceil(squareDim/500);
+                  var lineThickness = 2;
                   var arrowHeadLength = Math.ceil(squareDim/45)
                   
                   var topLeft = {
@@ -430,16 +430,17 @@ embeddingViewer.prototype.generateToolbar = function() {
                   //draw X axis
                   if(options[1]){
                     targetContext.textBaseline = "top";
+                    
                     targetContext.fillRect(topLeft.x-lineThickness, topLeft.y + plotDim, plotDim + lineThickness, lineThickness);
                     targetContext.fillText(text[1],topLeft.x + plotDim/2,  topLeft.y + plotDim + lineThickness + readablePadding);
                     targetContext.beginPath();
                     targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2,topLeft.y + plotDim - arrowHeadLength);
-                    targetContext.lineTo(topLeft.x + plotDim +1,topLeft.y + plotDim + Math.floor((lineThickness + 1) / 2));
+                    targetContext.lineTo(topLeft.x + plotDim +1,topLeft.y + plotDim + ((lineThickness + 1) / 2));
                     targetContext.stroke();
                     targetContext.closePath();
                     targetContext.beginPath();
                     targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim + arrowHeadLength + lineThickness);
-                    targetContext.lineTo(topLeft.x + plotDim +1, topLeft.y + plotDim + Math.floor((lineThickness + 1) / 2));
+                    targetContext.lineTo(topLeft.x + plotDim +1, topLeft.y + plotDim + ((lineThickness + 1) / 2));
                     targetContext.stroke();
                     targetContext.closePath();
                   }
@@ -450,14 +451,16 @@ embeddingViewer.prototype.generateToolbar = function() {
                     targetContext.rotate(-Math.PI/2);
                     targetContext.fillText(text[2],-(topLeft.y + plotDim/2),topLeft.x-lineThickness -readablePadding );
                     targetContext.rotate(Math.PI/2);
+                    
                     targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x - arrowHeadLength,topLeft.y + arrowHeadLength*2);
-                    targetContext.lineTo(topLeft.x + Math.floor((lineThickness + 1) / 2) -lineThickness,topLeft.y - 1);
+                    targetContext.moveTo(topLeft.x - arrowHeadLength - lineThickness/2,topLeft.y + arrowHeadLength*2);
+                    targetContext.lineTo(topLeft.x - ((lineThickness + 1) / 2),topLeft.y - 1);
                     targetContext.stroke();
                     targetContext.closePath();
+                    
                     targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x + arrowHeadLength + lineThickness, topLeft.y + arrowHeadLength*2);
-                    targetContext.lineTo(topLeft.x + Math.floor((lineThickness + 1) / 2) - lineThickness, topLeft.y - 1);
+                    targetContext.moveTo(topLeft.x + arrowHeadLength - lineThickness/2, topLeft.y + arrowHeadLength*2);
+                    targetContext.lineTo(topLeft.x - ((lineThickness + 1) / 2), topLeft.y - 1);
                     targetContext.stroke();
                     targetContext.closePath();
                   }
