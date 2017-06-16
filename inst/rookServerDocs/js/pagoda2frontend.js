@@ -226,6 +226,7 @@ function generateExtJsLayout() {
 		    title: 'Cell Selections',
 		    glyph: 0xf03a,
 		    tooltip: 'View and manage available cell selections',
+		    scrollable: true,
 		    items: cellSelectionPanel
 		},
 		{
