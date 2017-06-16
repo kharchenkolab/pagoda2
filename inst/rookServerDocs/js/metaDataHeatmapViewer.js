@@ -192,7 +192,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
 	      var cellSelCntr = new cellSelectionController();
 	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000ff");
-        
+
             // Highlight on heatmap
             var metaView = new heatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
@@ -266,11 +266,11 @@ metaDataHeatmapViewer.prototype.initialize = function () {
             {
               text: "Generate selection for each cluster",
               handler: function(){
-                Ext.MessageBox.prompt("Set Limit","Specify a lower limit for number of cells in a new selection.", 
+                Ext.MessageBox.prompt("Set Limit","Specify a lower limit for number of cells in a new selection.",
                 function(btn,text){
                   var rejectionFunction = function(selection){return true;};
                   if(btn === "ok"){
-                    
+
                     if(!isNaN(text)){
                       var lowerLimit = parseInt(text);
                       rejectionFunction = function(selection){
@@ -282,14 +282,14 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                     mdhv.makeCellSelectionFromMetadata(params.key,i,(params.keyLabel+ "_" + (i+1)).split(/\ |\#/).join(""),false, false,rejectionFunction)
                   }
                 },this,false, "50")
-                
+
               }
             }
           ] //items
         }); //context menu
 
         contextMenu.showAt(e.clientX, e.clientY);
-        
+
         return false;
         }); // resolve click
 
@@ -744,7 +744,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectio
     var ctx = metadataHeatV.getSelectionDrawingContext();
     ctx.clearRect(0,0,3000,3000);
 
-var heatDendView = new heatmapDendrogramViewer();
+    var heatDendView = new heatmapDendrogramViewer();
     // Get and calculate plotting values
     var drawConsts = metadataHeatV.getDrawConstants();
     var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
@@ -755,7 +755,10 @@ var heatDendView = new heatmapDendrogramViewer();
      var actualPlotHeight = drawConsts.height;
 
     ctx.save();
-    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+
+    // We need to split the color to components to add the alpha (Chrome issue)
+    var selColor = pagHelpers.hexToRgb(cellSelCntr.getColor(selectionName));
+    ctx.strokeStyle = 'rgba(' + selColor.r + ',' + selColor.g + ',' + selColor.b + ',0.2)';
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
@@ -792,11 +795,11 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(select
   var dendV = new dendrogramViewer();
   var ctx = metadataHeatV.getSelectionDrawingContext();
   ctx.clearRect(0,0,3000,3000);
-  
+
     // Get the cells in the cell selection to highlight
   var cellSelCntr = new cellSelectionController();
-  
-  
+
+
 
   // Get the cell order
   var dataCntr = new dataController();
@@ -854,11 +857,11 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(select
  */
 metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight, restriction) {
   // Generate a cell selection
-  
+
   if(typeof restriction === "undefined"){
     restriction = function(selection){return true;};
   }
-  
+
   var dataCntr = new dataController();
   dataCntr.getCellMetadata(function(data, callbackParameters) {
     // data[callbackParameters.metadataName].data
@@ -896,5 +899,5 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
   }, {metadataName: metadataName,metadataValue: metadataValue, selectionName: selectionName, focus: focus,highlight: highlight});
-  
+
 }

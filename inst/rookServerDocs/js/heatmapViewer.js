@@ -962,8 +962,12 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
     var actualPlotHeight = heatV.getActualPlotHeight();
 
     ctx.save();
-    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
-    
+
+    // We need to split the color to components to add the alpha (Chrome issue)
+    var selColor = pagHelpers.hexToRgb(cellSelCntr.getColor(selectionName));
+    ctx.strokeStyle = 'rgba(' + selColor.r + ',' + selColor.g + ',' + selColor.b + ',0.2)';
+
+
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);
@@ -1001,20 +1005,20 @@ heatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames
 
   // Get the cells in the cell selection to highlight
   var cellSelCntr = new cellSelectionController();
-  
+
   var ctx = heatV.getSelectionDrawingContext();
   ctx.clearRect(0,0,3000,3000);
   // Get the cell order
   var dataCntr = new dataController();
   dataCntr.getCellOrder(function(cellorder) {
     // Currently displayed cells
-    
+
     selectionNames.foreach(function(selectionName){
     var cellSelection = cellSelCntr.getSelection(selectionName);
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
 
-    
+
 
     // Get and calculate plotting values
     var drawConsts = heatV.getDrawConstants();
@@ -1027,7 +1031,7 @@ heatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames
 
     ctx.save();
     ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
-    
+
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);

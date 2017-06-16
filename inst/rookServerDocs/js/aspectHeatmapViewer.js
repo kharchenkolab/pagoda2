@@ -285,7 +285,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
   this.primaryMouseButtonDown = false;
   this.dragging = false;
   this.dragStartX = null;
-  
+
     // For preventing selection on double click
     heatmapOverlayArea.addEventListener('mousedown', function(e) {
       e.preventDefault();
@@ -328,7 +328,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
   	metaV.showOverlay(x);
 
   	aspHeatView.showOverlay(x, y);
-    
+
     if(aspHeatView.primaryMouseButtonDown) {
         if (!aspHeatView.dragging) {
           // The first mouse move after the mouse down
@@ -368,7 +368,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         ctx.fillRect(aspHeatView.dragStartX, drawConsts.top, boundedX - aspHeatView.dragStartX, actualPlotHeight);
         ctx.restore();
       }
-    
+
   });
 
    heatmapOverlayArea.addEventListener('mouseenter', function(e) {
@@ -379,15 +379,15 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
      var aspHeatView =  new aspectHeatmapViewer();
      var metaV = new metaDataHeatmapViewer();
      var heatV = new heatmapViewer();
-     
+
      aspHeatView.clearOverlay();
      metaV.clearOverlay();
      heatV.clearOverlay();
      document.body.style.cursor = "default";
    });
-   
+
    heatmapOverlayArea.addEventListener('mouseup', function(e){
-     
+
      var heatDendView = new heatmapDendrogramViewer();
 
       var aspHeatView = new aspectHeatmapViewer();
@@ -431,7 +431,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
 	      var cellSelCntr = new cellSelectionController();
 	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000FF");
-        
+
             // Highlight on heatmap
             var heatView = new heatmapViewer();
             heatView.highlightCellSelectionByName('heatmapSelection');
@@ -448,7 +448,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
       }
-     
+
    });
 
 
@@ -484,7 +484,7 @@ aspectHeatmapViewer.prototype.clearSelectionOverlayInternal = function(){
  */
 aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   var aspHeatView = new aspectHeatmapViewer()
-  
+
   var overlayArea = document.getElementById('aspect-heatmap-area-overlay');
   var ctx = overlayArea.getContext('2d');
 
@@ -756,10 +756,13 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
 
     var actualPlotHeight = aspHeatView.getActualPlotHeight() + 6;
 
-    
+
     ctx.save();
-    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
-    
+
+    // We need to split the color to components to add the alpha (Chrome issue)
+    var selColor = pagHelpers.hexToRgb(cellSelCntr.getColor(selectionName));
+    ctx.strokeStyle = 'rgba(' + selColor.r + ',' + selColor.g + ',' + selColor.b + ',0.2)';
+
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);
@@ -797,10 +800,10 @@ aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectio
   var ctx = aspHeatView.getSelectionDrawingContext();
   ctx.clearRect(0,0,3000,3000);
   var dataCntr = new dataController();
-  
-  
 
-  
+
+
+
   dataCntr.getCellOrder(function(cellorder) {
     selectionNames.foreach(function(selectionName){
     var cellSelection = cellSelCntr.getSelection(selectionName);
@@ -816,10 +819,10 @@ aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectio
 
     var actualPlotHeight = aspHeatView.getActualPlotHeight() + 6;
 
-    
+
     ctx.save();
     ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
-    
+
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);
