@@ -379,61 +379,96 @@ embeddingViewer.prototype.generateToolbar = function() {
                 
                 drawPlot: function(canvas,overlay, destination, squareDim){
                   var options = [Ext.getCmp('includeTitle').getValue(),Ext.getCmp('includeX').getValue(),Ext.getCmp('includeY').getValue(),Ext.getCmp('includeHighlight').getValue()];
-                  var text = [Ext.getCmp('embTitle').getValue(), Ext.getCmp('xAxisTitle').getValue(),Ext.getCmp('yAxisTitle').getValue()]
-                  var topOffset = (options[0]? Math.ceil(squareDim/9):0);
-                  var bottomOffset = (options[1]? Math.ceil(squareDim/12):0);
-                  var leftOffset = (options[2]? Math.ceil(squareDim/12):0);
-                  var plotDim = Math.min(squareDim-(topOffset+bottomOffset), squareDim-leftOffset);
-                  leftOffset = (leftOffset === 0? (squareDim-plotDim)/2: leftOffset)
-                  topOffset = (topOffset === 0? (squareDim-plotDim-bottomOffset)/2: topOffset)
-                  bottomOffset = (bottomOffset === 0? (squareDim-plotDim-topOffset)/2: bottomOffset)
                   var targetContext = destination.getContext("2d");
+                  targetContext.clearRect(0,0,squareDim,squareDim);
+                  targetContext.fillStyle = "#FFFFFF";
+                  targetContext.fillRect(0,0,squareDim,squareDim);
+                  if(!(options[0] || options[1] || options[2])){
+                    destination.getContext("2d").drawImage(canvas,2,2,squareDim-4,squareDim-4);
+                    if(options[3]){
+                      destination.getContext("2d").drawImage(overlay,2,2,squareDim-4,squareDim-4);
+                    }
+                    return;
+                  }
+                  
+                  var text = [Ext.getCmp('embTitle').getValue(), Ext.getCmp('xAxisTitle').getValue(),Ext.getCmp('yAxisTitle').getValue()]
+                  var topOffset = (options[0]? Math.ceil(squareDim/12):0);
+                  var bottomOffset = (options[1]? Math.ceil(squareDim/15):0);
+                  var leftOffset = (options[2]? Math.ceil(squareDim/15):0);
+                  var enclosingMargin = 10;
+                  var plotDim = Math.min(squareDim-(topOffset+bottomOffset + 2 * enclosingMargin), squareDim - (leftOffset + 2 * enclosingMargin));
+                  
                   var readablePadding = 2;
-                  var titlePadding = 4;
+                  var titlePadding = Math.ceil(squareDim/125);
                   var graphPaddingLeft = 2;
                   var graphPaddingRight = 10;
                   var graphPaddingTop = 10;
                   var graphPaddingBottom = 2;
-                  var lineThickness = 2;
+                  var lineThickness = Math.ceil(squareDim/500);
+                  var arrowHeadLength = Math.ceil(squareDim/45)
                   
+                  var topLeft = {
+                    x: leftOffset+graphPaddingLeft+enclosingMargin,
+                    y: topOffset+graphPaddingTop+enclosingMargin
+                  }
                   //clear the canvas
-                  targetContext.fillStyle = "#FFFFFF";
-                  targetContext.fillRect(0,0,squareDim,squareDim);
+                  
                   
                   //draw the plot
-                  targetContext.drawImage(canvas,leftOffset+graphPaddingLeft,topOffset+graphPaddingTop,plotDim-(graphPaddingLeft+graphPaddingRight),plotDim-(graphPaddingTop+graphPaddingBottom));
+                  targetContext.drawImage(canvas,topLeft.x + graphPaddingLeft,topLeft.y + graphPaddingTop , plotDim - (graphPaddingLeft+graphPaddingRight), plotDim - (graphPaddingTop+graphPaddingBottom));
                   
-                  targetContext.font = (Math.ceil(squareDim/9)-4) + "px Arial"
+                  targetContext.font = (Math.ceil(squareDim/12)-4) + "px Arial"
                   targetContext.fillStyle = "#000000";
                   targetContext.textAlign = "center";
                   if(options[0]){
-                    targetContext.fillText(text[0],(leftOffset+plotDim/2), topOffset-2 * titlePadding);
+                    targetContext.fillText(text[0],(topLeft.x +plotDim/2), topLeft.y - titlePadding);
                   }
-                  
                   //draw necessary axis
-                  targetContext.font = (Math.ceil(squareDim/12)-4) + "px Arial";
+                  targetContext.font = (Math.ceil(squareDim/15)-4) + "px Arial";
                   targetContext.textAlign = "center"
                   
                   //draw X axis
                   if(options[1]){
-                    targetContext.fillRect(leftOffset-lineThickness, squareDim-bottomOffset, plotDim + lineThickness, lineThickness);
-                    targetContext.fillText(text[1],leftOffset+plotDim/2, squareDim - readablePadding * 2);
+                    targetContext.textBaseline = "top";
+                    targetContext.fillRect(topLeft.x-lineThickness, topLeft.y + plotDim, plotDim + lineThickness, lineThickness);
+                    targetContext.fillText(text[1],topLeft.x + plotDim/2,  topLeft.y + plotDim + lineThickness + readablePadding);
+                    targetContext.beginPath();
+                    targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2,topLeft.y + plotDim - arrowHeadLength);
+                    targetContext.lineTo(topLeft.x + plotDim +1,topLeft.y + plotDim + Math.floor((lineThickness + 1) / 2));
+                    targetContext.stroke();
+                    targetContext.closePath();
+                    targetContext.beginPath();
+                    targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim + arrowHeadLength + lineThickness);
+                    targetContext.lineTo(topLeft.x + plotDim +1, topLeft.y + plotDim + Math.floor((lineThickness + 1) / 2));
+                    targetContext.stroke();
+                    targetContext.closePath();
                   }
                   //draw Y axis
                   if(options[2]){
-                    targetContext.fillRect(leftOffset-lineThickness, topOffset, lineThickness,  plotDim + lineThickness);
+                    targetContext.fillRect(topLeft.x-lineThickness, topLeft.y, lineThickness,  plotDim + lineThickness);
+                    targetContext.textBaseline = "bottom";
                     targetContext.rotate(-Math.PI/2);
-                    targetContext.fillText(text[2],-(squareDim - bottomOffset + topOffset)/2,leftOffset-lineThickness * 3);
+                    targetContext.fillText(text[2],-(topLeft.y + plotDim/2),topLeft.x-lineThickness -readablePadding );
                     targetContext.rotate(Math.PI/2);
+                    targetContext.beginPath();
+                    targetContext.moveTo(topLeft.x - arrowHeadLength,topLeft.y + arrowHeadLength*2);
+                    targetContext.lineTo(topLeft.x + Math.floor((lineThickness + 1) / 2) -lineThickness,topLeft.y - 1);
+                    targetContext.stroke();
+                    targetContext.closePath();
+                    targetContext.beginPath();
+                    targetContext.moveTo(topLeft.x + arrowHeadLength + lineThickness, topLeft.y + arrowHeadLength*2);
+                    targetContext.lineTo(topLeft.x + Math.floor((lineThickness + 1) / 2) - lineThickness, topLeft.y - 1);
+                    targetContext.stroke();
+                    targetContext.closePath();
                   }
                   
                   if(options[3]){
-                    targetContext.drawImage(overlay,leftOffset+graphPaddingLeft,topOffset+graphPaddingTop,plotDim-(graphPaddingLeft+graphPaddingRight),plotDim-(graphPaddingTop+graphPaddingBottom));
+                    targetContext.drawImage(overlay,topLeft.x + graphPaddingLeft,topLeft.y + graphPaddingTop , plotDim - (graphPaddingLeft+graphPaddingRight), plotDim - (graphPaddingTop+graphPaddingBottom));
                   }
                 }
               }).show()
-          
-              document.getElementById('print-preview-canvas').getContext("2d").drawImage(canvas,0,0,225,225)
+              
+              document.getElementById('print-preview-canvas').getContext("2d").drawImage(canvas,2,2,221,221)
 
 
                
