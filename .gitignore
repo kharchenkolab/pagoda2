@@ -1,5 +1,6 @@
 .Rproj.user
 .Rhistory
 .RData
-.o
+*.o
 *~
+p2pack
