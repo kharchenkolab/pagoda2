@@ -37,11 +37,11 @@ function cellSelectionController() {
  * @param {Array[]} cells identifiers of the cells for this selection
  * @param {string} displayName Name to show in the UI when refering to this selection
  * @param {object} metadata any kind of metadata we want to attach to this cell selection
- * @param {color} color of the cells when highlighted. If not specified random color is chosen 
+ * @param {color} color of the cells when highlighted. If not specified random color is chosen
  */
 cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata, color ) {
     if(typeof color === "undefined"){
-      color = highlights[Math.floor(Math.random()*highlights.length)];
+      color = this.highlights[Math.floor(Math.random()* this.highlights.length)];
     }
      if (typeof displayName === 'undefined') {
 	displayName = selectionName;
@@ -127,7 +127,7 @@ cellSelectionController.prototype.setColor = function(selectionName, newColor){
 
   this.selections[selectionName].color =  newColor;
   this.raiseSelectionChangedEvent();
-  
+
 }
 /**
  * get the display name of a cell selection
@@ -154,10 +154,10 @@ cellSelectionController.prototype.duplicateSelection = function(selectionName,
 								newSelectionDisplayName) {
     var oldSelection = this.selections[selectionName];
     var sel = {};
-    
+
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
+    sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
     sel.cells = JSON.parse(JSON.stringify(oldSelection.cells));
 
     this.selections[newSelectionName] = sel;
@@ -184,7 +184,7 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, 
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
+    sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
 
     // Concatenate arrays into a new one
     sel.cells = selA.concat(selB);
@@ -209,7 +209,7 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
     sel.cells = [];
-    sel.color = highlights[Math.floor(Math.random()*highlights.length)];
+    sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
 
     // TODO: There might be performance benefits in looping over shortere array
     var l = selA.length;
