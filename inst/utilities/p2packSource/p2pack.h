@@ -12,6 +12,10 @@
 #include <string>
 
 
+// Exception codes
+#define EX_MEM_ALLOC_FAIL 0x0001;
+
+
 using namespace std;
 
 // File format constants

@@ -38,14 +38,16 @@ int main( int ac, char *av[] ) {
     cout << "You need to specify an input directory" << endl;
   }
 
-  //string indir = "/home/barkasn/testSerial/";
-  //string outfile = "./output.p2s";
-
   string indir = vm["input-directory"].as< string >();
   string outfile = vm["output-file"].as< string >();
-  
-  make_file(indir, outfile);
 
+  try {
+    make_file(indir, outfile);
+  }
+  catch (int e) {
+    cout << "Fatal Exception: Could not allocate required memory" << endl;
+
+  }
   return 0;
 }
 
@@ -54,15 +56,24 @@ void print_file_format_info() {
   cout << "Size of fileHeader: " << sizeof(fileHeader) << endl;
 }
 
+
+
 struct entry* make_entry_from_string(char const *key, string &data) {
   struct entry *e;
   e = (struct entry*) malloc(sizeof(struct entry));
-  //malloc
+  if (e == 0) {
+    throw EX_MEM_ALLOC_FAIL;
+  }
   
   memset(e, 0, sizeof(entry));
   strcpy(e-> key, key);
   uint64_t entryLengthBytes = data.length();
   e->payload = malloc(entryLengthBytes); // second allo, in case we want to free this need to be freed too
+  if (e->payload == 0) {
+    throw EX_MEM_ALLOC_FAIL;
+  }
+
+  
   memcpy(e->payload, data.c_str(), entryLengthBytes);
   e->size = entryLengthBytes;
   e->blockSize = (uint32_t) intDivRoundUP(entryLengthBytes, FILE_BLOCK_SIZE);
@@ -350,8 +361,11 @@ void make_file_from_payload(list<entry> &entries, string &filename) {
 
     cout << "Entry size is " <<  iterator->blockSize << " blocks or " << s << " bytes" << endl;
     void *entry = malloc(s); // memspace for entry as will be on disk
-    // TODO: Check entry != 0
+    if (entry == 0) {
+      throw EX_MEM_ALLOC_FAIL;
+    }
 
+    
     memset(entry,  0, s); // fill with 0s
     memcpy(entry, (const char*) iterator->payload, iterator->size); // copy the payload
     
