@@ -61,25 +61,38 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
 
 }
 
-function getLoadingParamsFromUser() {
 
-  // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
+/**
+ * Reads the p2globalParams options for the app configuration required
+ */
+function getDataLoadingParams() {
+    // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
 
-  var developmentMode = false;
-
-  var params = null;
-  if (developmentMode) {
-    params = {
-      connectionType: 'remoteFile',
-      remoteFileUrl: 'http://pklab.med.harvard.edu/nikolas/p2demo.bin'
-    }
-  } else {
-   params = {
+  if (p2globalParams.dataLoadingParams.configuration == "server") {
+    var params = {
       connectionType: 'remoteServer'
-   }
-  }
+    };
+    return params;
+  } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-static") {
+    var params= {
+      connectionType: 'remoteFile',
+      remoteFileUrl: p2globalParams.dataLoadingParams.fileRemoteURL
+    }
+    return params;
+  } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-from-url") {
+    var url_string = window.location.href;
+    var url = new URL(url_string);
+    var fileURL = url.searchParams.get("fileURL")
 
-  return params;
+    var params = {
+      connectionType: 'remoteFile',
+      remoteFileUrl: fileURL
+    }
+    return params;
+  } else {
+    throw new Error('Unknown data configuration');
+  }
+  return null;
 
 }
 
@@ -97,7 +110,7 @@ function initialise() {
 
       // Show dialog to user that allows selecting data source
       // alternatively this could be in p2Params in some configs
-      var loadParams = getLoadingParamsFromUser();
+      var loadParams = getDataLoadingParams();
       var dataCntr = new dataController(loadParams);
 
 
