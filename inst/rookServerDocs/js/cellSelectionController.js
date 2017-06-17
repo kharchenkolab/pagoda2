@@ -44,7 +44,7 @@ cellSelectionController.prototype.setSelection = function(selectionName, cells, 
       color = this.highlights[Math.floor(Math.random()* this.highlights.length)];
     }
      if (typeof displayName === 'undefined') {
-	displayName = selectionName;
+	    displayName = selectionName;
     }
 
     this.selections[selectionName] = {

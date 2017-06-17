@@ -38,7 +38,7 @@ var p2globalParams = {
         local or remote file [ NOT IMPLEMENTED ]
   */
   dataLoadingParams: {
-    configuration: "server", // server | fileremote-static | fileremote-from-url  FUTURE:| fileremote-user-select | filelocal
+    configuration: "server", // server | fileremote-static | fileremote-from-url | filelocal FUTURE:| fileremote-user-select
     fileRemoteURL: "http://pklab.med.harvard.edu/nikolas/output.bin"
   },
 

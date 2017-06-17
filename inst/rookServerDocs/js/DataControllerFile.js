@@ -7,14 +7,13 @@
  * initialisation, according to the parameters provided by loadParams
  */
 function DataControllerFile(loadParams) {
-  if(!(loadParams.connectionType == 'remoteFile')) {
-    throw new Error('DataControllerFile does not support the selected connection type');
+  var frTemp;
+
+  if(loadParams.connectionType == 'remoteFile') {
+    frTemp = new p2FileReader('remote', loadParams.remoteFileUrl,null);
+  } else if (loadParams.connectionType == 'localFile') {
+    frTemp = new p2FileReader('local', null, loadParams.fileRef);
   }
-
-  // TODO: handle local
-
-  // Make a p2file reader with the appropriate settings and save it here
-  var frTemp = new p2FileReader('remote', loadParams.remoteFileUrl,null);
 
   // Generate format reader that will use the p2File Reader to access the data
   // the format reader handles the top level index and resolution to file locations
@@ -26,11 +25,8 @@ function DataControllerFile(loadParams) {
   // object for storing the preloaded information for the sparse array
   // this includes offsets and the p vector
   this.sparseArrayPreloadInfo = null;
-
   this.aspectArrayPreloadInfo = null;
-
   this.aspectInformation = null;
-
   this.geneInformationMapCache = null;
 }
 

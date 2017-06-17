@@ -21,7 +21,6 @@ Ext.onReady(function() {
 
     initialise();
 
-    initialise2();
 });
 
 /**
@@ -30,11 +29,7 @@ Ext.onReady(function() {
  * be performed after the basic element hierarchy has been established.
  */
 function initialise2() {
-
-
-var tableViewToolbar = Ext.create('Ext.Toolbar');
-
-
+  var tableViewToolbar = Ext.create('Ext.Toolbar');
     tableViewToolbar.add({
       text: "",
       type: 'button',
@@ -56,29 +51,28 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
     } // handler
     });
 
-
   Ext.getCmp('tableExtJSWrapper').getHeader().add(tableViewToolbar);
 
 }
 
-
 /**
  * Reads the p2globalParams options for the app configuration required
  */
-function getDataLoadingParams() {
+function getDataLoadingParams(callback) {
     // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
+
 
   if (p2globalParams.dataLoadingParams.configuration == "server") {
     var params = {
       connectionType: 'remoteServer'
     };
-    return params;
+    callback(params);
   } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-static") {
     var params= {
       connectionType: 'remoteFile',
       remoteFileUrl: p2globalParams.dataLoadingParams.fileRemoteURL
     }
-    return params;
+    callback(params);
   } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-from-url") {
     var url_string = window.location.href;
     var url = new URL(url_string);
@@ -88,15 +82,31 @@ function getDataLoadingParams() {
       connectionType: 'remoteFile',
       remoteFileUrl: fileURL
     }
-    return params;
+    callback(params);
+  } else if (p2globalParams.dataLoadingParams.configuration == "filelocal") {
+      var fileSelector = document.createElement('input');
+      fileSelector.type = 'file';
+      fileSelector.id = 'pagodaDataSourceFileSelector';
+      document.body.appendChild(fileSelector);
+      var fileSelectedHandler = function() {
+        var fileSelector = document.getElementById('pagodaDataSourceFileSelector');
+        document.body.removeChild(fileSelector);
+
+        var params = {
+          connectionType: 'localFile',
+          fileRef: this.files[0]
+        };
+
+        callback(params);
+      };
+      fileSelector.addEventListener('change', fileSelectedHandler, false);
+
+
   } else {
     throw new Error('Unknown data configuration');
   }
   return null;
-
 }
-
-///////////////////////////////////////////////////////
 
 /**
  * Check browser version and initialise app if OK
@@ -105,56 +115,54 @@ function initialise() {
     if (!pagHelpers.checkBrowser()) {
         pagHelpers.showNotSupportedBrowserWarning();
     } else {
-      // Generate the overall layout
-      generateExtJsLayout();
 
-      // Show dialog to user that allows selecting data source
-      // alternatively this could be in p2Params in some configs
-      var loadParams = getDataLoadingParams();
-      var dataCntr = new dataController(loadParams);
+      // Get the data loading params before initialising the app
+      getDataLoadingParams(function(loadParams) {
+        // Generate the overall layout
+        generateExtJsLayout();
 
+        var dataCntr = new dataController(loadParams);
+        // Initialize internal components
 
-      // Initialize internal components
+        // Calculation controllers are init from a factory that is singleton
+        var calcCntr = new calculationController(true, true);// Both local and remote
 
+        var evtBus = new eventBus();
+        var stsBar = new statusBar();
+        var selCntr = new cellSelectionController();
+        //var infoBxCntr = new infoboxController();
+        var geneSelCntr = new geneSelectionController();
 
-      // Calculation controllers are init from a factory that is singleton
-      var calcCntr = new calculationController(true, true);// Both local and remote
+        // Controller for cell selection UI
+        var cellSelUICntr = new cellSelectionUIcontroller();
+        var geneSelUICntr = new geneSelectionUIcontroller();
+        var actionPanelUICntr = new actionPanelUIcontroller();
 
-      var evtBus = new eventBus();
-      var stsBar = new statusBar();
-      var selCntr = new cellSelectionController();
-      //var infoBxCntr = new infoboxController();
-      var geneSelCntr = new geneSelectionController();
+        // Set the page title
+        document.title = p2globalParams.generalParams.applicationName;
 
-      // Controller for cell selection UI
-      var cellSelUICntr = new cellSelectionUIcontroller();
-      var geneSelUICntr = new geneSelectionUIcontroller();
-      var actionPanelUICntr = new actionPanelUIcontroller();
-
-      // Set the page title
-      document.title = p2globalParams.generalParams.applicationName;
-
-      // Initialize page components
-      var embView = new embeddingViewer();
-      // Load the default embedding
-      embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
-  			  p2globalParams.embedding.defaultEmbedding.embedding);
+        // Initialize page components
+        var embView = new embeddingViewer();
+        // Load the default embedding
+        embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
+    			  p2globalParams.embedding.defaultEmbedding.embedding);
 
 
-      // Generate the tables
-      var geneTable = new geneTableViewer();
+        // Generate the tables
+        var geneTable = new geneTableViewer();
 
-      var geneSetsTable = new geneSetsTableViewer();
-      var heatDendView = new heatmapDendrogramViewer();
-      var aspTableView = new aspectsTableViewer();
+        var geneSetsTable = new geneSetsTableViewer();
+        var heatDendView = new heatmapDendrogramViewer();
+        var aspTableView = new aspectsTableViewer();
+        var diffExprTableView = new diffExprTableViewer();
 
-      var diffExprTableView = new diffExprTableViewer();
+        // Update status bar
+        stsBar.showMessage("Ready");
 
-      // Not used
-      //  var odGeneTable = new odGeneTableViewer();
+        // Continue with initialisation
+        initialise2();
+      });
 
-      // Update status bar
-      stsBar.showMessage("Ready");
     }
 };
 

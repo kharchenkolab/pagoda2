@@ -6,10 +6,10 @@
 * @param opt_url the URL of the resource to read
 * @constructor
 */
-  function RemoteFileReader(opt_url) {
-    // TODO: Check Browser Suport
-    this.url = opt_url;
-  }
+function RemoteFileReader(opt_url) {
+  // TODO: Check Browser Suport
+  this.url = opt_url;
+}
 
 /**
   * Read range of specified file
