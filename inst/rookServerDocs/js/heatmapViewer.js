@@ -982,7 +982,8 @@ heatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames
     var actualPlotHeight = heatV.getActualPlotHeight();
 
     ctx.save();
-    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+    var selColor = pagHelpers.hexToRgb(cellSelCntr.getColor(selectionName));
+    ctx.strokeStyle = 'rgba(' + selColor.r + ',' + selColor.g + ',' + selColor.b + ',0.2)';
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
