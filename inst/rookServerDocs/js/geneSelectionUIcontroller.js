@@ -93,24 +93,29 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('geneSelectionTable');
       		var selectedItems = selectionTable.getSelectionModel().getSelected();
-      		if (selectedItems.length === 1) {
-      		    var selName = selectedItems.getAt(0).getData().selectionname;
+      		if (selectedItems.length >= 1) {
+      		    var dispNames = [];
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		      dispNames.push(selectedItems.getAt(i).getData().displayname)
+      		    }
         		   Ext.Msg.show({
                    title:'Delete Selection',
-                   msg: 'Delete ' + selectedItems.getAt(0).getData().displayname + '?',
+                   msg: "Would you like to delete the following selections? <br>" + dispNames.join("<br>"),
                    buttons:  Ext.Msg.OKCANCEL,
                    fn: function(btn, text) {
                      if (btn === 'ok') {
                        var geneSel = new geneSelectionController();
-                       geneSel.deleteSelection(selName);
+                       selNames.forEach(function(selName){
+                         geneSel.deleteSelection(selName);
+                       });
                      }
                    }
                 });
-      		} else if (selectedItems.length === 0) {
-      		  Ext.MessageBox.alert('Warning', 'Please select a gene selection first');
       		} else {
-      		  Ext.MessageBox.alert('Warning', 'Only one gene selection can be deleted at a time.');
-      		}
+      		  Ext.MessageBox.alert('Warning', 'Please select a gene selection first');
+          }
 
         }
 
