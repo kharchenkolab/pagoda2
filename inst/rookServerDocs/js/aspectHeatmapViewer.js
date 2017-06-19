@@ -665,7 +665,6 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
   	for (var i = 0; i < data.DimNames2.length; i++) {
 	    // Print the names
 	    var name = data.DimNames2[i];
-      console.log(data.DimNames2[i]);
 	    // Get the appropriate font size for this number of cells
 	    var fontSize = aspHeatView.getRowFontSize(cellHeight)
 

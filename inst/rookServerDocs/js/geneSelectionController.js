@@ -131,24 +131,23 @@ geneSelectionController.prototype.renameSelection = function(selectionName, newS
 /**
  * Generate a new gene selection from two existing gene selections
  */
-geneSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName)  {
-    var selA = this.selections[selectionA].genes;
-    var selB = this.selections[selectionB].genes;
+geneSelectionController.prototype.mergeSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName)  {
 
+    var geneSelCntrl = this;
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
 
-    // Concatenate arrays into a new one
-    sel.genes = selA.concat(selB);
-    for(var i=0; i<sel.genes.length; ++i) {
-        for(var j=i+1; j<sel.genes.length; ++j) {
-            if(sel.genes[i] === sel.genes[j])
-                sel.genes.splice(j--, 1);
-        }
-    }
-    this.selections[newSelectionName] = sel;
-    this.raiseSelectionChangedEvent();
+    var genes = {};
+    selections.forEach(function(selection){
+      geneSelCntrl.selections[selection].genes.forEach(function(gene){
+        genes[gene] = true;
+      })
+    });
+    sel.genes = Object.keys(genes);
+    
+    geneSelCntrl.selections[newSelectionName] = sel;
+    geneSelCntrl.raiseSelectionChangedEvent();
 }
 
 /**

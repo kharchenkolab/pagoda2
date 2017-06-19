@@ -177,23 +177,22 @@ cellSelectionController.prototype.renameSelection = function(selectionName, newS
 /**
  * Generate a new cell selection from two existing cell selections
  */
-cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName)  {
-    var selA = this.selections[selectionA].cells;
-    var selB = this.selections[selectionB].cells;
+cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName)  {
 
+    var cellSelCtrl = new cellSelectionController();
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
     sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
 
-    // Concatenate arrays into a new one
-    sel.cells = selA.concat(selB);
-    for(var i=0; i<sel.cells.length; ++i) {
-        for(var j=i+1; j<sel.cells.length; ++j) {
-            if(sel.cells[i] === sel.cells[j])
-                sel.cells.splice(j--, 1);
-        }
-    }
+    var cells = {};
+    selections.forEach(function(selection){
+      cellSelCtrl.getSelection(selection).forEach(function(cell){
+        cells[cell] = true;
+      })
+    });
+    sel.cells = Object.keys(cells);
+    
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }
@@ -211,7 +210,7 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
     sel.cells = [];
     sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
 
-    // TODO: There might be performance benefits in looping over shortere array
+    // TODO: There might be performance benefits in looping over shortere arFray
     var l = selA.length;
     for (var i = 0; i < l; i++){
       if (selB.indexOf(selA[i]) != -1) {
