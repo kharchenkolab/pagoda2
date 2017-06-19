@@ -23,37 +23,7 @@ Ext.onReady(function() {
 
 });
 
-/**
- * Second step of initialisation.
- * @description This function contains extjs operations that need to
- * be performed after the basic element hierarchy has been established.
- */
-function initialise2() {
-  var tableViewToolbar = Ext.create('Ext.Toolbar');
-    tableViewToolbar.add({
-      text: "",
-      type: 'button',
-      tooltip: 'Help',
-      glyph: 0xf128,
-        handler: function() {
-          Ext.create('Ext.window.Window', {
-            height: 300,
-            width: 400,
-            title: 'Help: Table View',
-            scrollable: true,
-            bodyPadding: 10,
-            html: '<h2>Help: Table View</h2>' +
-              '<p>The table view allows you to view and search tabular data.</p><p>The All Genes view displays all gene in the loaded dataset. Genesets of interest displays pre-loaded genesets that usually include GO Terms and may include pre-calculated differential expression results. Aspects provides information about each set of genesets in each aspect and allows you to browse the indivual genes. Differential expression displays the results of differential expression that you can calculated during this session.</p><p>All search boxes support the use of case-insensitive regular expressions. You can learn more about regular expressions <a href="http://www.regular-expressions.info/" target="_blank">here</a> and <a href="https://en.wikipedia.org/wiki/Regular_expression">here</a>. For example if you want to search for multiple genes at once you can enter: "^geneA$|^geneB$|^geneC$" (without quotes).</p><p>Most tables support selection of multiple elements. In order to select a range click on the first item and then while holding the Shift key click on the last. In order to select only specific items you can use the Control key (or Cmd in Mac).</p>',
-            constrain: true,
-            closable: true,
-            resizable: false
-          }).show();
-    } // handler
-    });
 
-  Ext.getCmp('tableExtJSWrapper').getHeader().add(tableViewToolbar);
-
-}
 
 /**
  * Reads the p2globalParams options for the app configuration required
@@ -84,22 +54,43 @@ function getDataLoadingParams(callback) {
     }
     callback(params);
   } else if (p2globalParams.dataLoadingParams.configuration == "filelocal") {
-      var fileSelector = document.createElement('input');
-      fileSelector.type = 'file';
-      fileSelector.id = 'pagodaDataSourceFileSelector';
-      document.body.appendChild(fileSelector);
-      var fileSelectedHandler = function() {
-        var fileSelector = document.getElementById('pagodaDataSourceFileSelector');
-        document.body.removeChild(fileSelector);
+      Ext.create('Ext.window.Window',{
+        title:'Pagoda2 file selection',
+        id: 'pagodaFileSelectorWindow',
+        height:100,
+        width:500,
+        align:"center",
+        modal: true,
+        items:[
+          {
+            height: "12px",
+            html: '<input type="file" id="pagodaDataSourceFileSelector"><br>'
+          },
+          {
+            xtype: 'button',
+            text: 'Ok',
+            width:"10%",
+            height:"30%",
+            margin: "10 10 10 10",
+            align: "center",
+            handler: function(){
+                var fileSelector = document.getElementById('pagodaDataSourceFileSelector');
 
-        var params = {
-          connectionType: 'localFile',
-          fileRef: this.files[0]
-        };
+                var params = {
+                  connectionType: 'localFile',
+                  fileRef: fileSelector.files[0]
+                };
 
-        callback(params);
-      };
-      fileSelector.addEventListener('change', fileSelectedHandler, false);
+                callback(params);
+
+                Ext.getCmp('pagodaFileSelectorWindow').close();
+            }
+          },
+        ],
+      }).show();
+
+
+
 
 
   } else {
@@ -116,10 +107,12 @@ function initialise() {
         pagHelpers.showNotSupportedBrowserWarning();
     } else {
 
+      generateExtJsLayout();
+
       // Get the data loading params before initialising the app
       getDataLoadingParams(function(loadParams) {
         // Generate the overall layout
-        generateExtJsLayout();
+
 
         var dataCntr = new dataController(loadParams);
         // Initialize internal components
@@ -166,6 +159,38 @@ function initialise() {
     }
 };
 
+
+/**
+ * Second step of initialisation.
+ * @description This function contains extjs operations that need to
+ * be performed after the basic element hierarchy has been established.
+ */
+function initialise2() {
+  var tableViewToolbar = Ext.create('Ext.Toolbar');
+    tableViewToolbar.add({
+      text: "",
+      type: 'button',
+      tooltip: 'Help',
+      glyph: 0xf128,
+        handler: function() {
+          Ext.create('Ext.window.Window', {
+            height: 300,
+            width: 400,
+            title: 'Help: Table View',
+            scrollable: true,
+            bodyPadding: 10,
+            html: '<h2>Help: Table View</h2>' +
+              '<p>The table view allows you to view and search tabular data.</p><p>The All Genes view displays all gene in the loaded dataset. Genesets of interest displays pre-loaded genesets that usually include GO Terms and may include pre-calculated differential expression results. Aspects provides information about each set of genesets in each aspect and allows you to browse the indivual genes. Differential expression displays the results of differential expression that you can calculated during this session.</p><p>All search boxes support the use of case-insensitive regular expressions. You can learn more about regular expressions <a href="http://www.regular-expressions.info/" target="_blank">here</a> and <a href="https://en.wikipedia.org/wiki/Regular_expression">here</a>. For example if you want to search for multiple genes at once you can enter: "^geneA$|^geneB$|^geneC$" (without quotes).</p><p>Most tables support selection of multiple elements. In order to select a range click on the first item and then while holding the Shift key click on the last. In order to select only specific items you can use the Control key (or Cmd in Mac).</p>',
+            constrain: true,
+            closable: true,
+            resizable: false
+          }).show();
+    } // handler
+    });
+
+  Ext.getCmp('tableExtJSWrapper').getHeader().add(tableViewToolbar);
+
+}
 
 /**
  * Generate the basic page layout with extJS framework
