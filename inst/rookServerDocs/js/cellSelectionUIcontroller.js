@@ -172,10 +172,12 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('cellSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		  if (selectedItems.length == 2) {
-            var selectionA = selectedItems.getAt(0).getData().selectionname;
-            var selectionB = selectedItems.getAt(1).getData().selectionname;
-
+    		  if (selectedItems.length >= 2) {
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+            
             Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
               if ( btn === 'ok') {
                 var cellSelCntr =  new cellSelectionController();
@@ -193,14 +195,14 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                 if (cellSelCntr.getSelection(newSelectionName)) {
                   Ext.MessageBox.alert('Error','A selection with this name already exists!');
                 } else {
-                  cellSelCntr.intersectSelectionsIntoNew(selectionA, selectionB,
+                  cellSelCntr.intersectSelectionsIntoNew(selectionNames,
                     newSelectionName, newSelectionDisplayName);
                 }
               } // if btn ok
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two cell selections to intersect first.');
+            Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to intersect first.');
     		  }
 
         }
@@ -417,7 +419,6 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
               selectionNames.push(selectedItems.getAt(i).getData().selectionname);
     		    }
     		    
-    		    console.log(selectionNames)
             // Highlight on heatmap
             var heatV = new heatmapViewer();
             heatV.highlightCellSelectionsByNames(selectionNames);

@@ -170,9 +170,11 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('geneSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		  if (selectedItems.length == 2) {
-            var selectionA = selectedItems.getAt(0).getData().selectionname;
-            var selectionB = selectedItems.getAt(1).getData().selectionname;
+    		  if (selectedItems.length >= 2) {
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		    }
 
             Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
               if ( btn === 'ok') {
@@ -191,14 +193,14 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
                 if (geneSelCntr.getSelection(newSelectionName)) {
                   Ext.MessageBox.alert('Error','A selection with this name already exists!');
                 } else {
-                  geneSelCntr.intersectSelectionsIntoNew(selectionA, selectionB,
+                  geneSelCntr.intersectSelectionsIntoNew( selNames,
                     newSelectionName, newSelectionDisplayName);
                 }
               } // if btn ok
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two gene selection to intersect first.');
+            Ext.MessageBox.alert('Warning', 'Please pick at least two gene selection to intersect first.');
     		  }
 
         }

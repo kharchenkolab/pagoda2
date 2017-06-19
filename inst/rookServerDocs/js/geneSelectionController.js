@@ -153,23 +153,31 @@ geneSelectionController.prototype.mergeSelectionsIntoNew = function(selections, 
 /**
  * Genereate a new gene selection by intersecting two gene selections
  */
-geneSelectionController.prototype.intersectSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName){
-    var selA = this.selections[selectionA].genes;
-    var selB = this.selections[selectionB].genes;
-
+geneSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName){
+    var geneSelCtrl = this;
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.genes = [];
 
-    // TODO: There might be performance benefits in looping over shortere array
-    var l = selA.length;
-    for (var i = 0; i < l; i++){
-      if (selB.indexOf(selA[i]) != -1) {
-        sel.genes.push(selA[i]);
+    var genes = {};
+    geneSelCtrl.selections[selections[0]].genes.forEach(function(gene){
+      genes[gene] = 1; 
+    });
+    for(var i = 1; i< selections.length; i++){
+      geneSelCtrl.selections[selections[i]].genes.forEach(function(gene){
+        if(genes[gene]){
+          genes[gene]++;
+        }
+      });
+    }
+    sel.genes = [];
+    
+    for(var gene in genes){
+      if(genes[gene] === selections.length){
+        sel.genes.push(gene);
       }
     }
-
+    
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }

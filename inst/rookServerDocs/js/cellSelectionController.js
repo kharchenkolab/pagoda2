@@ -200,24 +200,33 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, 
 /**
  * Genereate a new cell selection by intersecting two cell selections
  */
-cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName){
-    var selA = this.selections[selectionA].cells;
-    var selB = this.selections[selectionB].cells;
+cellSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName){
 
+    var cellSelCtrl = this;
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.cells = [];
     sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
-
-    // TODO: There might be performance benefits in looping over shortere arFray
-    var l = selA.length;
-    for (var i = 0; i < l; i++){
-      if (selB.indexOf(selA[i]) != -1) {
-        sel.cells.push(selA[i]);
+    
+    var cells = {};
+    cellSelCtrl.getSelection(selections[0]).forEach(function(cell){
+      cells[cell] = 1; 
+    });
+    for(var i = 1; i< selections.length; i++){
+      cellSelCtrl.getSelection(selections[i]).forEach(function(cell){
+        if(cells[cell]){
+          cells[cell]++;
+        }
+      });
+    }
+    sel.cells = [];
+    
+    for(cell in cells){
+      if(cells[cell] === selections.length){
+        sel.cells.push(cell);
       }
     }
-
+    
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }
