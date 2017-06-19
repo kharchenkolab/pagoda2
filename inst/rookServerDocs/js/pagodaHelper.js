@@ -11,6 +11,16 @@
  * @namespace
  */
 var pagHelpers = {
+  hexToRgb: function(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+  },
+
+
   showNotSupportedBrowserWarning: function() {
     Ext.create('Ext.window.Window', {
         height: 200,
@@ -60,7 +70,7 @@ var pagHelpers = {
 
   ,
 
-  downloadURL: function(data, filename) {
+  downloadURL: function(data, filename, canvas = null) {
     var link = document.createElement("a");
     if (link.download !== undefined) { // feature detection
         var url = URL.createObjectURL(data);
@@ -71,10 +81,15 @@ var pagHelpers = {
         link.click();
         document.body.removeChild(link);
     }
-    // Potential fallback code
-    // var imageURL = canvas.toDataURL('image/png');
-    // imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
-    // window.open(imageURL);
+    else if(canvas !== null){// Fallback code
+      var imageURL = canvas.toDataURL('image/png');
+      imageURL = imageURL.replace(/^data:image\/[^;]*/, 'data:application/octet-stream');
+      window.open(imageURL);
+    }
+    else{
+      Ext.MessageBox.alert('Error','Browser does not support any valid download options for the specified request.')
+    }
+
   },
 
   checkBrowser: function() {

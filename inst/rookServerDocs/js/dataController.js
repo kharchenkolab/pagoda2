@@ -32,7 +32,7 @@ function dataController(loadParams) {
       this.internalController = new DataControllerServer();
     } else if (loadParams.connectionType == 'localFile') {
       // Local file with user drag drop
-      throw new Error('localFile access not implemented')
+      this.internalController = new DataControllerFile(loadParams);
     } else if (loadParams.connectionType == 'remoteFile') {
       // Remote file url
       this.internalController = new DataControllerFile(loadParams);

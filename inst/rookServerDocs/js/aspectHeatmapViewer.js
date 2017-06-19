@@ -27,6 +27,7 @@ function aspectHeatmapViewer() {
     // Keep track of what selection we are showing so
     // we can persist accross redraws
     this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
 
 
@@ -130,12 +131,12 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
                    buttons: Ext.Msg.OKCANCEL,
                    fn: function(s) {
                      if (s == 'ok') {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png')})
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
                      } //if
                    } //fn
                 }) // Ext.Msg.show
             } else {
-                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png')})
+                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
             } // if
         } // handler
 });
@@ -281,10 +282,19 @@ aspectHeatmapViewer.prototype.initialize = function() {
 aspectHeatmapViewer.prototype.setupOverlays = function() {
   var heatmapOverlayArea = $('#aspect-heatmap-area-overlay')[0];
   var aspHeatView = this;
+  this.primaryMouseButtonDown = false;
+  this.dragging = false;
+  this.dragStartX = null;
 
     // For preventing selection on double click
     heatmapOverlayArea.addEventListener('mousedown', function(e) {
       e.preventDefault();
+      var heatView = new aspectHeatmapViewer();
+      var drawConsts = heatView.getDrawConstants();
+      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width & e.which == 1) {
+        heatView.primaryMouseButtonDown = true;
+        heatView.dragStartX =  e.offsetX;
+      }
     });
 
   heatmapOverlayArea.addEventListener('dblclick', function(e) {
@@ -319,6 +329,46 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
   	aspHeatView.showOverlay(x, y);
 
+    if(aspHeatView.primaryMouseButtonDown) {
+        if (!aspHeatView.dragging) {
+          // The first mouse move after the mouse down
+          // Initiate dragging process
+          aspHeatView.clearSelectionOverlay(); // This is for resetting the current selection params not for the actual clear
+          aspHeatView.dragging = true;
+        }
+
+
+        // Clear the canvas
+        var canvas = document.getElementById('aspect-heatmap-area-selection');
+        var ctx = canvas.getContext('2d');
+        var width = canvas.width;
+        var height = canvas.height;
+        ctx.clearRect(0,0,width, height);
+
+
+        var drawConsts = aspHeatView.getDrawConstants();
+        var actualPlotHeight = aspHeatView.getActualPlotHeight();
+
+
+        var heatDendView = new heatmapDendrogramViewer();
+
+        var boundedX;
+        if (x < drawConsts.left) {
+          boundedX = drawConsts.left;
+        } else if (x > drawConsts.left + drawConsts.width - heatDendView.getPlotAreaRightPadding()) {
+          boundedX = drawConsts.left + drawConsts.width - heatDendView.getPlotAreaRightPadding();
+        } else {
+          boundedX = x;
+        }
+
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(0,0,255,0.5)';
+        ctx.fillRect(aspHeatView.dragStartX, drawConsts.top, boundedX - aspHeatView.dragStartX, actualPlotHeight);
+        ctx.restore();
+      }
+
   });
 
    heatmapOverlayArea.addEventListener('mouseenter', function(e) {
@@ -327,8 +377,78 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
    heatmapOverlayArea.addEventListener('mouseout', function(e) {
      var aspHeatView =  new aspectHeatmapViewer();
+     var metaV = new metaDataHeatmapViewer();
+     var heatV = new heatmapViewer();
+
      aspHeatView.clearOverlay();
+     metaV.clearOverlay();
+     heatV.clearOverlay();
      document.body.style.cursor = "default";
+   });
+
+   heatmapOverlayArea.addEventListener('mouseup', function(e){
+
+     var heatDendView = new heatmapDendrogramViewer();
+
+      var aspHeatView = new aspectHeatmapViewer();
+      aspHeatView.primaryMouseButtonDown = false;
+      if(aspHeatView.dragging) {
+        // End of drag
+        aspHeatView.dragging = false;
+
+        // Range of X is aspHeatView.dragStartX  to e.offsetX
+
+        var drawConsts = aspHeatView.getDrawConstants();
+
+        var dendV = new dendrogramViewer();
+        var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
+
+
+        var metaWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+
+
+        // Start and end as percent of current display cell range
+        var startPC = (aspHeatView.dragStartX - drawConsts.left) / metaWidth;
+        var endPC = (e.offsetX - drawConsts.left) / metaWidth;
+
+        // For left to right drag
+        if (startPC > endPC) {
+          var tmp = startPC;
+          startPC = endPC;
+          endPC = tmp;
+        };
+
+        // Avoid out of bounds issues
+        if (endPC > 1) { endPC =1};
+        if (startPC < 0) { startPC = 0};
+
+        var ncells = curDisplayIdxs[1] - curDisplayIdxs[0];
+
+        var startIndex = Math.floor(startPC * ncells)
+        var endIndex = Math.floor(endPC * ncells);
+
+        var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
+
+	      var cellSelCntr = new cellSelectionController();
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000FF");
+
+            // Highlight on heatmap
+            var heatView = new heatmapViewer();
+            heatView.highlightCellSelectionByName('heatmapSelection');
+
+            // Highlight on embedding
+            var embCntr = new embeddingViewer();
+            embCntr.highlightSelectionByName('heatmapSelection');
+
+            // Highlight on Aspects
+            var aspHeatView = new aspectHeatmapViewer();
+            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+
+            //Highlight on Metadata
+            var metaView = new metaDataHeatmapViewer();
+            metaView.highlightCellSelectionByName('heatmapSelection');
+      }
+
    });
 
 
@@ -541,7 +661,23 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
     // Plot the bounding box
     ctx.strokeRect(left, top, heatmapWidth, actualPlotHeight);
 
+    // Plot the labels
+  	for (var i = 0; i < data.DimNames2.length; i++) {
+	    // Print the names
+	    var name = data.DimNames2[i];
+	    // Get the appropriate font size for this number of cells
+	    var fontSize = aspHeatView.getRowFontSize(cellHeight)
 
+	    // Calculate position
+	    x = ncells * cellWidth + left + 10;
+	    y = i * cellHeight + top + cellHeight / 2 + fontSize / 3;
+
+	    // Plot
+	    ctx.font =  fontSize + 'px Arial';
+	    ctx.fillStyle = 'black';
+	    ctx.fillText(name, x, y);
+	  } // Label plot loop
+    
     // TODO: setup click areas here
     aspHeatView.aspectRegions.clearClickAreas();
     for (var i = 0; i < data.DimNames2.length; i++){
@@ -561,7 +697,12 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 
         aspHeatView.clearSelectionOverlayInternal();
     if (aspHeatView.currentOverlaySelectionShown === true) {
-      aspHeatView.highlightCellSelectionByName(aspHeatView.currentOverlaySelectionName);
+      if(aspHeatView.currentOverlaySelectionName !== null){
+        aspHeatView.highlightCellSelectionByName(aspHeatView.currentOverlaySelectionName);
+      }
+      else{
+        aspHeatView.highlightCellSelectionsByNames(aspHeatView.currentOverlaySelectionNames);
+      }
     }
 
 
@@ -606,6 +747,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
   var dendV = new dendrogramViewer();
 
     this.currentOverlaySelectionName = selectionName;
+    this.currentOverlaySelectionNames = null;
   this.currentOverlaySelectionShown = true;
 
   var heatDendView = new heatmapDendrogramViewer();
@@ -628,11 +770,14 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
     var left = drawConsts.left;
     var n = cellSelection.length;
 
-    var actualPlotHeight = aspHeatView.getActualPlotHeight() + 10;
+    var actualPlotHeight = aspHeatView.getActualPlotHeight() + 6;
 
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+
+    // We need to split the color to components to add the alpha (Chrome issue)
+    var selColor = pagHelpers.hexToRgb(cellSelCntr.getColor(selectionName));
+    ctx.strokeStyle = 'rgba(' + selColor.r + ',' + selColor.g + ',' + selColor.b + ',0.2)';
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
@@ -653,8 +798,74 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
 
     ctx.restore();
 
+  })
+
+}
+
+aspectHeatmapViewer.prototype.getRowFontSize = function (cellHeight) {
+    var a = Math.min(cellHeight, 11);
+    a = a * 3/4;
+    if (a < 4) { a = 0;}
+
+    return a;
+}
+
+aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames) {
+  var aspHeatView = this;
+  var dendV = new dendrogramViewer();
+
+  this.currentOverlaySelectionNames = selectionNames;
+  this.currentOverlaySelectionName = null;
+  this.currentOverlaySelectionShown = true;
+
+  var heatDendView = new heatmapDendrogramViewer();
+
+  var cellSelCntr = new cellSelectionController();
+  var ctx = aspHeatView.getSelectionDrawingContext();
+  ctx.clearRect(0,0,3000,3000);
+  var dataCntr = new dataController();
 
 
+
+
+  dataCntr.getCellOrder(function(cellorder) {
+    selectionNames.forEach(function(selectionName){
+    var cellSelection = cellSelCntr.getSelection(selectionName);
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+    // Get and calculate plotting values
+    var drawConsts = aspHeatView.getDrawConstants();
+    var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+    var actualPlotHeight = aspHeatView.getActualPlotHeight() + 6;
+
+
+    ctx.save();
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+
+    // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+    })
   })
 
 }

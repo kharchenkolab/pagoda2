@@ -12,6 +12,37 @@ var p2globalParams = {
     applicationGenerated: "Saturday, January 28th 2017",
   },
 
+  /*
+    Specifies the data loading parameters for the application deployment
+    This section controlls the behaviour of the global getDataLoadingParams
+    function.
+
+    configuration values:
+      server: the application is running from a rook server and will connect getData.php and
+        doComputation.php in the same directory to load the data and do computations respectively
+
+      fileremote-static: The application will obtain data form a static url file
+        that is hardcoded int he fileRemoteURL variable
+
+      fileremote-from-url: The application will obtain data from a static file url
+        and will not have access to an external data processing unit. The file will be specified
+        in the URL as a parameter, so that a single app deployment with this option can access
+        multiple files
+
+      fileremote-user-select: The application will run from a remote file that the user can
+        specify at application startup [NOT IMPLEMENTED]
+
+      filelocal: The application will run for a local file using the the File API,
+        the user will be presented with a prompt
+
+      user-select: The user is presented with a prompt to select loading from any
+        local or remote file [ NOT IMPLEMENTED ]
+  */
+  dataLoadingParams: {
+    configuration: "server", // server | fileremote-static | fileremote-from-url | filelocal FUTURE:| fileremote-user-select | user-select
+    fileRemoteURL: "http://pklab.med.harvard.edu/nikolas/output.bin"
+  },
+
   misc: {
     jaxGeneQueryFormatString: '<a href="http://www.genecards.org/cgi-bin/carddisp.pl?gene={0}" target="_blank">{1}</a>'
   },

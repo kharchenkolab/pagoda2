@@ -66,6 +66,7 @@ geneSelectionUIcontroller.prototype.generateGeneSelectionStore = function() {
  */
 geneSelectionUIcontroller.prototype.generateUI = function() {
     var uipanel = Ext.getCmp('geneselection-app-container');
+    var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 
     var geneSelectionTable = Ext.create('Ext.grid.Panel', {
 	title: 'Available Gene Selections',
@@ -75,7 +76,8 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	    {text: 'Name', dataIndex: 'displayname', width: '70%'},
 	    {text: 'Count', dataIndex: 'cellcount', width: '29%'}
 	],
-	emptyText: 'No gene selections are currently available'
+	emptyText: 'No gene selections are currently available',
+	selModel: geneTableSelectionModel
     });
 
     var formPanel = Ext.create('Ext.form.Panel', {
@@ -86,13 +88,131 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	items: [
 	    geneSelectionTable,
 	    {
+        xtype: 'button',
+        text: 'Delete',
+        handler: function() {
+          var selectionTable = Ext.getCmp('geneSelectionTable');
+      		var selectedItems = selectionTable.getSelectionModel().getSelected();
+      		if (selectedItems.length >= 1) {
+      		    var dispNames = [];
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		      dispNames.push(selectedItems.getAt(i).getData().displayname)
+      		    }
+        		   Ext.Msg.show({
+                   title:'Delete Selection',
+                   msg: "Would you like to delete the following selections? <br>" + dispNames.join("<br>"),
+                   buttons:  Ext.Msg.OKCANCEL,
+                   fn: function(btn, text) {
+                     if (btn === 'ok') {
+                       var geneSel = new geneSelectionController();
+                       selNames.forEach(function(selName){
+                         geneSel.deleteSelection(selName);
+                       });
+                     }
+                   }
+                });
+      		} else {
+      		  Ext.MessageBox.alert('Warning', 'Please select a gene selection first');
+          }
+
+        }
+
+      },
+      {
+        xtype: 'button',
+        text: 'Merge',
+        handler: function() {
+          var selectionTable = Ext.getCmp('geneSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 2) {
+    		    
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+
+            Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
+              if ( btn === 'ok') {
+                var geneSelCntr =  new geneSelectionController();
+
+                var newSelectionName = text;
+                var newSelectionDisplayName = text;
+
+                var re = new RegExp('[^A-Za-z0-9_]');
+                if (newSelectionName.length === 0) {
+                  Ext.MessageBox.alert('Error', 'You must enter a selection name');
+                }
+                else if (newSelectionName.match(re) ) {
+                  Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
+                } else {
+                if (geneSelCntr.getSelection(newSelectionName)) {
+                  Ext.MessageBox.alert('Error','A selection with this name already exists!');
+                } else {
+                  geneSelCntr.mergeSelectionsIntoNew(selectionNames,
+                    newSelectionName, newSelectionDisplayName);
+                }
+              } // if btn ok
+            }
+          });
+    		  } else {
+            Ext.MessageBox.alert('Warning', 'Please pick at least two gene selections to merge first.');
+    		  }
+
+        }
+
+      },
+      ///
+   {
+        xtype: 'button',
+        text: 'Intersect',
+        handler: function() {
+          var selectionTable = Ext.getCmp('geneSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 2) {
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		    }
+
+            Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
+              if ( btn === 'ok') {
+                var geneSelCntr =  new geneSelectionController();
+
+                var newSelectionName = text;
+                var newSelectionDisplayName = text;
+
+                var re = new RegExp('[^A-Za-z0-9_]');
+                if (newSelectionName.length === 0) {
+                  Ext.MessageBox.alert('Error', 'You must enter a selection name');
+                }
+                else if (newSelectionName.match(re) ) {
+                  Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
+                } else {
+                if (geneSelCntr.getSelection(newSelectionName)) {
+                  Ext.MessageBox.alert('Error','A selection with this name already exists!');
+                } else {
+                  geneSelCntr.intersectSelectionsIntoNew( selNames,
+                    newSelectionName, newSelectionDisplayName);
+                }
+              } // if btn ok
+            }
+          });
+    		  } else {
+            Ext.MessageBox.alert('Warning', 'Please pick at least two gene selection to intersect first.');
+    		  }
+
+        }
+
+      },
+	    {
 		xtype: 'button',
 		text: 'Duplicate',
 		handler: function() {
 
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
 		    var selectedItems = selectionTable.getSelectionModel().getSelected();
-		    console.log(selectionTable, selectedItems);
 
 		    if (selectedItems.length === 1) {
 
@@ -161,17 +281,131 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
 		    var selectedItems = selectionTable.getSelectionModel().getSelected();
 		    if (selectedItems.length === 1) {
-			var selectionName = selectedItems.getAt(0).getData().selectionname;
-			var geneSelCntr = new geneSelectionController();
-			var selection = geneSelCntr.getSelection(selectionName).genes;
-
-			var selectionFormatted = selection.join("\n");
-			window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
+			    var selectionName = selectedItems.getAt(0).getData().selectionname;
+			    var geneSelCntr = new geneSelectionController();
+			    var selection = geneSelCntr.getSelection(selectionName).genes;
+			    var selectionFormatted = selection.join("\n");
+			    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted));
 		    } else  {
-			Ext.MessageBox.alert('Warning', 'Please choose a gene selection first');
+		  	  Ext.MessageBox.alert('Warning', 'Please choose a gene selection first');
 		    }
 		}
+	    },
+	    {
+        xtype: 'button',
+        text: 'Export Selected',
+        handler: function(){
+          var selectionTable = Ext.getCmp('geneSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 1) {
+            var selectionFormatted = [];
+            var geneSelCntr = new geneSelectionController();
+            for(var index = 0; index < selectedItems.length; index++){
+      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
+    	  	    var selection = geneSelCntr.getSelection(selectionName).genes;
+      		    selectionFormatted.push(selectionName+ "," + selection.join(","));
+      		  }
+    		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
+    		  } else {
+    		    Ext.MessageBox.alert('Warning', 'Please choose one or more gene selections first');
+    		  }
+        }
+	    },
+	    {
+	  xtype: 'button',
+	  text: 'Import Selections',
+  	  handler: function(){
+	     if(!Ext.getCmp('geneFileSelectionWindow')){
+	      Ext.create('Ext.window.Window',{
+	        title:'Gene File Selection',
+	        id: 'geneFileSelectionWindow',
+	        height:100,
+	        width:500,
+	        align:"center",
+	        modal: true,
+	        items:[
+	          {
+	            height: "12px",
+	            html: '<input type="file" id="selectedGeneFile"><br>'
+	          },
+  	        {
+  	          xtype: 'button',
+	            text: 'Ok',
+	            width:"10%",
+	            height:"30%",
+	            margin:"5 5 5 5",
+	            align: "center",
+	            handler: function(){
+	              
+	              var geneSelFile = document.getElementById("selectedGeneFile").files[0];
+	              var geneSelFileName = geneSelFile.name;
+	              var reader = new FileReader();
+	              reader.onload = function(progressEvent){
+	                var lines = this.result.split("\n");
+	                var dataCntr = new dataController();
+	                dataCntr.getGeneInformationStore(function(geneInformationStore){
+	                var geneOrder = [];
+                  for(var i = 0; i < geneInformationStore.localData.length; i++){
+                      geneOrder.push(geneInformationStore.localData[i].genename)
+                  }
+	                var geneSelCntrl = new geneSelectionController();
+	                var total = 0;
+	                var removedGenes = {};
+	                for(var line = 0; line < lines.length; line++){
+	                  if(lines[line].length !== 0){
+	                    var selection = lines[line].split(",");
+	                    var selName = selection.shift();
+	                    removedGenes[selName] = 0;
+	                    var pureSelection = [];
+	                    for(var elem = 0; elem < selection.length; elem++){
+	                      if(geneOrder.includes(selection[elem])){
+	                        pureSelection.push(selection[elem]);
+	                      }
+	                      else{
+	                        removedGenes[selName]++;
+	                      }
+	                    }// ensure all genes are rightfully containers
+	                    
+	                    if(geneSelCntrl.getSelection(selName)){
+  	                    selName = selName  + "~RecentlyLoaded"
+	                    }
+	                    if(removedGenes[selName] !== selection.length){
+	                      geneSelCntrl.setSelection(selName,pureSelection,selName,"loaded from " + geneSelFileName);
+	                      total++;
+	                    }//confirm
+	                  }
+	                }
+	                var extraInfo = "";
+	                for(var selName in removedGenes){
+	                  if(removedGenes[selName] > 0){
+	                    extraInfo += "<br>" + removedGenes[selName] + " gene(s) could not be loaded from selection " + selName;
+	                  }
+	                }
+	                Ext.MessageBox.alert('Load Gene Selections Complete', total + " selections were generated from the data within " + geneSelFileName + extraInfo)
+	                });
+  	           };
+	             reader.readAsText(geneSelFile);
+	             Ext.getCmp('geneFileSelectionWindow').close();
+	            }
+	          },
+	          {
+	            xtype: 'button',
+	            text: 'Cancel',
+  	          width:"10%",
+	            height:"30%",
+	            margin: "5 5 5 5",
+	            align: "center",
+	            handler: function(){
+	              Ext.getCmp('geneFileSelectionWindow').close();
+	            }
+	          },
+	        ],
+	      }).show();
 	    }
+	    Ext.getCmp('geneFileSelectionWindow').focus();
+	    
+	  }
+	},
 	]
     });
 

@@ -29,6 +29,7 @@ function metaDataHeatmapViewer() {
     // Keep track of what selection we are showing so
     // we can persist accross redraws
     this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
 
 
@@ -136,7 +137,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
       var heatView = new metaDataHeatmapViewer();
       var drawConsts = heatView.getDrawConstants();
-      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
+      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width & e.which == 1) {
         heatView.primaryMouseButtonDown = true;
         heatView.dragStartX =  e.offsetX;
       }
@@ -190,7 +191,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object());
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000ff");
 
             // Highlight on heatmap
             var metaView = new heatmapViewer();
@@ -221,9 +222,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         mdhv.clickRegionsEntries.resolveClick(x,y, function(params) {
         // params.cellid
         // params.keyLabel params.valueLabel
-
         var defaultLabel = params.keyLabel + '_' + params.valueLabel;
-
+        defaultLabel = defaultLabel.split(/\ |\#/).join("");
         var contextMenu = new Ext.menu.Menu({
           items: [
             {
@@ -261,8 +261,30 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     						      } // if lenth == 0
   						      } // if btn == ok
 					      }, this, false, defaultLabel); // Message box prompthandler
+              },
+            }, //Item 1
+            {
+              text: "Generate selection for each cluster",
+              handler: function(){
+                Ext.MessageBox.prompt("Set Limit","Specify a lower limit for number of cells in a new selection.",
+                function(btn,text){
+                  var rejectionFunction = function(selection){return true;};
+                  if(btn === "ok"){
+
+                    if(!isNaN(text)){
+                      var lowerLimit = parseInt(text);
+                      rejectionFunction = function(selection){
+                        return selection.length >= lowerLimit;
+                      }
+                    }
+                  }
+                  for(var i = 0; i< params.totalLevels; i++ ){
+                    mdhv.makeCellSelectionFromMetadata(params.key,i,(params.keyLabel+ "_" + (i+1)).split(/\ |\#/).join(""),false, false,rejectionFunction)
+                  }
+                },this,false, "50")
+
               }
-            } //Item 1
+            }
           ] //items
         }); //context menu
 
@@ -337,7 +359,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.fillStyle = 'rgba(0,0,255,0.5)';
         ctx.fillRect(metaV.dragStartX, drawConsts.top, boundedX - metaV.dragStartX, actualPlotHeight);
         ctx.restore();
       }
@@ -374,8 +396,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
         handler: function(){
             pagHelpers.regC(25);
             var canvas = document.getElementById('metadata-area');
-
-                        const maxSize = 2000;
+                const maxSize = 2000;
                 if (canvas.width > maxSize | canvas.height >maxSize){
                     Ext.Msg.show({
                       title: 'Warning',
@@ -384,12 +405,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                        buttons: Ext.Msg.OKCANCEL,
                        fn: function(s) {
                          if (s == 'ok') {
-                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png')})
+                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png', canvas)})
                          } //if
                        } //fn
                     }) // Ext.Msg.show
                 } else {
-                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png')})
+                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png', canvas)})
             }
 
 
@@ -564,7 +585,6 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
     var left = plotConsts.left;
     var metaWidth = plotConsts.width - heatDendView.getPlotAreaRightPadding();
     var metaHeight = plotConsts.height - bottomPadding;
-
     // Request the data
     var dataCntr = new dataController();
     dataCntr.getCellMetadata(function(data) {
@@ -635,7 +655,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
                 x, y + cellHeight,
                 x + cellWidth, y + cellHeight,
                 x + cellWidth, y,
-                { 'key': key, 'keyLabel': curLabel , cellid: curCell, value: val, valueLabel: curLevels[val] }
+                { 'key': key, 'keyLabel': curLabel , cellid: curCell, value: val, valueLabel: curLevels[val], totalLevels: curPal.length}
 		        );
     	    }
 
@@ -677,7 +697,12 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
     	    mdhv.clearSelectionOverlayInternal();
     if (mdhv.currentOverlaySelectionShown === true) {
-      mdhv.highlightCellSelectionByName(mdhv.currentOverlaySelectionName);
+      if(mdhv.currentOverlaySelectionName !== null){
+        mdhv.highlightCellSelectionByName(mdhv.currentOverlaySelectionName);
+      }
+      else{
+        mdhv.highlightCellSelectionsByNames(mdhv.currentOverlaySelectionNames);
+      }
     }
 
     });
@@ -699,6 +724,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectio
   var metadataHeatV = this;
 
     this.currentOverlaySelectionName = selectionName;
+    this.currentOverlaySelectionNames = null;
   this.currentOverlaySelectionShown = true;
 
   var dendV = new dendrogramViewer();
@@ -718,7 +744,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectio
     var ctx = metadataHeatV.getSelectionDrawingContext();
     ctx.clearRect(0,0,3000,3000);
 
-var heatDendView = new heatmapDendrogramViewer();
+    var heatDendView = new heatmapDendrogramViewer();
     // Get and calculate plotting values
     var drawConsts = metadataHeatV.getDrawConstants();
     var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
@@ -729,10 +755,12 @@ var heatDendView = new heatmapDendrogramViewer();
      var actualPlotHeight = drawConsts.height;
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
 
+    // We need to split the color to components to add the alpha (Chrome issue)
+    var selColor = pagHelpers.hexToRgb(cellSelCntr.getColor(selectionName));
+    ctx.strokeStyle = 'rgba(' + selColor.r + ',' + selColor.g + ',' + selColor.b + ',0.2)';
 
-        // Draw vertical lines for selected cells
+    // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
       var cellIndex = cellorder.indexOf(cellSelection[i]);
 
@@ -754,6 +782,70 @@ var heatDendView = new heatmapDendrogramViewer();
   }); // get the cell order
 }
 
+/**
+ * Highlight a group of cell selections given a list of names
+ */
+metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames) {
+  var metadataHeatV = this;
+
+  this.currentOverlaySelectionNames = selectionNames;
+  this.currentOverlaySelectionName = null;
+  this.currentOverlaySelectionShown = true;
+
+  var dendV = new dendrogramViewer();
+  var ctx = metadataHeatV.getSelectionDrawingContext();
+  ctx.clearRect(0,0,3000,3000);
+
+    // Get the cells in the cell selection to highlight
+  var cellSelCntr = new cellSelectionController();
+
+
+
+  // Get the cell order
+  var dataCntr = new dataController();
+  dataCntr.getCellOrder(function(cellorder) {
+    // Currently displayed cells
+    selectionNames.forEach(function(selectionName){
+    var cellSelection = cellSelCntr.getSelection(selectionName);
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+    var heatDendView = new heatmapDendrogramViewer();
+    // Get and calculate plotting values
+    var drawConsts = metadataHeatV.getDrawConstants();
+    var heatmapWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+     var actualPlotHeight = drawConsts.height;
+
+    ctx.save();
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+
+    // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+
+  });
+  });// get the cell order
+}
+
 
 /**
  * Make a cell selection from metadata
@@ -763,14 +855,17 @@ var heatDendView = new heatmapDendrogramViewer();
  * @param focus logical, give focus to the selection in the cell selection pane afterwards?
  * @param highlight logical, hightlight the selection on the heatmaps and embedding?
  */
-metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight) {
+metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadataName, metadataValue, selectionName, focus, highlight, restriction) {
   // Generate a cell selection
+
+  if(typeof restriction === "undefined"){
+    restriction = function(selection){return true;};
+  }
 
   var dataCntr = new dataController();
   dataCntr.getCellMetadata(function(data, callbackParameters) {
     // data[callbackParameters.metadataName].data
     var val =  callbackParameters.metadataValue;
-
     var cellSelectionNames = [];
 
     var keys = Object.keys(data[callbackParameters.metadataName].data);
@@ -783,7 +878,9 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
     var cellSel = new cellSelectionController();
-    cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName);
+    if(restriction(cellSelectionNames)){
+      cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
+    }
 
     if (highlight) {
       var heatView = new heatmapViewer();
@@ -802,6 +899,5 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
   }, {metadataName: metadataName,metadataValue: metadataValue, selectionName: selectionName, focus: focus,highlight: highlight});
-
 
 }

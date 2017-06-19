@@ -8,6 +8,7 @@
  *    analysis of large single cell datasets.
  */
 
+
 Ext.require(['*']);
 Ext.onReady(function() {
     // The following line doesn't work in initlise
@@ -20,8 +21,144 @@ Ext.onReady(function() {
 
     initialise();
 
-    initialise2();
 });
+
+
+
+/**
+ * Reads the p2globalParams options for the app configuration required
+ */
+function getDataLoadingParams(callback) {
+    // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
+
+
+  if (p2globalParams.dataLoadingParams.configuration == "server") {
+    var params = {
+      connectionType: 'remoteServer'
+    };
+    callback(params);
+  } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-static") {
+    var params= {
+      connectionType: 'remoteFile',
+      remoteFileUrl: p2globalParams.dataLoadingParams.fileRemoteURL
+    }
+    callback(params);
+  } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-from-url") {
+    var url_string = window.location.href;
+    var url = new URL(url_string);
+    var fileURL = url.searchParams.get("fileURL")
+
+    var params = {
+      connectionType: 'remoteFile',
+      remoteFileUrl: fileURL
+    }
+    callback(params);
+  } else if (p2globalParams.dataLoadingParams.configuration == "filelocal") {
+      Ext.create('Ext.window.Window',{
+        title:'Pagoda2 file selection',
+        id: 'pagodaFileSelectorWindow',
+        height:100,
+        width:500,
+        align:"center",
+        modal: true,
+        items:[
+          {
+            height: "12px",
+            html: '<input type="file" id="pagodaDataSourceFileSelector"><br>'
+          },
+          {
+            xtype: 'button',
+            text: 'Ok',
+            width:"10%",
+            height:"30%",
+            margin: "10 10 10 10",
+            align: "center",
+            handler: function(){
+                var fileSelector = document.getElementById('pagodaDataSourceFileSelector');
+
+                var params = {
+                  connectionType: 'localFile',
+                  fileRef: fileSelector.files[0]
+                };
+
+                callback(params);
+
+                Ext.getCmp('pagodaFileSelectorWindow').close();
+            }
+          },
+        ],
+      }).show();
+
+
+
+
+
+  } else {
+    throw new Error('Unknown data configuration');
+  }
+  return null;
+}
+
+/**
+ * Check browser version and initialise app if OK
+ */
+function initialise() {
+    if (!pagHelpers.checkBrowser()) {
+        pagHelpers.showNotSupportedBrowserWarning();
+    } else {
+
+      generateExtJsLayout();
+
+      // Get the data loading params before initialising the app
+      getDataLoadingParams(function(loadParams) {
+        // Generate the overall layout
+
+
+        var dataCntr = new dataController(loadParams);
+        // Initialize internal components
+
+        // Calculation controllers are init from a factory that is singleton
+        var calcCntr = new calculationController(true, true);// Both local and remote
+
+        var evtBus = new eventBus();
+        var stsBar = new statusBar();
+        var selCntr = new cellSelectionController();
+        //var infoBxCntr = new infoboxController();
+        var geneSelCntr = new geneSelectionController();
+
+        // Controller for cell selection UI
+        var cellSelUICntr = new cellSelectionUIcontroller();
+        var geneSelUICntr = new geneSelectionUIcontroller();
+        var actionPanelUICntr = new actionPanelUIcontroller();
+
+        // Set the page title
+        document.title = p2globalParams.generalParams.applicationName;
+
+        // Initialize page components
+        var embView = new embeddingViewer();
+        // Load the default embedding
+        embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
+    			  p2globalParams.embedding.defaultEmbedding.embedding);
+
+
+        // Generate the tables
+        var geneTable = new geneTableViewer();
+
+        var geneSetsTable = new geneSetsTableViewer();
+        var heatDendView = new heatmapDendrogramViewer();
+        var aspTableView = new aspectsTableViewer();
+        var diffExprTableView = new diffExprTableViewer();
+
+        // Update status bar
+        stsBar.showMessage("Ready");
+
+        // Continue with initialisation
+        initialise2();
+      });
+
+    }
+};
+
 
 /**
  * Second step of initialisation.
@@ -29,11 +166,7 @@ Ext.onReady(function() {
  * be performed after the basic element hierarchy has been established.
  */
 function initialise2() {
-
-
-var tableViewToolbar = Ext.create('Ext.Toolbar');
-
-
+  var tableViewToolbar = Ext.create('Ext.Toolbar');
     tableViewToolbar.add({
       text: "",
       type: 'button',
@@ -43,7 +176,7 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
           Ext.create('Ext.window.Window', {
             height: 300,
             width: 400,
-            title: 'Help: Aspect heatmap',
+            title: 'Help: Table View',
             scrollable: true,
             bodyPadding: 10,
             html: '<h2>Help: Table View</h2>' +
@@ -55,95 +188,9 @@ var tableViewToolbar = Ext.create('Ext.Toolbar');
     } // handler
     });
 
-
   Ext.getCmp('tableExtJSWrapper').getHeader().add(tableViewToolbar);
 
 }
-
-function getLoadingParamsFromUser() {
-
-  // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
-
-  var developmentMode = false;
-
-  var params = null;
-  if (developmentMode) {
-    params = {
-      connectionType: 'remoteFile',
-      remoteFileUrl: 'http://pklab.med.harvard.edu/nikolas/p2demo.bin'
-    }
-  } else {
-   params = {
-      connectionType: 'remoteServer'
-   }
-  }
-
-  return params;
-
-}
-
-///////////////////////////////////////////////////////
-
-/**
- * Check browser version and initialise app if OK
- */
-function initialise() {
-    if (!pagHelpers.checkBrowser()) {
-        pagHelpers.showNotSupportedBrowserWarning();
-    } else {
-      // Generate the overall layout
-      generateExtJsLayout();
-
-      // Show dialog to user that allows selecting data source
-      // alternatively this could be in p2Params in some configs
-      var loadParams = getLoadingParamsFromUser();
-      var dataCntr = new dataController(loadParams);
-
-
-      // Initialize internal components
-
-
-      // Calculation controllers are init from a factory that is singleton
-      var calcCntr = new calculationController(true, true);// Both local and remote
-
-      var evtBus = new eventBus();
-      var stsBar = new statusBar();
-      var selCntr = new cellSelectionController();
-      //var infoBxCntr = new infoboxController();
-      var geneSelCntr = new geneSelectionController();
-
-      // Controller for cell selection UI
-      var cellSelUICntr = new cellSelectionUIcontroller();
-      var geneSelUICntr = new geneSelectionUIcontroller();
-      var actionPanelUICntr = new actionPanelUIcontroller();
-
-      // Set the page title
-      document.title = p2globalParams.generalParams.applicationName;
-
-      // Initialize page components
-      var embView = new embeddingViewer();
-      // Load the default embedding
-      embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
-  			  p2globalParams.embedding.defaultEmbedding.embedding);
-
-
-      // Generate the tables
-      var geneTable = new geneTableViewer();
-
-      var geneSetsTable = new geneSetsTableViewer();
-      var heatDendView = new heatmapDendrogramViewer();
-      var aspTableView = new aspectsTableViewer();
-
-      var diffExprTableView = new diffExprTableViewer();
-
-      // Not used
-      //  var odGeneTable = new odGeneTableViewer();
-
-      // Update status bar
-      stsBar.showMessage("Ready");
-    }
-};
-
 
 /**
  * Generate the basic page layout with extJS framework
@@ -186,7 +233,7 @@ function generateExtJsLayout() {
 	id: 'cellselection-app-container',
 	layout: 'fit',
 	height: '100%',
-	width: '100%',
+	width: '100%'
     });
 
     var geneSelectionPanel =  Ext.create('Ext.panel.Panel', {
@@ -225,6 +272,7 @@ function generateExtJsLayout() {
 		    title: 'Cell Selections',
 		    glyph: 0xf03a,
 		    tooltip: 'View and manage available cell selections',
+		    scrollable: true,
 		    items: cellSelectionPanel
 		},
 		{
@@ -440,8 +488,8 @@ function generateExtJsLayout() {
         layout: {
             type: 'border',
             padding: 5,
-	    height: '100%',
-	    width: '100%'
+  	    height: '100%',
+  	    width: '100%'
         },
         defaults: {
             split: true

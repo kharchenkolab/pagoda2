@@ -187,7 +187,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    } // for
 
 	    var cellSelCntr = new cellSelectionController();
-	    cellSelCntr.setSelection('embSelection', cellsForSelection, 'Embedding Selection', new Object());
+	    cellSelCntr.setSelection('embSelection', cellsForSelection, 'Embedding Selection', new Object(),'#ff0000');
 
       // TODO: Make this optional
 
@@ -260,8 +260,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 	    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
 	    ctx.save();
 	    ctx.clearRect(0,0,5000,5000);
-	    ctx.strokeStyle = 'red';
-
+	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
 	    for (var i = 0; i < plotData.length; i++) {
     		var point = plotData[i];
     		if ( cells.indexOf(point[0]) > -1 ) {
@@ -275,6 +274,80 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 	    } // for
 	    ctx.restore();
 
+  });
+
+}
+
+embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(selectionNames) {
+  
+  var cellSelCntr = new cellSelectionController();
+  var embViewer = new embeddingViewer();
+  var thisViewer = this;
+
+  var config =  embViewer.getConfig();
+  var dataCntr = new dataController();
+  var type = config.type;
+  var embeddingType = config.embeddingType;
+
+  var size = this.size;
+  
+  var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
+  ctx.clearRect(0,0,5000,5000);
+  
+  dataCntr.getEmbedding(type, embeddingType, function(data){
+    selectionNames.forEach(function(selectionName){
+
+      var cells = cellSelCntr.getSelection(selectionName);
+      var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+      
+	    // Make the xscale
+	    thisViewer.xScaleDomainMin = +Infinity;
+	    thisViewer.xScaleDomainMax = -Infinity;
+	    for (var j = 0; j < plotData.length; j++) {
+    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+	    }
+	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+							 thisViewer.xScaleDomainMax,
+							 thisViewer.xScaleRangeMin,
+							 thisViewer.xScaleRangeMax);
+
+	    // Make the y scale
+	    thisViewer.yScaleDomainMin = +Infinity;
+	    thisViewer.yScaleDomainMax = -Infinity;
+	    for (var j = 0; j < plotData.length; j++) {
+    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+	    }
+	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
+							 thisViewer.yScaleDomainMax,
+							 thisViewer.yScaleRangeMin,
+							 thisViewer.yScaleRangeMax);
+
+
+	    var pointsize = embViewer.getCurrentPointSize();
+
+	    
+	    ctx.save();
+	    
+	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
+	    for (var i = 0; i < plotData.length; i++) {
+    		var point = plotData[i];
+    		if ( cells.indexOf(point[0]) > -1 ) {
+    		    var xs = xScale(point[1]);
+    		    var ys = yScale(point[2]);
+
+    		    ctx.beginPath();
+    		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+    		    ctx.stroke();
+    		}
+	    } // for
+	    ctx.restore();
+    });
   });
 
 }
@@ -356,7 +429,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 	    ctx.clearRect(0,0,4000,4000);
 	    ctx.save();
 	    ctx.setLineDash([10,10]);
-	    ctx.strokeStyle = '#FF0000';
+	    ctx.strokeStyle = 'rgba(255,0,0,1)';
 	    ctx.lineWidth = 2;
 	    ctx.strokeRect(dragStartX, dragStartY, dragEndX - dragStartX, dragEndY - dragStartY);
 	    ctx.restore();
@@ -384,8 +457,6 @@ embeddingViewerScatterCanvas.prototype.clearHighlight = function() {
   var ctx = overlayCanvasElement.getContext('2d');
   ctx.clearRect(0,0,4000,4000);
 }
-
-
 
 /**
  * Generated the necessary html structure for this viewer
@@ -506,8 +577,8 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	    thisViewer.xScaleDomainMin = +Infinity;
 	    thisViewer.xScaleDomainMax = -Infinity;
 	    for (var j = 0; j < plotData.length; j++) {
-		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
-		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
 	    }
 	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
@@ -520,8 +591,8 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	    thisViewer.yScaleDomainMin = +Infinity;
 	    thisViewer.yScaleDomainMax = -Infinity;
 	    for (j = 0; j < plotData.length; j++) {
-		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
-		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
 	    }
 	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
 	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
@@ -541,8 +612,8 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	    var stroke = embViewer.getCurrentBorder();
 
 	    if (stroke === true ) {
-		strokeColor = embViewer.getCurrentBorderColor();
-		strokeWidth = embViewer.getCurrentBorderWidth();
+    		strokeColor = embViewer.getCurrentBorderColor();
+    		strokeWidth = embViewer.getCurrentBorderWidth();
 	    }
 
 	    // Get 2d context and plot
@@ -551,29 +622,25 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 
 	    // Main plot loop
 	    for (var i = 0; i < plotData.length; i++) {
-		var point = plotData[i];
+    		var point = plotData[i];
 
-		var xs = xScale(point[1]);
-		var ys = yScale(point[2]);
+    		var xs = xScale(point[1]);
+    		var ys = yScale(point[2]);
 
-		// TODO: Get the correct color for this point
-		// var alpha
-		ctx.beginPath();
-		ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
-		ctx.fillStyle = point[3];
-		ctx.fill();
+    		ctx.beginPath();
+    		ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+    		ctx.fillStyle = point[3];
+    		ctx.fill();
 
-		// Plot the border
-		if (stroke) {
-		    ctx.lineWidth = strokeWidth;
-		    ctx.strokeStyle = strokeColor;
-		    ctx.stroke();
-		}
+    		// Plot the border if selected
+    		if (stroke) {
+    		    ctx.lineWidth = strokeWidth;
+    		    ctx.strokeStyle = strokeColor;
+    		    ctx.stroke();
+    		}
 	    }
 
 	    embViewer.hideWait();
-
-
 	}, type, embeddingType); // GenerateFillStyles
 
 
@@ -586,8 +653,6 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
  * Generate fill styles suitable for the given dataset
  */
 embeddingViewerScatterCanvas.prototype.generateFillStyles = function(plotdata, callback, type, embeddingType) {
-
-
 
     // Get the color config
     var ev = new embeddingViewer();
@@ -631,16 +696,16 @@ embeddingViewerScatterCanvas.prototype.updateColorAlpha = function(colors, newAl
     // Prepare the palette with our alpha
     var retVals = [];
     for (var k = 0; k < colors.length; k++) {
-	var color = colors[k];
+    	var color = colors[k];
 
-	// Split the channels
-	var r = parseInt(color.substring(1,3),16);
-	var g = parseInt(color.substring(3,5),16)
-	var b = parseInt(color.substring(5,7),16);
+    	// Split the channels
+    	var r = parseInt(color.substring(1,3),16);
+    	var g = parseInt(color.substring(3,5),16)
+    	var b = parseInt(color.substring(5,7),16);
 
-	// Add user-specified alpha
-	color = 'rgba('+ r+','+g+','+b+','+newAlpha+')';
-	retVals[k] = color;
+    	// Add user-specified alpha
+    	color = 'rgba('+ r+','+g+','+b+','+newAlpha+')';
+    	retVals[k] = color;
     }
     return retVals;
 
@@ -766,9 +831,6 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
  * @param embeddingType the embedding type, used for caching the match indexes
  */
 embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = function(plotdata, callback, type, embeddingType) {
-
-
-
     var evSC = this;
 
     var ev = embeddingViewer();
@@ -787,9 +849,11 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 	var cellIndexEnd = data.length;
 	var geneSelection = [config.geneexpressionColorInfo.geneid];
 
-	evSC.colorAJAXrequest =
-	    dataCntr.getExpressionValuesSparseByCellIndex(
+
+  // For potential cancelling
+	evSC.colorAJAXrequest = dataCntr.getExpressionValuesSparseByCellIndex(
 		geneSelection, cellIndexStart, cellIndexEnd, function(data) {
+
 		    var heatView = new heatmapViewer();
 		    // Get palette
 		    var palSize = heatView.palManager.getNumberOfColors();
@@ -800,10 +864,10 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    // TODO: We need a better abstraction form palettes
 		    var rowSum = 0;
 		    var rowMax = data.array[0][0];
-		    var rowMin = data.array[0][0];
+		    var rowMin = 0;
 		    for (var j = 0; j < data.array.length; j++) {
     			rowMax = Math.max(rowMax, data.array[j][0]);
-    			rowMin = Math.min(rowMin, data.array[j][0]);
+    			//rowMin = Math.min(rowMin, data.array[j][0]);
     			rowSum += data.array[j][0];
 		    }
 
@@ -850,11 +914,11 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 		    			console.warn('Embedding plotter found a cell that does not' +
 						     'have and entry in the expression matrix. Cellid: "' +
 						     cellId +
-		    				     '. This is an error with the data provided by server.');
-		    			color = '#000000'; // default to black
+		    				     '". This is an error with the data provided by server.');
+		    			      color = '#000000'; // default to black
 		    		    } else {
-		    			var palIndex = colorMapper(data.array[index][0]);
-		    			color = palAlpha[palIndex];
+    		    			var palIndex = colorMapper(data.array[index][0]);
+    		    			color = palAlpha[palIndex];
 		    		    }
 		    		    plotdata[j][3] = color;
 		    		}
@@ -960,14 +1024,13 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
 embeddingViewerScatterCanvas.prototype.abortPendingRequest = function() {
     var evSC = this;
     // Check if there is a request running already
-    if (typeof evSC.colorAJAXrequest !== 'undefined') {
-      	if (evSC.colorAJAXrequest.readyState != 4) {  //Not DONE
-      	    // A previous request exists and is still running
-      	    // cancel it
-      	    evSC.colorAJAXrequest.abort();
-      	}
+    if ((typeof evSC.colorAJAXrequest !== 'undefined') && evSC.colorAJAXrequest !== null) {
+        	if (evSC.colorAJAXrequest.readyState != 4) {  //Not DONE
+        	    // A previous request exists and is still running
+        	    // cancel it
+        	    evSC.colorAJAXrequest.abort();
+        	}
     }
-
 }
 
 /**

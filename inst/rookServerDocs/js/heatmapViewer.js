@@ -25,12 +25,11 @@ function heatmapViewer() {
     	heatView.drawHeatmap();
     };
 
-    // How to show missing values
-    this.missingDisplay = 'mean';
 
     // Keep track of what selection we are showing so
     // we can persist accross redraws
     this.currentOverlaySelectionName = null;
+    this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
     heatmapViewer.instance =  this;
 };
@@ -164,41 +163,6 @@ heatmapViewer.prototype.generateMenu = function() {
 
   var paletteMenu = this.generatePalettesMenu();
 
-  // Menu for displaying missing values
-  var missingValueChangeHandler = function(item) {
-     var heatView = new heatmapViewer();
-     heatView.setMissingDisplay(item.value);
-     heatView.drawHeatmap();
-  }
-  var missingValueDisplayMenu = Ext.create('Ext.menu.Menu', {
-    id: 'missingValueDisplayMenu',
-    items: [{
-      text: 'Mean',
-      value: 'mean',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'Min',
-      value: 'min',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'White',
-      value: 'white',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'Grey',
-      value: 'grey',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'Black',
-      value: 'black',
-      handler: missingValueChangeHandler
-    }
-    ]
-  })
 
  var heatmapSettingsMenu = Ext.create('Ext.menu.Menu', {
 	id: 'heatmapSettingsMenu',
@@ -206,10 +170,6 @@ heatmapViewer.prototype.generateMenu = function() {
 	    {
     		text: 'Palette Name',
     		menu: paletteMenu
-	    },
-	    {
-	      text: 'Show missing as',
-	      menu: missingValueDisplayMenu
 	    },
 	    {
     		fieldLabel: 'Palette Levels',
@@ -258,12 +218,12 @@ toolbar.add({
                    buttons: Ext.Msg.OKCANCEL,
                    fn: function(s) {
                      if (s == 'ok') {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png')})
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
                      } //if
                    } //fn
                 }) // Ext.Msg.show
             } else {
-                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png')})
+                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
             }// if
         } // handler
 });
@@ -388,12 +348,10 @@ heatmapViewer.prototype.setupOverlays = function() {
         var startIndex = Math.floor(startPC * ncells);
         var endIndex = Math.floor(endPC * ncells);
 
-
-
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object());
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#00FF00");//TODO green or blue?
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
@@ -411,12 +369,7 @@ heatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
       }
-
-
     });
-
-
-
 
     // Click listener for setting gene color to embedding
     heatmapAreaOverlay.addEventListener('dblclick', function(e) {
@@ -487,7 +440,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.fillStyle = 'rgba(0,255,0,0.5)';
         ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
 
@@ -931,6 +884,7 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   var heatV = this;
 
   this.currentOverlaySelectionName = selectionName;
+  this.currentOverlaySelectionNames = null;
   this.currentOverlaySelectionShown = true;
 
 
@@ -960,7 +914,11 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
     var actualPlotHeight = heatV.getActualPlotHeight();
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+
+    // We need to split the color to components to add the alpha (Chrome issue)
+    var selColor = pagHelpers.hexToRgb(cellSelCntr.getColor(selectionName));
+    ctx.strokeStyle = 'rgba(' + selColor.r + ',' + selColor.g + ',' + selColor.b + ',0.2)';
+
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
@@ -984,10 +942,71 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   }); // get the cell order
 }
 
-heatmapViewer.prototype.setMissingDisplay = function(value) {
-  this.missingDisplay = value;
+/**
+ * Given a group of cell selection names hightlight them on the heatmap with vertical lines
+ */
+heatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames) {
+  var heatV = this;
 
+  this.currentOverlaySelectionNames = selectionNames;
+  this.currentOverlaySelectionName = null;
+  this.currentOverlaySelectionShown = true;
+
+
+  var dendV = new dendrogramViewer();
+
+  // Get the cells in the cell selection to highlight
+  var cellSelCntr = new cellSelectionController();
+
+  var ctx = heatV.getSelectionDrawingContext();
+  ctx.clearRect(0,0,3000,3000);
+  // Get the cell order
+  var dataCntr = new dataController();
+  dataCntr.getCellOrder(function(cellorder) {
+    // Currently displayed cells
+
+    selectionNames.forEach(function(selectionName){
+    var cellSelection = cellSelCntr.getSelection(selectionName);
+    var cellRange = dendV.getCurrentDisplayCellsIndexes();
+    var ncells = cellRange[1] - cellRange[0];
+
+
+
+    // Get and calculate plotting values
+    var drawConsts = heatV.getDrawConstants();
+    var heatmapWidth = drawConsts.width;
+    var cellWidth = heatmapWidth / ncells;
+    var left = drawConsts.left;
+    var n = cellSelection.length;
+
+    var actualPlotHeight = heatV.getActualPlotHeight();
+
+    ctx.save();
+    ctx.strokeStyle = cellSelCntr.getColor(selectionName) + "4C";
+
+    // Draw vertical lines for selected cells
+    for (var i = 0; i < n; i++) {
+      var cellIndex = cellorder.indexOf(cellSelection[i]);
+
+      // Cell is among currently displayed ones
+      if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
+        var colIndex = cellIndex - cellRange[0];
+
+        var x = colIndex * cellWidth + left;
+
+        ctx.beginPath();
+        ctx.moveTo(x, drawConsts.top);
+        ctx.lineTo(x, actualPlotHeight);
+        ctx.stroke();
+      } // if
+    } // for
+
+    ctx.restore();
+    });
+  }); // get the cell order
 }
+
+
 
 /**
  * Internal function for drawing the heatmap using the sparse matrix directly
@@ -1067,19 +1086,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	var palSize = heatView.palManager.getNumberOfColors();
 	var pal = heatView.palManager.getPaletteColors();
 
-	// Plot background according the missing value setting
-	if (heatView.missingDisplay == 'mean') {
-	  ctx.fillStyle = pal[Math.floor(palSize/2)];
-	} else if (heatView.missingDisplay == 'white') {
-	  ctx.fillStyle = 'white';
-	} else if (heatView.missingDisplay == 'black') {
-	  ctx.fillStyle = 'black';
-	} else if (heatView.missingDisplay == 'grey') {
-	  ctx.fillStyle = '#666666';
-	} else if (heatView.missingDisplay == 'min') {
-	  ctx.fillStyle = pal[0];
-	}
-	ctx.fillRect(left,top,heatmapWidth,actualPlotHeight);
+
 
 	for ( var j = 0; j < data.p.length - 1; j++) {
 	    // row start index, row end index (in x and i)
@@ -1087,10 +1094,14 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    var rei = data.p[j+1] -1;
 
 	    // Calculate row normalisation values
-	    var rowMin = data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
-	    var rowMax = data.x.slice(rsi, rei).reduce(function(a,b){ return Math.max(a,b) } );
-	    var rowSum = data.x.slice(rsi, rei).reduce(function(a,b){ return a+b });
-	    var rowMean = rowSum / (rei - rsi + 1);
+	    var rowMin = 0; // data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
+	    var maxFn = function(a,b){ return Math.max(a,b) };
+	    var rowMax = data.x.slice(rsi, rei).reduce(maxFn);
+
+	    var sumFn = function(a,b){ return a+b };
+	    var rowSum = data.x.slice(rsi, rei).reduce(sumFn);
+	    var rowMean = rowSum / ncells;
+
 	    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
 
 	    // color mapper is a function
@@ -1098,19 +1109,18 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    // other views (eg embedding)
 	    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
 
+      // Print row background
+      ctx.fillStyle = pal[colorMapper(0)];
+      ctx.fillRect(left, rowOrder[j] * cellHeight + top,heatmapWidth,cellHeight);
+
 	    // Plot row
 	    for (var k = rsi; k < rei; k++) {
-      //		var plotValue = (data.x[k] - rowMean) / (maxAbsValue * 2) + 0.5;
-      //		var palIndex = Math.floor(plotValue * (palSize)) - 1;
-
-      		var palIndex = colorMapper(data.x[k]);
-      		ctx.fillStyle = pal[palIndex];
+      		ctx.fillStyle = pal[colorMapper(data.x[k])];
 
       		var x = data.i[k] * cellWidth + left;
       		var y = rowOrder[j] * cellHeight + top; // reorder on the fly
 
-      		ctx.fillRect(x,y,
-  		    cellWidth, cellHeight);
+      		ctx.fillRect(x,y, cellWidth, cellHeight);
 	    } // for k
 
 	} // for j
@@ -1159,7 +1169,12 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
     heatView.clearSelectionOverlayInternal();
     if (heatView.currentOverlaySelectionShown === true) {
-      heatView.highlightCellSelectionByName(heatView.currentOverlaySelectionName);
+      if(heatView.currentOverlaySelectionName !== null){
+        heatView.highlightCellSelectionByName(heatView.currentOverlaySelectionName);
+      }
+      else{
+        heatView.highlightCellSelectionsByNames(heatView.currentOverlaySelectionNames);
+      }
     }
 
     }); // dataCntr.getExpressionValuesSparseTransposedByCellIndexUnpacked callback

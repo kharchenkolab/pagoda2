@@ -61,13 +61,11 @@ pagoda2WebApp <- setRefClass(
               originalP2object <<- pagoda2obj
             }
 
-		# Check that the object we are getting is what it should be
+		        # Check that the object we are getting is what it should be
             if (class(pagoda2obj) != "Pagoda2") {
                 cat("We have an error");
                 stop("ERROR: The provided object is not a pagoda 2 object")
             }
-
-
 
             # Keep the name for later (consistent) use
             name <<- appName;
@@ -275,9 +273,39 @@ pagoda2WebApp <- setRefClass(
                                       # but only returns information for the genes that belong
                                       # to the specified geneset
                                       'genesetgeneinformation' = {
-                                          response$header("Content-type", "application/javascript");
-                                          response$write(geneInformationJSON());
-                                          return(response$finish());
+
+
+                                        # FIXME: to work with genelistnames not
+                                        # gene names
+
+                                        geneListName <- requestArguments[['genesetname']];
+
+                                        # TODO: Check that the specified gene set actually
+                                        # exists
+
+                                        # Get the genes in this geneset
+                                        geneList <- geneSets[[geneListName]]$genes
+
+                                        # Subset to genes that exist
+                                        geneList <- geneList[geneList %in% rownames(varinfo)];
+
+                                        # Generate dataset
+                                        dataset <-  varinfo[geneList, c("m","v")];
+                                        dataset$name <-  rownames(dataset);
+
+                                        # Convert to row format
+                                        retd <-  apply(dataset,
+                                                       1, function(x) {
+                                                         list(genename = x[["name"]],
+                                                              dispersion =x[["v"]],
+                                                              meanExpr = x[["m"]])
+                                                       });
+                                        retd <- unname(retd);
+
+
+                                        response$header("Content-type", "application/javascript");
+                                        response$write(toJSON(retd));
+                                        return(response$finish());
 
                                       },
 
@@ -675,12 +703,6 @@ pagoda2WebApp <- setRefClass(
                                                           colnames = colnames(a)
                                                       );
                                                       response$write(toJSON(ret));
-
-
-
-
-
-
                                                       return(response$finish());
                                                   } else {
                                                       response$write(paste0("Error: Unknown embedding specified: ",embeddingType));
@@ -881,7 +903,6 @@ pagoda2WebApp <- setRefClass(
             }
         },
 
-
         # Logging function for console
         serverLog = function(message) {
             print(message);
@@ -937,7 +958,9 @@ pagoda2WebApp <- setRefClass(
 		    }
 		    ,
 
-		    serialiseToDirectory = function(dir = null) {
+		    serialiseToStatic = function(text.file.directory = null, binary.filemame = null) {
+		      dir <- text.file.directory;
+
 		      if (is.null(dir)) {
 		        stop('Please specify a directory');
 		      }
@@ -965,14 +988,135 @@ pagoda2WebApp <- setRefClass(
             for (embed in names(embStructure[[reduc]])) {
               id <- embStructure[[reduc]][[embed]][[1]];
               filename <- paste0(id, '.json');
-              e <- toJSON(originalP2object$embeddings[[reduc]][[embed]])
+
+              a <- embeddings[[reduc]][[embed]];
+              ret <- list(
+                values = .self$packCompressFloat64Array(as.vector(a)),
+                dim =  dim(a),
+                rownames = rownames(a),
+                colnames = colnames(a)
+              );
+              e <- toJSON(ret);
+
               writeDataToFile(dir, filename, e);
             }
           }
 
+          # Serialise the matsparse array
 
-          # TODO: Continue
+          # Functions for serialising sparse arrays
+          simpleSerializeArrayToFile <- function(array, dir, filename) {
+            conn <- file(file.path(dir, filename), open='w');
+            x_length <- length(array);
+            for (i in 1:x_length) {
+              cat(array[i], file=conn);
+              cat(' ', file=conn);
+            }
+            close(conn);
+          }
 
+          serialiseSparseArray <- function(array, dir, filename) {
+            # Serialise the i
+            cat('Serialising i...\n')
+            simpleSerializeArrayToFile(array@i, dir, paste0(filename,'i.txt'))
+            cat('Serialising p...\n')
+            simpleSerializeArrayToFile(array@p, dir,  paste0(filename,'p.txt'))
+            cat('Serialising x...\n')
+            simpleSerializeArrayToFile(array@x, dir,  paste0(filename,'x.txt'))
+            cat('Serialising Dim...\n')
+            simpleSerializeArrayToFile(array@Dim, dir,  paste0(filename,'Dim.txt'))
+            cat('Serialising Dimnames1...\n')
+            writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(array@Dimnames[[1]]));
+            cat('Serialising Dimnames2...\n')
+            writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(array@Dimnames[[2]]));
+          }
+
+          # Serialise the main sparse matrix
+          matsparseToSave <- matsparse[mainDendrogram$cellorder,]
+          serialiseSparseArray(matsparseToSave, dir, 'matsparse_');
+
+          # Serialise aspect matrix
+          cellIndices <- mainDendrogram$cellorder;
+          aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
+          trimPoint <- max(abs(aspectMatrixToSave)) / 50;
+          aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
+          aspectMatrixToSave <- t(aspectMatrixToSave);
+          aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
+          serialiseSparseArray(aspectMatrixToSave, dir, 'mataspect_');
+
+          # Serialise the aspect information
+
+
+          cat('Serialising aspects..\n');
+          aspectInformation <- list();
+          for (curAspect in rownames(pathways$xv)) {
+            # Genesets in this aspect
+            curgenesets <- unname(pathways$cnam[[curAspect]]);
+
+            # Get the metadata for these gene sets
+            colOfInterest <- c("name","n","cz");
+            retTable <- pathwayODInfo[curgenesets, colOfInterest];
+
+            # Convert to JSON friendly format
+            aspectInformation[[curAspect]]  <- unname(apply(retTable, 1, function(x) {
+              # Must be in genesets for short description
+              desc <- geneSets[[x[[1]]]]$properties$shortdescription;
+
+              list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
+            }));
+          }
+          writeDataToFile(dir, 'aspectInformation.json', toJSON(aspectInformation));
+
+          cat('Serialising gene sets...\n');
+          writeDataToFile(dir, 'genesets.json',toJSON(unname(lapply(geneSets, function(x) {x$properties}))));
+
+          # TODO: Continue here
+          cat('Serialising geneset genes...\n');
+
+          geneListName <- names(geneSets);
+
+          geneListGenes <- list();
+          for(geneListName in names(geneSets)) {
+            # Get the genes in this geneset
+            geneList <- geneSets[[geneListName]]$genes
+            # Subset to genes that exist
+            geneList <- geneList[geneList %in% rownames(varinfo)];
+
+            # Generate dataset
+            dataset <-  varinfo[geneList, c("m","v")];
+            dataset$name <-  rownames(dataset);
+
+            # Convert to row format
+            retd <-  apply(dataset,
+                           1, function(x) {
+                             x[["name"]];
+                           #  list(genename = x[["name"]],
+                           #        dispersion =x[["v"]],
+                           #        meanExpr = x[["m"]])
+                           });
+            geneListGenes[[geneListName]] <- unname(retd);
+          }
+          writeDataToFile(dir, 'genesetsgenes.json',toJSON(geneListGenes));
+
+
+          #We want to make a binary file as well
+          if (!is.null(binary.filemame)) {
+            p2packExec <- file.path(system.file(package='pagoda2'),'utilities','p2packSource','p2pack');
+
+            # Append trailing slash if missing
+            if (grepl('/$', text.file.directory)) {
+              dirVar = text.file.directory;
+            } else {
+              dirVar = paste0(text.file.directory, '/');
+            }
+
+            args <- paste0(' --input-directory ', dirVar, ' --output-file ', binary.filemame)
+            cmdRetVal <- system2(p2packExec, args)
+            if(cmdRetVal != 0) {
+              cat('Error conversion to binary failed! Have you built the conversion utility? Go to ',
+                  file.path(system.file(package='pagoda2'),'utilities','p2packSource'), 'and run "make".');
+            }
+          }
 
 		    }
 

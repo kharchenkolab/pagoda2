@@ -243,12 +243,12 @@ toolbar.add({
                    buttons: Ext.Msg.OKCANCEL,
                    fn: function(s) {
                      if (s == 'ok') {
-canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'dendrogram.png')})
+canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'dendrogram.png',canvas)})
                      } //if
                    } //fn
                 }) // Ext.Msg.show
             } else {
-canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'dendrogram.png')})
+canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'dendrogram.png',canvas)})
             }// if
 
 

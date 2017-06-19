@@ -95,6 +95,15 @@ geneSelectionController.prototype.getAvailableSelections = function() {
 };
 
 /**
+ * Delete a gene selection
+ * @param {string} selectionName the name of the selection to delete
+ */
+geneSelectionController.prototype.deleteSelection = function(selectionName) {
+    delete this.selections[selectionName];
+    this.raiseSelectionChangedEvent();
+}
+
+/**
  * Duplicate an existing selection
  */
 geneSelectionController.prototype.duplicateSelection = function(selectionName,
@@ -112,10 +121,63 @@ geneSelectionController.prototype.duplicateSelection = function(selectionName,
 }
 
 /**
- * Change the display name of the given cell selection
+ * Change the display name of the given gene selection
  */
 geneSelectionController.prototype.renameSelection = function(selectionName, newSelectionName) {
     this.selections[selectionName].displayName = newSelectionName;
     this.raiseSelectionChangedEvent();
 }
 
+/**
+ * Generate a new gene selection from two existing gene selections
+ */
+geneSelectionController.prototype.mergeSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName)  {
+
+    var geneSelCntrl = this;
+    var sel = {};
+    sel.name = newSelectionName;
+    sel.displayName = newSelectionDisplayName;
+
+    var genes = {};
+    selections.forEach(function(selection){
+      geneSelCntrl.selections[selection].genes.forEach(function(gene){
+        genes[gene] = true;
+      })
+    });
+    sel.genes = Object.keys(genes);
+    
+    geneSelCntrl.selections[newSelectionName] = sel;
+    geneSelCntrl.raiseSelectionChangedEvent();
+}
+
+/**
+ * Genereate a new gene selection by intersecting two gene selections
+ */
+geneSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName){
+    var geneSelCtrl = this;
+    var sel = {};
+    sel.name = newSelectionName;
+    sel.displayName = newSelectionDisplayName;
+
+    var genes = {};
+    geneSelCtrl.selections[selections[0]].genes.forEach(function(gene){
+      genes[gene] = 1; 
+    });
+    for(var i = 1; i< selections.length; i++){
+      geneSelCtrl.selections[selections[i]].genes.forEach(function(gene){
+        if(genes[gene]){
+          genes[gene]++;
+        }
+      });
+    }
+    sel.genes = [];
+    
+    for(var gene in genes){
+      if(genes[gene] === selections.length){
+        sel.genes.push(gene);
+      }
+    }
+    
+    this.selections[newSelectionName] = sel;
+    this.raiseSelectionChangedEvent();
+}
