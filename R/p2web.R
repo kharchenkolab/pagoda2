@@ -958,7 +958,7 @@ pagoda2WebApp <- setRefClass(
 		    }
 		    ,
 
-		    serialiseToStatic = function(text.file.directory = null, binary.filemame = null) {
+		    serialiseToStatic = function(text.file.directory = null, binary.filename = null) {
 		      dir <- text.file.directory;
 
 		      if (is.null(dir)) {
