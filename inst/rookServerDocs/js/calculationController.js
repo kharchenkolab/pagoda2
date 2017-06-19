@@ -150,8 +150,6 @@ differentialExpressionStore.prototype.getAvailableDEsets = function() {
     var date = this.deSets[curKey].getStartTime().valueOf();
     result.push({'name': name, 'date': date, 'displayName': displayName});
   }
-  console.log(this.deSets);
-
   return result;
 };
 
