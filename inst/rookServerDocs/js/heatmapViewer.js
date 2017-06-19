@@ -25,8 +25,6 @@ function heatmapViewer() {
     	heatView.drawHeatmap();
     };
 
-    // How to show missing values
-    this.missingDisplay = 'mean';
 
     // Keep track of what selection we are showing so
     // we can persist accross redraws
@@ -165,41 +163,6 @@ heatmapViewer.prototype.generateMenu = function() {
 
   var paletteMenu = this.generatePalettesMenu();
 
-  // Menu for displaying missing values
-  var missingValueChangeHandler = function(item) {
-     var heatView = new heatmapViewer();
-     heatView.setMissingDisplay(item.value);
-     heatView.drawHeatmap();
-  }
-  var missingValueDisplayMenu = Ext.create('Ext.menu.Menu', {
-    id: 'missingValueDisplayMenu',
-    items: [{
-      text: 'Mean',
-      value: 'mean',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'Min',
-      value: 'min',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'White',
-      value: 'white',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'Grey',
-      value: 'grey',
-      handler: missingValueChangeHandler
-    },
-    {
-      text: 'Black',
-      value: 'black',
-      handler: missingValueChangeHandler
-    }
-    ]
-  })
 
  var heatmapSettingsMenu = Ext.create('Ext.menu.Menu', {
 	id: 'heatmapSettingsMenu',
@@ -207,10 +170,6 @@ heatmapViewer.prototype.generateMenu = function() {
 	    {
     		text: 'Palette Name',
     		menu: paletteMenu
-	    },
-	    {
-	      text: 'Show missing as',
-	      menu: missingValueDisplayMenu
 	    },
 	    {
     		fieldLabel: 'Palette Levels',
@@ -1048,10 +1007,6 @@ heatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames
 }
 
 
-heatmapViewer.prototype.setMissingDisplay = function(value) {
-  this.missingDisplay = value;
-
-}
 
 /**
  * Internal function for drawing the heatmap using the sparse matrix directly
