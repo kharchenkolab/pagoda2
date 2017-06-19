@@ -40,7 +40,7 @@ var p2globalParams = {
   */
   dataLoadingParams: {
     configuration: "server", // server | fileremote-static | fileremote-from-url | filelocal FUTURE:| fileremote-user-select | user-select
-    fileRemoteURL: "http://pklab.med.harvard.edu/nikolas/output.bin"
+    fileRemoteURL: ""
   },
 
   misc: {
