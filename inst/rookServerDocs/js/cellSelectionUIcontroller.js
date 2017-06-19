@@ -84,22 +84,6 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	selModel: cellTableSelectionModel
     });
 
-   Ext.define('PagodaColorPicker',{
-          extend: "Ext.ux.colorpick.Field ",
-          constructor: function (config) {
-                var me = this;
-                childViewModel = Ext.Factory.viewModel('colorpick-selectormodel');
-
-                // Since this component needs to present its value as a thing to which users can
-                // bind, we create an internal VM for our purposes.
-                me.childViewModel = childViewModel;
-                me.items = [
-                  me.getMapAndHexRGBFields(childViewModel),
-                  me.getSliderAndHField(childViewModel),
-                ];
-                
-          },
-    });
     var formPanel = Ext.create('Ext.form.Panel', {
     height: '100%',
     width: '100%',
