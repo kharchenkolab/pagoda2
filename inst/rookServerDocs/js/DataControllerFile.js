@@ -567,8 +567,6 @@ DataControllerFile.prototype.getAspectMatrixByAspectInternal2 = function(cellInd
   };
 
   function handleComplete(callback, dcf, cellIndexStart, cellIndexEnd) {
-    console.log('COMPLETE HANDLE');
-    console.log(resultsArray);
     // convert back to sparse matrix and return to callback
      var x = new Array();
      var i = new Array();
