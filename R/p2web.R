@@ -958,7 +958,7 @@ pagoda2WebApp <- setRefClass(
 		    }
 		    ,
 
-		    serialiseToStatic = function(text.file.directory = null, binary.filemame = null) {
+		    serialiseToStatic = function(text.file.directory = null, binary.filename = null) {
 		      dir <- text.file.directory;
 
 		      if (is.null(dir)) {
@@ -1100,7 +1100,7 @@ pagoda2WebApp <- setRefClass(
 
 
           #We want to make a binary file as well
-          if (!is.null(binary.filemame)) {
+          if (!is.null(binary.filename)) {
             p2packExec <- file.path(system.file(package='pagoda2'),'utilities','p2packSource','p2pack');
 
             # Append trailing slash if missing
@@ -1110,7 +1110,7 @@ pagoda2WebApp <- setRefClass(
               dirVar = paste0(text.file.directory, '/');
             }
 
-            args <- paste0(' --input-directory ', dirVar, ' --output-file ', binary.filemame)
+            args <- paste0(' --input-directory ', dirVar, ' --output-file ', binary.filename)
             cmdRetVal <- system2(p2packExec, args)
             if(cmdRetVal != 0) {
               cat('Error conversion to binary failed! Have you built the conversion utility? Go to ',
