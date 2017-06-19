@@ -389,8 +389,6 @@ heatmapViewer.prototype.setupOverlays = function() {
         var startIndex = Math.floor(startPC * ncells);
         var endIndex = Math.floor(endPC * ncells);
 
-
-
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
@@ -412,12 +410,7 @@ heatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
       }
-
-
     });
-
-
-
 
     // Click listener for setting gene color to embedding
     heatmapAreaOverlay.addEventListener('dblclick', function(e) {
@@ -1138,18 +1131,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	var palSize = heatView.palManager.getNumberOfColors();
 	var pal = heatView.palManager.getPaletteColors();
 
-	// Plot background according the missing value setting
-	if (heatView.missingDisplay == 'mean') {
-	  ctx.fillStyle = pal[Math.floor(palSize/2)];
-	} else if (heatView.missingDisplay == 'white') {
-	  ctx.fillStyle = 'white';
-	} else if (heatView.missingDisplay == 'black') {
-	  ctx.fillStyle = 'black';
-	} else if (heatView.missingDisplay == 'grey') {
-	  ctx.fillStyle = '#666666';
-	} else if (heatView.missingDisplay == 'min') {
-	  ctx.fillStyle = pal[0];
-	}
+	ctx.fillStyle = pal[0];
 	ctx.fillRect(left,top,heatmapWidth,actualPlotHeight);
 
 	for ( var j = 0; j < data.p.length - 1; j++) {
@@ -1158,10 +1140,14 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    var rei = data.p[j+1] -1;
 
 	    // Calculate row normalisation values
-	    var rowMin = data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
-	    var rowMax = data.x.slice(rsi, rei).reduce(function(a,b){ return Math.max(a,b) } );
-	    var rowSum = data.x.slice(rsi, rei).reduce(function(a,b){ return a+b });
-	    var rowMean = rowSum / (rei - rsi + 1);
+	    var rowMin = 0; // data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
+	    var maxFn = function(a,b){ return Math.max(a,b) };
+	    var rowMax = data.x.slice(rsi, rei).reduce(maxFn);
+
+	    var sumFn = function(a,b){ return a+b };
+	    var rowSum = data.x.slice(rsi, rei).reduce(sumFn);
+	    var rowMean = rowSum / ncells;
+
 	    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
 
 	    // color mapper is a function
@@ -1171,17 +1157,12 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
 	    // Plot row
 	    for (var k = rsi; k < rei; k++) {
-      //		var plotValue = (data.x[k] - rowMean) / (maxAbsValue * 2) + 0.5;
-      //		var palIndex = Math.floor(plotValue * (palSize)) - 1;
-
-      		var palIndex = colorMapper(data.x[k]);
-      		ctx.fillStyle = pal[palIndex];
+      		ctx.fillStyle = pal[colorMapper(data.x[k])];
 
       		var x = data.i[k] * cellWidth + left;
       		var y = rowOrder[j] * cellHeight + top; // reorder on the fly
 
-      		ctx.fillRect(x,y,
-  		    cellWidth, cellHeight);
+      		ctx.fillRect(x,y, cellWidth, cellHeight);
 	    } // for k
 
 	} // for j
