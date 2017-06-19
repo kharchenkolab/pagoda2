@@ -315,9 +315,8 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             var selectionFormatted = [];
             var cellSelCntr = new cellSelectionController();
             for(var index = 0; index < selectedItems.length; index++){
-      		    var selectionName = selectedItems.getAt(index).getData().displayname;
+      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
     	  	    var selection = cellSelCntr.getSelection(selectionName);
-    	  	    console.log(selectionName);
       		    selectionFormatted.push(selectionName+ "," + selection.join(","));
       		  }
     		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));

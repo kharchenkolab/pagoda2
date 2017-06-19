@@ -291,7 +291,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
             var selectionFormatted = [];
             var geneSelCntr = new geneSelectionController();
             for(var index = 0; index < selectedItems.length; index++){
-      		    var selectionName = selectedItems.getAt(index).getData().displayname;
+      		    var selectionName = selectedItems.getAt(index).getData().selectionname;
     	  	    var selection = geneSelCntr.getSelection(selectionName).genes;
     	  	    console.log(selection)
       		    selectionFormatted.push(selectionName+ "," + selection.join(","));
