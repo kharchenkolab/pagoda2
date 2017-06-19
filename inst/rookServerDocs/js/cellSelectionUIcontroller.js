@@ -84,22 +84,6 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	selModel: cellTableSelectionModel
     });
 
-   Ext.define('PagodaColorPicker',{
-          extend: "Ext.ux.colorpick.Field ",
-          constructor: function (config) {
-                var me = this;
-                childViewModel = Ext.Factory.viewModel('colorpick-selectormodel');
-
-                // Since this component needs to present its value as a thing to which users can
-                // bind, we create an internal VM for our purposes.
-                me.childViewModel = childViewModel;
-                me.items = [
-                  me.getMapAndHexRGBFields(childViewModel),
-                  me.getSliderAndHField(childViewModel),
-                ];
-                
-          },
-    });
     var formPanel = Ext.create('Ext.form.Panel', {
     height: '100%',
     width: '100%',
@@ -113,27 +97,31 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() { 
           var selectionTable = Ext.getCmp('cellSelectionTable');
       		var selectedItems = selectionTable.getSelectionModel().getSelected();
-      		if (selectedItems.length === 1) {
-      		    var selName = selectedItems.getAt(0).getData().selectionname;
+      		if (selectedItems.length >= 1) {
+      		    var dispNames = [];
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		      dispNames.push(selectedItems.getAt(i).getData().displayname)
+      		    }
         		   Ext.Msg.show({
                    title:'Delete Selection',
-                   msg: 'Delete ' + selectedItems.getAt(0).getData().displayname + '?',
+                   msg: "Would you like to delete the following selections? <br>" + dispNames.join("<br>"),
                    buttons:  Ext.Msg.OKCANCEL,
                    fn: function(btn, text) {
                      if (btn === 'ok') {
                        var cellSel = new cellSelectionController();
-                       cellSel.deleteSelection(selName);
+                       selNames.forEach(function(selName){
+                         cellSel.deleteSelection(selName);
+                       });
                      }
                    }
                 });
-      		} else if (selectedItems.length === 0) {
-      		  Ext.MessageBox.alert('Warning', 'Please select a cell selection first');
       		} else {
-      		  Ext.MessageBox.alert('Warning', 'Only one cell selection can be deleted at a time.');
-      		}
+      		  Ext.MessageBox.alert('Warning', 'Please select a cell selection first');
 
+          }
         }
-
       },
       {
         xtype: 'button',
@@ -141,10 +129,12 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('cellSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		  if (selectedItems.length == 2) {
-            var selectionA = selectedItems.getAt(0).getData().selectionname;
-            var selectionB = selectedItems.getAt(1).getData().selectionname;
-
+    		  if (selectedItems.length >= 2) {
+    		    
+    		    var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
             Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
               if ( btn === 'ok') {
                 var cellSelCntr =  new cellSelectionController();
@@ -162,14 +152,14 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                 if (cellSelCntr.getSelection(newSelectionName)) {
                   Ext.MessageBox.alert('Error','A selection with this name already exists!');
                 } else {
-                  cellSelCntr.mergeSelectionsIntoNew(selectionA, selectionB,
+                  cellSelCntr.mergeSelectionsIntoNew(selectionNames,
                     newSelectionName, newSelectionDisplayName);
                 }
               } // if btn ok
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two cell selections to merge first.');
+            Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to merge first.');
     		  }
 
         }
@@ -182,10 +172,12 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('cellSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		  if (selectedItems.length == 2) {
-            var selectionA = selectedItems.getAt(0).getData().selectionname;
-            var selectionB = selectedItems.getAt(1).getData().selectionname;
-
+    		  if (selectedItems.length >= 2) {
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+            
             Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
               if ( btn === 'ok') {
                 var cellSelCntr =  new cellSelectionController();
@@ -203,14 +195,14 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                 if (cellSelCntr.getSelection(newSelectionName)) {
                   Ext.MessageBox.alert('Error','A selection with this name already exists!');
                 } else {
-                  cellSelCntr.intersectSelectionsIntoNew(selectionA, selectionB,
+                  cellSelCntr.intersectSelectionsIntoNew(selectionNames,
                     newSelectionName, newSelectionDisplayName);
                 }
               } // if btn ok
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two cell selections to intersect first.');
+            Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to intersect first.');
     		  }
 
         }
@@ -421,31 +413,30 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	  handler: function() {
 	    	var selectionTable = Ext.getCmp('cellSelectionTable');
     		var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		if (selectedItems.length === 1) {
-            var selectionName = selectedItems.getAt(0).getData().selectionname;
-
+    		    
+    		    var selectionNames = []
+    		    for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+    		    
             // Highlight on heatmap
             var heatV = new heatmapViewer();
-            heatV.highlightCellSelectionByName(selectionName);
+            heatV.highlightCellSelectionsByNames(selectionNames);
             pagHelpers.regC(72);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName(selectionName);
+            embCntr.highlightSelectionsByNames(selectionNames);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName(selectionName);
+            aspHeatView.highlightCellSelectionsByNames(selectionNames);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName(selectionName);
+            metaView.highlightCellSelectionsByNames(selectionNames);
 
 
-    		} else {
-    		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
-    		    pagHelpers.regC(88);
-    		}
 	  }
 	},
 	{

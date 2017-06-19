@@ -93,24 +93,29 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('geneSelectionTable');
       		var selectedItems = selectionTable.getSelectionModel().getSelected();
-      		if (selectedItems.length === 1) {
-      		    var selName = selectedItems.getAt(0).getData().selectionname;
+      		if (selectedItems.length >= 1) {
+      		    var dispNames = [];
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		      dispNames.push(selectedItems.getAt(i).getData().displayname)
+      		    }
         		   Ext.Msg.show({
                    title:'Delete Selection',
-                   msg: 'Delete ' + selectedItems.getAt(0).getData().displayname + '?',
+                   msg: "Would you like to delete the following selections? <br>" + dispNames.join("<br>"),
                    buttons:  Ext.Msg.OKCANCEL,
                    fn: function(btn, text) {
                      if (btn === 'ok') {
                        var geneSel = new geneSelectionController();
-                       geneSel.deleteSelection(selName);
+                       selNames.forEach(function(selName){
+                         geneSel.deleteSelection(selName);
+                       });
                      }
                    }
                 });
-      		} else if (selectedItems.length === 0) {
-      		  Ext.MessageBox.alert('Warning', 'Please select a gene selection first');
       		} else {
-      		  Ext.MessageBox.alert('Warning', 'Only one gene selection can be deleted at a time.');
-      		}
+      		  Ext.MessageBox.alert('Warning', 'Please select a gene selection first');
+          }
 
         }
 
@@ -121,9 +126,12 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('geneSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		  if (selectedItems.length == 2) {
-            var selectionA = selectedItems.getAt(0).getData().selectionname;
-            var selectionB = selectedItems.getAt(1).getData().selectionname;
+    		  if (selectedItems.length >= 2) {
+    		    
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
 
             Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
               if ( btn === 'ok') {
@@ -142,14 +150,14 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
                 if (geneSelCntr.getSelection(newSelectionName)) {
                   Ext.MessageBox.alert('Error','A selection with this name already exists!');
                 } else {
-                  geneSelCntr.mergeSelectionsIntoNew(selectionA, selectionB,
+                  geneSelCntr.mergeSelectionsIntoNew(selectionNames,
                     newSelectionName, newSelectionDisplayName);
                 }
               } // if btn ok
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two gene selection to merge first.');
+            Ext.MessageBox.alert('Warning', 'Please pick at least two gene selections to merge first.');
     		  }
 
         }
@@ -162,9 +170,11 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
         handler: function() {
           var selectionTable = Ext.getCmp('geneSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		  if (selectedItems.length == 2) {
-            var selectionA = selectedItems.getAt(0).getData().selectionname;
-            var selectionB = selectedItems.getAt(1).getData().selectionname;
+    		  if (selectedItems.length >= 2) {
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		    }
 
             Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
               if ( btn === 'ok') {
@@ -183,14 +193,14 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
                 if (geneSelCntr.getSelection(newSelectionName)) {
                   Ext.MessageBox.alert('Error','A selection with this name already exists!');
                 } else {
-                  geneSelCntr.intersectSelectionsIntoNew(selectionA, selectionB,
+                  geneSelCntr.intersectSelectionsIntoNew( selNames,
                     newSelectionName, newSelectionDisplayName);
                 }
               } // if btn ok
             }
           });
     		  } else {
-            Ext.MessageBox.alert('Warning', 'Please pick two gene selection to intersect first.');
+            Ext.MessageBox.alert('Warning', 'Please pick at least two gene selection to intersect first.');
     		  }
 
         }
@@ -293,7 +303,6 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
             for(var index = 0; index < selectedItems.length; index++){
       		    var selectionName = selectedItems.getAt(index).getData().selectionname;
     	  	    var selection = geneSelCntr.getSelection(selectionName).genes;
-    	  	    console.log(selection)
       		    selectionFormatted.push(selectionName+ "," + selection.join(","));
       		  }
     		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
