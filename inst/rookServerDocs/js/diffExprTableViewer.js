@@ -108,7 +108,9 @@ diffExprTableViewer.prototype.generateTables = function() {
     id: 'deResultSetsTableExtJS',
     columns: [
       {text: 'Name', dataIndex: 'displayName', flex: 4.5 },
-      {text: 'Date', dataIndex: 'date', flex: 3.5 },
+      {text: 'Date', dataIndex: 'date', flex: 3.5, renderer: function(value){
+        return (new Date(value)).toUTCString();
+      }},
       {text: 'Internal name', dataIndex: 'name', flex: 2, hidden:true}
       ],
     emptyText: 'No differential expression results are available',
@@ -257,7 +259,7 @@ diffExprTableViewer.prototype.declareExtJStypes = function() {
     	extend: 'Ext.data.Model',
     	fields: [
     	    {name: 'name', type: 'string'},
-    	    {name: 'date', type: 'string'},
+    	    {name: 'date', type: 'number'},
     	    {name: 'displayName', type: 'string'}
     	]
     });
