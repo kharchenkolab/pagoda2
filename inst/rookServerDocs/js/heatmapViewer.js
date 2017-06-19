@@ -1086,8 +1086,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	var palSize = heatView.palManager.getNumberOfColors();
 	var pal = heatView.palManager.getPaletteColors();
 
-	ctx.fillStyle = pal[0];
-	ctx.fillRect(left,top,heatmapWidth,actualPlotHeight);
+
 
 	for ( var j = 0; j < data.p.length - 1; j++) {
 	    // row start index, row end index (in x and i)
@@ -1109,6 +1108,10 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    // use a color mapper to ensure consistency of coloring with
 	    // other views (eg embedding)
 	    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
+
+      // Print row background
+      ctx.fillStyle = pal[colorMapper(0)];
+      ctx.fillRect(left, rowOrder[j] * cellHeight + top,heatmapWidth,cellHeight);
 
 	    // Plot row
 	    for (var k = rsi; k < rei; k++) {
