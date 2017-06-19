@@ -319,21 +319,12 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	            height: "12px",
 	            html: '<input type="file" id="selectedGeneFile"><br>'
 	          },
-	          {
-	            xtype: 'button',
-	            text: 'cancel',
-  	          width:"10%",
-	            height:"40%",
-	            align: "center",
-	            handler: function(){
-	              Ext.getCmp('geneFileSelectionWindow').close();
-	            }
-	          },
   	        {
   	          xtype: 'button',
-	            text: 'ok',
+	            text: 'Ok',
 	            width:"10%",
-	            height:"40%",
+	            height:"30%",
+	            margin:"5 5 5 5",
 	            align: "center",
 	            handler: function(){
 	              
@@ -387,7 +378,18 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	             reader.readAsText(geneSelFile);
 	             Ext.getCmp('geneFileSelectionWindow').close();
 	            }
-	          }
+	          },
+	          {
+	            xtype: 'button',
+	            text: 'Cancel',
+  	          width:"10%",
+	            height:"30%",
+	            margin: "5 5 5 5",
+	            align: "center",
+	            handler: function(){
+	              Ext.getCmp('geneFileSelectionWindow').close();
+	            }
+	          },
 	        ],
 	      }).show();
 	    }

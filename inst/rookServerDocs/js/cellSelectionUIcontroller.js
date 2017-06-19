@@ -317,6 +317,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             for(var index = 0; index < selectedItems.length; index++){
       		    var selectionName = selectedItems.getAt(index).getData().displayname;
     	  	    var selection = cellSelCntr.getSelection(selectionName);
+    	  	    console.log(selectionName);
       		    selectionFormatted.push(selectionName+ "," + selection.join(","));
       		  }
     		    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
@@ -342,21 +343,12 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	            height: "12px",
 	            html: '<input type="file" id="selectedCellFile"><br>'
 	          },
-	          {
-	            xtype: 'button',
-	            text: 'cancel',
-  	          width:"10%",
-	            height:"40%",
-	            align: "center",
-	            handler: function(){
-	              Ext.getCmp('cellFileSelectionWindow').close();
-	            }
-	          },
   	        {
   	          xtype: 'button',
-	            text: 'ok',
+	            text: 'Ok',
 	            width:"10%",
-	            height:"40%",
+	            height:"30%",
+	            margin: "10 10 10 10",
 	            align: "center",
 	            handler: function(){
 	              var dataCntr = new dataController();
@@ -405,7 +397,18 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	             reader.readAsText(cellSelFile);
 	             Ext.getCmp('cellFileSelectionWindow').close();
 	            }
-	          }
+	          },
+	          {
+	            xtype: 'button',
+	            text: 'Cancel',
+  	          width:"10%",
+	            height:"30%",
+	            margin: "5 5 5 5",
+	            align: "center",
+	            handler: function(){
+	              Ext.getCmp('cellFileSelectionWindow').close();
+	            }
+	          },
 	        ],
 	      }).show();
 	    }
@@ -474,24 +477,13 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                   change: 'onChange'
                 }
             },
-	          {
-	            xtype: 'button',
-	            text: 'cancel',
-  	          width:"20%",
-	            height:"30%",
-	            align: "center",
-	            margin: "10 10 10 10",
-	            handler: function(){
-	              Ext.getCmp('cellSelectionColorWindow').close();
-	            }
-	          },
   	        {
   	          xtype: 'button',
-	            text: 'ok',
+	            text: 'Ok',
 	            width:"20%",
 	            height:"30%",
 	            align: "center",
-	            margin: "10 10 10 10",
+	            margin: "5 5 5 5",
 	            handler: function(){
 	              
 	              cellSelCntrl.setColor(selectedItems.getAt(0).getData().selectionname, "#" + (Ext.getCmp("colorPicker").value))
@@ -506,7 +498,18 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	          
 	              Ext.getCmp('cellSelectionColorWindow').close();
 	            }
-	          }
+	          },
+	          {
+	            xtype: 'button',
+	            text: 'Cancel',
+  	          width:"20%",
+	            height:"30%",
+	            align: "center",
+	            margin: "5 5 5 5",
+	            handler: function(){
+	              Ext.getCmp('cellSelectionColorWindow').close();
+	            }
+	          },
 	        ]
   	    }).show();
 		} else {

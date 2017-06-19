@@ -256,16 +256,17 @@ embeddingViewer.prototype.generateToolbar = function() {
                       },//title
                       {
                         xtype: 'checkbox',
-                        boxLabel: 'Include X-Axis',
-                        id: 'includeX',
+                        boxLabel: 'Include Axis',
+                        id: 'includeAxis',
                         listeners:{
                           change: function(){
-                            var me = Ext.getCmp('includeX');
-                            if(Ext.getCmp('includeX').getValue()){
+                            if(Ext.getCmp('includeAxis').getValue()){
                               Ext.getCmp('xAxisTitle').enable();
+                              Ext.getCmp('yAxisTitle').enable();
                             }
                             else{
                               Ext.getCmp('xAxisTitle').disable();
+                              Ext.getCmp('yAxisTitle').disable();
                             }
 
                             Ext.getCmp('EmbeddingEditor').refresh();
@@ -279,23 +280,6 @@ embeddingViewer.prototype.generateToolbar = function() {
                         disabled: true,
                         listeners:{
                           change: function(){
-                            Ext.getCmp('EmbeddingEditor').refresh();
-                          }
-                        }
-                      },
-                      {
-                        xtype: 'checkbox',
-                        boxLabel: 'Include Y-Axis',
-                        id: 'includeY',
-                        listeners:{
-                          change: function(){
-                            var me = Ext.getCmp('includeY');
-                            if(Ext.getCmp('includeY').getValue()){
-                              Ext.getCmp('yAxisTitle').enable();
-                            }
-                            else{
-                              Ext.getCmp('yAxisTitle').disable();
-                            }
                             Ext.getCmp('EmbeddingEditor').refresh();
                           }
                         }
@@ -321,15 +305,6 @@ embeddingViewer.prototype.generateToolbar = function() {
                           }
                         }
 
-                      },
-                      {
-                        xtype: 'button',
-                        text: 'Cancel',
-                        id: 'cancel-embedding-download',
-                        margin: '4 4 4 4',
-                        handler: function(){
-                          Ext.getCmp("EmbeddingEditor").close();
-                        }
                       },
                       {
                         xtype: 'button',
@@ -362,9 +337,18 @@ embeddingViewer.prototype.generateToolbar = function() {
                             Ext.getCmp("EmbeddingEditor").close()
                           }
                       },
-
+                      {
+                        xtype: 'button',
+                        text: 'Cancel',
+                        id: 'cancel-embedding-download',
+                        margin: '4 4 4 4',
+                        handler: function(){
+                          Ext.getCmp("EmbeddingEditor").close();
+                        }
+                      },
                     ]
                   },
+                  
                   {
                     xtype: 'container',
                     title: 'Preview',
@@ -381,14 +365,14 @@ embeddingViewer.prototype.generateToolbar = function() {
                 },
 
                 drawPlot: function(canvas,overlay, destination, squareDim){
-                  var options = [Ext.getCmp('includeTitle').getValue(),Ext.getCmp('includeX').getValue(),Ext.getCmp('includeY').getValue(),Ext.getCmp('includeHighlight').getValue()];
+                  var options = [Ext.getCmp('includeTitle').getValue(),Ext.getCmp('includeAxis').getValue(),Ext.getCmp('includeHighlight').getValue()];
                   var targetContext = destination.getContext("2d");
                   targetContext.clearRect(0,0,squareDim,squareDim);
                   targetContext.fillStyle = "#FFFFFF";
                   targetContext.fillRect(0,0,squareDim,squareDim);
-                  if(!(options[0] || options[1] || options[2])){
+                  if(!(options[0] || options[1])){
                     destination.getContext("2d").drawImage(canvas,2,2,squareDim-4,squareDim-4);
-                    if(options[3]){
+                    if(options[2]){
                       destination.getContext("2d").drawImage(overlay,2,2,squareDim-4,squareDim-4);
                     }
                     return;
@@ -397,9 +381,9 @@ embeddingViewer.prototype.generateToolbar = function() {
                   var text = [Ext.getCmp('embTitle').getValue(), Ext.getCmp('xAxisTitle').getValue(),Ext.getCmp('yAxisTitle').getValue()]
                   var topOffset = (options[0]? Math.ceil(squareDim/12):0);
                   var bottomOffset = (options[1]? Math.ceil(squareDim/15):0);
-                  var leftOffset = (options[2]? Math.ceil(squareDim/15):0);
+                  var leftOffset = (options[1]? Math.ceil(squareDim/15):0);
                   var enclosingMargin = 10;
-                  var plotDim = Math.min(squareDim-(topOffset+bottomOffset + 2 * enclosingMargin), squareDim - (leftOffset + 2 * enclosingMargin));
+                  var plotDim = Math.min(squareDim-(topOffset + bottomOffset + 2 * enclosingMargin), squareDim - (leftOffset + 2 * enclosingMargin));
 
                   var readablePadding = 2;
                   var titlePadding = Math.ceil(squareDim/125);
@@ -411,8 +395,8 @@ embeddingViewer.prototype.generateToolbar = function() {
                   var arrowHeadLength = Math.ceil(squareDim/45)
 
                   var topLeft = {
-                    x: leftOffset+graphPaddingLeft+enclosingMargin,
-                    y: topOffset+graphPaddingTop+enclosingMargin
+                    x: leftOffset+enclosingMargin,
+                    y: topOffset+enclosingMargin
                   }
                   //clear the canvas
 
@@ -427,7 +411,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                     targetContext.fillText(text[0],(topLeft.x +plotDim/2), topLeft.y - titlePadding);
                   }
                   //draw necessary axis
-                  targetContext.font = (Math.ceil(squareDim/15)-4) + "px Arial";
+                  targetContext.font = (Math.ceil(squareDim/16)-4) + "px Arial";
                   targetContext.textAlign = "center"
 
                   //draw X axis
@@ -436,6 +420,7 @@ embeddingViewer.prototype.generateToolbar = function() {
 
                     targetContext.fillRect(topLeft.x-lineThickness, topLeft.y + plotDim, plotDim + lineThickness, lineThickness);
                     targetContext.fillText(text[1],topLeft.x + plotDim/2,  topLeft.y + plotDim + lineThickness + readablePadding);
+                    
                     targetContext.beginPath();
                     targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2,topLeft.y + plotDim - arrowHeadLength);
                     targetContext.lineTo(topLeft.x + plotDim +1,topLeft.y + plotDim + ((lineThickness + 1) / 2));
@@ -446,13 +431,12 @@ embeddingViewer.prototype.generateToolbar = function() {
                     targetContext.lineTo(topLeft.x + plotDim +1, topLeft.y + plotDim + ((lineThickness + 1) / 2));
                     targetContext.stroke();
                     targetContext.closePath();
-                  }
-                  //draw Y axis
-                  if(options[2]){
+                  
+                    //draw Y axis
                     targetContext.fillRect(topLeft.x-lineThickness, topLeft.y, lineThickness,  plotDim + lineThickness);
                     targetContext.textBaseline = "bottom";
                     targetContext.rotate(-Math.PI/2);
-                    targetContext.fillText(text[2],-(topLeft.y + plotDim/2),topLeft.x-lineThickness -readablePadding );
+                    targetContext.fillText(text[2],-(topLeft.y + plotDim/2),topLeft.x -readablePadding );
                     targetContext.rotate(Math.PI/2);
 
                     targetContext.beginPath();
@@ -468,7 +452,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                     targetContext.closePath();
                   }
 
-                  if(options[3]){
+                  if(options[2]){
                     targetContext.drawImage(overlay,topLeft.x + graphPaddingLeft,topLeft.y + graphPaddingTop , plotDim - (graphPaddingLeft+graphPaddingRight), plotDim - (graphPaddingTop+graphPaddingBottom));
                   }
                 }
