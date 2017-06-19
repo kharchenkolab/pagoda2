@@ -384,8 +384,6 @@ embeddingViewerScatterCanvas.prototype.clearHighlight = function() {
   ctx.clearRect(0,0,4000,4000);
 }
 
-
-
 /**
  * Generated the necessary html structure for this viewer
  */
