@@ -27,18 +27,19 @@ var p2globalParams = {
       fileremote-from-url: The application will obtain data from a static file url
         and will not have access to an external data processing unit. The file will be specified
         in the URL as a parameter, so that a single app deployment with this option can access
-        multiple files [NOT IMPLEMENTED]
+        multiple files
 
       fileremote-user-select: The application will run from a remote file that the user can
         specify at application startup [NOT IMPLEMENTED]
 
-      filelocal: The application will run for a local file using the the File API [ NOT IMPLEMENTED ]
+      filelocal: The application will run for a local file using the the File API,
+        the user will be presented with a prompt
 
       user-select: The user is presented with a prompt to select loading from any
         local or remote file [ NOT IMPLEMENTED ]
   */
   dataLoadingParams: {
-    configuration: "server", // server | fileremote-static | fileremote-from-url | filelocal FUTURE:| fileremote-user-select
+    configuration: "server", // server | fileremote-static | fileremote-from-url | filelocal FUTURE:| fileremote-user-select | user-select
     fileRemoteURL: "http://pklab.med.harvard.edu/nikolas/output.bin"
   },
 
