@@ -421,31 +421,31 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	  handler: function() {
 	    	var selectionTable = Ext.getCmp('cellSelectionTable');
     		var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		if (selectedItems.length === 1) {
-            var selectionName = selectedItems.getAt(0).getData().selectionname;
-
+    		    
+    		    var selectionNames = []
+    		    for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+    		    
+    		    console.log(selectionNames)
             // Highlight on heatmap
             var heatV = new heatmapViewer();
-            heatV.highlightCellSelectionByName(selectionName);
+            heatV.highlightCellSelectionsByNames(selectionNames);
             pagHelpers.regC(72);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName(selectionName);
+            embCntr.highlightSelectionsByNames(selectionNames);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName(selectionName);
+            aspHeatView.highlightCellSelectionsByNames(selectionNames);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName(selectionName);
+            metaView.highlightCellSelectionsByNames(selectionNames);
 
 
-    		} else {
-    		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
-    		    pagHelpers.regC(88);
-    		}
 	  }
 	},
 	{

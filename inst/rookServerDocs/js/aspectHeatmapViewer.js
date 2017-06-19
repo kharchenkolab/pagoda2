@@ -661,7 +661,24 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
     // Plot the bounding box
     ctx.strokeRect(left, top, heatmapWidth, actualPlotHeight);
 
+    // Plot the labels
+  	for (var i = 0; i < data.DimNames2.length; i++) {
+	    // Print the names
+	    var name = data.DimNames2[i];
+      console.log(data.DimNames2[i]);
+	    // Get the appropriate font size for this number of cells
+	    var fontSize = aspHeatView.getRowFontSize(cellHeight)
 
+	    // Calculate position
+	    x = ncells * cellWidth + left + 10;
+	    y = i * cellHeight + top + cellHeight / 2 + fontSize / 3;
+
+	    // Plot
+	    ctx.font =  fontSize + 'px Arial';
+	    ctx.fillStyle = 'black';
+	    ctx.fillText(name, x, y);
+	  } // Label plot loop
+    
     // TODO: setup click areas here
     aspHeatView.aspectRegions.clearClickAreas();
     for (var i = 0; i < data.DimNames2.length; i++){
@@ -786,7 +803,15 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
 
 }
 
-aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionName) {
+aspectHeatmapViewer.prototype.getRowFontSize = function (cellHeight) {
+    var a = Math.min(cellHeight, 11);
+    a = a * 3/4;
+    if (a < 4) { a = 0;}
+
+    return a;
+}
+
+aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames) {
   var aspHeatView = this;
   var dendV = new dendrogramViewer();
 
@@ -805,7 +830,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectio
 
 
   dataCntr.getCellOrder(function(cellorder) {
-    selectionNames.foreach(function(selectionName){
+    selectionNames.forEach(function(selectionName){
     var cellSelection = cellSelCntr.getSelection(selectionName);
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
