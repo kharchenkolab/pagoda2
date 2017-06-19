@@ -97,10 +97,11 @@ diffExprTableViewer.prototype.generateTables = function() {
         closable: true,
         resizable: false
     }).show();
-
-
-
   }});
+  resultSelectionTbar.add(
+    {
+      
+    });
 
   // Table for the result sets
   var resultSetSelectionGrid = Ext.create('Ext.grid.Panel',{
