@@ -177,23 +177,22 @@ cellSelectionController.prototype.renameSelection = function(selectionName, newS
 /**
  * Generate a new cell selection from two existing cell selections
  */
-cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName)  {
-    var selA = this.selections[selectionA].cells;
-    var selB = this.selections[selectionB].cells;
+cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName)  {
 
+    var cellSelCtrl = new cellSelectionController();
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
     sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
 
-    // Concatenate arrays into a new one
-    sel.cells = selA.concat(selB);
-    for(var i=0; i<sel.cells.length; ++i) {
-        for(var j=i+1; j<sel.cells.length; ++j) {
-            if(sel.cells[i] === sel.cells[j])
-                sel.cells.splice(j--, 1);
-        }
-    }
+    var cells = {};
+    selections.forEach(function(selection){
+      cellSelCtrl.getSelection(selection).forEach(function(cell){
+        cells[cell] = true;
+      })
+    });
+    sel.cells = Object.keys(cells);
+    
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }
@@ -201,24 +200,33 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selectionA, 
 /**
  * Genereate a new cell selection by intersecting two cell selections
  */
-cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectionA, selectionB, newSelectionName, newSelectionDisplayName){
-    var selA = this.selections[selectionA].cells;
-    var selB = this.selections[selectionB].cells;
+cellSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName){
 
+    var cellSelCtrl = this;
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.cells = [];
     sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
-
-    // TODO: There might be performance benefits in looping over shortere array
-    var l = selA.length;
-    for (var i = 0; i < l; i++){
-      if (selB.indexOf(selA[i]) != -1) {
-        sel.cells.push(selA[i]);
+    
+    var cells = {};
+    cellSelCtrl.getSelection(selections[0]).forEach(function(cell){
+      cells[cell] = 1; 
+    });
+    for(var i = 1; i< selections.length; i++){
+      cellSelCtrl.getSelection(selections[i]).forEach(function(cell){
+        if(cells[cell]){
+          cells[cell]++;
+        }
+      });
+    }
+    sel.cells = [];
+    
+    for(cell in cells){
+      if(cells[cell] === selections.length){
+        sel.cells.push(cell);
       }
     }
-
+    
     this.selections[newSelectionName] = sel;
     this.raiseSelectionChangedEvent();
 }

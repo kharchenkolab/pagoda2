@@ -278,6 +278,80 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 
 }
 
+embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(selectionNames) {
+  
+  var cellSelCntr = new cellSelectionController();
+  var embViewer = new embeddingViewer();
+  var thisViewer = this;
+
+  var config =  embViewer.getConfig();
+  var dataCntr = new dataController();
+  var type = config.type;
+  var embeddingType = config.embeddingType;
+
+  var size = this.size;
+  
+  var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
+  ctx.clearRect(0,0,5000,5000);
+  
+  dataCntr.getEmbedding(type, embeddingType, function(data){
+    selectionNames.forEach(function(selectionName){
+
+      var cells = cellSelCntr.getSelection(selectionName);
+      var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+      
+	    // Make the xscale
+	    thisViewer.xScaleDomainMin = +Infinity;
+	    thisViewer.xScaleDomainMax = -Infinity;
+	    for (var j = 0; j < plotData.length; j++) {
+    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+	    }
+	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+							 thisViewer.xScaleDomainMax,
+							 thisViewer.xScaleRangeMin,
+							 thisViewer.xScaleRangeMax);
+
+	    // Make the y scale
+	    thisViewer.yScaleDomainMin = +Infinity;
+	    thisViewer.yScaleDomainMax = -Infinity;
+	    for (var j = 0; j < plotData.length; j++) {
+    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+	    }
+	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
+							 thisViewer.yScaleDomainMax,
+							 thisViewer.yScaleRangeMin,
+							 thisViewer.yScaleRangeMax);
+
+
+	    var pointsize = embViewer.getCurrentPointSize();
+
+	    
+	    ctx.save();
+	    
+	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
+	    for (var i = 0; i < plotData.length; i++) {
+    		var point = plotData[i];
+    		if ( cells.indexOf(point[0]) > -1 ) {
+    		    var xs = xScale(point[1]);
+    		    var ys = yScale(point[2]);
+
+    		    ctx.beginPath();
+    		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+    		    ctx.stroke();
+    		}
+	    } // for
+	    ctx.restore();
+    });
+  });
+
+}
+
 
 /**
  * Update the colors, delegated to draw()

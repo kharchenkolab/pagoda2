@@ -847,3 +847,6 @@ embeddingViewer.prototype.setCurrentPointSize = function (sz) {
 embeddingViewer.prototype.highlightSelectionByName = function(selectionName) {
   this.currentViewer.highlightSelectionByName(selectionName);
 }
+embeddingViewer.prototype.highlightSelectionsByNames = function(selectionNames) {
+  this.currentViewer.highlightSelectionsByNames(selectionNames);
+}

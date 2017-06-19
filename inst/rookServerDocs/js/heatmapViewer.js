@@ -1013,7 +1013,7 @@ heatmapViewer.prototype.highlightCellSelectionsByNames = function(selectionNames
   dataCntr.getCellOrder(function(cellorder) {
     // Currently displayed cells
 
-    selectionNames.foreach(function(selectionName){
+    selectionNames.forEach(function(selectionName){
     var cellSelection = cellSelCntr.getSelection(selectionName);
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
