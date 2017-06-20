@@ -113,14 +113,16 @@ diffExprTableViewer.prototype.generateTables = function() {
 			  var selectionTextFields = [{
 			    id: "selectionAName",
           xtype: "textfield",
-          fieldLabel: "New Selection A Name"
+          fieldLabel: "New Selection A Name",
+          value: resultsDEset.getName() + "_A"
         }];
         
 			  if(resultsDEset.getSelectionB()){
 			    selectionTextFields.push({
 			      id: "selectionBName",
             xtype: "textfield",
-            fieldLabel: "New Selection B Name"
+            fieldLabel: "New Selection B Name",
+            value: resultsDEset.getName() + "_B"
 			    });
 			  }
 			  console.log(resultsDEset.getSelectionB());
