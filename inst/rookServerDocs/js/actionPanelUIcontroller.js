@@ -57,6 +57,15 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 		tooltip: 'Perform differential expression between two groups of cells',
 		height: '100%',
 		width: '100%',
+	    },
+	    {
+		layout: 'fit',
+		title: 'Gene to Gene Expression',
+		id: 'expressionScatterPlotTab',
+		glyph: 0xf192, //fa-dot-in-circle
+		tooltip: 'Perform differential expression between two genes in one group of cells',
+		height: '100%',
+		width: '100%',
 	    }
 	    /*,
 	    {
@@ -87,7 +96,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     }
 
     var deTab = Ext.getCmp('differentialExpressionTab');
-
+    var espTab = Ext.getCmp('expressionScatterPlotTab');
     var formPanelDE =  Ext.create('Ext.form.Panel', {
     	id: 'formPanelDE',
     	height: '100%',
@@ -184,8 +193,52 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 
     	] //items
     });
+    
+    //Gene expression scatter chart
+    var formPanelESP =  Ext.create('Ext.form.Panel', {
+    	id: 'formPanelESP',
+    	height: '100%',
+    	width: '100%',
+    	bodyPadding: 10,
+    	items: [
+    	  {
+    	    id: 'cellSelectionESP',
+    	    xtype: 'combo',
+    	    fieldLabel: 'Reference Cell Selection',
+    	    queryMode: 'local',
+    	    editable: false,
+    	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
+    	    displayField: 'displayname',
+    	    valueField: 'selectionname'
+    	  },
+    	  {
+    	    xtype: 'textfield',
+    	    id: 'geneA',
+    	    fieldLabel: "Gene A",
+    	  },
+    	  {
+    	    xtype: 'textfield',
+    	    id: 'geneB',
+    	    fieldLabel: "Gene B",
+    	  },
+    	  {
+    	    xtype: 'button',
+    	    text: 'Build Plot',
+    	    margin: '5 5 5 5',
+    	    handler: UIcontroller.generateESPwindow
+    	  },
+    	  {
+    	    xtype: 'button',
+    	    glyph: 0xf128,
+    	    text: 'help',
+    	    margin: '5 5 5 5',
+    	    handler: UIcontroller.showESPhelpDialog
+    	  }
+    	]
+    });
+    
     deTab.add(formPanelDE);
-
+    espTab.add(formPanelESP);
     actionsTab.add(actionsInnerTab);
 };
 
@@ -239,7 +292,48 @@ actionPanelUIcontroller.prototype.showDEhelpDialog = function() {
     }).show();
     pagHelpers.regC(94);
 }
+/**
+ * Show help dialog for Expression Scatter Plot
+ */
+actionPanelUIcontroller.prototype.showESPhelpDialog = function (){
+  Ext.create('Ext.window.Window', {
+      height: 300,
+      width: 400,
+      title: 'Help: Expression Scatter Plots',
+      scrollable: true,
+      bodyPadding: 10,
+      html: '<h2>Plotting differential expression of two genes in a cell selection</h2>' +
+        '<p></p>'
+        ,
+      constrain: true,
+      closable: true,
+      resizable: false
+    }).show();
+}
 
+/**
+ * Generates an ESP window if the data provided on the ESP tab is valid 
+ */
+actionPanelUIcontroller.prototype.generateESPwindow = function(){
+  var form = Ext.getCmp("formPanelESP").getForm();
+  
+  var cellSelection = form.findField("cellSelectionESP").getValue();
+  var geneA = form.findField("geneA").getValue();
+  var geneB = form.findField("geneB").getValue();
+  
+  if(geneA.length === 0){
+    Ext.MessageBox.alert('Warning',"Please provide a gene in the Gene A field.");
+  }
+  else if(geneB.length === 0){
+    Ext.MessageBox.alert('Warning',"Please provide a gene in the Gene B field.");
+  }
+  else if(cellSelection === null){
+    Ext.MessageBox.alert('Warning',"No Cell Selection Provided")
+  }
+  else{
+    console.log((new dataController()).getGeneInformationStore(function(data){console.log(data)}))
+  }
+}
 /**
  * Click handler for stop button of DE analysis
  * @private
