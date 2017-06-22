@@ -8,7 +8,9 @@
 #include "p2pack.h"
 #include <boost/program_options.hpp>
 
+
 using namespace std;
+//namespace fs = ::boost::filesystem;
 
 int main( int ac, char *av[] ) {
 
@@ -125,8 +127,22 @@ void make_file(string &indir, string &outfile) {
   struct entry* embeddingstructureEntry = make_entry_from_string("embeddingstructure", embeddingstructureData);
   entries.push_back(*embeddingstructureEntry);
 
-  // Doing the embeddings here  -- this needs to be dynamic of a list of files staring with emb*
-  // Alternatively it could be a command line argument
+
+
+  // Pack all files starting with 'emb_' for the embeddings to pack
+  boost::filesystem::path p1 (indir);
+  vector<string> embeddingFiles;
+  getEmbeddingFileName(p1, ".json", embeddingFiles);
+  for (std::vector<string>::iterator it = embeddingFiles.begin(); it != embeddingFiles.end(); ++it) {
+    string embFileName = indir + *it + ".json";
+    cout << embFileName << endl;
+    string embData = readWholeFile(embFileName);
+    struct entry* embEntry = make_entry_from_string(it->c_str(), embData);
+    entries.push_back(*embEntry);
+  }
+  
+  /*
+    //Old code for packing embedding one at a time
   string embPCAlargeVisFile = indir + "emb_PCA_largeVis.json";
   string embPCAlargeVisData = readWholeFile(embPCAlargeVisFile);
   struct entry* embPCAlargeVisEntry = make_entry_from_string("emb_PCA_largeVis", embPCAlargeVisData);
@@ -136,6 +152,8 @@ void make_file(string &indir, string &outfile) {
   string embPCAtSNEData = readWholeFile(embPCAtSNEFile);
   struct entry* embPCAtSNEEntry = make_entry_from_string("emb_PCA_tSNE", embPCAtSNEData);
   entries.push_back(*embPCAtSNEEntry);
+  */
+  
 
   makeMainSparseMatrix(entries, indir);
   makeAspectSparseMatrix(entries, indir);
@@ -486,4 +504,32 @@ void makeAspectSparseMatrix(list<entry> &entries, string& indir) {
   // Make the entry and add it to the list
   struct entry* sparseMatrixEntry = make_entry_from_string("aspectMatrix", smhDataString);
   entries.push_back(*sparseMatrixEntry);
+
+
+		     
+}
+
+/**
+ * Get the stem names of files with an embedding
+ */
+void getEmbeddingFileName(const fs::path& root, const string& prefix, vector<string>& ret)
+{
+  if (!fs::exists(root) || !fs::is_directory(root)) return;
+
+  fs::recursive_directory_iterator it(root);
+  fs::recursive_directory_iterator endit;
+
+  while (it != endit) {
+    boost::regex expr {"^emb_.*"};
+      
+    if(fs::is_regular_file(*it)){
+      
+      if (boost::regex_match(it->path().stem().c_str(), expr)) {
+	//cout << it->path().stem().c_str() << endl;
+	ret.push_back(it->path().stem().string());
+      }
+    }
+    
+    ++it;
+  }
 }

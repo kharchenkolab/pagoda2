@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <sstream>
 #include <string>
+#include <boost/regex.hpp>
+
+#define BOOST_FILESYSTEM_VERSION 3
+#define BOOST_FILESYSTEM_NO_DEPRECATED
+#include <boost/filesystem.hpp>
+
 
 
 // Exception codes
@@ -17,6 +23,7 @@
 
 
 using namespace std;
+namespace fs = ::boost::filesystem;
 
 // File format constants
 // The block size in bytes
@@ -88,5 +95,8 @@ list<T>* readNumberArrayFromFile(string &filename);
 template <typename T> inline T intDivRoundUP(T a, T b) {
 return(a + b -1) /b;
 }
+
+void getEmbeddingFileName(const fs::path& root, const string& ext,
+			   vector<string>& ret);
 
 #endif
