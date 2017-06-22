@@ -464,13 +464,15 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	              var cellSelFile = document.getElementById("selectedCellFile").files[0];
 	              var cellSelFileName = cellSelFile.name;
 	              var reader = new FileReader();
+	              var selection = Ext.getCmp("importComboBox").getValue()
 	              if(selection === "csv"){
 	                reader.onload = function(progressEvent){
+	                  var lines = this.result.split("\n");
   	                dataCntr.getCellOrder(function(cellOrder){
   	                  var cellSelCntrl = new cellSelectionController();
 	                    var total = 0;
 	                    var removedCells = {};
-	                    var lines = this.result.split("\n");
+	                    
   	                  for(var line = 0; line < lines.length; line++){
 	                      if(lines[line].length !== 0){
 	                        var selection = lines[line].split(",");
