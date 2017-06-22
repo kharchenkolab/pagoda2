@@ -202,6 +202,39 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	bodyPadding: 10,
     	items: [
     	  {
+          xtype: 'radiogroup',
+          name: 'analysisType',
+          fieldLabel: 'Analysis Type',
+          items: [
+            {
+              boxLabel: 'Against Selection',
+              name: 'analysisTypeSelection',
+              inputValue: 'vsSelection',
+              disabled: true
+            },
+            {
+              boxLabel: 'Against All Cells',
+              name: 'analysisTypeSelection',
+              inputValue: 'vsBackground',
+              checked: true
+            }
+          ],
+
+          listeners: {
+            change: function(obj, newValue, oldValue, eOpts) {
+              var selectionControl = Ext.getCmp('cellSelectionESP');
+              //debugger;
+              if (newValue.analysisTypeSelection == 'vsSelection') {
+                selectionControl.enable();
+              } else if (newValue.analysisTypeSelection == 'vsBackground') {
+                selectionControl.disable();
+              } else {
+                //Something is wrong
+              }
+            }
+          }
+        },
+    	  {
     	    id: 'cellSelectionESP',
     	    xtype: 'combo',
     	    fieldLabel: 'Reference Cell Selection',
@@ -209,7 +242,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
     	    displayField: 'displayname',
-    	    valueField: 'selectionname'
+    	    valueField: 'selectionname',
+    	    disabled: true
     	  },
     	  {
     	    xtype: 'textfield',
@@ -327,11 +361,58 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
   else if(geneB.length === 0){
     Ext.MessageBox.alert('Warning',"Please provide a gene in the Gene B field.");
   }
-  else if(cellSelection === null){
-    Ext.MessageBox.alert('Warning',"No Cell Selection Provided")
-  }
+  //else if(cellSelection === null){
+  //  Ext.MessageBox.alert('Warning',"No Cell Selection Provided")
+  //}
   else{
-    console.log((new dataController()).getGeneInformationStore(function(data){console.log(data)}))
+    (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,3000,false, function(data){
+      
+      if(data.DimNames2.length < 2){
+        Ext.MessageBox.alert("Error", "One or more of the gene names provided could not be found in the provided dataset.");
+        return;
+      }
+      
+      var geneMatrix = data.getFullMatrix();
+      Ext.create("Ext.window.Window", {
+        resizeable: false,
+        modal:true,
+        items:[
+          {
+            html:'<canvas id="scatterChart" width="600" height="600"></canvas>'
+          }
+        ],
+        listeners:{
+          close: function(){
+            var element = document.getElementById("scatterChart");
+            element.parentNode.removeChild(element);
+          }
+        } 
+      }).show();
+      var minimum = 0;
+      for(var i = 0; i < geneMatrix.array.length; i++){
+        minimum = Math.min(geneMatrix.array[i][0],minimum);
+      }
+      var x = new RGraph.Scatter({
+        id: 'scatterChart',
+        data: geneMatrix.array,
+        options: {
+            backgroundGridBorder: false,
+            backgroundGridVlines: false,
+            tickmarks: 'circle',
+            defaultcolor:"#FF0000",
+            titleXaxis: geneMatrix.colnames[0],
+            titleYaxis: geneMatrix.colnames[1],
+            xscale: true,
+            ticksize: 5,
+            gutterLeft: 50,
+            gutterBottom: 40,
+            xmin: minimum
+        }
+      })
+      
+      x.draw();
+      RGraph.redrawCanvas(x.canvas)
+    })
   }
 }
 /**
