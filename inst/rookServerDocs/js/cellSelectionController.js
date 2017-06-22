@@ -235,3 +235,146 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
 
 
 
+function colorManager(){
+  if(typeof colorManager.instance == "Object"){
+    return colorManager.instance;
+  }
+  
+  this.usedColors = [];
+  
+  
+  colorManager.instance = this;
+}
+colorManager.prototype.generateColor = function(){
+  
+  if(this.usedColors.length === 0){
+    var randomColor = Math.floor(Math.random() * 360);
+    this.usedColors.push({h: randomColor, f: 1});
+    return randomColor;
+  }
+  if(this.usedColors.length === 360){
+    var randomColor = Math.floor(Math.random() * 360);
+    this.usedColors[randomColor].f++;
+    return randomColor;
+  }
+  
+  var distPair = {
+    p: null,
+    i: null,
+    d: 0
+  };
+  
+  for(var i = 0; i < this.usedColors.length; i++){
+    var prev = this.usedColors[(i-1 + this.usedColors.length) % this.usedColors.length];
+    var next = this.usedColors[i];
+    var dist = 360 - ((prev.h - next.h + 360) % 360);
+    if(distPair.d < dist){
+      distPair.d = dist;
+      distPair.p = prev.h;
+      distPair.i = i;
+    }
+  }
+  
+  var newColor = {
+    h: (Math.floor(distPair.d/2) + distPair.p)%360,
+    f: 1
+  }
+  if(distPair.i === 0 && newColor.h > this.usedColors[0].h){
+    this.usedColors.push(newColor);
+  }
+  else{
+    this.usedColors.splice(i,0,Array(newColor));
+  }
+  return newColor.h;
+}
+
+colorManager.prototype.addColorByHex = function(hexColor){
+  var targetHue = this.hsv2hex(hexColor).h;
+  
+  var index = 0;
+  
+  while(index < this.usedColors.length && this.usedColors[index].h < targetHue){index++;}
+  
+  if(this.usedColors[index].h === targetHue){
+    this.usedColors[index].f++;
+  }
+  else{
+    this.usedColors.splice(i,0,Array({
+      h: targetHue,
+      f: 1
+    }));
+  }
+}
+colorManager.prototype.removeColorByHex = function(hexColor){
+  var targetHue = this.hsv2hex(hexColor).h;
+  
+  var index = 0;
+  
+  while(index < this.usedColors.length && this.usedColors[index].h < targetHue){index++;}
+  
+  if(this.usedColors[index].h === targetHue){
+    this.usedColors[index].f--;
+    if(this.usedColors[index].f === 0){
+      this.usedColors.splice(i,1)
+    }
+  }
+}
+
+colorManager.prototype.hex2hsv = function(hexInput){
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexInput);
+  var x = result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+  
+  if(result){
+    var rprime = x.r/255;
+    var gprime = x.g/255;
+    var bprime = x.b/255;
+    var cmin = Math.min(rprime,gprime,bprime);
+    var cmax = Math.max(rprime,gprime,bprime);
+    var delta = cmax-cmin;
+    var hsv = {};
+    if(cmax == rprime){
+      hsv.h = 60 * (((gprime-bprime)/delta + 6) % 6)
+    }
+    else if(cmax == gprime){
+      hsv.h = 60 * ((bprime-rprime)/delta + 2)
+    }
+    else if(cmax == bprime){
+      hsv.h = 60 * ((rprime-gprime)/delta + 4)
+    }
+    hsv.s = (cmax === 0 ? 0 : (delta/cmax));
+    hsv.v = cmax;
+    return hsv;
+  }
+  else{
+    return null;
+  }
+}
+
+colorManager.prototype.hsv2hex =  function(h, s, v) {
+    var r, g, b, i, f, p, q, t;
+    if (arguments.length === 1) {
+        s = h.s, v = h.v, h = h.h;
+    }
+    h = (h%360)/360;
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    return "#" + Math.round(r * 255).toString(16) + Math.round(g * 255).toString(16) + Math.round(b * 255).toString(16);
+}
+
+
+
