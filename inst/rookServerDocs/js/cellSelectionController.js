@@ -27,7 +27,7 @@ function cellSelectionController() {
 
     // Generat the array to keep the selections in
     this.selections = new Object();
-    this.highlights = ["#FF0097","#A200FF","#00ABA9","#8CBF26","#A05000","#E671B8","#F09609","#1BA1E2","#E51400","#339933","#FFFF00","#8F0012","#E30181","#B3773C","#C76306","#ABDBB0","#8F0012","#FADC50","#E490B5","#AFD0F4","#8ED0BB","#39FA61","#B56194","#8DDE06","#C1BC76"];
+    this.colorManagement = new colorManager();
     cellSelectionController.instance = this;
 };
 
@@ -41,9 +41,13 @@ function cellSelectionController() {
  */
 cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata, color ) {
     if(typeof color === "undefined"){
-      color = this.highlights[Math.floor(Math.random()* this.highlights.length)];
+      color = this.colorManagement.generateColor();
     }
-     if (typeof displayName === 'undefined') {
+    else{
+      console.log(color)
+      this.colorManagement.addColorByHex(color);
+    }
+    if(typeof displayName === 'undefined') {
 	    displayName = selectionName;
     }
 
@@ -87,8 +91,9 @@ cellSelectionController.prototype.getAvailableSelections = function() {
  */
 cellSelectionController.prototype.deleteSelection = function(selectionName) {
 
+    this.colorManagement.removeColorByHex(this.selections[selectionName].color)
     delete this.selections[selectionName];
-this.raiseSelectionChangedEvent();
+    this.raiseSelectionChangedEvent();
 }
 
 /**
@@ -124,8 +129,10 @@ cellSelectionController.prototype.getColor = function(selectionName){
  * @param {string} desired new highlight color
  */
 cellSelectionController.prototype.setColor = function(selectionName, newColor){
-
-  this.selections[selectionName].color =  newColor;
+  
+  this.colorManagement.removeColorByHex(this.selections[selectionName].color)
+  this.selections[selectionName].color = newColor;
+  this.colorManagement.addColorByHex(newColor);
   this.raiseSelectionChangedEvent();
 
 }
@@ -157,7 +164,7 @@ cellSelectionController.prototype.duplicateSelection = function(selectionName,
 
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
+    sel.color = this.colorManagement.generateColor();
     sel.cells = JSON.parse(JSON.stringify(oldSelection.cells));
 
     this.selections[newSelectionName] = sel;
@@ -183,7 +190,7 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, 
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
+    sel.color = this.colorManagement.generateColor();
 
     var cells = {};
     selections.forEach(function(selection){
@@ -206,7 +213,7 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
     var sel = {};
     sel.name = newSelectionName;
     sel.displayName = newSelectionDisplayName;
-    sel.color = this.highlights[Math.floor(Math.random()*this.highlights.length)];
+    sel.color = this.colorManagement.generateColor();
     
     var cells = {};
     cellSelCtrl.getSelection(selections[0]).forEach(function(cell){
@@ -221,7 +228,7 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
     }
     sel.cells = [];
     
-    for(cell in cells){
+    for(var cell in cells){
       if(cells[cell] === selections.length){
         sel.cells.push(cell);
       }
@@ -232,6 +239,165 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
 }
 
 
+function colorManager(){
+  if(typeof colorManager.instance === 'object'){
+    return colorManager.instance;
+  }
+  
+  this.usedColors = [];
+  colorManager.instance = this;
+}
+
+/**
+ * Generates and adds a color to the usedColors based on already selected colors.
+ * @return a hex color that was generated based on prior colors.
+ */ 
+colorManager.prototype.generateColor = function(){
+  
+  if(this.usedColors.length === 0){
+    var randomColor = Math.floor(Math.random() * 360);
+    this.usedColors.push({h: randomColor, f: 1});
+    return this.hsv2hex(randomColor,1,1);
+  }
+  if(this.usedColors.length === 360){
+    var randomColor = Math.floor(Math.random() * 360);
+    this.usedColors[randomColor].f++;
+    return this.hsv2hex(randomColor,1,1);
+  }
+  
+  var distPair = {
+    p: null,
+    i: null,
+    d: 0
+  };
+  
+  for(var i = 0; i < this.usedColors.length; i++){
+    var prev = this.usedColors[(i-1 + this.usedColors.length) % this.usedColors.length];
+    var next = this.usedColors[i];
+    var dist = 360 - ((prev.h - next.h + 360) % 360);
+    if(distPair.d < dist){
+      distPair.d = dist;
+      distPair.p = prev.h;
+      distPair.i = i;
+    }
+  }
+  
+  var newColor = {
+    h: (Math.floor(distPair.d/2) + distPair.p)%360,
+    f: 1
+  }
+  
+  if(distPair.i === 0 && newColor.h > this.usedColors[0].h){
+    this.usedColors.push(newColor);
+  }
+  else{
+    this.usedColors.splice(distPair.i,0,newColor);
+  }
+  return this.hsv2hex(newColor.h,1,1);
+}
+
+/**
+ * Allows for the insertion of a color into the ColoManager's used colors field by providing its hex value
+ * @Param hexColor: a color defined with its hex format
+ */ 
+colorManager.prototype.addColorByHex = function(hexColor){
+  var targetHue = this.hex2hsv(hexColor).h;
+  var index = 0;
+  
+  while(index < this.usedColors.length && this.usedColors[index].h < targetHue){index++;}
+  if((this.usedColors.length > index) && this.usedColors[index].h === targetHue){
+    this.usedColors[index].f++;
+  }
+  else{
+    this.usedColors.splice(index,0,{
+      h: targetHue,
+      f: 1
+    });
+  }
+}
 
 
+/**
+ * Allows for the removal of a color from the ColoManager's used colors field by providing its hex value
+ * @Param hexColor: a color defined with its hex format
+ */
+colorManager.prototype.removeColorByHex = function(hexColor){
+  var targetHue = this.hex2hsv(hexColor).h;
+  
+  if(this.usedColors.length === 0){
+    return;
+  }
+  console.log(this.usedColors);
+  var index = 0;
+  while(index < this.usedColors.length && this.usedColors[index].h < targetHue){index++;}
+  if(index < this.usedColors.length && this.usedColors[index].h === targetHue){
+    this.usedColors[index].f--;
+    if(this.usedColors[index].f === 0){
+      this.usedColors.splice(index,1)
+    }
+  }
+}
+/**
+ * Using a hex input creates a HSV representation of the provided color.
+ * @param hexInput: color in hex form
+ * @return A color in HSV form
+ */ 
+colorManager.prototype.hex2hsv = function(hexInput){
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexInput);
+  var x = result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+  if(result){
+    var rprime = x.r/255;
+    var gprime = x.g/255;
+    var bprime = x.b/255;
+    var cmin = Math.min(rprime,gprime,bprime);
+    var cmax = Math.max(rprime,gprime,bprime);
+    var delta = cmax-cmin;
+    var hsv = {};
+    if(cmax == rprime){
+      hsv.h = 60 * (((gprime-bprime)/delta + 6) % 6)
+    }
+    else if(cmax == gprime){
+      hsv.h = 60 * ((bprime-rprime)/delta + 2)
+    }
+    else if(cmax == bprime){
+      hsv.h = 60 * ((rprime-gprime)/delta + 4)
+    }
+    hsv.s = (cmax === 0 ? 0 : (delta/cmax));
+    hsv.v = cmax;
+    return hsv;
+  }
+  else{
+    return null;
+  }
+}
 
+/**
+ * Using a hsv color input creates a hex representation of the provided color.
+ * @param hexInput: color in hsv form
+ * @return A color in hex form
+ */ 
+colorManager.prototype.hsv2hex =  function(h, s, v) {
+    var r, g, b, i, f, p, q, t;
+    if (arguments.length === 1) {
+        s = h.s, v = h.v, h = h.h;
+    }
+    h = (h%360)/360;
+    i = Math.floor(h * 6);
+    f = h * 6 - i;
+    p = v * (1 - s);
+    q = v * (1 - f * s);
+    t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+    return "#" + ("0" + Math.round(r * 255).toString(16)).slice(-2) + ("0" + Math.round(g * 255).toString(16)).slice(-2) + ("0" + Math.round(b * 255).toString(16)).slice(-2)
+}
