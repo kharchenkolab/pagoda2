@@ -240,15 +240,18 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
 
 
 function colorManager(){
-  if(typeof colorManager.instance == "Object"){
+  if(typeof colorManager.instance === 'object'){
     return colorManager.instance;
   }
   
   this.usedColors = [];
-  
-  
   colorManager.instance = this;
 }
+
+/**
+ * Generates and adds a color to the usedColors based on already selected colors.
+ * @return a hex color that was generated based on prior colors.
+ */ 
 colorManager.prototype.generateColor = function(){
   
   if(this.usedColors.length === 0){
@@ -293,6 +296,10 @@ colorManager.prototype.generateColor = function(){
   return this.hsv2hex(newColor.h,1,1);
 }
 
+/**
+ * Allows for the insertion of a color into the ColoManager's used colors field by providing its hex value
+ * @Param hexColor: a color defined with its hex format
+ */ 
 colorManager.prototype.addColorByHex = function(hexColor){
   var targetHue = this.hex2hsv(hexColor).h;
   var index = 0;
@@ -308,6 +315,12 @@ colorManager.prototype.addColorByHex = function(hexColor){
     });
   }
 }
+
+
+/**
+ * Allows for the removal of a color from the ColoManager's used colors field by providing its hex value
+ * @Param hexColor: a color defined with its hex format
+ */
 colorManager.prototype.removeColorByHex = function(hexColor){
   var targetHue = this.hex2hsv(hexColor).h;
   
@@ -324,7 +337,11 @@ colorManager.prototype.removeColorByHex = function(hexColor){
     }
   }
 }
-
+/**
+ * Using a hex input creates a HSV representation of the provided color.
+ * @param hexInput: color in hex form
+ * @return A color in HSV form
+ */ 
 colorManager.prototype.hex2hsv = function(hexInput){
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexInput);
   var x = result ? {
@@ -358,6 +375,11 @@ colorManager.prototype.hex2hsv = function(hexInput){
   }
 }
 
+/**
+ * Using a hsv color input creates a hex representation of the provided color.
+ * @param hexInput: color in hsv form
+ * @return A color in hex form
+ */ 
 colorManager.prototype.hsv2hex =  function(h, s, v) {
     var r, g, b, i, f, p, q, t;
     if (arguments.length === 1) {
@@ -379,4 +401,3 @@ colorManager.prototype.hsv2hex =  function(h, s, v) {
     }
     return "#" + ("0" + Math.round(r * 255).toString(16)).slice(-2) + ("0" + Math.round(g * 255).toString(16)).slice(-2) + ("0" + Math.round(b * 255).toString(16)).slice(-2)
 }
-var x = new colorManager();
