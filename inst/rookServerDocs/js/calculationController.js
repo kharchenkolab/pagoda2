@@ -146,10 +146,10 @@ differentialExpressionStore.prototype.getAvailableDEsets = function() {
     var curKey = availKeys[i];
     var name = curKey;
     var displayName = this.deSets[curKey].getName();
-    var date = this.deSets[curKey].getStartTime().toUTCString();
+    
+    var date = this.deSets[curKey].getStartTime().valueOf();
     result.push({'name': name, 'date': date, 'displayName': displayName});
   }
-
   return result;
 };
 
