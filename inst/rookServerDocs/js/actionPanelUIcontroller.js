@@ -30,8 +30,6 @@ function actionPanelUIcontroller() {
     this.currentDErequest = null;
     actionPanelUIcontroller.instance = this;
 
-
-
 };
 
 
@@ -378,40 +376,38 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
         modal:true,
         items:[
           {
-            html:'<canvas id="scatterChart" width="600" height="600"></canvas>'
+            html:'<div id="scatterChart" style="height: 500px; width: 550px"></canvas>'
           }
         ],
-        listeners:{
-          close: function(){
-            var element = document.getElementById("scatterChart");
-            element.parentNode.removeChild(element);
-          }
-        } 
       }).show();
-      var minimum = 0;
+      var minimumX = 0;
+      var minimumY = 0;
+      var dataPoints = [];
       for(var i = 0; i < geneMatrix.array.length; i++){
-        minimum = Math.min(geneMatrix.array[i][0],minimum);
+        minimumX = Math.min(geneMatrix.array[i][0],minimumX);
+        minimumY = Math.min(geneMatrix.array[i][1],minimumY);
+        dataPoints.push({x:geneMatrix.array[i][0], y:geneMatrix.array[i][1]});
       }
-      var x = new RGraph.Scatter({
-        id: 'scatterChart',
-        data: geneMatrix.array,
-        options: {
-            backgroundGridBorder: false,
-            backgroundGridVlines: false,
-            tickmarks: 'circle',
-            defaultcolor:"#FF0000",
-            titleXaxis: geneMatrix.colnames[0],
-            titleYaxis: geneMatrix.colnames[1],
-            xscale: true,
-            ticksize: 5,
-            gutterLeft: 50,
-            gutterBottom: 40,
-            xmin: minimum
-        }
-      })
-      
-      x.draw();
-      RGraph.redrawCanvas(x.canvas)
+      var chart = new CanvasJS.Chart("scatterChart",
+    {
+    axisX:{
+      title: geneMatrix.colnames[0],
+      minimum: minimumX
+    },
+    axisY:{
+      title: geneMatrix.colnames[1],
+      minimum: minimumY
+    },
+    data: [
+      {
+       type: "scatter",
+       color: "red",
+       markerType: "circle",
+       dataPoints: dataPoints
+      }
+    ]
+    });
+      chart.render();
     })
   }
 }
