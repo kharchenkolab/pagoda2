@@ -207,8 +207,25 @@ embeddingViewer.prototype.generateToolbar = function() {
         glyph: 0xf0ed,
         handler: function(){
 
+              var aspV = new aspectHeatmapViewer(); 
               var embV = new embeddingViewer();
-              var canvas = embV.currentViewer.getMainCanvasElement();
+              var backgroundCanvas = document.createElement("canvas");
+              backgroundCanvas.height = 1000;
+              backgroundCanvas.width = 1000;
+              var backgroundOverlay = document.createElement("canvas");
+              backgroundOverlay.height = 1000;
+              backgroundOverlay.width = 1000;
+              var embViewSC = (new embeddingViewer()).currentViewer;
+              embViewSC.drawToCanvas(backgroundCanvas,1000);
+              if(aspV.currentOverlaySelectionShown){
+                if(aspV.currentOverlaySelectionName !== null){
+                  embViewSC.highlightSelectionsByNamesOntoCanvas(backgroundOverlay,1000,Array(aspV.currentOverlaySelectionName));
+                }
+                else{
+                  embViewSC.highlightSelectionsByNamesOntoCanvas(backgroundOverlay,1000,aspV.currentOverlaySelectionNames);
+                }
+              }
+              
               var overlay = document.getElementById('embedding-canvas-overlay');
               Ext.create("Ext.window.Window",{
                 title:"Embedding Download Preview",
@@ -217,8 +234,8 @@ embeddingViewer.prototype.generateToolbar = function() {
                 constrain: true,
                 closable: true,
                 resizable: false,
-                height: 275,
-                width: 520,
+                height: 300,
+                width: 540,
                 items: [
                   {
                     xtype: 'container',
@@ -234,9 +251,11 @@ embeddingViewer.prototype.generateToolbar = function() {
                             var me = Ext.getCmp('includeTitle');
                             if(Ext.getCmp('includeTitle').getValue()){
                               Ext.getCmp('embTitle').enable();
+                              Ext.getCmp('title-font-size').enable();
                             }
                             else{
                               Ext.getCmp('embTitle').disable();
+                              Ext.getCmp('title-font-size').disable();
                             }
 
                             Ext.getCmp('EmbeddingEditor').refresh();
@@ -255,6 +274,15 @@ embeddingViewer.prototype.generateToolbar = function() {
                         }
                       },//title
                       {
+                        xtype: 'numberfield',
+                        id: 'title-font-size',
+                        label: 'Title Font Size',
+                        value: 100,
+                        maxValue: 115,
+                        minValue: 10,
+                        disabled: true
+                      },
+                      {
                         xtype: 'checkbox',
                         boxLabel: 'Include Axis',
                         id: 'includeAxis',
@@ -263,10 +291,12 @@ embeddingViewer.prototype.generateToolbar = function() {
                             if(Ext.getCmp('includeAxis').getValue()){
                               Ext.getCmp('xAxisTitle').enable();
                               Ext.getCmp('yAxisTitle').enable();
+                              Ext.getCmp('axis-font-size').enable();
                             }
                             else{
                               Ext.getCmp('xAxisTitle').disable();
                               Ext.getCmp('yAxisTitle').disable();
+                              Ext.getCmp('axis-font-size').disable();
                             }
 
                             Ext.getCmp('EmbeddingEditor').refresh();
@@ -296,6 +326,15 @@ embeddingViewer.prototype.generateToolbar = function() {
                         }
                       },
                       {
+                        xtype: 'numberfield',
+                        id: 'axis-font-size',
+                        label: 'Axis Font Size',
+                        value: 60,
+                        maxValue: 80,
+                        minValue: 10,
+                        disabled: true
+                      },
+                      {
                         xtype: 'checkbox',
                         boxLabel: 'Include Highlights',
                         id: 'includeHighlight',
@@ -317,7 +356,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                             printCanvas.height = "1000";
                             printCanvas.width = "1000";
                             printCanvas.id = "print-embedding";
-                            Ext.getCmp("EmbeddingEditor").drawPlot(canvas,overlay,printCanvas,1000);
+                            Ext.getCmp("EmbeddingEditor").drawPlot(backgroundCanvas,overlay,printCanvas,1000);
                             const maxSize = 2000;
                             if (printCanvas.width > maxSize | printCanvas.height >maxSize){
                               Ext.Msg.show({
@@ -346,6 +385,24 @@ embeddingViewer.prototype.generateToolbar = function() {
                           Ext.getCmp("EmbeddingEditor").close();
                         }
                       },
+                      {
+                        xtype: 'button',
+                        text: 'Refresh',
+                        id: 'refresh-canvases',
+                        margin: '4 4 4 4',
+                        handler: function(){
+                          embViewSC.drawToCanvas(backgroundCanvas,1000);
+                          if(aspV.currentOverlaySelectionShown){
+                            if(aspV.currentOverlaySelectionName !== null){
+                              embViewSC.highlightSelectionsByNamesOntoCanvas(backgroundOverlay,1000,Array(aspV.currentOverlaySelectionName));
+                            }
+                            else{
+                              embViewSC.highlightSelectionsByNamesOntoCanvas(backgroundOverlay,1000,aspV.currentOverlaySelectionNames);
+                            }
+                          }
+                          Ext.getCmp("EmbeddingEditor").refresh();
+                        }
+                      }
                     ]
                   },
                   
@@ -355,44 +412,48 @@ embeddingViewer.prototype.generateToolbar = function() {
                     margin: '6 6 6 6',
                     items:[
                       {
-                        html:'<canvas id="print-preview-canvas" height="225" width="225"></canvas>'
+                        html:'<canvas id="print-preview-canvas" height="250" width="250"></canvas>'
                       }
                     ]
                   }
                 ],
                 refresh: function(){
-                  this.drawPlot(canvas,overlay,document.getElementById("print-preview-canvas"),225);
+                  this.drawPlot(backgroundCanvas,backgroundOverlay,document.getElementById("print-preview-canvas"),250);
                 },
 
                 drawPlot: function(canvas,overlay, destination, squareDim){
                   var options = [Ext.getCmp('includeTitle').getValue(),Ext.getCmp('includeAxis').getValue(),Ext.getCmp('includeHighlight').getValue()];
+                  
+                  
                   var targetContext = destination.getContext("2d");
                   targetContext.clearRect(0,0,squareDim,squareDim);
                   targetContext.fillStyle = "#FFFFFF";
                   targetContext.fillRect(0,0,squareDim,squareDim);
                   if(!(options[0] || options[1])){
-                    destination.getContext("2d").drawImage(canvas,2,2,squareDim-4,squareDim-4);
+                    destination.getContext("2d").drawImage(backgroundCanvas,2,2,squareDim-4,squareDim-4);
                     if(options[2]){
-                      destination.getContext("2d").drawImage(overlay,2,2,squareDim-4,squareDim-4);
+                      destination.getContext("2d").drawImage(backgroundOverlay,2,2,squareDim-4,squareDim-4);
                     }
                     return;
                   }
-
-                  var text = [Ext.getCmp('embTitle').getValue(), Ext.getCmp('xAxisTitle').getValue(),Ext.getCmp('yAxisTitle').getValue()]
-                  var topOffset = (options[0]? Math.ceil(squareDim/12):0);
-                  var bottomOffset = (options[1]? Math.ceil(squareDim/15):0);
-                  var leftOffset = (options[1]? Math.ceil(squareDim/15):0);
-                  var enclosingMargin = 10;
-                  var plotDim = Math.min(squareDim-(topOffset + bottomOffset + 2 * enclosingMargin), squareDim - (leftOffset + 2 * enclosingMargin));
-
                   var readablePadding = 2;
                   var titlePadding = Math.ceil(squareDim/125);
                   var graphPaddingLeft = 2;
                   var graphPaddingRight = 10;
                   var graphPaddingTop = 10;
                   var graphPaddingBottom = 2;
-                  var lineThickness = 2;
-                  var arrowHeadLength = Math.ceil(squareDim/45)
+                  var lineThickness = 1;
+                  
+                  var axisFontSize = Ext.getCmp('axis-font-size').getValue()/(1000/squareDim);
+                  var titleFontSize = Ext.getCmp('title-font-size').getValue()/(1000/squareDim);
+                  var text = [Ext.getCmp('embTitle').getValue(), Ext.getCmp('xAxisTitle').getValue(),Ext.getCmp('yAxisTitle').getValue()]
+                  var topOffset = (options[0]? axisFontSize + titlePadding * 2:0);
+                  var bottomOffset = (options[1]? titleFontSize:0);
+                  var leftOffset = (options[1]? axisFontSize:0);
+                  var enclosingMargin = 10;
+                  var plotDim = Math.min(squareDim-(topOffset + bottomOffset + 2 * enclosingMargin), squareDim - (leftOffset + 2 * enclosingMargin));
+
+                  
 
                   var topLeft = {
                     x: leftOffset+enclosingMargin,
@@ -404,50 +465,60 @@ embeddingViewer.prototype.generateToolbar = function() {
                   //draw the plot
                   targetContext.drawImage(canvas,topLeft.x + graphPaddingLeft,topLeft.y + graphPaddingTop , plotDim - (graphPaddingLeft+graphPaddingRight), plotDim - (graphPaddingTop+graphPaddingBottom));
 
-                  targetContext.font = (Math.ceil(squareDim/12)-4) + "px Arial"
+                  targetContext.font = titleFontSize + "px Arial"
                   targetContext.fillStyle = "#000000";
                   targetContext.textAlign = "center";
                   if(options[0]){
                     targetContext.fillText(text[0],(topLeft.x +plotDim/2), topLeft.y - titlePadding);
                   }
                   //draw necessary axis
-                  targetContext.font = (Math.ceil(squareDim/16)-4) + "px Arial";
+                  targetContext.font = axisFontSize + "px Arial";
                   targetContext.textAlign = "center"
 
                   //draw X axis
                   if(options[1]){
-                    targetContext.textBaseline = "top";
-
-                    targetContext.fillRect(topLeft.x-lineThickness, topLeft.y + plotDim, plotDim + lineThickness, lineThickness);
-                    targetContext.fillText(text[1],topLeft.x + plotDim/2,  topLeft.y + plotDim + lineThickness + readablePadding);
                     
                     targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2,topLeft.y + plotDim - arrowHeadLength);
-                    targetContext.lineTo(topLeft.x + plotDim +1,topLeft.y + plotDim + ((lineThickness + 1) / 2));
+                    targetContext.textBaseline = "top";
+                    //targetContext.fillRect(topLeft.x-lineThickness, topLeft.y + plotDim, plotDim + lineThickness, lineThickness);
+                    targetContext.fillText(text[1],topLeft.x + plotDim/2,  topLeft.y + plotDim + lineThickness + readablePadding);
+                    pagHelpers.canvas_arrow(targetContext,topLeft.x,topLeft.y + plotDim,topLeft.x+plotDim,topLeft.y+plotDim,10 * (squareDim/250));
+                    
+                    /*
+                    targetContext.beginPath();
+                    targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim - arrowHeadLength);
+                    targetContext.lineTo(topLeft.x + plotDim +1,topLeft.y + plotDim-1);
                     targetContext.stroke();
                     targetContext.closePath();
                     targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim + arrowHeadLength + lineThickness);
-                    targetContext.lineTo(topLeft.x + plotDim +1, topLeft.y + plotDim + ((lineThickness + 1) / 2));
+                    targetContext.moveTo(topLeft.x + plotDim + 1, topLeft.y + plotDim-1);
+                    targetContext.lineTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim + arrowHeadLength);
                     targetContext.stroke();
                     targetContext.closePath();
-                  
+                    */
+                    
                     //draw Y axis
-                    targetContext.fillRect(topLeft.x-lineThickness, topLeft.y, lineThickness,  plotDim + lineThickness);
+                    //targetContext.fillRect(topLeft.x-lineThickness, topLeft.y, lineThickness,  plotDim + lineThickness);
+                    
+                    pagHelpers.canvas_arrow(targetContext,topLeft.x, topLeft.y + plotDim-lineThickness,topLeft.x,topLeft.y, 10 * (squareDim/250));
                     targetContext.textBaseline = "bottom";
                     targetContext.rotate(-Math.PI/2);
                     targetContext.fillText(text[2],-(topLeft.y + plotDim/2),topLeft.x -readablePadding );
                     targetContext.rotate(Math.PI/2);
-
+                    
+                    
+                    /*
                     targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x - arrowHeadLength - lineThickness/2,topLeft.y + arrowHeadLength*2);
-                    targetContext.lineTo(topLeft.x - ((lineThickness + 1) / 2),topLeft.y - 1);
+                    targetContext.moveTo(topLeft.x - arrowHeadLength, topLeft.y + arrowHeadLength*2);
+                    targetContext.lineTo(topLeft.x -1,topLeft.y -1);
                     targetContext.stroke();
                     targetContext.closePath();
-
                     targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x + arrowHeadLength - lineThickness/2, topLeft.y + arrowHeadLength*2);
-                    targetContext.lineTo(topLeft.x - ((lineThickness + 1) / 2), topLeft.y - 1);
+                    targetContext.moveTo(topLeft.x-1, topLeft.y - 1);
+                    targetContext.lineTo(topLeft.x + arrowHeadLength - lineThickness/2, topLeft.y + arrowHeadLength*2);
+                    targetContext.stroke();
+                    targetContext.closePath();
+                    */
                     targetContext.stroke();
                     targetContext.closePath();
                   }
@@ -458,7 +529,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                 }
               }).show()
 
-              document.getElementById('print-preview-canvas').getContext("2d").drawImage(canvas,2,2,221,221)
+              document.getElementById('print-preview-canvas').getContext("2d").drawImage(backgroundCanvas,2,2,246,246)
 
 
 
