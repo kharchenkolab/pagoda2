@@ -297,23 +297,6 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
       }
     });
 
-  heatmapOverlayArea.addEventListener('dblclick', function(e) {
-    var x = e.offsetX;
-    var y = e.offsetY;
-
-    var regionData = aspHeatView.aspectRegions.resolveClick(x,y);
-    if (typeof regionData !== 'undefined') {
-
-      var aspTable = new aspectsTableViewer();
-      aspTable.showSelectedAspect(regionData.aspectId);
-
-      var embV = new embeddingViewer();
-	    embV.setColorConfiguration('aspect');
-	    embV.setAspectColorInfo({aspectid: regionData.aspectId});
-	    embV.updateColors();
-    };
-  }); // click listener
-
   heatmapOverlayArea.addEventListener('mousemove', function(e) {
 
     var aspHeatView =  new aspectHeatmapViewer();
@@ -364,7 +347,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(0,0,255,0.5)';
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(aspHeatView.dragStartX, drawConsts.top, boundedX - aspHeatView.dragStartX, actualPlotHeight);
         ctx.restore();
       }
@@ -388,9 +371,11 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
    heatmapOverlayArea.addEventListener('mouseup', function(e){
 
-     var heatDendView = new heatmapDendrogramViewer();
+    var heatDendView = new heatmapDendrogramViewer();
 
-      var aspHeatView = new aspectHeatmapViewer();
+    var aspHeatView = new aspectHeatmapViewer();
+      
+    if(aspHeatView.primaryMouseButtonDown){
       aspHeatView.primaryMouseButtonDown = false;
       if(aspHeatView.dragging) {
         // End of drag
@@ -430,7 +415,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000FF");
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000");
 
             // Highlight on heatmap
             var heatView = new heatmapViewer();
@@ -448,7 +433,19 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
       }
-
+      else{
+          var x = e.offsetX;
+    	    var y = e.offsetY;
+        	var heatView = new heatmapViewer();
+        	var regionData = heatView.geneRegions.resolveClick(x, y);
+    	    // Draw tooltip
+    	    // Tell the embedding to update
+    	    var embV = new embeddingViewer();
+    	    embV.setColorConfiguration('geneexpression');
+    	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
+    	    embV.updateColors();
+      }
+    }
    });
 
 
@@ -484,7 +481,8 @@ aspectHeatmapViewer.prototype.clearSelectionOverlayInternal = function(){
  */
 aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   var aspHeatView = new aspectHeatmapViewer()
-
+  
+  var heatDendView = new heatmapDendrogramViewer();
   var overlayArea = document.getElementById('aspect-heatmap-area-overlay');
   var ctx = overlayArea.getContext('2d');
 
@@ -499,17 +497,18 @@ aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
 
   var actualPlotHeight = this.getActualPlotHeight();
 
-  if (typeof y !== 'undefined' & y < actualPlotHeight & y > drawConsts.top){
+  /* if (typeof y !== 'undefined' & y < actualPlotHeight & y > drawConsts.top){
     ctx.beginPath();
     ctx.moveTo(drawConsts.left, y);
     ctx.lineTo(drawConsts.width + drawConsts.left, y);
     ctx.stroke();
-  }
-
-  if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left  &
+  } 
+  */
+  
+  console.log("Asp: " + x + " - + " + drawConsts.width + " - " + drawConsts.left);
+  if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left - heatDendView.getPlotAreaRightPadding()  &
 	    (y < actualPlotHeight  | typeof y === 'undefined') // if y is provided it is in the plot
        ) {
-
 	ctx.beginPath();
 	ctx.moveTo(x, drawConsts.top);
 	ctx.lineTo(x, actualPlotHeight + drawConsts.top);

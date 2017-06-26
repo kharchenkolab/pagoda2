@@ -313,8 +313,9 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     heatmapAreaOverlay.addEventListener('mouseup', function(e) {
       var heatView = new heatmapViewer();
+      if(heatView.primaryMouseButtonDown){
       heatView.primaryMouseButtonDown = false;
-
+      
       if(heatView.dragging) {
         // End of drag
         heatView.dragging = false;
@@ -351,7 +352,7 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#00FF00");//TODO green or blue?
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000");//TODO green or blue?
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
@@ -369,25 +370,21 @@ heatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
       }
-    });
-
-    // Click listener for setting gene color to embedding
-    heatmapAreaOverlay.addEventListener('dblclick', function(e) {
-    	var x = e.offsetX;
-    	var y = e.offsetY;
-
-    	var heatView = new heatmapViewer();
-    	var regionData = heatView.geneRegions.resolveClick(x, y);
-
-    	// Draw tooltip
-    	if (typeof regionData !== 'undefined') {
+      else{
+          var x = e.offsetX;
+    	    var y = e.offsetY;
+        	var heatView = new heatmapViewer();
+        	var regionData = heatView.geneRegions.resolveClick(x, y);
+    	    // Draw tooltip
     	    // Tell the embedding to update
     	    var embV = new embeddingViewer();
     	    embV.setColorConfiguration('geneexpression');
     	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
     	    embV.updateColors();
-    	}
+      }
+      }
     });
+
 
     // Mouse  move listener for the cross hairs and tooltip
     heatmapAreaOverlay.addEventListener('mousemove', function(e) {
@@ -440,13 +437,14 @@ heatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(0,255,0,0.5)';
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
 
 
 
       }
+      
 
     });
 
@@ -643,6 +641,7 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
 	ctx.stroke();
     }
 
+    console.log("Gene: " + x + " - + " + drawConsts.width + " - " + drawConsts.left);
     if (typeof x !== 'undefined' &
 	x > drawConsts.left &
 	x < drawConsts.width + drawConsts.left  &
@@ -1138,7 +1137,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    var fontSize =  heatView.getRowFontSize(cellHeight)
 
 	    // Calculate position
-	    x = ncells * cellWidth + left + 20;
+	    x = ncells * cellWidth + left + 10;
 	    y = rowOrder[i] * cellHeight + top + cellHeight / 2 + fontSize / 3;
 
 	    // Plot
