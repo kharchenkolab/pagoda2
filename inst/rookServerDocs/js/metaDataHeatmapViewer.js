@@ -265,8 +265,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                 Ext.MessageBox.prompt("Set Limit","Specify a lower limit for number of cells in a new selection.",
                 function(btn,text){
                   var rejectionFunction = function(selection){return true;};
+                  
                   if(btn === "ok"){
-
                     if(!isNaN(text)){
                       var lowerLimit = parseInt(text);
                       rejectionFunction = function(selection){
@@ -274,10 +274,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                       }
                     }
                   }
-                  for(var i = 0; i< params.totalLevels; i++ ){
-                    mdhv.makeCellSelectionFromMetadata(params.key,i,(params.keyLabel+ "_" + (i+1)).split(/\ |\#/).join(""),false, false,rejectionFunction)
-                  }
-                },this,false, "50")
+                  mdhv.makeAllCellSelectionsFromMetadata(params.key, (params.keyLabel + "_").split(/\ |\#/).join(""), rejectionFunction)
+                },this,false, "50") 
 
               }
             },
@@ -863,7 +861,7 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     var cellSelectionNames = [];
 
     var keys = Object.keys(data[callbackParameters.metadataName].data);
-
+    
     for (var kn = 0;  kn < keys.length; kn++) {
       var cellid = keys[kn];
       if(data[callbackParameters.metadataName].data[cellid] == val)  {
@@ -893,5 +891,37 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
   }, {metadataName: metadataName,metadataValue: metadataValue, selectionName: selectionName, focus: focus,highlight: highlight});
+
+}
+metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(metadataName,selNamePrefix, restriction) {
+  // Generate a cell selection
+
+  if(typeof restriction === "undefined"){
+    restriction = function(selection){return true;};
+  }
+
+  var dataCntr = new dataController();
+  dataCntr.getCellMetadata(function(data, callbackParameters) {
+    // data[callbackParameters.metadataName].data
+    var cellSelections = [];
+
+    var allCells = data[callbackParameters.metadataName].data;
+    
+    for (var cellid in  allCells) {
+      if(!cellSelections[allCells[cellid]]){
+        cellSelections[allCells[cellid]] = []
+      }
+      cellSelections[allCells[cellid]].push(cellid);
+    }
+
+    var cellSel = new cellSelectionController();
+    for(var i = 0; i < cellSelections.length; i++){
+      var cellSelectionNames = cellSelections[i];
+      if(restriction(cellSelectionNames)){
+        cellSel.setSelection(selNamePrefix + i, cellSelectionNames, selNamePrefix + i, {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
+      }
+    }
+
+  }, {metadataName: metadataName, selNamePrefix: selNamePrefix});
 
 }
