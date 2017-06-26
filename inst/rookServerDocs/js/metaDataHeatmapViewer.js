@@ -598,7 +598,7 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
 
       // Calculate label position
     	var labelYpad = cellHeight / 2 + 5;
-    	var labelXpad = 20;
+    	var labelXpad = 10;
 
       // Get  and clear the click areas
     	var mdhv = new metaDataHeatmapViewer();
