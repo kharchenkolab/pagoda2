@@ -352,7 +352,7 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#00FF00");//TODO green or blue?
+	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000");//TODO green or blue?
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
@@ -437,7 +437,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(0,255,0,0.5)';
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
 
@@ -1136,7 +1136,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    var fontSize =  heatView.getRowFontSize(cellHeight)
 
 	    // Calculate position
-	    x = ncells * cellWidth + left + 20;
+	    x = ncells * cellWidth + left + 10;
 	    y = rowOrder[i] * cellHeight + top + cellHeight / 2 + fontSize / 3;
 
 	    // Plot

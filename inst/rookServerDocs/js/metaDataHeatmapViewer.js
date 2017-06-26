@@ -171,7 +171,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
           var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
   
 	        var cellSelCntr = new cellSelectionController();
-  	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000ff");
+  	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000");
 
             // Highlight on heatmap
             var metaView = new heatmapViewer();
@@ -350,7 +350,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(0,0,255,0.5)';
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(metaV.dragStartX, drawConsts.top, boundedX - metaV.dragStartX, actualPlotHeight);
         ctx.restore();
       }
