@@ -436,14 +436,17 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
       else{
           var x = e.offsetX;
     	    var y = e.offsetY;
-        	var heatView = new heatmapViewer();
-        	var regionData = heatView.geneRegions.resolveClick(x, y);
+        	var aspHeatView = new aspectHeatmapViewer();
+        	var regionData = aspHeatView.aspectRegions.resolveClick(x, y);
     	    // Draw tooltip
     	    // Tell the embedding to update
-    	    var embV = new embeddingViewer();
-    	    embV.setColorConfiguration('geneexpression');
-    	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
-    	    embV.updateColors();
+    	    var aspTable = new aspectsTableViewer();
+          aspTable.showSelectedAspect(regionData.aspectId);
+
+          var embV = new embeddingViewer();
+    	    embV.setColorConfiguration('aspect');
+      	  embV.setAspectColorInfo({aspectid: regionData.aspectId});
+          embV.updateColors();
       }
     }
    });
