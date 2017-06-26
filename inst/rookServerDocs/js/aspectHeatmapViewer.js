@@ -481,7 +481,8 @@ aspectHeatmapViewer.prototype.clearSelectionOverlayInternal = function(){
  */
 aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   var aspHeatView = new aspectHeatmapViewer()
-
+  
+  var heatDendView = new heatmapDendrogramViewer();
   var overlayArea = document.getElementById('aspect-heatmap-area-overlay');
   var ctx = overlayArea.getContext('2d');
 
@@ -496,17 +497,18 @@ aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
 
   var actualPlotHeight = this.getActualPlotHeight();
 
-  if (typeof y !== 'undefined' & y < actualPlotHeight & y > drawConsts.top){
+  /* if (typeof y !== 'undefined' & y < actualPlotHeight & y > drawConsts.top){
     ctx.beginPath();
     ctx.moveTo(drawConsts.left, y);
     ctx.lineTo(drawConsts.width + drawConsts.left, y);
     ctx.stroke();
-  }
-
-  if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left  &
+  } 
+  */
+  
+  console.log("Asp: " + x + " - + " + drawConsts.width + " - " + drawConsts.left);
+  if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left - heatDendView.getPlotAreaRightPadding()  &
 	    (y < actualPlotHeight  | typeof y === 'undefined') // if y is provided it is in the plot
        ) {
-
 	ctx.beginPath();
 	ctx.moveTo(x, drawConsts.top);
 	ctx.lineTo(x, actualPlotHeight + drawConsts.top);

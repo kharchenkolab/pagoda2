@@ -466,7 +466,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 metaDataHeatmapViewer.prototype.showOverlay = function(x) {
     var overlayArea = document.getElementById('metadata-area-overlay');
     var ctx = overlayArea.getContext('2d');
-
+    
+    var heatDendView = new heatmapDendrogramViewer();
     var metaV = new metaDataHeatmapViewer();
     var drawConsts = metaV.getDrawConstants();
 
@@ -475,7 +476,7 @@ metaDataHeatmapViewer.prototype.showOverlay = function(x) {
     ctx.lineWidth =1 ;
 
     // Within the heatmap area
-    if ( x > drawConsts.left & x < drawConsts.width + drawConsts.left) {
+    if ( x > drawConsts.left & x < drawConsts.width + drawConsts.left - heatDendView.getPlotAreaRightPadding()) {
     	ctx.beginPath();
     	ctx.moveTo(x, drawConsts.top);
     	ctx.lineTo(x, drawConsts.height + drawConsts.top);

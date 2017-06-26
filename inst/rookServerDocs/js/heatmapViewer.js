@@ -641,6 +641,7 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
 	ctx.stroke();
     }
 
+    console.log("Gene: " + x + " - + " + drawConsts.width + " - " + drawConsts.left);
     if (typeof x !== 'undefined' &
 	x > drawConsts.left &
 	x < drawConsts.width + drawConsts.left  &
