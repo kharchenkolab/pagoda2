@@ -380,17 +380,7 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
           }
         ],
       }).show();
-      var minX = 0;
-      var minY = 0;
-      var maxX = 0;
-      var maxY = 0;
-      var dataPoints = [];
-      for(var i = 0; i < geneMatrix.array.length; i++){
-        minX = Math.min(geneMatrix.array[i][0],minX);
-        minY = Math.min(geneMatrix.array[i][1],minY);
-        maxX = Math.max(geneMatrix.array[i][0],maxX);
-        maxY = Math.max(geneMatrix.array[i][1],maxY);
-      }
+      
       
     })
   }
@@ -540,5 +530,123 @@ actionPanelUIcontroller.prototype.syncCellSelectionStore = function() {
 
     	store.add({selectionname: selName, displayname: selDisplayName});
     }// for
-
 }
+
+
+function graphViewer(data, canvas){
+      this.minX = 0;
+      this.minY = 0;
+      this.maxX = 0;
+      this.maxY = 0;
+      this.dataPoints = data;
+      for(var i = 0; i < geneMatrix.array.length; i++){
+        this.minX = Math.min(geneMatrix.array[i][0],minX);
+        this.minY = Math.min(geneMatrix.array[i][1],minY);
+        this.maxX = Math.max(geneMatrix.array[i][0],maxX);
+        this.maxY = Math.max(geneMatrix.array[i][1],maxY);
+      }
+      this.targetCanvas = canvas;
+}
+graphViewer.prototype.drawScatterePlot = function(){
+  
+  var choices = {
+    hasXscale: true,
+    hasYscale: true,
+    hasAxisLabels: true
+  }
+  this.measureComponents("14px Arial","28px Arial",500,500,2,5,{
+    
+  });
+  
+  
+}
+graphViewer.prototype.measureComponents = function(axisFont, titleFont, width, height, padding, margin, choices){
+  var boundings = {}
+  var ctx = this.targetCanvas.getContext('2d');
+  
+  var axisHeight = pagHelpers.getTextHeight(axisFont);
+  boundings.xGutter = (choices.hasXscale? axisHeight + padding : 0) + (choices.hasAxisLabels? axisHeight + padding : 0) + margin;
+  boundings.yGutter = margin + (choices.hasAxisLabels? axisHeight + padding : 0);
+  if(choices.hasYscale){
+    var step = (this.maxY-this.minY)/5
+    ctx.font = axisFont;
+    var maxLength = 0;
+    for(var x = minY; x < this.maxY; x += step){maxLength = Math.max(ctx.measureText(x.toFixed(2)),maxLength)}
+    boundings.yGutter += maxLength + padding;
+  }
+  
+  var titleHeight = pagHelpers.getTextHeight(titleFont);
+  boundings.topGutter = margin + (choices.hasTitle? titleHeight + padding: 0)
+  boundings.rightGutter = margin;
+  
+  boundings.plotTL = {
+    x: yGutter + graphViewer.linethickness,
+    y: topGutter
+  }
+  boundings.plotBR = {
+    x: width - rightGutter,
+    y: height - xGutter - graphViewer.linethickness
+  }
+  boundings.plotDim = {
+    width: width - rightGutter - yGutter - graphViewer.linethickness,
+    height: height - topGutter - xGutter - graphViewer.linethickness
+  }
+  boundings.canvasDim = {
+    height: height,
+    width: width
+  }
+  
+  return boundings;
+}
+
+graphViewer.prototype.drawAxis = function(options, boundings, yLabel, xLabel, padding, margin){
+  var ctx = this.targetCanvas.getContext("2d");
+  
+  
+  if(choices.hasYscale){
+    ctx.textAlign = "right";
+    ctx.textBaseline = "Middle";
+    var scaleSpace = plotDim.height/5;
+    var step = (this.maxY-this.minY)/5
+    for(var i = 0; i < 6; i++){
+      ctx.fillStyle = "#000000";
+      ctx.fillText((minY+(i*step)).toFixed(2) + "", (plotTL.x - graphViewer.lineThickness - padding), plotBR.y - scaleSpace * i);
+      ctx.fillStyle = "#D3D3D3";
+      ctx.fillRect(graphTL.x, plotBR.y - scaleSpace * i, plotDim.width, graphViewer.lineThickness);
+    }
+  }
+  
+  if(choices.hasXscale){
+    ctx.textAlign = "center";
+    ctx.textBaseline = "Hanging";
+    var scaleSpace = plotDim.width/5;
+    var step = (this.maxX-this.minX)/5
+    for(var i = 0; i < 6; i++){
+      ctx.fillStyle = "#000000";
+      ctx.fillText((minY+(i*step)).toFixed(2) + "", (plotTL.x - graphViewer.lineThickness - padding), plotBR.y - scaleSpace * i);
+      ctx.fillStyle = "#D3D3D3";
+      ctx.fillRect(graphTL.x + scaleSpace * i, plotBR.y, graphViewer.lineThickness, plotDim.height);
+    }
+  }
+  
+  if(choices.hasAxisLabels){
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "Bottom";
+    ctx.fillText(xLabel, (plotBR.x - plotTL.x)/2, canvasDim.height - margin);
+
+    ctx.textBaseline = "Hanging";
+    targetContext.rotate(-Math.PI/2);
+    ctx.fillText(yLabel,-(plotBR.y - plotTL.y)/2, margin)
+    targetContext.rotate(Math.PI/2);
+    
+  }
+  
+  ctx.fillStyle = "#000000";
+  ctx.fillRect(boundings.plotTL.x, boundings.plotTL.y, -1 * graphViewer.lineThickness, plotDim.height + graphViewer.lineThickness);
+  ctx.fillRect(boundings.plotTL.x,boundings.plotBR.y, plotDim.width, graphViewer.lineThickness);
+  
+}
+graphViewer.prototype.lineThickness = 1;
+
+
