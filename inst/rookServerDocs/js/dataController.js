@@ -266,3 +266,25 @@ dataController.prototype.getGeneSetInformationStore = function(callback) {
 dataController.prototype.getAspectMatrixByAspect = function(cellIndexStart, cellIndexEnd, aspectIds, callback) {
   return this.internalController.getAspectMatrixByAspect(cellIndexStart, cellIndexEnd, aspectIds, callback);
 }
+
+
+/**
+ * Returns a hash from cell names to cell position in the cell order
+ * @description returns via callback a hast from cell name to cell position
+ */
+dataController.prototype.getCellOrderHash = function(callback) {
+  var dc = this;
+
+  this.internalController.getCellOrder(function(data){
+
+    if (dc.cellNameToOrderMap === null) {
+      dc.cellNameToOrderMap = {};
+      for (var i = 0; i < data.length; i++) {
+        dc.cellNameToOrderMap[data[i]] = i;
+      }
+    };
+
+    callback(dc.cellNameToOrderMap);
+  });
+}
+
