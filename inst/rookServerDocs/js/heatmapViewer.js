@@ -313,8 +313,9 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     heatmapAreaOverlay.addEventListener('mouseup', function(e) {
       var heatView = new heatmapViewer();
+      if(heatView.primaryMouseButtonDown){
       heatView.primaryMouseButtonDown = false;
-
+      
       if(heatView.dragging) {
         // End of drag
         heatView.dragging = false;
@@ -369,25 +370,21 @@ heatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
       }
-    });
-
-    // Click listener for setting gene color to embedding
-    heatmapAreaOverlay.addEventListener('dblclick', function(e) {
-    	var x = e.offsetX;
-    	var y = e.offsetY;
-
-    	var heatView = new heatmapViewer();
-    	var regionData = heatView.geneRegions.resolveClick(x, y);
-
-    	// Draw tooltip
-    	if (typeof regionData !== 'undefined') {
+      else{
+          var x = e.offsetX;
+    	    var y = e.offsetY;
+        	var heatView = new heatmapViewer();
+        	var regionData = heatView.geneRegions.resolveClick(x, y);
+    	    // Draw tooltip
     	    // Tell the embedding to update
     	    var embV = new embeddingViewer();
     	    embV.setColorConfiguration('geneexpression');
     	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
     	    embV.updateColors();
-    	}
+      }
+      }
     });
+
 
     // Mouse  move listener for the cross hairs and tooltip
     heatmapAreaOverlay.addEventListener('mousemove', function(e) {
@@ -447,6 +444,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
 
       }
+      
 
     });
 

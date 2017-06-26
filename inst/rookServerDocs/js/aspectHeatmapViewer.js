@@ -297,23 +297,6 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
       }
     });
 
-  heatmapOverlayArea.addEventListener('dblclick', function(e) {
-    var x = e.offsetX;
-    var y = e.offsetY;
-
-    var regionData = aspHeatView.aspectRegions.resolveClick(x,y);
-    if (typeof regionData !== 'undefined') {
-
-      var aspTable = new aspectsTableViewer();
-      aspTable.showSelectedAspect(regionData.aspectId);
-
-      var embV = new embeddingViewer();
-	    embV.setColorConfiguration('aspect');
-	    embV.setAspectColorInfo({aspectid: regionData.aspectId});
-	    embV.updateColors();
-    };
-  }); // click listener
-
   heatmapOverlayArea.addEventListener('mousemove', function(e) {
 
     var aspHeatView =  new aspectHeatmapViewer();
@@ -388,9 +371,11 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
    heatmapOverlayArea.addEventListener('mouseup', function(e){
 
-     var heatDendView = new heatmapDendrogramViewer();
+    var heatDendView = new heatmapDendrogramViewer();
 
-      var aspHeatView = new aspectHeatmapViewer();
+    var aspHeatView = new aspectHeatmapViewer();
+      
+    if(aspHeatView.primaryMouseButtonDown){
       aspHeatView.primaryMouseButtonDown = false;
       if(aspHeatView.dragging) {
         // End of drag
@@ -448,7 +433,19 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
             var metaView = new metaDataHeatmapViewer();
             metaView.highlightCellSelectionByName('heatmapSelection');
       }
-
+      else{
+          var x = e.offsetX;
+    	    var y = e.offsetY;
+        	var heatView = new heatmapViewer();
+        	var regionData = heatView.geneRegions.resolveClick(x, y);
+    	    // Draw tooltip
+    	    // Tell the embedding to update
+    	    var embV = new embeddingViewer();
+    	    embV.setColorConfiguration('geneexpression');
+    	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
+    	    embV.updateColors();
+      }
+    }
    });
 
 
