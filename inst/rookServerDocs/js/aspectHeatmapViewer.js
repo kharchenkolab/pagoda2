@@ -757,7 +757,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
   var cellSelection = cellSelCntr.getSelection(selectionName);
 
   var dataCntr = new dataController();
-  dataCntr.getCellOrder(function(cellorder) {
+  dataCntr.getCellOrderHash(function(cellorderHash) {
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
 
@@ -782,7 +782,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
-      var cellIndex = cellorder.indexOf(cellSelection[i]);
+      var cellIndex = cellorderHash[cellSelection[i]];
 
       // Cell is among currently displayed ones
       if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {

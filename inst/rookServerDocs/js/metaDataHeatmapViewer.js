@@ -727,11 +727,10 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectio
 
   // Get the cell order
   var dataCntr = new dataController();
-  dataCntr.getCellOrder(function(cellorder) {
+  dataCntr.getCellOrderHash(function(cellorderHash) {
     // Currently displayed cells
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
-
     var ctx = metadataHeatV.getSelectionDrawingContext();
     ctx.clearRect(0,0,3000,3000);
 
@@ -753,7 +752,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionByName = function(selectio
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
-      var cellIndex = cellorder.indexOf(cellSelection[i]);
+      var cellIndex = cellorderHash[cellSelection[i]];
 
       // Cell is among currently displayed ones
       if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
@@ -794,7 +793,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(select
 
   // Get the cell order
   var dataCntr = new dataController();
-  dataCntr.getCellOrder(function(cellorder) {
+  dataCntr.getCellOrderHash(function(cellorderHash) {
     // Currently displayed cells
     selectionNames.forEach(function(selectionName){
     var cellSelection = cellSelCntr.getSelection(selectionName);
@@ -817,7 +816,7 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(select
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
-      var cellIndex = cellorder.indexOf(cellSelection[i]);
+      var cellIndex = cellorderHash[cellSelection[i]];
 
       // Cell is among currently displayed ones
       if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {

@@ -894,7 +894,7 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
 
   // Get the cell order
   var dataCntr = new dataController();
-  dataCntr.getCellOrder(function(cellorder) {
+  dataCntr.getCellOrderHash(function(cellorderHash) {
     // Currently displayed cells
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
@@ -920,7 +920,7 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
-      var cellIndex = cellorder.indexOf(cellSelection[i]);
+      var cellIndex = cellorderHash[cellSelection[i]];
 
       // Cell is among currently displayed ones
       if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {

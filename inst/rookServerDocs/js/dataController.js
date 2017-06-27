@@ -26,7 +26,8 @@ function dataController(loadParams) {
 
     // Initialise the controller that will serve the data
     this.internalController = null;
-
+    this.cellNameToOrderMap = null;
+    
     if (loadParams.connectionType == 'remoteServer') {
       // Standard Server Backed
       this.internalController = new DataControllerServer();
@@ -283,7 +284,6 @@ dataController.prototype.getCellOrderHash = function(callback) {
         dc.cellNameToOrderMap[data[i]] = i;
       }
     };
-
     callback(dc.cellNameToOrderMap);
   });
 }
