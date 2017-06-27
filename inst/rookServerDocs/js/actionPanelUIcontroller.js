@@ -202,16 +202,16 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	  {
           xtype: 'radiogroup',
           name: 'analysisType',
-          fieldLabel: 'Analysis Type',
+          fieldLabel: 'Plotted Cells',
           items: [
             {
-              boxLabel: 'Against Selection',
+              boxLabel: 'From Selection',
               name: 'analysisTypeSelection',
               inputValue: 'vsSelection',
               disabled: true
             },
             {
-              boxLabel: 'Against All Cells',
+              boxLabel: 'All Cells',
               name: 'analysisTypeSelection',
               inputValue: 'vsBackground',
               checked: true
@@ -359,17 +359,16 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
   else if(geneB.length === 0){
     Ext.MessageBox.alert('Warning',"Please provide a gene in the Gene B field.");
   }
-  //else if(cellSelection === null){
-  //  Ext.MessageBox.alert('Warning',"No Cell Selection Provided")
-  //}
   else{
-    (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,3000,false, function(data){
+    var len;
+    (new dataController()).getCellOrder(function(data){len = data.length})
+    if(!len){return;}
+    (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,len,false, function(data){
       
       if(data.DimNames2.length < 2){
         Ext.MessageBox.alert("Error", "One or more of the gene names provided could not be found in the provided dataset.");
         return;
       }
-      
       var geneMatrix = data.getFullMatrix();
       Ext.create("Ext.window.Window", {
         resizeable: false,
@@ -380,8 +379,8 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
           }
         ],
       }).show();
-      
-      
+      console.log(geneMatrix);
+      (new graphViewer(geneMatrix.array)).drawScatterPlot("scatterChart",geneMatrix.colnames[0],geneMatrix.colnames[1],"Differential Gene Expression");
     })
   }
 }
@@ -533,63 +532,96 @@ actionPanelUIcontroller.prototype.syncCellSelectionStore = function() {
 }
 
 
-function graphViewer(data, canvas){
-      this.minX = 0;
-      this.minY = 0;
-      this.maxX = 0;
-      this.maxY = 0;
-      this.dataPoints = data;
-      for(var i = 0; i < geneMatrix.array.length; i++){
-        this.minX = Math.min(geneMatrix.array[i][0],minX);
-        this.minY = Math.min(geneMatrix.array[i][1],minY);
-        this.maxX = Math.max(geneMatrix.array[i][0],maxX);
-        this.maxY = Math.max(geneMatrix.array[i][1],maxY);
-      }
-      this.targetCanvas = canvas;
+
+
+
+function graphViewer(data){
+      this.data = data;
 }
-graphViewer.prototype.drawScatterePlot = function(){
+
+graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
   
+  var boundries ={}
+  boundries.minX = 0;
+  boundries.minY = 0;
+  boundries.maxX = 0;
+  boundries.maxY = 0;
+  for(var i = 0; i < this.data.length; i++){
+    boundries.minX = Math.min(this.data[i][0],boundries.minX);
+    boundries.minY = Math.min(this.data[i][1],boundries.minY);
+    boundries.maxX = Math.max(this.data[i][0],boundries.maxX);
+    boundries.maxY = Math.max(this.data[i][1],boundries.maxY);
+  }
+  var padding = 8;
+  var radius = 4;
+  var margin = 5;
+  var ctx = document.getElementById(canvas).getContext('2d');
   var choices = {
     hasXscale: true,
     hasYscale: true,
-    hasAxisLabels: true
+    hasAxisLabels: true,
+    hasTitle: true,
   }
-  this.measureComponents("14px Arial","28px Arial",500,500,2,5,{
-    
-  });
   
+  var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,parseInt(document.getElementById(canvas).getAttribute("width")),parseInt(document.getElementById(canvas).getAttribute("height")), padding, margin, choices, boundries);
+  
+  this.drawAxisWithScales(ctx, choices,boundings, xLabel ,yLabel ,title , padding ,margin, boundries)
+  var xRange = boundries.maxX-boundries.minX;
+  var yRange = boundries.maxY-boundries.minY;
+  for(var i = 0; i < this.data.length; i++){
+    
+    var coordinate = {
+      x: (this.data[i][0] - boundries.minX)/xRange * boundings.plotDim.width,
+      y: (this.data[i][1] - boundries.minY)/yRange * boundings.plotDim.height
+    }
+    ctx.beginPath();
+    ctx.arc(coordinate.x + boundings.plotTL.x, boundings.plotBR.y - coordinate.y , radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+
+    ctx.strokeStyle = 'red';
+    ctx.stroke();
+    
+  }
   
 }
-graphViewer.prototype.measureComponents = function(axisFont, titleFont, width, height, padding, margin, choices){
+graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeight, titleFont, titleHeight, width, height, padding, margin, choices, boundries){
   var boundings = {}
-  var ctx = this.targetCanvas.getContext('2d');
-  
-  var axisHeight = pagHelpers.getTextHeight(axisFont);
+  boundings.axisFont = axisFont;
+  boundings.titleFont = titleFont;
   boundings.xGutter = (choices.hasXscale? axisHeight + padding : 0) + (choices.hasAxisLabels? axisHeight + padding : 0) + margin;
   boundings.yGutter = margin + (choices.hasAxisLabels? axisHeight + padding : 0);
+  
   if(choices.hasYscale){
-    var step = (this.maxY-this.minY)/5
+    var step = (boundries.maxY-boundries.minY)/5
     ctx.font = axisFont;
     var maxLength = 0;
-    for(var x = minY; x < this.maxY; x += step){maxLength = Math.max(ctx.measureText(x.toFixed(2)),maxLength)}
+    for(var x = boundries.minY; x < boundries.maxY; x += step){maxLength = Math.max(ctx.measureText(x.toFixed(2) + "").width,maxLength)}
     boundings.yGutter += maxLength + padding;
   }
   
-  var titleHeight = pagHelpers.getTextHeight(titleFont);
-  boundings.topGutter = margin + (choices.hasTitle? titleHeight + padding: 0)
+  boundings.topGutter = margin + (choices.hasTitle? titleHeight + padding : 0)
   boundings.rightGutter = margin;
   
+  if(choices.hasXscale){
+    var step = (boundries.maxX-boundries.minX)/5
+    ctx.font = axisFont;
+    var maxLength = 0;
+    for(var x = boundries.minX; x < boundries.maxX; x += step){maxLength = Math.max(ctx.measureText(x.toFixed(2) + "").width,maxLength)}
+    boundings.rightGutter += maxLength/2;
+  }
+  
   boundings.plotTL = {
-    x: yGutter + graphViewer.linethickness,
-    y: topGutter
+    x: boundings.yGutter + graphViewer.lineThickness,
+    y: boundings.topGutter
   }
   boundings.plotBR = {
-    x: width - rightGutter,
-    y: height - xGutter - graphViewer.linethickness
+    x: width - boundings.rightGutter,
+    y: height - boundings.xGutter - graphViewer.lineThickness
   }
   boundings.plotDim = {
-    width: width - rightGutter - yGutter - graphViewer.linethickness,
-    height: height - topGutter - xGutter - graphViewer.linethickness
+    width: width - boundings.rightGutter - boundings.yGutter - graphViewer.lineThickness,
+    height: height - boundings.topGutter - boundings.xGutter - graphViewer.lineThickness
   }
   boundings.canvasDim = {
     height: height,
@@ -598,55 +630,59 @@ graphViewer.prototype.measureComponents = function(axisFont, titleFont, width, h
   
   return boundings;
 }
-
-graphViewer.prototype.drawAxis = function(options, boundings, yLabel, xLabel, padding, margin){
-  var ctx = this.targetCanvas.getContext("2d");
-  
+graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, xLabel, yLabel, title, padding, margin, boundries){
   
   if(choices.hasYscale){
     ctx.textAlign = "right";
-    ctx.textBaseline = "Middle";
-    var scaleSpace = plotDim.height/5;
-    var step = (this.maxY-this.minY)/5
+    ctx.textBaseline = "middle";
+    var scaleSpace = boundings.plotDim.height/5;
+    var step = (boundries.maxY-boundries.minY)/5
     for(var i = 0; i < 6; i++){
       ctx.fillStyle = "#000000";
-      ctx.fillText((minY+(i*step)).toFixed(2) + "", (plotTL.x - graphViewer.lineThickness - padding), plotBR.y - scaleSpace * i);
+      ctx.fillText((Math.round((boundries.minY+(i*step))*100) / 100) + "", (boundings.plotTL.x - graphViewer.lineThickness - padding), boundings.plotBR.y - scaleSpace * i);
       ctx.fillStyle = "#D3D3D3";
-      ctx.fillRect(graphTL.x, plotBR.y - scaleSpace * i, plotDim.width, graphViewer.lineThickness);
+      ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y - scaleSpace * i, boundings.plotDim.width, graphViewer.lineThickness);
     }
   }
   
   if(choices.hasXscale){
     ctx.textAlign = "center";
-    ctx.textBaseline = "Hanging";
-    var scaleSpace = plotDim.width/5;
-    var step = (this.maxX-this.minX)/5
+    ctx.textBaseline = "top";
+    var scaleSpace = boundings.plotDim.width/5;
+    var step = (boundries.maxX-boundries.minX)/5
     for(var i = 0; i < 6; i++){
       ctx.fillStyle = "#000000";
-      ctx.fillText((minY+(i*step)).toFixed(2) + "", (plotTL.x - graphViewer.lineThickness - padding), plotBR.y - scaleSpace * i);
+      ctx.fillText((Math.round((boundries.minX+(i*step))*100) / 100) + "", (boundings.plotTL.x - graphViewer.lineThickness) + scaleSpace * i, boundings.plotBR.y + padding + graphViewer.lineThickness);
       ctx.fillStyle = "#D3D3D3";
-      ctx.fillRect(graphTL.x + scaleSpace * i, plotBR.y, graphViewer.lineThickness, plotDim.height);
+      ctx.fillRect(boundings.plotTL.x + scaleSpace * i, boundings.plotTL.y, -1 * graphViewer.lineThickness, boundings.plotDim.height);
     }
   }
   
   if(choices.hasAxisLabels){
 
+    ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
-    ctx.textBaseline = "Bottom";
-    ctx.fillText(xLabel, (plotBR.x - plotTL.x)/2, canvasDim.height - margin);
+    ctx.textBaseline = "bottom";
+    ctx.fillText(xLabel, (boundings.plotBR.x - boundings.plotTL.x)/2 + boundings.plotTL.x, boundings.canvasDim.height - margin);
 
-    ctx.textBaseline = "Hanging";
-    targetContext.rotate(-Math.PI/2);
-    ctx.fillText(yLabel,-(plotBR.y - plotTL.y)/2, margin)
-    targetContext.rotate(Math.PI/2);
+    ctx.textBaseline = "top";
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(yLabel,-((boundings.plotBR.y - boundings.plotTL.y)/2+ boundings.plotTL.y), margin)
+    ctx.rotate(Math.PI/2);
+  }
+  
+  if(choices.hasTitle){
+    ctx.fillStyle = "#000000";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.font = boundings.titleFont;
+    ctx.fillText(title, (boundings.plotBR.x - boundings.plotTL.x)/2 + boundings.plotTL.x, margin);
     
   }
   
   ctx.fillStyle = "#000000";
-  ctx.fillRect(boundings.plotTL.x, boundings.plotTL.y, -1 * graphViewer.lineThickness, plotDim.height + graphViewer.lineThickness);
-  ctx.fillRect(boundings.plotTL.x,boundings.plotBR.y, plotDim.width, graphViewer.lineThickness);
-  
+  ctx.fillRect(boundings.plotTL.x, boundings.plotTL.y, -1 * graphViewer.lineThickness, boundings.plotDim.height + graphViewer.lineThickness);
+  ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y, boundings.plotDim.width, graphViewer.lineThickness);
 }
-graphViewer.prototype.lineThickness = 1;
-
+graphViewer.lineThickness = 1;
 
