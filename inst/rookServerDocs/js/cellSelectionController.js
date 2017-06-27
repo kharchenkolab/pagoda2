@@ -44,7 +44,6 @@ cellSelectionController.prototype.setSelection = function(selectionName, cells, 
       color = this.colorManagement.generateColor();
     }
     else{
-      console.log(color)
       this.colorManagement.addColorByHex(color);
     }
     if(typeof displayName === 'undefined') {
@@ -327,7 +326,6 @@ colorManager.prototype.removeColorByHex = function(hexColor){
   if(this.usedColors.length === 0){
     return;
   }
-  console.log(this.usedColors);
   var index = 0;
   while(index < this.usedColors.length && this.usedColors[index].h < targetHue){index++;}
   if(index < this.usedColors.length && this.usedColors[index].h === targetHue){

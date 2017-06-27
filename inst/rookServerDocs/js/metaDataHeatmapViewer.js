@@ -119,7 +119,6 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     (metadataAreaOverlay[0]).addEventListener('mousedown', function(e) {
       // For preventing selection on double click
       e.preventDefault();
-      console.log("down");
       var heatView = new metaDataHeatmapViewer();
       var drawConsts = heatView.getDrawConstants();
       if (!contextMenuOpen & e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width & e.which == 1) {

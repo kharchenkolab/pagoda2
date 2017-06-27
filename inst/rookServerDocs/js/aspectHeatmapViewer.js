@@ -508,7 +508,6 @@ aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   } 
   */
   
-  console.log("Asp: " + x + " - + " + drawConsts.width + " - " + drawConsts.left);
   if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left - heatDendView.getPlotAreaRightPadding()  &
 	    (y < actualPlotHeight  | typeof y === 'undefined') // if y is provided it is in the plot
        ) {
