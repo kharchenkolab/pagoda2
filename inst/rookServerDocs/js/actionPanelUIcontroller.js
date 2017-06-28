@@ -64,6 +64,15 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 		tooltip: 'Perform differential expression between two genes in one group of cells',
 		height: '100%',
 		width: '100%',
+	    },
+	    {
+		layout: 'fit',
+		title: 'Meta Data Comparison',
+		id: 'metaDataBarGraphTab',
+		glyph: 0xf080, //fa-bar-chart
+		tooltip: 'Examine membership of cells between different clusters of meta data',
+		height: '100%',
+		width: '100%',
 	    }
 	    /*,
 	    {
@@ -92,9 +101,11 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     for (var i in availableMethods) {
 	    deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
     }
-
+    this.generateMetaDataStore();
+    
     var deTab = Ext.getCmp('differentialExpressionTab');
     var espTab = Ext.getCmp('expressionScatterPlotTab');
+    var mdbgTab = Ext.getCmp('metaDataBarGraphTab');
     var formPanelDE =  Ext.create('Ext.form.Panel', {
     	id: 'formPanelDE',
     	height: '100%',
@@ -238,10 +249,11 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    fieldLabel: 'Reference Cell Selection',
     	    queryMode: 'local',
     	    editable: false,
+    	    disabled: true,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
     	    displayField: 'displayname',
     	    valueField: 'selectionname',
-    	    disabled: true
+    	    //disabled: true
     	  },
     	  {
     	    xtype: 'textfield',
@@ -268,9 +280,52 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	  }
     	]
     });
+    //Meta Data Bar Graph
+    var formPanelMDBG = Ext.create('Ext.form.Panel',{
+      id: 'formPanelMDBG',
+    	height: '100%',
+    	width: '100%',
+    	bodyPadding: 10,
+      items: [
+        {
+          id: 'metaDataSelectionA',
+          xtype: 'combo',
+          fieldLabel: 'Reference Meta Data Clusters',
+          queryMode: 'local',
+          editable: false,
+          store:Ext.data.StoreManager.lookup('metaDataSelectionStoreForDBG'),
+          displayField: 'displayName',
+          valueField: 'internalName'
+        },
+        {
+          id: 'metaDataSelectionB',
+          xtype: 'combo',
+          fieldLabel: 'Examined Meta Data Clusters',
+          queryMode: 'local',
+          editable: false,
+          store: Ext.data.StoreManager.lookup('metaDataSelectionStoreForDBG'),
+          displayField: 'displayName',
+          valueField: 'internalName'
+        },
+        {
+    	    xtype: 'button',
+    	    text: 'Build Plot',
+    	    margin: '5 5 5 5',
+    	    handler: UIcontroller.generateMDBGwindow
+    	  },
+    	  {
+    	    xtype: 'button',
+    	    glyph: 0xf128,
+    	    text: 'help',
+    	    margin: '5 5 5 5',
+    	    handler: UIcontroller.showMDBGhelpDialog
+    	  }
+      ]
+    })
     
     deTab.add(formPanelDE);
     espTab.add(formPanelESP);
+    mdbgTab.add(formPanelMDBG)
     actionsTab.add(actionsInnerTab);
 };
 
@@ -342,7 +397,6 @@ actionPanelUIcontroller.prototype.showESPhelpDialog = function (){
       resizable: false
     }).show();
 }
-
 /**
  * Generates an ESP window if the data provided on the ESP tab is valid 
  */
@@ -362,7 +416,7 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
   else{
     var len;
     (new dataController()).getCellOrder(function(data){len = data.length})
-    if(!len){return;}
+    if(!len){return}
     (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,len,false, function(data){
       
       if(data.DimNames2.length < 2){
@@ -370,20 +424,79 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
         return;
       }
       var geneMatrix = data.getFullMatrix();
-      Ext.create("Ext.window.Window", {
-        resizeable: false,
-        modal:true,
-        items:[
-          {
-            html:'<canvas id="scatterChart" height="500" width="500"></canvas>'
-          }
-        ],
-      }).show();
-      console.log(geneMatrix);
-      (new graphViewer(geneMatrix.array)).drawScatterPlot("scatterChart",geneMatrix.colnames[0],geneMatrix.colnames[1],"Differential Gene Expression");
+      
+      var scatterData = {
+        data: geneMatrix.array,
+        xLabel: geneMatrix.colnames[0],
+        yLabel: geneMatrix.colnames[1],
+        title: "Differential Gene Expression"
+      };
+
+      (new graphViewer(scatterData, "scatter")).render();
+      
     })
   }
 }
+
+/**
+ * Generates an MDBG window if the data provided on the MDBG tab is valid 
+ */
+actionPanelUIcontroller.prototype.generateMDBGwindow = function(){
+  var form = Ext.getCmp("formPanelMDBG").getForm();
+  
+  var metaDataReference = form.findField("metaDataSelectionA").getValue();
+  var metaDataComparison = form.findField("metaDataSelectionB").getValue();
+  
+  if(!(metaDataReference)){
+    Ext.MessageBox.alert("Warning","Please specify your reference meta data clustering");
+    return;
+  }
+  if(!(metaDataComparison)){
+    Ext.MessageBox.alert("Warning","Please specify your comparison meta data clustering");
+    return;
+  }
+  var dataCtrl = new dataController();
+  var barGraphData = {} 
+  dataCtrl.getCellMetadata(function(data){
+    
+    barGraphData.data = [];
+    for(var i = 0; i < data[metaDataReference].palette.length; i++){
+      var nextArray = [];
+      for(var j = 0; j < data[metaDataComparison].palette.length; j++){
+        nextArray.push(0);
+      }
+      barGraphData.data.push(nextArray);
+    }
+    for(var cellId in data[metaDataReference].data){barGraphData.data[data[metaDataReference].data[cellId]][data[metaDataComparison].data[cellId]]++}
+    barGraphData.compPalette = data[metaDataComparison].palette;
+    barGraphData.refPalette = data[metaDataReference].palette;
+    barGraphData.title = "Cluster Membership Bar graph";
+    barGraphData.xLabel = data[metaDataReference].displayname;
+    barGraphData.yLabel = data[metaDataComparison].displayname + " cells % Membership";
+    (new graphViewer(barGraphData, "bar")).render();
+  });
+  
+  
+}
+/**
+ * Show help dialog for Meda Data Bar Graph
+ */
+actionPanelUIcontroller.prototype.showMDBGhelpDialog = function(){
+  Ext.create('Ext.window.Window', {
+      height: 300,
+      width: 400,
+      title: 'Help: Expression Scatter Plots',
+      scrollable: true,
+      bodyPadding: 10,
+      html: '<h2>Displaying differential inclusion of cells within the clusters of each selected metadata grouping</h2>' +
+        '<p></p>'
+        ,
+      constrain: true,
+      closable: true,
+      resizable: false
+    }).show();
+}
+
 /**
  * Click handler for stop button of DE analysis
  * @private
@@ -531,7 +644,23 @@ actionPanelUIcontroller.prototype.syncCellSelectionStore = function() {
     }// for
 }
 
-
+actionPanelUIcontroller.prototype.generateMetaDataStore = function(){
+  
+  var mdStore = Ext.create('Ext.data.Store',{
+    storeId: 'metaDataSelectionStoreForDBG',
+    fields: [
+      {name:'internalName', type:'string'},
+      {name:'displayName', type:'string'}
+    ],
+    autoLoad: true
+  })
+  var dataCntr = new dataController();
+  dataCntr.getCellMetadata(function(data) {
+    for(var key in data){
+      mdStore.add({internalName: key, displayName: data[key].displayname});
+    }  
+  });
+}
 
 
 
