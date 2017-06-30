@@ -319,10 +319,10 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         label: "Pagoda CSV",
         value: "csv"
       });
-      importOptionsStore.add({
+      /*importOptionsStore.add({
         label: "JSON format",
         value: "json"
-      });
+      });*/
       
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {
