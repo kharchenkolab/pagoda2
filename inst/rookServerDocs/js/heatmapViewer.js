@@ -294,6 +294,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     var heatmapAreaOverlay = $('#heatmap-area-overlay')[0];
 
+    var thisViewer = this;
     this.primaryMouseButtonDown = false;
     this.dragging = false;
     this.dragStartX = null;
@@ -304,7 +305,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
       var heatView = new heatmapViewer();
       var drawConsts = heatView.getDrawConstants();
-      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
+      if (!(typeof thisViewer.displayGenes === 'undefined' || thisViewer.displayGenes.length === 0) && e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
         heatView.primaryMouseButtonDown = true;
         heatView.dragStartX =  e.offsetX;
       }
@@ -313,9 +314,8 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     heatmapAreaOverlay.addEventListener('mouseup', function(e) {
       var heatView = new heatmapViewer();
-      if(heatView.primaryMouseButtonDown){
+      if(heatView.primaryMouseButtonDown && !(typeof thisViewer.displayGenes === 'undefined' || thisViewer.displayGenes.length === 0)){
       heatView.primaryMouseButtonDown = false;
-      
       if(heatView.dragging) {
         // End of drag
         heatView.dragging = false;

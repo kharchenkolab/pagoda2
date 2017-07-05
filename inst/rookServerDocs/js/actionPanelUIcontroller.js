@@ -274,7 +274,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	  {
     	    xtype: 'button',
     	    glyph: 0xf128,
-    	    text: 'help',
+    	    text: 'Help',
     	    margin: '5 5 5 5',
     	    handler: UIcontroller.showESPhelpDialog
     	  }
@@ -316,7 +316,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	  {
     	    xtype: 'button',
     	    glyph: 0xf128,
-    	    text: 'help',
+    	    text: 'Help',
     	    margin: '5 5 5 5',
     	    handler: UIcontroller.showMDBGhelpDialog
     	  }
@@ -389,8 +389,8 @@ actionPanelUIcontroller.prototype.showESPhelpDialog = function (){
       title: 'Help: Expression Scatter Plots',
       scrollable: true,
       bodyPadding: 10,
-      html: '<h2>Plotting differential expression of two genes in a cell selection</h2>' +
-        '<p></p>'
+      html: '<h2>Plotting Gene Expression of two Genes</h2>' +
+        '<p>The following feature provides two means of comparing the gene expression of two different genes. The first is against cells from a predefined cell selection. To accomplish this Click the "From Selection" button and then select a selection from the dropdown menu. The second is against all cells. This is accomplished by just clicking the "All Cells" button. Next select a gene for the fields Gene A and Gene B. Gene A will appear along the X axis and gene B will appear along the Y.</p>'
         ,
       constrain: true,
       closable: true,
@@ -488,8 +488,8 @@ actionPanelUIcontroller.prototype.showMDBGhelpDialog = function(){
       title: 'Help: Expression Scatter Plots',
       scrollable: true,
       bodyPadding: 10,
-      html: '<h2>Displaying differential inclusion of cells within the clusters of each selected metadata grouping</h2>' +
-        '<p></p>'
+      html: '<h2>Display Differential Meta Data groupings</h2>' +
+        '<p>To display differential Metadata Bar Graph select a "Reference Meta Data Clusters" from the first drop down menu and a "Examined Meta Data Clusters" from the second menu. Then click "Build Plot". The reference meta data will appear along the x axis with numeric idnetifiers, while the color Examined metadata will appear along the Y axis with their clusters identified by color.</p>'
         ,
       constrain: true,
       closable: true,

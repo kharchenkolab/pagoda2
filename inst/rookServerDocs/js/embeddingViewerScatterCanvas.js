@@ -65,7 +65,7 @@ function embeddingViewerScatterCanvas() {
     this.yScaleDomainMax;
     this.yScaleRangeMin;
     this.yScaleRangeMax;
-
+    this.highlight = "box";
     // Generates the html structure required for the viewer
     this.generateStructure();
 
@@ -89,17 +89,6 @@ embeddingViewerScatterCanvas.prototype.getMainCanvasElement = function() {
  */
 embeddingViewerScatterCanvas.prototype.generateDragSelection =
   function(verticies) {
-	/*if (dragStartX > dragEndX) {
-	    var t = dragEndX; 
-	    dragEndX =  dragStartX; 
-	    dragStartX = t; 
-	} 
-	if (dragStartY > dragEndY) {
-	    var t = dragEndY;
-	    dragEndY = dragStartY;
-	    dragStartY = t;
-	}*/
-
 
 	var thisViewer = this;
 	var embViewer = new embeddingViewer();
@@ -152,11 +141,6 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    thisViewer.yScaleDomainMin,
 	    thisViewer.yScaleDomainMax);
 
-	//var x1 = xScaleRev(dragStartX);
-	//var y1 = yScaleRev(dragStartY);
-	//var x2 = xScaleRev(dragEndX);
-	//var y2 = yScaleRev(dragEndY);
-	    
 	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
 							 thisViewer.yScaleDomainMax,
 							 thisViewer.yScaleRangeMin,
@@ -175,13 +159,9 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
     		var point = plotData[i];
         var xs = xScale(point[1]);
     		var ys = yScale(point[2]);
-    		//if ( point[1] > x1 && point[1] < x2 && point[2] > y1 && point[2] < y2) {
     		if(pointInPolygon([xs,ys],verticies)){
     		    // Point in selection
     		    cellsForSelection.push(point[0]);
-
-    		    
-
     		    ctx.beginPath();
     		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
     		    ctx.stroke();
@@ -211,7 +191,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
  * Highlight cells by selection name
  * @param selectionName the name of the cell selection as registered int he cellSelectionController
  */
-embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selectionName) {
+embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selectionName, hasLabels) {
   var cellSelCntr = new cellSelectionController();
   var cells = cellSelCntr.getSelection(selectionName);
 
@@ -262,6 +242,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 	    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
 	    ctx.save();
 	    ctx.clearRect(0,0,5000,5000);
+	    thisViewer.hasLabels = hasLabels;
 	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
 	    
 	    var clusterCenter = {
@@ -297,12 +278,13 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 
 }
 
-embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(selectionNames) {
+embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(selectionNames, hasLabels) {
   
   var cellSelCntr = new cellSelectionController();
   var embViewer = new embeddingViewer();
   var thisViewer = this;
-
+  thisViewer.hasLabels = hasLabels;
+  
   var config =  embViewer.getConfig();
   var dataCntr = new dataController();
   var type = config.type;
@@ -377,16 +359,20 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
 	    }
 	    ctx.restore();
     });
-    ctx.save();
-    ctx.fillStyle = "black";
-    var fontPieces = ctx.font.split(/\s/);
-    ctx.font = "bold " + Math.floor(document.getElementById('embedding-canvas-overlay').height/25) + "px " + fontPieces[1];
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    for(var i = 0; i < clusterLabels.length; i++){
-      ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
+    
+    //adds label if it exists
+    if(hasLabels){
+      ctx.save();
+      ctx.fillStyle = "black";
+      var fontPieces = ctx.font.split(/\s/);
+      ctx.font = "bold " + Math.floor(document.getElementById('embedding-canvas-overlay').height/25) + "px " + fontPieces[1];
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for(var i = 0; i < clusterLabels.length; i++){
+        ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
+      }
+      ctx.restore();
     }
-    ctx.restore();
   });
 }
 
@@ -462,16 +448,18 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
 	    }
 	    ctx.restore();
     });
-    ctx.save();
-    ctx.fillStyle = "black";
-    var fontPieces = ctx.font.split(/\s/);
-    ctx.font = "bold " + Math.floor(overlayCanvas.height/25) + "px " + fontPieces[1];
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    for(var i = 0; i < clusterLabels.length; i++){
-      ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
+    if(thisViewer.hasLabels){
+      ctx.save();
+      ctx.fillStyle = "black";
+      var fontPieces = ctx.font.split(/\s/);
+      ctx.font = "bold " + Math.floor(overlayCanvas.height/25) + "px " + fontPieces[1];
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      for(var i = 0; i < clusterLabels.length; i++){
+        ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
+      }
+      ctx.restore();
     }
-    ctx.restore();
   });
 
 }
@@ -514,33 +502,59 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 
     var lastCursorPositionX = 0;
     var lastCursorPositionY = 0;
-    thisViewer.polygonVerts = [];
+    var polygonVerts = [];
     thisViewer.stopRadius = 7;
     
+    overlayCanvasElement.addEventListener('mousedown', function(e) {
+      e.preventDefault();
+      if(thisViewer.highlight === "box"){
+     	  dragStartX = e.offsetX;
+    	  dragStartY = e.offsetY;
+    	  thisViewer.dragging = true;
+      }
+      
+    });
+
+    overlayCanvasElement.addEventListener('mouseup', function(e) {
+      
+      if(thisViewer.highlight === "box"){
+      	if (thisViewer.dragging) {
+      	    // Dragging complete
+      	    var dragEndX = e.offsetX;
+      	    var dragEndY = e.offsetY;
+            var verticies = [[dragStartX, dragStartY],[dragStartX,dragEndY],[dragEndX, dragEndY],[dragEndX,dragStartY]];
+      	    thisViewer.generateDragSelection(verticies);
+      	}
+      	thisViewer.dragging = false;
+      }
+    });
     
     overlayCanvasElement.addEventListener('click', function(e){
       
       var xPos = e.offsetX;
       var yPos = e.offsetY;
-      if(thisViewer.dragging){
-        
-        if(Math.sqrt(Math.pow(xPos - thisViewer.polygonVerts[0][0], 2) + Math.pow(yPos - thisViewer.polygonVerts[0][1], 2)) < thisViewer.stopRadius){
-          ctx.clearRect(0,0,4000,4000);
-          thisViewer.generateDragSelection(thisViewer.polygonVerts);
-          thisViewer.polygonVerts = [];
-          thisViewer.dragging = false;
+      if(thisViewer.highlight === "poly"){
+        if(thisViewer.dragging){
+          
+          if(Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius){
+            ctx.clearRect(0,0,4000,4000);
+            thisViewer.generateDragSelection(polygonVerts);
+            polygonVerts = [];
+            thisViewer.dragging = false;
+            document.body.style.cursor = 'crosshair'
+          }
+          else{
+            polygonVerts.push([xPos,yPos]);
+          }
         }
         else{
-          thisViewer.polygonVerts.push([xPos,yPos]);
+          thisViewer.dragging = true;
+          polygonVerts.push([xPos,yPos]);
         }
       }
-      else{
-        thisViewer.dragging = true;
-        thisViewer.polygonVerts.push([xPos,yPos]);
-      }
-      
       
     });
+    
     overlayCanvasElement.addEventListener('mouseover', function(e) {
       var xPos = e.offsetX;
       var yPos = e.offsetY;
@@ -548,43 +562,57 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     	
     });
 
-
     overlayCanvasElement.addEventListener('mousemove', function(e) {
   	var xPos =  e.offsetX;
   	var yPos = e.offsetY;
 
-
-	  if (thisViewer.dragging) {
-	    // TODO: clear the correct coordinates
-	    ctx.clearRect(0,0,4000,4000);
-	    ctx.save();
-	    ctx.setLineDash([10,10]);
-	    ctx.strokeStyle = 'rgba(255,0,0,1)';
-	    ctx.lineWidth = 2;
-	    ctx.beginPath();
-	    ctx.moveTo(thisViewer.polygonVerts[0][0],thisViewer.polygonVerts[0][1]);
-	    for(var i = 1; i < thisViewer.polygonVerts.length; i++){
-	      var next = thisViewer.polygonVerts[i];
-	      ctx.lineTo(next[0],next[1]);
-	    }
-	    ctx.lineTo(xPos, yPos);
-	    ctx.stroke();
-	    ctx.closePath();
-	    
-	    ctx.beginPath()
-	    ctx.arc(thisViewer.polygonVerts[0][0],thisViewer.polygonVerts[0][1], thisViewer.stopRadius, 0, 2 * Math.PI, false);
-      ctx.fillStyle = 'red';
-      ctx.fill();
-      ctx.closePath();
-	    
-	    ctx.restore();
-	  }
-	  if(thisViewer.dragging && Math.sqrt(Math.pow(xPos - thisViewer.polygonVerts[0][0], 2) + Math.pow(yPos - thisViewer.polygonVerts[0][1], 2)) < thisViewer.stopRadius){
-    	  console.log(Math.sqrt(Math.pow(xPos - thisViewer.polygonVerts[0][0], 2) + Math.pow(yPos - thisViewer.polygonVerts[0][1], 2)) < thisViewer.stopRadius)
-    	  document.body.style.cursor = 'pointer';
-    }
-    else{
-    	  document.body.style.cursor = 'crosshair';
+    if(thisViewer.highlight === "poly"){
+  	  if (thisViewer.dragging) {
+  	    ctx.clearRect(0,0,4000,4000);
+  	    ctx.save();
+  	    ctx.setLineDash([10,10]);
+  	    ctx.strokeStyle = 'rgba(255,0,0,1)';
+  	    ctx.lineWidth = 2;
+  	    ctx.beginPath();
+  	    ctx.moveTo(polygonVerts[0][0],polygonVerts[0][1]);
+  	    for(var i = 1; i < polygonVerts.length; i++){
+  	      var next = polygonVerts[i];
+  	      ctx.lineTo(next[0],next[1]);
+  	    }
+  	    ctx.lineTo(xPos, yPos);
+  	    ctx.stroke();
+  	    ctx.closePath();
+  	    
+  	    ctx.beginPath()
+  	    ctx.arc(polygonVerts[0][0],polygonVerts[0][1], thisViewer.stopRadius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+        ctx.closePath();
+  	    
+  	    ctx.restore();
+  	  }
+  	  if(thisViewer.dragging && Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius){
+      	  document.body.style.cursor = 'pointer';
+      }
+      else{
+      	  document.body.style.cursor = 'crosshair';
+      }
+    } else if(thisViewer.highlight === "box"){
+      var dragEndX =  e.offsetX;
+      var dragEndY = e.offsetY;
+    
+      lastCursorPositionX = dragEndX;
+      lastCursorPositionY = dragEndY;
+    
+    	if (thisViewer.dragging) {
+    	    ctx.clearRect(0,0,4000,4000);
+    	    ctx.save();
+    	    ctx.setLineDash([10,10]);
+    	    ctx.strokeStyle = 'rgba(255,0,0,1)';
+    	    ctx.lineWidth = 2;
+    	    ctx.strokeRect(dragStartX, dragStartY, dragEndX - dragStartX, dragEndY - dragStartY);
+    	    ctx.restore();
+    	}
     }
 
     });
@@ -592,8 +620,12 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     overlayCanvasElement.addEventListener('mouseleave', function(e) {
         	if(thisViewer.dragging){
         	  thisViewer.dragging = false;
-            thisViewer.polygonVerts = [];
+            polygonVerts = [];
            ctx.clearRect(0,0,4000,4000);
+           if(thisViewer.highlight === "box"){
+             var verticies = [[dragStartX, dragStartY],[dragStartX,lastCursorPositionY],[lastCursorPositionX, lastCursorPositionY],[lastCursorPositionX,dragStartY]];
+             thisViewer.generateDragSelection(verticies);
+           }
          	}
         	document.body.style.cursor = 'default';
     });

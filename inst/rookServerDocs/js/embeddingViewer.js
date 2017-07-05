@@ -198,6 +198,31 @@ embeddingViewer.prototype.generateToolbar = function() {
     var toolbar = Ext.create('Ext.Toolbar');
     toolbar.add(comboBox);
     toolbar.add({xtype: 'tbseparator'});
+    toolbar.add({
+      text: "",
+        type: "button",
+        tooltip: 'Select With Box',
+        glyph: 0xf0c8,
+        id: "boxSelectionButton",
+        disabled: true,
+        handler: function(){
+          Ext.getCmp("boxSelectionButton").disable();
+          Ext.getCmp("polygonSelectionButton").enable();
+          (new embeddingViewer()).currentViewer.highlight = "box";
+        }
+    })
+    toolbar.add({
+      text: "",
+        type: "button",
+        tooltip: 'Select With Polygon',
+        id: "polygonSelectionButton",
+        glyph: 0xf040 ,
+        handler: function(){
+          Ext.getCmp("boxSelectionButton").enable();
+          Ext.getCmp("polygonSelectionButton").disable();
+          (new embeddingViewer()).currentViewer.highlight = "poly";
+        }
+    })
     // Add a button for the settings menu
     toolbar.add(
       {
@@ -535,7 +560,9 @@ embeddingViewer.prototype.generateToolbar = function() {
 
         } // handler
       }); // toolbar add
-
+    toolbar.add({
+      
+    })
       toolbar.add(
         {
           text: "",
@@ -915,9 +942,9 @@ embeddingViewer.prototype.setCurrentPointSize = function (sz) {
 /**
  * Highlight the selection specified by name, delegates to current viewer
  */
-embeddingViewer.prototype.highlightSelectionByName = function(selectionName) {
-  this.currentViewer.highlightSelectionByName(selectionName);
+embeddingViewer.prototype.highlightSelectionByName = function(selectionName, hasLabels) {
+  this.currentViewer.highlightSelectionByName(selectionName, hasLabels);
 }
-embeddingViewer.prototype.highlightSelectionsByNames = function(selectionNames) {
-  this.currentViewer.highlightSelectionsByNames(selectionNames);
+embeddingViewer.prototype.highlightSelectionsByNames = function(selectionNames, hasLabels) {
+  this.currentViewer.highlightSelectionsByNames(selectionNames, hasLabels);
 }

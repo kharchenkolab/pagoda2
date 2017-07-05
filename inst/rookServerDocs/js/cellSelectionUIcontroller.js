@@ -66,6 +66,7 @@ cellSelectionUIcontroller.prototype.generateCellSelectionStore = function() {
 cellSelectionUIcontroller.prototype.generateUI = function() {
     var uipanel = Ext.getCmp('cellselection-app-container');
 
+    var thisViewer = this;
     var cellTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     var cellSelectionTable = Ext.create('Ext.grid.Panel',{
     	title: 'Available Cell Selections',
@@ -91,7 +92,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     defaultType: 'textfield',
     items: [
   	  cellSelectionTable,
-      {
+  {
         xtype: 'button',
         text: 'Delete',
         handler: function() { 
@@ -123,7 +124,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
           }
         }
       },
-      {
+  {
         xtype: 'button',
         text: 'Merge',
         handler: function() {
@@ -135,29 +136,15 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             for(var i = 0; i < selectedItems.length; i++){
               selectionNames.push(selectedItems.getAt(i).getData().selectionname);
     		    }
-            Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
-              if ( btn === 'ok') {
-                var cellSelCntr =  new cellSelectionController();
-
-                var newSelectionName = text;
-                var newSelectionDisplayName = text;
-
-                var re = new RegExp('[^A-Za-z0-9_]');
-                if (newSelectionName.length === 0) {
-                  Ext.MessageBox.alert('Error', 'You must enter a selection name');
-                }
-                else if (newSelectionName.match(re) ) {
-                  Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
-                } else {
-                if (cellSelCntr.getSelection(newSelectionName)) {
-                  Ext.MessageBox.alert('Error','A selection with this name already exists!');
-                } else {
-                  cellSelCntr.mergeSelectionsIntoNew(selectionNames,
-                    newSelectionName, newSelectionDisplayName);
-                }
-              } // if btn ok
-            }
-          });
+    		    
+    		    thisViewer.promptName("", function(newDisplayName){
+          	  var cellSelCntr =  new cellSelectionController();
+          	  if(newDisplayName !== false){
+          	    var newSelectionName = newDisplayName;
+          	    cellSelCntr.mergeSelectionsIntoNew(selectionNames, newSelectionName, newDisplayName);
+      	    }
+      	})
+                  
     		  } else {
             Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to merge first.');
     		  }
@@ -165,8 +152,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         }
 
       },
-      ///
-   {
+  {
         xtype: 'button',
         text: 'Intersect',
         handler: function() {
@@ -177,30 +163,15 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             for(var i = 0; i < selectedItems.length; i++){
               selectionNames.push(selectedItems.getAt(i).getData().selectionname);
     		    }
-            
-            Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
-              if ( btn === 'ok') {
-                var cellSelCntr =  new cellSelectionController();
-
-                var newSelectionName = text;
-                var newSelectionDisplayName = text;
-
-                var re = new RegExp('[^A-Za-z0-9_]');
-                if (newSelectionName.length === 0) {
-                  Ext.MessageBox.alert('Error', 'You must enter a selection name');
-                }
-                else if (newSelectionName.match(re) ) {
-                  Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
-                } else {
-                if (cellSelCntr.getSelection(newSelectionName)) {
-                  Ext.MessageBox.alert('Error','A selection with this name already exists!');
-                } else {
-                  cellSelCntr.intersectSelectionsIntoNew(selectionNames,
-                    newSelectionName, newSelectionDisplayName);
-                }
-              } // if btn ok
-            }
-          });
+            thisViewer.promptName("", function(newDisplayName){
+          	  var cellSelCntr =  new cellSelectionController();
+          	  if(newDisplayName !== false){
+          	    var newSelectionName = newDisplayName;
+          	    cellSelCntr.intersectSelectionsIntoNew(selectionNames,newSelectionName, newDisplayName);
+      	      }
+            })
+      	    
+                  
     		  } else {
             Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to intersect first.');
     		  }
@@ -208,47 +179,23 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         }
 
       },
-      ///
-        {
+  {
             xtype: 'button',
-            text: 'Duplicate',
+            text: 'Save As',
 	    handler: function() {
     		var selectionTable = Ext.getCmp('cellSelectionTable');
     		var selectedItems = selectionTable.getSelectionModel().getSelected();
     		if (selectedItems.length === 1) {
     		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
     		    var oldDisplayName = selectedItems.getAt(0).getData().displayname;
-
-    		    Ext.MessageBox.prompt('New name', 'Name for new selection:',function(btn, text) {
-    			if ( btn === 'ok') {
-
-    			    var cellSelCntr =  new cellSelectionController();
-
-    			    var newSelectionName = text;
-    			    var newSelectionDisplayName = text;
-
-    			    var re = new RegExp('[^A-Za-z0-9_]');
-    			    if (newSelectionName.length === 0) {
-    				Ext.MessageBox.alert('Error',
-    						     'You must enter a selection name');
-    			    }
-    			    else if (newSelectionName.match(re) ) {
-    				Ext.MessageBox.alert('Error',
-                                      'The name must only contain letters, numbers and underscores (_)');
-    			    } else {
-    				if (cellSelCntr.getSelection(newSelectionName)) {
-    				    Ext.MessageBox.alert(
-    					'Error',
-    					'A selection with this name already exists!');
-    				} else {
-    				    cellSelCntr.duplicateSelection(oldSelectionName,
-    								   newSelectionName,
-    								   newSelectionDisplayName);
-    				}
-
-    			    }
-    			}
-		    });
+    		    
+            thisViewer.promptName(oldDisplayName, function(newDisplayName){
+          	  var cellSelCntr =  new cellSelectionController();
+          	  if(newDisplayName !== false){
+          	    var newSelectionName = newDisplayName;
+          	    cellSelCntr.duplicateSelection(oldSelectionName,newSelectionName,newDisplayName);
+          	  }
+          	})
 
 
 		} else {
@@ -264,39 +211,10 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		var selectionTable = Ext.getCmp('cellSelectionTable');
 		var selectedItems = selectionTable.getSelectionModel().getSelected();
 		if (selectedItems.length === 1) {
+		    var oldDisplayName = selectedItems.getAt(0).getData().displayName;
 		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
-        var promptName = function(curDisplay, callback){
-    		    Ext.Msg.prompt('Rename Cell Selection', 'Please enter a new name:', function(btn, text) {
-        			if (btn =='ok') {
-      			    var newName = text;
-      			    var cellSelCntr = new cellSelectionController();
-        			 var re = new RegExp('[^A-Za-z0-9_]');
-      			    if (newName.length === 0) {
-      				    Ext.MessageBox.alert('Error','You must enter a selection name',function(e){
-        			      promptName(newName, callback);
-        			    });
-      			    }
-      			    else if (newName.match(re) ) {
-      				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)',function(e){
-        			      promptName(newName, callback);
-        			    });
-      			    } 
-      			    else if (cellSelCntr.getSelection(newName)) {
-      				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!',function(e){
-        			      promptName(newName, callback);
-        			    });
-      				  }
-      				  else{
-      				    callback(newName)
-      				  }
-        			}
-        			else{
-        			  callback(false);
-        			}
-    		    },{},false,curDisplay);
-        }
-        
-      	var newDisplayName = promptName(oldSelectionName, function(newDisplayName){
+		    console.log()
+      	thisViewer.promptName(oldDisplayName, function(newDisplayName){
       	  var cellSelCntr =  new cellSelectionController();
       	  if(newDisplayName !== false){
       	    cellSelCntr.renameSelection(oldSelectionName, newDisplayName);
@@ -581,6 +499,37 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	  }
 	},
 	{
+	xtype: 'button',
+	  text: 'Highlight with text',
+	  handler: function() {
+	    	var selectionTable = Ext.getCmp('cellSelectionTable');
+    		var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		    
+    		    var selectionNames = []
+    		    for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+    		    
+            // Highlight on heatmap
+            var heatV = new heatmapViewer();
+            heatV.highlightCellSelectionsByNames(selectionNames);
+            pagHelpers.regC(72);
+
+            // Highlight on embedding
+            var embCntr = new embeddingViewer();
+            embCntr.highlightSelectionsByNames(selectionNames, true);
+
+            // Highlight on Aspects
+            var aspHeatView = new aspectHeatmapViewer();
+            aspHeatView.highlightCellSelectionsByNames(selectionNames);
+
+            //Highlight on Metadata
+            var metaView = new metaDataHeatmapViewer();
+            metaView.highlightCellSelectionsByNames(selectionNames);
+
+	  }
+	},
+	{
 	  xtype: 'button',
 	  text: 'Change Highlight',
 	  handler: 
@@ -668,37 +617,8 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	          }
 	        })
 	        if(selection.length > 0){
-  	        var promptName = function(curDisplay, callback){
-    		    Ext.Msg.prompt('Rename Cell Selection', 'Please enter a new name:', function(btn, text) {
-        			if (btn =='ok') {
-      			    var newName = text;
-      			   var cellSelCntr = new cellSelectionController();
-        			 var re = new RegExp('[^A-Za-z0-9_]');
-      			    if (newName.length === 0) {
-      				    Ext.MessageBox.alert('Error','You must enter a selection name',function(e){
-        			      promptName(newName, callback);
-        			    });
-      			    }
-      			    else if (newName.match(re) ) {
-      				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)',function(e){
-        			      promptName(newName, callback);
-        			    });
-      			    } 
-      			    else if (cellSelCntr.getSelection(newName)) {
-      				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!',function(e){
-        			      promptName(newName, callback);
-        			    });
-      				  }
-      				  else{
-      				    callback(newName)
-      				  }
-        			}
-        			else{
-        			  callback(false);
-        			}
-    		    },{},false,curDisplay);
-        }
-          	promptName("", function(newDisplayName){
+  	        
+          	thisViewer.promptName(text.split(",").join(""), function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
           	    cellSelCntr.setSelection(newDisplayName ,selection);
@@ -715,5 +635,38 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
     uipanel.add(formPanel);
 
+}
+
+cellSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
+    		    Ext.Msg.prompt('Rename Cell Selection', 'Please enter a new name:', function(btn, text) {
+        			if (btn =='ok') {
+      			    var newName = text;
+      			    var cellSelCntr = new cellSelectionController();
+      			    var cellSelUICntr = new cellSelectionUIcontroller();
+        			 var re = new RegExp('[^A-Za-z0-9_]');
+      			    if (newName.length === 0) {
+      				    Ext.MessageBox.alert('Error','You must enter a selection name',function(e){
+        			      cellSelUICntr.promptName(newName, callback);
+        			    });
+      			    }
+      			    else if (newName.match(re) ) {
+      				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)',function(e){
+        			      cellSelUICntr.promptName(newName, callback);
+        			    });
+      			    } 
+      			    else if (cellSelCntr.getSelection(newName)) {
+      				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!',function(e){
+        			      cellSelUICntr.promptName(newName, callback);
+        			    });
+      				  }
+      				  else{
+      				    callback(newName)
+      				  }
+        			}
+        			else{
+        			  callback(false);
+        			}
+    		    },{},false,curDisplay);
+  
 }
 
