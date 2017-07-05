@@ -170,7 +170,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
           var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
   
 	        var cellSelCntr = new cellSelectionController();
-  	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000");
+  	      cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var metaView = new heatmapViewer();
@@ -870,7 +870,7 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
 
     var cellSel = new cellSelectionController();
     if(restriction(cellSelectionNames)){
-      cellSel.setSelection(callbackParameters.selectionName, cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
+      cellSel.setSelection(cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
     }
 
     if (highlight) {
@@ -917,7 +917,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
     for(var i = 0; i < cellSelections.length; i++){
       var cellSelectionNames = cellSelections[i];
       if(restriction(cellSelectionNames)){
-        cellSel.setSelection(selNamePrefix + i, cellSelectionNames, selNamePrefix + i, {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
+        cellSel.setSelection(cellSelectionNames, selNamePrefix + i, {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
       }
     }
 

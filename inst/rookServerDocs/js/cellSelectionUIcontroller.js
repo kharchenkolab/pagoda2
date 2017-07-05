@@ -140,8 +140,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     		    thisViewer.promptName("", function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
-          	    var newSelectionName = newDisplayName;
-          	    cellSelCntr.mergeSelectionsIntoNew(selectionNames, newSelectionName, newDisplayName);
+          	    cellSelCntr.mergeSelectionsIntoNew(selectionNames, newDisplayName);
       	    }
       	})
                   
@@ -166,8 +165,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             thisViewer.promptName("", function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
-          	    var newSelectionName = newDisplayName;
-          	    cellSelCntr.intersectSelectionsIntoNew(selectionNames,newSelectionName, newDisplayName);
+          	    cellSelCntr.intersectSelectionsIntoNew(selectionNames, newDisplayName);
       	      }
             })
       	    
@@ -192,8 +190,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
             thisViewer.promptName(oldDisplayName, function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
-          	    var newSelectionName = newDisplayName;
-          	    cellSelCntr.duplicateSelection(oldSelectionName,newSelectionName,newDisplayName);
+          	    cellSelCntr.duplicateSelection(oldSelectionName,newDisplayName);
           	  }
           	})
 
@@ -213,7 +210,6 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		if (selectedItems.length === 1) {
 		    var oldDisplayName = selectedItems.getAt(0).getData().displayName;
 		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
-		    console.log()
       	thisViewer.promptName(oldDisplayName, function(newDisplayName){
       	  var cellSelCntr =  new cellSelectionController();
       	  if(newDisplayName !== false){
@@ -281,11 +277,10 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                   var selectionFormatted = [];
                   var cellSelCntr = new cellSelectionController();
                   for(var index = 0; index < selectedItems.length; index++){
-      	            var selectionName = selectedItems.getAt(index).getData().selectionname;
       	            var displayName = selectedItems.getAt(index).getData().displayname;
       	            var color = selectedItems.getAt(index).getData().color.substring(1);
     	              var selection = cellSelCntr.getSelection(selectionName);
-                    selectionFormatted.push(selectionName+ "," + color + "," + displayName + "," + selection.join(","));
+                    selectionFormatted.push(color + "," + displayName + "," + selection.join(","));
   		            }
   		              window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
                 }
@@ -394,27 +389,24 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
   	                  for(var line = 0; line < lines.length; line++){
 	                      if(lines[line].length !== 0){
 	                        var selection = lines[line].split(",");
-	                        var selName = selection.shift();
 	                        var color = "#" + selection.shift();
 	                        var dispName = selection.shift();
-	                        removedCells[selName] = 0;
+	                        removedCells[dispName] = 0;
 	                        var pureSelection = [];
 	                        for(var elem = 0; elem < selection.length; elem++){
 	                          if(cellOrder.includes(selection[elem])){
 	                            pureSelection.push(selection[elem]);
 	                          }
   	                        else{
-	                            removedCells[selName]++;
+	                            removedCells[dispName]++;
 	                          }
   	                      }// ensure all cells are rightfully containers
-	                        if(cellSelCntrl.getSelection(dispName)){
-  	                        dispName = dispName  + "~RecentlyLoaded"
-	                        }
-	                        if(cellSelCntrl.getSelection(selName)){
-  	                        selName = selName  + "~RecentlyLoaded"
-	                        }
-	                        if(removedCells[selName] !== selection.length){
-	                          cellSelCntrl.setSelection(selName,pureSelection,dispName,"loaded from " + cellSelFileName, color);
+	                        
+	                        if(removedCells[dispName] !== selection.length){
+	                          while(cellSelCntrl.displayNameExists(dispName)){
+  	                          dispName = dispName  + "~RecentlyLoaded"
+	                          }
+	                          cellSelCntrl.setSelection(pureSelection,dispName,{}, color);
 	                          total++;
 	                        }//confirm
   	                    }
@@ -654,7 +646,7 @@ cellSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
         			      cellSelUICntr.promptName(newName, callback);
         			    });
       			    } 
-      			    else if (cellSelCntr.getSelection(newName)) {
+      			    else if (cellSelCntr.displayNameExists(newName)) {
       				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!',function(e){
         			      cellSelUICntr.promptName(newName, callback);
         			    });

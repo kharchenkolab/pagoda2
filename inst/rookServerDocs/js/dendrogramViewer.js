@@ -1169,8 +1169,8 @@ dendrogramViewer.prototype.setupListeners = function() {
 
 			// Set the cell selection
 			var cellSelCntr = new cellSelectionController();
-			cellSelCntr.setSelection('currentPrimarySel', selectedCellIdentifiers,
-						 'Primary Selection', selectionMetadata);
+			cellSelCntr.setSelection(selectedCellIdentifiers,
+						 'Primary Selection', selectionMetadata, "#FF0000", 'currentPrimarySel');
 		    }); // getCellOrder();
 		}); // getReducedDendrogram();
 
@@ -1197,8 +1197,8 @@ dendrogramViewer.prototype.setupListeners = function() {
 			    }
 
 			    var cellSelCntr = new cellSelectionController();
-			    cellSelCntr.setSelection('currentPrimarySel', cellsInCluster,
-						     'Primary Selection', selectionMetadata);
+			    cellSelCntr.setSelection(cellsInCluster,
+						     'Primary Selection', selectionMetadata, "#FF0000", 'currentPrimarySel');
 			});
 		    } else {
 			// The left child is an internal node
@@ -1224,8 +1224,8 @@ dendrogramViewer.prototype.setupListeners = function() {
 
 			    // Set the cell selection
 			    var cellSelCntr = new cellSelectionController();
-			    cellSelCntr.setSelection('currentPrimarySel', selectedCellIdentifiers,
-						     'Primary Selection', selectionMetadata);
+			    cellSelCntr.setSelection(selectedCellIdentifiers,
+						     'Primary Selection', selectionMetadata, "#FF0000", 'currentPrimarySel');
 			}); // getCellOrder();
 		    } // else
 
@@ -1247,8 +1247,8 @@ dendrogramViewer.prototype.setupListeners = function() {
 			    }
 
 			    var cellSelCntr = new cellSelectionController();
-			    cellSelCntr.setSelection('currentSecondarySel', cellsInCluster,
-						     'Secondary selection', selectionMetadata);
+			    cellSelCntr.setSelection(cellsInCluster,
+						     'Secondary selection', selectionMetadata, "#FF0000", 'currentSecondarySel');
 			});
 		    } else {
 			descendants = dendV.getNodeDescendents(data, immediateChildren[1]);
@@ -1272,8 +1272,8 @@ dendrogramViewer.prototype.setupListeners = function() {
 
 			    // Set the cell selection
 			    var cellSelCntr = new cellSelectionController();
-			    cellSelCntr.setSelection('currentSecondarySel', selectedCellIdentifiers,
-						     'Secondary Selection', selectionMetadata);
+			    cellSelCntr.setSelection(selectedCellIdentifiers,
+						     'Secondary Selection', selectionMetadata, "#FF0000", 'currentSecondarySel');
 			}); // getCellOrder();
 		    } // else
 

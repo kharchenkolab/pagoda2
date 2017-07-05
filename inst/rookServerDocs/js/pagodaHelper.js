@@ -22,7 +22,6 @@ var pagHelpers = {
   
   canvas_arrow: function (context, fromx, fromy, tox, toy,headlen){
     var angle = Math.atan2(toy-fromy,tox-fromx);
-    console.log(fromx,fromy,tox,toy);
     
     context.moveTo(fromx,fromy)
     context.lineTo(tox, toy);

@@ -352,7 +352,7 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000");//TODO green or blue?
+	      cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
@@ -891,7 +891,6 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   // Get the cells in the cell selection to highlight
   var cellSelCntr = new cellSelectionController();
   var cellSelection = cellSelCntr.getSelection(selectionName);
-
   // Get the cell order
   var dataCntr = new dataController();
   dataCntr.getCellOrderHash(function(cellorderHash) {

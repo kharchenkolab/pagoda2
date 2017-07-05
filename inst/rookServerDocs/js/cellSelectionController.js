@@ -39,15 +39,18 @@ function cellSelectionController() {
  * @param {object} metadata any kind of metadata we want to attach to this cell selection
  * @param {color} color of the cells when highlighted. If not specified random color is chosen
  */
-cellSelectionController.prototype.setSelection = function(selectionName, cells, displayName, metadata, color ) {
+cellSelectionController.prototype.setSelection = function(cells, displayName, metadata, color, selectionName) {
     if(typeof color === "undefined"){
       color = this.colorManagement.generateColor();
     }
     else{
       this.colorManagement.addColorByHex(color);
     }
-    if(typeof displayName === 'undefined') {
-	    displayName = selectionName;
+    if(typeof metadata === 'undefined'){
+      metadata = {};
+    }
+    if(typeof selectionName === "undefined"){
+      selectionName = Math.floor(Math.random() * 1000) + "_" + (new Date()).getTime();
     }
 
     this.selections[selectionName] = {
@@ -135,6 +138,21 @@ cellSelectionController.prototype.setColor = function(selectionName, newColor){
   this.raiseSelectionChangedEvent();
 
 }
+
+/**
+ * Checks to see if a cell selection contains a given displayName
+ * @param {string} dispName the name we are looking for
+ * @returns {boolean} whether or not dispName exists among all other displayNames
+ */
+cellSelectionController.prototype.displayNameExists = function(dispName){
+  for(var sel in this.selections){
+    if(this.selections[sel].displayName === dispName){
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * get the display name of a cell selection
  * @param selectionName the internal name of the selection
@@ -155,19 +173,10 @@ cellSelectionController.prototype.getSelectionDisplayName = function(selectionNa
  * @param newSelectionName {string} name of the new selection to make
  * @param newSelectionDisplayName {string} display name of the new selection
  */
-cellSelectionController.prototype.duplicateSelection = function(selectionName,
-								newSelectionName,
-								newSelectionDisplayName) {
+cellSelectionController.prototype.duplicateSelection = function(selectionName,newSelectionDisplayName) {
+    
     var oldSelection = this.selections[selectionName];
-    var sel = {};
-
-    sel.name = newSelectionName;
-    sel.displayName = newSelectionDisplayName;
-    sel.color = this.colorManagement.generateColor();
-    sel.cells = JSON.parse(JSON.stringify(oldSelection.cells));
-
-    this.selections[newSelectionName] = sel;
-    this.raiseSelectionChangedEvent();
+    this.setSelection(JSON.parse(JSON.stringify(oldSelection.cells)), newSelectionDisplayName)
 }
 
 /**
@@ -183,36 +192,26 @@ cellSelectionController.prototype.renameSelection = function(selectionName, newS
 /**
  * Generate a new cell selection from two existing cell selections
  */
-cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName)  {
+cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, newSelectionDisplayName)  {
 
     var cellSelCtrl = new cellSelectionController();
     var sel = {};
-    sel.name = newSelectionName;
-    sel.displayName = newSelectionDisplayName;
-    sel.color = this.colorManagement.generateColor();
-
     var cells = {};
     selections.forEach(function(selection){
       cellSelCtrl.getSelection(selection).forEach(function(cell){
         cells[cell] = true;
       })
     });
-    sel.cells = Object.keys(cells);
-    
-    this.selections[newSelectionName] = sel;
-    this.raiseSelectionChangedEvent();
+    ;
+    this.setSelection(Object.keys(cells),newSelectionDisplayName);
 }
 
 /**
  * Genereate a new cell selection by intersecting two cell selections
  */
-cellSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionName, newSelectionDisplayName){
+cellSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionDisplayName){
 
     var cellSelCtrl = this;
-    var sel = {};
-    sel.name = newSelectionName;
-    sel.displayName = newSelectionDisplayName;
-    sel.color = this.colorManagement.generateColor();
     
     var cells = {};
     cellSelCtrl.getSelection(selections[0]).forEach(function(cell){
@@ -225,16 +224,14 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
         }
       });
     }
-    sel.cells = [];
-    
+    var passingCells = [];
     for(var cell in cells){
       if(cells[cell] === selections.length){
-        sel.cells.push(cell);
+        passingCells.push(cell);
       }
     }
     
-    this.selections[newSelectionName] = sel;
-    this.raiseSelectionChangedEvent();
+    this.setSelection(passingCells,newSelectionDisplayName);
 }
 
 

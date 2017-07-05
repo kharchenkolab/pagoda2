@@ -125,7 +125,6 @@ diffExprTableViewer.prototype.generateTables = function() {
             value: resultsDEset.getName() + "_B"
 			    });
 			  }
-			  console.log(resultsDEset.getSelectionB());
 			  selectionTextFields.push({
 			    xtype:"button",
 			    text: "Ok",
@@ -167,9 +166,9 @@ diffExprTableViewer.prototype.generateTables = function() {
     				    Ext.MessageBox.alert("Error", "Selectoin A's name and Selection B's name must not be the same");
     				    return;
     				  }
-    				  cellSelCntr.setSelection(selBName,resultsDEset.getSelectionB(),selBName);
+    				  cellSelCntr.setSelection(resultsDEset.getSelectionB(),selBName);
 			      }
-			      cellSelCntr.setSelection(selAName,resultsDEset.getSelectionA(),selAName);
+			      cellSelCntr.setSelection(resultsDEset.getSelectionA(),selAName);
 			      Ext.getCmp("retrieveCellSelectionsWindow").close();
 			    }
 			  });
@@ -180,7 +179,6 @@ diffExprTableViewer.prototype.generateTables = function() {
 			    height: "25%",
 			    margin: "5 5 5 5",
 			    handler: function(){
-			      console.log(Ext.getCmp("retrieveCellSelectionsWindow"));
 			      Ext.getCmp("retrieveCellSelectionsWindow").close();
 			    }
 			  });
