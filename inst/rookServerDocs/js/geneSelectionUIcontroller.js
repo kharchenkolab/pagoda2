@@ -174,7 +174,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
       },
 	    {
 		xtype: 'button',
-		text: 'Duplicate',
+		text: 'Save As',
 		handler: function() {
 
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
