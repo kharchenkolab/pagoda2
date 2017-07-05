@@ -788,12 +788,12 @@ heatmapViewer.prototype.drawHeatmap = function() {
 	// We also want to maintain a gene selection showing the
 	// current plotted genes
 	var geneSelCntr = new geneSelectionController();
-	geneSelCntr.setSelection('heatmapDisplayGenes', [], 'Current Heatmap Genes');
+	geneSelCntr.setSelection( [], 'Current Heatmap Genes', 'heatmapDisplayGenes');
     } else {
 
 	// Make a gene selection with the currently shown genes
 	var geneSelCntr = new geneSelectionController();
-	geneSelCntr.setSelection('heatmapDisplayGenes', this.displayGenes, 'Current Heatmap Genes');
+	geneSelCntr.setSelection( this.displayGenes, 'Current Heatmap Genes','heatmapDisplayGenes');
 	this.doDrawHeatmap();
     }
 }

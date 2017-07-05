@@ -73,7 +73,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	id: 'cellSelectionTable',
     	store: Ext.data.StoreManager.lookup('cellSelectionStoreForSelectionTable'),
     	columns: [
-    	    {text: 'Name', dataIndex: 'displayname', width: '67%'},
+    	    {text: 'Name', dataIndex: 'displayname', width: '62%'},
     	    {text: 'Count', dataIndex: 'cellcount', width: '28%'},
     	    {text: "&#x03DF;", dataIndex: 'color',width:'5%', renderer: 
     	    function(value, meta){
@@ -277,6 +277,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                   var selectionFormatted = [];
                   var cellSelCntr = new cellSelectionController();
                   for(var index = 0; index < selectedItems.length; index++){
+                    var selectionName = selectedItems.getAt(index).getData().selectionname;
       	            var displayName = selectedItems.getAt(index).getData().displayname;
       	            var color = selectedItems.getAt(index).getData().color.substring(1);
     	              var selection = cellSelCntr.getSelection(selectionName);
@@ -329,10 +330,10 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         label: "Pagoda CSV",
         value: "csv"
       });
-      importOptionsStore.add({
+      /*importOptionsStore.add({
         label: "JSON format",
         value: "json"
-      });
+      });*/
       
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {

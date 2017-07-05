@@ -135,7 +135,7 @@ aspectsTableViewer.prototype.generateTables = function() {
       		    });
 
       		    var geneSelCntr =  new geneSelectionController();
-      		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
+      		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
         } // selection change
       }, // listeners
       tbar: Ext.create('Ext.PagingToolbar', {

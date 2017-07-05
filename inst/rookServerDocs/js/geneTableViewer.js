@@ -109,7 +109,7 @@ geneTableViewer.prototype.generateGeneTable = function() {
 		    });
 
 		    var geneSelCntr =  new geneSelectionController();
-		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
+		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 		}
 
 	    } // listeners

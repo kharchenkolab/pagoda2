@@ -55,7 +55,7 @@ odGeneTableViewer.prototype.generateTable = function() {
 			selectedGeneNames.push(item.data.genename);
 		    });
 		    var geneSelCntr =  new geneSelectionController();
-		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames, 'Current Selected Genes');
+		    geneSelCntr.setSelection( selectedGeneNames, 'Current Selected Genes', 'geneTableSelection');
 		}
 	    }, // listeners
 	    tbar: Ext.create('Ext.PagingToolbar', {

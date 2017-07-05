@@ -163,10 +163,10 @@ diffExprTableViewer.prototype.generateTables = function() {
     				    return;
     				  }
     				  else if(selBName === selAName){
-    				    Ext.MessageBox.alert("Error", "Selectoin A's name and Selection B's name must not be the same");
+    				    Ext.MessageBox.alert("Error", "Selection A's name and Selection B's name must not be the same");
     				    return;
     				  }
-    				  cellSelCntr.setSelection(resultsDEset.getSelectionB(),selBName);
+    				  cellSelCntr.setSelection(resultsDEset.getSelectionB(), selBName);
 			      }
 			      cellSelCntr.setSelection(resultsDEset.getSelectionA(),selAName);
 			      Ext.getCmp("retrieveCellSelectionsWindow").close();
@@ -319,7 +319,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 		    });
 
 		    var geneSelCntr =  new geneSelectionController();
-		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
+		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 
 		}}
   });
