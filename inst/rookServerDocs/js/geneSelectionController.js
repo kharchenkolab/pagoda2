@@ -16,6 +16,7 @@ function geneSelectionController() {
     }
 
     this.selections = new Object();
+    this.idNum = 0;
     geneSelectionController.instance = this;
 }
 
@@ -29,7 +30,8 @@ geneSelectionController.prototype.setSelection = function(genes, displayName, se
 	    displayName = selectionName;
     }
     if(typeof selectionName === "undefined"){
-      selectionName = Math.floor(Math.random() * 1000) + "_" + (new Date()).getTime();
+      selectionName = this.idNum + "_" + (new Date()).getTime();
+      this.idNum++;
     }
     
     this.selections[selectionName] = ({

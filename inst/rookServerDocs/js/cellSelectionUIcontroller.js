@@ -289,7 +289,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	                    Ext.Msg.alert("Warning", "File format not yet supported");
 	              }
 	              else{
-	                    Ext.Msg.alert("Error", "An unexpected error has occured");
+	                    Ext.Msg.alert("Error", "No file format specified");
 	                    Ext.getCmp('cellFileCreationWindow').close();
 	                    return;
 	              }

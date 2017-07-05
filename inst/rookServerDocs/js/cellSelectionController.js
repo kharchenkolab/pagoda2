@@ -27,6 +27,7 @@ function cellSelectionController() {
 
     // Generat the array to keep the selections in
     this.selections = new Object();
+    this.idNum = 0;
     this.colorManagement = new colorManager();
     cellSelectionController.instance = this;
 };
@@ -50,7 +51,9 @@ cellSelectionController.prototype.setSelection = function(cells, displayName, me
       metadata = {};
     }
     if(typeof selectionName === "undefined"){
-      selectionName = Math.floor(Math.random() * 1000) + "_" + (new Date()).getTime();
+      
+      selectionName = this.idNum + "_" + (new Date()).getTime();
+      this.idNum++;
     }
 
     this.selections[selectionName] = {
