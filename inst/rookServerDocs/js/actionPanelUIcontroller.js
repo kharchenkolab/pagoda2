@@ -470,7 +470,7 @@ actionPanelUIcontroller.prototype.generateMDBGwindow = function(){
     for(var cellId in data[metaDataReference].data){barGraphData.data[data[metaDataReference].data[cellId]][data[metaDataComparison].data[cellId]]++}
     barGraphData.compPalette = data[metaDataComparison].palette;
     barGraphData.refPalette = data[metaDataReference].palette;
-    barGraphData.title = "Cluster Membership Bar graph";
+    barGraphData.title = "Cluster comparison bar graph";
     barGraphData.xLabel = data[metaDataReference].displayname;
     barGraphData.yLabel = data[metaDataComparison].displayname + " cells % Membership";
     (new graphViewer(barGraphData, "bar")).render();
