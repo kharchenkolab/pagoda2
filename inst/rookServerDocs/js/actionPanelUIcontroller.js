@@ -67,7 +67,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 	    },
 	    {
 		layout: 'fit',
-		title: 'Meta Data Comparison',
+		title: 'Metadata Comparison',
 		id: 'metaDataBarGraphTab',
 		glyph: 0xf080, //fa-bar-chart
 		tooltip: 'Examine membership of cells between different clusters of meta data',
@@ -102,7 +102,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 	    deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
     }
     this.generateMetaDataStore();
-    
+
     var deTab = Ext.getCmp('differentialExpressionTab');
     var espTab = Ext.getCmp('expressionScatterPlotTab');
     var mdbgTab = Ext.getCmp('metaDataBarGraphTab');
@@ -202,7 +202,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 
     	] //items
     });
-    
+
     //Gene expression scatter chart
     var formPanelESP =  Ext.create('Ext.form.Panel', {
     	id: 'formPanelESP',
@@ -267,7 +267,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	  },
     	  {
     	    xtype: 'button',
-    	    text: 'Build Plot',
+    	    text: 'Make Plot',
     	    margin: '5 5 5 5',
     	    handler: UIcontroller.generateESPwindow
     	  },
@@ -309,7 +309,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
         },
         {
     	    xtype: 'button',
-    	    text: 'Build Plot',
+    	    text: 'Make Plot',
     	    margin: '5 5 5 5',
     	    handler: UIcontroller.generateMDBGwindow
     	  },
@@ -322,7 +322,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	  }
       ]
     })
-    
+
     deTab.add(formPanelDE);
     espTab.add(formPanelESP);
     mdbgTab.add(formPanelMDBG)
@@ -390,7 +390,7 @@ actionPanelUIcontroller.prototype.showESPhelpDialog = function (){
       scrollable: true,
       bodyPadding: 10,
       html: '<h2>Plotting Gene Expression of two Genes</h2>' +
-        '<p>The following feature provides two means of comparing the gene expression of two different genes. The first is against cells from a predefined cell selection. To accomplish this Click the "From Selection" button and then select a selection from the dropdown menu. The second is against all cells. This is accomplished by just clicking the "All Cells" button. Next select a gene for the fields Gene A and Gene B. Gene A will appear along the X axis and gene B will appear along the Y.</p>'
+        '<p>This tab allows you to plot the gene expression of two different genes for all cells.</p>'
         ,
       constrain: true,
       closable: true,
@@ -398,15 +398,15 @@ actionPanelUIcontroller.prototype.showESPhelpDialog = function (){
     }).show();
 }
 /**
- * Generates an ESP window if the data provided on the ESP tab is valid 
+ * Generates an ESP window if the data provided on the ESP tab is valid
  */
 actionPanelUIcontroller.prototype.generateESPwindow = function(){
   var form = Ext.getCmp("formPanelESP").getForm();
-  
+
   var cellSelection = form.findField("cellSelectionESP").getValue();
   var geneA = form.findField("geneA").getValue();
   var geneB = form.findField("geneB").getValue();
-  
+
   if(geneA.length === 0){
     Ext.MessageBox.alert('Warning',"Please provide a gene in the Gene A field.");
   }
@@ -418,13 +418,13 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
     (new dataController()).getCellOrder(function(data){len = data.length})
     if(!len){return}
     (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,len,false, function(data){
-      
+
       if(data.DimNames2.length < 2){
         Ext.MessageBox.alert("Error", "One or more of the gene names provided could not be found in the provided dataset.");
         return;
       }
       var geneMatrix = data.getFullMatrix();
-      
+
       var scatterData = {
         data: geneMatrix.array,
         xLabel: geneMatrix.colnames[0],
@@ -433,20 +433,20 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
       };
 
       (new graphViewer(scatterData, "scatter")).render();
-      
+
     })
   }
 }
 
 /**
- * Generates an MDBG window if the data provided on the MDBG tab is valid 
+ * Generates an MDBG window if the data provided on the MDBG tab is valid
  */
 actionPanelUIcontroller.prototype.generateMDBGwindow = function(){
   var form = Ext.getCmp("formPanelMDBG").getForm();
-  
+
   var metaDataReference = form.findField("metaDataSelectionA").getValue();
   var metaDataComparison = form.findField("metaDataSelectionB").getValue();
-  
+
   if(!(metaDataReference)){
     Ext.MessageBox.alert("Warning","Please specify your reference meta data clustering");
     return;
@@ -456,9 +456,9 @@ actionPanelUIcontroller.prototype.generateMDBGwindow = function(){
     return;
   }
   var dataCtrl = new dataController();
-  var barGraphData = {} 
+  var barGraphData = {}
   dataCtrl.getCellMetadata(function(data){
-    
+
     barGraphData.data = [];
     for(var i = 0; i < data[metaDataReference].palette.length; i++){
       var nextArray = [];
@@ -475,8 +475,8 @@ actionPanelUIcontroller.prototype.generateMDBGwindow = function(){
     barGraphData.yLabel = data[metaDataComparison].displayname + " cells % Membership";
     (new graphViewer(barGraphData, "bar")).render();
   });
-  
-  
+
+
 }
 /**
  * Show help dialog for Meda Data Bar Graph
@@ -549,7 +549,7 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
               // Make a deResult set for saving the results
               // and save metadata related to this de result
-              
+
               var end = new Date();
               var resultSet = new deResultSet();
               resultSet.setResults(results);
@@ -645,7 +645,7 @@ actionPanelUIcontroller.prototype.syncCellSelectionStore = function() {
 }
 
 actionPanelUIcontroller.prototype.generateMetaDataStore = function(){
-  
+
   var mdStore = Ext.create('Ext.data.Store',{
     storeId: 'metaDataSelectionStoreForDBG',
     fields: [
@@ -658,7 +658,7 @@ actionPanelUIcontroller.prototype.generateMetaDataStore = function(){
   dataCntr.getCellMetadata(function(data) {
     for(var key in data){
       mdStore.add({internalName: key, displayName: data[key].displayname});
-    }  
+    }
   });
 }
 
