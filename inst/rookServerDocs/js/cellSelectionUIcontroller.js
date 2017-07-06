@@ -39,7 +39,7 @@ cellSelectionUIcontroller.prototype.syncCellSelectionStore = function() {
 	var selCount =  cellSelCntr.getSelection(selName).length;
 	var selDisplayName =  cellSelCntr.getSelectionDisplayName(selName);
 	var selColor = cellSelCntr.getColor(selName);
-  
+
 	store.add({selectionname: selName, displayname: selDisplayName , cellcount: selCount, color: selColor});
     }// for
 }
@@ -75,7 +75,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	columns: [
     	    {text: 'Name', dataIndex: 'displayname', width: '62%'},
     	    {text: 'Count', dataIndex: 'cellcount', width: '28%'},
-    	    {text: "&#x03DF;", dataIndex: 'color',width:'5%', renderer: 
+    	    {text: "&#x03DF;", dataIndex: 'color',width:'5%', renderer:
     	    function(value, meta){
     	      meta.style = "background-color:"+value+";";
     	    }}
@@ -95,7 +95,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
   {
         xtype: 'button',
         text: 'Delete',
-        handler: function() { 
+        handler: function() {
           var selectionTable = Ext.getCmp('cellSelectionTable');
       		var selectedItems = selectionTable.getSelectionModel().getSelected();
       		if (selectedItems.length >= 1) {
@@ -131,19 +131,19 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
           var selectionTable = Ext.getCmp('cellSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
     		  if (selectedItems.length >= 2) {
-    		    
+
     		    var selectionNames = [];
             for(var i = 0; i < selectedItems.length; i++){
               selectionNames.push(selectedItems.getAt(i).getData().selectionname);
     		    }
-    		    
+
     		    thisViewer.promptName("", function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
           	    cellSelCntr.mergeSelectionsIntoNew(selectionNames, newDisplayName);
       	    }
       	})
-                  
+
     		  } else {
             Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to merge first.');
     		  }
@@ -168,8 +168,8 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
           	    cellSelCntr.intersectSelectionsIntoNew(selectionNames, newDisplayName);
       	      }
             })
-      	    
-                  
+
+
     		  } else {
             Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to intersect first.');
     		  }
@@ -186,7 +186,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     		if (selectedItems.length === 1) {
     		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
     		    var oldDisplayName = selectedItems.getAt(0).getData().displayname;
-    		    
+
             thisViewer.promptName(oldDisplayName, function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
@@ -237,7 +237,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         label: "JSON format",
         value: "json"
       });*/
-      
+
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {
 	      fieldLabel: 'Export Format:',
@@ -272,7 +272,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	            margin: "5 5 5 5",
 	            align: "center",
 	            handler: function(){
-	                  
+
 	              if(importComboBox.getValue() === "csv"){
                   var selectionFormatted = [];
                   var cellSelCntr = new cellSelectionController();
@@ -310,12 +310,12 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	          },
 	        ],
 	      }).show();
-	      
+
 	    } else {
     		Ext.MessageBox.alert('Warning', 'Please choose one or more cell selections first');
     	}
     }
-          
+
 	},
 	{
 	  xtype: 'button',
@@ -334,7 +334,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         label: "JSON format",
         value: "json"
       });*/
-      
+
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {
 	      fieldLabel: 'Import Format:',
@@ -386,7 +386,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
   	                  var cellSelCntrl = new cellSelectionController();
 	                    var total = 0;
 	                    var removedCells = {};
-	                    
+
   	                  for(var line = 0; line < lines.length; line++){
 	                      if(lines[line].length !== 0){
 	                        var selection = lines[line].split(",");
@@ -402,7 +402,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	                            removedCells[dispName]++;
 	                          }
   	                      }// ensure all cells are rightfully containers
-	                        
+
 	                        if(removedCells[dispName] !== selection.length){
 	                          while(cellSelCntrl.displayNameExists(dispName)){
   	                          dispName = dispName  + "~RecentlyLoaded"
@@ -423,10 +423,10 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
   	           };
 	             }
 	             else if(selection === "json"){
-	                    
+
 	             }
 	             else if(selection === "pagbin"){
-	                    
+
 	             }
 	             else{
 	               Ext.Msg.alert("Error", "An unexpected error has occured");
@@ -449,14 +449,14 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	            }
 	          },
 	          importComboBox
-	          
+
             ]
             })
 	        ],
 	      }).show();
 	    }
 	    Ext.getCmp('cellFileSelectionWindow').focus();
-	    
+
 	  }
 	},
 	{
@@ -465,12 +465,12 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	  handler: function() {
 	    	var selectionTable = Ext.getCmp('cellSelectionTable');
     		var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		    
+
     		    var selectionNames = []
     		    for(var i = 0; i < selectedItems.length; i++){
               selectionNames.push(selectedItems.getAt(i).getData().selectionname);
     		    }
-    		    
+
             // Highlight on heatmap
             var heatV = new heatmapViewer();
             heatV.highlightCellSelectionsByNames(selectionNames);
@@ -497,12 +497,12 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	  handler: function() {
 	    	var selectionTable = Ext.getCmp('cellSelectionTable');
     		var selectedItems = selectionTable.getSelectionModel().getSelected();
-    		    
+
     		    var selectionNames = []
     		    for(var i = 0; i < selectedItems.length; i++){
               selectionNames.push(selectedItems.getAt(i).getData().selectionname);
     		    }
-    		    
+
             // Highlight on heatmap
             var heatV = new heatmapViewer();
             heatV.highlightCellSelectionsByNames(selectionNames);
@@ -524,8 +524,8 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	},
 	{
 	  xtype: 'button',
-	  text: 'Change Highlight',
-	  handler: 
+	  text: 'Change Color',
+	  handler:
 	  function(){
 	    var selectionTable = Ext.getCmp('cellSelectionTable');
 		  var selectedItems = selectionTable.getSelectionModel().getSelected();
@@ -541,7 +541,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	        modal: true,
 	        items:[
               {
-                xtype:"colorfield",              
+                xtype:"colorfield",
                 fieldLabel: 'Highlight Color',
                 id: "colorPicker",
                 labelWidth: 75,
@@ -558,7 +558,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	            align: "center",
 	            margin: "5 5 5 5",
 	            handler: function(){
-	              
+
 	              cellSelCntrl.setColor(selectedItems.getAt(0).getData().selectionname, "#" + (Ext.getCmp("colorPicker").value))
 	              var heatView = new heatmapViewer();
                 var aspHeatView = new aspectHeatmapViewer();
@@ -568,7 +568,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                 aspHeatView.highlightCellSelectionByName(selectionName);
                 metaHeatView.highlightCellSelectionByName(selectionName);
                 embCntr.highlightSelectionByName(selectionName);
-	          
+
 	              Ext.getCmp('cellSelectionColorWindow').close();
 	            }
 	          },
@@ -588,15 +588,15 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 		} else {
 		    Ext.MessageBox.alert('Warning', 'Please choose only one cell selection first');
 		}
-	   
+
 	  }
 	},
 	{
 	  xtype: 'button',
 	  text: 'Regex Selection',
-	  handler: 
+	  handler:
 	  function(){
-	    
+
 	    Ext.MessageBox.prompt("Regular Expression Selection", "Create Selection Using a Regular Expression",function(btn,text){
 	      if(btn === "ok"){
 	        var re = new RegExp(text);
@@ -610,7 +610,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	          }
 	        })
 	        if(selection.length > 0){
-  	        
+
           	thisViewer.promptName(text.split(",").join(""), function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
@@ -622,7 +622,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	    })
 	  }
 	}
-	
+
     ]
     });
 
@@ -646,7 +646,7 @@ cellSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
       				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)',function(e){
         			      cellSelUICntr.promptName(newName, callback);
         			    });
-      			    } 
+      			    }
       			    else if (cellSelCntr.displayNameExists(newName)) {
       				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!',function(e){
         			      cellSelUICntr.promptName(newName, callback);
@@ -660,6 +660,6 @@ cellSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
         			  callback(false);
         			}
     		    },{},false,curDisplay);
-  
+
 }
 
