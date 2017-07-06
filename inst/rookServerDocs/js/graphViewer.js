@@ -13,6 +13,8 @@
 function graphViewer(data, plotType){
     this.data = data;
     this.plotType = plotType;
+
+    this.lineThickness = 1;
 }
 
 graphViewer.prototype.draw = function(canvas){
@@ -44,7 +46,10 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     hasTitle: true,
   }
 
-  var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")), padding, margin, choices, boundries, scaleStyle);
+  var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,
+    parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")),
+    padding, margin, choices, boundries, scaleStyle);
+
   var realWidth = barSep * 2 + (barWidth + barSep) * this.data.data.length + parseInt(((canvas).getAttribute("width"))) - boundings.plotDim.width;
   if(realWidth < 500){
     realWidth = 500;
@@ -52,13 +57,14 @@ graphViewer.prototype.drawBarGraph = function(canvas){
   }
   (canvas).setAttribute("width", realWidth);
 
-  boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")), padding, margin, choices, boundries, scaleStyle);
+  boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",
+    28,parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")),
+    padding, margin, choices, boundries, scaleStyle);
 
   choices.hasXscale = false;
   this.drawAxisWithScales(ctx, choices, boundings, padding, margin, boundries, scaleStyle);
 
   if(parseInt((canvas).getAttribute("width")) === 500){
-
     var dilation = boundings.plotDim.width/((barSep+barWidth)* this.data.data.length + 2 * barSep);
     barSep = barSep * dilation;
     barWidth = barWidth * dilation;
@@ -74,7 +80,8 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     for(var j = 0; j < this.data.data[i].length; j++){
       if(this.data.data[i][j] !== 0){
         var barHeight = (this.data.data[i][j]/total) * boundings.plotDim.height;
-        ctx.fillStyle = this.data.compPalette[j];
+
+        ctx.fillStyle = this.data.compPalette[j].substring(0,7);
         ctx.fillRect(barStartX, barStartY, barWidth, -barHeight);
         barStartY = barStartY - barHeight;
       }
@@ -83,7 +90,7 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     ctx.baseline = "top";
     ctx.textAlign = "center";
     ctx.font = boundings.axisFont
-    ctx.fillText((i+1) + "" ,barStartX + barWidth/2, boundings.plotBR.y + graphViewer.lineThickness + padding)
+    ctx.fillText((i+1) + "" ,barStartX + barWidth/2, boundings.plotBR.y + this.lineThickness + padding)
   }
 }
 
@@ -160,16 +167,16 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
   }
 
   boundings.plotTL = {
-    x: boundings.yGutter + graphViewer.lineThickness,
+    x: boundings.yGutter + this.lineThickness,
     y: boundings.topGutter
   }
   boundings.plotBR = {
     x: width - boundings.rightGutter,
-    y: height - boundings.xGutter - graphViewer.lineThickness
+    y: height - boundings.xGutter - this.lineThickness
   }
   boundings.plotDim = {
-    width: width - boundings.rightGutter - boundings.yGutter - graphViewer.lineThickness,
-    height: height - boundings.topGutter - boundings.xGutter - graphViewer.lineThickness
+    width: width - boundings.rightGutter - boundings.yGutter - this.lineThickness,
+    height: height - boundings.topGutter - boundings.xGutter - this.lineThickness
   }
   boundings.canvasDim = {
     height: height,
@@ -187,9 +194,9 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
     var step = (boundries.maxY - boundries.minY)/5
     for(var i = 0; i < 6; i++){
       ctx.fillStyle = "#000000";
-      ctx.fillText(scaleStyle(boundries.minY+(i*step)) + "", (boundings.plotTL.x - graphViewer.lineThickness - padding), boundings.plotBR.y - scaleSpace * i);
+      ctx.fillText(scaleStyle(boundries.minY+(i*step)) + "", (boundings.plotTL.x - this.lineThickness - padding), boundings.plotBR.y - scaleSpace * i);
       ctx.fillStyle = "#D3D3D3";
-      ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y - scaleSpace * i, boundings.plotDim.width, graphViewer.lineThickness);
+      ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y - scaleSpace * i, boundings.plotDim.width, this.lineThickness);
     }
   }
 
@@ -200,9 +207,9 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
     var step = (boundries.maxX-boundries.minX)/5
     for(var i = 0; i < 6; i++){
       ctx.fillStyle = "#000000";
-      ctx.fillText(scaleStyle(boundries.minX+(i*step)) + "", (boundings.plotTL.x - graphViewer.lineThickness) + scaleSpace * i, boundings.plotBR.y + padding + graphViewer.lineThickness);
+      ctx.fillText(scaleStyle(boundries.minX+(i*step)) + "", (boundings.plotTL.x - this.lineThickness) + scaleSpace * i, boundings.plotBR.y + padding + this.lineThickness);
       ctx.fillStyle = "#D3D3D3";
-      ctx.fillRect(boundings.plotTL.x + scaleSpace * i, boundings.plotTL.y, -1 * graphViewer.lineThickness, boundings.plotDim.height);
+      ctx.fillRect(boundings.plotTL.x + scaleSpace * i, boundings.plotTL.y, -1 * this.lineThickness, boundings.plotDim.height);
     }
   }
 
@@ -229,9 +236,10 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
   }
 
   ctx.fillStyle = "#000000";
-  ctx.fillRect(boundings.plotTL.x, boundings.plotTL.y, -1 * graphViewer.lineThickness, boundings.plotDim.height + graphViewer.lineThickness);
-  ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y, boundings.plotDim.width, graphViewer.lineThickness);
+  ctx.fillRect(boundings.plotTL.x, boundings.plotTL.y, -1 * this.lineThickness, boundings.plotDim.height + this.lineThickness);
+  ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y, boundings.plotDim.width, this.lineThickness);
 }
+
 graphViewer.prototype.render = function(){
   var height = 500;
   var width = 500;
@@ -309,7 +317,8 @@ graphViewer.prototype.findTrueBarWidth = function(height, width){
   var realWidth = barSep * 2 + (barWidth + barSep) * this.data.data.length + width - boundings.plotDim.width;
   return realWidth;
 }
-graphViewer.lineThickness = 1;
+
+
 
 
 
