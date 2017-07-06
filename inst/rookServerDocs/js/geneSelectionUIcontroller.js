@@ -172,6 +172,54 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
         }
 
       },
+  {
+	  xtype: "button",
+	  text: "Compliment",
+	  handler: function(){
+	    var selectionTable = Ext.getCmp('geneSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 1) {
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+            thisViewer.promptName("", function(newDisplayName){
+          	  var geneSelCntr =  new geneSelectionController();
+          	  if(newDisplayName !== false){
+          	    geneSelCntr.complimentSelectionsIntoNew(selectionNames, newDisplayName);
+      	      }
+            })
+
+
+    		  } else {
+            Ext.MessageBox.alert('Warning', 'Please pick at least one gene selection to compliment first.');
+    		  }
+	  }
+	},
+	{
+	  xtype: "button",
+	  text: "Difference",
+	  handler: function(){
+	    var selectionTable = Ext.getCmp('geneSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 2) {
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+            thisViewer.promptName("", function(newDisplayName){
+          	  var geneSelCntr =  new geneSelectionController();
+          	  if(newDisplayName !== false){
+          	    geneSelCntr.differenceSelectionsIntoNew(selectionNames, newDisplayName);
+      	      }
+            })
+
+
+    		  } else {
+            Ext.MessageBox.alert('Warning', 'Please pick at least two gene selections to find the difference of first.');
+    		  }
+	  }
+	},
 	    {
 		xtype: 'button',
 		text: 'Save As',

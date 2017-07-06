@@ -73,7 +73,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	id: 'cellSelectionTable',
     	store: Ext.data.StoreManager.lookup('cellSelectionStoreForSelectionTable'),
     	columns: [
-    	    {text: 'Name', dataIndex: 'displayname', width: '62%'},
+    	    {text: 'Name', dataIndex: 'displayname', width: '62.7%'},
     	    {text: 'Count', dataIndex: 'cellcount', width: '28%'},
     	    {text: "&#x03DF;", dataIndex: 'color',width:'5%', renderer:
     	    function(value, meta){
@@ -152,9 +152,9 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
       },
   {
-        xtype: 'button',
-        text: 'Intersect',
-        handler: function() {
+    xtype: 'button',
+    text: 'Intersect',
+    handler: function() {
           var selectionTable = Ext.getCmp('cellSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
     		  if (selectedItems.length >= 2) {
@@ -175,8 +175,55 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     		  }
 
         }
+  },
+  {
+	  xtype: "button",
+	  text: "Compliment",
+	  handler: function(){
+	    var selectionTable = Ext.getCmp('cellSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 1) {
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+            thisViewer.promptName("", function(newDisplayName){
+          	  var cellSelCntr =  new cellSelectionController();
+          	  if(newDisplayName !== false){
+          	    cellSelCntr.complimentSelectionsIntoNew(selectionNames, newDisplayName);
+      	      }
+            })
 
-      },
+
+    		  } else {
+            Ext.MessageBox.alert('Warning', 'Please pick at least one cell selection to compliment first.');
+    		  }
+	  }
+	},
+	{
+	  xtype: "button",
+	  text: "Difference",
+	  handler: function(){
+	    var selectionTable = Ext.getCmp('cellSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+    		  if (selectedItems.length >= 2) {
+            var selectionNames = [];
+            for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+            thisViewer.promptName("", function(newDisplayName){
+          	  var cellSelCntr =  new cellSelectionController();
+          	  if(newDisplayName !== false){
+          	    cellSelCntr.differenceSelectionsIntoNew(selectionNames, newDisplayName);
+      	      }
+            })
+
+
+    		  } else {
+            Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to find the difference of first.');
+    		  }
+	  }
+	},
   {
             xtype: 'button',
             text: 'Save As',
@@ -621,7 +668,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	      }
 	    })
 	  }
-	}
+	},
 
     ]
     });
@@ -636,19 +683,19 @@ cellSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
       			    var newName = text;
       			    var cellSelCntr = new cellSelectionController();
       			    var cellSelUICntr = new cellSelectionUIcontroller();
-        			 var re = new RegExp('[^A-Za-z0-9_]');
+        			 var re = new RegExp('[\,]');
       			    if (newName.length === 0) {
       				    Ext.MessageBox.alert('Error','You must enter a selection name',function(e){
         			      cellSelUICntr.promptName(newName, callback);
         			    });
       			    }
       			    else if (newName.match(re) ) {
-      				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)',function(e){
+      				    Ext.MessageBox.alert('Error', 'The name must not contain a comma',function(e){
         			      cellSelUICntr.promptName(newName, callback);
         			    });
       			    }
       			    else if (cellSelCntr.displayNameExists(newName)) {
-      				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!',function(e){
+      				    Ext.MessageBox.alert('Error', 'A selection with this name already exists',function(e){
         			      cellSelUICntr.promptName(newName, callback);
         			    });
       				  }
