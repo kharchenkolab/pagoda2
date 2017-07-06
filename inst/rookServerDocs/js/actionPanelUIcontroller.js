@@ -489,7 +489,7 @@ actionPanelUIcontroller.prototype.showMDBGhelpDialog = function(){
       scrollable: true,
       bodyPadding: 10,
       html: '<h2>Display Differential Meta Data groupings</h2>' +
-        '<p>To display differential Metadata Bar Graph select a "Reference Meta Data Clusters" from the first drop down menu and a "Examined Meta Data Clusters" from the second menu. Then click "Build Plot". The reference meta data will appear along the x axis with numeric idnetifiers, while the color Examined metadata will appear along the Y axis with their clusters identified by color.</p>'
+        '<p>To display differential Metadata Bar Graph select a "Reference Meta Data Clusters" from the first drop down menu and a "Examined Meta Data Clusters" from the second menu. Then click "Make Plot". The reference meta data will appear along the x axis with numeric identifiers, while the color Examined metadata will appear along the Y axis with their clusters identified by color.</p>'
         ,
       constrain: true,
       closable: true,
