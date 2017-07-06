@@ -222,7 +222,8 @@ embeddingViewer.prototype.generateToolbar = function() {
           Ext.getCmp("polygonSelectionButton").disable();
           (new embeddingViewer()).currentViewer.highlight = "poly";
         }
-    })
+    });
+    toolbar.add({xtype: 'tbseparator'});
     // Add a button for the settings menu
     toolbar.add(
       {
@@ -232,7 +233,7 @@ embeddingViewer.prototype.generateToolbar = function() {
         glyph: 0xf0ed,
         handler: function(){
 
-              var aspV = new aspectHeatmapViewer(); 
+              var aspV = new aspectHeatmapViewer();
               var embV = new embeddingViewer();
               var backgroundCanvas = document.createElement("canvas");
               backgroundCanvas.height = 1000;
@@ -250,7 +251,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                   embViewSC.highlightSelectionsByNamesOntoCanvas(backgroundOverlay,1000,aspV.currentOverlaySelectionNames);
                 }
               }
-              
+
               var overlay = document.getElementById('embedding-canvas-overlay');
               Ext.create("Ext.window.Window",{
                 title:"Embedding Download Preview",
@@ -430,7 +431,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                       }
                     ]
                   },
-                  
+
                   {
                     xtype: 'container',
                     title: 'Preview',
@@ -448,8 +449,8 @@ embeddingViewer.prototype.generateToolbar = function() {
 
                 drawPlot: function(canvas,overlay, destination, squareDim){
                   var options = [Ext.getCmp('includeTitle').getValue(),Ext.getCmp('includeAxis').getValue(),Ext.getCmp('includeHighlight').getValue()];
-                  
-                  
+
+
                   var targetContext = destination.getContext("2d");
                   targetContext.clearRect(0,0,squareDim,squareDim);
                   targetContext.fillStyle = "#FFFFFF";
@@ -468,7 +469,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                   var graphPaddingTop = 10;
                   var graphPaddingBottom = 2;
                   var lineThickness = 1;
-                  
+
                   var axisFontSize = Ext.getCmp('axis-font-size').getValue()/(1000/squareDim);
                   var titleFontSize = Ext.getCmp('title-font-size').getValue()/(1000/squareDim);
                   var text = [Ext.getCmp('embTitle').getValue(), Ext.getCmp('xAxisTitle').getValue(),Ext.getCmp('yAxisTitle').getValue()]
@@ -478,7 +479,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                   var enclosingMargin = 10;
                   var plotDim = Math.min(squareDim-(topOffset + bottomOffset + 2 * enclosingMargin), squareDim - (leftOffset + 2 * enclosingMargin));
 
-                  
+
 
                   var topLeft = {
                     x: leftOffset+enclosingMargin,
@@ -502,13 +503,13 @@ embeddingViewer.prototype.generateToolbar = function() {
 
                   //draw X axis
                   if(options[1]){
-                    
+
                     targetContext.beginPath();
                     targetContext.textBaseline = "top";
                     //targetContext.fillRect(topLeft.x-lineThickness, topLeft.y + plotDim, plotDim + lineThickness, lineThickness);
                     targetContext.fillText(text[1],topLeft.x + plotDim/2,  topLeft.y + plotDim + lineThickness + readablePadding);
                     pagHelpers.canvas_arrow(targetContext,topLeft.x,topLeft.y + plotDim,topLeft.x+plotDim,topLeft.y+plotDim,10 * (squareDim/250));
-                    
+
                     /*
                     targetContext.beginPath();
                     targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim - arrowHeadLength);
@@ -521,17 +522,17 @@ embeddingViewer.prototype.generateToolbar = function() {
                     targetContext.stroke();
                     targetContext.closePath();
                     */
-                    
+
                     //draw Y axis
                     //targetContext.fillRect(topLeft.x-lineThickness, topLeft.y, lineThickness,  plotDim + lineThickness);
-                    
+
                     pagHelpers.canvas_arrow(targetContext,topLeft.x, topLeft.y + plotDim-lineThickness,topLeft.x,topLeft.y, 10 * (squareDim/250));
                     targetContext.textBaseline = "bottom";
                     targetContext.rotate(-Math.PI/2);
                     targetContext.fillText(text[2],-(topLeft.y + plotDim/2),topLeft.x -readablePadding );
                     targetContext.rotate(Math.PI/2);
-                    
-                    
+
+
                     /*
                     targetContext.beginPath();
                     targetContext.moveTo(topLeft.x - arrowHeadLength, topLeft.y + arrowHeadLength*2);
@@ -560,9 +561,7 @@ embeddingViewer.prototype.generateToolbar = function() {
 
         } // handler
       }); // toolbar add
-    toolbar.add({
-      
-    })
+
       toolbar.add(
         {
           text: "",
