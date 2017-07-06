@@ -76,13 +76,76 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	    {text: 'Name', dataIndex: 'displayname', width: '62.7%'},
     	    {text: 'Count', dataIndex: 'cellcount', width: '28%'},
     	    {text: "&#x03DF;", dataIndex: 'color',width:'5%', renderer:
-    	    function(value, meta){
-    	      meta.style = "background-color:"+value+";";
-    	    }}
+    	      function(value, meta){
+    	        meta.style = "background-color:"+value+";";
+    	      },
+    	    }
     	],
     	emptyText: "No cell selections are currently available",
     	singleSelect: false,
-    	selModel: cellTableSelectionModel
+    	selModel: cellTableSelectionModel,
+    	listeners:{
+      	celldblclick: function(thisGrid, td,col,record, tr, row){
+      	  if(col === 3){
+      	      var selectionName = Ext.getCmp('cellSelectionTable').getStore().getAt(row).getData().selectionname;
+      		    var cellSelCntrl = new cellSelectionController();
+      		    var oldColor = cellSelCntrl.getColor(selectionName);
+              Ext.create('Ext.window.Window',{
+      	        title:'Change Cell Selection Color',
+        	      id: 'cellSelectionColorWindow',
+      	        align:"center",
+      	        width: 300,
+      	        modal: true,
+      	        items:[
+                    {
+                      xtype:"colorfield",
+                      fieldLabel: 'Highlight Color',
+                      id: "colorPicker",
+                      labelWidth: 75,
+                      value: oldColor,
+                      listeners: {
+                        change: 'onChange'
+                      }
+                  },
+        	        {
+        	          xtype: 'button',
+      	            text: 'Ok',
+      	            width:"20%",
+      	            height:"30%",
+      	            align: "center",
+      	            margin: "5 5 5 5",
+      	            handler: function(){
+      
+      	              cellSelCntrl.setColor(selectionName, "#" + (Ext.getCmp("colorPicker").value))
+      	              var heatView = new heatmapViewer();
+                      var aspHeatView = new aspectHeatmapViewer();
+                      var embCntr = new embeddingViewer();
+                      var metaHeatView = new metaDataHeatmapViewer();
+                      heatView.highlightCellSelectionByName(selectionName);
+                      aspHeatView.highlightCellSelectionByName(selectionName);
+                      metaHeatView.highlightCellSelectionByName(selectionName);
+                      embCntr.highlightSelectionByName(selectionName);
+      
+      	              Ext.getCmp('cellSelectionColorWindow').close();
+      	            }
+      	          },
+      	          {
+      	            xtype: 'button',
+      	            text: 'Cancel',
+        	          width:"20%",
+      	            height:"30%",
+      	            align: "center",
+      	            margin: "5 5 5 5",
+      	            handler: function(){
+      	              Ext.getCmp('cellSelectionColorWindow').close();
+      	            }
+      	          },
+      	        ]
+        	    }).show();
+	       
+      	    }
+      	 }
+      }
     });
 
     var formPanel = Ext.create('Ext.form.Panel', {
