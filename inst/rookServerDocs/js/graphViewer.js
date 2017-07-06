@@ -1,3 +1,15 @@
+"use strict";
+
+/*
+ * Filename: actionPanelUIcontroller.js
+ * Author: Brendan Joyce
+ * Date: June 2017
+ */
+
+/**
+ * Generates custom plots
+ * @constructor
+ */
 function graphViewer(data, plotType){
     this.data = data;
     this.plotType = plotType;
@@ -31,22 +43,22 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     hasAxisLabels: true,
     hasTitle: true,
   }
-  
+
   var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")), padding, margin, choices, boundries, scaleStyle);
   var realWidth = barSep * 2 + (barWidth + barSep) * this.data.data.length + parseInt(((canvas).getAttribute("width"))) - boundings.plotDim.width;
   if(realWidth < 500){
     realWidth = 500;
-    
+
   }
   (canvas).setAttribute("width", realWidth);
-  
+
   boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")), padding, margin, choices, boundries, scaleStyle);
-  
+
   choices.hasXscale = false;
   this.drawAxisWithScales(ctx, choices, boundings, padding, margin, boundries, scaleStyle);
-  
+
   if(parseInt((canvas).getAttribute("width")) === 500){
-    
+
     var dilation = boundings.plotDim.width/((barSep+barWidth)* this.data.data.length + 2 * barSep);
     barSep = barSep * dilation;
     barWidth = barWidth * dilation;
@@ -76,7 +88,7 @@ graphViewer.prototype.drawBarGraph = function(canvas){
 }
 
 graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
-  
+
   var boundries ={}
   boundries.minX = 0;
   boundries.minY = 0;
@@ -89,7 +101,7 @@ graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
     boundries.maxY = Math.max(this.data.data[i][1],boundries.maxY);
   }
   var padding = 8;
-  var radius = 4;
+  var radius = 2;
   var margin = 5;
   var ctx = canvas.getContext('2d');
   var choices = {
@@ -100,26 +112,26 @@ graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
   }
   var scaleFunction = function(x){return (x.toFixed(2) + "")};
   var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")), padding, margin, choices, boundries,scaleFunction);
-  
+
   this.drawAxisWithScales(ctx, choices,boundings, padding ,margin, boundries, function(x){return (Math.round(x * 100)/100)});
   var xRange = boundries.maxX-boundries.minX;
   var yRange = boundries.maxY-boundries.minY;
   for(var i = 0; i < this.data.data.length; i++){
-    
+
     var coordinate = {
       x: (this.data.data[i][0] - boundries.minX)/xRange * boundings.plotDim.width,
       y: (this.data.data[i][1] - boundries.minY)/yRange * boundings.plotDim.height
     }
     ctx.beginPath();
     ctx.arc(coordinate.x + boundings.plotTL.x, boundings.plotBR.y - coordinate.y , radius, 0, 2 * Math.PI, false);
-    ctx.fillStyle = 'red';
+    ctx.fillStyle = 'black';
     ctx.fill();
 
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = 'black';
     ctx.stroke();
-    
+
   }
-  
+
 }
 graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeight, titleFont, titleHeight, width, height, padding, margin, choices, boundries, scaleStyle){
   var boundings = {}
@@ -127,7 +139,7 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
   boundings.titleFont = titleFont;
   boundings.xGutter = (choices.hasXscale? axisHeight + padding : 0) + (choices.hasAxisLabels? axisHeight + padding : 0) + margin;
   boundings.yGutter = margin + (choices.hasAxisLabels? axisHeight + padding : 0);
-  
+
   if(choices.hasYscale){
     var step = (boundries.maxY-boundries.minY)/5
     ctx.font = axisFont;
@@ -135,10 +147,10 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
     for(var x = boundries.minY; x < boundries.maxY; x += step){maxLength = Math.max(ctx.measureText(scaleStyle(x)).width,maxLength)}
     boundings.yGutter += maxLength + padding;
   }
-  
+
   boundings.topGutter = margin + (choices.hasTitle? titleHeight + padding : 0)
   boundings.rightGutter = margin;
-  
+
   if(choices.hasXscale){
     var step = (boundries.maxX-boundries.minX)/5
     ctx.font = axisFont;
@@ -146,7 +158,7 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
     for(var x = boundries.minX; x < boundries.maxX; x += step){maxLength = Math.max(ctx.measureText(scaleStyle(x)).width,maxLength)}
     boundings.rightGutter += maxLength/2;
   }
-  
+
   boundings.plotTL = {
     x: boundings.yGutter + graphViewer.lineThickness,
     y: boundings.topGutter
@@ -163,11 +175,11 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
     height: height,
     width: width
   }
-  
+
   return boundings;
 }
 graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, padding, margin, boundries, scaleStyle){
-  
+
   if(choices.hasYscale){
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
@@ -180,7 +192,7 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
       ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y - scaleSpace * i, boundings.plotDim.width, graphViewer.lineThickness);
     }
   }
-  
+
   if(choices.hasXscale){
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
@@ -193,7 +205,7 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
       ctx.fillRect(boundings.plotTL.x + scaleSpace * i, boundings.plotTL.y, -1 * graphViewer.lineThickness, boundings.plotDim.height);
     }
   }
-  
+
   if(choices.hasAxisLabels){
 
     ctx.fillStyle = "#000000";
@@ -206,16 +218,16 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
     ctx.fillText(this.data.yLabel,-((boundings.plotBR.y - boundings.plotTL.y)/2+ boundings.plotTL.y), margin)
     ctx.rotate(Math.PI/2);
   }
-  
+
   if(choices.hasTitle){
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.font = boundings.titleFont;
     ctx.fillText(this.data.title, (boundings.plotBR.x - boundings.plotTL.x)/2 + boundings.plotTL.x, margin);
-    
+
   }
-  
+
   ctx.fillStyle = "#000000";
   ctx.fillRect(boundings.plotTL.x, boundings.plotTL.y, -1 * graphViewer.lineThickness, boundings.plotDim.height + graphViewer.lineThickness);
   ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y, boundings.plotDim.width, graphViewer.lineThickness);
@@ -292,7 +304,7 @@ graphViewer.prototype.findTrueBarWidth = function(height, width){
     hasAxisLabels: true,
     hasTitle: true,
   }
-  
+
   var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28, width, height, padding, margin, choices, boundries, scaleStyle);
   var realWidth = barSep * 2 + (barWidth + barSep) * this.data.data.length + width - boundings.plotDim.width;
   return realWidth;
@@ -300,5 +312,5 @@ graphViewer.prototype.findTrueBarWidth = function(height, width){
 graphViewer.lineThickness = 1;
 
 
-  
+
 
