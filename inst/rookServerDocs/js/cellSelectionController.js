@@ -64,6 +64,7 @@ cellSelectionController.prototype.setSelection = function(cells, displayName, me
 	'color' : color
     };
     this.raiseSelectionChangedEvent();
+    return selectionName;
 };
 
 
@@ -148,7 +149,9 @@ cellSelectionController.prototype.setColor = function(selectionName, newColor){
  * @returns {boolean} whether or not dispName exists among all other displayNames
  */
 cellSelectionController.prototype.displayNameExists = function(dispName){
+  console.log(this.selections)
   for(var sel in this.selections){
+    console.log(this.selections[sel].displayName + " " + dispName);
     if(this.selections[sel].displayName === dispName){
       return true;
     }

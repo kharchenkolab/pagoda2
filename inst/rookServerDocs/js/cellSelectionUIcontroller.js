@@ -72,7 +72,10 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     var cellSelectionTable = Ext.create('Ext.grid.Panel',{
     	title: 'Available Cell Selections',
     	id: 'cellSelectionTable',
+    	height: "100%",
+    	width: "100%",
     	tools: [toolbar],
+    	scrollable: true,
     	store: Ext.data.StoreManager.lookup('cellSelectionStoreForSelectionTable'),
     	columns: [
     	    {text: 'Name', dataIndex: 'displayname', width: '62.7%'},

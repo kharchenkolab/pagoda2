@@ -79,6 +79,8 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	title: 'Available Gene Selections',
 	tools: [toolbar],
 	id: 'geneSelectionTable',
+	height: '100%',
+	width: '100%',
 	store: Ext.data.StoreManager.lookup('geneSelectionStoreForSelectionTable'),
 	columns: [
 	    {text: 'Name', dataIndex: 'displayname', width: '70%'},
@@ -88,15 +90,15 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	selModel: geneTableSelectionModel
     });
 
-    var formPanel = Ext.create('Ext.form.Panel', {
+    /*var formPanel = Ext.create('Ext.form.Panel', {
 	height: '100%',
 	width: '100%',
 	bodyPadding: 10,
 	defaultType: 'textfield',
 	items: [geneSelectionTable]
-    });
+    });*/
 
-    uipanel.add(formPanel);
+    uipanel.add(geneSelectionTable);
     
     
   
@@ -137,6 +139,8 @@ geneSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
 
 geneSelectionUIcontroller.prototype.generateToolbar = function(){
   var toolbar = Ext.create("Ext.Toolbar");
+  var thisViewer = this;
+  
   toolbar.add({
         xtype: 'button',
        glyph: 0xf055, //fa-plus-circle

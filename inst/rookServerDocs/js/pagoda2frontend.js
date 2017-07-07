@@ -230,10 +230,10 @@ function generateExtJsLayout() {
     });
 
     var cellSelectionPanel =  Ext.create('Ext.panel.Panel', {
-	id: 'cellselection-app-container',
-	layout: 'fit',
-	height: '100%',
-	width: '100%'
+	      id: 'cellselection-app-container',
+	      layout: 'fit',
+		    height: '100%',
+		    width: '100%',
     });
 
     var geneSelectionPanel =  Ext.create('Ext.panel.Panel', {
@@ -271,8 +271,11 @@ function generateExtJsLayout() {
 		{
 		    title: 'Cell Selections',
 		    glyph: 0xf03a,
+		    layout: "fit",
+		    height: '100%',
+		    width: '100%',
 		    tooltip: 'View and manage available cell selections',
-		    scrollable: true,
+		    //scrollable: true,
 		    items: cellSelectionPanel
 		},
 		{
@@ -285,6 +288,9 @@ function generateExtJsLayout() {
 				{
 		    title: 'Gene Selections',
 		    glyph: 0xf03a,
+		    layout: "fit",
+		    height: '100%',
+		    width: '100%',
 		    tooltip: 'View and manage available gene selections',
 		    items: geneSelectionPanel,
 		}
@@ -321,9 +327,10 @@ function generateExtJsLayout() {
 		//     glyph: 0xf0db,
 		// },
 		{
-		    layout: 'fit',
+		    
 		    title: 'All Genes',
 		    id: 'geneTableViewerExtJS',
+		    layout: 'fit',
 		    height: '100%',
 		    width: '100%',
 		    glyph: 0xf0db,
