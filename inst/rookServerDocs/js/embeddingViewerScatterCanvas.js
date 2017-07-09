@@ -1299,10 +1299,11 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
     			evSC.fillStylesGeneExpressionOrder[cacheId] = [];
     			evSC.doMatching(plotdata, undefined, evSC, callback, data, cacheId, colorMapper, palAlpha);
 	     } else {
-		      evSC.doMatching(plotdata, undefined, callback, data, cache, colorMapper,  palAlpha);
+	       var cache = evSC.fillStylesGeneExpressionOrder[cacheId];
+		      evSC.doMatchingFromCache(plotdata, undefined, callback, data, cache, colorMapper,  palAlpha);
 	     } // if ... else
 
     }); //dataCntr.getAspectMatrixByAspect
   });   // dataCntr.getCellOrder
-} //generateFillStylesAspect
+}; //generateFillStylesAspect
 
