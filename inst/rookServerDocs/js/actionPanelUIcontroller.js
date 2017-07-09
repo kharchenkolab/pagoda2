@@ -415,25 +415,25 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
   }
   else{
     var len;
-    (new dataController()).getCellOrder(function(data){len = data.length})
-    if(!len){return}
-    (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,len,false, function(data){
-
-      if(data.DimNames2.length < 2){
-        Ext.MessageBox.alert("Error", "One or more of the gene names provided could not be found in the provided dataset.");
-        return;
-      }
-      var geneMatrix = data.getFullMatrix();
-
-      var scatterData = {
-        data: geneMatrix.array,
-        xLabel: geneMatrix.colnames[0],
-        yLabel: geneMatrix.colnames[1],
-        title: "Gene expression comparison"
-      };
-
-      (new graphViewer(scatterData, "scatter")).render();
-
+    (new dataController()).getCellOrder(function(data){
+      len = data.length;
+      (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,len,false, function(data){
+  
+        if(data.DimNames2.length < 2){
+          Ext.MessageBox.alert("Error", "One or more of the gene names provided could not be found in the provided dataset.");
+          return;
+        }
+        var geneMatrix = data.getFullMatrix();
+  
+        var scatterData = {
+          data: geneMatrix.array,
+          xLabel: geneMatrix.colnames[0],
+          yLabel: geneMatrix.colnames[1],
+          title: "Gene expression comparison"
+        };
+  
+        (new graphViewer(scatterData, "scatter")).render();
+      })
     })
   }
 }
