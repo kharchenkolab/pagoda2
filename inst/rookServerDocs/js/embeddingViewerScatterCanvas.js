@@ -1266,7 +1266,6 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
 
 	  evSC.colorAJAXrequest = dataCntr.getAspectMatrixByAspect(cellIndexStart, cellIndexEnd, aspectId, function(data) {
 
-
 		    var heatView = new aspectHeatmapViewer();
 		    // Get palette
 		    var palSize = heatView.palManager.getNumberOfColors();
@@ -1284,7 +1283,6 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
     			rowSum += data.array[j][0];
 		    }
 
-
 		    var rowMean = rowSum / data.array.length;
 		    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
 
@@ -1295,123 +1293,14 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
 		    // use it for consistency with heatmap
 		    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
 
-
 		    var cacheId = type + '_' + embeddingType;
 
-		     if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
-
-
-
-			// We don't have the cache for the order matching for this embedding saved
-			// So we need to calculate it and cache it on the way
-			evSC.fillStylesGeneExpressionOrder[cacheId] = [];
-
-			// NOTE: The following construction ensures that
-			// The interfact doesn't lock up during the long
-			// calculation time of the color matching
-			function doMatching(plotdata, i) {
-		    	    if (i == undefined) {
-		    		i = 0;
-		    	    }
-		    	    if (i < plotdata.length) {
-				// The size of the batch is a trade off between slowing the
-				// processing and maintaining responsiveness
-		    		var batchSize = 500;
-		    		for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
-				    var cellId = plotdata[j][0];
-		    		    var index = data.rownames.indexOf(cellId);
-
-				    // Cache
-//				    evSC.fillStylesGeneExpressionOrder[cacheId][cellId] = index;
-				    evSC.fillStylesGeneExpressionOrder[cacheId][j] = index;
-
-		    		    var color;
-		    		    if (index < 0) {
-		    			console.warn('Embedding plotter found a cell that does not' +
-						     'have and entry in the expression matrix. Cellid: "' +
-						     cellId +
-		    				     '. This is an error with the data provided by server.');
-		    			color = '#000000'; // default to black
-		    		    } else {
-		    			var palIndex = colorMapper(data.array[index][0]);
-		    			color = palAlpha[palIndex];
-		    		    }
-		    		    plotdata[j][3] = color;
-		    		}
-
-				if (j == plotdata.length) {
-				    callback(plotdata);
-				}
-
-		    		var nextBatch = function()
-				{
-				    // Here we can optionaly update the
-				    // inteface with a progress bar
-				    doMatching(plotdata, i + batchSize);
-				}
-				// Process the next batch immediately,
-				// Allowing other pending event to run in the meanwhile
-		    		setTimeout(nextBatch, 0);
-		    	    }
-			}
-			doMatching(plotdata);
-
-
-		     } else {
-
-
-	// The data were cached
-
-			var cache = evSC.fillStylesGeneExpressionOrder[cacheId];
-
-			// Use much larger batches here
-		    	var batchSize = 50000;
-
-			// NOTE: The following construction ensures that
-			// The interfact doesn't lock up during the long
-			// calculation time of the color matching
-			function doMatching(plotdata, i) {
-		    	    if (i == undefined) {
-		    		i = 0;
-		    	    }
-		    	    if (i < plotdata.length) {
-				// The size of the batch is a trade off between slowing the
-				// processing and maintaining responsiveness
-
-		    		for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
-				    // Retrieve from cache
-//		    		    var index = cache[plotdata[j][0]];
-				    var index = cache[j];
-		    		    if (index < 0) {
-		    			plotdata[j][3] = '#000000'; // default to black
-		    		    } else {
-		    			var palIndex = colorMapper(data.array[index][0]);
-		    			plotdata[j][3] = palAlpha[palIndex];
-		    		    }
-
-		    		}
-
-				if (j == plotdata.length) {
-
-				    callback(plotdata);
-				}
-
-		    		var nextBatch = function()
-				{
-				    // Here we can optionaly update the
-				    // inteface with a progress bar
-				    doMatching(plotdata, i + batchSize);
-				}
-				// Process the next batch immediately,
-				// Allowing other pending event to run in the meanwhile
-		    		setTimeout(nextBatch, 0);
-		    	    }
-			}
-			doMatching(plotdata);
-
-
-
-		     } // if ... else
+	     if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
+    			evSC.fillStylesGeneExpressionOrder[cacheId] = [];
+    			evSC.doMatching(plotdata, undefined, evSC, callback, data, cacheId, colorMapper, palAlpha);
+	     } else {
+		      evSC.doMatching(plotdata, undefined, callback, data, cache, colorMapper,  palAlpha);
+	     } // if ... else
 
     }); //dataCntr.getAspectMatrixByAspect
   });   // dataCntr.getCellOrder
