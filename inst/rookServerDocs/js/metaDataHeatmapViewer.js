@@ -40,7 +40,7 @@ function metaDataHeatmapViewer() {
  * Get the height
  */
 metaDataHeatmapViewer.prototype.getHeight  = function() {
-  return Ext.getCmp('metadataPanel').getHeight() - 40;
+  return Ext.getCmp('metadataPanel').getHeight() - 5;
 }
 
 /**
@@ -376,8 +376,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
   // Make the menu
 
-  var toolbar = Ext.create('Ext.Toolbar');
-  toolbar.add({
+  //var toolbar = Ext.create('Ext.Toolbar');
+  /*toolbar.add({
           text: "",
         type: "button",
         tooltip: 'Download current view',
@@ -404,9 +404,9 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
 
         } // handler
-  });
+  });*/
 
-  toolbar.add({
+  /*toolbar.add({
   text: '',
   xtype: 'button',
   tooltip: 'Clear selection overlay',
@@ -414,10 +414,10 @@ metaDataHeatmapViewer.prototype.initialize = function () {
   handler: function() {
     var obj = new metaDataHeatmapViewer();
     obj.clearSelectionOverlay();
+  }
+  });*/
 
-  }});
-
-  toolbar.add({
+  /*toolbar.add({
     text: '',
     xtype: 'button',
     tooltip: 'Help',
@@ -441,12 +441,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
             resizable: false
           }).show();
     } // handler
-  }); // toolbar add
+  });*/ // toolbar add
 
 
 
 
-  var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
+  //var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
 
 
 
@@ -923,4 +923,25 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
 
   }, {metadataName: metadataName, selNamePrefix: selNamePrefix});
 
+}
+
+metaDataHeatmapViewer.prototype.downloadImage = function(){
+  var canvas = document.getElementById('metadata-area');
+
+            const maxSize = 2000;
+            if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png',canvas)})
+                     } //if
+                   } //fn
+                }) // Ext.Msg.show
+            } else {
+                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png',canvas)})
+            }
 }
