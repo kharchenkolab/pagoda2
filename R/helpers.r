@@ -5,8 +5,6 @@
 #'
 NULL
 
-
-
 #' @export p2.generate.human.go
 p2.generate.human.go <- function(r) {
   # Generate GO environment
