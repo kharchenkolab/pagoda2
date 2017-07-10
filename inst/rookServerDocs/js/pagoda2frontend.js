@@ -337,6 +337,15 @@ function generateExtJsLayout() {
 		    //items: []
 		},
 		{
+		  title: "Selection Genes",
+		  id: 'geneSelectionTableViewerExtJS',
+		  layout:'fit',
+		  height: '100%',
+		  width: '100%',
+		  glyph: 0xf279, //fa-map
+		  tooltip: 'This tab displays a table of genes from a provided selection'
+		},
+		{
 		    title: 'Gene Sets of Interest',
 		    id: 'geneSetsOfInterestExtJS',
 		    layout: 'border',
