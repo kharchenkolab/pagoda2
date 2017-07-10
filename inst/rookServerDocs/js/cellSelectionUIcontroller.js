@@ -328,8 +328,9 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 		var selectionTable = Ext.getCmp('cellSelectionTable');
 		var selectedItems = selectionTable.getSelectionModel().getSelected();
 		if (selectedItems.length === 1) {
-		    var oldDisplayName = selectedItems.getAt(0).getData().displayName;
+		    var oldDisplayName = selectedItems.getAt(0).getData().displayname;
 		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
+		    console.log(oldDisplayName)
       	thisViewer.promptName(oldDisplayName, function(newDisplayName){
       	  var cellSelCntr =  new cellSelectionController();
       	  if(newDisplayName !== false){
