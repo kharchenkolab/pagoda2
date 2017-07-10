@@ -87,7 +87,12 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	    {text: 'Count', dataIndex: 'cellcount', width: '29%'}
 	],
 	emptyText: 'No gene selections are currently available',
-	selModel: geneTableSelectionModel
+	selModel: geneTableSelectionModel,
+	listeners: {
+	  sortChange: function(){
+	    console.log("hello");
+	  }
+	}
     });
 
     /*var formPanel = Ext.create('Ext.form.Panel', {
@@ -110,14 +115,14 @@ geneSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
       			    var newName = text;
       			    var geneSelCntr = new geneSelectionController();
       			    var geneSelUICntr = new geneSelectionUIcontroller();
-        			 var re = new RegExp('[^A-Za-z0-9_]');
+        			 var re = new RegExp(',');
       			    if (newName.length === 0) {
       				    Ext.MessageBox.alert('Error','You must enter a selection name',function(e){
         			      geneSelUICntr.promptName(newName, callback);
         			    });
       			    }
       			    else if (newName.match(re) ) {
-      				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)',function(e){
+      				    Ext.MessageBox.alert('Error', 'The name must not contain a comma',function(e){
         			      geneSelUICntr.promptName(newName, callback);
         			    });
       			    } 

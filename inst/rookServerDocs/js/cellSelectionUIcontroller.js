@@ -149,8 +149,21 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
         	    }).show();
 	       
       	    }
-      	 }
-      }
+      	 },
+    	  sortChange: function(){
+	        var store = this.getStore().data.items;
+	        var autoStore = [];
+	        for(var i = 0; i < store.length; i++){
+	          if(store[i].data.selectionname.includes("auto")){
+	            autoStore.push(store[i]);
+	            store.splice(i,1);
+	            i--;
+	          }
+	        }
+	        console.log(autoStore);
+	      }
+    	  
+    	}
     });
     
     

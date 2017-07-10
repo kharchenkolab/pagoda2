@@ -55,6 +55,9 @@ cellSelectionController.prototype.setSelection = function(cells, displayName, me
       selectionName = this.idNum + "_" + (new Date()).getTime();
       this.idNum++;
     }
+    else{
+      selectionName = "auto_" + selectionName;
+    }
 
     this.selections[selectionName] = {
 	'name': selectionName,

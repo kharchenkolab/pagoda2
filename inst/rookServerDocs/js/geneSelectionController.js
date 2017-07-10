@@ -33,6 +33,9 @@ geneSelectionController.prototype.setSelection = function(genes, displayName, se
       selectionName = this.idNum + "_" + (new Date()).getTime();
       this.idNum++;
     }
+    else{
+      selectionName = "auto_" + selectionName;
+    }
     
     this.selections[selectionName] = ({
 	'name': selectionName,
