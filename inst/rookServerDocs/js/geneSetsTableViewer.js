@@ -140,7 +140,7 @@ geneSetsTableViewer.prototype.generateTables = function() {
 			glyph: 0xf0ce,
 			handler: function() {
 			    var heatmapV = new heatmapViewer();
-			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
 			    heatmapV.drawHeatmap();
 			}
 		    },

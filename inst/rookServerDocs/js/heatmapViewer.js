@@ -352,23 +352,23 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
+	      var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
-            heatV.highlightCellSelectionByName('heatmapSelection');
+            heatV.highlightCellSelectionByName(selectionName);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName('heatmapSelection');
+            embCntr.highlightSelectionByName(selectionName);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+            aspHeatView.highlightCellSelectionByName(selectionName);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
       }
       else{
           var x = e.offsetX;

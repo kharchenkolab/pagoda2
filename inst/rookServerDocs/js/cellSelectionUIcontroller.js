@@ -150,18 +150,22 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	       
       	    }
       	 },
-    	  sortChange: function(){
+    	  /*sortChange: function(ct, columns, direction){
 	        var store = this.getStore().data.items;
 	        var autoStore = [];
 	        for(var i = 0; i < store.length; i++){
 	          if(store[i].data.selectionname.includes("auto")){
-	            autoStore.push(store[i]);
-	            store.splice(i,1);
+	            autoStore.push(store[i].data);
+	            store.removeAt(i);
 	            i--;
 	          }
 	        }
-	        console.log(autoStore);
-	      }
+	        
+	        for(var j = 0; j < autoStore.length; j++){
+	          store.insert(0,autoStore[j]);
+	        }
+	        refresh();
+	      }*/
     	  
     	}
     });

@@ -169,19 +169,19 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    } // for
 
 	    var cellSelCntr = new cellSelectionController();
-	    cellSelCntr.setSelection( cellsForSelection, 'Embedding Selection', new Object(),'#ff0000', 'embSelection');
+	    var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Embedding Selection', new Object(),'#ff0000', 'embSelection');
 
       // TODO: Make this optional
 
 
       var heatView = new heatmapViewer();
-      heatView.highlightCellSelectionByName('embSelection');
+      heatView.highlightCellSelectionByName(selectionName);
 
       var aspHeatView = new aspectHeatmapViewer();
-      aspHeatView.highlightCellSelectionByName('embSelection');
+      aspHeatView.highlightCellSelectionByName(selectionName);
 
       var metaHeatView = new metaDataHeatmapViewer();
-      metaHeatView.highlightCellSelectionByName('embSelection');
+      metaHeatView.highlightCellSelectionByName(selectionName);
 
 	});
 

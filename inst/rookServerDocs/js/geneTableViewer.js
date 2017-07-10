@@ -91,7 +91,7 @@ geneTableViewer.prototype.generateGeneTable = function() {
 			handler: function() {
 			    pagHelpers.regC(0xF1);
 			    var heatmapV = new heatmapViewer();
-			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
 			    heatmapV.drawHeatmap();
 			} //handler
 		    }, //button
