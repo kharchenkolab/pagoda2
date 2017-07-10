@@ -917,7 +917,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
     for(var i = 0; i < cellSelections.length; i++){
       var cellSelectionNames = cellSelections[i];
       if(restriction(cellSelectionNames)){
-        cellSel.setSelection(cellSelectionNames, selNamePrefix + i, {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
+        cellSel.setSelection(cellSelectionNames, selNamePrefix + (i+1), {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
       }
     }
 
