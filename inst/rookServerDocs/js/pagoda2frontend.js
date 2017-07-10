@@ -450,6 +450,7 @@ function generateExtJsLayout() {
               padding: 0,
               split: true,
               title: 'Metadata View',
+              header: false,
               html: '<div id="metadata-area-container"></div>'
             },
             {
@@ -458,6 +459,7 @@ function generateExtJsLayout() {
               width: '100%',
               height: '10%',
               padding: 0,
+              header: false,
               split: true,
               title: 'Aspect View',
               html: '<div id="aspect-heatmap-container"></div>'
@@ -469,6 +471,7 @@ function generateExtJsLayout() {
               height: '55%',
               padding: 0,
               split: true,
+              header: false,
               title: 'Heatmap View',
               html: '<div id="heatmap-area-container"></div>'
             }
