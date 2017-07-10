@@ -5,8 +5,6 @@
 #'
 NULL
 
-
-
 #' @export p2.generate.human.go
 p2.generate.human.go <- function(r) {
   # Generate GO environment
@@ -363,5 +361,48 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
   names(deSets) <- unlist(lapply(deSets, function(x){x$properties$genesetname}));
 
   deSets
+}
+
+#' @title reads a pagoda2 web app exported cell selection file
+#' @description reads a cell selection file exported by pagoda2 web interface as a list
+#' of list objects that contain the name of the selection, the color (as a hex string) and the
+#' identifiers of the individual cells
+#' @param filepath the path of the file load
+#' @export readPagoda2SelectionFile
+readPagoda2SelectionFile <- function(filepath) {
+  returnList <- list();
+
+  con <- file(filepath, "r");
+  while (TRUE) {
+    suppressWarnings(line <- readLines(con, n = 1))
+    if ( length(line) == 0 ) {
+      break
+    }
+
+    fields <- unlist(strsplit(line, split=',', fixed=T));
+
+    name <- make.names(fields[2]);
+    color <- fields[1];
+    cells <- fields[-c(1:2)];
+    returnList[[name]] <- list(name=fields[2], cells = cells);
+  }
+  close(con)
+
+  invisible(returnList)
+}
+
+#' @title writes a list of genes as a gene selection that can be loaded in the web interface
+#' @description writes a list of genes as a gene selection that can be loaded in the web interfact
+#' @param name the name of the selection
+#' @param genes a string vector of the gene names
+#' @param filename the filename to save to
+#' @export writeGenesAsPagoda2Selection
+writeGenesAsPagoda2Selection <- function(name, genes, filename) {
+  con <- file(filename, 'w')
+  cat(name, file=con)
+  cat(',',file=con)
+  cat(paste(genes, collapse=','),file=con)
+  cat('\n', file=con)
+  close(con)
 }
 
