@@ -1419,7 +1419,7 @@ dendrogramViewer.prototype.downloadImagePopUp = function(){
     
     items:[
       {
-        html: "<h3>Which of the following do you want to print?</h3>"
+        html: "<h3>Which of the following do you want to print?</h3>",
       },
       {
         xtype: "checkbox",
@@ -1450,12 +1450,9 @@ dendrogramViewer.prototype.downloadImagePopUp = function(){
         text: "Ok",
         handler: function(){
           if(Ext.getCmp("printDendrogram").getValue()){
-            //console.log("blah")
             (new dendrogramViewer()).downloadImage()
-            //console.log("test")
           }
           if(Ext.getCmp("printMetaDataHeatmap").getValue()){
-            //console.log("blaha");
             (new metaDataHeatmapViewer()).downloadImage()
           }
           if(Ext.getCmp("printAspectHeatmap").getValue()){

@@ -491,7 +491,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         label: "JSON format",
         value: "json"
       });*/
-
+      
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {
 	      fieldLabel: 'Export Format:',
@@ -504,6 +504,8 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         columnWidth: "100%",
         margin: "5 5 5 5",
       });
+      importComboBox.setValue("csv");
+      
       var selectionTable = Ext.getCmp('cellSelectionTable');
 		  var selectedItems = selectionTable.getSelectionModel().getSelected();
 	    if (selectedItems.length >= 1) {
@@ -589,7 +591,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         label: "JSON format",
         value: "json"
       });*/
-
+      
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {
 	      fieldLabel: 'Import Format:',
@@ -603,6 +605,8 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         columnWidth: "100%",
         margin: "5 5 5 5",
       });
+      importComboBox.setValue("csv")
+      
 	    if(!Ext.getCmp('cellFileSelectionWindow')){
 	      Ext.create('Ext.window.Window',{
 	        title:'Cell File Selection',
