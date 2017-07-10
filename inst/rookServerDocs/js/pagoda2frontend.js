@@ -20,7 +20,6 @@ Ext.onReady(function() {
     Ext.setGlyphFontFamily('FontAwesome');
 
     initialise();
-
 });
 
 
@@ -30,7 +29,6 @@ Ext.onReady(function() {
  */
 function getDataLoadingParams(callback) {
     // connectionType optiosn: 'remoteServer', 'remoteFile', or 'localFile',
-
 
   if (p2globalParams.dataLoadingParams.configuration == "server") {
     var params = {
@@ -44,6 +42,7 @@ function getDataLoadingParams(callback) {
     }
     callback(params);
   } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-from-url") {
+
     var url_string = window.location.href;
     var url = new URL(url_string);
     var fileURL = url.searchParams.get("fileURL")

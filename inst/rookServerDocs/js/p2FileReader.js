@@ -19,8 +19,10 @@ function p2FileReader(opt_Type, opt_Url, opt_File) {
     	    this.internalReader = new LocalFileReader(opt_File);
     	}
     } else if ( opt_Type === 'remote' ) {
-    	if (typeof url === 'undefined' || url === '') {
+    	if (!(typeof opt_Url === 'undefined' || opt_Url === '' || opt_Url === null)) {
     	    this.internalReader = new RemoteFileReader(opt_Url);
+    	} else {
+    	  throw new Error('p2FileReader type is remote and opt_URL is not valid');
     	}
     } else {
 	    throw new Error('Unknown p2FileReader type: ', opt_Type);

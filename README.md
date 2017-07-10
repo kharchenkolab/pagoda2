@@ -1,7 +1,7 @@
 # Overview of pagoda 2
 
 # Demo Web Application
-http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/index.html
+https://tinyurl.com/pagoda2demo
 (Requires latest Firefox or Chrome)
 
 # Installation Instructions

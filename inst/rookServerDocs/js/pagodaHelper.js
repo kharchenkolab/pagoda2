@@ -19,16 +19,16 @@ var pagHelpers = {
         b: parseInt(result[3], 16)
     } : null;
   },
-  
+
   canvas_arrow: function (context, fromx, fromy, tox, toy,headlen){
     var angle = Math.atan2(toy-fromy,tox-fromx);
-    
+
     context.moveTo(fromx,fromy)
     context.lineTo(tox, toy);
     context.lineTo(tox-headlen*Math.cos(angle-Math.PI/6),toy-headlen*Math.sin(angle-Math.PI/6));
     context.moveTo(tox, toy);
     context.lineTo(tox-headlen*Math.cos(angle+Math.PI/6),toy-headlen*Math.sin(angle+Math.PI/6));
-    
+
   },
   showNotSupportedBrowserWarning: function() {
     Ext.create('Ext.window.Window', {
@@ -111,7 +111,7 @@ var pagHelpers = {
     		var version_major = parseInt(version_split[0]);
     		var version_minor = parseInt(version_split[1]);
 
-    		if (version_major >= 53) {
+    		if (version_major >= 42) {
     			return true;
     		} else {
     			return false;
@@ -307,7 +307,7 @@ var pagHelpers = {
 
 	// The merge steps
 	var s = pagHelpers.seq(0, N-2);
-	for (let j of s ) {
+	for (var j in s ) {
 	    // Find the smallest distance and between
 	    // which elements it occurs
 
