@@ -170,23 +170,23 @@ metaDataHeatmapViewer.prototype.initialize = function () {
           var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	        var cellSelCntr = new cellSelectionController();
-  	      cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
+  	      var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var metaView = new heatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName('heatmapSelection');
+            embCntr.highlightSelectionByName(selectionName);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+            aspHeatView.highlightCellSelectionByName(selectionName);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
         }
         else{
           var x = e.offsetX;
@@ -239,30 +239,28 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 					      function(btn, text) {
                     // Make new selection
                     if (btn === 'ok')  {
-    						      var geneSelCntr = new geneSelectionController();
+    						      var cellSelCntr = new cellSelectionController();
 
-    						      var newSelectionName = text;
     						      var newSelectionDisplayName = text;
 
-    						      var re = new RegExp('[^A-Za-z0-9_]');
-    						      if (newSelectionName.length === 0) {
+    						      var re = new RegExp('[,]');
+    						      if (newSelectionDisplayName.length === 0) {
     							      Ext.MessageBox.alert('Error', 'You must enter a selection name');
-    						      } else if ( newSelectionName.match(re) ) {
+    						      } else if ( newSelectionDisplayName.match(re) ) {
     							      Ext.MessageBox.alert('Error',
-    									       'The name must only contain letters, numbers and underscores (_)');
+    									       'The name must not contain a comma');
     						      } else {
-    							      if (geneSelCntr.getSelection(newSelectionName)) {
+    							      if (cellSelCntr.displayNameExists(newSelectionDisplayName)) {
     							        Ext.MessageBox.alert(
     								        'Error',
     								        'A selection with this name already exists!');
     							      } else {
                             // Make the slection here
-
                             var key =params.key;
                             var value = params.value;
 
 
-                            mdhv.makeCellSelectionFromMetadata(key, value, newSelectionName, true, true);
+                            mdhv.makeCellSelectionFromMetadata(key, value, newSelectionDisplayName, true, true);
     							      }
     						      } // if lenth == 0
   						      } // if btn == ok
@@ -283,8 +281,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                         return selection.length >= lowerLimit;
                       }
                     }
+                    mdhv.makeAllCellSelectionsFromMetadata(params.key, (params.keyLabel + "_").split(/\ |\#/).join(""), rejectionFunction)
                   }
-                  mdhv.makeAllCellSelectionsFromMetadata(params.key, (params.keyLabel + "_").split(/\ |\#/).join(""), rejectionFunction)
                 },this,false, "50")
 
               }
@@ -870,23 +868,24 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
     var cellSel = new cellSelectionController();
+    var selectionName = false;
     if(restriction(cellSelectionNames)){
-      cellSel.setSelection(cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
+      selectionName = cellSel.setSelection(cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
     }
-
-    if (highlight) {
+    
+    if (selectionName && highlight) {
       var heatView = new heatmapViewer();
-      heatView.highlightCellSelectionByName(callbackParameters.selectionName);
+      heatView.highlightCellSelectionByName(selectionName);
 
       var aspHeatView = new aspectHeatmapViewer();
-      aspHeatView.highlightCellSelectionByName(callbackParameters.selectionName);
+      aspHeatView.highlightCellSelectionByName(selectionName);
 
       var metaHeatView = new metaDataHeatmapViewer();
-      metaHeatView.highlightCellSelectionByName(callbackParameters.selectionName);
+      metaHeatView.highlightCellSelectionByName(selectionName);
 
       // Highlight on embedding
       var embCntr = new embeddingViewer();
-      embCntr.highlightSelectionByName(callbackParameters.selectionName);
+      embCntr.highlightSelectionByName(selectionName);
 
     }
 
@@ -918,7 +917,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
     for(var i = 0; i < cellSelections.length; i++){
       var cellSelectionNames = cellSelections[i];
       if(restriction(cellSelectionNames)){
-        cellSel.setSelection(cellSelectionNames, selNamePrefix + i, {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
+        cellSel.setSelection(cellSelectionNames, selNamePrefix + (i+1), {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
       }
     }
 

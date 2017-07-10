@@ -55,6 +55,9 @@ cellSelectionController.prototype.setSelection = function(cells, displayName, me
       selectionName = this.idNum + "_" + (new Date()).getTime();
       this.idNum++;
     }
+    else{
+      selectionName = "auto_" + selectionName;
+    }
 
     this.selections[selectionName] = {
 	'name': selectionName,
@@ -64,6 +67,7 @@ cellSelectionController.prototype.setSelection = function(cells, displayName, me
 	'color' : color
     };
     this.raiseSelectionChangedEvent();
+    return selectionName;
 };
 
 
@@ -148,7 +152,9 @@ cellSelectionController.prototype.setColor = function(selectionName, newColor){
  * @returns {boolean} whether or not dispName exists among all other displayNames
  */
 cellSelectionController.prototype.displayNameExists = function(dispName){
+  console.log(this.selections)
   for(var sel in this.selections){
+    console.log(this.selections[sel].displayName + " " + dispName);
     if(this.selections[sel].displayName === dispName){
       return true;
     }
@@ -237,6 +243,46 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
     this.setSelection(passingCells,newSelectionDisplayName);
 }
 
+cellSelectionController.prototype.complimentSelectionsIntoNew = function(selections, newSelectionDisplayName){
+  
+  var cellSelCtrl = this;
+  var cells = {};
+  for(var i = 0; i< selections.length; i++){
+    var selection = selections[i];
+    cellSelCtrl.getSelection(selection).forEach(function (cell){
+      cells[cell] = true;
+    });
+  }
+  
+  (new dataController()).getCellOrder(function(data){
+    var cellsPrime = [];
+    for(var cell in data){
+      if(!cells[data[cell]]){
+        cellsPrime.push(data[cell]);
+      }
+    }
+    cellSelCtrl.setSelection(cellsPrime, newSelectionDisplayName)
+  })
+}
+
+cellSelectionController.prototype.differenceSelectionsIntoNew = function(selections, newSelectionDisplayName){
+  var cellSelCtrl = this;
+  var cells = {}
+  for(var i = 0; i< selections.length; i++){
+    var selection = selections[i];
+    cellSelCtrl.getSelection(selection).forEach(function(cell){
+      if(!cells[cell]){cells[cell] = 0}
+      cells[cell]++;
+    })
+  }
+  var cellIntersect = [];
+  for(var cell in cells){
+    if(cells[cell] === 1){
+      cellIntersect.push(cell);
+    }
+  }
+  cellSelCtrl.setSelection(cellIntersect,newSelectionDisplayName);
+}
 
 function colorManager(){
   if(typeof colorManager.instance === 'object'){

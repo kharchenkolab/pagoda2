@@ -45,6 +45,7 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     hasAxisLabels: true,
     hasTitle: true,
   }
+  var hoverFields = [];// x range by y range
 
   var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,
     parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")),
@@ -73,6 +74,9 @@ graphViewer.prototype.drawBarGraph = function(canvas){
   for(var i = 0; i < this.data.data.length; i++){
     var barStartY = boundings.plotBR.y;
     var barStartX = boundings.plotTL.x + i * (barSep + barWidth) + barSep;
+    
+    hoverFields.push({xStart: barStartX, yRanges: []});
+    
     var total = 0;
     for(var j = 0; j < this.data.data[i].length; j++){
       total += this.data.data[i][j];
@@ -83,6 +87,8 @@ graphViewer.prototype.drawBarGraph = function(canvas){
 
         ctx.fillStyle = this.data.compPalette[j].substring(0,7);
         ctx.fillRect(barStartX, barStartY, barWidth, -barHeight);
+        hoverFields[i].yRanges.push({start: barStartY, height: barHeight, value: j});
+        
         barStartY = barStartY - barHeight;
       }
     }
@@ -92,6 +98,38 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     ctx.font = boundings.axisFont
     ctx.fillText((i+1) + "" ,barStartX + barWidth/2, boundings.plotBR.y + this.lineThickness + padding)
   }
+  function showTooltip(x, y, contents) {
+    $('<div id="barplot_tooltip">' + contents + '</div>').css({
+        position: 'absolute',
+        display: 'none',
+        top: y + 5,
+        left: x + 5,
+        border: '1px solid #ffdddd',
+        padding: '2px',
+        'background-color': '#ffeeee',
+        opacity: 0.80
+    }).appendTo(".canvas_holder").fadeIn(0);
+}
+  
+  var parent = this;
+  document.getElementById("displayChart").addEventListener("mousemove",function(event){
+    var xPos = event.offsetX;
+    var yPos = event.offsetY;
+    var xPlotPos = Math.floor((xPos - boundings.plotTL.x)/(barWidth+barSep));
+    
+    if(xPlotPos >= 0 && xPlotPos < hoverFields.length && hoverFields[xPlotPos].xStart <= xPos){
+      for(var i = 0; i < hoverFields[xPlotPos].yRanges.length; i++){
+        //console.log(yPos + " " + hoverFields[xPlotPos].yRanges[i].start + " " + hoverFields[xPlotPos].yRanges[i].height)
+        if(hoverFields[xPlotPos].yRanges[i].start > yPos && hoverFields[xPlotPos].yRanges[i].start - hoverFields[xPlotPos].yRanges[i].height < yPos){
+          $("#barplot_tooltip").remove();
+          showTooltip(xPos,yPos,"Cluster index: " + (hoverFields[xPlotPos].yRanges[i].value + 1) + " Color: " + parent.data.compPalette[hoverFields[xPlotPos].yRanges[i].value].substring(0,7))
+          return;
+        }
+      }
+    }
+    console.log("no hit");
+    $("#barplot_tooltip").remove();
+  })
 }
 
 graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
@@ -140,6 +178,7 @@ graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
   }
 
 }
+
 graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeight, titleFont, titleHeight, width, height, padding, margin, choices, boundries, scaleStyle){
   var boundings = {}
   boundings.axisFont = axisFont;
@@ -185,6 +224,7 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
 
   return boundings;
 }
+
 graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, padding, margin, boundries, scaleStyle){
 
   if(choices.hasYscale){
@@ -252,7 +292,7 @@ graphViewer.prototype.render = function(){
         modal:true,
         items:[
           {
-            html:'<canvas id="displayChart" height="'+ height + '" width="'+ width + '"></canvas>'
+            html:'<div class="canvas_holder"><canvas id="displayChart" height="'+ height + '" width="'+ width + '"></canvas></div>'
           },
           {
             xtype: "button",
@@ -317,6 +357,7 @@ graphViewer.prototype.findTrueBarWidth = function(height, width){
   var realWidth = barSep * 2 + (barWidth + barSep) * this.data.data.length + width - boundings.plotDim.width;
   return realWidth;
 }
+
 
 
 

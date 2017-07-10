@@ -33,6 +33,9 @@ geneSelectionController.prototype.setSelection = function(genes, displayName, se
       selectionName = this.idNum + "_" + (new Date()).getTime();
       this.idNum++;
     }
+    else{
+      selectionName = "auto_" + selectionName;
+    }
     
     this.selections[selectionName] = ({
 	'name': selectionName,
@@ -177,4 +180,51 @@ geneSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
       }
     }
     this.setSelection(puregenes, newSelectionDisplayName)
+}
+
+/**
+ * Genereate a new gene selection by complimenting one or more gene selections
+ */
+geneSelectionController.prototype.complimentSelectionsIntoNew = function(selections, newSelectionDisplayName){
+  
+  var geneSelCtrl = this;
+  var genes = {};
+  for(var i = 0; i< selections.length; i++){
+    var selection = selections[i];
+    geneSelCtrl.getSelection(selection).genes.forEach(function (gene){
+      genes[gene] = true;
+    });
+  }
+  
+  (new dataController()).getGeneInformationStore(function(store){
+    var genesPrime = [];
+    var data = store.localData;
+    for(var gene in data){
+      if(!genes[data[gene].genename]){
+        genesPrime.push(data[gene].genename);
+      }
+    }
+    geneSelCtrl.setSelection(genesPrime, newSelectionDisplayName)
+  })
+}
+/**
+ * Genereate a new gene selection by finding the difference between two or more gene selections
+ */
+geneSelectionController.prototype.differenceSelectionsIntoNew = function(selections, newSelectionDisplayName){
+  var geneSelCtrl = this;
+  var genes = {}
+  for(var i = 0; i< selections.length; i++){
+    var selection = selections[i];
+    geneSelCtrl.getSelection(selection).genes.forEach(function(gene){
+      if(!genes[gene]){genes[gene] = 0}
+      genes[gene]++;
+    })
+  }
+  var geneIntersect = [];
+  for(var gene in genes){
+    if(genes[gene] === 1){
+      geneIntersect.push(gene);
+    }
+  }
+  geneSelCtrl.setSelection(geneIntersect,newSelectionDisplayName);
 }
