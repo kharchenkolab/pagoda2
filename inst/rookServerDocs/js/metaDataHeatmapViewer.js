@@ -281,7 +281,7 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                         return selection.length >= lowerLimit;
                       }
                     }
-                    mdhv.makeAllCellSelectionsFromMetadata(params.key, (params.keyLabel + "_").split(/\ |\#/).join(""), rejectionFunction)
+                    mdhv.makeAllCellSelectionsFromMetadataProgress(params.key, (params.keyLabel + "_").split(/\ |\#/).join(""), rejectionFunction)
                   }
                 },this,false, "50")
 
@@ -920,6 +920,48 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
         cellSel.setSelection(cellSelectionNames, selNamePrefix + (i+1), {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
       }
     }
+
+  }, {metadataName: metadataName, selNamePrefix: selNamePrefix});
+
+}
+metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = function(metadataName,selNamePrefix, restriction) {
+  // Generate a cell selection
+
+  if(typeof restriction === "undefined"){
+    restriction = function(selection){return true;};
+  }
+
+  var dataCntr = new dataController();
+  dataCntr.getCellMetadata(function(data, callbackParameters) {
+    // data[callbackParameters.metadataName].data
+    var parameters = {};
+    
+    parameters.cellSelections = [];
+    parameters.selNamePrefix = callbackParameters.selNamePrefix;
+    parameters.metadataName = callbackParameters.metadataName;
+    parameters.restriction = restriction;
+    var allCells = data[callbackParameters.metadataName].data;
+
+    for (var cellid in  allCells) {
+      if(!parameters.cellSelections[allCells[cellid]]){
+        parameters.cellSelections[allCells[cellid]] = []
+      }
+      parameters.cellSelections[allCells[cellid]].push(cellid);
+    }
+    
+    var stepFunction = function(params,i, step, max){
+      var cellSel = new cellSelectionController();
+      for(var j = 0; j < step; j++){
+        var cellSelectionNames = params.cellSelections[i];
+        if(params.restriction(cellSelectionNames)){
+          cellSel.setSelection(cellSelectionNames, params.selNamePrefix + (i+j+1), {}, data[params.metadataName].palette[i].substring(0,7));
+        }
+      }
+    }
+    
+    var callback = function(params){}
+    
+    pagHelpers.generateProgressBar(stepFunction,parameters.cellSelections.length,1,callback,parameters);
 
   }, {metadataName: metadataName, selNamePrefix: selNamePrefix});
 

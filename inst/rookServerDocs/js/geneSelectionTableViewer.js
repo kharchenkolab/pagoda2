@@ -11,7 +11,6 @@ function geneSelectionTableViewer()  {
     
     geneSelectionTableViewer.instance = this;
     console.log('Initializing geneSelectionTableViewer...');
-    console.log(this);
     this.selectionTable = null;
     this.geneFilter = [];
     this.initialize();
