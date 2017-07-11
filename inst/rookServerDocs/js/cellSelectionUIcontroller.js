@@ -633,6 +633,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	            margin: "5 5 5 5",
 	            align: "center",
 	            handler: function(){
+	              
 	              var dataCntr = new dataController();
 	              var cellSelFile = document.getElementById("selectedCellFile").files[0];
 	              var cellSelFileName = cellSelFile.name;
@@ -640,44 +641,60 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	              var selection = Ext.getCmp("importComboBox").getValue()
 	              if(selection === "csv"){
 	                reader.onload = function(progressEvent){
-	                  var lines = this.result.split("\n");
+	                  var reader = this;
+	                  
   	                dataCntr.getCellOrder(function(cellOrder){
-  	                  var cellSelCntrl = new cellSelectionController();
-	                    var total = 0;
-	                    var removedCells = {};
-
-  	                  for(var line = 0; line < lines.length; line++){
-	                      if(lines[line].length !== 0){
-	                        var selection = lines[line].split(",");
+  	                  
+  	                  var params = {};
+	                    params.total = 0;
+	                    params.lines = reader.result.split("\n");
+	                    params.removedCells = {};
+	                    params.cellOrder = cellOrder;
+	                    for(var i = 0; i< params.lines.length; i++){
+	                      while(params.lines[i].length === 0 && i < params.lines.length){
+	                        params.lines.splice(i,1)
+	                      }
+	                    }
+	                    
+	                    var functionStep = function(params,i,step,max){
+	                      var cellSelCntrl = new cellSelectionController();
+	                      for(var line = 0; line < step; line++){
+	                        var selection = params.lines[line + i].split(",");
 	                        var color = "#" + selection.shift();
 	                        var dispName = selection.shift();
-	                        removedCells[dispName] = 0;
+	                        params.removedCells[dispName] = 0;
 	                        var pureSelection = [];
 	                        for(var elem = 0; elem < selection.length; elem++){
-	                          if(cellOrder.includes(selection[elem])){
+	                          if(params.cellOrder.includes(selection[elem])){
 	                            pureSelection.push(selection[elem]);
 	                          }
   	                        else{
-	                            removedCells[dispName]++;
+	                            params.removedCells[dispName]++;
 	                          }
   	                      }// ensure all cells are rightfully containers
 
-	                        if(removedCells[dispName] !== selection.length){
+	                        if(params.removedCells[dispName] !== selection.length){
 	                          while(cellSelCntrl.displayNameExists(dispName)){
   	                          dispName = dispName  + "~RecentlyLoaded"
 	                          }
 	                          cellSelCntrl.setSelection(pureSelection,dispName,{}, color);
-	                          total++;
+	                          params.total++;
 	                        }//confirm
-  	                    }
+	                      }
 	                    }
-	                  var extraInfo = "";
-	                  for(var selName in removedCells){
-	                    if(removedCells[selName] > 0){
-	                      extraInfo += "<br>" + removedCells[selName] + " cell(s) could not be loaded from selection " + selName;
-	                    }
-	                  }
-	                    Ext.MessageBox.alert('Load Cell Selections Complete', total + " selections were generated from the data within " + cellSelFileName + extraInfo)
+                      
+  	                  var callback = function(params){
+  	                    var extraInfo = "";
+    	                  for(var selName in params.removedCells){
+    	                    if(params.removedCells[selName] > 0){
+    	                      extraInfo += "<br>" + params.removedCells[selName] + " cell(s) could not be loaded from selection " + selName;
+    	                    }
+    	                  }
+	                      Ext.MessageBox.alert('Load Cell Selections Complete', params.total + " selections were generated from the data within " + cellSelFileName + extraInfo)
+  	                  }
+  	                  
+  	                  pagHelpers.generateProgressBar(functionStep,params.lines.length,1,callback,params);
+  	                  
 	                  });
   	           };
 	             }

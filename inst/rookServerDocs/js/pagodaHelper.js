@@ -19,7 +19,39 @@ var pagHelpers = {
         b: parseInt(result[3], 16)
     } : null;
   },
-
+  generateProgressBar: function(stepWiseCall, max, step, callback, callbackParameters){
+    Ext.create("Ext.window.Window", {
+      title: "Processing",
+      id: "progressBarWindow",
+      internalPadding: '10 10 10 10',
+      modal: true,
+      width: "300px",
+      resizeable: false,
+      items: [
+        {
+          html:'<div style="width:100%;background-color:#DDDDDD;height:30px"> <div id="progressBar" style="width:0%;background-color:#B0E2FF;height:30px; text-align: center;vertical-align: middle;line-height: 30px;"><div id="progressLabel" style="float: left; width: 100%; height: 100%; position: absolute; vertical-align: middle;">0%</div></div></div>'
+        }
+      ]
+    }).show(0);
+    
+    var recursiveCall = function(stepWiseCall, i, max, step, callbackParameters){
+      if(i >= max){
+        document.getElementById("progressLabel").innerHTML = "99.9%"
+        callback(callbackParameters);
+        Ext.getCmp("progressBarWindow").close();
+      }
+      else{
+        stepWiseCall(callbackParameters, i, Math.min(step, max - i), max)
+        i = Math.min(i + step, max);
+        var execution = (i/max) * 100;
+        Ext.getCmp("progressBarWindow").hide().show(0);
+        document.getElementById("progressBar").style.width = execution + "%"
+        document.getElementById("progressLabel").innerHTML = Math.floor(execution*10)/10 + "%"
+        setTimeout(function(){recursiveCall(stepWiseCall,i,max,step,callbackParameters)},1);
+      }
+    }
+    setTimeout(function(){recursiveCall(stepWiseCall,0,max,step,callbackParameters)},1);
+  },
   canvas_arrow: function (context, fromx, fromy, tox, toy,headlen){
     var angle = Math.atan2(toy-fromy,tox-fromx);
 
@@ -76,7 +108,6 @@ var pagHelpers = {
             }
             return csvFile;
   }
-
   ,
 
   downloadURL: function(data, filename, canvas = null) {
