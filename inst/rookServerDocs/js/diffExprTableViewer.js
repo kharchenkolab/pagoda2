@@ -423,5 +423,5 @@ diffExprTableViewer.prototype.showSelectedSet = function(internalName) {
 diffExprTableViewer.prototype.raiseTab = function() {
   var tablesTab = Ext.getCmp('tablesTabExtJS');
   // FIXME: The tab order is hard-wired here
-  tablesTab.setActiveTab(3);
+  tablesTab.setActiveTab("diffExprExtJS");
 }

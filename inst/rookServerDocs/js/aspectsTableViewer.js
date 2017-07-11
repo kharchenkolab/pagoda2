@@ -209,5 +209,5 @@ aspectsTableViewer.prototype.showSelectedAspect = function(aspectIdentifier) {
 aspectsTableViewer.prototype.raiseTab = function() {
   var tablesTab = Ext.getCmp('tablesTabExtJS');
   // FIXME: The tab order is hard-wired here
-  tablesTab.setActiveTab(2);
+  tablesTab.setActiveTab("aspectsExtJS");
 };

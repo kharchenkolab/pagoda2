@@ -330,6 +330,26 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 
         }
       });
+  toolbar.add({
+        xtype: 'button',
+        glyph: 0xf0db, 
+        tooltip: 'Display',
+        handler: function() {
+          var selectionTable = Ext.getCmp('geneSelectionTable');
+      		var selectedItems = selectionTable.getSelectionModel().getSelected();
+      		if (selectedItems.length >= 1) {
+      		    var dispNames = [];
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		    }
+      		    (new geneSelectionTableViewer()).generateTableFromSelection(selNames);
+      		} else {
+      		  Ext.MessageBox.alert('Warning', 'Please select a gene selection first');
+          }
+
+        }
+      });
   
   toolbar.add({xtype: 'tbseparator'});
   toolbar.add({
