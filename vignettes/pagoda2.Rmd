@@ -181,6 +181,11 @@ myPagoda2WebObject$updateRookRoot();
 # Show the app
 show.app(app=myPagoda2WebObject,name='p2Sample1')
 
+# Optionally serialise to a static binary file
+# tmp/ directory must exist and be empty
+# (Also requires packing utility in the utilities directory of the package to be built
+# Provides error with instructions if it is not)
+myPagoda2WebObject$serialiseToStatic(text.file.directory = 'tmp/', binary.filename = 'pagodaTest.bin')
 
 # Save the app as an RDS for deploying
 saveRDS(myPagoda2WebObject, file = '~/p2Sample1.rds') # This object will now support DE
