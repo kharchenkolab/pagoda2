@@ -286,6 +286,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                 },this,false, "50")
 
               }
+            },
+            {
+              text: "Show Legend",
+              handler: function(){
+                mdhv.generateLegend(params.key)
+              }
             }
 
           ], //items
@@ -872,7 +878,7 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     if(restriction(cellSelectionNames)){
       selectionName = cellSel.setSelection(cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
     }
-    
+
     if (selectionName && highlight) {
       var heatView = new heatmapViewer();
       heatView.highlightCellSelectionByName(selectionName);
@@ -935,7 +941,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = func
   dataCntr.getCellMetadata(function(data, callbackParameters) {
     // data[callbackParameters.metadataName].data
     var parameters = {};
-    
+
     parameters.cellSelections = [];
     parameters.selNamePrefix = callbackParameters.selNamePrefix;
     parameters.metadataName = callbackParameters.metadataName;
@@ -948,24 +954,75 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = func
       }
       parameters.cellSelections[allCells[cellid]].push(cellid);
     }
-    
+
     var stepFunction = function(params,i, step, max){
       var cellSel = new cellSelectionController();
       for(var j = 0; j < step; j++){
-        var cellSelectionNames = params.cellSelections[i];
+        var cellSelectionNames = params.cellSelections[i+j];
         if(params.restriction(cellSelectionNames)){
-          cellSel.setSelection(cellSelectionNames, params.selNamePrefix + (i+j+1), {}, data[params.metadataName].palette[i].substring(0,7));
+          cellSel.setSelection(cellSelectionNames, params.selNamePrefix + (i+j+1), {}, data[params.metadataName].palette[i].substring(0,7), undefined, true);
         }
       }
     }
-    
-    var callback = function(params){}
-    
+
+    var callback = function(params){var cellSel = new cellSelectionController(); cellSel.raiseSelectionChangedEvent();}
+
     pagHelpers.generateProgressBar(stepFunction,parameters.cellSelections.length,1,callback,parameters);
 
   }, {metadataName: metadataName, selNamePrefix: selNamePrefix});
 
 }
+
+metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
+  var metaLegendStore = Ext.create("Ext.data.Store",{
+    fields:[
+      {name: 'index', type: 'integer'},
+	    {name: 'color', type: 'string'},
+    ],
+    autoLoad: true
+  })
+  var dataCntr = new dataController();
+  dataCntr.getCellMetadata(function(data, callbackParameters) {
+    console.log(data);
+    var palette = data[callbackParameters.metadataName].palette
+    for(var i = 0; i < palette.length; i++){
+      metaLegendStore.add({
+        index: (i+1),
+        color: palette[i]
+      });
+    }
+  }, {metadataName: metadataName});
+  var cellSelectionTable = Ext.create('Ext.grid.Panel',{
+        	title: "Legend: " + metadataName,
+        	height: "100%",
+        	width: "100%",
+        	scrollable: true,
+        	store: metaLegendStore,
+        	columns: [
+        	    {text: 'Cluster', dataIndex: 'index', width: '50%'},
+        	    {text: "&#x03DF;", dataIndex: 'color',width:'50%', renderer:
+        	      function(value, meta){
+        	        meta.style = "background-color:"+value+";";
+        	      },
+        	    }
+        	],
+        	emptyText: "Legend Not Available",
+        	singleSelect: false,
+  });
+  Ext.create("Ext.window.Window",{
+    title: "Legend Window",
+    modal: false,
+    resizable: false,
+    dragable: true,
+    height: 300,
+    width: 154,
+    layout: "fit",
+    items:[cellSelectionTable]
+
+  }).show();
+
+}
+
 
 metaDataHeatmapViewer.prototype.downloadImage = function(){
   var canvas = document.getElementById('metadata-area');
