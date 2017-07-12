@@ -982,9 +982,11 @@ metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
     autoLoad: true
   })
   var dataCntr = new dataController();
+  var metaName = "";
   dataCntr.getCellMetadata(function(data, callbackParameters) {
     console.log(data);
     var palette = data[callbackParameters.metadataName].palette
+    metaName = data[callbackParameters.metadataName].displayname
     for(var i = 0; i < palette.length; i++){
       metaLegendStore.add({
         index: (i+1),
@@ -993,7 +995,7 @@ metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
     }
   }, {metadataName: metadataName});
   var cellSelectionTable = Ext.create('Ext.grid.Panel',{
-        	title: "Legend: " + metadataName,
+        	title: "Legend: " + metaName,
         	height: "100%",
         	width: "100%",
         	scrollable: true,
@@ -1002,7 +1004,7 @@ metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
         	    {text: 'Cluster', dataIndex: 'index', width: '50%'},
         	    {text: "&#x03DF;", dataIndex: 'color',width:'50%', renderer:
         	      function(value, meta){
-        	        meta.style = "background-color:"+value+";";
+        	        meta.style = "background-color:"+value.substring(0,7)+";";
         	      },
         	    }
         	],
@@ -1010,7 +1012,7 @@ metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
         	singleSelect: false,
   });
   Ext.create("Ext.window.Window",{
-    title: "Legend Window",
+    title: "Legend",
     modal: false,
     resizable: false,
     dragable: true,
