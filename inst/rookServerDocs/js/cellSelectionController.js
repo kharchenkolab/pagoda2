@@ -40,7 +40,7 @@ function cellSelectionController() {
  * @param {object} metadata any kind of metadata we want to attach to this cell selection
  * @param {color} color of the cells when highlighted. If not specified random color is chosen
  */
-cellSelectionController.prototype.setSelection = function(cells, displayName, metadata, color, selectionName) {
+cellSelectionController.prototype.setSelection = function(cells, displayName, metadata, color, selectionName, supressEvent) {
     if(typeof color === "undefined"){
       color = this.colorManagement.generateColor();
     }
@@ -51,7 +51,7 @@ cellSelectionController.prototype.setSelection = function(cells, displayName, me
       metadata = {};
     }
     if(typeof selectionName === "undefined"){
-      
+
       selectionName = this.idNum + "_" + (new Date()).getTime();
       this.idNum++;
     }
@@ -66,7 +66,9 @@ cellSelectionController.prototype.setSelection = function(cells, displayName, me
 	'metadata': metadata,
 	'color' : color
     };
-    this.raiseSelectionChangedEvent();
+    if(!supressEvent){
+      this.raiseSelectionChangedEvent();
+    }
     return selectionName;
 };
 
@@ -137,13 +139,14 @@ cellSelectionController.prototype.getColor = function(selectionName){
  * @param {string} selectionName the internal name of the cell selection
  * @param {string} desired new highlight color
  */
-cellSelectionController.prototype.setColor = function(selectionName, newColor){
-  
+cellSelectionController.prototype.setColor = function(selectionName, newColor, supress){
+
   this.colorManagement.removeColorByHex(this.selections[selectionName].color)
   this.selections[selectionName].color = newColor;
   this.colorManagement.addColorByHex(newColor);
-  this.raiseSelectionChangedEvent();
-
+  if(!supress){
+    this.raiseSelectionChangedEvent();
+  }
 }
 
 /**
@@ -183,7 +186,7 @@ cellSelectionController.prototype.getSelectionDisplayName = function(selectionNa
  * @param newSelectionDisplayName {string} display name of the new selection
  */
 cellSelectionController.prototype.duplicateSelection = function(selectionName,newSelectionDisplayName) {
-    
+
     var oldSelection = this.selections[selectionName];
     this.setSelection(JSON.parse(JSON.stringify(oldSelection.cells)), newSelectionDisplayName)
 }
@@ -221,10 +224,10 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, 
 cellSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionDisplayName){
 
     var cellSelCtrl = this;
-    
+
     var cells = {};
     cellSelCtrl.getSelection(selections[0]).forEach(function(cell){
-      cells[cell] = 1; 
+      cells[cell] = 1;
     });
     for(var i = 1; i< selections.length; i++){
       cellSelCtrl.getSelection(selections[i]).forEach(function(cell){
@@ -239,12 +242,12 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
         passingCells.push(cell);
       }
     }
-    
+
     this.setSelection(passingCells,newSelectionDisplayName);
 }
 
 cellSelectionController.prototype.complimentSelectionsIntoNew = function(selections, newSelectionDisplayName){
-  
+
   var cellSelCtrl = this;
   var cells = {};
   for(var i = 0; i< selections.length; i++){
@@ -253,7 +256,7 @@ cellSelectionController.prototype.complimentSelectionsIntoNew = function(selecti
       cells[cell] = true;
     });
   }
-  
+
   (new dataController()).getCellOrder(function(data){
     var cellsPrime = [];
     for(var cell in data){
@@ -288,7 +291,7 @@ function colorManager(){
   if(typeof colorManager.instance === 'object'){
     return colorManager.instance;
   }
-  
+
   this.usedColors = [];
   colorManager.instance = this;
 }
@@ -296,9 +299,9 @@ function colorManager(){
 /**
  * Generates and adds a color to the usedColors based on already selected colors.
  * @return a hex color that was generated based on prior colors.
- */ 
+ */
 colorManager.prototype.generateColor = function(){
-  
+
   if(this.usedColors.length === 0){
     var randomColor = Math.floor(Math.random() * 360);
     this.usedColors.push({h: randomColor, f: 1});
@@ -309,13 +312,13 @@ colorManager.prototype.generateColor = function(){
     this.usedColors[randomColor].f++;
     return this.hsv2hex(randomColor,1,1);
   }
-  
+
   var distPair = {
     p: null,
     i: null,
     d: 0
   };
-  
+
   for(var i = 0; i < this.usedColors.length; i++){
     var prev = this.usedColors[(i-1 + this.usedColors.length) % this.usedColors.length];
     var next = this.usedColors[i];
@@ -326,12 +329,12 @@ colorManager.prototype.generateColor = function(){
       distPair.i = i;
     }
   }
-  
+
   var newColor = {
     h: (Math.floor(distPair.d/2) + distPair.p)%360,
     f: 1
   }
-  
+
   if(distPair.i === 0 && newColor.h > this.usedColors[0].h){
     this.usedColors.push(newColor);
   }
@@ -344,11 +347,11 @@ colorManager.prototype.generateColor = function(){
 /**
  * Allows for the insertion of a color into the ColoManager's used colors field by providing its hex value
  * @Param hexColor: a color defined with its hex format
- */ 
+ */
 colorManager.prototype.addColorByHex = function(hexColor){
   var targetHue = this.hex2hsv(hexColor).h;
   var index = 0;
-  
+
   while(index < this.usedColors.length && this.usedColors[index].h < targetHue){index++;}
   if((this.usedColors.length > index) && this.usedColors[index].h === targetHue){
     this.usedColors[index].f++;
@@ -368,7 +371,7 @@ colorManager.prototype.addColorByHex = function(hexColor){
  */
 colorManager.prototype.removeColorByHex = function(hexColor){
   var targetHue = this.hex2hsv(hexColor).h;
-  
+
   if(this.usedColors.length === 0){
     return;
   }
@@ -385,7 +388,7 @@ colorManager.prototype.removeColorByHex = function(hexColor){
  * Using a hex input creates a HSV representation of the provided color.
  * @param hexInput: color in hex form
  * @return A color in HSV form
- */ 
+ */
 colorManager.prototype.hex2hsv = function(hexInput){
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexInput);
   var x = result ? {
@@ -423,7 +426,7 @@ colorManager.prototype.hex2hsv = function(hexInput){
  * Using a hsv color input creates a hex representation of the provided color.
  * @param hexInput: color in hsv form
  * @return A color in hex form
- */ 
+ */
 colorManager.prototype.hsv2hex =  function(h, s, v) {
     var r, g, b, i, f, p, q, t;
     if (arguments.length === 1) {

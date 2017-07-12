@@ -65,7 +65,7 @@ cellSelectionUIcontroller.prototype.generateCellSelectionStore = function() {
  */
 cellSelectionUIcontroller.prototype.generateUI = function() {
     var uipanel = Ext.getCmp('cellselection-app-container');
-  
+
     var thisViewer = this;
     var toolbar = this.generateToolbar();
     var cellTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
@@ -120,7 +120,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
       	            align: "center",
       	            margin: "5 5 5 5",
       	            handler: function(){
-      
+
       	              cellSelCntrl.setColor(selectionName, "#" + (Ext.getCmp("colorPicker").value))
       	              var heatView = new heatmapViewer();
                       var aspHeatView = new aspectHeatmapViewer();
@@ -130,7 +130,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
                       aspHeatView.highlightCellSelectionByName(selectionName);
                       metaHeatView.highlightCellSelectionByName(selectionName);
                       embCntr.highlightSelectionByName(selectionName);
-      
+
       	              Ext.getCmp('cellSelectionColorWindow').close();
       	            }
       	          },
@@ -147,7 +147,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
       	          },
       	        ]
         	    }).show();
-	       
+
       	    }
       	 },
     	  /*sortChange: function(ct, columns, direction){
@@ -160,17 +160,17 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 	            i--;
 	          }
 	        }
-	        
+
 	        for(var j = 0; j < autoStore.length; j++){
 	          store.insert(0,autoStore[j]);
 	        }
 	        refresh();
 	      }*/
-    	  
+
     	}
     });
-    
-    
+
+
     /*var formPanel = Ext.create('Ext.form.Panel', {
     height: '100%',
     width: '100%',
@@ -180,16 +180,148 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
   	  cellSelectionTable,
     ]
     });*/
-    
+
     uipanel.add(cellSelectionTable);
     this.generateToolbar();
 
 }
 
 cellSelectionUIcontroller.prototype.generateToolbar = function(){
-  
+
   var toolbar = Ext.create("Ext.Toolbar");
   var thisViewer = this;
+
+  var highlightMenu = Ext.create("Ext.menu.Menu", {
+    items:[
+      {
+        text: "Highlight",
+        handler: function(){
+          var selectionTable = Ext.getCmp('cellSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+
+    		    var selectionNames = []
+    		    for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+
+            // Highlight on heatmap
+            var heatV = new heatmapViewer();
+            heatV.highlightCellSelectionsByNames(selectionNames);
+            pagHelpers.regC(72);
+
+            // Highlight on embedding
+            var embCntr = new embeddingViewer();
+            embCntr.highlightSelectionsByNames(selectionNames);
+
+            // Highlight on Aspects
+            var aspHeatView = new aspectHeatmapViewer();
+            aspHeatView.highlightCellSelectionsByNames(selectionNames);
+
+            //Highlight on Metadata
+            var metaView = new metaDataHeatmapViewer();
+            metaView.highlightCellSelectionsByNames(selectionNames);
+
+
+        }
+      },
+      {
+        text: "Highlight with Labels",
+        handler: function() {
+	    	  var selectionTable = Ext.getCmp('cellSelectionTable');
+    		  var selectedItems = selectionTable.getSelectionModel().getSelected();
+
+    		    var selectionNames = []
+    		    for(var i = 0; i < selectedItems.length; i++){
+              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+    		    }
+
+            // Highlight on heatmap
+            var heatV = new heatmapViewer();
+            heatV.highlightCellSelectionsByNames(selectionNames);
+            pagHelpers.regC(72);
+
+            // Highlight on embedding
+            var embCntr = new embeddingViewer();
+            embCntr.highlightSelectionsByNames(selectionNames, true);
+
+            // Highlight on Aspects
+            var aspHeatView = new aspectHeatmapViewer();
+            aspHeatView.highlightCellSelectionsByNames(selectionNames);
+
+            //Highlight on Metadata
+            var metaView = new metaDataHeatmapViewer();
+            metaView.highlightCellSelectionsByNames(selectionNames);
+
+	      }
+      },
+      {
+        text: "Change Highlight",
+        handler: function(){
+          var cellSelCntrl = new cellSelectionController();
+              var selectionTable = Ext.getCmp('cellSelectionTable');
+              var selectedItems = selectionTable.getSelectionModel().getSelected();
+              if(selectedItems.length === 0){
+                 Ext.MessageBox.alert('Warning', 'Please pick a cell selection first.');
+                return;
+              }
+      		    var oldColor = cellSelCntrl.getColor(selectedItems.getAt(0).getData().selectionname);
+              Ext.create('Ext.window.Window',{
+      	        title:'Change Cell Selection Color',
+        	      id: 'cellSelectionColorWindow',
+      	        align:"center",
+      	        width: 300,
+      	        modal: true,
+      	        items:[
+                    {
+                      xtype:"colorfield",
+                      fieldLabel: 'Highlight Color',
+                      id: "colorPicker",
+                      labelWidth: 75,
+                      value: oldColor,
+                      listeners: {
+                        change: 'onChange'
+                      }
+                  },
+        	        {
+        	          xtype: 'button',
+      	            text: 'Ok',
+      	            width:"20%",
+      	            height:"30%",
+      	            align: "center",
+      	            margin: "5 5 5 5",
+      	            handler: function(){
+
+                      var selectionNames = [];
+                      for(var i = 0; i < selectedItems.length; i++){
+                        selectionNames.push(selectedItems.getAt(i).getData().selectionname);
+                      }
+
+                      for(var i = 0; i < selectionNames.length; i++){
+       	                cellSelCntrl.setColor(selectionNames[i], "#" + (Ext.getCmp("colorPicker").value), true)
+                      }
+                      cellSelCntrl.raiseSelectionChangedEvent();
+      	              Ext.getCmp('cellSelectionColorWindow').close();
+
+      	            }
+      	          },
+      	          {
+      	            xtype: 'button',
+      	            text: 'Cancel',
+        	          width:"20%",
+      	            height:"30%",
+      	            align: "center",
+      	            margin: "5 5 5 5",
+      	            handler: function(){
+      	              Ext.getCmp('cellSelectionColorWindow').close();
+      	            }
+      	          },
+      	        ]
+        	    }).show();
+        }
+      }
+    ]
+  })
+
   toolbar.add({
         xtype: 'button',
         glyph: 0xf055, //fa-plus-circle
@@ -245,7 +377,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	});
   toolbar.add({
     xtype: 'button',
-    glyph: 0xf042, //fa-adjust 
+    glyph: 0xf042, //fa-adjust
     tooltip: 'Intersect',
     handler: function() {
           var selectionTable = Ext.getCmp('cellSelectionTable');
@@ -271,7 +403,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
   });
   toolbar.add({
 	  xtype: "button",
-	  glyph: 0xf057 , //fa-stop-circle 
+	  glyph: 0xf057 , //fa-stop-circle
 	  tooltip: "Compliment",
 	  handler: function(){
 	    var selectionTable = Ext.getCmp('cellSelectionTable');
@@ -375,7 +507,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
           }
         }
       });
-  toolbar.add({
+  /*toolbar.add({
 	  xtype: 'button',
 	  glyph: 0xf1fc, //fa-paint-brush
 	  tooltip: 'Highlight',
@@ -439,7 +571,14 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
             metaView.highlightCellSelectionsByNames(selectionNames);
 
 	  }
+	});*/
+	toolbar.add({
+	  xtype: 'button',
+	  tooltip: 'Highlight Options',
+	  glyph: 0xf1fc, //fa-paint-brush
+	  menu: highlightMenu
 	});
+
   toolbar.add({xtype: 'tbseparator'});
   toolbar.add({
 	  xtype: 'button',
@@ -491,7 +630,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         label: "JSON format",
         value: "json"
       });*/
-      
+
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {
 	      fieldLabel: 'Export Format:',
@@ -505,7 +644,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         margin: "5 5 5 5",
       });
       importComboBox.setValue("csv");
-      
+
       var selectionTable = Ext.getCmp('cellSelectionTable');
 		  var selectedItems = selectionTable.getSelectionModel().getSelected();
 	    if (selectedItems.length >= 1) {
@@ -591,7 +730,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         label: "JSON format",
         value: "json"
       });*/
-      
+
       // Make a combobox
       var importComboBox = Ext.create('Ext.form.ComboBox', {
 	      fieldLabel: 'Import Format:',
@@ -606,7 +745,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
         margin: "5 5 5 5",
       });
       importComboBox.setValue("csv")
-      
+
 	    if(!Ext.getCmp('cellFileSelectionWindow')){
 	      Ext.create('Ext.window.Window',{
 	        title:'Cell File Selection',
@@ -633,7 +772,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	            margin: "5 5 5 5",
 	            align: "center",
 	            handler: function(){
-	              
+
 	              var dataCntr = new dataController();
 	              var cellSelFile = document.getElementById("selectedCellFile").files[0];
 	              var cellSelFileName = cellSelFile.name;
@@ -642,9 +781,9 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	              if(selection === "csv"){
 	                reader.onload = function(progressEvent){
 	                  var reader = this;
-	                  
+
   	                dataCntr.getCellOrder(function(cellOrder){
-  	                  
+
   	                  var params = {};
 	                    params.total = 0;
 	                    params.lines = reader.result.split("\n");
@@ -655,7 +794,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	                        params.lines.splice(i,1)
 	                      }
 	                    }
-	                    
+
 	                    var functionStep = function(params,i,step,max){
 	                      var cellSelCntrl = new cellSelectionController();
 	                      for(var line = 0; line < step; line++){
@@ -677,12 +816,12 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	                          while(cellSelCntrl.displayNameExists(dispName)){
   	                          dispName = dispName  + "~RecentlyLoaded"
 	                          }
-	                          cellSelCntrl.setSelection(pureSelection,dispName,{}, color);
+	                          cellSelCntrl.setSelection(pureSelection,dispName,{}, color, undefined, true);
 	                          params.total++;
 	                        }//confirm
 	                      }
 	                    }
-                      
+
   	                  var callback = function(params){
   	                    var extraInfo = "";
     	                  for(var selName in params.removedCells){
@@ -691,10 +830,12 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
     	                    }
     	                  }
 	                      Ext.MessageBox.alert('Load Cell Selections Complete', params.total + " selections were generated from the data within " + cellSelFileName + extraInfo)
+	                      var cellSel = new cellSelectionController();
+	                      cellSel.raiseSelectionChangedEvent();
   	                  }
-  	                  
+
   	                  pagHelpers.generateProgressBar(functionStep,params.lines.length,1,callback,params);
-  	                  
+
 	                  });
   	           };
 	             }
@@ -735,7 +876,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 
 	  }
 	});
-	
+
 	return toolbar;
 }
 
