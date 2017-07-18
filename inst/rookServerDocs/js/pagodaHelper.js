@@ -19,10 +19,18 @@ var pagHelpers = {
         b: parseInt(result[3], 16)
     } : null;
   },
-  generateProgressBar: function(stepWiseCall, max, step, callback, callbackParameters){
+  generateProgressBar: function(stepWiseCall, max, step, callback, callbackParameters, title, modal){
+    if(typeof(title) === 'undefined'){
+      title = "Processing";
+    }
+    if(typeof(modal) === 'undefined'){
+      modal = true;
+    }
+
+
     Ext.create("Ext.window.Window", {
-      title: "Processing",
-      id: "progressBarWindow",
+      title: title,
+      id: modal,
       internalPadding: '10 10 10 10',
       modal: true,
       width: "300px",
@@ -33,12 +41,11 @@ var pagHelpers = {
         }
       ]
     }).show(0);
-    
+
     var recursiveCall = function(stepWiseCall, i, max, step, callbackParameters){
       if(i >= max){
-        document.getElementById("progressLabel").innerHTML = "99.9%"
-        callback(callbackParameters);
-        Ext.getCmp("progressBarWindow").close();
+        document.getElementById("progressLabel").innerHTML = "Finishing"
+        setTimeout(function(){callback(callbackParameters);Ext.getCmp("progressBarWindow").close();},1);
       }
       else{
         stepWiseCall(callbackParameters, i, Math.min(step, max - i), max)
