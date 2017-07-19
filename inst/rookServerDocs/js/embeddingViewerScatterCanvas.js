@@ -365,7 +365,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
       ctx.save();
       ctx.fillStyle = "black";
       var fontPieces = ctx.font.split(/\s/);
-      ctx.font = "bold " + Math.floor(document.getElementById('embedding-canvas-overlay').height/25) + "px " + fontPieces[1];
+      ctx.font = "bold " + Math.floor(new cellSelectionUIcontroller().selectionFont) + "px " + fontPieces[1];
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for(var i = 0; i < clusterLabels.length; i++){
@@ -386,7 +386,8 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
   var dataCntr = new dataController();
   var type = config.type;
   var embeddingType = config.embeddingType;
-  var pointsize = embViewer.getCurrentPointSize()*size/this.size;
+  var ratio = size/this.size;
+  var pointsize = embViewer.getCurrentPointSize()*ratio;
   var ctx = overlayCanvas.getContext('2d');
   ctx.clearRect(0,0,5000,5000);
   dataCntr.getEmbedding(type, embeddingType, function(data){
@@ -452,7 +453,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
       ctx.save();
       ctx.fillStyle = "black";
       var fontPieces = ctx.font.split(/\s/);
-      ctx.font = "bold " + Math.floor(overlayCanvas.height/25) + "px " + fontPieces[1];
+      ctx.font = "bold " + /*Math.floor(overlayCanvas.height/25)*/ ((new cellSelectionUIcontroller()).selectionFont * ratio) + "px " + fontPieces[1];
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for(var i = 0; i < clusterLabels.length; i++){

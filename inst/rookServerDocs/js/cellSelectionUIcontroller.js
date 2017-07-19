@@ -9,11 +9,12 @@ function cellSelectionUIcontroller() {
     }
 
     cellSelectionUIcontroller.instance = this;
-
+    this.selectionFont = 12;
     this.generateCellSelectionStore();
     this.generateUI();
 
     // Setup listener for selection change
+
     var evtBus = new eventBus();
     evtBus.register("cell-selection-updated", null, function() {
 	var cellSelUI = new cellSelectionUIcontroller();
@@ -122,14 +123,14 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
       	            handler: function(){
 
       	              cellSelCntrl.setColor(selectionName, "#" + (Ext.getCmp("colorPicker").value))
-      	              var heatView = new heatmapViewer();
+      	              /*var heatView = new heatmapViewer();
                       var aspHeatView = new aspectHeatmapViewer();
                       var embCntr = new embeddingViewer();
                       var metaHeatView = new metaDataHeatmapViewer();
                       heatView.highlightCellSelectionByName(selectionName);
                       aspHeatView.highlightCellSelectionByName(selectionName);
                       metaHeatView.highlightCellSelectionByName(selectionName);
-                      embCntr.highlightSelectionByName(selectionName);
+                      embCntr.highlightSelectionByName(selectionName);*/
 
       	              Ext.getCmp('cellSelectionColorWindow').close();
       	            }
@@ -318,6 +319,22 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
       	        ]
         	    }).show();
         }
+      },
+      {
+        fieldLabel: 'Label size',
+  	    xtype: 'numberfield',
+  	    tooltip: 'Highlight label font size',
+  	    value: thisViewer.selectionFont, // 2
+  	    minValue: 4,
+  	    maxValue: 50,
+  	    disabled: false,
+  	    listeners:{
+  	      change: {
+  	        fn: function(f,v){
+  	          thisViewer.selectionFont = v;
+  	        }
+  	      }
+  	    }
       }
     ]
   })
@@ -462,7 +479,6 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 		if (selectedItems.length === 1) {
 		    var oldDisplayName = selectedItems.getAt(0).getData().displayname;
 		    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
-		    console.log(oldDisplayName)
       	thisViewer.promptName(oldDisplayName, function(newDisplayName){
       	  var cellSelCntr =  new cellSelectionController();
       	  if(newDisplayName !== false){
