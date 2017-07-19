@@ -363,6 +363,15 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
   deSets
 }
 
+
+
+
+
+#############################################
+# Functions for working with p2 selections
+#############################################
+
+
 #' @title reads a pagoda2 web app exported cell selection file
 #' @description reads a cell selection file exported by pagoda2 web interface as a list
 #' of list objects that contain the name of the selection, the color (as a hex string) and the
@@ -404,5 +413,36 @@ writeGenesAsPagoda2Selection <- function(name, genes, filename) {
   cat(paste(genes, collapse=','),file=con)
   cat('\n', file=con)
   close(con)
+}
+
+#' @title returns a list vector with the number of multiclassified cells
+#' @description returns a list vector with the number of cells that are
+#' present in more than one selections in the provided p2 selection object
+#' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
+#' @export calcMulticlassified
+calcMulticlassified <- function(sel) {
+  selectionCellsFlat <- unname(unlist(sapply(sel, function(x) x$cells)))
+  multiClassified <- selectionCellsFlat[duplicated(selectionCellsFlat)]
+  sort(sapply(sel, function(x) { sum(x$cells %in% multiClassified) / length(x$cells) }))
+}
+
+#' @title returns a factor of cell membership from a p2 selection
+#' @description returns a factor of cell membership from a p2 selection object
+#' the factor only includes cells present in the selection. If the selection
+#' contains multiclassified cells an error is raised
+#' @export factorFromP2Selection
+factorFromP2Selection <- function(sel) {
+  if(!all(calcMulticlassified(sel) == 0)) {
+    stop('The selections provided are not mutually exclusive')
+  }
+  x <- lapply(sel, function(x) {
+    data.frame(cellid = x$cells, label=c(x$name))
+  })
+  d <- do.call(rbind, x)
+
+  f <- as.factor(d$label)
+  names(f) <- d$cellid
+
+  f
 }
 
