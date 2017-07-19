@@ -393,7 +393,7 @@ readPagoda2SelectionFile <- function(filepath) {
     name <- make.names(fields[2]);
     color <- fields[1];
     cells <- fields[-c(1:2)];
-    returnList[[name]] <- list(name=fields[2], cells = cells);
+    returnList[[name]] <- list(name=fields[2], color = color, cells = cells);
   }
   close(con)
 
