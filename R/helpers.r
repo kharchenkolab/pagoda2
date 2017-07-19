@@ -446,3 +446,29 @@ factorFromP2Selection <- function(sel) {
   f
 }
 
+#' @title converts a factor to a p2 selection object
+#' @description converts a names factor to a p2 selection object
+#' if colors are provided it assigns those, otherwise uses a rainbow palette
+#' @param col names vector of colors
+#' @return a p2 selection object (list)
+#' @export factorToP2selection
+factorToP2selection <- function(cl,col=NULL) {
+  if(!is.factor(cl)) {
+    stop('cl is not a factor');
+  }
+  # If no colors are provided generate some random ones
+  if(is.null(col)) {
+    col=substr(rainbow(nlevels(cl)),2,7); # Rainbow w/o alpha and hash
+    names(col) <- levels(cl);
+  }
+  ns <- list();
+  for (l in levels(cl)) {
+    ns[[l]] <- list(
+      name = l,
+      cells = names(mlvlcpy)[which(mlvlcpy == l)],
+      color=col[l]
+    )
+  }
+  invisible(ns)
+}
+
