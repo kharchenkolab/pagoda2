@@ -400,6 +400,25 @@ readPagoda2SelectionFile <- function(filepath) {
   invisible(returnList)
 }
 
+#' @title writes a pagoda2 selection object as a p2 pagoda2 selection files
+#' @description writes a pagoda2 selection object as a p2 selection file that be be
+#' loaded to the web interfact
+#' @param sel pagoda2 selection object
+#' @param filepath name of file to write to
+#' @export writePagoda2SelectionFile
+writePagoda2SelectionFile <- function(sel, filepath) {
+  fileConn <- file(filepath);
+  lines <- c();
+  for (l in names(sel2)) {
+    cells <- sel2[[l]]$cells
+    cellsString <- paste0(cells,collapse=',');
+    ln <- paste(sel2[[l]]$color,as.character(l),cellsString,sep=',');
+    lines <- c(lines,ln)
+  }
+  writeLines(lines, con=fileConn);
+  close(fileConn);
+}
+
 #' @title writes a list of genes as a gene selection that can be loaded in the web interface
 #' @description writes a list of genes as a gene selection that can be loaded in the web interfact
 #' @param name the name of the selection
