@@ -330,7 +330,26 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 
         }
       });
-  
+  toolbar.add({
+        xtype: 'button',
+        glyph: 0xf0db, 
+        tooltip: 'Display',
+        handler: function() {
+          var selectionTable = Ext.getCmp('geneSelectionTable');
+      		var selectedItems = selectionTable.getSelectionModel().getSelected();
+      		if (selectedItems.length >= 1) {
+      		    var dispNames = [];
+      		    var selNames = [];
+      		    for(var i = 0; i < selectedItems.length; i++){
+      		      selNames.push(selectedItems.getAt(i).getData().selectionname);
+      		    }
+      		    (new geneSelectionTableViewer()).generateTableFromSelection(selNames);
+      		} else {
+      		  Ext.MessageBox.alert('Warning', 'Please select a gene selection first');
+          }
+
+        }
+      });
   toolbar.add({xtype: 'tbseparator'});
   toolbar.add({
         xtype: 'button',
@@ -385,48 +404,62 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	              var geneSelFileName = geneSelFile.name;
 	              var reader = new FileReader();
 	              reader.onload = function(progressEvent){
-	                var lines = this.result.split("\n");
+	                var reader = this;
 	                var dataCntr = new dataController();
 	                dataCntr.getGeneInformationStore(function(geneInformationStore){
-	                var geneOrder = [];
+	                var params = {}
+	                params.lines = reader.result.split("\n");
+	                params.geneOrder = [];
+	                params.total = 0;
+	                params.removedGenes = {};
+	                params.geneSelCntrl = new geneSelectionController();
+	                for(var i = 0; i< params.lines.length; i++){
+	                  while(params.lines[i].length === 0 && i < params.lines.length){
+	                    params.lines.splice(i,1)
+	                  }
+	                }
+	                    
                   for(var i = 0; i < geneInformationStore.localData.length; i++){
-                      geneOrder.push(geneInformationStore.localData[i].genename)
+                      params.geneOrder.push(geneInformationStore.localData[i].genename)
                   }
-	                var geneSelCntrl = new geneSelectionController();
-	                var total = 0;
-	                var removedGenes = {};
-	                for(var line = 0; line < lines.length; line++){
-	                  if(lines[line].length !== 0){
-	                    var selection = lines[line].split(",");
+                  console.log(params.geneOrder);
+	                var functionStep = function(params,i, step, max){
+	                  for(var line = 0; line < step; line++){
+	                    var selection = params.lines[i + line].split(",");
+	                    console.log(selection);
 	                    var dispName = selection.shift();
-	                    removedGenes[dispName] = 0;
+	                    params.removedGenes[dispName] = 0;
 	                    var pureSelection = [];
 	                    for(var elem = 0; elem < selection.length; elem++){
-	                      if(geneOrder.includes(selection[elem])){
+	                      if(params.geneOrder.includes(selection[elem])){
 	                        pureSelection.push(selection[elem]);
 	                      }
 	                      else{
-	                        removedGenes[dispName]++;
+	                        params.removedGenes[dispName]++;
 	                      }
 	                    }// ensure all genes are rightfully containers
 	                    
 	                    
-	                    if(removedGenes[dispName] !== selection.length){
-	                      while(geneSelCntrl.displayNameExists(dispName)){
+	                    if(params.removedGenes[dispName] !== selection.length){
+	                      while(params.geneSelCntrl.displayNameExists(dispName)){
   	                      dispName = dispName  + "~RecentlyLoaded"
 	                      }
-	                      geneSelCntrl.setSelection(pureSelection,dispName);
-	                      total++;
+	                      params.geneSelCntrl.setSelection(pureSelection,dispName);
+	                      params.total++;
 	                    }//confirm
 	                  }
 	                }
-	                var extraInfo = "";
-	                for(var selName in removedGenes){
-	                  if(removedGenes[selName] > 0){
-	                    extraInfo += "<br>" + removedGenes[selName] + " gene(s) could not be loaded from selection " + selName;
-	                  }
-	                }
-	                Ext.MessageBox.alert('Load Gene Selections Complete', total + " selections were generated from the data within " + geneSelFileName + extraInfo)
+	                
+	                var callback = function(params){
+	                  var extraInfo = "";
+  	                for(var selName in params.removedGenes){
+  	                  if(params.removedGenes[selName] > 0){
+  	                    extraInfo += "<br>" + params.removedGenes[selName] + " gene(s) could not be loaded from selection " + selName;
+  	                  }
+  	                }
+  	                Ext.MessageBox.alert('Load Gene Selections Complete', params.total + " selections were generated from the data within " + geneSelFileName + extraInfo)
+  	               }
+  	               pagHelpers.generateProgressBar(functionStep,params.lines.length,1,callback,params);
 	                });
   	           };
 	             reader.readAsText(geneSelFile);

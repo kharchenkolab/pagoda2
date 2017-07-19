@@ -30,6 +30,9 @@ function aspectHeatmapViewer() {
     this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
 
+  this.palManager = new paletteManager();
+  this.palManager.setPalette(p2globalParams.aspectViewer.defaultPaletteName);
+  this.palManager.setNumberOfColors(p2globalParams.aspectViewer.defaultPaletteLevels);
 
   aspectHeatmapViewer.instance = this;
 }
@@ -74,17 +77,12 @@ aspectHeatmapViewer.prototype.generatePalettesMenu = function() {
 }
 
 
-/**
- * Genereate the menu
- * @private
- */
-aspectHeatmapViewer.prototype.generateMenu = function(){
-  var toolbar = Ext.create('Ext.Toolbar');
-
+aspectHeatmapViewer.prototype.generateAspectHeatmapSettingsMenu = function(){
+  
   var paletteMenu = this.generatePalettesMenu();
   var aspHeatView = new aspectHeatmapViewer();
-
-  var settingsMenu = Ext.create('Ext.menu.Menu', {
+  
+  return Ext.create('Ext.menu.Menu', {
     id: 'aspectSettingsMenu',
     items: [
       {
@@ -113,8 +111,20 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
     ] // items
 
   });
+}
 
-  toolbar.add({
+/**
+ * Genereate the menu
+ * @private
+ */
+aspectHeatmapViewer.prototype.generateMenu = function(){
+  //var toolbar = Ext.create('Ext.Toolbar');
+
+  
+  //var aspHeatView = new aspectHeatmapViewer();
+  //var settingsMenu = aspHeatView.generateAspectHeatmapSettingsMenu();
+
+  /*toolbar.add({
           text: "",
         type: "button",
         tooltip: 'Download current view',
@@ -139,9 +149,9 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
                 canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
             } // if
         } // handler
-});
+});*/
 
-toolbar.add({
+  /*toolbar.add({
   text: '',
   xtype: 'button',
   tooltip: 'Clear selection overlay',
@@ -149,24 +159,23 @@ toolbar.add({
   handler: function() {
     var obj = new aspectHeatmapViewer();
     obj.clearSelectionOverlay();
-
   }
 
-});
+});*/
 
 
     // Add plot configuration menu button
-    toolbar.add({
+  /*toolbar.add({
     	text: '',
     	xtype: 'button',
     	tooltip: 'Configure aspect heatmap plot settings',
     	glyph: 0xf013,
     	menu: settingsMenu
-    });
+    });*/
 
 
 
-      toolbar.add({
+  /*toolbar.add({
     text: '',
     xtype: 'button',
     tooltip: 'Help',
@@ -193,11 +202,11 @@ toolbar.add({
             resizable: false
           }).show();
     } // handler
-  }); // toolbar add
+  }); // toolbar add*/
 
 
-    var aspectPanel = Ext.getCmp('aspectPanel');
-    aspectPanel.getHeader().add(toolbar);
+    //var aspectPanel = Ext.getCmp('aspectPanel');
+    //aspectPanel.getHeader().add(toolbar);
 
 }
 
@@ -206,7 +215,7 @@ toolbar.add({
  * Get the area height
  */
 aspectHeatmapViewer.prototype.getHeight = function() {
-  return Ext.getCmp('aspectPanel').getHeight() - 40;
+  return Ext.getCmp('aspectPanel').getHeight() - 10;
 }
 
 /**
@@ -263,12 +272,12 @@ aspectHeatmapViewer.prototype.initialize = function() {
   this.updateCanvasSize();
 
   // TODO: Update this with an apsect specific palette
-  this.palManager = new paletteManager();
+  /*this.palManager = new paletteManager();
   this.palManager.setPalette(p2globalParams.aspectViewer.defaultPaletteName);
-  this.palManager.setNumberOfColors(p2globalParams.aspectViewer.defaultPaletteLevels);
+  this.palManager.setNumberOfColors(p2globalParams.aspectViewer.defaultPaletteLevels);*/
 
   // Make the menu
-  this.generateMenu();
+  //this.generateMenu();
 
 
   // Draw the heatmap
@@ -868,5 +877,26 @@ aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectio
     })
   })
 
+}
+
+aspectHeatmapViewer.prototype.downloadImage = function(){
+  var canvas = document.getElementById('aspect-heatmap-area');
+
+            const maxSize = 2000;
+            if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
+                     } //if
+                   } //fn
+                }) // Ext.Msg.show
+            } else {
+                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
+            }
 }
 

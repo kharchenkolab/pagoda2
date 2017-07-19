@@ -142,7 +142,7 @@ function initialise() {
 
         // Generate the tables
         var geneTable = new geneTableViewer();
-
+        var geneSelTable = new geneSelectionTableViewer();
         var geneSetsTable = new geneSetsTableViewer();
         var heatDendView = new heatmapDendrogramViewer();
         var aspTableView = new aspectsTableViewer();
@@ -337,6 +337,15 @@ function generateExtJsLayout() {
 		    //items: []
 		},
 		{
+		  title: "Gene Subset",
+		  id: 'geneSelectionTableViewerExtJS',
+		  layout:'fit',
+		  height: '100%',
+		  width: '100%',
+		  glyph: 0xf279, //fa-map
+		  tooltip: 'This tab displays a table of genes from one or more provided selections'
+		},
+		{
 		    title: 'Gene Sets of Interest',
 		    id: 'geneSetsOfInterestExtJS',
 		    layout: 'border',
@@ -450,6 +459,7 @@ function generateExtJsLayout() {
               padding: 0,
               split: true,
               title: 'Metadata View',
+              header: false,
               html: '<div id="metadata-area-container"></div>'
             },
             {
@@ -458,6 +468,7 @@ function generateExtJsLayout() {
               width: '100%',
               height: '10%',
               padding: 0,
+              header: false,
               split: true,
               title: 'Aspect View',
               html: '<div id="aspect-heatmap-container"></div>'
@@ -469,6 +480,7 @@ function generateExtJsLayout() {
               height: '55%',
               padding: 0,
               split: true,
+              header: false,
               title: 'Heatmap View',
               html: '<div id="heatmap-area-container"></div>'
             }
