@@ -19,21 +19,23 @@ var pagHelpers = {
         b: parseInt(result[3], 16)
     } : null;
   },
-  generateProgressBar: function(stepWiseCall, max, step, callback, callbackParameters, title, modal){
+  generateProgressBar: function(stepWiseCall, max, step, callback, callbackParameters, title, id){
+    var modal = false;
     if(typeof(title) === 'undefined'){
       title = "Processing";
     }
-    if(typeof(modal) === 'undefined'){
+    if(typeof(id) === 'undefined'){
       modal = true;
+      id = "progressBarWindow"
     }
 
 
     Ext.create("Ext.window.Window", {
       title: title,
-      id: modal,
       internalPadding: '10 10 10 10',
-      modal: true,
+      modal: modal,
       width: "300px",
+      id: id,
       resizeable: false,
       items: [
         {

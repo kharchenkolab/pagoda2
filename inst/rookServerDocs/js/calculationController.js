@@ -16,16 +16,16 @@ function calculationController(localAvailable, remoteAvailable) {
         displayName: 'Remote Default',
         help: 'Remote Default Method',
         repos: 'remote'
-      }
-    /*  ,
+      },
       {
         name: 'localDefault',
         displayName: 'Local Default',
         help: 'Local default method',
         repos: 'T-test'
-      } */
+      }
     ];
 
+    this.localWorker;
     calculationController.instance = this;
     return this;
 }
@@ -37,6 +37,8 @@ function calculationController(localAvailable, remoteAvailable) {
 calculationController.prototype.calculateDEfor2selections = function(selectionA, selectionB, method, callback) {
   if (method === 'remoteDefault') {
     return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
+  } else if(method=== 'localDefault'){
+    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback);
   } else {
     callback('Not implemented');
   }
@@ -50,11 +52,206 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
 calculationController.prototype.calculateDEfor1selection = function(selectionA, method, callback) {
   if (method === 'remoteDefault') {
     return this.calculateDEfor1selectionbyRemote(selectionA, callback);
+  } else if(method=== 'localDefault'){
+    return this.calculateDEfor1selectionbyLocal(selectionA, callback);
   } else {
     callback('Not implemented');
   }
 }
 
+calculationController.prototype.calculateDELocal = function(selections, callback){
+  var thisController = this;
+  var dataCtrl = new dataController();
+  if(typeof(this.localWorker) === "undefined") {
+    this.localWorker = new Worker("js/statisticsWorker.js");
+    dataCtrl.getGeneInformationStore(function(geneNameData){
+      var geneNames = [];
+      for(var i = 0; i < geneNameData.localData.length; i++){
+        geneNames.push(geneNameData.localData[i].genename);
+      }
+      geneNameData = undefined;
+
+      var startUpPackage = {
+        command:{
+          type: "setup",
+        },
+        params:{
+          method: "default",
+          geneNames: geneNames,
+          results: [],
+          closed: false
+        }
+      }
+      thisController.localWorker.postMessage(startUpPackage)
+      Ext.create("Ext.window.Window", {
+      title: "Processing Data Locally",
+      internalPadding: '10 10 10 10',
+      width: "300px",
+      id: "localProgressBarWindow",
+      resizeable: false,
+      items: [
+        {
+          html:'<div style="width:100%;background-color:#DDDDDD;height:30px"> <div id="localProgressBar" style="width:0%;background-color:#B0E2FF;height:30px; text-align: center;vertical-align: middle;line-height: 30px;"><div id="localProgressLabel" style="float: left; width: 100%; height: 100%; position: absolute; vertical-align: middle;">0%</div></div></div>'
+        }
+      ],
+      listeners:{
+        close: function(win){
+          var actionUI = new actionPanelUIcontroller();
+          if(actionUI.currentDErequest){
+            actionUI.stopAnalysisClickHandler()
+          }
+        },
+      }
+    }).show(0);
+    });
+  }
+
+  var w = this.localWorker;
+  var cellSelCntr = new cellSelectionController();
+
+  this.localWorker.onmessage = function(e){
+    var callParams = e.data;
+
+    if(callParams.request.type === "cell order"){
+      dataCtrl.getCellOrder(function(cellData){
+        w.postMessage({
+          command:{
+            type: "initiate",
+            data: cellData,
+            selections: selections,
+          },
+          params: callParams.params
+        })
+      });
+
+    }
+
+    else if(callParams.request.type === "expr vals"){
+      if(document.getElementById("localProgressBar")){
+        var execution = (callParams.params.index/callParams.params.geneNames.length) * 100;
+        document.getElementById("localProgressBar").style.width = execution + "%"
+        document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%"
+        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0, callParams.params.numCells, function(data){
+          w.postMessage({
+            command:{
+              type: "process",
+              data: data
+            },
+            params: callParams.params
+          })
+        })
+      }
+    }
+    else if(callParams.request.type === "clean death"){
+
+      thisController.localWorker.terminate();
+      thisController.localWorker = undefined;
+      document.getElementById("localProgressLabel").innerHTML = "Finishing"
+      setTimeout(function(){callback(callParams.params.results);Ext.getCmp("localProgressBarWindow").close();},1);
+
+
+    }
+    else if(callParams.request.type === "abrupt death"){
+
+      if(Ext.getCmp("localProgressBarWindow")){
+        Ext.getCmp("localProgressBarWindow").close()
+      }
+      w.terminate();
+      thisController.localWorker = undefined;
+    }
+
+  }
+  return {
+    abort: function(){
+      w.postMessage({command:{type:"stop"}})
+    }
+  };
+}
+
+calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback){
+  var cellSelCntr = new cellSelectionController();
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback);
+}
+calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback){
+  var cellSelCntr = new cellSelectionController();
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback);
+}
+/*calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback){
+  var thisController = this;
+  var dataCtrl = new dataController();
+  if(typeof(this.localWorker) === "undefined") {
+    this.localWorker = new Worker("js/statisticsWorker.js");
+    dataCtrl.getGeneInformationStore(function(geneNameData){
+      var geneNames = [];
+      for(var i = 0; i < geneNameData.localData.length; i++){
+        geneNames.push(geneNameData.localData[i].genename);
+      }
+      geneNameData = undefined;
+
+      var startUpPackage = {
+        command:{
+          type: "setup",
+        },
+        params:{
+          method: "default",
+          geneNames: geneNames,
+          results: []
+        }
+      }
+      thisController.localWorker.postMessage(startUpPackage)
+    });
+  }
+
+  var w = this.localWorker;
+  var cellSelCntr = new cellSelectionController();
+
+  this.localWorker.onmessage = function(e){
+    var callParams = e.data;
+    if(callParams.request.type === "cell order"){
+      dataCtrl.getCellOrder(function(cellData){
+        w.postMessage({
+          command:{
+            type: "initiate",
+            data: cellData,
+            selections:[
+              cellSelCntr.getSelection(selectionA),
+              cellSelCntr.getSelection(selectionB)
+            ],
+          },
+          params: callParams.params
+        })
+      });
+
+    }
+
+    else if(callParams.request.type === "expr vals"){
+      dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0, callParams.params.numCells, function(data){
+        w.postMessage({
+          command:{
+            type: "process",
+            data: data
+          },
+          params: callParams.params
+        })
+      })
+    }
+    else if(callParams.request.type === "clean death"){
+      w.terminate();
+      thisController.localWorker = undefined;
+      callback(callParams.params.results);
+    }
+    else if(callParams.request.type === "abrupt death"){
+      w.terminate();
+      thisController.localWorker = undefined;
+    }
+
+  }
+  return {
+    abort: function(){
+      w.postMessage({command:{type:"stop"}})
+    }
+  };
+}*/
 
 calculationController.prototype.calculateDEfor1selectionbyRemote = function(selectionA, callback) {
   var cellSelCntr = new cellSelectionController();
@@ -69,9 +266,8 @@ calculationController.prototype.calculateDEfor1selectionbyRemote = function(sele
 	      "selectionA": Ext.util.JSON.encode(selAcells)
 	    },
 	    url: "doComputation.php?compidentifier=doDifferentialExpression1selection",
-	    startTime: new Date(),
 	    success: function(data) {
-		    callback(data,this.startTime);
+		    callback(data);
 	    }
 	});
 
@@ -97,9 +293,8 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
 	      "selectionB": Ext.util.JSON.encode(selBcells),
 	    },
 	    url: "doComputation.php?compidentifier=doDifferentialExpression2selections",
-	    startTime: new Date(),
 	    success: function(data) {
-		    callback(data,this.startTime);
+		    callback(data);
 	    }
 	});
 
@@ -146,7 +341,7 @@ differentialExpressionStore.prototype.getAvailableDEsets = function() {
     var curKey = availKeys[i];
     var name = curKey;
     var displayName = this.deSets[curKey].getName();
-    
+
     var date = this.deSets[curKey].getStartTime().valueOf();
     result.push({'name': name, 'date': date, 'displayName': displayName});
   }
