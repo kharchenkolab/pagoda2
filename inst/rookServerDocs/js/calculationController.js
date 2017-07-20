@@ -20,9 +20,15 @@ function calculationController(localAvailable, remoteAvailable) {
       {
         name: 'localDefault',
         displayName: 'Local Default',
-        help: 'Local default method',
-        repos: 'T-test'
-      }
+        help: 'Local Default Method',
+        repos: 'KStest'
+      },
+      /*{
+        name: 'localWilcoxon',
+        displayName: 'Local Wilcoxon',
+        help: 'Local Wilcoxon Method',
+        repos: 'wilcoxon',
+      }*/
     ];
 
     this.localWorker;
@@ -38,8 +44,10 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
   if (method === 'remoteDefault') {
     return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
   } else if(method=== 'localDefault'){
-    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback);
-  } else {
+    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"default");
+  } else if(method === 'localWilcoxon'){
+    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"wilcoxon");
+  }else {
     callback('Not implemented');
   }
 }
@@ -53,13 +61,15 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
   if (method === 'remoteDefault') {
     return this.calculateDEfor1selectionbyRemote(selectionA, callback);
   } else if(method=== 'localDefault'){
-    return this.calculateDEfor1selectionbyLocal(selectionA, callback);
+    return this.calculateDEfor1selectionbyLocal(selectionA, callback, "default");
+  } else if(method=== 'localWilcoxon'){
+    return this.calculateDEfor1selectionbyLocal(selectionA, callback, "wilcoxon");
   } else {
     callback('Not implemented');
   }
 }
 
-calculationController.prototype.calculateDELocal = function(selections, callback){
+calculationController.prototype.calculateDELocal = function(selections, callback, method){
   var thisController = this;
   var dataCtrl = new dataController();
   if(typeof(this.localWorker) === "undefined") {
@@ -76,7 +86,7 @@ calculationController.prototype.calculateDELocal = function(selections, callback
           type: "setup",
         },
         params:{
-          method: "default",
+          method: method,
           geneNames: geneNames,
           results: [],
           closed: false
@@ -168,13 +178,13 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   };
 }
 
-calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback){
+calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback, method){
   var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback);
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, method);
 }
-calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback){
+calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
   var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback);
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 }
 /*calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback){
   var thisController = this;
