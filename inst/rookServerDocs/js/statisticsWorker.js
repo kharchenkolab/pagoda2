@@ -1,7 +1,9 @@
 "use strict";
 
 /**
- *
+ * Calculate differential expression between two groups of cells the Kologomorov Smirnov test
+ * @param params A compound object containing data, and information passed to this worker from the event listener
+ * @param geneData A sparse matrix containing the gene names being read in and the expression values
  */
 function runKSonGroup(params, geneData){
       //for each gene calculate differential expression
@@ -110,7 +112,9 @@ function runKSonGroup(params, geneData){
 }
 
 /**
- *
+ * Calculate differential expression between two groups of cells the Wilcoxon Mann-Whitney test
+ * @param params A compound object containing data, and information passed to this worker from the event listener
+ * @param geneData A sparse matrix containing the gene names being read in and the expression values
  */
 function runWilcoxonOnGroup(params,geneData){
 
@@ -132,12 +136,15 @@ function runWilcoxonOnGroup(params,geneData){
         selAexpr.sort(function(x,y){return x-y});
         selBexpr.sort(function(x,y){return x-y});
 
+        //removes all selections with a value of 0
         while(selAexpr.length >0 && selAexpr[0] === 0){
           selAexpr.shift();
         }
         while(selBexpr.length >0 && selBexpr[0] === 0){
           selBexpr.shift();
         }
+
+        //skips the gene if there aren't enough valid cells
         if(selAexpr.length < 10 || selBexpr.length < 10){
           continue;
         }
@@ -148,6 +155,8 @@ function runWilcoxonOnGroup(params,geneData){
 
         var totalArank = 0;
         var mean = 0;
+
+        //calculates ranks for cell selection A by way of wilcoxon ranking
         for(var i = 0; i< selBexpr.length; i++){
           while(index < selAexpr.length && selAexpr[index] <= selBexpr[i]){
             if(selAexpr[index] === selBexpr[i]){
@@ -167,6 +176,7 @@ function runWilcoxonOnGroup(params,geneData){
         }
         mean = mean/(length + lengthPrime);
 
+        //calculates total of B's ranks using A's rank and sample size
         var totalBrank = length * lengthPrime - totalArank;
 
 
@@ -178,6 +188,7 @@ function runWilcoxonOnGroup(params,geneData){
 
         var z = Math.abs((Math.max(totalArank,totalBrank) - mu)/sigma);
         var zSign = (Math.max(totalBrank,totalArank) === totalArank ? 1 : -1);
+        //accepts p < .05
         if(z >= 3.0){
           params.results.push({Z:(z*zSign), absZ:z, name: geneData.colnames[gene], fe: fold, M:mean, highest:(zSign >= 0)})
         }
@@ -260,12 +271,17 @@ function runWilcoxonOnGroup(params,geneData){
       }
 }*/
 
-
-/**
- *
- */
+// event listener functions as channel for communication between worker and Master
 self.addEventListener("message", function(e){
   var callParams = e.data;
+
+  /**
+  * Setup command
+  *
+  * Worker requests cell data from its master
+  *
+  * request type: Cell order
+  */
   if(callParams.command.type === "setup"){
     var response = {
       request:{
@@ -275,15 +291,31 @@ self.addEventListener("message", function(e){
     }
     postMessage(response);
   }
-  //initiates the workers statistic modules
+
+  /**
+   * Initiate command
+   *
+   * Recieves cell name data from the master thread and initializes the selection index arrays
+   *
+   * Requests a subset of the genes at a time
+   *
+   * params step set to number of genes requested per request made
+   * params index set to 0, index will represent next gene to interpret
+   * params numCells is the number of cells
+   *
+   * request expr vals
+   * request data: contains the gene names that are being asked for
+   */
   else if(callParams.command.type === "initiate"){
     callParams.params.step = Math.max(Math.floor(callParams.params.geneNames.length/200),10);
     callParams.params.index = 0;
     callParams.params.numCells = callParams.command.data.length;
 
+    //if there is only one selection given make the second selection off of the indexes of the cellOrderData keys
     if(callParams.command.selections.length === 1){
       callParams.params.selAidx = [];
       callParams.params.selBidx = [...callParams.command.data.keys()];
+      //creates array of cell indexes based on their corresponding index in cell order array
       for(var i = 0; i < callParams.command.selections[0].length; i++){
         var idx = callParams.command.data.indexOf(callParams.command.selections[0][i]);
         if(idx !== -1){
@@ -292,6 +324,7 @@ self.addEventListener("message", function(e){
       }
 
     }
+    //makes selection index arrays for two selections
     else if(callParams.command.selections.length === 2){
       callParams.params.selAidx = [];
       callParams.params.selBidx = [];
@@ -316,7 +349,20 @@ self.addEventListener("message", function(e){
       params: callParams.params
     });
   }
-  // tells statistic module to process a clump of data
+
+
+  /**
+   * Process Command
+   *
+   * Process a chunk of data based on the chosen method then requests more data in a similar way to other unless no more data remains, otherwise requests death
+   *
+   * request 1
+   * request type: expr vals
+   * request data: contains the gene names that are being asked for next
+   *
+   * request 2
+   * request type: clean death
+   */
   else if(callParams.command.type === "process"){
     if(callParams.params.method === "default" || callParams.params.method === "ksTest"){
       runKSonGroup(callParams.params, callParams.command.data);
@@ -328,6 +374,8 @@ self.addEventListener("message", function(e){
       runTtestOnGroup(callParams.params, callParams.command.data);
     }
     callParams.params.index += callParams.params.step;//advance index to current spot
+
+    //continue requesting data if data still needs to be read
     if(callParams.params.index < callParams.params.geneNames.length){
       postMessage({
         request:{
@@ -347,6 +395,10 @@ self.addEventListener("message", function(e){
     }
   }
 
+  /**
+   * User has issued a stop command
+   * Halts progress of analysis and sends the main thread a message to kill this worker and not call the callback
+   */
   else if(callParams.command.type === "stop"){
       postMessage({
         request:{

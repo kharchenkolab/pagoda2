@@ -7,17 +7,17 @@ function geneSelectionUIcontroller() {
     if (typeof geneSelectionUIcontroller.instance === 'object' ) {
 	return geneSelectionUIcontroller.instance
     }
-    
+
     geneSelectionUIcontroller.instance = this;
 
     this.generateGeneSelectionStore();
     this.generateUI();
-    
+
     var evtBus = new eventBus();
     evtBus.register('gene-selection-updated', null, function() {
 	var geneSelUI = new geneSelectionUIcontroller();
 	geneSelUI.syncGeneSelectionStore();
-	
+
     });
     //this.generateToolbar();
 }
@@ -71,7 +71,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
     var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     var thisViewer = this;
     var toolbar = this.generateToolbar();
-    
+
 
 
 
@@ -104,11 +104,16 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
     });*/
 
     uipanel.add(geneSelectionTable);
-    
-    
-  
+
+
+
 }
 
+/**
+ * Generate the user interface for selecting a new name. Blocks until proper name given or user cancles request
+ * @param {curDisplay} Information that appears in text field at the beginning
+ * @param {callback}
+ */
 geneSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
     		    Ext.Msg.prompt('Rename Gene Selection', 'Please enter a new name:', function(btn, text) {
         			if (btn =='ok') {
@@ -125,7 +130,7 @@ geneSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
       				    Ext.MessageBox.alert('Error', 'The name must not contain a comma',function(e){
         			      geneSelUICntr.promptName(newName, callback);
         			    });
-      			    } 
+      			    }
       			    else if (geneSelCntr.displayNameExists(newName)) {
       				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!',function(e){
         			      geneSelUICntr.promptName(newName, callback);
@@ -139,13 +144,16 @@ geneSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
         			  callback(false);
         			}
     		    },{},false,curDisplay);
-  
+
 }
 
+/**
+ * Builds the UI toolbar for the gene selection window
+ */
 geneSelectionUIcontroller.prototype.generateToolbar = function(){
   var toolbar = Ext.create("Ext.Toolbar");
   var thisViewer = this;
-  
+
   toolbar.add({
         xtype: 'button',
        glyph: 0xf055, //fa-plus-circle
@@ -154,7 +162,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
           var selectionTable = Ext.getCmp('geneSelectionTable');
     		  var selectedItems = selectionTable.getSelectionModel().getSelected();
     		  if (selectedItems.length >= 2) {
-    		    
+
             var selectionNames = [];
             for(var i = 0; i < selectedItems.length; i++){
               selectionNames.push(selectedItems.getAt(i).getData().selectionname);
@@ -165,7 +173,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
                 geneSelCntr.mergeSelectionsIntoNew(selectionNames, newSelectionDisplayName);
               }
             })
-            
+
     		  } else {
             Ext.MessageBox.alert('Warning', 'Please pick at least two gene selections to merge first.');
     		  }
@@ -200,7 +208,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	});
   toolbar.add({
     xtype: 'button',
-   glyph: 0xf042, //fa-adjust 
+   glyph: 0xf042, //fa-adjust
     tooltip: 'Intersect',
     handler: function() {
           var selectionTable = Ext.getCmp('geneSelectionTable');
@@ -224,7 +232,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
   });
   toolbar.add({
 	  xtype: "button",
-	  glyph: 0xf057, //fa-stop-circle 
+	  glyph: 0xf057, //fa-stop-circle
 	  tooltip: "Compliment",
 	  handler: function(){
 	    var selectionTable = Ext.getCmp('geneSelectionTable');
@@ -267,7 +275,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 			      geneSelCntr.duplicateSelection(oldSelectionName,newSelectionDisplayName);
           }
 			 });
-			 
+
 		    } else {
 			     Ext.MessageBox.alert('Warning', 'Please choose a single gene selection first');
 		    } // selectedItems == 1
@@ -280,7 +288,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	    handler: function() {
 		    var selectionTable = Ext.getCmp('geneSelectionTable');
 		    var selectedItems =  selectionTable.getSelectionModel().getSelected();
-		    
+
 		    if (selectedItems.length === 1) {
 			    var oldSelectionName = selectedItems.getAt(0).getData().selectionname;
 			    Ext.Msg.prompt('Rename Gene Selection', 'Please enter a new name:',
@@ -332,7 +340,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
       });
   toolbar.add({
         xtype: 'button',
-        glyph: 0xf0db, 
+        glyph: 0xf0db,
         tooltip: 'Display',
         handler: function() {
           var selectionTable = Ext.getCmp('geneSelectionTable');
@@ -399,7 +407,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	            margin:"5 5 5 5",
 	            align: "center",
 	            handler: function(){
-	              
+
 	              var geneSelFile = document.getElementById("selectedGeneFile").files[0];
 	              var geneSelFileName = geneSelFile.name;
 	              var reader = new FileReader();
@@ -418,7 +426,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	                    params.lines.splice(i,1)
 	                  }
 	                }
-	                    
+
                   for(var i = 0; i < geneInformationStore.localData.length; i++){
                       params.geneOrder.push(geneInformationStore.localData[i].genename)
                   }
@@ -438,8 +446,8 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	                        params.removedGenes[dispName]++;
 	                      }
 	                    }// ensure all genes are rightfully containers
-	                    
-	                    
+
+
 	                    if(params.removedGenes[dispName] !== selection.length){
 	                      while(params.geneSelCntrl.displayNameExists(dispName)){
   	                      dispName = dispName  + "~RecentlyLoaded"
@@ -449,7 +457,7 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	                    }//confirm
 	                  }
 	                }
-	                
+
 	                var callback = function(params){
 	                  var extraInfo = "";
   	                for(var selName in params.removedGenes){
@@ -481,9 +489,9 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
 	      }).show();
 	    }
 	    Ext.getCmp('geneFileSelectionWindow').focus();
-	    
+
 	  }
 	});
-	
+
 	return toolbar;
 }

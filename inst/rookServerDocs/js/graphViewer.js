@@ -17,6 +17,10 @@ function graphViewer(data, plotType){
     this.lineThickness = 1;
 }
 
+/**
+ * Draws a graph onto the target canvas
+ * @param {canvas} Target canvas
+ */
 graphViewer.prototype.draw = function(canvas){
   if(this.plotType === "scatter"){
     this.drawScatterPlot(canvas);
@@ -26,6 +30,10 @@ graphViewer.prototype.draw = function(canvas){
   }
 }
 
+/**
+ * Draws a percent composition bar graph onto the target canvas
+ * @param {canvas} Target canvas
+ */
 graphViewer.prototype.drawBarGraph = function(canvas){
   var boundries = {
     minY: 0,
@@ -74,9 +82,9 @@ graphViewer.prototype.drawBarGraph = function(canvas){
   for(var i = 0; i < this.data.data.length; i++){
     var barStartY = boundings.plotBR.y;
     var barStartX = boundings.plotTL.x + i * (barSep + barWidth) + barSep;
-    
+
     hoverFields.push({xStart: barStartX, yRanges: []});
-    
+
     var total = 0;
     for(var j = 0; j < this.data.data[i].length; j++){
       total += this.data.data[i][j];
@@ -88,7 +96,7 @@ graphViewer.prototype.drawBarGraph = function(canvas){
         ctx.fillStyle = this.data.compPalette[j].substring(0,7);
         ctx.fillRect(barStartX, barStartY, barWidth, -barHeight);
         hoverFields[i].yRanges.push({start: barStartY, height: barHeight, value: j});
-        
+
         barStartY = barStartY - barHeight;
       }
     }
@@ -110,13 +118,13 @@ graphViewer.prototype.drawBarGraph = function(canvas){
         opacity: 0.80
     }).appendTo(".canvas_holder").fadeIn(0);
 }
-  
+
   var parent = this;
   document.getElementById("displayChart").addEventListener("mousemove",function(event){
     var xPos = event.offsetX;
     var yPos = event.offsetY;
     var xPlotPos = Math.floor((xPos - boundings.plotTL.x)/(barWidth+barSep));
-    
+
     if(xPlotPos >= 0 && xPlotPos < hoverFields.length && hoverFields[xPlotPos].xStart <= xPos){
       for(var i = 0; i < hoverFields[xPlotPos].yRanges.length; i++){
         //console.log(yPos + " " + hoverFields[xPlotPos].yRanges[i].start + " " + hoverFields[xPlotPos].yRanges[i].height)

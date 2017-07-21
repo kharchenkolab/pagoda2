@@ -91,11 +91,15 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     	singleSelect: false,
     	selModel: cellTableSelectionModel,
     	listeners:{
+
+    	  //on response to double click color picker window is generated to change the color
       	celldblclick: function(thisGrid, td,col,record, tr, row){
       	  if(col === 3){
       	      var selectionName = Ext.getCmp('cellSelectionTable').getStore().getAt(row).getData().selectionname;
       		    var cellSelCntrl = new cellSelectionController();
       		    var oldColor = cellSelCntrl.getColor(selectionName);
+
+      		    //creates window with color picker to cahnge a color
               Ext.create('Ext.window.Window',{
       	        title:'Change Cell Selection Color',
         	      id: 'cellSelectionColorWindow',
@@ -187,6 +191,9 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
 }
 
+/**
+ * Builds the tool bar for the cell selection controller
+ */
 cellSelectionUIcontroller.prototype.generateToolbar = function(){
 
   var toolbar = Ext.create("Ext.Toolbar");
@@ -523,78 +530,12 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
           }
         }
       });
-  /*toolbar.add({
-	  xtype: 'button',
-	  glyph: 0xf1fc, //fa-paint-brush
-	  tooltip: 'Highlight',
-	  handler: function() {
-	    	var selectionTable = Ext.getCmp('cellSelectionTable');
-    		var selectedItems = selectionTable.getSelectionModel().getSelected();
-
-    		    var selectionNames = []
-    		    for(var i = 0; i < selectedItems.length; i++){
-              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
-    		    }
-
-            // Highlight on heatmap
-            var heatV = new heatmapViewer();
-            heatV.highlightCellSelectionsByNames(selectionNames);
-            pagHelpers.regC(72);
-
-            // Highlight on embedding
-            var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionsByNames(selectionNames);
-
-            // Highlight on Aspects
-            var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionsByNames(selectionNames);
-
-            //Highlight on Metadata
-            var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionsByNames(selectionNames);
-
-
-	  }
-	});
-	toolbar.add({
-	xtype: 'button',
-	glyph: 0xf040, //fa-pencil
-	tooltip: 'Highlight with labels',
-	  handler: function() {
-	    	var selectionTable = Ext.getCmp('cellSelectionTable');
-    		var selectedItems = selectionTable.getSelectionModel().getSelected();
-
-    		    var selectionNames = []
-    		    for(var i = 0; i < selectedItems.length; i++){
-              selectionNames.push(selectedItems.getAt(i).getData().selectionname);
-    		    }
-
-            // Highlight on heatmap
-            var heatV = new heatmapViewer();
-            heatV.highlightCellSelectionsByNames(selectionNames);
-            pagHelpers.regC(72);
-
-            // Highlight on embedding
-            var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionsByNames(selectionNames, true);
-
-            // Highlight on Aspects
-            var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionsByNames(selectionNames);
-
-            //Highlight on Metadata
-            var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionsByNames(selectionNames);
-
-	  }
-	});*/
 	toolbar.add({
 	  xtype: 'button',
 	  tooltip: 'Highlight Options',
 	  glyph: 0xf1fc, //fa-paint-brush
 	  menu: highlightMenu
 	});
-
   toolbar.add({xtype: 'tbseparator'});
   toolbar.add({
 	  xtype: 'button',
@@ -896,6 +837,11 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	return toolbar;
 }
 
+/**
+ * Prompts the user for a name and doesn't let them leave the prompt until cancelled request or provide a name that is passable
+ * @param {curDisplay} what, if any, text will appear in the box
+ * @param {callback}
+ */
 cellSelectionUIcontroller.prototype.promptName = function(curDisplay, callback){
     		    Ext.Msg.prompt('Rename Cell Selection', 'Please enter a new name:', function(btn, text) {
         			if (btn =='ok') {

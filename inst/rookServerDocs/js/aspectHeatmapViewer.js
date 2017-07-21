@@ -76,12 +76,15 @@ aspectHeatmapViewer.prototype.generatePalettesMenu = function() {
     return paletteMenu;
 }
 
-
+/**
+ * Generate the settings menu for the heatmap
+ * @private
+ */
 aspectHeatmapViewer.prototype.generateAspectHeatmapSettingsMenu = function(){
-  
+
   var paletteMenu = this.generatePalettesMenu();
   var aspHeatView = new aspectHeatmapViewer();
-  
+
   return Ext.create('Ext.menu.Menu', {
     id: 'aspectSettingsMenu',
     items: [
@@ -116,11 +119,12 @@ aspectHeatmapViewer.prototype.generateAspectHeatmapSettingsMenu = function(){
 /**
  * Genereate the menu
  * @private
+ * @deprecated
  */
 aspectHeatmapViewer.prototype.generateMenu = function(){
   //var toolbar = Ext.create('Ext.Toolbar');
 
-  
+
   //var aspHeatView = new aspectHeatmapViewer();
   //var settingsMenu = aspHeatView.generateAspectHeatmapSettingsMenu();
 
@@ -383,7 +387,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
     var heatDendView = new heatmapDendrogramViewer();
 
     var aspHeatView = new aspectHeatmapViewer();
-      
+
     if(aspHeatView.primaryMouseButtonDown){
       aspHeatView.primaryMouseButtonDown = false;
       if(aspHeatView.dragging) {
@@ -493,7 +497,7 @@ aspectHeatmapViewer.prototype.clearSelectionOverlayInternal = function(){
  */
 aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   var aspHeatView = new aspectHeatmapViewer()
-  
+
   var heatDendView = new heatmapDendrogramViewer();
   var overlayArea = document.getElementById('aspect-heatmap-area-overlay');
   var ctx = overlayArea.getContext('2d');
@@ -514,9 +518,9 @@ aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
     ctx.moveTo(drawConsts.left, y);
     ctx.lineTo(drawConsts.width + drawConsts.left, y);
     ctx.stroke();
-  } 
+  }
   */
-  
+
   if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left - heatDendView.getPlotAreaRightPadding()  &
 	    (y < actualPlotHeight  | typeof y === 'undefined') // if y is provided it is in the plot
        ) {
@@ -687,7 +691,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	    ctx.fillStyle = 'black';
 	    ctx.fillText(name, x, y);
 	  } // Label plot loop
-    
+
     // TODO: setup click areas here
     aspHeatView.aspectRegions.clearClickAreas();
     for (var i = 0; i < data.DimNames2.length; i++){

@@ -39,6 +39,8 @@ function cellSelectionController() {
  * @param {string} displayName Name to show in the UI when refering to this selection
  * @param {object} metadata any kind of metadata we want to attach to this cell selection
  * @param {color} color of the cells when highlighted. If not specified random color is chosen
+ * @param {selectionName} name of the selection
+ * @param {supressEvent} Supress the raise selection changed event if true
  */
 cellSelectionController.prototype.setSelection = function(cells, displayName, metadata, color, selectionName, supressEvent) {
     if(typeof color === "undefined"){
@@ -217,7 +219,7 @@ cellSelectionController.prototype.mergeSelectionsIntoNew = function(selections, 
 }
 
 /**
- * Genereate a new cell selection by intersecting two cell selections
+ * Genereate a new cell selection by intersecting multiple cell selections
  */
 cellSelectionController.prototype.intersectSelectionsIntoNew = function(selections, newSelectionDisplayName){
 
@@ -243,7 +245,9 @@ cellSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
 
     this.setSelection(passingCells,newSelectionDisplayName);
 }
-
+/**
+ * Generate a new selection from the intersected compliment of multiple selections
+ */
 cellSelectionController.prototype.complimentSelectionsIntoNew = function(selections, newSelectionDisplayName){
 
   var cellSelCtrl = this;
@@ -266,6 +270,9 @@ cellSelectionController.prototype.complimentSelectionsIntoNew = function(selecti
   })
 }
 
+/**
+ * Generate a new selection from the diference of multiple selections
+ */
 cellSelectionController.prototype.differenceSelectionsIntoNew = function(selections, newSelectionDisplayName){
   var cellSelCtrl = this;
   var cells = {}
@@ -285,7 +292,12 @@ cellSelectionController.prototype.differenceSelectionsIntoNew = function(selecti
   cellSelCtrl.setSelection(cellIntersect,newSelectionDisplayName);
 }
 
+/**
+ * Creates a color manager that determine how colors are added and manipulated in this tool
+ * @constructor
+ */
 function colorManager(){
+  //singleton design pattern
   if(typeof colorManager.instance === 'object'){
     return colorManager.instance;
   }

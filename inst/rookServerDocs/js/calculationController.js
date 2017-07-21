@@ -29,12 +29,12 @@ function calculationController(localAvailable, remoteAvailable) {
         help: 'Local Wilcoxon Method',
         repos: 'wilcoxon',
       },
-      {
+      /*{
         name: 'localTtest',
         displayName: 'Local Ttest',
         help: 'Local T-test Method',
         repos: 't_test',
-      }
+      }*/
     ];
 
     this.localWorker;
@@ -79,13 +79,22 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
   }
 }
 
+/**
+ * Calculate differential expression for a group of selections against the background
+ * @param selections An array of the cell selections to be used to perform differential expression analysis as an array of cell names
+ * @param callback
+ * @param method the identifier for the local being used to calculate
+ */
 calculationController.prototype.calculateDELocal = function(selections, callback, method){
   var thisController = this;
   var dataCtrl = new dataController();
+
+  //Generates the new worker
   if(typeof(this.localWorker) === "undefined") {
     this.localWorker = new Worker("js/statisticsWorker.js");
     dataCtrl.getGeneInformationStore(function(geneNameData){
       var geneNames = [];
+      //collects all gene names being analyzed
       for(var i = 0; i < geneNameData.localData.length; i++){
         geneNames.push(geneNameData.localData[i].genename);
       }
@@ -102,7 +111,11 @@ calculationController.prototype.calculateDELocal = function(selections, callback
           closed: false
         }
       }
+
+      //sends start up package to worker to begin communiation line
       thisController.localWorker.postMessage(startUpPackage)
+
+      //builds non-modal progress bar window
       Ext.create("Ext.window.Window", {
       title: "Processing Data Locally",
       internalPadding: '10 10 10 10',
@@ -132,6 +145,7 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   this.localWorker.onmessage = function(e){
     var callParams = e.data;
 
+    //in the event of the cell order request sends cell order back with cell selection names
     if(callParams.request.type === "cell order"){
       dataCtrl.getCellOrder(function(cellData){
         w.postMessage({
@@ -146,8 +160,11 @@ calculationController.prototype.calculateDELocal = function(selections, callback
 
     }
 
+    //in the event of a expr vals request sends expression values back for a given chunk of gene names
     else if(callParams.request.type === "expr vals"){
       if(document.getElementById("localProgressBar")){
+
+        //continues
         var execution = (callParams.params.index/callParams.params.geneNames.length) * 100;
         document.getElementById("localProgressBar").style.width = execution + "%"
         document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
@@ -163,15 +180,19 @@ calculationController.prototype.calculateDELocal = function(selections, callback
         })
       }
     }
+    //during ompletion of execution a clean death is evoked
     else if(callParams.request.type === "clean death"){
 
-      thisController.localWorker.terminate();
-      thisController.localWorker = undefined;
-      document.getElementById("localProgressLabel").innerHTML = "Finishing"
-      setTimeout(function(){callback(callParams.params.results);Ext.getCmp("localProgressBarWindow").close();},1);
-
+      //if the clean death occures while an abrupt death is being evoked this if should prevent data race
+      if(document.getElementById("localProgressBar")){
+        thisController.localWorker.terminate();
+        thisController.localWorker = undefined;
+        document.getElementById("localProgressLabel").innerHTML = "Finishing"
+        setTimeout(function(){callback(callParams.params.results);Ext.getCmp("localProgressBarWindow").close();},1);
+      }
 
     }
+    //if stop or another button like it is clicked cleanly shutsdown the worker without calling the call back
     else if(callParams.request.type === "abrupt death"){
 
       if(Ext.getCmp("localProgressBarWindow")){
@@ -183,21 +204,40 @@ calculationController.prototype.calculateDELocal = function(selections, callback
 
   }
   return {
+    //abort function for stop button functionality
     abort: function(){
       w.postMessage({command:{type:"stop"}})
     }
   };
 }
 
+/**
+ * Calculate differential expression for 1 selection against the packground
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ * @param callback
+ * @param method the identifier for the local being used to calculate
+ */
 calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback, method){
   var cellSelCntr = new cellSelectionController();
   return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, method);
 }
+
+/**
+ * Calculate differential expression for 1 selection against the packground
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ * @param selectionB the name of the second cell selection as registered in the cell selection controller
+ * @param callback
+ * @param method the identifier for the local being used to calculate
+ */
 calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
   var cellSelCntr = new cellSelectionController();
   return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 }
 
+/**
+ * Calculate differential expression between two groups of cells via connection to a remote server
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ */
 calculationController.prototype.calculateDEfor1selectionbyRemote = function(selectionA, callback) {
   var cellSelCntr = new cellSelectionController();
   var selAcells = cellSelCntr.getSelection(selectionA);
