@@ -23,12 +23,18 @@ function calculationController(localAvailable, remoteAvailable) {
         help: 'Local Default Method',
         repos: 'KStest'
       },
-      /*{
+      {
         name: 'localWilcoxon',
         displayName: 'Local Wilcoxon',
         help: 'Local Wilcoxon Method',
         repos: 'wilcoxon',
-      }*/
+      },
+      {
+        name: 'localTtest',
+        displayName: 'Local Ttest',
+        help: 'Local T-test Method',
+        repos: 't_test',
+      }
     ];
 
     this.localWorker;
@@ -47,7 +53,9 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
     return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"default");
   } else if(method === 'localWilcoxon'){
     return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"wilcoxon");
-  }else {
+  } else if(method === 'localTtest'){
+    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"tTest");
+  } else {
     callback('Not implemented');
   }
 }
@@ -64,6 +72,8 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
     return this.calculateDEfor1selectionbyLocal(selectionA, callback, "default");
   } else if(method=== 'localWilcoxon'){
     return this.calculateDEfor1selectionbyLocal(selectionA, callback, "wilcoxon");
+  } else if(method === 'localTtest'){
+    return this.calculateDEfor1selectionbyLocal(selectionA, callback, "tTest");
   } else {
     callback('Not implemented');
   }
@@ -140,7 +150,8 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       if(document.getElementById("localProgressBar")){
         var execution = (callParams.params.index/callParams.params.geneNames.length) * 100;
         document.getElementById("localProgressBar").style.width = execution + "%"
-        document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%"
+        document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
+
         dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0, callParams.params.numCells, function(data){
           w.postMessage({
             command:{
@@ -186,82 +197,6 @@ calculationController.prototype.calculateDEfor2selectionsbyLocal = function(sele
   var cellSelCntr = new cellSelectionController();
   return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 }
-/*calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback){
-  var thisController = this;
-  var dataCtrl = new dataController();
-  if(typeof(this.localWorker) === "undefined") {
-    this.localWorker = new Worker("js/statisticsWorker.js");
-    dataCtrl.getGeneInformationStore(function(geneNameData){
-      var geneNames = [];
-      for(var i = 0; i < geneNameData.localData.length; i++){
-        geneNames.push(geneNameData.localData[i].genename);
-      }
-      geneNameData = undefined;
-
-      var startUpPackage = {
-        command:{
-          type: "setup",
-        },
-        params:{
-          method: "default",
-          geneNames: geneNames,
-          results: []
-        }
-      }
-      thisController.localWorker.postMessage(startUpPackage)
-    });
-  }
-
-  var w = this.localWorker;
-  var cellSelCntr = new cellSelectionController();
-
-  this.localWorker.onmessage = function(e){
-    var callParams = e.data;
-    if(callParams.request.type === "cell order"){
-      dataCtrl.getCellOrder(function(cellData){
-        w.postMessage({
-          command:{
-            type: "initiate",
-            data: cellData,
-            selections:[
-              cellSelCntr.getSelection(selectionA),
-              cellSelCntr.getSelection(selectionB)
-            ],
-          },
-          params: callParams.params
-        })
-      });
-
-    }
-
-    else if(callParams.request.type === "expr vals"){
-      dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0, callParams.params.numCells, function(data){
-        w.postMessage({
-          command:{
-            type: "process",
-            data: data
-          },
-          params: callParams.params
-        })
-      })
-    }
-    else if(callParams.request.type === "clean death"){
-      w.terminate();
-      thisController.localWorker = undefined;
-      callback(callParams.params.results);
-    }
-    else if(callParams.request.type === "abrupt death"){
-      w.terminate();
-      thisController.localWorker = undefined;
-    }
-
-  }
-  return {
-    abort: function(){
-      w.postMessage({command:{type:"stop"}})
-    }
-  };
-}*/
 
 calculationController.prototype.calculateDEfor1selectionbyRemote = function(selectionA, callback) {
   var cellSelCntr = new cellSelectionController();
