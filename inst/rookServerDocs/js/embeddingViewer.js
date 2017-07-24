@@ -232,6 +232,7 @@ embeddingViewer.prototype.generateToolbar = function() {
         glyph: 0xf0ed,
         handler: function(){
 
+              //set up background canvas for rendering of the print preview and a high definition saved image
               var aspV = new aspectHeatmapViewer();
               var embV = new embeddingViewer();
               var backgroundCanvas = document.createElement("canvas");
@@ -252,6 +253,8 @@ embeddingViewer.prototype.generateToolbar = function() {
               }
 
               var overlay = document.getElementById('embedding-canvas-overlay');
+
+              //Window containing print preview and aditional image altering options
               Ext.create("Ext.window.Window",{
                 title:"Embedding Download Preview",
                 id: "EmbeddingEditor",
@@ -272,6 +275,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                         boxLabel: 'Include Title',
                         id: 'includeTitle',
                         listeners:{
+                          //adds paddding for title and does some reformatting
                           change: function(){
                             var me = Ext.getCmp('includeTitle');
                             if(Ext.getCmp('includeTitle').getValue()){
