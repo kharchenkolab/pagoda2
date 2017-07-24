@@ -363,6 +363,15 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
   deSets
 }
 
+
+
+
+
+#############################################
+# Functions for working with p2 selections
+#############################################
+
+
 #' @title reads a pagoda2 web app exported cell selection file
 #' @description reads a cell selection file exported by pagoda2 web interface as a list
 #' of list objects that contain the name of the selection, the color (as a hex string) and the
@@ -384,11 +393,30 @@ readPagoda2SelectionFile <- function(filepath) {
     name <- make.names(fields[2]);
     color <- fields[1];
     cells <- fields[-c(1:2)];
-    returnList[[name]] <- list(name=fields[2], cells = cells);
+    returnList[[name]] <- list(name=fields[2], color = color, cells = cells);
   }
   close(con)
 
   invisible(returnList)
+}
+
+#' @title writes a pagoda2 selection object as a p2 pagoda2 selection files
+#' @description writes a pagoda2 selection object as a p2 selection file that be be
+#' loaded to the web interfact
+#' @param sel pagoda2 selection object
+#' @param filepath name of file to write to
+#' @export writePagoda2SelectionFile
+writePagoda2SelectionFile <- function(sel, filepath) {
+  fileConn <- file(filepath);
+  lines <- c();
+  for (l in names(sel2)) {
+    cells <- sel2[[l]]$cells
+    cellsString <- paste0(cells,collapse=',');
+    ln <- paste(sel2[[l]]$color,as.character(l),cellsString,sep=',');
+    lines <- c(lines,ln)
+  }
+  writeLines(lines, con=fileConn);
+  close(fileConn);
 }
 
 #' @title writes a list of genes as a gene selection that can be loaded in the web interface
@@ -404,5 +432,62 @@ writeGenesAsPagoda2Selection <- function(name, genes, filename) {
   cat(paste(genes, collapse=','),file=con)
   cat('\n', file=con)
   close(con)
+}
+
+#' @title returns a list vector with the number of multiclassified cells
+#' @description returns a list vector with the number of cells that are
+#' present in more than one selections in the provided p2 selection object
+#' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
+#' @export calcMulticlassified
+calcMulticlassified <- function(sel) {
+  selectionCellsFlat <- unname(unlist(sapply(sel, function(x) x$cells)))
+  multiClassified <- selectionCellsFlat[duplicated(selectionCellsFlat)]
+  sort(sapply(sel, function(x) { sum(x$cells %in% multiClassified) / length(x$cells) }))
+}
+
+#' @title returns a factor of cell membership from a p2 selection
+#' @description returns a factor of cell membership from a p2 selection object
+#' the factor only includes cells present in the selection. If the selection
+#' contains multiclassified cells an error is raised
+#' @export factorFromP2Selection
+factorFromP2Selection <- function(sel) {
+  if(!all(calcMulticlassified(sel) == 0)) {
+    stop('The selections provided are not mutually exclusive')
+  }
+  x <- lapply(sel, function(x) {
+    data.frame(cellid = x$cells, label=c(x$name))
+  })
+  d <- do.call(rbind, x)
+
+  f <- as.factor(d$label)
+  names(f) <- d$cellid
+
+  f
+}
+
+#' @title converts a factor to a p2 selection object
+#' @description converts a names factor to a p2 selection object
+#' if colors are provided it assigns those, otherwise uses a rainbow palette
+#' @param col names vector of colors
+#' @return a p2 selection object (list)
+#' @export factorToP2selection
+factorToP2selection <- function(cl,col=NULL) {
+  if(!is.factor(cl)) {
+    stop('cl is not a factor');
+  }
+  # If no colors are provided generate some random ones
+  if(is.null(col)) {
+    col=substr(rainbow(nlevels(cl)),2,7); # Rainbow w/o alpha and hash
+    names(col) <- levels(cl);
+  }
+  ns <- list();
+  for (l in levels(cl)) {
+    ns[[l]] <- list(
+      name = l,
+      cells = names(mlvlcpy)[which(mlvlcpy == l)],
+      color=col[l]
+    )
+  }
+  invisible(ns)
 }
 
