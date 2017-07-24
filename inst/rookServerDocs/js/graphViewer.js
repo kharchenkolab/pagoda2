@@ -52,7 +52,7 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     hasYscale: true,
     hasAxisLabels: true,
     hasTitle: true,
-  }
+  }// choices represents an object that contains information about x and y scale, title, and axis labels existance,
   var hoverFields = [];// x range by y range
 
   var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,
@@ -60,6 +60,8 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     padding, margin, choices, boundries, scaleStyle);
 
   var realWidth = barSep * 2 + (barWidth + barSep) * this.data.data.length + parseInt(((canvas).getAttribute("width"))) - boundings.plotDim.width;
+
+  //sets realwidth to mininum of 500
   if(realWidth < 500){
     realWidth = 500;
 
@@ -79,6 +81,7 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     barWidth = barWidth * dilation;
   }
 
+  //for each value in the array of clusters fill a multiple boxes representing membership with other clusters
   for(var i = 0; i < this.data.data.length; i++){
     var barStartY = boundings.plotBR.y;
     var barStartX = boundings.plotTL.x + i * (barSep + barWidth) + barSep;
@@ -106,6 +109,8 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     ctx.font = boundings.axisFont
     ctx.fillText((i+1) + "" ,barStartX + barWidth/2, boundings.plotBR.y + this.lineThickness + padding)
   }
+
+  //simple tooltip generator that displays cluster name when hovering over a give point
   function showTooltip(x, y, contents) {
     $('<div id="barplot_tooltip">' + contents + '</div>').css({
         position: 'absolute',
@@ -125,9 +130,9 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     var yPos = event.offsetY;
     var xPlotPos = Math.floor((xPos - boundings.plotTL.x)/(barWidth+barSep));
 
+    //finds the tooltip's information if thecursor is hovering over a valid hover field
     if(xPlotPos >= 0 && xPlotPos < hoverFields.length && hoverFields[xPlotPos].xStart <= xPos){
       for(var i = 0; i < hoverFields[xPlotPos].yRanges.length; i++){
-        //console.log(yPos + " " + hoverFields[xPlotPos].yRanges[i].start + " " + hoverFields[xPlotPos].yRanges[i].height)
         if(hoverFields[xPlotPos].yRanges[i].start > yPos && hoverFields[xPlotPos].yRanges[i].start - hoverFields[xPlotPos].yRanges[i].height < yPos){
           $("#barplot_tooltip").remove();
           showTooltip(xPos,yPos,"Cluster index: " + (hoverFields[xPlotPos].yRanges[i].value + 1) + " Color: " + parent.data.compPalette[hoverFields[xPlotPos].yRanges[i].value].substring(0,7))
@@ -139,7 +144,13 @@ graphViewer.prototype.drawBarGraph = function(canvas){
     $("#barplot_tooltip").remove();
   })
 }
-
+/**
+ * Draws a scatter plot with provided data xLabel, yLabel, title, and canvas target
+ * @param {canvas} Canvas as target for drawing the new plot
+ * @param {xLabel} X axis title
+ * @param {yLabel} Y axis title
+ * @param {title} Title fo the graph
+ */
 graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
 
   var boundries ={}
@@ -147,6 +158,8 @@ graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
   boundries.minY = 0;
   boundries.maxX = 0;
   boundries.maxY = 0;
+
+  //find minumums and maximums of the data set
   for(var i = 0; i < this.data.data.length; i++){
     boundries.minX = Math.min(this.data.data[i][0],boundries.minX);
     boundries.minY = Math.min(this.data.data[i][1],boundries.minY);
@@ -163,14 +176,17 @@ graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
     hasAxisLabels: true,
     hasTitle: true,
   }
+
   var scaleFunction = function(x){return (x.toFixed(2) + "")};
   var boundings = this.measureScatterComponents(ctx, "14px Arial",14,"28px Arial",28,parseInt((canvas).getAttribute("width")),parseInt((canvas).getAttribute("height")), padding, margin, choices, boundries,scaleFunction);
+
 
   this.drawAxisWithScales(ctx, choices,boundings, padding ,margin, boundries, function(x){return (Math.round(x * 100)/100)});
   var xRange = boundries.maxX-boundries.minX;
   var yRange = boundries.maxY-boundries.minY;
-  for(var i = 0; i < this.data.data.length; i++){
 
+  //plot the points on the graph
+  for(var i = 0; i < this.data.data.length; i++){
     var coordinate = {
       x: (this.data.data[i][0] - boundries.minX)/xRange * boundings.plotDim.width,
       y: (this.data.data[i][1] - boundries.minY)/yRange * boundings.plotDim.height
@@ -187,6 +203,20 @@ graphViewer.prototype.drawScatterPlot = function(canvas, xLabel, yLabel, title){
 
 }
 
+/** Measure the components for a scatter canvas and determine how much padding should be distrbuted
+ * @param {ctx} 2d Context from the canvas being used
+ * @param {axisFont} Font for axis titles
+ * @param {axisHeight} Font size for axis
+ * @param {titleFont} Font for title
+ * @param {titleHeight} Font size for title height
+ * @param {width} Width of the plot
+ * @param {height} Height of the plot
+ * @param {padding} desired padding on the graph's content
+ * @param {margin} Margin surrounding the graph on the canvas
+ * @param {choices} Object consisting of parameters specifying whether or not certain components should be included
+ * @param {boundries} Boundries that enclose the graph
+ * @param {scaleStyle} Means of formatting scale to create a reasonable graph
+ */
 graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeight, titleFont, titleHeight, width, height, padding, margin, choices, boundries, scaleStyle){
   var boundings = {}
   boundings.axisFont = axisFont;
@@ -194,6 +224,7 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
   boundings.xGutter = (choices.hasXscale? axisHeight + padding : 0) + (choices.hasAxisLabels? axisHeight + padding : 0) + margin;
   boundings.yGutter = margin + (choices.hasAxisLabels? axisHeight + padding : 0);
 
+  //format adjustments for inclusion of yscale
   if(choices.hasYscale){
     var step = (boundries.maxY-boundries.minY)/5
     ctx.font = axisFont;
@@ -205,6 +236,7 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
   boundings.topGutter = margin + (choices.hasTitle? titleHeight + padding : 0)
   boundings.rightGutter = margin;
 
+  //format adjustments for inclusion of xscale
   if(choices.hasXscale){
     var step = (boundries.maxX-boundries.minX)/5
     ctx.font = axisFont;
@@ -213,6 +245,7 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
     boundings.rightGutter += maxLength/2;
   }
 
+  //coordinates and dimensions of plot and canvas
   boundings.plotTL = {
     x: boundings.yGutter + this.lineThickness,
     y: boundings.topGutter
@@ -232,14 +265,25 @@ graphViewer.prototype.measureScatterComponents = function(ctx, axisFont,axisHeig
 
   return boundings;
 }
-
+/**
+ * Draw the axis and scales based on the user provided boundings and canvas
+ * @param {ctx} 2D context for the canvas being drawn to
+ * @param {choices} Object consisting of parameters specifying whether or not certain components should be included
+ * @param {boundries} Boundries that enclose the graph
+ * @param {padding} desired padding on the graph's content
+ * @param {margin} Margin surrounding the graph on the canvas
+ * @param {boundries} Boundries that enclose the graph
+ * @param {scaleStyle} Means of formatting scale to create a reasonable graph
+ */
 graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, padding, margin, boundries, scaleStyle){
 
+  //adds yscale if its existence is specified
   if(choices.hasYscale){
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     var scaleSpace = boundings.plotDim.height/5;
     var step = (boundries.maxY - boundries.minY)/5
+    //draw xScale line by line
     for(var i = 0; i < 6; i++){
       ctx.fillStyle = "#000000";
       ctx.fillText(scaleStyle(boundries.minY+(i*step)) + "", (boundings.plotTL.x - this.lineThickness - padding), boundings.plotBR.y - scaleSpace * i);
@@ -248,11 +292,13 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
     }
   }
 
+  //adds xscale if its existence is specified
   if(choices.hasXscale){
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     var scaleSpace = boundings.plotDim.width/5;
-    var step = (boundries.maxX-boundries.minX)/5
+    var step = (boundries.maxX-boundries.minX)/5;
+    //draw xScale line by line
     for(var i = 0; i < 6; i++){
       ctx.fillStyle = "#000000";
       ctx.fillText(scaleStyle(boundries.minX+(i*step)) + "", (boundings.plotTL.x - this.lineThickness) + scaleSpace * i, boundings.plotBR.y + padding + this.lineThickness);
@@ -261,6 +307,7 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
     }
   }
 
+  //adds axis labels if they exist
   if(choices.hasAxisLabels){
 
     ctx.fillStyle = "#000000";
@@ -268,12 +315,14 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
     ctx.textBaseline = "bottom";
     ctx.fillText(this.data.xLabel, (boundings.plotBR.x - boundings.plotTL.x)/2 + boundings.plotTL.x, boundings.canvasDim.height - margin);
 
+    //have to rotate the context in order to print y axis label
     ctx.textBaseline = "top";
     ctx.rotate(-Math.PI/2);
     ctx.fillText(this.data.yLabel,-((boundings.plotBR.y - boundings.plotTL.y)/2+ boundings.plotTL.y), margin)
     ctx.rotate(Math.PI/2);
   }
 
+  //adds a title if it is specified
   if(choices.hasTitle){
     ctx.fillStyle = "#000000";
     ctx.textAlign = "center";
@@ -288,13 +337,21 @@ graphViewer.prototype.drawAxisWithScales = function(ctx, choices, boundings, pad
   ctx.fillRect(boundings.plotTL.x, boundings.plotBR.y, boundings.plotDim.width, this.lineThickness);
 }
 
+/**
+ * Contoller for the functionality of the graph viewer
+ * Renders the window for viewing and saving elements from the graph
+ */
 graphViewer.prototype.render = function(){
   var height = 500;
   var width = 500;
+
+
   if(this.plotType === "bar"){
     width = Math.max(this.findTrueBarWidth(height,width), 500);
   }
   var graphingImplement = this;
+
+  //Viewing box + save button
   Ext.create("Ext.window.Window", {
         resizeable: false,
         modal:true,
@@ -341,6 +398,12 @@ graphViewer.prototype.render = function(){
   this.draw(document.getElementById("displayChart"));
 }
 
+/**
+ * Preprocessing to determine the actual width of the plot if it contains a bar graph
+ * @param {height} Estimated height of canvas
+ * @param {width} Estimated Width of canvas
+ * @returns Actual width of the bargraph as integer
+ */
 graphViewer.prototype.findTrueBarWidth = function(height, width){
   var boundries = {
     minY: 0,

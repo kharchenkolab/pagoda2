@@ -429,7 +429,7 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
           data: geneMatrix.array,
           xLabel: geneMatrix.colnames[0],
           yLabel: geneMatrix.colnames[1],
-          title: "Gene expression comparison"
+          title: "Gene Expression Comparison"
         };
 
         (new graphViewer(scatterData, "scatter")).render();
