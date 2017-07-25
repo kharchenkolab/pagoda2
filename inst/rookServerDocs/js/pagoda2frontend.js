@@ -142,7 +142,7 @@ function initialise() {
 
         // Generate the tables
         var geneTable = new geneTableViewer();
-
+        var geneSelTable = new geneSelectionTableViewer();
         var geneSetsTable = new geneSetsTableViewer();
         var heatDendView = new heatmapDendrogramViewer();
         var aspTableView = new aspectsTableViewer();
@@ -229,10 +229,10 @@ function generateExtJsLayout() {
     });
 
     var cellSelectionPanel =  Ext.create('Ext.panel.Panel', {
-	id: 'cellselection-app-container',
-	layout: 'fit',
-	height: '100%',
-	width: '100%'
+	      id: 'cellselection-app-container',
+	      layout: 'fit',
+		    height: '100%',
+		    width: '100%',
     });
 
     var geneSelectionPanel =  Ext.create('Ext.panel.Panel', {
@@ -270,8 +270,11 @@ function generateExtJsLayout() {
 		{
 		    title: 'Cell Selections',
 		    glyph: 0xf03a,
+		    layout: "fit",
+		    height: '100%',
+		    width: '100%',
 		    tooltip: 'View and manage available cell selections',
-		    scrollable: true,
+		    //scrollable: true,
 		    items: cellSelectionPanel
 		},
 		{
@@ -284,6 +287,9 @@ function generateExtJsLayout() {
 				{
 		    title: 'Gene Selections',
 		    glyph: 0xf03a,
+		    layout: "fit",
+		    height: '100%',
+		    width: '100%',
 		    tooltip: 'View and manage available gene selections',
 		    items: geneSelectionPanel,
 		}
@@ -320,14 +326,24 @@ function generateExtJsLayout() {
 		//     glyph: 0xf0db,
 		// },
 		{
-		    layout: 'fit',
+		    
 		    title: 'All Genes',
 		    id: 'geneTableViewerExtJS',
+		    layout: 'fit',
 		    height: '100%',
 		    width: '100%',
 		    glyph: 0xf0db,
 		    tooltip: 'This tab displays the table of all genes'
 		    //items: []
+		},
+		{
+		  title: "Gene Subset",
+		  id: 'geneSelectionTableViewerExtJS',
+		  layout:'fit',
+		  height: '100%',
+		  width: '100%',
+		  glyph: 0xf279, //fa-map
+		  tooltip: 'This tab displays a table of genes from one or more provided selections'
 		},
 		{
 		    title: 'Gene Sets of Interest',
@@ -443,6 +459,7 @@ function generateExtJsLayout() {
               padding: 0,
               split: true,
               title: 'Metadata View',
+              header: false,
               html: '<div id="metadata-area-container"></div>'
             },
             {
@@ -451,6 +468,7 @@ function generateExtJsLayout() {
               width: '100%',
               height: '10%',
               padding: 0,
+              header: false,
               split: true,
               title: 'Aspect View',
               html: '<div id="aspect-heatmap-container"></div>'
@@ -462,6 +480,7 @@ function generateExtJsLayout() {
               height: '55%',
               padding: 0,
               split: true,
+              header: false,
               title: 'Heatmap View',
               html: '<div id="heatmap-area-container"></div>'
             }

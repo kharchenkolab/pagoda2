@@ -40,7 +40,7 @@ function metaDataHeatmapViewer() {
  * Get the height
  */
 metaDataHeatmapViewer.prototype.getHeight  = function() {
-  return Ext.getCmp('metadataPanel').getHeight() - 40;
+  return Ext.getCmp('metadataPanel').getHeight() - 5;
 }
 
 /**
@@ -170,23 +170,23 @@ metaDataHeatmapViewer.prototype.initialize = function () {
           var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	        var cellSelCntr = new cellSelectionController();
-  	      cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
+  	      var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var metaView = new heatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName('heatmapSelection');
+            embCntr.highlightSelectionByName(selectionName);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+            aspHeatView.highlightCellSelectionByName(selectionName);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
         }
         else{
           var x = e.offsetX;
@@ -239,30 +239,28 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 					      function(btn, text) {
                     // Make new selection
                     if (btn === 'ok')  {
-    						      var geneSelCntr = new geneSelectionController();
+    						      var cellSelCntr = new cellSelectionController();
 
-    						      var newSelectionName = text;
     						      var newSelectionDisplayName = text;
 
-    						      var re = new RegExp('[^A-Za-z0-9_]');
-    						      if (newSelectionName.length === 0) {
+    						      var re = new RegExp('[,]');
+    						      if (newSelectionDisplayName.length === 0) {
     							      Ext.MessageBox.alert('Error', 'You must enter a selection name');
-    						      } else if ( newSelectionName.match(re) ) {
+    						      } else if ( newSelectionDisplayName.match(re) ) {
     							      Ext.MessageBox.alert('Error',
-    									       'The name must only contain letters, numbers and underscores (_)');
+    									       'The name must not contain a comma');
     						      } else {
-    							      if (geneSelCntr.getSelection(newSelectionName)) {
+    							      if (cellSelCntr.displayNameExists(newSelectionDisplayName)) {
     							        Ext.MessageBox.alert(
     								        'Error',
     								        'A selection with this name already exists!');
     							      } else {
                             // Make the slection here
-
                             var key =params.key;
                             var value = params.value;
 
 
-                            mdhv.makeCellSelectionFromMetadata(key, value, newSelectionName, true, true);
+                            mdhv.makeCellSelectionFromMetadata(key, value, newSelectionDisplayName, true, true);
     							      }
     						      } // if lenth == 0
   						      } // if btn == ok
@@ -283,10 +281,16 @@ metaDataHeatmapViewer.prototype.initialize = function () {
                         return selection.length >= lowerLimit;
                       }
                     }
+                    mdhv.makeAllCellSelectionsFromMetadataProgress(params.key, (params.keyLabel + "_").split(/\ |\#/).join(""), rejectionFunction)
                   }
-                  mdhv.makeAllCellSelectionsFromMetadata(params.key, (params.keyLabel + "_").split(/\ |\#/).join(""), rejectionFunction)
                 },this,false, "50")
 
+              }
+            },
+            {
+              text: "Show Legend",
+              handler: function(){
+                mdhv.generateLegend(params.key)
               }
             }
 
@@ -378,8 +382,8 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
   // Make the menu
 
-  var toolbar = Ext.create('Ext.Toolbar');
-  toolbar.add({
+  //var toolbar = Ext.create('Ext.Toolbar');
+  /*toolbar.add({
           text: "",
         type: "button",
         tooltip: 'Download current view',
@@ -406,9 +410,9 @@ metaDataHeatmapViewer.prototype.initialize = function () {
 
 
         } // handler
-  });
+  });*/
 
-  toolbar.add({
+  /*toolbar.add({
   text: '',
   xtype: 'button',
   tooltip: 'Clear selection overlay',
@@ -416,10 +420,10 @@ metaDataHeatmapViewer.prototype.initialize = function () {
   handler: function() {
     var obj = new metaDataHeatmapViewer();
     obj.clearSelectionOverlay();
+  }
+  });*/
 
-  }});
-
-  toolbar.add({
+  /*toolbar.add({
     text: '',
     xtype: 'button',
     tooltip: 'Help',
@@ -443,12 +447,12 @@ metaDataHeatmapViewer.prototype.initialize = function () {
             resizable: false
           }).show();
     } // handler
-  }); // toolbar add
+  });*/ // toolbar add
 
 
 
 
-  var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
+  //var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
 
 
 
@@ -870,23 +874,24 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     }
 
     var cellSel = new cellSelectionController();
+    var selectionName = false;
     if(restriction(cellSelectionNames)){
-      cellSel.setSelection(cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
+      selectionName = cellSel.setSelection(cellSelectionNames, callbackParameters.selectionName, {}, data[callbackParameters.metadataName].palette[val].substring(0,7));
     }
 
-    if (highlight) {
+    if (selectionName && highlight) {
       var heatView = new heatmapViewer();
-      heatView.highlightCellSelectionByName(callbackParameters.selectionName);
+      heatView.highlightCellSelectionByName(selectionName);
 
       var aspHeatView = new aspectHeatmapViewer();
-      aspHeatView.highlightCellSelectionByName(callbackParameters.selectionName);
+      aspHeatView.highlightCellSelectionByName(selectionName);
 
       var metaHeatView = new metaDataHeatmapViewer();
-      metaHeatView.highlightCellSelectionByName(callbackParameters.selectionName);
+      metaHeatView.highlightCellSelectionByName(selectionName);
 
       // Highlight on embedding
       var embCntr = new embeddingViewer();
-      embCntr.highlightSelectionByName(callbackParameters.selectionName);
+      embCntr.highlightSelectionByName(selectionName);
 
     }
 
@@ -918,10 +923,126 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
     for(var i = 0; i < cellSelections.length; i++){
       var cellSelectionNames = cellSelections[i];
       if(restriction(cellSelectionNames)){
-        cellSel.setSelection(cellSelectionNames, selNamePrefix + i, {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
+        cellSel.setSelection(cellSelectionNames, selNamePrefix + (i+1), {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
       }
     }
 
   }, {metadataName: metadataName, selNamePrefix: selNamePrefix});
 
+}
+metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = function(metadataName,selNamePrefix, restriction) {
+  // Generate a cell selection
+
+  if(typeof restriction === "undefined"){
+    restriction = function(selection){return true;};
+  }
+
+  var dataCntr = new dataController();
+  dataCntr.getCellMetadata(function(data, callbackParameters) {
+    // data[callbackParameters.metadataName].data
+    var parameters = {};
+
+    parameters.cellSelections = [];
+    parameters.selNamePrefix = callbackParameters.selNamePrefix;
+    parameters.metadataName = callbackParameters.metadataName;
+    parameters.restriction = restriction;
+    var allCells = data[callbackParameters.metadataName].data;
+
+    for (var cellid in  allCells) {
+      if(!parameters.cellSelections[allCells[cellid]]){
+        parameters.cellSelections[allCells[cellid]] = []
+      }
+      parameters.cellSelections[allCells[cellid]].push(cellid);
+    }
+
+    var stepFunction = function(params,i, step, max){
+      var cellSel = new cellSelectionController();
+      for(var j = 0; j < step; j++){
+        var cellSelectionNames = params.cellSelections[i+j];
+        if(params.restriction(cellSelectionNames)){
+          cellSel.setSelection(cellSelectionNames, params.selNamePrefix + (i+j+1), {}, data[params.metadataName].palette[i].substring(0,7), undefined, true);
+        }
+      }
+    }
+
+    var callback = function(params){var cellSel = new cellSelectionController(); cellSel.raiseSelectionChangedEvent();}
+
+    pagHelpers.generateProgressBar(stepFunction,parameters.cellSelections.length,1,callback,parameters);
+
+  }, {metadataName: metadataName, selNamePrefix: selNamePrefix});
+
+}
+
+metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
+  var metaLegendStore = Ext.create("Ext.data.Store",{
+    fields:[
+      {name: 'index', type: 'integer'},
+	    {name: 'color', type: 'string'},
+    ],
+    autoLoad: true
+  })
+  var dataCntr = new dataController();
+  var metaName = "";
+  dataCntr.getCellMetadata(function(data, callbackParameters) {
+    console.log(data);
+    var palette = data[callbackParameters.metadataName].palette
+    metaName = data[callbackParameters.metadataName].displayname
+    for(var i = 0; i < palette.length; i++){
+      metaLegendStore.add({
+        index: (i+1),
+        color: palette[i]
+      });
+    }
+  }, {metadataName: metadataName});
+  var cellSelectionTable = Ext.create('Ext.grid.Panel',{
+        	title: "Legend: " + metaName,
+        	height: "100%",
+        	width: "100%",
+        	scrollable: true,
+        	store: metaLegendStore,
+        	columns: [
+        	    {text: 'Cluster', dataIndex: 'index', width: '50%'},
+        	    {text: "&#x03DF;", dataIndex: 'color',width:'50%', renderer:
+        	      function(value, meta){
+        	        meta.style = "background-color:"+value.substring(0,7)+";";
+        	      },
+        	    }
+        	],
+        	emptyText: "Legend Not Available",
+        	singleSelect: false,
+  });
+  Ext.create("Ext.window.Window",{
+    title: "Legend",
+    modal: false,
+    resizable: false,
+    dragable: true,
+    height: 300,
+    width: 154,
+    layout: "fit",
+    items:[cellSelectionTable]
+
+  }).show();
+
+}
+
+
+metaDataHeatmapViewer.prototype.downloadImage = function(){
+  var canvas = document.getElementById('metadata-area');
+
+            const maxSize = 2000;
+            if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png',canvas)})
+                     } //if
+                   } //fn
+                }) // Ext.Msg.show
+            } else {
+                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png',canvas)})
+            }
 }

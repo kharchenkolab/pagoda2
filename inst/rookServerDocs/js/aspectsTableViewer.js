@@ -149,7 +149,7 @@ aspectsTableViewer.prototype.generateTables = function() {
       			glyph: 0xf0ce,
       			handler: function() {
       			    var heatmapV = new heatmapViewer();
-      			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+      			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
       			    heatmapV.drawHeatmap();
       			} //handler
           }, //item
@@ -209,5 +209,5 @@ aspectsTableViewer.prototype.showSelectedAspect = function(aspectIdentifier) {
 aspectsTableViewer.prototype.raiseTab = function() {
   var tablesTab = Ext.getCmp('tablesTabExtJS');
   // FIXME: The tab order is hard-wired here
-  tablesTab.setActiveTab(2);
+  tablesTab.setActiveTab("aspectsExtJS");
 };

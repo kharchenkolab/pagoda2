@@ -418,20 +418,20 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
     (new dataController()).getCellOrder(function(data){
       len = data.length;
       (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,len,false, function(data){
-  
+
         if(data.DimNames2.length < 2){
           Ext.MessageBox.alert("Error", "One or more of the gene names provided could not be found in the provided dataset.");
           return;
         }
         var geneMatrix = data.getFullMatrix();
-  
+
         var scatterData = {
           data: geneMatrix.array,
           xLabel: geneMatrix.colnames[0],
           yLabel: geneMatrix.colnames[1],
-          title: "Gene expression comparison"
+          title: "Gene Expression Comparison"
         };
-  
+
         (new graphViewer(scatterData, "scatter")).render();
       })
     })
@@ -522,6 +522,7 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
   var selectionB = form.findField("selectionB").getValue();
   var method = form.findField('selectionMethod').getValue();
   var resultName = form.findField("resultName").getValue();
+  var start = new Date();
 
   if (method === null) {
         Ext.MessageBox.alert('Warning', 'Please enter a method for the differential expression',function(){});
@@ -538,7 +539,7 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
 
           var calcCntr = new calculationController();
 
-          actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, 'remoteDefault',  function(results,start) {
+          actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, method,  function(results) {
             actionUI.enableRunButton();
               actionUI.currentDErequest = null;
 
@@ -575,7 +576,7 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
           var actionUI = new actionPanelUIcontroller();
           actionUI.disableRunButton();
           var calcCntr = new calculationController();
-          actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, 'remoteDefault',  function(results,start) {
+          actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, method,  function(results) {
               actionUI.enableRunButton();
               actionUI.currentDErequest = null;
               // Get the cell names in the selection for storing

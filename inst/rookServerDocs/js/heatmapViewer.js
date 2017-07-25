@@ -31,6 +31,12 @@ function heatmapViewer() {
     this.currentOverlaySelectionName = null;
     this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
+    
+     // Palette Manager init
+    this.palManager = new paletteManager();
+    this.palManager.setPalette(p2globalParams.heatmapViewer.defaultPaletteName);
+    this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);
+    
     heatmapViewer.instance =  this;
 };
 
@@ -99,9 +105,9 @@ heatmapViewer.prototype.initialize = function() {
     this.displayGenes = [];
 
     // Palette Manager init
-    this.palManager = new paletteManager();
+    /*this.palManager = new paletteManager();
     this.palManager.setPalette(p2globalParams.heatmapViewer.defaultPaletteName);
-    this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);
+    this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);*/
 
     this.displayGenes = new Array();
     this.drawHeatmap();
@@ -153,18 +159,11 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
 }
 
 
-
-/**
- * Generates the heatmap configuration menu
- */
-heatmapViewer.prototype.generateMenu = function() {
-  var toolbar = Ext.create('Ext.Toolbar');
+heatmapViewer.prototype.generateHeatmapSettingsMenu = function(){
   var heatView = this;
-
   var paletteMenu = this.generatePalettesMenu();
-
-
- var heatmapSettingsMenu = Ext.create('Ext.menu.Menu', {
+  
+  return Ext.create('Ext.menu.Menu', {
 	id: 'heatmapSettingsMenu',
 	items: [
 	    {
@@ -201,8 +200,19 @@ heatmapViewer.prototype.generateMenu = function() {
 
 	] // items
     });
+}
+/**
+ * Generates the heatmap configuration menu
+ */
+heatmapViewer.prototype.generateMenu = function() {
+  //var toolbar = Ext.create('Ext.Toolbar');
+  //var heatView = this;
 
-toolbar.add({
+  
+  //var heatmapSettingsMenu = this.generateHeatmapSettingsMenu();
+
+
+    /*toolbar.add({
           text: "",
         type: "button",
         tooltip: 'Download current view',
@@ -226,11 +236,11 @@ toolbar.add({
                           canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
             }// if
         } // handler
-});
+});*/
 
 
 
-toolbar.add({
+    /*toolbar.add({
   text: '',
   xtype: 'button',
   tooltip: 'Clear selection overlay',
@@ -241,19 +251,19 @@ toolbar.add({
 
   }
 
-});
+});*/
 
       // Add plot configuration menu button
-    toolbar.add({
+    /*toolbar.add({
     	text: '',
     	xtype: 'button',
     	tooltip: 'Configure heatmap plot settings',
     	glyph: 0xf013,
     	menu: heatmapSettingsMenu
-    });
+    });*/
 
 
-      toolbar.add({
+      /*toolbar.add({
     text: '',
     xtype: 'button',
     tooltip: 'Help',
@@ -277,12 +287,15 @@ toolbar.add({
             resizable: false
           }).show();
     } // handler
-  }); // toolbar add
+  });*/ // toolbar add
 
 
-    var heatmapPanel = Ext.getCmp('heatmapPanel');
-    heatmapPanel.getHeader().add(toolbar);
+    //var heatmapPanel = Ext.getCmp('heatmapPanel');
+    //heatmapPanel.getHeader().add(toolbar);
 }
+
+
+
 
 /**
  * Setup all the overlay canvas events
@@ -352,23 +365,23 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
+	      var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
-            heatV.highlightCellSelectionByName('heatmapSelection');
+            heatV.highlightCellSelectionByName(selectionName);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName('heatmapSelection');
+            embCntr.highlightSelectionByName(selectionName);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+            aspHeatView.highlightCellSelectionByName(selectionName);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
       }
       else{
           var x = e.offsetX;
@@ -676,7 +689,7 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
 }
 
 heatmapViewer.prototype.getHeight = function() {
-  return Ext.getCmp('heatmapPanel').getHeight() - 60;
+  return Ext.getCmp('heatmapPanel').getHeight() - 20;
 }
 
 heatmapViewer.prototype.getWidth = function() {
@@ -1178,4 +1191,22 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     }); // dataCntr.getExpressionValuesSparseTransposedByCellIndexUnpacked callback
 } // doDrawHeatmapSparseMatrix
 
-
+heatmapViewer.prototype.downloadImage = function(){
+  var canvas = document.getElementById('heatmap-area');
+            const maxSize = 2000;
+            if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimension.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
+                     } //if
+                   } //fn
+                }) // Ext.Msg.show
+            } else {
+                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
+            }
+}

@@ -500,7 +500,7 @@ Pagoda2 <- setRefClass(
       } else {
          pcs <- irlba(x, nv=nPcs, nu =0, right_only = F, fastpath = fastpath, maxit= maxit, reorth = T);
       }
-      rownames(pcs) <- colnames(x);
+      rownames(pcs$v) <- colnames(x);
 
       # Optional centering
       if (center) {
@@ -522,7 +522,7 @@ Pagoda2 <- setRefClass(
       if(center) {
         pcas <- pcas - Matrix::rowMeans(pcas)
       }
-      xn <- hnswKnn2(x,k, nTreads= n.cores, verbose=verbose)
+      xn <- hnswKnn2(pcas, k, nThreads= n.cores, verbose=verbose)
 
       # Remove self edges
       xn <- xn [!xn$s == xn$e,]

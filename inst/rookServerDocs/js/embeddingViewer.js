@@ -225,14 +225,14 @@ embeddingViewer.prototype.generateToolbar = function() {
     });
     toolbar.add({xtype: 'tbseparator'});
     // Add a button for the settings menu
-    toolbar.add(
-      {
+    toolbar.add({
         text: "",
         type: "button",
         tooltip: 'Download current view',
         glyph: 0xf0ed,
         handler: function(){
 
+              //set up background canvas for rendering of the print preview and a high definition saved image
               var aspV = new aspectHeatmapViewer();
               var embV = new embeddingViewer();
               var backgroundCanvas = document.createElement("canvas");
@@ -253,6 +253,8 @@ embeddingViewer.prototype.generateToolbar = function() {
               }
 
               var overlay = document.getElementById('embedding-canvas-overlay');
+
+              //Window containing print preview and aditional image altering options
               Ext.create("Ext.window.Window",{
                 title:"Embedding Download Preview",
                 id: "EmbeddingEditor",
@@ -273,6 +275,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                         boxLabel: 'Include Title',
                         id: 'includeTitle',
                         listeners:{
+                          //adds paddding for title and does some reformatting
                           change: function(){
                             var me = Ext.getCmp('includeTitle');
                             if(Ext.getCmp('includeTitle').getValue()){
@@ -447,6 +450,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                   this.drawPlot(backgroundCanvas,backgroundOverlay,document.getElementById("print-preview-canvas"),250);
                 },
 
+                //draws the plot from a canvas onto a destination canvas with the fixtures specified by the user included
                 drawPlot: function(canvas,overlay, destination, squareDim){
                   var options = [Ext.getCmp('includeTitle').getValue(),Ext.getCmp('includeAxis').getValue(),Ext.getCmp('includeHighlight').getValue()];
 
@@ -510,19 +514,6 @@ embeddingViewer.prototype.generateToolbar = function() {
                     targetContext.fillText(text[1],topLeft.x + plotDim/2,  topLeft.y + plotDim + lineThickness + readablePadding);
                     pagHelpers.canvas_arrow(targetContext,topLeft.x,topLeft.y + plotDim,topLeft.x+plotDim,topLeft.y+plotDim,10 * (squareDim/250));
 
-                    /*
-                    targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim - arrowHeadLength);
-                    targetContext.lineTo(topLeft.x + plotDim +1,topLeft.y + plotDim-1);
-                    targetContext.stroke();
-                    targetContext.closePath();
-                    targetContext.beginPath();
-                    targetContext.moveTo(topLeft.x + plotDim + 1, topLeft.y + plotDim-1);
-                    targetContext.lineTo(topLeft.x + plotDim - arrowHeadLength*2, topLeft.y + plotDim + arrowHeadLength);
-                    targetContext.stroke();
-                    targetContext.closePath();
-                    */
-
                     //draw Y axis
                     //targetContext.fillRect(topLeft.x-lineThickness, topLeft.y, lineThickness,  plotDim + lineThickness);
 
@@ -562,8 +553,7 @@ embeddingViewer.prototype.generateToolbar = function() {
         } // handler
       }); // toolbar add
 
-      toolbar.add(
-        {
+    toolbar.add({
           text: "",
           tooltip: "Information about View",
           glyph: 0xf05a,
@@ -601,8 +591,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                   }).show();
 
           }
-        }
-        ); // toolbar add
+        }); // toolbar add
 
 toolbar.add(
   {

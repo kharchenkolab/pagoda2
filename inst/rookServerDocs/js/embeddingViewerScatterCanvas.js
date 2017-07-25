@@ -169,19 +169,19 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    } // for
 
 	    var cellSelCntr = new cellSelectionController();
-	    cellSelCntr.setSelection( cellsForSelection, 'Embedding Selection', new Object(),'#ff0000', 'embSelection');
+	    var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Embedding Selection', new Object(),'#ff0000', 'embSelection');
 
       // TODO: Make this optional
 
 
       var heatView = new heatmapViewer();
-      heatView.highlightCellSelectionByName('embSelection');
+      heatView.highlightCellSelectionByName(selectionName);
 
       var aspHeatView = new aspectHeatmapViewer();
-      aspHeatView.highlightCellSelectionByName('embSelection');
+      aspHeatView.highlightCellSelectionByName(selectionName);
 
       var metaHeatView = new metaDataHeatmapViewer();
-      metaHeatView.highlightCellSelectionByName('embSelection');
+      metaHeatView.highlightCellSelectionByName(selectionName);
 
 	});
 
@@ -190,6 +190,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 /**
  * Highlight cells by selection name
  * @param selectionName the name of the cell selection as registered int he cellSelectionController
+ * @param hasLabels Whether or not the name of the cell selection should be written on top of the highlighted cell selection
  */
 embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selectionName, hasLabels) {
   var cellSelCntr = new cellSelectionController();
@@ -278,6 +279,12 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 
 }
 
+
+/**
+ * Highlight cells by selection name
+ * @param selectionNames the names of the cell selections as registered int he cellSelectionController
+ * @param hasLabels Whether or not the name of the cell selection should be written on top of the highlighted cell selection
+ */
 embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(selectionNames, hasLabels) {
 
   var cellSelCntr = new cellSelectionController();
@@ -365,7 +372,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
       ctx.save();
       ctx.fillStyle = "black";
       var fontPieces = ctx.font.split(/\s/);
-      ctx.font = "bold " + Math.floor(document.getElementById('embedding-canvas-overlay').height/25) + "px " + fontPieces[1];
+      ctx.font = "bold " + Math.floor(new cellSelectionUIcontroller().selectionFont) + "px " + fontPieces[1];
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for(var i = 0; i < clusterLabels.length; i++){
@@ -376,6 +383,12 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
   });
 }
 
+/**
+ * Highlight cells by selection name
+ * @param overlayCanvas canvas target to draw scatter plot onto
+ * @param size Square dimmension of the plot's dimmension
+ * @param selectionNames the names of each selection to be highlighted
+ */
 embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = function(overlayCanvas, size, selectionNames) {
 
   var cellSelCntr = new cellSelectionController();
@@ -386,7 +399,8 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
   var dataCntr = new dataController();
   var type = config.type;
   var embeddingType = config.embeddingType;
-  var pointsize = embViewer.getCurrentPointSize()*size/this.size;
+  var ratio = size/this.size;
+  var pointsize = embViewer.getCurrentPointSize()*ratio;
   var ctx = overlayCanvas.getContext('2d');
   ctx.clearRect(0,0,5000,5000);
   dataCntr.getEmbedding(type, embeddingType, function(data){
@@ -452,7 +466,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
       ctx.save();
       ctx.fillStyle = "black";
       var fontPieces = ctx.font.split(/\s/);
-      ctx.font = "bold " + Math.floor(overlayCanvas.height/25) + "px " + fontPieces[1];
+      ctx.font = "bold " + ((new cellSelectionUIcontroller()).selectionFont * ratio) + "px " + fontPieces[1];
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       for(var i = 0; i < clusterLabels.length; i++){
@@ -533,6 +547,8 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 
       var xPos = e.offsetX;
       var yPos = e.offsetY;
+
+      //sets initial position for polygon highlighting if poly highlight is selected or creates a new vertex
       if(thisViewer.highlight === "poly"){
         if(thisViewer.dragging){
 
@@ -555,6 +571,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 
     });
 
+    //changes cursor to crosshair on hover
     overlayCanvasElement.addEventListener('mouseover', function(e) {
       var xPos = e.offsetX;
       var yPos = e.offsetY;
@@ -566,7 +583,10 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
   	var xPos =  e.offsetX;
   	var yPos = e.offsetY;
 
+    //handles polygon highlighting of the selected region
     if(thisViewer.highlight === "poly"){
+
+      //if there is a dragging event going on, draws the lines enclosing the space
   	  if (thisViewer.dragging) {
   	    ctx.clearRect(0,0,4000,4000);
   	    ctx.save();
@@ -591,12 +611,14 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 
   	    ctx.restore();
   	  }
+  	  //changes cursor if hovered over the end position
   	  if(thisViewer.dragging && Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius){
       	  document.body.style.cursor = 'pointer';
       }
       else{
       	  document.body.style.cursor = 'crosshair';
       }
+      //otherwise draws box for box highlighting
     } else if(thisViewer.highlight === "box"){
       var dragEndX =  e.offsetX;
       var dragEndY = e.offsetY;
@@ -833,6 +855,11 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
     });
 }
 
+/**
+ * Draws the current embedding to the canvas specified by the call
+ * @param {embCanvas} canvas to draw to
+ * @param {dimension} the square dimension of the canvas
+ */
 embeddingViewerScatterCanvas.prototype.drawToCanvas = function(embCanvas, dimension) {
     var dataCntr = new dataController();
     var embViewer = new embeddingViewer();

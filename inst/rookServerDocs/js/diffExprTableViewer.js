@@ -282,7 +282,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     			glyph: 0xf0ce,
     			handler: function() {
     			    var heatmapV = new heatmapViewer();
-    			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+    			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
     			    heatmapV.drawHeatmap();
     			} //handler
 		    }, //button
@@ -423,5 +423,5 @@ diffExprTableViewer.prototype.showSelectedSet = function(internalName) {
 diffExprTableViewer.prototype.raiseTab = function() {
   var tablesTab = Ext.getCmp('tablesTabExtJS');
   // FIXME: The tab order is hard-wired here
-  tablesTab.setActiveTab(3);
+  tablesTab.setActiveTab("diffExprExtJS");
 }
