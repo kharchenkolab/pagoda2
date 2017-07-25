@@ -860,7 +860,7 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
 
   var dataCntr = new dataController();
   dataCntr.getCellMetadata(function(data, callbackParameters) {
-    // data[callbackParameters.metadataName].data
+
     var val =  callbackParameters.metadataValue;
     var cellSelectionNames = [];
 
@@ -922,7 +922,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
     var cellSel = new cellSelectionController();
     for(var i = 0; i < cellSelections.length; i++){
       var cellSelectionNames = cellSelections[i];
-      if(restriction(cellSelectionNames)){
+      if(cellSelectionNames && restriction(cellSelectionNames)){
         cellSel.setSelection(cellSelectionNames, selNamePrefix + (i+1), {}, data[callbackParameters.metadataName].palette[i].substring(0,7));
       }
     }
@@ -959,7 +959,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = func
       var cellSel = new cellSelectionController();
       for(var j = 0; j < step; j++){
         var cellSelectionNames = params.cellSelections[i+j];
-        if(params.restriction(cellSelectionNames)){
+        if(cellSelectionNames && params.restriction(cellSelectionNames)){
           cellSel.setSelection(cellSelectionNames, params.selNamePrefix + (i+j+1), {}, data[params.metadataName].palette[i].substring(0,7), undefined, true);
         }
       }
