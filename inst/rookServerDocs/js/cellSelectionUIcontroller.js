@@ -557,11 +557,10 @@ cellSelectionUIcontroller.prototype.generateToolbar = function(){
 	          }
 	        })
 	        if(selection.length > 0){
-
           	thisViewer.promptName(text.split(",").join(""), function(newDisplayName){
           	  var cellSelCntr =  new cellSelectionController();
           	  if(newDisplayName !== false){
-          	    cellSelCntr.setSelection(newDisplayName ,selection);
+          	    cellSelCntr.setSelection(selection,newDisplayName);
           	  }
           	})
 	        }
