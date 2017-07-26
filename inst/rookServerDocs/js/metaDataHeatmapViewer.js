@@ -1017,7 +1017,7 @@ metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
   Ext.create("Ext.window.Window",{
     title: "Legend",
     modal: false,
-    resizable: false,
+    resizable: true,
     dragable: true,
     height: 300,
     width: 154,
