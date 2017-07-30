@@ -219,13 +219,12 @@ actionPanelUIcontroller.prototype.generateUI = function() {
               boxLabel: 'From Selection',
               name: 'analysisTypeSelection',
               inputValue: 'vsSelection',
-              disabled: true
+              checked: true
             },
             {
               boxLabel: 'All Cells',
               name: 'analysisTypeSelection',
               inputValue: 'vsBackground',
-              checked: true
             }
           ],
 
@@ -249,7 +248,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    fieldLabel: 'Reference Cell Selection',
     	    queryMode: 'local',
     	    editable: false,
-    	    disabled: true,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
     	    displayField: 'displayname',
     	    valueField: 'selectionname',
@@ -402,10 +400,10 @@ actionPanelUIcontroller.prototype.showESPhelpDialog = function (){
  */
 actionPanelUIcontroller.prototype.generateESPwindow = function(){
   var form = Ext.getCmp("formPanelESP").getForm();
-
   var cellSelection = form.findField("cellSelectionESP").getValue();
   var geneA = form.findField("geneA").getValue();
   var geneB = form.findField("geneB").getValue();
+  var analysisType = form.findField("analysisType").getValue().analysisTypeSelection;
 
   if(geneA.length === 0){
     Ext.MessageBox.alert('Warning',"Please provide a gene in the Gene A field.");
@@ -413,10 +411,12 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
   else if(geneB.length === 0){
     Ext.MessageBox.alert('Warning',"Please provide a gene in the Gene B field.");
   }
+  else if(analysisType === 'vsSelection' && cellSelection === null){
+    Ext.MessageBox.alert('Warning',"Please provide a selection.");
+  }
   else{
-    var len;
-    (new dataController()).getCellOrder(function(data){
-      len = data.length;
+    (new dataController()).getCellOrder(function(cellOrderData){
+      var len = cellOrderData.length;
       (new dataController()).getExpressionValuesSparseByCellIndexUnpacked(Array(geneA,geneB),0,len,false, function(data){
 
         if(data.DimNames2.length < 2){
@@ -424,6 +424,15 @@ actionPanelUIcontroller.prototype.generateESPwindow = function(){
           return;
         }
         var geneMatrix = data.getFullMatrix();
+
+        if(analysisType === "vsSelection"){
+          var cells = (new cellSelectionController()).getSelection(cellSelection);
+          var tempData = [];
+          for(var i = 0; i < cells.length; i++){
+            tempData.push(geneMatrix.array[cellOrderData.indexOf(cells[i])]);
+          }
+          geneMatrix.array = tempData
+        }
 
         var scatterData = {
           data: geneMatrix.array,
