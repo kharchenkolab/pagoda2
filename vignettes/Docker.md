@@ -1,6 +1,3 @@
-Docker installation Instructions
-
-
 # Docker for R with Pagoda2
 Use a version of R-3.4.1 with Pagoda2 and all dependencies preinstalled.
 
@@ -12,7 +9,7 @@ https://docs.docker.com/docker-for-mac/install/
 #### Ubuntu
 https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
 
-#### or blindly trust the Bash ;)
+#### OR install using online script
 curl -sSL https://get.docker.com/ | sh
 
 
@@ -25,8 +22,6 @@ Creates a container called docker-p2:latest in your docker.
 
 Check available docker images with:
 > docker images
-
-In the future it might be possible to download the container directly from a docker repo. 
 
 # QuickStart with resources and options set:
 
@@ -97,7 +92,6 @@ Further flags for `docker run`:
 https://docs.docker.com/engine/reference/run/#specify-custom-cgroups 
 
 https://goldmann.pl/blog/2014/09/11/resource-management-in-docker/#_cpu
-
 
 
 
