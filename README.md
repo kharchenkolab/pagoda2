@@ -64,6 +64,10 @@ $ R
 > library('pagoda2')
 # Pagoda2 is now ready to use
 ```
+
+Install padoga2 as a docker container
+[Instructions for installing docker container with pagoda2](vignettes/Docker.md)
+
 # Basic analysis walkthrough
 [PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
 
