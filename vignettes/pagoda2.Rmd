@@ -7,7 +7,7 @@
     %\VignetteEngine{knitr::rmarkdown}
     \usepackage[utf8]{inputenc}
 ---
-  
+   
 # Analysis of single cell data with pagoda
 
 ```
