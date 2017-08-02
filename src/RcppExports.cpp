@@ -7,9 +7,20 @@
 
 using namespace Rcpp;
 
+// WriteListToBinary
+void WriteListToBinary(List expL, std::string outfile);
+RcppExport SEXP _pagoda2_WriteListToBinary(SEXP expLSEXP, SEXP outfileSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type expL(expLSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outfile(outfileSEXP);
+    WriteListToBinary(expL, outfile);
+    return R_NilValue;
+END_RCPP
+}
 // non0LogColLmS
 int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells);
-RcppExport SEXP pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP) {
+RcppExport SEXP _pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -23,7 +34,7 @@ END_RCPP
 }
 // colMeanVarS
 Rcpp::DataFrame colMeanVarS(SEXP sY, SEXP rowSel);
-RcppExport SEXP pagoda2_colMeanVarS(SEXP sYSEXP, SEXP rowSelSEXP) {
+RcppExport SEXP _pagoda2_colMeanVarS(SEXP sYSEXP, SEXP rowSelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -35,7 +46,7 @@ END_RCPP
 }
 // colSumByFac
 arma::mat colSumByFac(SEXP sY, SEXP rowSel);
-RcppExport SEXP pagoda2_colSumByFac(SEXP sYSEXP, SEXP rowSelSEXP) {
+RcppExport SEXP _pagoda2_colSumByFac(SEXP sYSEXP, SEXP rowSelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -47,7 +58,7 @@ END_RCPP
 }
 // inplaceColMult
 int inplaceColMult(SEXP sY, const arma::vec& mult, SEXP rowSel);
-RcppExport SEXP pagoda2_inplaceColMult(SEXP sYSEXP, SEXP multSEXP, SEXP rowSelSEXP) {
+RcppExport SEXP _pagoda2_inplaceColMult(SEXP sYSEXP, SEXP multSEXP, SEXP rowSelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -60,7 +71,7 @@ END_RCPP
 }
 // inplaceWinsorizeSparseCols
 int inplaceWinsorizeSparseCols(SEXP sY, const int n);
-RcppExport SEXP pagoda2_inplaceWinsorizeSparseCols(SEXP sYSEXP, SEXP nSEXP) {
+RcppExport SEXP _pagoda2_inplaceWinsorizeSparseCols(SEXP sYSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -72,7 +83,7 @@ END_RCPP
 }
 // jsDist
 arma::mat jsDist(const arma::mat& m);
-RcppExport SEXP pagoda2_jsDist(SEXP mSEXP) {
+RcppExport SEXP _pagoda2_jsDist(SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -83,7 +94,7 @@ END_RCPP
 }
 // orderColumnRows
 arma::ivec orderColumnRows(const arma::ivec& p, arma::ivec& i);
-RcppExport SEXP pagoda2_orderColumnRows(SEXP pSEXP, SEXP iSEXP) {
+RcppExport SEXP _pagoda2_orderColumnRows(SEXP pSEXP, SEXP iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -95,7 +106,7 @@ END_RCPP
 }
 // smatColVecCorr
 arma::vec smatColVecCorr(SEXP sY, SEXP sv, bool parallel);
-RcppExport SEXP pagoda2_smatColVecCorr(SEXP sYSEXP, SEXP svSEXP, SEXP parallelSEXP) {
+RcppExport SEXP _pagoda2_smatColVecCorr(SEXP sYSEXP, SEXP svSEXP, SEXP parallelSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -108,7 +119,7 @@ END_RCPP
 }
 // arma_mat_cor
 arma::mat arma_mat_cor(const arma::mat& m);
-RcppExport SEXP pagoda2_arma_mat_cor(SEXP mSEXP) {
+RcppExport SEXP _pagoda2_arma_mat_cor(SEXP mSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -119,7 +130,7 @@ END_RCPP
 }
 // hnswKnn
 vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction, int indexThreadQty, int searchMethod);
-RcppExport SEXP pagoda2_hnswKnn(SEXP mSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP) {
+RcppExport SEXP _pagoda2_hnswKnn(SEXP mSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -133,7 +144,7 @@ END_RCPP
 }
 // hnswKnn2
 DataFrame hnswKnn2(NumericMatrix m, int k, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
-RcppExport SEXP pagoda2_hnswKnn2(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
+RcppExport SEXP _pagoda2_hnswKnn2(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -151,7 +162,7 @@ END_RCPP
 }
 // hnswKnnJS
 DataFrame hnswKnnJS(NumericMatrix m, int k, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed);
-RcppExport SEXP pagoda2_hnswKnnJS(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP) {
+RcppExport SEXP _pagoda2_hnswKnnJS(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -168,7 +179,7 @@ END_RCPP
 }
 // hnswKnnLp
 DataFrame hnswKnnLp(NumericMatrix m, int k, int nThreads, float p, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
-RcppExport SEXP pagoda2_hnswKnnLp(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP pSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
+RcppExport SEXP _pagoda2_hnswKnnLp(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP pSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -187,7 +198,7 @@ END_RCPP
 }
 // hnswKnn3test
 DataFrame hnswKnn3test(NumericMatrix m, int k, int multiplex, int nqueries, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
-RcppExport SEXP pagoda2_hnswKnn3test(SEXP mSEXP, SEXP kSEXP, SEXP multiplexSEXP, SEXP nqueriesSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
+RcppExport SEXP _pagoda2_hnswKnn3test(SEXP mSEXP, SEXP kSEXP, SEXP multiplexSEXP, SEXP nqueriesSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -207,7 +218,7 @@ END_RCPP
 }
 // matWCorr
 SEXP matWCorr(SEXP Mat, SEXP Matw);
-RcppExport SEXP pagoda2_matWCorr(SEXP MatSEXP, SEXP MatwSEXP) {
+RcppExport SEXP _pagoda2_matWCorr(SEXP MatSEXP, SEXP MatwSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -219,7 +230,7 @@ END_RCPP
 }
 // winsorizeMatrix
 SEXP winsorizeMatrix(SEXP Mat, SEXP Trim);
-RcppExport SEXP pagoda2_winsorizeMatrix(SEXP MatSEXP, SEXP TrimSEXP) {
+RcppExport SEXP _pagoda2_winsorizeMatrix(SEXP MatSEXP, SEXP TrimSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -231,7 +242,7 @@ END_RCPP
 }
 // plSemicompleteCor2
 SEXP plSemicompleteCor2(SEXP Pl);
-RcppExport SEXP pagoda2_plSemicompleteCor2(SEXP PlSEXP) {
+RcppExport SEXP _pagoda2_plSemicompleteCor2(SEXP PlSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -242,7 +253,7 @@ END_RCPP
 }
 // avg_rank
 Rcpp::NumericVector avg_rank(Rcpp::NumericVector x);
-RcppExport SEXP pagoda2_avg_rank(SEXP xSEXP) {
+RcppExport SEXP _pagoda2_avg_rank(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -253,7 +264,7 @@ END_RCPP
 }
 // sparse_matrix_column_ranks
 S4 sparse_matrix_column_ranks(const SEXP sY);
-RcppExport SEXP pagoda2_sparse_matrix_column_ranks(SEXP sYSEXP) {
+RcppExport SEXP _pagoda2_sparse_matrix_column_ranks(SEXP sYSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -264,7 +275,7 @@ END_RCPP
 }
 // nearbyPointsGreedyCluster
 IntegerVector nearbyPointsGreedyCluster(NumericVector p, double windowSize);
-RcppExport SEXP pagoda2_nearbyPointsGreedyCluster(SEXP pSEXP, SEXP windowSizeSEXP) {
+RcppExport SEXP _pagoda2_nearbyPointsGreedyCluster(SEXP pSEXP, SEXP windowSizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -276,7 +287,7 @@ END_RCPP
 }
 // closestNPointsToSegments
 List closestNPointsToSegments(NumericVector s, NumericVector e, NumericVector p, IntegerVector tss, int N);
-RcppExport SEXP pagoda2_closestNPointsToSegments(SEXP sSEXP, SEXP eSEXP, SEXP pSEXP, SEXP tssSEXP, SEXP NSEXP) {
+RcppExport SEXP _pagoda2_closestNPointsToSegments(SEXP sSEXP, SEXP eSEXP, SEXP pSEXP, SEXP tssSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -291,7 +302,7 @@ END_RCPP
 }
 // closestNSegmentsToPoints
 List closestNSegmentsToPoints(NumericVector s, NumericVector e, NumericVector p, IntegerVector tss, int N);
-RcppExport SEXP pagoda2_closestNSegmentsToPoints(SEXP sSEXP, SEXP eSEXP, SEXP pSEXP, SEXP tssSEXP, SEXP NSEXP) {
+RcppExport SEXP _pagoda2_closestNSegmentsToPoints(SEXP sSEXP, SEXP eSEXP, SEXP pSEXP, SEXP tssSEXP, SEXP NSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -303,4 +314,59 @@ BEGIN_RCPP
     rcpp_result_gen = Rcpp::wrap(closestNSegmentsToPoints(s, e, p, tss, N));
     return rcpp_result_gen;
 END_RCPP
+}
+
+RcppExport SEXP pagoda2_arma_mat_cor(SEXP);
+RcppExport SEXP pagoda2_avg_rank(SEXP);
+RcppExport SEXP pagoda2_closestNPointsToSegments(SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_closestNSegmentsToPoints(SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_colMeanVarS(SEXP, SEXP);
+RcppExport SEXP pagoda2_colSumByFac(SEXP, SEXP);
+RcppExport SEXP pagoda2_hnswKnn(SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_hnswKnn2(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_hnswKnn3test(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_hnswKnnJS(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_hnswKnnLp(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_inplaceColMult(SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_inplaceWinsorizeSparseCols(SEXP, SEXP);
+RcppExport SEXP pagoda2_jsDist(SEXP);
+RcppExport SEXP pagoda2_matWCorr(SEXP, SEXP);
+RcppExport SEXP pagoda2_nearbyPointsGreedyCluster(SEXP, SEXP);
+RcppExport SEXP pagoda2_non0LogColLmS(SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_orderColumnRows(SEXP, SEXP);
+RcppExport SEXP pagoda2_plSemicompleteCor2(SEXP);
+RcppExport SEXP pagoda2_smatColVecCorr(SEXP, SEXP, SEXP);
+RcppExport SEXP pagoda2_sparse_matrix_column_ranks(SEXP);
+RcppExport SEXP pagoda2_winsorizeMatrix(SEXP, SEXP);
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 2},
+    {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},
+    {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 2},
+    {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},
+    {"_pagoda2_inplaceColMult", (DL_FUNC) &_pagoda2_inplaceColMult, 3},
+    {"_pagoda2_inplaceWinsorizeSparseCols", (DL_FUNC) &_pagoda2_inplaceWinsorizeSparseCols, 2},
+    {"_pagoda2_jsDist", (DL_FUNC) &_pagoda2_jsDist, 1},
+    {"_pagoda2_orderColumnRows", (DL_FUNC) &_pagoda2_orderColumnRows, 2},
+    {"_pagoda2_smatColVecCorr", (DL_FUNC) &_pagoda2_smatColVecCorr, 3},
+    {"_pagoda2_arma_mat_cor", (DL_FUNC) &_pagoda2_arma_mat_cor, 1},
+    {"_pagoda2_hnswKnn", (DL_FUNC) &_pagoda2_hnswKnn, 4},
+    {"_pagoda2_hnswKnn2", (DL_FUNC) &_pagoda2_hnswKnn2, 8},
+    {"_pagoda2_hnswKnnJS", (DL_FUNC) &_pagoda2_hnswKnnJS, 7},
+    {"_pagoda2_hnswKnnLp", (DL_FUNC) &_pagoda2_hnswKnnLp, 9},
+    {"_pagoda2_hnswKnn3test", (DL_FUNC) &_pagoda2_hnswKnn3test, 10},
+    {"_pagoda2_matWCorr", (DL_FUNC) &_pagoda2_matWCorr, 2},
+    {"_pagoda2_winsorizeMatrix", (DL_FUNC) &_pagoda2_winsorizeMatrix, 2},
+    {"_pagoda2_plSemicompleteCor2", (DL_FUNC) &_pagoda2_plSemicompleteCor2, 1},
+    {"_pagoda2_avg_rank", (DL_FUNC) &_pagoda2_avg_rank, 1},
+    {"_pagoda2_sparse_matrix_column_ranks", (DL_FUNC) &_pagoda2_sparse_matrix_column_ranks, 1},
+    {"_pagoda2_nearbyPointsGreedyCluster", (DL_FUNC) &_pagoda2_nearbyPointsGreedyCluster, 2},
+    {"_pagoda2_closestNPointsToSegments", (DL_FUNC) &_pagoda2_closestNPointsToSegments, 5},
+    {"_pagoda2_closestNSegmentsToPoints", (DL_FUNC) &_pagoda2_closestNSegmentsToPoints, 5},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_pagoda2(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
 }
