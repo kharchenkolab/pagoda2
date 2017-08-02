@@ -17,6 +17,8 @@
 #include "space.h"
 #include "space/space_scalar.h"
 #include "space/space_js.h"
+#include "lshkit.h"
+
 #include "init.h"
 #include "index.h"
 #include "params.h"
