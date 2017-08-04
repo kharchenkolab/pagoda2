@@ -963,24 +963,26 @@ pagoda2WebApp <- setRefClass(
             # Serialise geneset Genes:
             geneListName <- names(geneSets);
 
-            geneListGenes <- list();
-            for(geneListName in names(geneSets)) {
-                # Get the genes in this geneset
-                geneList <- geneSets[[geneListName]]$genes
-                # Subset to genes that exist
-                geneList <- geneList[geneList %in% rownames(varinfo)];
+            # This is super inefficient. Adapted to to the same with a sapply
+            # geneListGenes <- list();
+            # for(geneListName in names(geneSets)) {
+            #     # Get the genes in this geneset
+            #     geneList <- geneSets[[geneListName]]$genes
+            #     # Subset to genes that exist
+            #     geneList <- geneList[geneList %in% rownames(varinfo)];
 
-                # Generate dataset
-                dataset <-  varinfo[geneList, c("m","v")];
-                dataset$name <-  rownames(dataset);
+            #     # Generate dataset
+            #     dataset <-  varinfo[geneList, c("m","v")];
+            #     dataset$name <-  rownames(dataset);
 
-                # Convert to row format
-                retd <-  apply(dataset,
-                            1, function(x) {
-                                x[["name"]];
-                            });
-                geneListGenes[[geneListName]] <- unname(retd);
-            }
+            #     # Convert to row format
+            #     retd <-  apply(dataset,
+            #                 1, function(x) {
+            #                     x[["name"]];
+            #                 });
+            #     geneListGenes[[geneListName]] <- unname(retd);
+            # }
+            geneListGenes <- lapply(myPagoda2WebObject$geneSets, function(gos) make.unique(gos$genes))
                        
             # Creation of the export List for Rcpp
             
