@@ -142,7 +142,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     if ( "batch" %in% names(r@.xData) ) {
         if ( !is.null(r@.xData$batch)  ) {
             metadata$batch <- list(
-                data = ,
+                data = batchData,
                 palette = rainbow(n = length(levels(r$batch))),
                 displayname = 'Batch'
             )

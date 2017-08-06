@@ -7,6 +7,17 @@
 
 using namespace Rcpp;
 
+// WriteListToBinary
+void WriteListToBinary(List expL, std::string outfile);
+RcppExport SEXP _pagoda2_WriteListToBinary(SEXP expLSEXP, SEXP outfileSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type expL(expLSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outfile(outfileSEXP);
+    WriteListToBinary(expL, outfile);
+    return R_NilValue;
+END_RCPP
+}
 // non0LogColLmS
 int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells);
 RcppExport SEXP _pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP) {
@@ -306,6 +317,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 2},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 2},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},

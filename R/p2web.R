@@ -232,7 +232,7 @@ pagoda2WebApp <- setRefClass(
                                       'relatedgenes' = {
                                         # This requires the original object -- must add check
                                         postArgs <- request$POST();
- 
+
                                         geneListName <- postArgs[['querygenes']];
                                         relatedGenes <- originalP2object$genegraphs$graph$to[originalP2object$genegraphs$graph$from %in% geneListName]
                                         relatedGenes <- relatedGenes[!duplicated(relatedGenes)];
@@ -901,6 +901,144 @@ pagoda2WebApp <- setRefClass(
 
           # Update the middleware static server
           .self$app$app$file_server$root <- rookRoot;
+        },
+
+        # Create a List consisting of JSON-strings and two sparse Matrices
+        # Write to static binary file by Calling Rcpp function
+        # Author: Simon Steiger
+        #
+        # Arguments: Specifiy the name of the output file.
+        # Takes the other objects to export from RefClass
+        # Returns the exportList which could be passed to the WriteListToBinary
+
+        serializeToStaticFast = function(binary.filename=NULL){
+            if (is.null(binary.filename)) {
+              stop('Please specify a directory');
+            }
+
+            exportList <- new("list");
+            # TODO: optimize the R-part, move stuff over to Rcpp
+            # Preparation of objects to pass to Rcpp
+            # Create embedding strucutre for export
+            embStructure <- generateEmbeddingStructure();
+
+            # Export to list For all contained embeddings
+            for (reduc in names(embStructure)) {
+                for (embed in names(embStructure[[reduc]])) {
+                id <- embStructure[[reduc]][[embed]][[1]];
+                filename <- paste0(id, '.json');
+
+                a <- embeddings[[reduc]][[embed]];
+                ret <- list(
+                    values = .self$packCompressFloat64Array(as.vector(a)),
+                    dim =  dim(a),
+                    rownames = rownames(a),
+                    colnames = colnames(a)
+                );
+                e <- toJSON(ret);
+                exportList[filename] <- e;
+                }
+            }
+
+            # Export list with all included embeddings for easier iteration in Rcpp-function.
+            exportList[["embedList"]] <- grep("emb_",names(exportList),value=T);
+
+            # Main Sparse count matrix to save
+            matsparseToSave <- matsparse[mainDendrogram$cellorder,]
+
+            # Serialise aspect matrix
+            cellIndices <- mainDendrogram$cellorder;
+            aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
+            trimPoint <- max(abs(aspectMatrixToSave)) / 50;
+            aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
+            aspectMatrixToSave <- t(aspectMatrixToSave);
+            aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
+
+            # Serialise the aspect information
+
+            aspectInformation <- list();
+            for (curAspect in rownames(pathways$xv)) {
+                # Genesets in this aspect
+                curgenesets <- unname(pathways$cnam[[curAspect]]);
+
+                # Get the metadata for these gene sets
+                colOfInterest <- c("name","n","cz");
+                retTable <- pathwayODInfo[curgenesets, colOfInterest];
+
+                # Convert to JSON friendly format
+                aspectInformation[[curAspect]]  <- unname(apply(retTable, 1, function(x) {
+                # Must be in genesets for short description
+                desc <- geneSets[[x[[1]]]]$properties$shortdescription;
+
+                list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
+                }));
+            }
+
+            # Serialising geneset Information
+            genesetInformation <- unname(lapply(geneSets, function(x) {x$properties}))
+
+
+            # Serialise geneset Genes:
+            geneListName <- names(geneSets);
+
+            # This is super inefficient. Adapted to to the same with a sapply
+            # geneListGenes <- list();
+            # for(geneListName in names(geneSets)) {
+            #     # Get the genes in this geneset
+            #     geneList <- geneSets[[geneListName]]$genes
+            #     # Subset to genes that exist
+            #     geneList <- geneList[geneList %in% rownames(varinfo)];
+
+            #     # Generate dataset
+            #     dataset <-  varinfo[geneList, c("m","v")];
+            #     dataset$name <-  rownames(dataset);
+
+            #     # Convert to row format
+            #     retd <-  apply(dataset,
+            #                 1, function(x) {
+            #                     x[["name"]];
+            #                 });
+            #     geneListGenes[[geneListName]] <- unname(retd);
+            # }
+            geneListGenes <- lapply(myPagoda2WebObject$geneSets, function(gos) make.unique(gos$genes))
+
+            # Creation of the export List for Rcpp
+
+            ## JSON & Annotation part
+            exportList[["reduceddendrogram"]] <- reducedDendrogramJSON();
+            exportList[["cellorder"]] <- cellOrderJSON();
+            exportList[["cellmetadata"]] <- cellmetadataJSON();
+            exportList[["geneinformation"]] <- geneInformationJSON();
+
+            exportList[["embeddingstructure"]] <- toJSON(embStructure);
+            exportList[["aspectInformation"]] <- toJSON(aspectInformation);
+            exportList[["genesets"]] <- toJSON(genesetInformation);
+            exportList[["genesetGenes"]] <- toJSON(geneListGenes);
+
+            ## Sparse Count Matrix & dimnames as JSON.
+            # TODO: export matsparse as S4 object and move "splitting" over to Rcpp.
+            #exportList[["matsparse"]] <- matsparseToSave;
+            exportList[["matsparse_i"]] <- matsparseToSave@i;
+            exportList[["matsparse_p"]] <- matsparseToSave@p;
+            exportList[["matsparse_x"]] <- matsparseToSave@x;
+            exportList[["matsparse_dim"]] <- matsparseToSave@Dim;
+            exportList[["matsparse_dimnames1"]] <- toJSON(matsparseToSave@Dimnames[[1]]);
+            exportList[["matsparse_dimnames2"]] <- toJSON(matsparseToSave@Dimnames[[2]]);
+
+            ## Sparse Aspect Matrix & dimnames as JSON.
+            # TODO: export mataspect as S4 object and move "splitting" over to Rcpp.
+            #exportList[["mataspect"]] <- aspectMatrixToSave;
+            exportList[["mataspect_i"]] <- aspectMatrixToSave@i;
+            exportList[["mataspect_p"]] <- aspectMatrixToSave@p;
+            exportList[["mataspect_x"]] <- aspectMatrixToSave@x;
+            exportList[["mataspect_dim"]] <- aspectMatrixToSave@Dim;
+            exportList[["mataspect_dimnames1"]] <- toJSON(aspectMatrixToSave@Dimnames[[1]]);
+            exportList[["mataspect_dimnames2"]] <- toJSON(aspectMatrixToSave@Dimnames[[2]]);
+
+
+            #outfilename <- file.path(getwd(),outfilename);
+            WriteListToBinary(expL=exportList,outfile = outfilename);
+            return(invisible(exportList));
         },
 
         # Serialise an R array to a JSON object
