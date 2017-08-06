@@ -57,6 +57,9 @@ pagoda2WebApp <- setRefClass(
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
                               verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE) {
 
+            # Keep the original pagoda 2 object
+            # This is required for things like differential expression and
+            # gene KNN lookups
             if (keepOriginal) {
               originalP2object <<- pagoda2obj
             }
@@ -103,10 +106,9 @@ pagoda2WebApp <- setRefClass(
             # The cell metadata
             cellmetadata <<- metadata;
 
-            # Rook sever root directory to be changed to package subdirectory
+             # Rook sever root directory to be changed to package subdirectory
             # this holds all the static files required by the app
             rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
-
 
             pathwayODInfo <<- pagoda2obj$misc$pathwayODInfo;
 
@@ -227,7 +229,19 @@ pagoda2WebApp <- setRefClass(
                            if (!is.null(dataIdentifier)) {
                                # Handle a getData request
                                switch(dataIdentifier,
+                                      'relatedgenes' = {
+                                        # This requires the original object -- must add check
+                                        postArgs <- request$POST();
+ 
+                                        geneListName <- postArgs[['querygenes']];
+                                        relatedGenes <- originalP2object$genegraphs$graph$to[originalP2object$genegraphs$graph$from %in% geneListName]
+                                        relatedGenes <- relatedGenes[!duplicated(relatedGenes)];
+                                        relatedGenes <- relatedGenes[!relatedGenes %in% geneListName];
 
+                                        response$header("Content-type", "application/javascript");
+                                        response$write(toJSON(relatedGenes));
+                                        return(response$finish());
+                                      },
 
                                       # Return a gene information table
                                       # for all the genes
