@@ -26,6 +26,8 @@ function geneSelectionController() {
  * @param {Array[]} genes The gene identifers for this selection
  */
 geneSelectionController.prototype.setSelection = function(genes, displayName, selectionName) {
+
+
     if ( typeof displayName === 'undefined') {
 	    displayName = selectionName;
     }
@@ -36,11 +38,11 @@ geneSelectionController.prototype.setSelection = function(genes, displayName, se
     else{
       selectionName = "auto_" + selectionName;
     }
-    
+
     this.selections[selectionName] = ({
-	'name': selectionName,
-	'genes': genes,
-	'displayName': displayName
+    	'name': selectionName,
+    	'genes': genes,
+    	'displayName': displayName
     });
 
     //this.selections[selectionName] = genes;
@@ -152,7 +154,7 @@ geneSelectionController.prototype.mergeSelectionsIntoNew = function(selections, 
         genes[gene] = true;
       })
     });
-    
+
     geneSelCntrl.setSelection(Object.keys(genes), newSelectionDisplayName);
 }
 
@@ -164,7 +166,7 @@ geneSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
 
     var genes = {};
     geneSelCtrl.selections[selections[0]].genes.forEach(function(gene){
-      genes[gene] = 1; 
+      genes[gene] = 1;
     });
     for(var i = 1; i< selections.length; i++){
       geneSelCtrl.selections[selections[i]].genes.forEach(function(gene){
@@ -186,7 +188,7 @@ geneSelectionController.prototype.intersectSelectionsIntoNew = function(selectio
  * Genereate a new gene selection by complimenting one or more gene selections
  */
 geneSelectionController.prototype.complimentSelectionsIntoNew = function(selections, newSelectionDisplayName){
-  
+
   var geneSelCtrl = this;
   var genes = {};
   for(var i = 0; i< selections.length; i++){
@@ -195,7 +197,7 @@ geneSelectionController.prototype.complimentSelectionsIntoNew = function(selecti
       genes[gene] = true;
     });
   }
-  
+
   (new dataController()).getGeneInformationStore(function(store){
     var genesPrime = [];
     var data = store.localData;
