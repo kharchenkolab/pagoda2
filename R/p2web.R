@@ -1036,8 +1036,8 @@ pagoda2WebApp <- setRefClass(
             exportList[["mataspect_dimnames2"]] <- toJSON(aspectMatrixToSave@Dimnames[[2]]);
 
 
-            #outfilename <- file.path(getwd(),outfilename);
-            WriteListToBinary(expL=exportList,outfile = outfilename);
+            #binary.filename <- file.path(getwd(),binary.filename);
+            WriteListToBinary(expL=exportList,outfile = binary.filename);
             return(invisible(exportList));
         },
 
