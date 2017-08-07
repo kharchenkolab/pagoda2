@@ -232,7 +232,7 @@ p2FormatReader.prototype.getEntryAsText = function(entryKey, callback, context) 
   	    callback(data);
       });
     } else {
-      console.error('Unknown index: ', entryKey);
+      throw new RuntimeException(STATIC_FILE_FIELD_MISSING, 'Unknown index: '.concat(entryKey))
     }
 
 }

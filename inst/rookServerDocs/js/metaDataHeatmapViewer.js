@@ -944,6 +944,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = func
 
     parameters.cellSelections = [];
     parameters.selNamePrefix = callbackParameters.selNamePrefix;
+    parameters.selectionNames = (data[callbackParameters.metadataName].levels ? data[callbackParameters.metadataName].levels : data[callbackParameters.metadataName].palette);
     parameters.metadataName = callbackParameters.metadataName;
     parameters.restriction = restriction;
     var allCells = data[callbackParameters.metadataName].data;
@@ -960,7 +961,7 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = func
       for(var j = 0; j < step; j++){
         var cellSelectionNames = params.cellSelections[i+j];
         if(cellSelectionNames && params.restriction(cellSelectionNames)){
-          cellSel.setSelection(cellSelectionNames, params.selNamePrefix + (i+j+1), {}, data[params.metadataName].palette[i].substring(0,7), undefined, true);
+          cellSel.setSelection(cellSelectionNames, params.selNamePrefix + params.selectionNames[i+j].split(/\ |\#/).join(""), {}, data[params.metadataName].palette[i].substring(0,7), undefined, true);
         }
       }
     }
@@ -1017,7 +1018,7 @@ metaDataHeatmapViewer.prototype.generateLegend = function(metadataName){
   Ext.create("Ext.window.Window",{
     title: "Legend",
     modal: false,
-    resizable: false,
+    resizable: true,
     dragable: true,
     height: 300,
     width: 154,

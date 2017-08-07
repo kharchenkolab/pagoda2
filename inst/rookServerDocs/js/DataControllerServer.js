@@ -647,6 +647,25 @@ DataControllerServer.prototype.getAspectMatrixByAspect = function(cellIndexStart
     return request;
 }
 
+
+DataControllerServer.prototype.getGeneNeighbours = function(queryGenes, callback) {
+    // Setup the request data
+    var requestData = {
+      dataidentifier: "relatedgenes",
+    	"querygenes": queryGenes
+    };
+
+    var request = $.ajax({
+    	type: "POST",
+    	dataType: "json",
+    	url: "getData.php?dataidentifier=relatedgenes",
+    	data: requestData,
+    	success: function(data) {
+        callback(data);
+    	}
+    });
+}
+
 /**
  * Given a string that encodes a sequence of lz compressed
  * Int32 values, decompress and return resulting typed array
@@ -679,3 +698,6 @@ DataControllerServer.prototype.unpackCompressedBase64Float64Array =  function (e
 
     return f64a;
 }
+
+
+

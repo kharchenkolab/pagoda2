@@ -43,3 +43,4 @@ importFrom(rjson,fromJSON)
 importFrom(rjson,toJSON)
 importFrom(utils,URLdecode)
 useDynLib(pagoda2)
+

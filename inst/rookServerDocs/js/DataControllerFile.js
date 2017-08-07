@@ -877,4 +877,50 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 }
 
 
+DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) {
+  // FIXME: Assume format reader is ready here
+  var fr = this.formatReader;
 
+  var fn = function() {
+        fr.getEntryAsText('geneknn', function(text) {
+          var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+      		var textTrimmed = text.slice(0, dataLength);
+
+      		var allData = JSON.parse(textTrimmed);
+      		var neighbours = [];
+
+      		for (var qgi = 0; qgi < queryGenes.length; qgi++) { // query gene index
+      		  var qg = queryGenes[qgi];
+            neighbours = neighbours.concat(allData[qg]);
+      		}
+
+      		// Make neighbours unique and remove queryGenes
+          var tmpNeighbours = {};
+          for (var i = 0; i <  neighbours.length; i++) {
+            tmpNeighbours[neighbours[i]] = 1;
+          }
+
+          // Set original genes to 0
+          for (var qgi = 0; qgi < queryGenes.length; qgi++) { // query gene index
+      		  var qg = queryGenes[qgi];
+      		  tmpNeighbours[qg] = 0;
+      		}
+
+          var retNeighbours = [];
+      		for (var k in Object.keys(tmpNeighbours)) {
+      		  if(tmpNeighbours[k] == 1) {
+      		    retNeighbours.push(k);
+      		  }
+      		}
+
+      		callback(neighbours);
+  	 }, fr);
+  }
+
+  // Call immediately or defer to when the object is ready
+  if (fr.state == fr.READY) {
+    fn();
+  } else {
+    fr.addEventListener('onready',fn);
+  }
+}

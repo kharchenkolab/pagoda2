@@ -96,9 +96,9 @@ dendrogramViewer.prototype.initializeButtons =  function() {
           text: "Gene Heatmap",
           menu: heatViewSettingsMenu
         }
-      ] 
+      ]
     });
-    
+
     var thisViewer = new dendrogramViewer();
     var toolbar = Ext.create('Ext.Toolbar');
     toolbar.add({
@@ -252,6 +252,14 @@ dendrogramViewer.prototype.initializeButtons =  function() {
         handler: thisViewer.downloadImagePopUp
 });
 
+  toolbar.add({
+      text: "",
+      type: "button",
+      tooltip: "Show related genes",
+      glyph: 0xf002,
+      handler: thisViewer.showRelatedGenes
+  });
+
     toolbar.add({
       text: '',
       xtype: 'button',
@@ -263,7 +271,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
         var heatView = new heatmapViewer();
         heatView.clearSelectionOverlay();
         var metaView = new metaDataHeatmapViewer();
-        metaView.clearSelectionOverlay();        
+        metaView.clearSelectionOverlay();
       }
     });
 
@@ -274,7 +282,7 @@ dendrogramViewer.prototype.initializeButtons =  function() {
     	glyph: 0xf013,
     	menu: allSettingsMenu
     });
-    
+
     toolbar.add({
       text: '',
       xtype: 'button',
@@ -1389,12 +1397,15 @@ dendrogramViewer.prototype.redrawDendrogram = function() {
     }
 }
 
+/*
+ * Show popup for initiating the download of the different images
+ */
 dendrogramViewer.prototype.downloadImage = function() {
   var canvas = document.getElementById('dendrogram-area');
 
-                        const maxSize = 2000;
-            if (canvas.width > maxSize | canvas.height >maxSize){
-                Ext.Msg.show({
+  const maxSize = 2000;
+  if (canvas.width > maxSize | canvas.height >maxSize){
+   Ext.Msg.show({
                   title: 'Warning',
                   msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
                    'This may cause problems during exporting. Do you want to continue?',
@@ -1410,13 +1421,65 @@ canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'dendrogram.png',canva
             }
 }
 
+/**
+ * Replace the current main heatmap genes with related genes
+ */
+dendrogramViewer.prototype.showRelatedGenes = function() {
+  // Get the current displayed genes
+  var gsc = new geneSelectionController();
+  var sel = gsc.getSelection('auto_heatmapDisplayGenes');
+
+  var showError = function() {
+      Ext.Msg.show({
+      title: 'Warning',
+      msg: 'No genes are currently displayed on the main heatmap.',
+      buttons: Ext.Msg.OK
+    });
+  };
+
+  if (typeof(sel) != 'undefined') {
+    var queryGenes = sel.genes;
+    if (queryGenes.length > 0) {
+      var dc = new dataController();
+      try {
+        dc.getGeneNeighbours(queryGenes, function(results){
+            console.log("Genes are back:", results);
+
+            // TODO: check that we got at least one gene back
+
+              var geneSelCntr =  new geneSelectionController();
+    		      geneSelCntr.setSelection( results,'relatedSelection','relatedSelection');
+
+          		var heatmapV = new heatmapViewer();
+    			    heatmapV.setNamedSelectionToDisplayGenes('auto_relatedSelection');
+    			    heatmapV.drawHeatmap();
+
+        })
+
+     } catch(e) {
+       if (e.code == STATIC_FILE_FIELD_MISSING) {
+
+          Ext.Msg.show({
+            title: 'Error',
+            msg: 'The loaded file does not support finding similar gene patterns',
+            buttons: Ext.Msg.OK
+          });
+      } else {
+        console.error("An unknown error occured");
+      }
+     }
+    } else { showError() }
+  } else { showError() }
+
+}
+
 dendrogramViewer.prototype.downloadImagePopUp = function(){
   Ext.create("Ext.window.Window", {
     title: "Print Selections",
     id: "printSelectionMenu",
     modal: true,
     resizeable: false,
-    
+
     items:[
       {
         html: "<h3>Which of the following do you want to print?</h3>",
