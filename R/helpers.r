@@ -76,7 +76,7 @@ p2.generate.human.go.web <- function(myGeneNames) {
 p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = 1, pal = NULL) {
   # Check input
   if ( !is.factor(metadata) ) {
-    stop('metadata has to be a factor');
+    stop('metadata is not a factor');
   }
 
   if (  is.null(names(metadata))) {
@@ -97,10 +97,17 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
      stop("The provided palette contains a different number of colours from the levels in the metadata");
     } else {
       if (is.null(names(pal))) {
+        # Palette doesn't have names use as is
         pal0 <- pal;
       } else {
-        # The palette is named, we need to ensure that we have the correct order
-        stop("Named palettes not implemented");
+        if(!all(names(pal) %in% levels(metadata))) {
+          stop('Some palette names do not correspond to metadata levels')
+        }
+        if (!all(levels(metadata) %in% names(pal))) {
+          stop('Some metadata names do not appear in palette levels')
+        }
+        # Order according to metadata levels
+        pal0 <- pal[as.character(levels(metadata))];
       }
     }
   } else {
