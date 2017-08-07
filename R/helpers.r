@@ -118,7 +118,7 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
   ret <- list(
     data = data,
     levels = labs,
-    palette = pal0,
+    palette = unname(as.character(pal0)),
     displayname = ""
   );
 
