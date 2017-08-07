@@ -129,91 +129,88 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
   invisible(ret);
 }
 
-
-
-
 #' @title Generate a Rook Server app from a pagoda2 object
-#' @description Contains some code required to convert from the pagoda2 object to the
-#' web object constructor. Advanced users may wish to use the PagodaWebApp
-#' constructor directly
+#' @description Generates a pagoda 2 web object from pagoda2 object by automating steps that most
+#' users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
+#' may wish to use use the constructor directly
 #' @param r pagoda2 object
 #' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added
 #' @param geneSets a list of genesets to show
-#' @param debug build debug app?
-#' @return a Rook web app
+#' @param show.depth logical, include depth as a metadata row
+#' @param show.batch logical, include batch as a metadata row
+#' @param show.clusters logical, include clusters as a metadata row
+#' @param appname application name
+#' @return a pagoda2 web object that presents a Rook compatible interface
 #' @export make.p2.app
-make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets) {
-
-
+make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
+                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application") {
     # Build the metadata
     metadata <- list();
-    if ( "depth" %in% names(r@.xData) ) {
-        if ( !is.null(r@.xData$depth ) ) {
-            levels  <- 20
 
-            dpt <- log10(r@.xData$depth+0.00001)
-            max <- max(dpt)
-            min <- min(dpt)
-            dptnorm <- floor((dpt - min) / (max - min) * levels)
-            metadata$depth <- list(
-                data = dptnorm,
-                palette = colorRampPalette(c('white','black'))(levels+1),
-                displayname = 'Depth'
-            )
+    if (show.depth) {
+      if ( "depth" %in% names(r@.xData) ) {
+          if ( !is.null(r@.xData$depth ) ) {
+              levels  <- 20
 
+              dpt <- log10(r@.xData$depth+0.00001)
+              max <- max(dpt)
+              min <- min(dpt)
+              dptnorm <- floor((dpt - min) / (max - min) * levels)
+              metadata$depth <- list(
+                  data = dptnorm,
+                  palette = colorRampPalette(c('white','black'))(levels+1),
+                  displayname = 'Depth'
+              )
+          }
+      }
+    }
 
-        }
+    if (show.batch) {
+      batchData <- as.numeric(r$batch) - 1;
+      names(batchData) <- names(r$batch);
+      if ( "batch" %in% names(r@.xData) ) {
+          if ( !is.null(r@.xData$batch)  ) {
+              metadata$batch <- list(
+                  data = batchData,
+                  palette = rainbow(n = length(levels(r$batch))),
+                  displayname = 'Batch'
+              )
+          }
+      }
+    }
+
+    if (show.clusters) {
+      clusterData <- as.numeric(dendrogramCellGroups) - 1;
+      names(clusterData) <- names(dendrogramCellGroups);
+      metadata$clusters <- list(
+              data = clusterData,
+              palette = rainbow(n =  length(levels(dendrogramCellGroups))),
+              displayname = 'Dendrogram Clusters'
+      )
     }
 
 
-    batchData <- as.numeric(r$batch) - 1;
-    names(batchData) <- names(r$batch);
-    if ( "batch" %in% names(r@.xData) ) {
-        if ( !is.null(r@.xData$batch)  ) {
-            metadata$batch <- list(
-                data = batchData,
-                palette = rainbow(n = length(levels(r$batch))),
-                displayname = 'Batch'
-            )
-        }
-    }
-
-    clusterData <- as.numeric(dendrogramCellGroups) -1;
-    names(clusterData) <- names(dendrogramCellGroups);
-    metadata$clusters <- list(
-            data = clusterData,
-            palette = rainbow(n =  length(levels(dendrogramCellGroups))),
-            displayname = 'Clusters'
-    )
-
-    # Append the additional metadata
+    # User provided metadata
     for ( itemName in names(additionalMetadata)) {
         metadata[[itemName]] <- additionalMetadata[[itemName]]
     }
 
-    # Pre-calculate differential gene expression between
-    # each cluster in the dendrogram clusters and the background
-    # Append these to gene sets of interest
-    deGenes <- r$getDifferentialGenes(type='counts', groups=dendrogramCellGroups)
-
-
-
-
+    #deGenes <- r$getDifferentialGenes(type='counts', groups=dendrogramCellGroups)
 
     # Make the app object
     p2w <- pagoda2WebApp$new(
         pagoda2obj = r,
-        appName = "DefaultPagoda2Name",
+        appName = appname,
         dendGroups = dendrogramCellGroups,
         verbose = 0,
         debug = TRUE,
         geneSets = geneSets,
-        metadata = metadata)
+        metadata = metadata
+    );
+
+    invisible(p2w);
 }
-
-
-
 
 #' @export show.app
 show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
