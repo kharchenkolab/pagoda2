@@ -71,7 +71,7 @@ p2.generate.human.go.web <- function(myGeneNames) {
 #' @param v v value for rainbow palette
 #' @param start starting value
 #' @param end ending value
-#' @pal optional vector of colours to use, if provided overrides s,v,start and end parameters
+#' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters
 #' @export p2.metadata.from.factor
 p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = 1, pal = NULL) {
   # Check input
