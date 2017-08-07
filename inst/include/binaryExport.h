@@ -98,5 +98,7 @@ template <typename T> inline T intDivRoundUP(T a, T b) {
   return(a + b -1) /b;
 }
 
+struct entry *make_entry_from_string(char const *key, string &data);
+
 
 #endif

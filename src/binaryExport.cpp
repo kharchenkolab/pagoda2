@@ -4,56 +4,8 @@
  * Date: August 6th 2017
  */
 
-
-
-
 #include "pagoda2.h"
 #include "binaryExport.h"
-
-
-/**
- * Create the internal entry structure from a key and data
- * @description allocates space for the new entry structure, calculates required values
- * and allocates space for the data and copies it there
- */
-struct entry *make_entry_from_string(char const *key, string &data)
-{
-    // Allocate space for the structure
-    struct entry *e;
-    e = (struct entry *)malloc(sizeof(struct entry));
-    if (e == 0)
-    {
-        throw EX_MEM_ALLOC_FAIL;
-    }
-
-    // Set memory to all zeros
-    memset(e, 0, sizeof(entry));
-
-    // Set the key of the entry
-    strcpy(e->key, key);
-
-    // Set the length field
-    uint64_t entryLengthBytes = data.length();
-
-    // Allocate memory for the payload
-    e->payload = malloc(entryLengthBytes);
-    if (e->payload == 0)
-    {
-        throw EX_MEM_ALLOC_FAIL;
-    }
-
-    // Copy the payload to the entry
-    memcpy(e->payload, data.c_str(), entryLengthBytes);
-
-    // Calculate the number of blocks that will be required
-    e->size = entryLengthBytes;
-    e->blockSize = (uint32_t)intDivRoundUP(entryLengthBytes, FILE_BLOCK_SIZE);
-
-    // Return pointer to the newly allocated entry
-    return e;
-}
-
-
 
 /**
  * Rcpp function called from R to write the web object
@@ -63,7 +15,6 @@ struct entry *make_entry_from_string(char const *key, string &data)
 void WriteListToBinary(List expL, std::string outfile)
 {
     // Read in JSON formatted strings from R List given by List expL
-    // TODO: Move the "convert to JSON" into a Cpp function
     string cellmetadataData = expL["cellmetadata"];
     string cellorderData = expL["cellorder"];
     string geneinformationData = expL["geneinformation"];
@@ -79,28 +30,33 @@ void WriteListToBinary(List expL, std::string outfile)
     // Structure list<entry> as defined in pagoda2.h - List for all entries
     list<entry> entries;
 
-    // Make Entry from each JSON string passed by expL
-    // - Cellmetadata:
+    //Make entries for JSON items
+    // Cellmetadata
     struct entry *metadataEntry = make_entry_from_string("cellmetadata", cellmetadataData);
     entries.push_back(*metadataEntry);
-
-    // - Cellorder:
+    // Cellorder
     struct entry *cellorderEntry = make_entry_from_string("cellorder", cellorderData);
     entries.push_back(*cellorderEntry);
-
-    // - Geneinformation:
+    // Geneinformation
     struct entry *geneinformationEntry = make_entry_from_string("geneinformation", geneinformationData);
     entries.push_back(*geneinformationEntry);
-
-    // - Reduced Dendrogram
+    // Reduced Dendrogram
     struct entry *reduceddendrogramEntry = make_entry_from_string("reduceddendrogram", reduceddendrogramData);
     entries.push_back(*reduceddendrogramEntry);
-
-    // - EmbeddingStructure
+    // EmbeddingStructure
     struct entry *embeddingstructureEntry = make_entry_from_string("embeddingstructure", embeddingstructureData);
     entries.push_back(*embeddingstructureEntry);
+    // - Aspect Information
+    struct entry *aspectInformationEntry = make_entry_from_string("aspectinformation", aspectInformationData);
+    entries.push_back(*aspectInformationEntry);
+    // - Genesets Data
+    struct entry *genesetsEntry = make_entry_from_string("genesets", genesetsData);
+    entries.push_back(*genesetsEntry);
+    // - Genesets-genes Data
+    struct entry *genesetsgenesEntry = make_entry_from_string("genesetsgenes", genesetsgenesData);
+    entries.push_back(*genesetsgenesEntry);
 
-    // Reading all exported Embeddings into entries. Iteration over embedList
+    // Push the embeddings
     for (int embedIndex = 0; embedIndex != embedList.size(); ++embedIndex)
     {
         // TODO: Remove the json-extension - should be removed in the R part
@@ -111,6 +67,8 @@ void WriteListToBinary(List expL, std::string outfile)
         struct entry *embEntry = make_entry_from_string(embedName.c_str(), embData);
         entries.push_back(*embEntry);
     }
+
+
 
     // ------------------------  Sparse Count Matrix  ------------------------
     // Read in iData from R-export list and convert to list of pointers
@@ -137,11 +95,11 @@ void WriteListToBinary(List expL, std::string outfile)
     cout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
     cout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
 
-
     // Read the dimnames of the sparse matrices.
     // Add a Nul to the end, because thats what happened in writing to a temporary txt file in R
     string matsparseDimnames1 = expL["matsparse_dimnames1"];
     matsparseDimnames1.push_back('\0');
+
     string matsparseDimnames2 = expL["matsparse_dimnames2"];
     matsparseDimnames2.push_back('\0');
 
@@ -171,7 +129,7 @@ void WriteListToBinary(List expL, std::string outfile)
     cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
 
 
-    // Make a memory holder for the data
+    // Make an in-memorty string stream to hold the data
     stringstream smhData(stringstream::in | stringstream::out | stringstream::binary);
 
     // Write the header
@@ -210,6 +168,14 @@ void WriteListToBinary(List expL, std::string outfile)
 
     struct entry *sparseMatrixEntry = make_entry_from_string("sparseMatrix", smhDataString);
     entries.push_back(*sparseMatrixEntry);
+
+
+
+
+
+
+
+
 
     // ------------------------  Sparse Aspect Matrix  ------------------------
     // Read in iData from R-export list and convert to list of pointers
@@ -301,19 +267,14 @@ void WriteListToBinary(List expL, std::string outfile)
 
     struct entry *AsparseMatrixEntry = make_entry_from_string("aspectMatrix", AsmhDataString);
     entries.push_back(*AsparseMatrixEntry);
-    // ------------------------   ------------------------
 
-    // - Aspect Information
-    struct entry *aspectInformationEntry = make_entry_from_string("aspectinformation", aspectInformationData);
-    entries.push_back(*aspectInformationEntry);
+    /// End of aspect sparce matrix
 
-    // - Genesets Data///////////////////////////////////////////
-    struct entry *genesetsEntry = make_entry_from_string("genesets", genesetsData);
-    entries.push_back(*genesetsEntry);
 
-    // - Genesets-genes Data
-    struct entry *genesetsgenesEntry = make_entry_from_string("genesetsgenes", genesetsgenesData);
-    entries.push_back(*genesetsgenesEntry);
+
+
+
+
 
 
 
@@ -352,6 +313,7 @@ void WriteListToBinary(List expL, std::string outfile)
     list<indexEntry> indexEntries;
     uint32_t curOffset = 0; // in blocks
 
+    // Calculate the index entry sizes
     for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
     {
         struct indexEntry ie;
@@ -373,10 +335,6 @@ void WriteListToBinary(List expL, std::string outfile)
         // Increment the offset
         curOffset += iterator->blockSize;
     }
-
-
-
-
 
     ///////////////////////////////////////////
     // Write the file to disk
@@ -415,7 +373,6 @@ void WriteListToBinary(List expL, std::string outfile)
     }
     fs.close();
 
-
     // Free up the payloads of the entries
     cout << "Free up entry payloads" << endl;
     for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
@@ -428,8 +385,6 @@ void WriteListToBinary(List expL, std::string outfile)
 ///////////////////////////////////
 // Helper functions
 ///////////////////////////////////
-
-
 
 /**
  * Helper function for getting rcpp data in
@@ -466,3 +421,46 @@ std::list<T>* NVtoL(Rcpp::NumericVector f)
   }
   return (s);
 }
+
+/**
+ * Create the internal entry structure from a key and data
+ * @description allocates space for the new entry structure, calculates required values
+ * and allocates space for the data and copies it there
+ */
+struct entry *make_entry_from_string(char const *key, string &data)
+{
+  // Allocate space for the structure
+  struct entry *e;
+  e = (struct entry *)malloc(sizeof(struct entry));
+  if (e == 0)
+  {
+    throw EX_MEM_ALLOC_FAIL;
+  }
+
+  // Set memory to all zeros
+  memset(e, 0, sizeof(entry));
+
+  // Set the key of the entry
+  strcpy(e->key, key);
+
+  // Set the length field
+  uint64_t entryLengthBytes = data.length();
+
+  // Allocate memory for the payload
+  e->payload = malloc(entryLengthBytes);
+  if (e->payload == 0)
+  {
+    throw EX_MEM_ALLOC_FAIL;
+  }
+
+  // Copy the payload to the entry
+  memcpy(e->payload, data.c_str(), entryLengthBytes);
+
+  // Calculate the number of blocks that will be required
+  e->size = entryLengthBytes;
+  e->blockSize = (uint32_t)intDivRoundUP(entryLengthBytes, FILE_BLOCK_SIZE);
+
+  // Return pointer to the newly allocated entry
+  return e;
+}
+

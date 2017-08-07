@@ -877,4 +877,6 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
 }
 
 
-
+DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) {
+  console.log('Not implemented');
+}
