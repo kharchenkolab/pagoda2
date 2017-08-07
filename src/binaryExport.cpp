@@ -1,95 +1,24 @@
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(openmp)]]
-// [[Rcpp::plugins(cpp11)]]
-// [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::depends(RcppProgress)]]
+/**
+ * Filename: binaryExport.cpp
+ * Description: Implements exporting to file via Rcpp
+ * Date: August 6th 2017
+ */
+
+
+
 
 #include "pagoda2.h"
-
-#include <string>
-#include <iostream>
-#include <cstdint>
-#include <fstream>
-#include <string.h>
-#include <list>
-#include <stdlib.h>
-#include <sstream>
-#include <string>
-
-#define BOOST_FILESYSTEM_VERSION 3
-#define BOOST_FILESYSTEM_NO_DEPRECATED
-#include <boost/filesystem.hpp>
-
-// Exception codes
-#define EX_MEM_ALLOC_FAIL 0x0001
-
-using namespace std;
-namespace fs = ::boost::filesystem;
-
-// File format constants
-// The block size in bytes
-// Set to 2MB because this allows accessing the full file size
-// Allowable by javascript MAX_SAFE_INTEGER to address file positions
-// Number.MAX_SAFE_INTEGER = 9007199254740991
-// Max Int32 Value: 4294967295
-// Number.MAX_SAFE_INTEGER / 4294967295 = 2097152 =  2 * (1024)^2
-#define FILE_BLOCK_SIZE ((uint64_t) 2097152)
-
-// File format stucts
-struct fileHeader {
-  char identifier[32];
-  uint8_t versionMajor;
-  uint8_t versionMinor;
-  uint16_t flags;
-  // Uint32 because JS doesn't support 64 bit ints
-  uint32_t blockSize; // In bytes
-  uint32_t headerSize; // In bytes
-  uint32_t indexSize; // In bytes
-};
+#include "binaryExport.h"
 
 
-struct indexEntry {
-  char key[128];
-  uint32_t sizeBlocks; // size in blocks
-  uint32_t offset; // In blocks after index
-  uint32_t flags;
-};
-
-
-struct sparseMatrixHeader {
-  // Offsets with respect to the beginning of the beginning of the
-  // First block
-  uint32_t dim1;
-  uint32_t dim2;
-  uint32_t pStartOffset;
-  uint32_t iStartOffset;
-  uint32_t xStartOffset;
-  uint32_t dimname1StartOffset;
-  uint32_t dimname2StartOffset;
-  uint32_t dimname2EndOffset;
-};
-
-// Program structs
-// Program structs
-// Keeping track of entries
-
-struct entry {
-  char key[128];
-  void* payload;
-  uint64_t size; // bytes
-  uint32_t blockSize; // size in blocks as will be written in the index
-};
-
-// Function prototypes
-
-template <typename T> inline T intDivRoundUP(T a, T b) {
-    return(a + b -1) /b;
-}
-
-// Struct entry define make_entry_from_string function:
-// Author Nikolas Barkas
+/**
+ * Create the internal entry structure from a key and data
+ * @description allocates space for the new entry structure, calculates required values
+ * and allocates space for the data and copies it there
+ */
 struct entry *make_entry_from_string(char const *key, string &data)
 {
+    // Allocate space for the structure
     struct entry *e;
     e = (struct entry *)malloc(sizeof(struct entry));
     if (e == 0)
@@ -97,54 +26,39 @@ struct entry *make_entry_from_string(char const *key, string &data)
         throw EX_MEM_ALLOC_FAIL;
     }
 
+    // Set memory to all zeros
     memset(e, 0, sizeof(entry));
+
+    // Set the key of the entry
     strcpy(e->key, key);
+
+    // Set the length field
     uint64_t entryLengthBytes = data.length();
-    e->payload = malloc(entryLengthBytes); // second allo, in case we want to free this need to be freed too
+
+    // Allocate memory for the payload
+    e->payload = malloc(entryLengthBytes);
     if (e->payload == 0)
     {
         throw EX_MEM_ALLOC_FAIL;
     }
 
+    // Copy the payload to the entry
     memcpy(e->payload, data.c_str(), entryLengthBytes);
+
+    // Calculate the number of blocks that will be required
     e->size = entryLengthBytes;
     e->blockSize = (uint32_t)intDivRoundUP(entryLengthBytes, FILE_BLOCK_SIZE);
 
+    // Return pointer to the newly allocated entry
     return e;
 }
 
-template <class T>
-std::list<T>* IVtoL(Rcpp::IntegerVector f)
-{
-    std::list<T>* s;
-    s = new list<T>;
 
-    for (int i = 0; i < f.size(); i++)
-    {
-        T val(f[i]);
-        // s[i] = T(f[i]);
-        s->push_back(val);
-    }
-    return (s);
-}
 
-template <class T>
-std::list<T>* NVtoL(Rcpp::NumericVector f)
-{
-    std::list<T>* s;
-    s = new list<T>;
-
-    for (int i = 0; i < f.size(); i++)
-    {
-        T val(f[i]);
-        // s[i] = T(f[i]);
-        s->push_back(val);
-    }
-    return (s);
-}
-// Rcpp export to binary function for the Webobject
-// Uses boost/filesystem to write a binary file which can be opened by the JS frontend
-// Author: Simon Steiger
+/**
+ * Rcpp function called from R to write the web object
+ * @description accepts a list of items to write and the name of a file to write to
+ */
 // [[Rcpp::export]]
 void WriteListToBinary(List expL, std::string outfile)
 {
@@ -232,7 +146,7 @@ void WriteListToBinary(List expL, std::string outfile)
     matsparseDimnames2.push_back('\0');
 
     // Create Header for sparse Matrix
-    // read Dimensions of Matrix by iterating through the list Dim 
+    // read Dimensions of Matrix by iterating through the list Dim
     struct sparseMatrixHeader smh;
     list<uint32_t>::iterator li = Dim->begin();
     smh.dim1 = *li;
@@ -280,6 +194,12 @@ void WriteListToBinary(List expL, std::string outfile)
     {
         smhData.write((const char *) &*iter, sizeof(uint32_t));
     }
+
+    // Clear pData, iData and xData
+    delete pData;
+    delete iData;
+    delete xData;
+
 
     // Write the Dimnames as JSON string
     smhData.write(matsparseDimnames1.c_str(), matsparseDimnames1.size());
@@ -387,7 +307,7 @@ void WriteListToBinary(List expL, std::string outfile)
     struct entry *aspectInformationEntry = make_entry_from_string("aspectinformation", aspectInformationData);
     entries.push_back(*aspectInformationEntry);
 
-    // - Genesets Data
+    // - Genesets Data///////////////////////////////////////////
     struct entry *genesetsEntry = make_entry_from_string("genesets", genesetsData);
     entries.push_back(*genesetsEntry);
 
@@ -454,6 +374,14 @@ void WriteListToBinary(List expL, std::string outfile)
         curOffset += iterator->blockSize;
     }
 
+
+
+
+
+    ///////////////////////////////////////////
+    // Write the file to disk
+    ///////////////////////////////////////////
+
     // Write the header
     fs.write((const char *) &header, sizeof(header));
 
@@ -463,7 +391,7 @@ void WriteListToBinary(List expL, std::string outfile)
         fs.write((const char *)&(*iterator), sizeof(indexEntry));
     }
 
-    // Write the file content:
+    // Write the file content
     int i = 0;
     for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
     {
@@ -476,7 +404,7 @@ void WriteListToBinary(List expL, std::string outfile)
             throw EX_MEM_ALLOC_FAIL;
         }
 
-        // fill wiht 0s
+        // fill with 0s
         memset(entry, 0, s);
         // copy the payload
         memcpy(entry, (const char *)iterator->payload, iterator->size);
@@ -485,6 +413,56 @@ void WriteListToBinary(List expL, std::string outfile)
 
         free(entry);
     }
-
     fs.close();
+
+
+    // Free up the payloads of the entries
+    cout << "Free up entry payloads" << endl;
+    for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
+    {
+      free(iterator->payload);
+    }
+}
+
+
+///////////////////////////////////
+// Helper functions
+///////////////////////////////////
+
+
+
+/**
+ * Helper function for getting rcpp data in
+ */
+template <class T>
+std::list<T>* IVtoL(Rcpp::IntegerVector f)
+{
+  std::list<T>* s;
+  s = new list<T>;
+
+  for (int i = 0; i < f.size(); i++)
+  {
+    T val(f[i]);
+    s->push_back(val);
+  }
+
+  return (s);
+}
+
+
+/**
+ * Helper function for getting rcpp data in
+ */
+template <class T>
+std::list<T>* NVtoL(Rcpp::NumericVector f)
+{
+  std::list<T>* s;
+  s = new list<T>;
+
+  for (int i = 0; i < f.size(); i++)
+  {
+    T val(f[i]);
+    s->push_back(val);
+  }
+  return (s);
 }

@@ -916,6 +916,11 @@ pagoda2WebApp <- setRefClass(
               stop('Please specify a directory');
             }
 
+            # TODO: Add the gene Knn information if the p2 object is available. They need to reformated in to JSON
+            #   for fast js lookups
+
+
+
             exportList <- new("list");
             # TODO: optimize the R-part, move stuff over to Rcpp
             # Preparation of objects to pass to Rcpp
@@ -1110,6 +1115,7 @@ pagoda2WebApp <- setRefClass(
 		    }
 		    ,
 
+		    # deprecated, use serialiseToStaticFast
 		    serialiseToStatic = function(text.file.directory = null, binary.filename = null) {
 		      dir <- text.file.directory;
 
