@@ -1425,8 +1425,6 @@ canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'dendrogram.png',canva
  * Replace the current main heatmap genes with related genes
  */
 dendrogramViewer.prototype.showRelatedGenes = function() {
-  console.log("Showing related genes....");
-
   // Get the current displayed genes
   var gsc = new geneSelectionController();
   var sel = gsc.getSelection('auto_heatmapDisplayGenes');
@@ -1443,19 +1441,33 @@ dendrogramViewer.prototype.showRelatedGenes = function() {
     var queryGenes = sel.genes;
     if (queryGenes.length > 0) {
       var dc = new dataController();
-      dc.getGeneNeighbours(queryGenes, function(results){
-          console.log("Genes are back:", results);
+      try {
+        dc.getGeneNeighbours(queryGenes, function(results){
+            console.log("Genes are back:", results);
 
-          // TODO: check that we got at least one gene back
+            // TODO: check that we got at least one gene back
 
-            var geneSelCntr =  new geneSelectionController();
-  		      geneSelCntr.setSelection( results,'relatedSelection','relatedSelection');
+              var geneSelCntr =  new geneSelectionController();
+    		      geneSelCntr.setSelection( results,'relatedSelection','relatedSelection');
 
-        		var heatmapV = new heatmapViewer();
-  			    heatmapV.setNamedSelectionToDisplayGenes('auto_relatedSelection');
-  			    heatmapV.drawHeatmap();
+          		var heatmapV = new heatmapViewer();
+    			    heatmapV.setNamedSelectionToDisplayGenes('auto_relatedSelection');
+    			    heatmapV.drawHeatmap();
 
-      })
+        })
+
+     } catch(e) {
+       if (e.code == STATIC_FILE_FIELD_MISSING) {
+
+          Ext.Msg.show({
+            title: 'Error',
+            msg: 'The loaded file does not support finding similar gene patterns',
+            buttons: Ext.Msg.OK
+          });
+      } else {
+        console.error("An unknown error occured");
+      }
+     }
     } else { showError() }
   } else { showError() }
 
