@@ -1020,6 +1020,9 @@ pagoda2WebApp <- setRefClass(
             exportList[["genesets"]] <- toJSON(genesetInformation);
             exportList[["genesetGenes"]] <- toJSON(geneListGenes);
 
+            # The gene Knn
+            exportList[["geneknn"]] <- generateGeneKnnJSON();
+
             ## Sparse Count Matrix & dimnames as JSON.
             # TODO: export matsparse as S4 object and move "splitting" over to Rcpp.
             #exportList[["matsparse"]] <- matsparseToSave;

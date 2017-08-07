@@ -24,6 +24,8 @@ void WriteListToBinary(List expL, std::string outfile)
     string genesetsData = expL["genesets"];
     string genesetsgenesData = expL["genesetGenes"];
 
+    string geneKnn = expL["geneknn"];
+
     // Reading in the names of exported Embeddings:
     vector<string> embedList = expL["embedList"];
 
@@ -31,6 +33,9 @@ void WriteListToBinary(List expL, std::string outfile)
     list<entry> entries;
 
     //Make entries for JSON items
+    struct entry *geneKnnEntry = make_entry_from_string("geneknn", geneKnn);
+    entries.push_back(*geneKnnEntry);
+
     // Cellmetadata
     struct entry *metadataEntry = make_entry_from_string("cellmetadata", cellmetadataData);
     entries.push_back(*metadataEntry);
