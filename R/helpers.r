@@ -69,11 +69,18 @@ p2.generate.human.go.web <- function(myGeneNames) {
 #' @param displayname name to display for the metadata
 #' @param s s value for rainbow palette
 #' @param v v value for rainbow palette
+#' @param start starting value
+#' @param end ending value
+#' @pal optional vector of colours to use, if provided overrides s,v,start and end parameters
 #' @export p2.metadata.from.factor
-p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v =1) {
+p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = 1, pal = NULL) {
   # Check input
-  if ( !is.factor(metadata) | is.null(names(metadata))) {
-    stop('metadata parameter has to be a named factor');
+  if ( !is.factor(metadata) ) {
+    stop('metadata has to be a factor');
+  }
+
+  if (  is.null(names(metadata))) {
+    stop('metadata needs to be named with cell identifiers');
   }
 
   # Convert input factor to named number vector
@@ -84,12 +91,28 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v =1) {
   labs <- levels(metadata);
 
   # Genereate palette
-  pal <- rainbow(n = nlevels(metadata), s = s, v = v);
+  if (!is.null(pal)){
+    # Do some checks on pal and set that
+    if (nlevels(metadata) != length(pal)) {
+     stop("The provided palette contains a different number of colours from the levels in the metadata");
+    } else {
+      if (is.null(names(pal))) {
+        pal0 <- pal;
+      } else {
+        # The palette is named, we need to ensure that we have the correct order
+        stop("Named palettes not implemented");
+      }
+    }
+  } else {
+    # No palette has been specified use the parameters to make a rainbow palette
+    pal0 <- rainbow(n = nlevels(metadata), s = s, v = v, start = start, end = end, alpha = 1);
+  }
 
   ret <- list(
     data = data,
     levels = labs,
-    palette = pal
+    palette = pal0,
+    displayname = ""
   );
 
   if (!is.null(displayname)) {
