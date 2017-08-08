@@ -144,7 +144,7 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 #' @return a pagoda2 web object that presents a Rook compatible interface
 #' @export make.p2.app
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
-                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application") {
+                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application",innerOrder=NULL) {
     # Build the metadata
     metadata <- list();
 
@@ -206,7 +206,8 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
         verbose = 0,
         debug = TRUE,
         geneSets = geneSets,
-        metadata = metadata
+        metadata = metadata,
+        innerOrder = innerOrder
     );
 
     invisible(p2w);

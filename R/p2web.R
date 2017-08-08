@@ -55,7 +55,7 @@ pagoda2WebApp <- setRefClass(
         # keepOriginal: maintain a copy to the original RF object -- this allows for some extra capabilities
 
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
-                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE) {
+                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE, innerOrder=NULL) {
 
             # Keep the original pagoda 2 object
             # This is required for things like differential expression and
@@ -87,7 +87,7 @@ pagoda2WebApp <- setRefClass(
             # Generate an hclust object of these cell groups
             # a cell ordering compatible with these groups
             # an the number of cells in each group (for plotting purposes)
-            mainDendrogram <<- .self$generateDendrogramOfGroups(pagoda2obj,dendGroups);
+            mainDendrogram <<- .self$generateDendrogramOfGroups(pagoda2obj,dendGroups,innerOrder);
 
             # Available reductions
             reductions <<- pagoda2obj$reductions;
@@ -137,7 +137,7 @@ pagoda2WebApp <- setRefClass(
         },
 
 
-        generateDendrogramOfGroups = function(r, dendrogramCellGroups){
+        generateDendrogramOfGroups = function(r, dendrogramCellGroups,innerOrder = NULL){
             cl0 <- dendrogramCellGroups
             # Generate an hclust objct of the above groups
             dendrogramCellGroups <- dendrogramCellGroups[match(rownames(r$counts),names(dendrogramCellGroups))]
@@ -153,8 +153,80 @@ pagoda2WebApp <- setRefClass(
 
             # We now need to derive a cell order compatible with the order
             # of the above dendrogram
+            if(!is.null(innerOrder) && innerOrder == "knn") {
+                message("Creating reductions and knn-embedding for all groups")
+                message("This might take a bit")
+            }
+
             cellorder <- unlist(lapply(hcGroups$labels[hcGroups$order], function(x) {
-                base::sample(names(cl0)[cl0 == x]) # Sample for random order
+                    if(is.null(innerOrder)){
+                        base::sample(names(cl0)[cl0 == x]) # Sample for random order
+                        
+                    } else {
+                        if(length(names(cl0)[cl0 == x]) < 5){
+                               base::sample(names(cl0)[cl0 == x]);
+                                message(paste("Cluster", x ,"contains less than 5 cells - no Ordering applied"))
+                        } else {
+                        if(innerOrder == "odPCA") {
+
+                            if(!"odgenes" %in% names(r$misc)){
+                                stop("Missing odgenes for odPCA");
+                            } else {
+                                celsel <- names(cl0)[cl0 == x]
+                                vpca <- r$counts[celsel, r$misc$odgenes] %*% irlba::irlba(r$counts[celsel,r$misc$odgenes],nv = 1,nu=0)$v # run a PCA on overdispersed genes just in this selection.
+                                celsel[order(vpca,decreasing = T)] # order by this PCA
+                            }
+
+                        } else if (innerOrder == "reductdist") {
+                            if(!"PCA" %in% names(r$reductions)){
+                                stop("Missing PCA reduction, , run calculatePcaReduction first");
+                            } else {
+
+                                celsel <- names(cl0)[cl0 == x]
+                                celsel[hclust(as.dist(1-WGCNA::cor(t(r$reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
+                            }
+
+                        } else if(innerOrder == "graphbased") {
+
+                            if(!"PCA" %in% names(r$graphs)){
+                                stop("Missing graph, , run makeKnnGraph first");
+                            } else {
+                                celsel <- names(cl0)[cl0==x]
+                                sgraph <- igraph::induced_subgraph(r$graphs$PCA,(celsel))
+                                celsel[hclust(as.dist(1-WGCNA::cor(t(igraph::layout.auto(sgraph,dim=3)))))$order]                    
+                            }
+
+                        } else if(innerOrder == "knn") {
+                            require(largeVis)
+
+                            celsel <- names(cl0)[cl0 == x]
+                            k <- round(pmax(length(celsel)*0.20,5)) # Coarse estimate for k
+                            nv <- ceiling(pmax(length(celsel)*0.10,5)) # Coarse estimate for appropriate number of PCs 
+                            
+                            xx <- r$counts[celsel,] %*% irlba(r$counts[celsel,],nv = nv,nu=0)$v
+                            colnames(xx) <- paste('PC',seq(ncol(xx)),sep='')
+                
+                            xn <- hnswKnnLp(as.matrix(xx),k,nThreads=r$n.cores,p=2.0,verbose=0)
+                            
+                            xn <- xn[!xn$s==xn$e,]
+                            xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
+                        
+                            df <- data.frame(from=rownames(xx)[xn$s+1],to=rownames(xx)[xn$e+1],weight=xn$d,stringsAsFactors=F)
+                            
+                            df$weight <- pmax(0,df$weight);
+                            xn <- cbind(xn,rd=df$weight)
+                            edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(xx),nrow(xx)))
+                            edgeMat <- edgeMat + t(edgeMat);
+                            wij <- largeVis::buildWijMatrix(edgeMat,perplexity=100,threads=r$n.cores)
+                            coords <- largeVis::projectKNNs(wij = wij, dim=1, M = 5, verbose = FALSE,sgd_batches = 2e6,gamma=1, seed=1)
+                            
+                            rownames(xx)[order(coords)]
+
+                        } else {
+                            stop(paste0(innerOrder," is not a possible option for the inner Clustering."))
+                            }
+                        }
+                    }
             }))
 
             # We need the cell order cluster sizes
