@@ -167,7 +167,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     }
 
     if (show.batch) {
-      if(!nlevels(r$batch)=<1){
+      if(!nlevels(r$batch)<=1){
         batchData <- as.numeric(r$batch) - 1;
         names(batchData) <- names(r$batch);
         if ( "batch" %in% names(r@.xData) ) {
