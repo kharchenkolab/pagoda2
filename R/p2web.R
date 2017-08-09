@@ -70,6 +70,13 @@ pagoda2WebApp <- setRefClass(
                 stop("ERROR: The provided object is not a pagoda 2 object")
             }
 
+            # Check that the dendGroups we are getting is what it should be
+            if (length(dendGroups) != nrow(pagoda2obj$counts)) {
+                cat("We have an error");
+                stop("ERROR: The provided dendGroups has a different number of cells than the pagoda 2 object")
+            }
+
+
             # Keep the name for later (consistent) use
             name <<- appName;
 

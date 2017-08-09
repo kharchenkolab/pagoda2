@@ -167,16 +167,18 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     }
 
     if (show.batch) {
-      batchData <- as.numeric(r$batch) - 1;
-      names(batchData) <- names(r$batch);
-      if ( "batch" %in% names(r@.xData) ) {
-          if ( !is.null(r@.xData$batch)  ) {
-              metadata$batch <- list(
-                  data = batchData,
-                  palette = rainbow(n = length(levels(r$batch))),
-                  displayname = 'Batch'
-              )
-          }
+      if(!nlevels(r$batch)<=1){
+        batchData <- as.numeric(r$batch) - 1;
+        names(batchData) <- names(r$batch);
+        if ( "batch" %in% names(r@.xData) ) {
+            if ( !is.null(r@.xData$batch)  ) {
+                metadata$batch <- list(
+                    data = batchData,
+                    palette = rainbow(n = length(levels(r$batch))),
+                    displayname = 'Batch'
+                )
+            }
+        }
       }
     }
 
