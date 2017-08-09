@@ -23,7 +23,8 @@ Pagoda2 <- setRefClass(
   "Pagoda2",
   fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes','pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
   methods = list(
-    initialize=function(x, ..., modelType='plain',batchNorm='glm',n.cores=30,verbose=TRUE,min.cells.per.gene=30,trim=round(min.cells.per.gene/2),lib.sizes=NULL,log.scale=FALSE) {
+    initialize=function(x, ..., modelType='plain', batchNorm='glm', n.cores=30, verbose=TRUE,
+                        min.cells.per.gene=30, trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE) {
       # # init all the output lists
       embeddings <<- list();
       graphs <<- list();
@@ -35,6 +36,12 @@ Pagoda2 <- setRefClass(
       misc <<-list(lib.sizes=lib.sizes,log.scale=log.scale,model.type=modelType,trim=trim);
       batch <<- NULL;
       counts <<- NULL;
+
+      if(!class(x) == 'dgCMatrix') {
+        stop("x is not of class dgCMatrix");
+      }
+
+
       if(!missing(x) && class(x)=='Pagoda2') {
         callSuper(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores);
       } else {
