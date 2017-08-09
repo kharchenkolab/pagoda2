@@ -71,7 +71,7 @@ pagoda2WebApp <- setRefClass(
             }
 
             # Check that the dendGroups we are getting is what it should be
-            if (length(dendGroups) != ncol(pagoda2obj$counts)) {
+            if (length(dendGroups) != nrow(pagoda2obj$counts)) {
                 cat("We have an error");
                 stop("ERROR: The provided dendGroups has a different number of cells than the pagoda 2 object")
             }
