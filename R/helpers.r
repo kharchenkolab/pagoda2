@@ -520,3 +520,119 @@ factorToP2selection <- function(cl,col=NULL) {
   invisible(ns)
 }
 
+#' @title remove cells that are present in more than one selection from all selections
+#' @description remove cells that are present in more than one selection from all the
+#' selections they are in
+#' @param selection a pagoda2 selections list
+#' @return a new list with the duplicated cells removed
+#' @export removeSelectionOvelaps
+removeSelectionOvelaps <- function(selections) {
+  selectionsCellsFlat <- unname(unlist(sapply(selections, function(x) x$cells)))
+  multiClassified <- selectionsCellsFlat[duplicated(selectionsCellsFlat)]
+
+  lapply(selections, function(x) {
+    r <- list();
+    r$name = x$name;
+    r$color = x$color;
+    r$cells = x$cells[!x$cells %in% multiClassified];
+    r;
+  });
+}
+
+#' @title get the number of cells per selection group
+#' @description get the number of cells in each selection group
+#' @param selection a pagoda2 selection list
+#' @return a named vector of cell numbers in each grous
+#' @export cellsPerSelectionGroup
+cellsPerSelectionGroup <- function(selection) {
+  unlist(lapply(selection, function(x) length(x$cells)))
+}
+
+#' Validates a pagoda2 selection object
+#' @description validates a pagoda2 selection object
+#' @param selections the pagoda2 selection object to be validated
+#' @return a logical value indicating if the object is valid
+#' @export validateSelectionsObject
+validateSelectionsObject <- function(selections) {
+  t <- lapply(selections, function(x) {
+    isvalidentry <- TRUE;
+    if (!is.character(x$name)) {
+      isvalidentry <- FALSE;
+    }
+    if (!is.character(x$color)) {
+      isvalidentry <- FALSE;
+    }
+    if (!is.character(x$cells)) {
+      isvalidentry <- FALSE;
+    }
+    isvalidentry;
+  })
+
+  all(unlist(t))
+}
+
+#' Given a clustering vector and a set of selections assign names to the clusters
+#' @description This function will use a set of pagoda2 cell seletcion to identify
+#' the clusters in a a named factor. It is meant to be used to import user defined annotations
+#' that are defined as selections into a more formal categorization of cells that are defined by cluster.
+#' To help with this the function allows a percent of cells to have been classified in the selections into
+#' multiple groups, something which may be the result of the users making wrong selections. The percent of
+#' cells allows to be multiselected in any given group is defined by multiClassCutoff. Furthermore
+#' the method will assign each cluster to a selection only if the most popular cluster to the next most popular
+#' exceed the ambiguous.ratio in terms of cell numbers. If a cluster does not satisfy this condtiion it is not
+#' assigned.
+#' @param clustering a named factor of clusters, where every entry is a cell
+#' @param selections a pagoda2 selection object
+#' @param multiClasscutoff percent of cells in any one cluster that can be multiassigned
+#' @param ambiguour.ratio the ratio of first and second cell numbers for any cluster to produce a valid clustering
+#' @return a data.frame with two colums, one for cluster and one for selections, each cluster appears only once
+getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff = 0.3, ambiguous.ratio = 0.5) {
+  require(plyr)
+
+  if (!is.factor(clustering)) {
+    stop('clustering is not a factor');
+  }
+
+  if (!validateSelectionsObject(selections)) {
+    stop('selections is not a valid selection object');
+  }
+
+  multiClass <- calcMulticlassified(selections)
+
+  # Stop if the any of the selections exceed the specified multiclass cutoff
+  if(!all(multiClass < multiClassCutoff)) {
+    msg <- paste0('The following selections have a very high number of multiclassified cells: ',paste(names(multiClass)[!multiClass < multiClassCutoff], collapse = ', '), '. Please reduce the overlaps and try again. You can use calcMulticlassified() to see more details.')
+    stop(msg)
+  }
+
+  # Clean selections of overlaps
+  sel.clean <- removeSelectionOverlaps(selections)
+  sel.clean.vector <- factorFromP2Selection(sel.clean)
+
+  shared.names <- intersect(names(sel.clean.vector), names(clustering))
+
+  confusion.table <- table(data.frame(sel.clean.vector[shared.names],clustering[shared.names]))
+
+
+  tmp1 <- adply(.data = confusion.table, .margins = 2, .fun =  function(x) {
+    rv <- NA
+    x.sort <- sort(x, decreasing=T)
+    if((x.sort[1] * ambiguous.ratio) >= x.sort[2]) {
+      rv <- names(x.sort)[1]
+    }
+    rv
+  })
+
+  labels <- tmp1[,2]
+  names(labels) <- tmp1[,1]
+
+  colnames(tmp1) <- c('cluster', 'selection')
+  tmp1
+
+}
+
+
+
+
+
+
