@@ -586,6 +586,7 @@ validateSelectionsObject <- function(selections) {
 #' @param multiClasscutoff percent of cells in any one cluster that can be multiassigned
 #' @param ambiguour.ratio the ratio of first and second cell numbers for any cluster to produce a valid clustering
 #' @return a data.frame with two colums, one for cluster and one for selections, each cluster appears only once
+#' @export getClusterLabelsFromSelection
 getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff = 0.3, ambiguous.ratio = 0.5) {
   require(plyr)
 
@@ -631,6 +632,21 @@ getClusterLabelsFromSelection <- function(clustering, selections, multiClassCuto
 
 }
 
+#' Given a cell clustering (partitioning) and a set of user provided selections
+#' generate a cleaned up annotation of cluster groups that can be used for classification
+#' @param clustering a factor that provides the clustering
+#' @param selection a p2 selection object that provided by the web interfact user
+#' @return a named factor that can be used for classification
+#' @export generateClassificationAnnotation
+generateClassificationAnnotation <- function(clustering, selections) {
+  clAnnotation <- getClusterLabelsFromSelection(clustering, selections);
+  rownames(clAnnotation) <- clAnnotation$cluster
+
+  r <- as.factor(clAnnotation[as.character(clustering),]$selection)
+  names(r) <- names(clustering)
+
+  r
+}
 
 
 
