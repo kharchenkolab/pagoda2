@@ -1,8 +1,8 @@
 #' @import org.Hs.eg.db
 #' @import org.Mm.eg.db
 #' @import GO.db
-#' @import BiocGenerics
-#' @import AnnotationDbi
+# @import BiocGenerics
+# @import AnnotationDbi
 #' @import parallel
 NULL
 
@@ -77,4 +77,3 @@ p2.generate.go.web <- function(gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL
   # return geneSets
   invisible(geneSets)
 }
-
