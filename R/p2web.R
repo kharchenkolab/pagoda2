@@ -553,8 +553,8 @@ pagoda2WebApp <- setRefClass(
                                           matrixToSend <- pathways$xv[,cellIndices,drop=F];
 
                                           # Discard values < 1/50 of the max
-                                          trimPoint <-  max(abs(matrixToSend)) / 50;
-                                          matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
+                                          #trimPoint <-  max(abs(matrixToSend)) / 50;
+                                          #matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
 
                                           # Transpose and make sparse
                                           matrixToSend <- Matrix(t(matrixToSend), sparse = T);
@@ -1033,8 +1033,10 @@ pagoda2WebApp <- setRefClass(
             # Serialise aspect matrix
             cellIndices <- mainDendrogram$cellorder;
             aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
-            trimPoint <- max(abs(aspectMatrixToSave)) / 50;
-            aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
+
+            #trimPoint <- max(abs(aspectMatrixToSave)) / 50;
+            #aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
+            
             aspectMatrixToSave <- t(aspectMatrixToSave);
             aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
 
