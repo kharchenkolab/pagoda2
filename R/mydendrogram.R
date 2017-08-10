@@ -329,7 +329,7 @@ my.heatmap <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     lhei <- c((if(doCdend) 1 else 0.05) + if(!is.null(main)) 0.2 else 0, imageVSize)
     if(!missing(ColSideColors)) { ## add middle row to layout
       if(is.matrix(ColSideColors)) {
-        if(ncol(ColSideColors)!=nc) 
+        if(ncol(ColSideColors)!=nc)
           stop("'ColSideColors' matrix must have the same number of columns as length ncol(x)")
         lmat <- rbind(lmat[1,]+1, c(NA,1), lmat[2,]+1)
         lhei <- c(lhei[1], 0.2*nrow(ColSideColors), lhei[2])
@@ -516,8 +516,8 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 
     ## Calculate the plot layout
     ds <- dev.size(units="cm");
-    
-    
+
+
     lmat <- rbind(c(NA, 3), 2:1)
     if(doRdend) {
       lwid <- c(if(is.character(Rowv.hsize)) Rowv.hsize else lcm(Rowv.hsize*ds[1]), 1)
@@ -534,7 +534,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     if(!missing(ColSideColors) && !is.null(ColSideColors)) { ## add middle row to layout
 
       if(is.matrix(ColSideColors)) {
-        if(ncol(ColSideColors)!=nc) 
+        if(ncol(ColSideColors)!=nc)
           stop("'ColSideColors' matrix must have the same number of columns as length ncol(x)")
         if(is.character(ColSideColors.unit.vsize)) {
           ww <- paste(as.numeric(gsub("(\\d+\\.?\\d*)(.*)","\\1",ColSideColors.unit.vsize,perl=T))*nrow(ColSideColors),gsub("(\\d+\\.?\\d*)(.*)","\\2",ColSideColors.unit.vsize,perl=T),sep="")
@@ -624,7 +624,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     if(doCdend) {
       par(mar = c(internal.margin, 0, if(!is.null(main)) 1 else 0, margins[2]))
       plot(ddc, axes = FALSE, xaxs = "i", leaflab = "none",yaxs="i")
-    } 
+    }
     invisible(list(rowInd = rowInd, colInd = colInd,
                    Rowv = if(keep.dendro && doRdend) ddr,
                    Colv = if(keep.dendro && doCdend) ddc ))

@@ -357,12 +357,3 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 
   deSets
 }
-
-
-
-
-
-
-
-
-
