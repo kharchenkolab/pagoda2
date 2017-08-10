@@ -4,7 +4,9 @@
 \alias{make.p2.app}
 \title{Generate a Rook Server app from a pagoda2 object}
 \usage{
-make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(), geneSets)
+make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(), geneSets,
+  show.depth = T, show.batch = T, show.clusters = T,
+  appname = "Pagoda2 Application")
 }
 \arguments{
 \item{r}{pagoda2 object}
@@ -13,15 +15,21 @@ make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(), geneSets)
 
 \item{geneSets}{a list of genesets to show}
 
-\item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
+\item{show.depth}{logical, include depth as a metadata row}
 
-\item{debug}{build debug app?}
+\item{show.batch}{logical, include batch as a metadata row}
+
+\item{show.clusters}{logical, include clusters as a metadata row}
+
+\item{appname}{application name}
+
+\item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
 }
 \value{
-a Rook web app
+a pagoda2 web object that presents a Rook compatible interface
 }
 \description{
-Contains some code required to convert from the pagoda2 object to the
-web object constructor. Advanced users may wish to use the PagodaWebApp
-constructor directly
+Generates a pagoda 2 web object from pagoda2 object by automating steps that most
+users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
+may wish to use use the constructor directly
 }

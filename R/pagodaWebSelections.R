@@ -1,8 +1,7 @@
-
-#############################################
-# Functions for working with p2 selections
-#############################################
-
+# File: pagodaWebSelection
+# Author: Nikolas Barkas
+# Date: August 2017
+# Description: A collection of functions for working with p2 selections
 
 #' @title reads a pagoda2 web app exported cell selection file
 #' @description reads a cell selection file exported by pagoda2 web interface as a list
@@ -249,4 +248,29 @@ generateClassificationAnnotation <- function(clustering, selections) {
   names(r) <- names(clustering)
 
   r
+}
+
+#' Returns all the cells that are in the designated selections
+#' @description Given a pagoda2 selections object and the names of some selections
+#' in it returns the names of the cells that are in these selections removed any duplicates
+#' @param p2selections a p2 selections object
+#' @param selectionNames the names of some selections in th p2 object
+#' @return a character vector of cell names
+#' @export getCellsInSelections
+getCellsInSelections <- function(p2selections, selectionNames) {
+  if(!is.character(selectionNames)) {
+    stop('selectionNames needs to be a character vector of cell names');
+  }
+
+  if(!validateSelectionsObject(p2selections)) {
+    stop('p2selections is not a valid p2 selection object');
+  }
+
+  if(any(!selectionNames %in% names(p2selections))) {
+    stop('Some selection names were not found in the pagoda2 selections object');
+  }
+
+  cells <- unique(unname(unlist(lapply(p2selections[selectionNames], function(x) x$cells))))
+
+  cells
 }
