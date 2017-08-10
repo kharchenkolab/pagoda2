@@ -1202,18 +1202,15 @@ pagoda2WebApp <- setRefClass(
 		    generateGeneKnnJSON = function() {
     		    require(rjson)
 
-                from <- originalP2object$genegraphs$graph$from
-                kpg <- table(from)[unique(from)]
-                cs <- cumsum(kpg)
-                to <- originalP2object$genegraphs$graph$to
-                y <- lapply(1:length(kpg),function(n){
+                cs <- cumsum(table(originalP2object$genegraphs$graph$from)[unique(originalP2object$genegraphs$graph$from)])
+                y <- lapply(1:length(cs),function(n){
                         if(n == 1){
-                            to[1:cs[n]]
+                            originalP2object$genegraphs$graph$to[1:cs[n]]
                         } else {
-                            to[(cs[n-1]+1):cs[n]]
+                            originalP2object$genegraphs$graph$to[(cs[n-1]+1):cs[n]]
                         }
                     })
-                names(list) <- unique(from)
+                names(y) <- unique(originalP2object$genegraphs$graph$from)
                 toJSON(y)
 		    },
 
