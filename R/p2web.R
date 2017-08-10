@@ -1084,7 +1084,7 @@ pagoda2WebApp <- setRefClass(
             #                 });
             #     geneListGenes[[geneListName]] <- unname(retd);
             # }
-            geneListGenes <- lapply(myPagoda2WebObject$geneSets, function(gos) make.unique(gos$genes))
+            geneListGenes <- lapply( geneSets, function(gos) make.unique(gos$genes))
 
             # Creation of the export List for Rcpp
 
