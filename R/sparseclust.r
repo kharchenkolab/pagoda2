@@ -493,9 +493,13 @@ Pagoda2 <- setRefClass(
       return(invisible(cls))
     },
 
+    geneKnnbyPCA = function() {
+      stop('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+    },
+
     # Calculates gene Knn network for gene similarity
     # Author: Simon Steiger
-    geneKnnbyPCA = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =100, k = 30, n.cores = .self$n.cores, verbose =T) {
+    makeGeneKnnGraph = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =100, k = 30, n.cores = .self$n.cores, verbose =T) {
        # Transpose first
        x <- t(counts);
 
@@ -522,8 +526,8 @@ Pagoda2 <- setRefClass(
       colnames(pcas) <- paste0('PC',seq(ncol(pcas)));
 
       # Save into genegraphs slot
-      genegraphs$genePCs <<- pcs;
-      genegraphs$geneRotated <<- pcas;
+      #genegraphs$genePCs <<- pcs;
+      #genegraphs$geneRotated <<- pcas;
 
       # Using cosine distance only here
       if(center) {
