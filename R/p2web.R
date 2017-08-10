@@ -510,6 +510,7 @@ pagoda2WebApp <- setRefClass(
                                         # Discard values < 1/50 of the max
                                         #trimPoint <-  max(abs(matrixToSend)) / 50;
                                         #matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
+                                        
 
                                         # Transpose and make sparse
                                         matrixToSend <- Matrix(t(matrixToSend), sparse = T);
@@ -555,6 +556,12 @@ pagoda2WebApp <- setRefClass(
                                           # Discard values < 1/50 of the max
                                           #trimPoint <-  max(abs(matrixToSend)) / 50;
                                           #matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
+
+                                          # Discard values < 1/50 of row max
+                                          #rowmax <- apply(matrixToSend,1,max)
+                                          #blw <- which(apply(array(1:nrow(matrixToSend)),1,function(x) matrixToSend[x,] < rowmax[x]/50))
+                                          #matrixToSend[blw] <- 0
+
 
                                           # Transpose and make sparse
                                           matrixToSend <- Matrix(t(matrixToSend), sparse = T);
@@ -1034,9 +1041,16 @@ pagoda2WebApp <- setRefClass(
             cellIndices <- mainDendrogram$cellorder;
             aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
 
+
+            # Discard values < 1/50 of overall max
             #trimPoint <- max(abs(aspectMatrixToSave)) / 50;
             #aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
-            
+
+            # Discard values < 1/50 of row max
+            # rowmax <- apply(aspectMatrixToSave,1,max)
+            # blw <- which(apply(array(1:nrow(aspectMatrixToSave)),1,function(x) aspectMatrixToSave[x,] < rowmax[x]/50))
+            # aspectMatrixToSave[blw] <- 0
+
             aspectMatrixToSave <- t(aspectMatrixToSave);
             aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
 
@@ -1186,13 +1200,21 @@ pagoda2WebApp <- setRefClass(
 
 		    # Generate a JSON list representation of the gene KNN network
 		    generateGeneKnnJSON = function() {
-		      require(rjson)
-		      geneList <- unique(originalP2object$genegraphs$graph$from)
-		      names(geneList) <- geneList
-		      y <- lapply(geneList, function(x) {
-		        originalP2object$genegraphs$graph$to[originalP2object$genegraphs$graph$from == x]
-		      })
-		      toJSON(y)
+    		    require(rjson)
+
+                from <- originalP2object$genegraphs$graph$from
+                kpg <- table(from)[unique(from)]
+                cs <- cumsum(kpg)
+                to <- originalP2object$genegraphs$graph$to
+                y <- lapply(1:length(kpg),function(n){
+                        if(n == 1){
+                            to[1:cs[n]]
+                        } else {
+                            to[(cs[n-1]+1):cs[n]]
+                        }
+                    })
+                names(list) <- unique(from)
+                toJSON(y)
 		    },
 
 		    # Generate information about the embeddings we are exporting
