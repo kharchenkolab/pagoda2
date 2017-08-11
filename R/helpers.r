@@ -141,10 +141,11 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 #' @param show.batch logical, include batch as a metadata row
 #' @param show.clusters logical, include clusters as a metadata row
 #' @param appname application name
+#' @param innerOrder Ordering of cells inside the clusters provided in dendrogramCellGroups. This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL
 #' @return a pagoda2 web object that presents a Rook compatible interface
 #' @export make.p2.app
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
-                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application",innerOrder=NULL) {
+                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application",innerOrder=NULL,orderDend=FALSE) {
     # Build the metadata
     metadata <- list();
 
@@ -209,7 +210,8 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
         debug = TRUE,
         geneSets = geneSets,
         metadata = metadata,
-        innerOrder = innerOrder
+        innerOrder = innerOrder,
+        orderDend = orderDend
     );
 
     invisible(p2w);

@@ -27,7 +27,8 @@ Imports: rjson,
     Rtsne,
     GO.db,
     RMTstat,
-    org.Hs.eg.db
+    org.Hs.eg.db,
+    dendsort
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1

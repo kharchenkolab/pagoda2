@@ -55,7 +55,7 @@ pagoda2WebApp <- setRefClass(
         # keepOriginal: maintain a copy to the original RF object -- this allows for some extra capabilities
 
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
-                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE, innerOrder=NULL) {
+                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE, innerOrder=NULL,orderDend=FALSE) {
 
             # Keep the original pagoda 2 object
             # This is required for things like differential expression and
@@ -94,7 +94,7 @@ pagoda2WebApp <- setRefClass(
             # Generate an hclust object of these cell groups
             # a cell ordering compatible with these groups
             # an the number of cells in each group (for plotting purposes)
-            mainDendrogram <<- .self$generateDendrogramOfGroups(pagoda2obj,dendGroups,innerOrder);
+            mainDendrogram <<- .self$generateDendrogramOfGroups(pagoda2obj,dendGroups,innerOrder,orderDend);
 
             # Available reductions
             reductions <<- pagoda2obj$reductions;
@@ -144,7 +144,7 @@ pagoda2WebApp <- setRefClass(
         },
 
 
-        generateDendrogramOfGroups = function(r, dendrogramCellGroups,innerOrder = NULL){
+        generateDendrogramOfGroups = function(r, dendrogramCellGroups,innerOrder = NULL,orderDend=FALSE){
             cl0 <- dendrogramCellGroups
             # Generate an hclust objct of the above groups
             dendrogramCellGroups <- dendrogramCellGroups[match(rownames(r$counts),names(dendrogramCellGroups))]
@@ -157,7 +157,11 @@ pagoda2WebApp <- setRefClass(
 
             #hcGroup is a hclust object of whatever cell groupings we provided above
             hcGroups <- hclust(as.dist(ld), method = 'ward.D');
-
+            
+            if(orderDend){
+                require(dendsort)
+                hcGroups <- dendsort::dendsort(hcGroups)
+            }
             # We now need to derive a cell order compatible with the order
             # of the above dendrogram
             if(!is.null(innerOrder) && innerOrder == "knn") {
