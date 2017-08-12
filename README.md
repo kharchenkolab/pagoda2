@@ -1,8 +1,13 @@
 # Overview of pagoda 2
 
 # Demo Web Application
-http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/index.html
-(Requires latest Firefox or Chrome)
+
+10X sorted PBMCs
+https://tinyurl.com/pagoda2demo
+
+
+10X PBMC Dataset
+http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/10xPBMC.bin
 
 # Installation Instructions
 
@@ -14,7 +19,7 @@ it should work with any subsequent version. To install pagoda2 please follow the
 Install system dependencies for building nmslib, example here provided for Ubuntu
 ```
 $ sudo apt-get update
-$ sudo apt-get install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev
+$ sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libcurl4-gnutls-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
 
 # Download and build nmslib v1.5.3
 # You will need to keep this directory after the installation
@@ -52,12 +57,24 @@ $ export NMSLIB_PATH=/path/to/nmslib-1.5.3/
 $ R
 # Install Bioconductor dependencies
 > source("http://bioconductor.org/biocLite.R")
-> biocLite(c("GO.db", "org.Hs.eg.db"), suppressUpdates=TRUE)
+> biocLite(c("GO.db", "org.Hs.eg.db","pcaMethods"), suppressUpdates=TRUE)
+> library(devtools)
+> install_github("igraph/rigraph") # Don't install with install.packages()
+> install.packages(‘Cairo’)
+> install.packages('devtools')
+
 # Install pagoda
 > library(devtools)
 > install_github("hms-dbmi/pagoda2")
 > library('pagoda2')
 # Pagoda2 is now ready to use
 ```
+
+# Install padoga2 as a docker container
+[Instructions for installing docker container with pagoda2](vignettes/Docker.md)
+
 # Basic analysis walkthrough
 [PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
+
+# Basic analysis with generation of pagoda2 web application
+[Pagoda2 Web Application analysis](vignettes/pagoda2.Rmd)

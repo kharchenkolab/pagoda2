@@ -31,6 +31,12 @@ function heatmapViewer() {
     this.currentOverlaySelectionName = null;
     this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
+    
+     // Palette Manager init
+    this.palManager = new paletteManager();
+    this.palManager.setPalette(p2globalParams.heatmapViewer.defaultPaletteName);
+    this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);
+    
     heatmapViewer.instance =  this;
 };
 
@@ -99,9 +105,9 @@ heatmapViewer.prototype.initialize = function() {
     this.displayGenes = [];
 
     // Palette Manager init
-    this.palManager = new paletteManager();
+    /*this.palManager = new paletteManager();
     this.palManager.setPalette(p2globalParams.heatmapViewer.defaultPaletteName);
-    this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);
+    this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);*/
 
     this.displayGenes = new Array();
     this.drawHeatmap();
@@ -153,18 +159,11 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
 }
 
 
-
-/**
- * Generates the heatmap configuration menu
- */
-heatmapViewer.prototype.generateMenu = function() {
-  var toolbar = Ext.create('Ext.Toolbar');
+heatmapViewer.prototype.generateHeatmapSettingsMenu = function(){
   var heatView = this;
-
   var paletteMenu = this.generatePalettesMenu();
-
-
- var heatmapSettingsMenu = Ext.create('Ext.menu.Menu', {
+  
+  return Ext.create('Ext.menu.Menu', {
 	id: 'heatmapSettingsMenu',
 	items: [
 	    {
@@ -201,8 +200,19 @@ heatmapViewer.prototype.generateMenu = function() {
 
 	] // items
     });
+}
+/**
+ * Generates the heatmap configuration menu
+ */
+heatmapViewer.prototype.generateMenu = function() {
+  //var toolbar = Ext.create('Ext.Toolbar');
+  //var heatView = this;
 
-toolbar.add({
+  
+  //var heatmapSettingsMenu = this.generateHeatmapSettingsMenu();
+
+
+    /*toolbar.add({
           text: "",
         type: "button",
         tooltip: 'Download current view',
@@ -226,11 +236,11 @@ toolbar.add({
                           canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
             }// if
         } // handler
-});
+});*/
 
 
 
-toolbar.add({
+    /*toolbar.add({
   text: '',
   xtype: 'button',
   tooltip: 'Clear selection overlay',
@@ -241,19 +251,19 @@ toolbar.add({
 
   }
 
-});
+});*/
 
       // Add plot configuration menu button
-    toolbar.add({
+    /*toolbar.add({
     	text: '',
     	xtype: 'button',
     	tooltip: 'Configure heatmap plot settings',
     	glyph: 0xf013,
     	menu: heatmapSettingsMenu
-    });
+    });*/
 
 
-      toolbar.add({
+      /*toolbar.add({
     text: '',
     xtype: 'button',
     tooltip: 'Help',
@@ -277,12 +287,15 @@ toolbar.add({
             resizable: false
           }).show();
     } // handler
-  }); // toolbar add
+  });*/ // toolbar add
 
 
-    var heatmapPanel = Ext.getCmp('heatmapPanel');
-    heatmapPanel.getHeader().add(toolbar);
+    //var heatmapPanel = Ext.getCmp('heatmapPanel');
+    //heatmapPanel.getHeader().add(toolbar);
 }
+
+
+
 
 /**
  * Setup all the overlay canvas events
@@ -294,6 +307,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     var heatmapAreaOverlay = $('#heatmap-area-overlay')[0];
 
+    var thisViewer = this;
     this.primaryMouseButtonDown = false;
     this.dragging = false;
     this.dragStartX = null;
@@ -304,7 +318,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
       var heatView = new heatmapViewer();
       var drawConsts = heatView.getDrawConstants();
-      if (e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
+      if (!(typeof thisViewer.displayGenes === 'undefined' || thisViewer.displayGenes.length === 0) && e.offsetX > drawConsts.left &  e.offsetX < drawConsts.left + drawConsts.width) {
         heatView.primaryMouseButtonDown = true;
         heatView.dragStartX =  e.offsetX;
       }
@@ -313,8 +327,8 @@ heatmapViewer.prototype.setupOverlays = function() {
 
     heatmapAreaOverlay.addEventListener('mouseup', function(e) {
       var heatView = new heatmapViewer();
+      if(heatView.primaryMouseButtonDown && !(typeof thisViewer.displayGenes === 'undefined' || thisViewer.displayGenes.length === 0)){
       heatView.primaryMouseButtonDown = false;
-
       if(heatView.dragging) {
         // End of drag
         heatView.dragging = false;
@@ -351,43 +365,39 @@ heatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#00FF00");//TODO green or blue?
+	      var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var heatV = new heatmapViewer();
-            heatV.highlightCellSelectionByName('heatmapSelection');
+            heatV.highlightCellSelectionByName(selectionName);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName('heatmapSelection');
+            embCntr.highlightSelectionByName(selectionName);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+            aspHeatView.highlightCellSelectionByName(selectionName);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
       }
-    });
-
-    // Click listener for setting gene color to embedding
-    heatmapAreaOverlay.addEventListener('dblclick', function(e) {
-    	var x = e.offsetX;
-    	var y = e.offsetY;
-
-    	var heatView = new heatmapViewer();
-    	var regionData = heatView.geneRegions.resolveClick(x, y);
-
-    	// Draw tooltip
-    	if (typeof regionData !== 'undefined') {
+      else{
+          var x = e.offsetX;
+    	    var y = e.offsetY;
+        	var heatView = new heatmapViewer();
+        	var regionData = heatView.geneRegions.resolveClick(x, y);
+    	    // Draw tooltip
     	    // Tell the embedding to update
     	    var embV = new embeddingViewer();
     	    embV.setColorConfiguration('geneexpression');
     	    embV.setGeneExpressionColorInfo({geneid: regionData.geneId});
     	    embV.updateColors();
-    	}
+      }
+      }
     });
+
 
     // Mouse  move listener for the cross hairs and tooltip
     heatmapAreaOverlay.addEventListener('mousemove', function(e) {
@@ -440,13 +450,14 @@ heatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(0,255,0,0.5)';
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
 
 
 
       }
+      
 
     });
 
@@ -678,7 +689,7 @@ heatmapViewer.prototype.showOverlay = function (x,y, label) {
 }
 
 heatmapViewer.prototype.getHeight = function() {
-  return Ext.getCmp('heatmapPanel').getHeight() - 60;
+  return Ext.getCmp('heatmapPanel').getHeight() - 20;
 }
 
 heatmapViewer.prototype.getWidth = function() {
@@ -790,12 +801,12 @@ heatmapViewer.prototype.drawHeatmap = function() {
 	// We also want to maintain a gene selection showing the
 	// current plotted genes
 	var geneSelCntr = new geneSelectionController();
-	geneSelCntr.setSelection('heatmapDisplayGenes', [], 'Current Heatmap Genes');
+	geneSelCntr.setSelection( [], 'Current Heatmap Genes', 'heatmapDisplayGenes');
     } else {
 
 	// Make a gene selection with the currently shown genes
 	var geneSelCntr = new geneSelectionController();
-	geneSelCntr.setSelection('heatmapDisplayGenes', this.displayGenes, 'Current Heatmap Genes');
+	geneSelCntr.setSelection( this.displayGenes, 'Current Heatmap Genes','heatmapDisplayGenes');
 	this.doDrawHeatmap();
     }
 }
@@ -893,10 +904,9 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
   // Get the cells in the cell selection to highlight
   var cellSelCntr = new cellSelectionController();
   var cellSelection = cellSelCntr.getSelection(selectionName);
-
   // Get the cell order
   var dataCntr = new dataController();
-  dataCntr.getCellOrder(function(cellorder) {
+  dataCntr.getCellOrderHash(function(cellorderHash) {
     // Currently displayed cells
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
@@ -922,7 +932,7 @@ heatmapViewer.prototype.highlightCellSelectionByName = function(selectionName) {
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
-      var cellIndex = cellorder.indexOf(cellSelection[i]);
+      var cellIndex = cellorderHash[cellSelection[i]];
 
       // Cell is among currently displayed ones
       if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
@@ -1138,7 +1148,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    var fontSize =  heatView.getRowFontSize(cellHeight)
 
 	    // Calculate position
-	    x = ncells * cellWidth + left + 20;
+	    x = ncells * cellWidth + left + 10;
 	    y = rowOrder[i] * cellHeight + top + cellHeight / 2 + fontSize / 3;
 
 	    // Plot
@@ -1181,4 +1191,22 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
     }); // dataCntr.getExpressionValuesSparseTransposedByCellIndexUnpacked callback
 } // doDrawHeatmapSparseMatrix
 
-
+heatmapViewer.prototype.downloadImage = function(){
+  var canvas = document.getElementById('heatmap-area');
+            const maxSize = 2000;
+            if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimension.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
+                     } //if
+                   } //fn
+                }) // Ext.Msg.show
+            } else {
+                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
+            }
+}

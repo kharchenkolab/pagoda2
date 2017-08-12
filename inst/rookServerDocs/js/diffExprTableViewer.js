@@ -97,10 +97,109 @@ diffExprTableViewer.prototype.generateTables = function() {
         closable: true,
         resizable: false
     }).show();
-
-
-
   }});
+  resultSelectionTbar.add(
+    {
+      type: "button",
+			text: 'Retrieve Cells',
+			tooltip: 'Retrieve Cell Selection',
+			glyph: 0xf0e2,
+			handler: function() {
+			  
+			 var selectedItems = Ext.getCmp("deResultSetsTableExtJS").getSelectionModel().getSelected();
+			 if(selectedItems.length === 1){
+			  var diffExprStore = differentialExpressionStore();
+			  var resultsDEset = diffExprStore.getResultSetByInternalName(selectedItems.getAt(0).getData().name)
+			  var selectionTextFields = [{
+			    id: "selectionAName",
+          xtype: "textfield",
+          fieldLabel: "New Selection A Name",
+          value: resultsDEset.getName() + "_A"
+        }];
+        
+			  if(resultsDEset.getSelectionB()){
+			    selectionTextFields.push({
+			      id: "selectionBName",
+            xtype: "textfield",
+            fieldLabel: "New Selection B Name",
+            value: resultsDEset.getName() + "_B"
+			    });
+			  }
+			  selectionTextFields.push({
+			    xtype:"button",
+			    text: "Ok",
+			    width: "20%",
+			    height: "25%",
+			    margin: "5 5 5 5",
+			    handler: function(){
+			      
+			      var selAName = Ext.getCmp("selectionAName").getValue();
+			      var cellSelCntr = new cellSelectionController();
+			      var re = new RegExp('[^A-Za-z0-9_]');
+    			  if (selAName.length === 0) {
+    				    Ext.MessageBox.alert('Error', 'You must enter a selection name');
+    				    return;
+    			  }
+    			  else if (selAName.match(re) ) {
+    				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
+    				    return;
+    			  } 
+    			  else if (cellSelCntr.getSelection(selAName)) {
+    				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!');
+    				    return;
+    				}
+			      if(resultsDEset.getSelectionB()){
+			        var selBName = Ext.getCmp("selectionBName").getValue();
+			        if (selBName.length === 0) {
+    				    Ext.MessageBox.alert('Error', 'You must enter a selection name');
+    				    return;
+    			    }
+    			    else if (selBName.match(re) ) {
+    				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
+    				    return;
+    			    } 
+    			    else if (cellSelCntr.getSelection(selBName)) {
+    				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!');
+    				    return;
+    				  }
+    				  else if(selBName === selAName){
+    				    Ext.MessageBox.alert("Error", "Selection A's name and Selection B's name must not be the same");
+    				    return;
+    				  }
+    				  cellSelCntr.setSelection(resultsDEset.getSelectionB(), selBName);
+			      }
+			      cellSelCntr.setSelection(resultsDEset.getSelectionA(),selAName);
+			      Ext.getCmp("retrieveCellSelectionsWindow").close();
+			    }
+			  });
+			  selectionTextFields.push({
+			    xtype:"button",
+			    text: "Cancel",
+			    width: "20%",
+			    height: "25%",
+			    margin: "5 5 5 5",
+			    handler: function(){
+			      Ext.getCmp("retrieveCellSelectionsWindow").close();
+			    }
+			  });
+			  
+    Ext.create('Ext.window.Window', {
+        height: 170,
+        width: 400,
+        title: 'Help: Differential Expression',
+        id: "retrieveCellSelectionsWindow",
+        scrollable: true,
+        bodyPadding: 10,
+        items: selectionTextFields,
+        constrain: true,
+        closable: true,
+        resizable: false
+    }).show();
+			} else {
+			  Ext.messagebox.alert("Please select only one differential expression result at a time.");
+			}
+			}
+    });
 
   // Table for the result sets
   var resultSetSelectionGrid = Ext.create('Ext.grid.Panel',{
@@ -108,7 +207,9 @@ diffExprTableViewer.prototype.generateTables = function() {
     id: 'deResultSetsTableExtJS',
     columns: [
       {text: 'Name', dataIndex: 'displayName', flex: 4.5 },
-      {text: 'Date', dataIndex: 'date', flex: 3.5 },
+      {text: 'Date', dataIndex: 'date', flex: 3.5, renderer: function(value){
+        return (new Date(value)).toUTCString();
+      }},
       {text: 'Internal name', dataIndex: 'name', flex: 2, hidden:true}
       ],
     emptyText: 'No differential expression results are available',
@@ -181,7 +282,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     			glyph: 0xf0ce,
     			handler: function() {
     			    var heatmapV = new heatmapViewer();
-    			    heatmapV.setNamedSelectionToDisplayGenes('geneTableSelection');
+    			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
     			    heatmapV.drawHeatmap();
     			} //handler
 		    }, //button
@@ -218,7 +319,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 		    });
 
 		    var geneSelCntr =  new geneSelectionController();
-		    geneSelCntr.setSelection('geneTableSelection', selectedGeneNames);
+		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 
 		}}
   });
@@ -257,7 +358,7 @@ diffExprTableViewer.prototype.declareExtJStypes = function() {
     	extend: 'Ext.data.Model',
     	fields: [
     	    {name: 'name', type: 'string'},
-    	    {name: 'date', type: 'string'},
+    	    {name: 'date', type: 'number'},
     	    {name: 'displayName', type: 'string'}
     	]
     });
@@ -322,5 +423,5 @@ diffExprTableViewer.prototype.showSelectedSet = function(internalName) {
 diffExprTableViewer.prototype.raiseTab = function() {
   var tablesTab = Ext.getCmp('tablesTabExtJS');
   // FIXME: The tab order is hard-wired here
-  tablesTab.setActiveTab(3);
+  tablesTab.setActiveTab("diffExprExtJS");
 }

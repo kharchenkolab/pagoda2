@@ -4,16 +4,18 @@
  * table creation and any required updates. Singlenton
  * @constructor
  */
-function geneTableViewer()  {
-    if (typeof geneTableViewer.instance === 'object') {
-	return geneTableViewer.instance;
+function geneSelectionTableViewer()  {
+    if (typeof geneSelectionTableViewer.instance === 'object') {
+	return geneSelectionTableViewer.instance;
     }
-
-    console.log('Initializing geneTableViewer...');
-
-    this.generateGeneTable();
-
-    geneTableViewer.instance = this;
+    
+    geneSelectionTableViewer.instance = this;
+    console.log('Initializing geneSelectionTableViewer...');
+    this.selectionTable = null;
+    this.geneFilter = [];
+    this.initialize();
+    
+    
 };
 
 
@@ -22,21 +24,21 @@ function geneTableViewer()  {
  * Here were are making the gene table and connecting it
  * to the appropriate data source provided by the dataController
  */
-geneTableViewer.prototype.generateGeneTable = function() {
+geneSelectionTableViewer.prototype.initialize = function() {
     var dataCntr = new dataController();
-    
+    var thisViewer = this;
     dataCntr.getGeneInformationStore(function(geneTableEntryStore) {
       
 	// For checkboxes on table
-	var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
+	var geneSelectionTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 
 	// Construct the table
-	var geneTable = Ext.getCmp('geneTableViewerExtJS');
-	geneTable.add(Ext.create('Ext.grid.Panel',{
+	var geneTable = Ext.getCmp('geneSelectionTableViewerExtJS');
+	thisViewer.selectionTable = Ext.create('Ext.grid.Panel',{
 	    title: '',
-	    id: 'extjsgenetable',
-	    selModel: geneTableSelectionModel,
-	    emptyText: 'No matching genes',
+	    id: 'extjsgeneselectiontable',
+	    selModel: geneSelectionTableSelectionModel,
+	    emptyText: 'No genes found',
 	    store: geneTableEntryStore,
 	    columns: [
 		{ text: 'Name', dataIndex: 'genename', width: '80%',
@@ -65,10 +67,11 @@ geneTableViewer.prototype.generateGeneTable = function() {
 		    {
 			emptyText: 'Search...',
 			xtype: 'textfield',
+			id: 'selectionTableSearchBar',
 			width: 100,
 			listeners: {
 			    'change': {buffer: 50, fn: function(f, newValue, oldValues, eOpts) {
-				var g = Ext.getCmp('extjsgenetable');
+				var g = Ext.getCmp('extjsgeneselectiontable');
 				var store = g.getStore();
 				store.clearFilter();
 				if (newValue !== '') {
@@ -80,6 +83,7 @@ geneTableViewer.prototype.generateGeneTable = function() {
 					} // if genename
 				    }); // store filter by
 				} // if new values
+				(new geneSelectionTableViewer()).filterThroughSelection();
 			    }} //change listener and buffer
 			} // listeners
 		    },
@@ -112,9 +116,46 @@ geneTableViewer.prototype.generateGeneTable = function() {
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 		}
 
-	    } // listeners
-	}));
-
+	    }, // listeners
+	     
+	});
+	geneTable.add(thisViewer.selectionTable);
+  thisViewer.filterThroughSelection();
     });
+    
+}
 
+geneSelectionTableViewer.prototype.generateTableFromSelection = function(geneSelections){
+  var g = Ext.getCmp('extjsgeneselectiontable');
+	var store = g.getStore();
+	store.clearFilter();
+	var thisViewer = new geneSelectionTableViewer();
+  var geneSelCntrl = new geneSelectionController();
+  var genes = {};
+  geneSelections.forEach(function(selection){
+    geneSelCntrl.getSelection(selection).genes.forEach(function(gene){
+      genes[gene] = true;
+    })
+  });
+  
+  Ext.getCmp("selectionTableSearchBar").setValue("");
+  thisViewer.geneFilter = Object.keys(genes);
+  thisViewer.filterThroughSelection();
+  thisViewer.raiseTab();
+}
+geneSelectionTableViewer.prototype.filterThroughSelection = function(){
+	var geneSelTblView = (new geneSelectionTableViewer());
+	var store = geneSelTblView.selectionTable.getStore();
+  store.filterBy(function(rec) {
+		if (geneSelTblView.geneFilter.includes(rec.get('genename'))) {
+			return true;
+		} else {
+			return false;
+		}
+	})
+}
+geneSelectionTableViewer.prototype.raiseTab = function(){
+  var tablesTab = Ext.getCmp('tablesTabExtJS');
+  // FIXME: The tab order is hard-wired here
+  tablesTab.setActiveTab("geneSelectionTableViewerExtJS");
 }

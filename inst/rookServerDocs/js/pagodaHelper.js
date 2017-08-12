@@ -19,8 +19,58 @@ var pagHelpers = {
         b: parseInt(result[3], 16)
     } : null;
   },
+  generateProgressBar: function(stepWiseCall, max, step, callback, callbackParameters, title, id){
+    var modal = false;
+    if(typeof(title) === 'undefined'){
+      title = "Processing";
+    }
+    if(typeof(id) === 'undefined'){
+      modal = true;
+      id = "progressBarWindow"
+    }
 
 
+    Ext.create("Ext.window.Window", {
+      title: title,
+      internalPadding: '10 10 10 10',
+      modal: modal,
+      width: "300px",
+      id: id,
+      resizeable: false,
+      items: [
+        {
+          html:'<div style="width:100%;background-color:#DDDDDD;height:30px"> <div id="progressBar" style="width:0%;background-color:#B0E2FF;height:30px; text-align: center;vertical-align: middle;line-height: 30px;"><div id="progressLabel" style="float: left; width: 100%; height: 100%; position: absolute; vertical-align: middle;">0%</div></div></div>'
+        }
+      ]
+    }).show(0);
+
+    var recursiveCall = function(stepWiseCall, i, max, step, callbackParameters){
+      if(i >= max){
+        document.getElementById("progressLabel").innerHTML = "Finishing"
+        setTimeout(function(){callback(callbackParameters);Ext.getCmp("progressBarWindow").close();},1);
+      }
+      else{
+        stepWiseCall(callbackParameters, i, Math.min(step, max - i), max)
+        i = Math.min(i + step, max);
+        var execution = (i/max) * 100;
+        Ext.getCmp("progressBarWindow").hide().show(0);
+        document.getElementById("progressBar").style.width = execution + "%"
+        document.getElementById("progressLabel").innerHTML = Math.floor(execution*10)/10 + "%"
+        setTimeout(function(){recursiveCall(stepWiseCall,i,max,step,callbackParameters)},1);
+      }
+    }
+    setTimeout(function(){recursiveCall(stepWiseCall,0,max,step,callbackParameters)},1);
+  },
+  canvas_arrow: function (context, fromx, fromy, tox, toy,headlen){
+    var angle = Math.atan2(toy-fromy,tox-fromx);
+
+    context.moveTo(fromx,fromy)
+    context.lineTo(tox, toy);
+    context.lineTo(tox-headlen*Math.cos(angle-Math.PI/6),toy-headlen*Math.sin(angle-Math.PI/6));
+    context.moveTo(tox, toy);
+    context.lineTo(tox-headlen*Math.cos(angle+Math.PI/6),toy-headlen*Math.sin(angle+Math.PI/6));
+
+  },
   showNotSupportedBrowserWarning: function() {
     Ext.create('Ext.window.Window', {
         height: 200,
@@ -67,7 +117,6 @@ var pagHelpers = {
             }
             return csvFile;
   }
-
   ,
 
   downloadURL: function(data, filename, canvas = null) {
@@ -102,7 +151,7 @@ var pagHelpers = {
     		var version_major = parseInt(version_split[0]);
     		var version_minor = parseInt(version_split[1]);
 
-    		if (version_major >= 53) {
+    		if (version_major >= 42) {
     			return true;
     		} else {
     			return false;
@@ -298,7 +347,7 @@ var pagHelpers = {
 
 	// The merge steps
 	var s = pagHelpers.seq(0, N-2);
-	for (let j of s ) {
+	for (var j in s ) {
 	    // Find the smallest distance and between
 	    // which elements it occurs
 

@@ -4,7 +4,8 @@
 \alias{p2.metadata.from.factor}
 \title{Generate a metadata structure for a p2 web object from a named factor}
 \usage{
-p2.metadata.from.factor(metadata, displayname = NULL, s = 1, v = 1)
+p2.metadata.from.factor(metadata, displayname = NULL, s = 1, v = 1,
+  start = 0, end = 1, pal = NULL)
 }
 \arguments{
 \item{metadata}{named factor with metadata for individual cells, names must correspond to cells}
@@ -14,6 +15,12 @@ p2.metadata.from.factor(metadata, displayname = NULL, s = 1, v = 1)
 \item{s}{s value for rainbow palette}
 
 \item{v}{v value for rainbow palette}
+
+\item{start}{starting value}
+
+\item{end}{ending value}
+
+\item{pal}{optional vector of colours to use, if provided overrides s,v,start and end parameters}
 }
 \description{
 This function will genereate a metadata structure that can be passed to

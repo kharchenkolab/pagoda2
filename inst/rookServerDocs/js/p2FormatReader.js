@@ -88,7 +88,8 @@ p2FormatReader.prototype.readHeaderIndex = function() {
 	// Check File version
 	var majorVersion = new Uint8Array(data.slice(32,33));
 	var minorVersion = new Uint8Array(data.slice(33,34));
-	if (!(majorVersion == 1 && minorVersion ==0)) {
+
+	if (!(majorVersion[0] == 1 && minorVersion[0] ==0)) {
 	    throw new Error('Incompatible file version');
 	}
 
@@ -189,7 +190,7 @@ p2FormatReader.prototype.readHeaderIndex = function() {
 	    context.dispatchEvent('onready');
 
 	    // DEBUG
-	    console.log('Index structure: ', context.index);
+	    //console.log('Index structure: ', context.index);
 	});
     });
 
@@ -231,7 +232,7 @@ p2FormatReader.prototype.getEntryAsText = function(entryKey, callback, context) 
   	    callback(data);
       });
     } else {
-      console.error('Unknown index: ', entryKey);
+      throw new RuntimeException(STATIC_FILE_FIELD_MISSING, 'Unknown index: '.concat(entryKey))
     }
 
 }

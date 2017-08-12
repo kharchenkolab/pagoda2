@@ -57,6 +57,9 @@ pagoda2WebApp <- setRefClass(
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
                               verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE) {
 
+            # Keep the original pagoda 2 object
+            # This is required for things like differential expression and
+            # gene KNN lookups
             if (keepOriginal) {
               originalP2object <<- pagoda2obj
             }
@@ -66,6 +69,13 @@ pagoda2WebApp <- setRefClass(
                 cat("We have an error");
                 stop("ERROR: The provided object is not a pagoda 2 object")
             }
+
+            # Check that the dendGroups we are getting is what it should be
+            if (length(dendGroups) != nrow(pagoda2obj$counts)) {
+                cat("We have an error");
+                stop("ERROR: The provided dendGroups has a different number of cells than the pagoda 2 object")
+            }
+
 
             # Keep the name for later (consistent) use
             name <<- appName;
@@ -103,10 +113,9 @@ pagoda2WebApp <- setRefClass(
             # The cell metadata
             cellmetadata <<- metadata;
 
-            # Rook sever root directory to be changed to package subdirectory
+             # Rook sever root directory to be changed to package subdirectory
             # this holds all the static files required by the app
             rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
-
 
             pathwayODInfo <<- pagoda2obj$misc$pathwayODInfo;
 
@@ -227,7 +236,19 @@ pagoda2WebApp <- setRefClass(
                            if (!is.null(dataIdentifier)) {
                                # Handle a getData request
                                switch(dataIdentifier,
+                                      'relatedgenes' = {
+                                        # This requires the original object -- must add check
+                                        postArgs <- request$POST();
 
+                                        geneListName <- postArgs[['querygenes']];
+                                        relatedGenes <- originalP2object$genegraphs$graph$to[originalP2object$genegraphs$graph$from %in% geneListName]
+                                        relatedGenes <- relatedGenes[!duplicated(relatedGenes)];
+                                        relatedGenes <- relatedGenes[!relatedGenes %in% geneListName];
+
+                                        response$header("Content-type", "application/javascript");
+                                        response$write(toJSON(relatedGenes));
+                                        return(response$finish());
+                                      },
 
                                       # Return a gene information table
                                       # for all the genes
@@ -889,6 +910,152 @@ pagoda2WebApp <- setRefClass(
           .self$app$app$file_server$root <- rookRoot;
         },
 
+        # Create a List consisting of JSON-strings and two sparse Matrices
+        # Write to static binary file by Calling Rcpp function
+        # Author: Simon Steiger
+        #
+        # Arguments: Specifiy the name of the output file.
+        # Takes the other objects to export from RefClass
+        # Returns the exportList which could be passed to the WriteListToBinary
+
+        serializeToStaticFast = function(binary.filename=NULL){
+            if (is.null(binary.filename)) {
+              stop('Please specify a directory');
+            }
+
+            # TODO: Add the gene Knn information if the p2 object is available. They need to reformated in to JSON
+            #   for fast js lookups
+
+
+
+            exportList <- new("list");
+            # TODO: optimize the R-part, move stuff over to Rcpp
+            # Preparation of objects to pass to Rcpp
+            # Create embedding strucutre for export
+            embStructure <- generateEmbeddingStructure();
+
+            # Export to list For all contained embeddings
+            for (reduc in names(embStructure)) {
+                for (embed in names(embStructure[[reduc]])) {
+                id <- embStructure[[reduc]][[embed]][[1]];
+                filename <- paste0(id, '.json');
+
+                a <- embeddings[[reduc]][[embed]];
+                ret <- list(
+                    values = .self$packCompressFloat64Array(as.vector(a)),
+                    dim =  dim(a),
+                    rownames = rownames(a),
+                    colnames = colnames(a)
+                );
+                e <- toJSON(ret);
+                exportList[filename] <- e;
+                }
+            }
+
+            # Export list with all included embeddings for easier iteration in Rcpp-function.
+            exportList[["embedList"]] <- grep("emb_",names(exportList),value=T);
+
+            # Main Sparse count matrix to save
+            matsparseToSave <- matsparse[mainDendrogram$cellorder,]
+
+            # Serialise aspect matrix
+            cellIndices <- mainDendrogram$cellorder;
+            aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
+            trimPoint <- max(abs(aspectMatrixToSave)) / 50;
+            aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
+            aspectMatrixToSave <- t(aspectMatrixToSave);
+            aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
+
+            # Serialise the aspect information
+
+            aspectInformation <- list();
+            for (curAspect in rownames(pathways$xv)) {
+                # Genesets in this aspect
+                curgenesets <- unname(pathways$cnam[[curAspect]]);
+
+                # Get the metadata for these gene sets
+                colOfInterest <- c("name","n","cz");
+                retTable <- pathwayODInfo[curgenesets, colOfInterest];
+
+                # Convert to JSON friendly format
+                aspectInformation[[curAspect]]  <- unname(apply(retTable, 1, function(x) {
+                # Must be in genesets for short description
+                desc <- geneSets[[x[[1]]]]$properties$shortdescription;
+
+                list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
+                }));
+            }
+
+            # Serialising geneset Information
+            genesetInformation <- unname(lapply(geneSets, function(x) {x$properties}))
+
+
+            # Serialise geneset Genes:
+            geneListName <- names(geneSets);
+
+            # This is super inefficient. Adapted to to the same with a sapply
+            # geneListGenes <- list();
+            # for(geneListName in names(geneSets)) {
+            #     # Get the genes in this geneset
+            #     geneList <- geneSets[[geneListName]]$genes
+            #     # Subset to genes that exist
+            #     geneList <- geneList[geneList %in% rownames(varinfo)];
+
+            #     # Generate dataset
+            #     dataset <-  varinfo[geneList, c("m","v")];
+            #     dataset$name <-  rownames(dataset);
+
+            #     # Convert to row format
+            #     retd <-  apply(dataset,
+            #                 1, function(x) {
+            #                     x[["name"]];
+            #                 });
+            #     geneListGenes[[geneListName]] <- unname(retd);
+            # }
+            geneListGenes <- lapply(myPagoda2WebObject$geneSets, function(gos) make.unique(gos$genes))
+
+            # Creation of the export List for Rcpp
+
+            ## JSON & Annotation part
+            exportList[["reduceddendrogram"]] <- reducedDendrogramJSON();
+            exportList[["cellorder"]] <- cellOrderJSON();
+            exportList[["cellmetadata"]] <- cellmetadataJSON();
+            exportList[["geneinformation"]] <- geneInformationJSON();
+
+            exportList[["embeddingstructure"]] <- toJSON(embStructure);
+            exportList[["aspectInformation"]] <- toJSON(aspectInformation);
+            exportList[["genesets"]] <- toJSON(genesetInformation);
+            exportList[["genesetGenes"]] <- toJSON(geneListGenes);
+
+            # The gene Knn
+            exportList[["geneknn"]] <- generateGeneKnnJSON();
+
+            ## Sparse Count Matrix & dimnames as JSON.
+            # TODO: export matsparse as S4 object and move "splitting" over to Rcpp.
+            #exportList[["matsparse"]] <- matsparseToSave;
+            exportList[["matsparse_i"]] <- matsparseToSave@i;
+            exportList[["matsparse_p"]] <- matsparseToSave@p;
+            exportList[["matsparse_x"]] <- matsparseToSave@x;
+            exportList[["matsparse_dim"]] <- matsparseToSave@Dim;
+            exportList[["matsparse_dimnames1"]] <- toJSON(matsparseToSave@Dimnames[[1]]);
+            exportList[["matsparse_dimnames2"]] <- toJSON(matsparseToSave@Dimnames[[2]]);
+
+            ## Sparse Aspect Matrix & dimnames as JSON.
+            # TODO: export mataspect as S4 object and move "splitting" over to Rcpp.
+            #exportList[["mataspect"]] <- aspectMatrixToSave;
+            exportList[["mataspect_i"]] <- aspectMatrixToSave@i;
+            exportList[["mataspect_p"]] <- aspectMatrixToSave@p;
+            exportList[["mataspect_x"]] <- aspectMatrixToSave@x;
+            exportList[["mataspect_dim"]] <- aspectMatrixToSave@Dim;
+            exportList[["mataspect_dimnames1"]] <- toJSON(aspectMatrixToSave@Dimnames[[1]]);
+            exportList[["mataspect_dimnames2"]] <- toJSON(aspectMatrixToSave@Dimnames[[2]]);
+
+
+            #binary.filename <- file.path(getwd(),binary.filename);
+            WriteListToBinary(expL=exportList,outfile = binary.filename);
+            return(invisible(exportList));
+        },
+
         # Serialise an R array to a JSON object
         #
         # Arguments: accepts an R array
@@ -943,6 +1110,18 @@ pagoda2WebApp <- setRefClass(
 		      toJSON(retd);
 		    },
 
+		    # Generate a JSON list representation of the gene KNN network
+		    generateGeneKnnJSON = function() {
+		      require(rjson)
+		      geneList <- unique(originalP2object$genegraphs$graph$from)
+		      names(geneList) <- geneList
+		      y <- lapply(geneList, function(x) {
+		        originalP2object$genegraphs$graph$to[originalP2object$genegraphs$graph$from == x]
+		      })
+		      toJSON(y)
+		    },
+
+		    # Generate information about the embeddings we are exporting
 		    generateEmbeddingStructure = function() {
 		      resp <- list();
 		      i <- 0;
@@ -958,6 +1137,7 @@ pagoda2WebApp <- setRefClass(
 		    }
 		    ,
 
+		    # deprecated, use serialiseToStaticFast
 		    serialiseToStatic = function(text.file.directory = null, binary.filename = null) {
 		      dir <- text.file.directory;
 

@@ -30,6 +30,9 @@ function aspectHeatmapViewer() {
     this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
 
+  this.palManager = new paletteManager();
+  this.palManager.setPalette(p2globalParams.aspectViewer.defaultPaletteName);
+  this.palManager.setNumberOfColors(p2globalParams.aspectViewer.defaultPaletteLevels);
 
   aspectHeatmapViewer.instance = this;
 }
@@ -73,18 +76,16 @@ aspectHeatmapViewer.prototype.generatePalettesMenu = function() {
     return paletteMenu;
 }
 
-
 /**
- * Genereate the menu
+ * Generate the settings menu for the heatmap
  * @private
  */
-aspectHeatmapViewer.prototype.generateMenu = function(){
-  var toolbar = Ext.create('Ext.Toolbar');
+aspectHeatmapViewer.prototype.generateAspectHeatmapSettingsMenu = function(){
 
   var paletteMenu = this.generatePalettesMenu();
   var aspHeatView = new aspectHeatmapViewer();
 
-  var settingsMenu = Ext.create('Ext.menu.Menu', {
+  return Ext.create('Ext.menu.Menu', {
     id: 'aspectSettingsMenu',
     items: [
       {
@@ -113,8 +114,21 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
     ] // items
 
   });
+}
 
-  toolbar.add({
+/**
+ * Genereate the menu
+ * @private
+ * @deprecated
+ */
+aspectHeatmapViewer.prototype.generateMenu = function(){
+  //var toolbar = Ext.create('Ext.Toolbar');
+
+
+  //var aspHeatView = new aspectHeatmapViewer();
+  //var settingsMenu = aspHeatView.generateAspectHeatmapSettingsMenu();
+
+  /*toolbar.add({
           text: "",
         type: "button",
         tooltip: 'Download current view',
@@ -139,9 +153,9 @@ aspectHeatmapViewer.prototype.generateMenu = function(){
                 canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
             } // if
         } // handler
-});
+});*/
 
-toolbar.add({
+  /*toolbar.add({
   text: '',
   xtype: 'button',
   tooltip: 'Clear selection overlay',
@@ -149,24 +163,23 @@ toolbar.add({
   handler: function() {
     var obj = new aspectHeatmapViewer();
     obj.clearSelectionOverlay();
-
   }
 
-});
+});*/
 
 
     // Add plot configuration menu button
-    toolbar.add({
+  /*toolbar.add({
     	text: '',
     	xtype: 'button',
     	tooltip: 'Configure aspect heatmap plot settings',
     	glyph: 0xf013,
     	menu: settingsMenu
-    });
+    });*/
 
 
 
-      toolbar.add({
+  /*toolbar.add({
     text: '',
     xtype: 'button',
     tooltip: 'Help',
@@ -193,11 +206,11 @@ toolbar.add({
             resizable: false
           }).show();
     } // handler
-  }); // toolbar add
+  }); // toolbar add*/
 
 
-    var aspectPanel = Ext.getCmp('aspectPanel');
-    aspectPanel.getHeader().add(toolbar);
+    //var aspectPanel = Ext.getCmp('aspectPanel');
+    //aspectPanel.getHeader().add(toolbar);
 
 }
 
@@ -206,7 +219,7 @@ toolbar.add({
  * Get the area height
  */
 aspectHeatmapViewer.prototype.getHeight = function() {
-  return Ext.getCmp('aspectPanel').getHeight() - 40;
+  return Ext.getCmp('aspectPanel').getHeight() - 10;
 }
 
 /**
@@ -263,12 +276,12 @@ aspectHeatmapViewer.prototype.initialize = function() {
   this.updateCanvasSize();
 
   // TODO: Update this with an apsect specific palette
-  this.palManager = new paletteManager();
+  /*this.palManager = new paletteManager();
   this.palManager.setPalette(p2globalParams.aspectViewer.defaultPaletteName);
-  this.palManager.setNumberOfColors(p2globalParams.aspectViewer.defaultPaletteLevels);
+  this.palManager.setNumberOfColors(p2globalParams.aspectViewer.defaultPaletteLevels);*/
 
   // Make the menu
-  this.generateMenu();
+  //this.generateMenu();
 
 
   // Draw the heatmap
@@ -296,23 +309,6 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         heatView.dragStartX =  e.offsetX;
       }
     });
-
-  heatmapOverlayArea.addEventListener('dblclick', function(e) {
-    var x = e.offsetX;
-    var y = e.offsetY;
-
-    var regionData = aspHeatView.aspectRegions.resolveClick(x,y);
-    if (typeof regionData !== 'undefined') {
-
-      var aspTable = new aspectsTableViewer();
-      aspTable.showSelectedAspect(regionData.aspectId);
-
-      var embV = new embeddingViewer();
-	    embV.setColorConfiguration('aspect');
-	    embV.setAspectColorInfo({aspectid: regionData.aspectId});
-	    embV.updateColors();
-    };
-  }); // click listener
 
   heatmapOverlayArea.addEventListener('mousemove', function(e) {
 
@@ -364,7 +360,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.fillStyle = 'rgba(0,0,255,0.5)';
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(aspHeatView.dragStartX, drawConsts.top, boundedX - aspHeatView.dragStartX, actualPlotHeight);
         ctx.restore();
       }
@@ -388,9 +384,11 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
    heatmapOverlayArea.addEventListener('mouseup', function(e){
 
-     var heatDendView = new heatmapDendrogramViewer();
+    var heatDendView = new heatmapDendrogramViewer();
 
-      var aspHeatView = new aspectHeatmapViewer();
+    var aspHeatView = new aspectHeatmapViewer();
+
+    if(aspHeatView.primaryMouseButtonDown){
       aspHeatView.primaryMouseButtonDown = false;
       if(aspHeatView.dragging) {
         // End of drag
@@ -430,25 +428,40 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         var cellsForSelection = dendV.getCurrentDisplayCells().slice(startIndex, endIndex);
 
 	      var cellSelCntr = new cellSelectionController();
-	      cellSelCntr.setSelection('heatmapSelection', cellsForSelection, 'Heatmap Selection', new Object(), "#0000FF");
+	      var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Heatmap Selection', new Object(), "#FF0000",'heatmapSelection');
 
             // Highlight on heatmap
             var heatView = new heatmapViewer();
-            heatView.highlightCellSelectionByName('heatmapSelection');
+            heatView.highlightCellSelectionByName(selectionName);
 
             // Highlight on embedding
             var embCntr = new embeddingViewer();
-            embCntr.highlightSelectionByName('heatmapSelection');
+            embCntr.highlightSelectionByName(selectionName);
 
             // Highlight on Aspects
             var aspHeatView = new aspectHeatmapViewer();
-            aspHeatView.highlightCellSelectionByName('heatmapSelection');
+            aspHeatView.highlightCellSelectionByName(selectionName);
 
             //Highlight on Metadata
             var metaView = new metaDataHeatmapViewer();
-            metaView.highlightCellSelectionByName('heatmapSelection');
+            metaView.highlightCellSelectionByName(selectionName);
       }
+      else{
+          var x = e.offsetX;
+    	    var y = e.offsetY;
+        	var aspHeatView = new aspectHeatmapViewer();
+        	var regionData = aspHeatView.aspectRegions.resolveClick(x, y);
+    	    // Draw tooltip
+    	    // Tell the embedding to update
+    	    var aspTable = new aspectsTableViewer();
+          aspTable.showSelectedAspect(regionData.aspectId);
 
+          var embV = new embeddingViewer();
+    	    embV.setColorConfiguration('aspect');
+      	  embV.setAspectColorInfo({aspectid: regionData.aspectId});
+          embV.updateColors();
+      }
+    }
    });
 
 
@@ -485,6 +498,7 @@ aspectHeatmapViewer.prototype.clearSelectionOverlayInternal = function(){
 aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
   var aspHeatView = new aspectHeatmapViewer()
 
+  var heatDendView = new heatmapDendrogramViewer();
   var overlayArea = document.getElementById('aspect-heatmap-area-overlay');
   var ctx = overlayArea.getContext('2d');
 
@@ -499,17 +513,17 @@ aspectHeatmapViewer.prototype.showOverlay = function(x,y) {
 
   var actualPlotHeight = this.getActualPlotHeight();
 
-  if (typeof y !== 'undefined' & y < actualPlotHeight & y > drawConsts.top){
+  /* if (typeof y !== 'undefined' & y < actualPlotHeight & y > drawConsts.top){
     ctx.beginPath();
     ctx.moveTo(drawConsts.left, y);
     ctx.lineTo(drawConsts.width + drawConsts.left, y);
     ctx.stroke();
   }
+  */
 
-  if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left  &
+  if (typeof x !== 'undefined' & x > drawConsts.left & x < drawConsts.width + drawConsts.left - heatDendView.getPlotAreaRightPadding()  &
 	    (y < actualPlotHeight  | typeof y === 'undefined') // if y is provided it is in the plot
        ) {
-
 	ctx.beginPath();
 	ctx.moveTo(x, drawConsts.top);
 	ctx.lineTo(x, actualPlotHeight + drawConsts.top);
@@ -677,7 +691,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
 	    ctx.fillStyle = 'black';
 	    ctx.fillText(name, x, y);
 	  } // Label plot loop
-    
+
     // TODO: setup click areas here
     aspHeatView.aspectRegions.clearClickAreas();
     for (var i = 0; i < data.DimNames2.length; i++){
@@ -756,7 +770,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
   var cellSelection = cellSelCntr.getSelection(selectionName);
 
   var dataCntr = new dataController();
-  dataCntr.getCellOrder(function(cellorder) {
+  dataCntr.getCellOrderHash(function(cellorderHash) {
     var cellRange = dendV.getCurrentDisplayCellsIndexes();
     var ncells = cellRange[1] - cellRange[0];
 
@@ -781,7 +795,7 @@ aspectHeatmapViewer.prototype.highlightCellSelectionByName = function(selectionN
 
     // Draw vertical lines for selected cells
     for (var i = 0; i < n; i++) {
-      var cellIndex = cellorder.indexOf(cellSelection[i]);
+      var cellIndex = cellorderHash[cellSelection[i]];
 
       // Cell is among currently displayed ones
       if (cellIndex < cellRange[1] && cellIndex > cellRange[0]) {
@@ -867,5 +881,26 @@ aspectHeatmapViewer.prototype.highlightCellSelectionsByNames = function(selectio
     })
   })
 
+}
+
+aspectHeatmapViewer.prototype.downloadImage = function(){
+  var canvas = document.getElementById('aspect-heatmap-area');
+
+            const maxSize = 2000;
+            if (canvas.width > maxSize | canvas.height >maxSize){
+                Ext.Msg.show({
+                  title: 'Warning',
+                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                   'This may cause problems during exporting. Do you want to continue?',
+                   buttons: Ext.Msg.OKCANCEL,
+                   fn: function(s) {
+                     if (s == 'ok') {
+                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
+                     } //if
+                   } //fn
+                }) // Ext.Msg.show
+            } else {
+                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
+            }
 }
 

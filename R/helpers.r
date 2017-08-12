@@ -5,8 +5,6 @@
 #'
 NULL
 
-
-
 #' @export p2.generate.human.go
 p2.generate.human.go <- function(r) {
   # Generate GO environment
@@ -71,11 +69,18 @@ p2.generate.human.go.web <- function(myGeneNames) {
 #' @param displayname name to display for the metadata
 #' @param s s value for rainbow palette
 #' @param v v value for rainbow palette
+#' @param start starting value
+#' @param end ending value
+#' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters
 #' @export p2.metadata.from.factor
-p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v =1) {
+p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = 1, pal = NULL) {
   # Check input
-  if ( !is.factor(metadata) | is.null(names(metadata))) {
-    stop('metadata parameter has to be a named factor');
+  if ( !is.factor(metadata) ) {
+    stop('metadata is not a factor');
+  }
+
+  if (  is.null(names(metadata))) {
+    stop('metadata needs to be named with cell identifiers');
   }
 
   # Convert input factor to named number vector
@@ -86,12 +91,35 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v =1) {
   labs <- levels(metadata);
 
   # Genereate palette
-  pal <- rainbow(n = nlevels(metadata), s = s, v = v);
+  if (!is.null(pal)){
+    # Do some checks on pal and set that
+    if (nlevels(metadata) != length(pal)) {
+     stop("The provided palette contains a different number of colours from the levels in the metadata");
+    } else {
+      if (is.null(names(pal))) {
+        # Palette doesn't have names use as is
+        pal0 <- pal;
+      } else {
+        if(!all(names(pal) %in% levels(metadata))) {
+          stop('Some palette names do not correspond to metadata levels')
+        }
+        if (!all(levels(metadata) %in% names(pal))) {
+          stop('Some metadata names do not appear in palette levels')
+        }
+        # Order according to metadata levels
+        pal0 <- pal[as.character(levels(metadata))];
+      }
+    }
+  } else {
+    # No palette has been specified use the parameters to make a rainbow palette
+    pal0 <- rainbow(n = nlevels(metadata), s = s, v = v, start = start, end = end, alpha = 1);
+  }
 
   ret <- list(
     data = data,
     levels = labs,
-    palette = pal
+    palette = unname(as.character(pal0)),
+    displayname = ""
   );
 
   if (!is.null(displayname)) {
@@ -101,91 +129,90 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v =1) {
   invisible(ret);
 }
 
-
-
-
 #' @title Generate a Rook Server app from a pagoda2 object
-#' @description Contains some code required to convert from the pagoda2 object to the
-#' web object constructor. Advanced users may wish to use the PagodaWebApp
-#' constructor directly
+#' @description Generates a pagoda 2 web object from pagoda2 object by automating steps that most
+#' users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
+#' may wish to use use the constructor directly
 #' @param r pagoda2 object
 #' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added
 #' @param geneSets a list of genesets to show
-#' @param debug build debug app?
-#' @return a Rook web app
+#' @param show.depth logical, include depth as a metadata row
+#' @param show.batch logical, include batch as a metadata row
+#' @param show.clusters logical, include clusters as a metadata row
+#' @param appname application name
+#' @return a pagoda2 web object that presents a Rook compatible interface
 #' @export make.p2.app
-make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets) {
-
-
+make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
+                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application") {
     # Build the metadata
     metadata <- list();
-    if ( "depth" %in% names(r@.xData) ) {
-        if ( !is.null(r@.xData$depth ) ) {
-            levels  <- 20
 
-            dpt <- log10(r@.xData$depth+0.00001)
-            max <- max(dpt)
-            min <- min(dpt)
-            dptnorm <- floor((dpt - min) / (max - min) * levels)
-            metadata$depth <- list(
-                data = dptnorm,
-                palette = colorRampPalette(c('white','black'))(levels+1),
-                displayname = 'Depth'
-            )
+    if (show.depth) {
+      if ( "depth" %in% names(r@.xData) ) {
+          if ( !is.null(r@.xData$depth ) ) {
+              levels  <- 20
 
+              dpt <- log10(r@.xData$depth+0.00001)
+              max <- max(dpt)
+              min <- min(dpt)
+              dptnorm <- floor((dpt - min) / (max - min) * levels)
+              metadata$depth <- list(
+                  data = dptnorm,
+                  palette = colorRampPalette(c('white','black'))(levels+1),
+                  displayname = 'Depth'
+              )
+          }
+      }
+    }
 
+    if (show.batch) {
+      if(!nlevels(r$batch)<=1){
+        batchData <- as.numeric(r$batch) - 1;
+        names(batchData) <- names(r$batch);
+        if ( "batch" %in% names(r@.xData) ) {
+            if ( !is.null(r@.xData$batch)  ) {
+                metadata$batch <- list(
+                    data = batchData,
+                    palette = rainbow(n = length(levels(r$batch))),
+                    displayname = 'Batch'
+                )
+            }
         }
+      }
+    }
+
+    if (show.clusters) {
+      clusterData <- as.numeric(dendrogramCellGroups) - 1;
+      names(clusterData) <- names(dendrogramCellGroups);
+      metadata$clusters <- list(
+              data = clusterData,
+              palette = rainbow(n =  length(levels(dendrogramCellGroups))),
+              displayname = 'Clusters'
+      )
     }
 
 
-    batchData <- as.numeric(r$batch) - 1;
-    names(batchData) <- names(r$batch);
-    if ( "batch" %in% names(r@.xData) ) {
-        if ( !is.null(r@.xData$batch)  ) {
-            metadata$batch <- list(
-                data = ,
-                palette = rainbow(n = length(levels(r$batch))),
-                displayname = 'Batch'
-            )
-        }
-    }
-
-    clusterData <- as.numeric(dendrogramCellGroups) -1;
-    names(clusterData) <- names(dendrogramCellGroups);
-    metadata$clusters <- list(
-            data = clusterData,
-            palette = rainbow(n =  length(levels(dendrogramCellGroups))),
-            displayname = 'Clusters'
-    )
-
-    # Append the additional metadata
+    # User provided metadata
     for ( itemName in names(additionalMetadata)) {
         metadata[[itemName]] <- additionalMetadata[[itemName]]
     }
 
-    # Pre-calculate differential gene expression between
-    # each cluster in the dendrogram clusters and the background
-    # Append these to gene sets of interest
-    deGenes <- r$getDifferentialGenes(type='counts', groups=dendrogramCellGroups)
-
-
-
-
+    #deGenes <- r$getDifferentialGenes(type='counts', groups=dendrogramCellGroups)
 
     # Make the app object
     p2w <- pagoda2WebApp$new(
         pagoda2obj = r,
-        appName = "DefaultPagoda2Name",
+        appName = appname,
         dendGroups = dendrogramCellGroups,
         verbose = 0,
         debug = TRUE,
         geneSets = geneSets,
-        metadata = metadata)
+        metadata = metadata
+    );
+
+    invisible(p2w);
 }
-
-
-
 
 #' @export show.app
 show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
@@ -363,5 +390,133 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
   names(deSets) <- unlist(lapply(deSets, function(x){x$properties$genesetname}));
 
   deSets
+}
+
+
+
+
+
+#############################################
+# Functions for working with p2 selections
+#############################################
+
+
+#' @title reads a pagoda2 web app exported cell selection file
+#' @description reads a cell selection file exported by pagoda2 web interface as a list
+#' of list objects that contain the name of the selection, the color (as a hex string) and the
+#' identifiers of the individual cells
+#' @param filepath the path of the file load
+#' @export readPagoda2SelectionFile
+readPagoda2SelectionFile <- function(filepath) {
+  returnList <- list();
+
+  con <- file(filepath, "r");
+  while (TRUE) {
+    suppressWarnings(line <- readLines(con, n = 1))
+    if ( length(line) == 0 ) {
+      break
+    }
+
+    fields <- unlist(strsplit(line, split=',', fixed=T));
+
+    name <- make.names(fields[2]);
+    color <- fields[1];
+    cells <- fields[-c(1:2)];
+    returnList[[name]] <- list(name=fields[2], color = color, cells = cells);
+  }
+  close(con)
+
+  invisible(returnList)
+}
+
+#' @title writes a pagoda2 selection object as a p2 pagoda2 selection files
+#' @description writes a pagoda2 selection object as a p2 selection file that be be
+#' loaded to the web interfact
+#' @param sel pagoda2 selection object
+#' @param filepath name of file to write to
+#' @export writePagoda2SelectionFile
+writePagoda2SelectionFile <- function(sel, filepath) {
+  fileConn <- file(filepath);
+  lines <- c();
+  for (l in names(sel2)) {
+    cells <- sel2[[l]]$cells
+    cellsString <- paste0(cells,collapse=',');
+    ln <- paste(sel2[[l]]$color,as.character(l),cellsString,sep=',');
+    lines <- c(lines,ln)
+  }
+  writeLines(lines, con=fileConn);
+  close(fileConn);
+}
+
+#' @title writes a list of genes as a gene selection that can be loaded in the web interface
+#' @description writes a list of genes as a gene selection that can be loaded in the web interfact
+#' @param name the name of the selection
+#' @param genes a string vector of the gene names
+#' @param filename the filename to save to
+#' @export writeGenesAsPagoda2Selection
+writeGenesAsPagoda2Selection <- function(name, genes, filename) {
+  con <- file(filename, 'w')
+  cat(name, file=con)
+  cat(',',file=con)
+  cat(paste(genes, collapse=','),file=con)
+  cat('\n', file=con)
+  close(con)
+}
+
+#' @title returns a list vector with the number of multiclassified cells
+#' @description returns a list vector with the number of cells that are
+#' present in more than one selections in the provided p2 selection object
+#' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
+#' @export calcMulticlassified
+calcMulticlassified <- function(sel) {
+  selectionCellsFlat <- unname(unlist(sapply(sel, function(x) x$cells)))
+  multiClassified <- selectionCellsFlat[duplicated(selectionCellsFlat)]
+  sort(sapply(sel, function(x) { sum(x$cells %in% multiClassified) / length(x$cells) }))
+}
+
+#' @title returns a factor of cell membership from a p2 selection
+#' @description returns a factor of cell membership from a p2 selection object
+#' the factor only includes cells present in the selection. If the selection
+#' contains multiclassified cells an error is raised
+#' @export factorFromP2Selection
+factorFromP2Selection <- function(sel) {
+  if(!all(calcMulticlassified(sel) == 0)) {
+    stop('The selections provided are not mutually exclusive')
+  }
+  x <- lapply(sel, function(x) {
+    data.frame(cellid = x$cells, label=c(x$name))
+  })
+  d <- do.call(rbind, x)
+
+  f <- as.factor(d$label)
+  names(f) <- d$cellid
+
+  f
+}
+
+#' @title converts a factor to a p2 selection object
+#' @description converts a names factor to a p2 selection object
+#' if colors are provided it assigns those, otherwise uses a rainbow palette
+#' @param col names vector of colors
+#' @return a p2 selection object (list)
+#' @export factorToP2selection
+factorToP2selection <- function(cl,col=NULL) {
+  if(!is.factor(cl)) {
+    stop('cl is not a factor');
+  }
+  # If no colors are provided generate some random ones
+  if(is.null(col)) {
+    col=substr(rainbow(nlevels(cl)),2,7); # Rainbow w/o alpha and hash
+    names(col) <- levels(cl);
+  }
+  ns <- list();
+  for (l in levels(cl)) {
+    ns[[l]] <- list(
+      name = l,
+      cells = names(mlvlcpy)[which(mlvlcpy == l)],
+      color=col[l]
+    )
+  }
+  invisible(ns)
 }
 
