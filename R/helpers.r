@@ -155,6 +155,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
       names(clusterData) <- names(dendrogramCellGroups);
       metadata$clusters <- list(
               data = clusterData,
+              level = levels(dendrogramCellGroups),
               palette = rainbow(n =  length(levels(dendrogramCellGroups))),
               displayname = 'Clusters'
       )
