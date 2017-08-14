@@ -6,7 +6,7 @@
 \usage{
 make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(), geneSets,
   show.depth = T, show.batch = T, show.clusters = T,
-  appname = "Pagoda2 Application", innerOrder = NULL)
+  appname = "Pagoda2 Application", innerOrder = NULL, orderDend = FALSE)
 }
 \arguments{
 \item{r}{pagoda2 object}
