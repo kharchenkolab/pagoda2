@@ -6,7 +6,7 @@
 \usage{
 make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(), geneSets,
   show.depth = T, show.batch = T, show.clusters = T,
-  appname = "Pagoda2 Application")
+  appname = "Pagoda2 Application", innerOrder = NULL, orderDend = FALSE)
 }
 \arguments{
 \item{r}{pagoda2 object}
@@ -22,6 +22,8 @@ make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(), geneSets,
 \item{show.clusters}{logical, include clusters as a metadata row}
 
 \item{appname}{application name}
+
+\item{innerOrder}{Ordering of cells inside the clusters provided in dendrogramCellGroups. This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL}
 
 \item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
 }
