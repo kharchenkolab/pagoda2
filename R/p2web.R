@@ -7,6 +7,7 @@
 #' @import Rook
 #' @importFrom utils URLdecode
 #' @importFrom rjson fromJSON toJSON
+#' @importFrom dendsort dendsort
 #' @import base64enc
 
 ##' @export pagoda2WebApp
