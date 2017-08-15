@@ -41,7 +41,7 @@ Pagoda2 <- setRefClass(
         stop("x is not of class dgCMatrix");
       }
 
-      if(x@x < 0) {
+      if(any(x@x < 0)) {
        stop("x contains negative values");
       }
 
