@@ -40,7 +40,7 @@ p2.generate.human.go <- function(r) {
 #' @param end ending value
 #' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters
 #' @export p2.metadata.from.factor
-p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = 1, pal = NULL) {
+p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = NULL, pal = NULL) {
   # Check input
   if ( !is.factor(metadata) ) {
     stop('metadata is not a factor');
@@ -48,6 +48,11 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 
   if (  is.null(names(metadata))) {
     stop('metadata needs to be named with cell identifiers');
+  }
+
+  if ( is.null(end) ) {
+    n <- nlevels(metadata)
+    end <-  max(1, n - 1)/n
   }
 
   # Convert input factor to named number vector
