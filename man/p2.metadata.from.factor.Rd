@@ -26,3 +26,19 @@ p2.metadata.from.factor(metadata, displayname = NULL, s = 1, v = 1,
 This function will genereate a metadata structure that can be passed to
 p2 web object constructor as additional metadata from a named factor of arbitrary values
 }
+\examples{
+additionalMetadata <- list()
+
+# Generate metadata the easy way
+additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[1]], displayname = 'Infomap')
+
+# Generate metadata by specifying parameters to be passes to the rainbow function
+additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[2]], displayname = 'Multilevel', s = 0.7, v = 0.8,start = 0, end = 0.5)
+
+# Generate metadata by specifying a palette
+a <- myPagoda2Object$clusters$PCA[[3]]
+library(colorRamps)
+p1 <- colorRamps::primary.colors(n = nlevels(a))
+names(p1) <- levels(a) # This is optional
+additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = 1)
+}
