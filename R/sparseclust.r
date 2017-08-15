@@ -41,6 +41,9 @@ Pagoda2 <- setRefClass(
         stop("x is not of class dgCMatrix");
       }
 
+      if(x@x < 0) {
+       stop("x contains negative values");
+      }
 
       if(!missing(x) && class(x)=='Pagoda2') {
         callSuper(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores);
