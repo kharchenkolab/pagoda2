@@ -30,8 +30,8 @@ p2.generate.human.go <- function(r) {
 
 
 #' @title Generate a metadata structure for a p2 web object from a named factor
-#' @description This function will genereate a metadata structure that can be passed to
-#' p2 web object constructor as additional metadata from a named factor of arbitrary values
+#' @description This function will generate a metadata structure that can be passed to
+#' p2 web object constructor as additional metadata given a named factor
 #' @param metadata named factor with metadata for individual cells, names must correspond to cells
 #' @param displayname name to display for the metadata
 #' @param s s value for rainbow palette
@@ -54,7 +54,7 @@ p2.generate.human.go <- function(r) {
 #' library(colorRamps)
 #' p1 <- colorRamps::primary.colors(n = nlevels(a))
 #' names(p1) <- levels(a) # This is optional
-#' additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = 1)
+#' additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = p1)
 p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = NULL, pal = NULL) {
   # Check input
   if ( !is.factor(metadata) ) {
