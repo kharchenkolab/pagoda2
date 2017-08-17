@@ -1308,7 +1308,7 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, ... ) {
       if(type=='counts') {
         x <- counts;
       } else {
@@ -1356,15 +1356,11 @@ Pagoda2 <- setRefClass(
         require(Rtsne);
         cat("calculating distance ... ")
         #d <- dist(x);
-        if(distance=='L2') {
-          d <- dist(x)
-        } else {
-          d <- as.dist(1-cor(t(x), method = 'pearson'))
-        }
+        d <- as.dist(1-cor(t(x), method = 'pearson'))
         #d <- as.dist(1-cor(x))
         cat("done\n")
         emb <- Rtsne(d,is_distance=T, perplexity=perplexity, ...)$Y;
-        rownames(emb) <- rownames(x)
+        rownames(emb) <- labels(d)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
         g <- graphs[[type]];
@@ -1399,8 +1395,6 @@ fac2col <- function(x,s=1,v=1,shuffle=FALSE,min.group.size=1,return.details=F,un
 
   y <- col[as.integer(x)]; names(y) <- names(x);
   y[is.na(y)] <- unclassified.cell.color;
-  if(!is.null(names(x))) { names(y) <- names(x) }
-
   if(return.details) {
     return(list(colors=y,palette=col))
   } else {
@@ -1437,10 +1431,7 @@ val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.9
 
   }
 
-  gp <- gradientPalette[x*(length(gradientPalette)-1)+1]
-  if(!is.null(names(x))) { names(gp) <- names(x) }
-  gp
-
+  gradientPalette[x*(length(gradientPalette)-1)+1]
 }
 
 
