@@ -274,3 +274,39 @@ getCellsInSelections <- function(p2selections, selectionNames) {
 
   cells
 }
+
+#' Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object
+#' @description Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object
+#' ignore self overlaps
+#' @param sel a pagoda2 selection object
+#' @return a list that contains a ggplot2 object and a datatable with the overlaps data
+#' @export plotSelectionOverlaps
+plotSelectionOverlaps <- function(sel) {
+  require(ggplot2)
+
+  n1s = c()
+  n2s = c();
+  overlaps = c();
+  for (n1 in names(sel)) {
+    for (n2 in names(sel)) {
+      if (n1 != n2) {
+        overlapC = length(which(sel[[n1]]$cells %in% sel[[n2]]$cells))
+      } else {
+        overlapC = 0;
+      }
+      n1s <- c(n1s, n1);
+      n2s <- c(n2s, n2);
+      overlaps = c(overlaps,overlapC)
+    }
+  }
+  res <- data.frame(cbind(n1s, n2s, overlaps),stringsAsFactors=F)
+  res$overlaps <- as.numeric(res$overlaps)
+
+  p <- ggplot(res, aes(n1s, n2s)) + geom_tile(aes(fill=log10(overlaps))) +  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    geom_text(aes(label=(overlaps))) + scale_fill_gradient(low = "yellow", high = "red")
+
+  invisible(list(results=res, plot=p))
+}
+
+
+

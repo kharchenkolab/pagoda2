@@ -23,8 +23,8 @@ p2.metadata.from.factor(metadata, displayname = NULL, s = 1, v = 1,
 \item{pal}{optional vector of colours to use, if provided overrides s,v,start and end parameters}
 }
 \description{
-This function will genereate a metadata structure that can be passed to
-p2 web object constructor as additional metadata from a named factor of arbitrary values
+This function will generate a metadata structure that can be passed to
+p2 web object constructor as additional metadata given a named factor
 }
 \examples{
 additionalMetadata <- list()
@@ -40,5 +40,5 @@ a <- myPagoda2Object$clusters$PCA[[3]]
 library(colorRamps)
 p1 <- colorRamps::primary.colors(n = nlevels(a))
 names(p1) <- levels(a) # This is optional
-additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = 1)
+additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = p1)
 }
