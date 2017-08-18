@@ -174,8 +174,8 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
 
   # prepare pathway df
   df <- data.frame(name = vdf$name, npc = vdf$npc, n = vdf$n, score = vdf$oe, z = vdf$z, adj.z = vdf$cz, stringsAsFactors = FALSE)
-  if(exists("myGOTERM", envir = globalenv())) {
-    df$desc <- mget(df$name, get("myGOTERM", envir = globalenv()), ifnotfound = "")
+  if(exists("GOTERM", envir = globalenv())) {
+    df$desc <- unlist(lapply(mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
   } else {
     df$desc <- ""
   }
@@ -457,8 +457,8 @@ p2ViewPagodaApp <- setRefClass(
                      #tpi <- tpi[seq(1, min(length(tpi), 15))]
                      npc <- gsub("^#PC(\\d+)#.*", "\\1", names(ii[tpi]))
                      nams <- gsub("^#PC\\d+# ", "", names(ii[tpi]))
-                     if(exists("myGOTERM", envir = globalenv())) {
-                       tpn <- paste(nams, mget(nams, get("myGOTERM", envir = globalenv()), ifnotfound = ""), sep = " ")
+                     if(exists("GOTERM", envir = globalenv())) {
+                       tpn <- paste(nams, unlist(lapply(mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                      } else {
                        tpn <- nams;
                      }
@@ -564,8 +564,8 @@ p2ViewPagodaApp <- setRefClass(
                        selgenes <- fromJSON(URLdecode(req$POST()$genes))
                        lgt <- calculate.go.enrichment(selgenes, colnames(results$p2$counts), pvalue.cutoff = 0.99, env = renv, over.only = TRUE)$over
                        lgt <- lgt[is.finite(lgt$Z),];
-                       if(exists("myGOTERM", envir = globalenv())) {
-                         lgt$nam <- paste(lgt$t, mget(as.character(lgt$t), get("myGOTERM", envir = globalenv()), ifnotfound = ""), sep = " ")
+                       if(exists("GOTERM", envir = globalenv())) {
+                         lgt$nam <- paste(lgt$t, unlist(lapply(mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                        } else {
                          lgt$name <- lgt$t
                        }

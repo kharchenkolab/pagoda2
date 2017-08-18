@@ -1145,7 +1145,7 @@ Pagoda2 <- setRefClass(
         pwpca <- papply(gsl, function(sn) {
           lab <- proper.gene.names %in% get(sn, envir = setenv)
           if(sum(lab)<1) { return(NULL) }
-          pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab], right_only=TRUE,fastpath=T,reorth=T)
+          pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab])
           pcs$d <- pcs$d/sqrt(nrow(x))
           pcs$rotation <- pcs$v;
           pcs$v <- NULL;
@@ -1154,7 +1154,7 @@ Pagoda2 <- setRefClass(
           ngenes <- sum(lab)
           z <- do.call(rbind,lapply(seq_len(n.randomizations), function(i) {
             si <- sample(ncol(x), ngenes)
-            pcs <- irlba(x[,si], nv=nPcs, nu=0, center=cm[si], right_only=FALSE,fastpath=T,reorth=T)$d
+            pcs <- irlba(x[,si], nv=nPcs, nu=0, center=cm[si])$d
           }))
           z <- z/sqrt(nrow(x));
 
@@ -1308,7 +1308,7 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', ... ) {
       if(type=='counts') {
         x <- counts;
       } else {
@@ -1353,14 +1353,18 @@ Pagoda2 <- setRefClass(
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
-        require(Rtsne);
+        require(Rtsne.multicore);
         cat("calculating distance ... ")
-        #d <- dist(x);
-        d <- as.dist(1-cor(t(x), method = 'pearson'))
-        #d <- as.dist(1-cor(x))
+        if(distance=='L2') {
+          cat("euclidean ... ")
+          d <- as.matrix(dist(x))
+        } else {
+          cat("pearson ... ")
+          d <- as.matrix(1-cor(t(x), method = 'pearson'))
+        }
         cat("done\n")
-        emb <- Rtsne(d,is_distance=T, perplexity=perplexity, ...)$Y;
-        rownames(emb) <- labels(d)
+        emb <- Rtsne.multicore(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
+        rownames(emb) <- colnames(d)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
         g <- graphs[[type]];

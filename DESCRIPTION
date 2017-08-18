@@ -24,7 +24,7 @@ Imports: rjson,
     RcppArmadillo,
     RcppProgress,
     stats,
-    Rtsne,
+    Rtsne.multicore,
     GO.db,
     RMTstat,
     org.Hs.eg.db
