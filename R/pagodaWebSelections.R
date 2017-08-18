@@ -128,7 +128,7 @@ factorToP2selection <- function(cl,col=NULL) {
 #' @param selection a pagoda2 selections list
 #' @return a new list with the duplicated cells removed
 #' @export removeSelectionOverlaps
-removeSelectionOvelaps <- function(selections) {
+removeSelectionOverlaps <- function(selections) {
   selectionsCellsFlat <- unname(unlist(sapply(selections, function(x) x$cells)))
   multiClassified <- selectionsCellsFlat[duplicated(selectionsCellsFlat)]
 
