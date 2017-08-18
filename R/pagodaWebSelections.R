@@ -308,5 +308,23 @@ plotSelectionOverlaps <- function(sel) {
   invisible(list(results=res, plot=p))
 }
 
+#' Plot multiclassified cells per selection as a % barplot
+#' @description Plot multiclassified cells per selection as a % barplot
+#' @param sel pagoda2 selection object
+#' @return ggplot2 object
+#' @export plotMulticlassified
+plotMulticlassified <- function(sel) {
+  require(ggplot2)
 
+  multiclassified <- calcMulticlassified(sel)
+  tmp1 <- as.data.frame(multiclassified)
+  tmp1$lab <- rownames(tmp1)
+
+  p <- ggplot(tmp1, aes(x=lab, y= multiclassified)) + geom_bar(stat='identity') +
+    theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    scale_y_continuous(name='% multiclassified') +
+    scale_x_discrete(name='Selection Label')
+
+  p
+}
 
