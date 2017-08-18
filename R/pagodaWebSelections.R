@@ -308,8 +308,8 @@ plotSelectionOverlaps <- function(sel) {
   invisible(list(results=res, plot=p))
 }
 
-#' Plot multiclassified cells per selection as a % barplot
-#' @description Plot multiclassified cells per selection as a % barplot
+#' Plot multiclassified cells per selection as a percent barplot
+#' @description Plot multiclassified cells per selection as a percent barplot
 #' @param sel pagoda2 selection object
 #' @return ggplot2 object
 #' @export plotMulticlassified

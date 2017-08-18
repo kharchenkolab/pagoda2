@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{plotMulticlassified}
 \alias{plotMulticlassified}
-\title{Plot multiclassified cells per selection as a % barplot}
+\title{Plot multiclassified cells per selection as a percent barplot}
 \usage{
 plotMulticlassified(sel)
 }
@@ -13,5 +13,5 @@ plotMulticlassified(sel)
 ggplot2 object
 }
 \description{
-Plot multiclassified cells per selection as a % barplot
+Plot multiclassified cells per selection as a percent barplot
 }
