@@ -1,6 +1,5 @@
 #' @import Rook
 #' @import rjson
-# @import scde
 
 #' @export p2.make.pagoda1.app
 p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {

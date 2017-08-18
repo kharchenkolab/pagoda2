@@ -23,7 +23,8 @@ Pagoda2 <- setRefClass(
   "Pagoda2",
   fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes','pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
   methods = list(
-    initialize=function(x, ..., modelType='plain',batchNorm='glm',n.cores=30,verbose=TRUE,min.cells.per.gene=30,trim=round(min.cells.per.gene/2),lib.sizes=NULL,log.scale=FALSE) {
+    initialize=function(x, ..., modelType='plain', batchNorm='glm', n.cores=30, verbose=TRUE,
+                        min.cells.per.gene=30, trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE) {
       # # init all the output lists
       embeddings <<- list();
       graphs <<- list();
@@ -35,6 +36,15 @@ Pagoda2 <- setRefClass(
       misc <<-list(lib.sizes=lib.sizes,log.scale=log.scale,model.type=modelType,trim=trim);
       batch <<- NULL;
       counts <<- NULL;
+
+      if(!class(x) == 'dgCMatrix') {
+        stop("x is not of class dgCMatrix");
+      }
+
+      if(any(x@x < 0)) {
+       stop("x contains negative values");
+      }
+
       if(!missing(x) && class(x)=='Pagoda2') {
         callSuper(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores);
       } else {
@@ -486,9 +496,13 @@ Pagoda2 <- setRefClass(
       return(invisible(cls))
     },
 
+    geneKnnbyPCA = function() {
+      stop('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+    },
+
     # Calculates gene Knn network for gene similarity
     # Author: Simon Steiger
-    geneKnnbyPCA = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =100, k = 30, n.cores = .self$n.cores, verbose =T) {
+    makeGeneKnnGraph = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =100, k = 30, n.cores = .self$n.cores, verbose =T) {
        # Transpose first
        x <- t(counts);
 
@@ -515,8 +529,8 @@ Pagoda2 <- setRefClass(
       colnames(pcas) <- paste0('PC',seq(ncol(pcas)));
 
       # Save into genegraphs slot
-      genegraphs$genePCs <<- pcs;
-      genegraphs$geneRotated <<- pcas;
+      #genegraphs$genePCs <<- pcs;
+      #genegraphs$geneRotated <<- pcas;
 
       # Using cosine distance only here
       if(center) {

@@ -5,6 +5,7 @@
 #'
 NULL
 
+
 #' @export p2.generate.human.go
 p2.generate.human.go <- function(r) {
   # Generate GO environment
@@ -28,43 +29,9 @@ p2.generate.human.go <- function(r) {
 }
 
 
-#' @export p2.generate.human.go.web
-p2.generate.human.go.web <- function(myGeneNames) {
-  require(org.Hs.eg.db)
-  require(GO.db)
-  require(BiocGenerics)
-  require(AnnotationDbi)
-  require(parallel)
-
-  ids <- unlist(mclapply(BiocGenerics::mget(myGeneNames, org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1]))
-  rids <- names(ids)
-  names(rids) <- ids
-
-  go.env <- AnnotationDbi::eapply(org.Hs.egGO2ALLEGS, function(x) as.character(na.omit(rids[x])))
-
-  go.env <- go.env[unlist(lapply(go.env, length)) > 5]
-
-  # TODO make this parallel with mcmapply
-  geneSets <- lapply(names(go.env), function(x) {
-    list(
-      properties = list(
-        locked = T,
-        genesetname = x,
-        shortdescription = GO.db::GOTERM[[x]]@Term
-      ),
-      genes = c(go.env[[x]])
-    )
-  })
-
-  names(geneSets) <- names(go.env)
-
-  geneSets
-}
-
-
 #' @title Generate a metadata structure for a p2 web object from a named factor
-#' @description This function will genereate a metadata structure that can be passed to
-#' p2 web object constructor as additional metadata from a named factor of arbitrary values
+#' @description This function will generate a metadata structure that can be passed to
+#' p2 web object constructor as additional metadata given a named factor
 #' @param metadata named factor with metadata for individual cells, names must correspond to cells
 #' @param displayname name to display for the metadata
 #' @param s s value for rainbow palette
@@ -73,7 +40,22 @@ p2.generate.human.go.web <- function(myGeneNames) {
 #' @param end ending value
 #' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters
 #' @export p2.metadata.from.factor
-p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = 1, pal = NULL) {
+#' @examples
+#' additionalMetadata <- list()
+#'
+#' # Generate metadata the easy way
+#' additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[1]], displayname = 'Infomap')
+#'
+#' # Generate metadata by specifying parameters to be passes to the rainbow function
+#' additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[2]], displayname = 'Multilevel', s = 0.7, v = 0.8,start = 0, end = 0.5)
+#'
+#' # Generate metadata by specifying a palette
+#' a <- myPagoda2Object$clusters$PCA[[3]]
+#' library(colorRamps)
+#' p1 <- colorRamps::primary.colors(n = nlevels(a))
+#' names(p1) <- levels(a) # This is optional
+#' additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = p1)
+p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = NULL, pal = NULL) {
   # Check input
   if ( !is.factor(metadata) ) {
     stop('metadata is not a factor');
@@ -81,6 +63,11 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 
   if (  is.null(names(metadata))) {
     stop('metadata needs to be named with cell identifiers');
+  }
+
+  if ( is.null(end) ) {
+    n <- nlevels(metadata)
+    end <-  max(1, n - 1)/n
   }
 
   # Convert input factor to named number vector
@@ -141,10 +128,11 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 #' @param show.batch logical, include batch as a metadata row
 #' @param show.clusters logical, include clusters as a metadata row
 #' @param appname application name
+#' @param innerOrder Ordering of cells inside the clusters provided in dendrogramCellGroups. This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL
 #' @return a pagoda2 web object that presents a Rook compatible interface
 #' @export make.p2.app
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
-                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application") {
+                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application",innerOrder=NULL,orderDend=FALSE) {
     # Build the metadata
     metadata <- list();
 
@@ -187,6 +175,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
       names(clusterData) <- names(dendrogramCellGroups);
       metadata$clusters <- list(
               data = clusterData,
+              levels = levels(dendrogramCellGroups),
               palette = rainbow(n =  length(levels(dendrogramCellGroups))),
               displayname = 'Clusters'
       )
@@ -208,7 +197,9 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
         verbose = 0,
         debug = TRUE,
         geneSets = geneSets,
-        metadata = metadata
+        metadata = metadata,
+        innerOrder = innerOrder,
+        orderDend = orderDend
     );
 
     invisible(p2w);
@@ -391,132 +382,3 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 
   deSets
 }
-
-
-
-
-
-#############################################
-# Functions for working with p2 selections
-#############################################
-
-
-#' @title reads a pagoda2 web app exported cell selection file
-#' @description reads a cell selection file exported by pagoda2 web interface as a list
-#' of list objects that contain the name of the selection, the color (as a hex string) and the
-#' identifiers of the individual cells
-#' @param filepath the path of the file load
-#' @export readPagoda2SelectionFile
-readPagoda2SelectionFile <- function(filepath) {
-  returnList <- list();
-
-  con <- file(filepath, "r");
-  while (TRUE) {
-    suppressWarnings(line <- readLines(con, n = 1))
-    if ( length(line) == 0 ) {
-      break
-    }
-
-    fields <- unlist(strsplit(line, split=',', fixed=T));
-
-    name <- make.names(fields[2]);
-    color <- fields[1];
-    cells <- fields[-c(1:2)];
-    returnList[[name]] <- list(name=fields[2], color = color, cells = cells);
-  }
-  close(con)
-
-  invisible(returnList)
-}
-
-#' @title writes a pagoda2 selection object as a p2 pagoda2 selection files
-#' @description writes a pagoda2 selection object as a p2 selection file that be be
-#' loaded to the web interfact
-#' @param sel pagoda2 selection object
-#' @param filepath name of file to write to
-#' @export writePagoda2SelectionFile
-writePagoda2SelectionFile <- function(sel, filepath) {
-  fileConn <- file(filepath);
-  lines <- c();
-  for (l in names(sel2)) {
-    cells <- sel2[[l]]$cells
-    cellsString <- paste0(cells,collapse=',');
-    ln <- paste(sel2[[l]]$color,as.character(l),cellsString,sep=',');
-    lines <- c(lines,ln)
-  }
-  writeLines(lines, con=fileConn);
-  close(fileConn);
-}
-
-#' @title writes a list of genes as a gene selection that can be loaded in the web interface
-#' @description writes a list of genes as a gene selection that can be loaded in the web interfact
-#' @param name the name of the selection
-#' @param genes a string vector of the gene names
-#' @param filename the filename to save to
-#' @export writeGenesAsPagoda2Selection
-writeGenesAsPagoda2Selection <- function(name, genes, filename) {
-  con <- file(filename, 'w')
-  cat(name, file=con)
-  cat(',',file=con)
-  cat(paste(genes, collapse=','),file=con)
-  cat('\n', file=con)
-  close(con)
-}
-
-#' @title returns a list vector with the number of multiclassified cells
-#' @description returns a list vector with the number of cells that are
-#' present in more than one selections in the provided p2 selection object
-#' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
-#' @export calcMulticlassified
-calcMulticlassified <- function(sel) {
-  selectionCellsFlat <- unname(unlist(sapply(sel, function(x) x$cells)))
-  multiClassified <- selectionCellsFlat[duplicated(selectionCellsFlat)]
-  sort(sapply(sel, function(x) { sum(x$cells %in% multiClassified) / length(x$cells) }))
-}
-
-#' @title returns a factor of cell membership from a p2 selection
-#' @description returns a factor of cell membership from a p2 selection object
-#' the factor only includes cells present in the selection. If the selection
-#' contains multiclassified cells an error is raised
-#' @export factorFromP2Selection
-factorFromP2Selection <- function(sel) {
-  if(!all(calcMulticlassified(sel) == 0)) {
-    stop('The selections provided are not mutually exclusive')
-  }
-  x <- lapply(sel, function(x) {
-    data.frame(cellid = x$cells, label=c(x$name))
-  })
-  d <- do.call(rbind, x)
-
-  f <- as.factor(d$label)
-  names(f) <- d$cellid
-
-  f
-}
-
-#' @title converts a factor to a p2 selection object
-#' @description converts a names factor to a p2 selection object
-#' if colors are provided it assigns those, otherwise uses a rainbow palette
-#' @param col names vector of colors
-#' @return a p2 selection object (list)
-#' @export factorToP2selection
-factorToP2selection <- function(cl,col=NULL) {
-  if(!is.factor(cl)) {
-    stop('cl is not a factor');
-  }
-  # If no colors are provided generate some random ones
-  if(is.null(col)) {
-    col=substr(rainbow(nlevels(cl)),2,7); # Rainbow w/o alpha and hash
-    names(col) <- levels(cl);
-  }
-  ns <- list();
-  for (l in levels(cl)) {
-    ns[[l]] <- list(
-      name = l,
-      cells = names(mlvlcpy)[which(mlvlcpy == l)],
-      color=col[l]
-    )
-  }
-  invisible(ns)
-}
-

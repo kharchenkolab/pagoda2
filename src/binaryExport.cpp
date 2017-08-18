@@ -7,6 +7,10 @@
 #include "pagoda2.h"
 #include "binaryExport.h"
 
+struct binaryExportParams {
+  bool verbose;
+};
+
 /**
  * Rcpp function called from R to write the web object
  * @description accepts a list of items to write and the name of a file to write to
@@ -14,6 +18,13 @@
 // [[Rcpp::export]]
 void WriteListToBinary(List expL, std::string outfile)
 {
+    // Define a parameter set
+    struct binaryExportParams params;
+
+    // TODO: Make Rcpp param
+    params.verbose = false; // pass as a reference (&) to called  functions
+
+
     // Read in JSON formatted strings from R List given by List expL
     string cellmetadataData = expL["cellmetadata"];
     string cellorderData = expL["cellorder"];
@@ -96,9 +107,11 @@ void WriteListToBinary(List expL, std::string outfile)
     list<float> *xData;
     xData = NVtoL<float>(vxData);
 
-    cout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << "]" << endl;
-    cout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
-    cout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
+    if (params.verbose) {
+      cout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << "]" << endl;
+      cout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
+      cout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
+    }
 
     // Read the dimnames of the sparse matrices.
     // Add a Nul to the end, because thats what happened in writing to a temporary txt file in R
@@ -123,16 +136,17 @@ void WriteListToBinary(List expL, std::string outfile)
     smh.dimname2StartOffset = smh.dimname1StartOffset + matsparseDimnames1.size();
     smh.dimname2EndOffset = smh.dimname2StartOffset + matsparseDimnames2.size();
 
-    cout << "\tExpression matrix header information" << endl;
-    cout << "\t\tdim1=" << smh.dim1 << endl;
-    cout << "\t\tdim2=" << smh.dim2 << endl;
-    cout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
-    cout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
-    cout << "\t\txStartOffset=" << smh.xStartOffset << endl;
-    cout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
-    cout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
-    cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
-
+    if (params.verbose) {
+      cout << "\tExpression matrix header information" << endl;
+      cout << "\t\tdim1=" << smh.dim1 << endl;
+      cout << "\t\tdim2=" << smh.dim2 << endl;
+      cout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
+      cout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
+      cout << "\t\txStartOffset=" << smh.xStartOffset << endl;
+      cout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
+      cout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
+      cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
+    }
 
     // Make an in-memorty string stream to hold the data
     stringstream smhData(stringstream::in | stringstream::out | stringstream::binary);
@@ -203,9 +217,11 @@ void WriteListToBinary(List expL, std::string outfile)
     list<float> *AxData;
     AxData = NVtoL<float>(AvxData);
 
-    cout << "\t\tp array size: " << ApData->size() << " [First entry value: " << ApData->front() << "]" << endl;
-    cout << "\t\ti array size: " << AiData->size() << " [First entry value: " << AiData->front() << "]" << endl;
-    cout << "\t\tx array size: " << AxData->size() << " [First entry value: " << AxData->front() << "]" << endl;
+    if (params.verbose) {
+      cout << "\t\tp array size: " << ApData->size() << " [First entry value: " << ApData->front() << "]" << endl;
+      cout << "\t\ti array size: " << AiData->size() << " [First entry value: " << AiData->front() << "]" << endl;
+      cout << "\t\tx array size: " << AxData->size() << " [First entry value: " << AxData->front() << "]" << endl;
+    }
 
     // Read the dimnames of the sparse matrices.
     // Add a Nul to the end, because thats what happened in writing to a temporary txt file in R
@@ -229,15 +245,17 @@ void WriteListToBinary(List expL, std::string outfile)
     Asmh.dimname2StartOffset = Asmh.dimname1StartOffset + mataspectDimnames1.size();
     Asmh.dimname2EndOffset = Asmh.dimname2StartOffset + mataspectDimnames2.size();
 
-    cout << "\tAspect matrix header information" << endl;
-    cout << "\t\tdim1=" << Asmh.dim1 << endl;
-    cout << "\t\tdim2=" << Asmh.dim2 << endl;
-    cout << "\t\tpStartOffset=" << Asmh.pStartOffset << endl;
-    cout << "\t\tiStartOffset=" << Asmh.iStartOffset << endl;
-    cout << "\t\txStartOffset=" << Asmh.xStartOffset << endl;
-    cout << "\t\tdimnames1StartOffset=" << Asmh.dimname1StartOffset << endl;
-    cout << "\t\tdimnames2StartOffset=" << Asmh.dimname2StartOffset << endl;
-    cout << "\t\tdimnames2EndOffset=" << Asmh.dimname2EndOffset << endl;
+    if (params.verbose) {
+      cout << "\tAspect matrix header information" << endl;
+      cout << "\t\tdim1=" << Asmh.dim1 << endl;
+      cout << "\t\tdim2=" << Asmh.dim2 << endl;
+      cout << "\t\tpStartOffset=" << Asmh.pStartOffset << endl;
+      cout << "\t\tiStartOffset=" << Asmh.iStartOffset << endl;
+      cout << "\t\txStartOffset=" << Asmh.xStartOffset << endl;
+      cout << "\t\tdimnames1StartOffset=" << Asmh.dimname1StartOffset << endl;
+      cout << "\t\tdimnames2StartOffset=" << Asmh.dimname2StartOffset << endl;
+      cout << "\t\tdimnames2EndOffset=" << Asmh.dimname2EndOffset << endl;
+    }
 
     // Make a memory holder for the data
     stringstream AsmhData(stringstream::in | stringstream::out | stringstream::binary);
@@ -275,26 +293,21 @@ void WriteListToBinary(List expL, std::string outfile)
 
     /// End of aspect sparce matrix
 
-
-
-
-
-
-
-
-
     // Writing file
-    cout << "Making File from payload..." << endl;
+    if (params.verbose) {
+      cout << "Making File from payload..." << endl;
 
-    cout << "\tFile format information" << endl;
-    cout << "\t\tIndex entry size is " << sizeof(indexEntry) << " bytes" << endl;
-    cout << "\t\tFile header size is " << sizeof(fileHeader) << " bytes" << endl;
-
+      cout << "\tFile format information" << endl;
+      cout << "\t\tIndex entry size is " << sizeof(indexEntry) << " bytes" << endl;
+      cout << "\t\tFile header size is " << sizeof(fileHeader) << " bytes" << endl;
+    }
     // Export entries to file
     ofstream fs;
     fs.open(outfile, ios::out | ios::binary);
 
-    cout << "\tPreparing header..." << endl;
+    if(params.verbose) {
+      cout << "\tPreparing header..." << endl;
+    }
     struct fileHeader header;
 
     // Clear the memory to avoid rubbish data written to the file
@@ -309,11 +322,13 @@ void WriteListToBinary(List expL, std::string outfile)
     header.headerSize = sizeof(struct fileHeader);
     header.indexSize = sizeof(indexEntry) * entries.size();
 
+    if (params.verbose) {
     // TODO if verbose
-    cout << "\tTotal index size is: " << header.indexSize << " bytes" << endl;
+      cout << "\tTotal index size is: " << header.indexSize << " bytes" << endl;
 
-    // Construct the index in memory
-    cout << "\tConstructing index..." << endl;
+      // Construct the index in memory
+      cout << "\tConstructing index..." << endl;
+    }
 
     list<indexEntry> indexEntries;
     uint32_t curOffset = 0; // in blocks
@@ -358,9 +373,14 @@ void WriteListToBinary(List expL, std::string outfile)
     int i = 0;
     for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
     {
-        cout << "\t\tWriting entry " << i++;
+
         size_t s = iterator->blockSize * FILE_BLOCK_SIZE;
-        cout << " of size " << iterator->blockSize << " blocks (or " << s << " bytes)" << endl;
+
+        if (params.verbose) {
+          cout << "\t\tWriting entry " << i++;
+          cout << " of size " << iterator->blockSize << " blocks (or " << s << " bytes)" << endl;
+        }
+
         void *entry = malloc(s);
         if (entry == 0)
         {
@@ -379,7 +399,9 @@ void WriteListToBinary(List expL, std::string outfile)
     fs.close();
 
     // Free up the payloads of the entries
-    cout << "Free up entry payloads" << endl;
+    if (params.verbose) {
+      cout << "Free up entry payloads" << endl;
+    }
     for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
     {
       free(iterator->payload);
