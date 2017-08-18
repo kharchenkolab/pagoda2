@@ -40,10 +40,10 @@ readPagoda2SelectionFile <- function(filepath) {
 writePagoda2SelectionFile <- function(sel, filepath) {
   fileConn <- file(filepath);
   lines <- c();
-  for (l in names(sel2)) {
-    cells <- sel2[[l]]$cells
+  for (l in names(sel)) {
+    cells <- sel[[l]]$cells
     cellsString <- paste0(cells,collapse=',');
-    ln <- paste(sel2[[l]]$color,as.character(l),cellsString,sep=',');
+    ln <- paste(sel[[l]]$color,as.character(l),cellsString,sep=',');
     lines <- c(lines,ln)
   }
   writeLines(lines, con=fileConn);
