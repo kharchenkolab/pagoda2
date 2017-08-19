@@ -37,19 +37,18 @@ Pagoda2 <- setRefClass(
       batch <<- NULL;
       counts <<- NULL;
 
-      if(!class(x) == 'dgCMatrix') {
-        stop("x is not of class dgCMatrix");
-      }
 
-      if(any(x@x < 0)) {
-       stop("x contains negative values");
-      }
-
-      if(!missing(x) && class(x)=='Pagoda2') {
+      if(!missing(x) && class(x)=='Pagoda2') { # copy constructor
         callSuper(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores);
       } else {
         callSuper(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose);
         if(!missing(x) && is.null(counts)) { # interpret x as a countMatrix
+          if(!class(x) == 'dgCMatrix') {
+            stop("x is not of class dgCMatrix");
+          }
+          if(any(x@x < 0)) {
+            stop("x contains negative values");
+          }
           setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale)
         }
       }
