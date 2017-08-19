@@ -5,7 +5,7 @@
 
 
 #' @import Rook
-#' @importFrom utils URLdecode
+#' @importFrom urltools url_decode
 #' @importFrom rjson fromJSON toJSON
 #' @importFrom dendsort dendsort
 #' @import base64enc
@@ -427,7 +427,7 @@ pagoda2WebApp <- setRefClass(
 
                                       'genesetsinaspect' = {
                                           requestArguments <- request$GET();
-                                          aspectId <- URLdecode(requestArguments[['aspectId']]);
+                                          aspectId <- url_decode(requestArguments[['aspectId']]);
 
                                           # Genesets in this aspect
                                           genesets <- unname(pathways$cnam[[aspectId]]);
@@ -505,9 +505,9 @@ pagoda2WebApp <- setRefClass(
 
                                         postArgs <- request$POST();
 
-                                        aspectIds <- URLdecode(postArgs[['aspectids']]);
-                                        cellIndexStart <- URLdecode(postArgs[['cellindexstart']]);
-                                        cellIndexEnd <- URLdecode(postArgs[['cellindexend']]);
+                                        aspectIds <- url_decode(postArgs[['aspectids']]);
+                                        cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
+                                        cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
 
                                         cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
                                         matrixToSend <- pathways$xv[aspectIds,cellIndices,drop=F];
@@ -551,9 +551,9 @@ pagoda2WebApp <- setRefClass(
 
                                           postArgs <- request$GET();
 
-                                          cellIndexStart <- URLdecode(postArgs[['cellindexstart']]);
-                                          cellIndexEnd <- URLdecode(postArgs[['cellindexend']]);
-                                          getCellNames <- URLdecode(postArgs[['getcellnames']]);
+                                          cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
+                                          cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
+                                          getCellNames <- url_decode(postArgs[['getcellnames']]);
 
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
                                           matrixToSend <- pathways$xv[,cellIndices,drop=F];
@@ -603,9 +603,9 @@ pagoda2WebApp <- setRefClass(
                                           postArgs <- request$POST();
 
                                           geneIdentifiers <- (postArgs[['geneids']]); # DONT decode it's an array
-                                          cellIndexStart <- URLdecode(postArgs[['cellindexstart']]);
-                                          cellIndexEnd <- URLdecode(postArgs[['cellindexend']]);
-                                          getCellNames <- URLdecode(postArgs[['getCellNames']]);
+                                          cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
+                                          cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
+                                          getCellNames <- url_decode(postArgs[['getCellNames']]);
 
 
 
@@ -659,7 +659,7 @@ pagoda2WebApp <- setRefClass(
                                       # GET Arguments accepted
                                       # type -- the reduction type (e.g. mat, odgenes, PCA)
                                       'availableclusterings' = {
-                                          reductionname <- URLdecode(requestArguments[['type']]);
+                                          reductionname <- url_decode(requestArguments[['type']]);
 
                                           if (!is.null(reductionname) &&
                                               reductionname %in% c("mat", names(reductions))) {
@@ -696,7 +696,7 @@ pagoda2WebApp <- setRefClass(
                                       #                  if rows or columns that do not exist have
                                       #                  been specified
                                       'reduction' = {
-                                           reductionname <- URLdecode(requestArguments[['type']]);
+                                           reductionname <- url_decode(requestArguments[['type']]);
 
                                            # Is the requested reduction available?
                                            if (!is.null(reductionname) &&
@@ -758,7 +758,7 @@ pagoda2WebApp <- setRefClass(
                                       #         from the 'availablereductiontypes' call
                                       'availableembeddings' = {
 
-                                          type <- URLdecode(requestArguments[['type']]);
+                                          type <- url_decode(requestArguments[['type']]);
 
                                           if (!is.null(type)) {
                                               if( type %in% c( names(embeddings), "mat") ) {
@@ -788,14 +788,14 @@ pagoda2WebApp <- setRefClass(
                                       #                  values for this parameter are returned
                                       #                  by doing an 'availableembeddings' request
                                       'embedding' = {
-                                          type <- URLdecode(requestArguments[['type']]);
+                                          type <- url_decode(requestArguments[['type']]);
 
                                           if (!is.null(type)) {
                                               if ( type %in% c( names(embeddings), "mat") ) {
                                                   response$header('Content-type', "application/javascript");
 
                                                   # Which embedding?
-                                                  embeddingType <- URLdecode(requestArguments[['embeddingtype']]);
+                                                  embeddingType <- url_decode(requestArguments[['embeddingtype']]);
 
                                                   if ( (!is.null(embeddingType)) &&
                                                        embeddingType %in% names(embeddings[[type]]) ) {
@@ -853,7 +853,7 @@ pagoda2WebApp <- setRefClass(
 
 
                       requestArguments <- request$GET();
-                      compIdentifier <- URLdecode(requestArguments[['compidentifier']]);
+                      compIdentifier <- url_decode(requestArguments[['compidentifier']]);
 
                       if (!is.null(compIdentifier)) {
                         switch(compIdentifier,
@@ -862,7 +862,7 @@ pagoda2WebApp <- setRefClass(
 
                                  postArguments <- request$POST();
 
-                                 selectionA <- fromJSON(URLdecode(postArguments[['selectionA']]));
+                                 selectionA <- fromJSON(url_decode(postArguments[['selectionA']]));
 
                                  # TODO: check that the originalP2object field is populated, as this is optional
 
@@ -908,8 +908,8 @@ pagoda2WebApp <- setRefClass(
                                     selAarg <- postArguments[['selectionA']];
                                     selBarg <- postArguments[['selectionB']];
 
-                                    selectionA <- fromJSON(URLdecode(selAarg));
-                                    selectionB <- fromJSON(URLdecode(selBarg));
+                                    selectionA <- fromJSON(url_decode(selAarg));
+                                    selectionB <- fromJSON(url_decode(selBarg));
 
                                     # TODO: check that the originalP2object field is populated, as this is optional
 
