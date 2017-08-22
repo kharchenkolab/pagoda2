@@ -42,6 +42,7 @@ $ sha1sum largeVis.tar.gz # (optional) should be: 0eb51b7322d795f3f6cc35aec03e5b
 $ tar xvzf largeVis.tar.gz
 # Start R and install largeVis
 $ R
+> install.packages('devtools')
 > library(devtools)
 > install('largeVis/')
 > q()
@@ -60,10 +61,8 @@ $ R
 > library(devtools)
 > install_github("igraph/rigraph") # Don't install with install.packages()
 > install.packages(‘Cairo’)
-> install.packages('devtools')
 
 # Install pagoda
-> library(devtools)
 > install_github("hms-dbmi/pagoda2")
 > library('pagoda2')
 # Pagoda2 is now ready to use
