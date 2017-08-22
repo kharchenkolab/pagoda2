@@ -59,6 +59,7 @@ $ R
 > biocLite(c("GO.db", "org.Hs.eg.db","pcaMethods"), suppressUpdates=TRUE)
 > library(devtools)
 > install_github("igraph/rigraph") # Don't install with install.packages()
+> install_github("pkharchenko/Rtsne.multicore",ref="precomputed_distance")
 > install.packages(‘Cairo’)
 > install.packages('devtools')
 
