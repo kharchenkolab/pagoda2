@@ -63,11 +63,7 @@ $ R
 > install_github("igraph/rigraph") # Don't install with install.packages()
 > install_github("pkharchenko/Rtsne.multicore",ref="precomputed_distance")
 > install.packages(‘Cairo’)
-<<<<<<< HEAD
-=======
 > install.packages('urltools')
-
->>>>>>> devel
 
 # Install pagoda
 > install_github("hms-dbmi/pagoda2")
