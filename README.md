@@ -42,6 +42,7 @@ $ sha1sum largeVis.tar.gz # (optional) should be: 0eb51b7322d795f3f6cc35aec03e5b
 $ tar xvzf largeVis.tar.gz
 # Start R and install largeVis
 $ R
+> install.packages('devtools')
 > library(devtools)
 > install('largeVis/')
 > q()
@@ -58,10 +59,12 @@ $ R
 > source("http://bioconductor.org/biocLite.R")
 > biocLite(c("GO.db", "org.Hs.eg.db","pcaMethods"), suppressUpdates=TRUE)
 > library(devtools)
+> devtools::install_github("RGLab/Rtsne.multicore")
 > install_github("igraph/rigraph") # Don't install with install.packages()
 > install_github("pkharchenko/Rtsne.multicore",ref="precomputed_distance")
 > install.packages(‘Cairo’)
-> install.packages('devtools')
+> install.packages('urltools')
+
 
 # Install pagoda
 > library(devtools)
