@@ -24,12 +24,13 @@ Imports: rjson,
     RcppArmadillo,
     RcppProgress,
     stats,
-    Rtsne,
+    Rtsne.multicore,
     GO.db,
     RMTstat,
     org.Hs.eg.db,
     org.Mm.eg.db,
-    dendsort
+    dendsort,
+    urltools
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
