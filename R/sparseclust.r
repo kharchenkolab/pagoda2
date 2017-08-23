@@ -23,7 +23,8 @@ Pagoda2 <- setRefClass(
   "Pagoda2",
   fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes','pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
   methods = list(
-    initialize=function(x, ..., modelType='plain',batchNorm='glm',n.cores=30,verbose=TRUE,min.cells.per.gene=30,trim=round(min.cells.per.gene/2),lib.sizes=NULL,log.scale=FALSE) {
+    initialize=function(x, ..., modelType='plain', batchNorm='glm', n.cores=30, verbose=TRUE,
+                        min.cells.per.gene=30, trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE) {
       # # init all the output lists
       embeddings <<- list();
       graphs <<- list();
@@ -35,11 +36,19 @@ Pagoda2 <- setRefClass(
       misc <<-list(lib.sizes=lib.sizes,log.scale=log.scale,model.type=modelType,trim=trim);
       batch <<- NULL;
       counts <<- NULL;
-      if(!missing(x) && class(x)=='Pagoda2') {
+
+
+      if(!missing(x) && class(x)=='Pagoda2') { # copy constructor
         callSuper(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores);
       } else {
         callSuper(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose);
         if(!missing(x) && is.null(counts)) { # interpret x as a countMatrix
+          if(!class(x) == 'dgCMatrix') {
+            stop("x is not of class dgCMatrix");
+          }
+          if(any(x@x < 0)) {
+            stop("x contains negative values");
+          }
           setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale)
         }
       }
@@ -486,9 +495,13 @@ Pagoda2 <- setRefClass(
       return(invisible(cls))
     },
 
+    geneKnnbyPCA = function() {
+      stop('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+    },
+
     # Calculates gene Knn network for gene similarity
     # Author: Simon Steiger
-    geneKnnbyPCA = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =100, k = 30, n.cores = .self$n.cores, verbose =T) {
+    makeGeneKnnGraph = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =100, k = 30, n.cores = .self$n.cores, verbose =T) {
        # Transpose first
        x <- t(counts);
 
@@ -515,8 +528,8 @@ Pagoda2 <- setRefClass(
       colnames(pcas) <- paste0('PC',seq(ncol(pcas)));
 
       # Save into genegraphs slot
-      genegraphs$genePCs <<- pcs;
-      genegraphs$geneRotated <<- pcas;
+      #genegraphs$genePCs <<- pcs;
+      #genegraphs$geneRotated <<- pcas;
 
       # Using cosine distance only here
       if(center) {
@@ -1145,7 +1158,7 @@ Pagoda2 <- setRefClass(
         pwpca <- papply(gsl, function(sn) {
           lab <- proper.gene.names %in% get(sn, envir = setenv)
           if(sum(lab)<1) { return(NULL) }
-          pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab], right_only=TRUE,fastpath=T,reorth=T)
+          pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab])
           pcs$d <- pcs$d/sqrt(nrow(x))
           pcs$rotation <- pcs$v;
           pcs$v <- NULL;
@@ -1154,7 +1167,7 @@ Pagoda2 <- setRefClass(
           ngenes <- sum(lab)
           z <- do.call(rbind,lapply(seq_len(n.randomizations), function(i) {
             si <- sample(ncol(x), ngenes)
-            pcs <- irlba(x[,si], nv=nPcs, nu=0, center=cm[si], right_only=FALSE,fastpath=T,reorth=T)$d
+            pcs <- irlba(x[,si], nv=nPcs, nu=0, center=cm[si])$d
           }))
           z <- z/sqrt(nrow(x));
 
@@ -1308,7 +1321,7 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', ... ) {
       if(type=='counts') {
         x <- counts;
       } else {
@@ -1353,14 +1366,18 @@ Pagoda2 <- setRefClass(
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
-        require(Rtsne);
+        require(Rtsne.multicore);
         cat("calculating distance ... ")
-        #d <- dist(x);
-        d <- as.dist(1-cor(t(x), method = 'pearson'))
-        #d <- as.dist(1-cor(x))
+        if(distance=='L2') {
+          cat("euclidean ... ")
+          d <- as.matrix(dist(x))
+        } else {
+          cat("pearson ... ")
+          d <- as.matrix(1-cor(t(x), method = 'pearson'))
+        }
         cat("done\n")
-        emb <- Rtsne(d,is_distance=T, perplexity=perplexity, ...)$Y;
-        rownames(emb) <- labels(d)
+        emb <- Rtsne.multicore(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
+        rownames(emb) <- colnames(d)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
         g <- graphs[[type]];

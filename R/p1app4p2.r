@@ -1,6 +1,5 @@
 #' @import Rook
 #' @import rjson
-# @import scde
 
 #' @export p2.make.pagoda1.app
 p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
@@ -174,8 +173,8 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
 
   # prepare pathway df
   df <- data.frame(name = vdf$name, npc = vdf$npc, n = vdf$n, score = vdf$oe, z = vdf$z, adj.z = vdf$cz, stringsAsFactors = FALSE)
-  if(exists("myGOTERM", envir = globalenv())) {
-    df$desc <- mget(df$name, get("myGOTERM", envir = globalenv()), ifnotfound = "")
+  if(exists("GOTERM", envir = globalenv())) {
+    df$desc <- unlist(lapply(mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
   } else {
     df$desc <- ""
   }
@@ -380,8 +379,8 @@ p2ViewPagodaApp <- setRefClass(
                    },
                    '/genecl.json' = { # report heatmap data for a selected set of genes
                      # Under Rstudio server, the URL decoding is not done automatically ..
-                     #  .. here we're calling URLdecode again for everything (it shouldn't have an effect on a properly formed list)
-                     selgenes <- fromJSON(URLdecode(req$POST()$genes))
+                     #  .. here we're calling url_decode again for everything (it shouldn't have an effect on a properly formed list)
+                     selgenes <- fromJSON(url_decode(req$POST()$genes))
                      ltrim <- ifelse(is.null(req$params()$trim), 0, as.numeric(req$params()$trim))
                      ol <- getgenecldata(selgenes, ltrim = ltrim)
                      s <- toJSON(ol)
@@ -396,7 +395,7 @@ p2ViewPagodaApp <- setRefClass(
                      ngenes <- ifelse(is.null(req$params()$ngenes), 20, as.integer(req$params()$ngenes))
                      twosided <- ifelse(is.null(req$params()$twosided), FALSE, as.logical(req$params()$twosided))
                      ltrim <- ifelse(is.null(req$params()$trim), 0, as.numeric(req$params()$trim))
-                     pws <- fromJSON(URLdecode(req$POST()$genes))
+                     pws <- fromJSON(url_decode(req$POST()$genes))
 
                      n.pcs <- as.integer(gsub("^#PC(\\d+)# .*", "\\1", pws))
                      n.pcs[is.na(n.pcs)]<-1
@@ -412,10 +411,14 @@ p2ViewPagodaApp <- setRefClass(
                      }
                    },
                    '/patterngenes.json' = { # report heatmap of genes most closely matching a given pattern
-                     ngenes <- ifelse(is.null(req$params()$ngenes), 20, as.integer(req$params()$ngenes))
-                     twosided <- ifelse(is.null(req$params()$twosided), FALSE, as.logical(req$params()$twosided))
-                     ltrim <- ifelse(is.null(req$params()$trim), 0/nrow(results$p2$counts), as.numeric(req$params()$trim))
-                     pat <- fromJSON(URLdecode(req$POST()$pattern))
+                     # manual parse
+                     x <- rawToChar(env[['rook.input']]$read())
+                     x <- do.call(rbind,lapply(strsplit(url_decode(x),'&'),strsplit,'=')[[1]])
+                     par <- as.list(x[,2]); names(par) <- x[,1];
+                     ngenes <- ifelse(is.null(par$ngenes), 20, as.integer(par$ngenes))
+                     twosided <- ifelse(is.null(par$twosided), FALSE, as.logical(par$twosided))
+                     ltrim <- ifelse(is.null(par$trim), 0/nrow(results$p2$counts), as.numeric(par$trim))
+                     pat <- fromJSON(par$pattern)
                      # reorder the pattern back according to column clustering
                      pat[results$hvc$order] <- pat
                      #patc <- matCorr(as.matrix(t(mat)), as.matrix(pat, ncol = 1))
@@ -426,29 +429,35 @@ p2ViewPagodaApp <- setRefClass(
                      ol$pattern <- pat
                      s <- toJSON(ol)
                      res$header('Content-Type', 'application/javascript')
-                     if(!is.null(req$params()$callback)) {
-                       res$write(paste(req$params()$callback, "(", s, ")", sep = ""))
+                     if(!is.null(par$callback)) {
+                       res$write(paste(par$callback, "(", s, ")", sep = ""))
                      } else {
                        res$write(s)
                      }
                    },
                    '/diffexpressedgenes.json' = { # report heatmap of genes most closely matching a given pattern
-                       ngenes <- ifelse(is.null(req$params()$ngenes), 20, as.integer(req$params()$ngenes))
-                       twosided <- ifelse(is.null(req$params()$twosided), FALSE, as.logical(req$params()$twosided))
-                       ltrim <- ifelse(is.null(req$params()$trim), 0, as.numeric(req$params()$trim))
-                       cells <- fromJSON(URLdecode(req$POST()$cells))
-                       ci <- rownames(results$p2$counts) %in% cells;
-                       groups <- rep('other',length(ci)); groups[ci] <- 'group'; names(groups) <- rownames(results$p2$counts);
-                       ds <- results$p2$getDifferentialGenes(type='PCA',groups=groups,upregulated.only=T,verbose=F)
-                       mgenes <- rownames(ds[['group']])[1:ngenes]
-                       ol <- getgenecldata(mgenes, ltrim = ltrim); #ol$sigdiff <- names(sigdiff);
-                       s <- toJSON(ol)
-                       res$header('Content-Type', 'application/javascript')
-                       if(!is.null(req$params()$callback)) {
-                           res$write(paste(req$params()$callback, "(", s, ")", sep = ""))
-                       } else {
-                           res$write(s)
-                       }
+                     #par <- req$POST();
+                     # manual parse
+                     x <- rawToChar(env[['rook.input']]$read())
+                     x <- do.call(rbind,lapply(strsplit(url_decode(x),'&'),strsplit,'=')[[1]])
+                     par <- as.list(x[,2]); names(par) <- x[,1];
+                     
+                     ngenes <- ifelse(is.null(par$ngenes), 20, as.integer(par$ngenes))
+                     twosided <- ifelse(is.null(par$twosided), FALSE, as.logical(par$twosided))
+                     ltrim <- ifelse(is.null(par$trim), 0, as.numeric(par$trim))
+                     cells <- fromJSON(url_decode(par$cells))
+                     ci <- rownames(results$p2$counts) %in% cells;
+                     groups <- rep('other',length(ci)); groups[ci] <- 'group'; names(groups) <- rownames(results$p2$counts);
+                     ds <- results$p2$getDifferentialGenes(type='PCA',groups=groups,upregulated.only=T,verbose=F)
+                     mgenes <- rownames(ds[['group']])[1:ngenes]
+                     ol <- getgenecldata(mgenes, ltrim = ltrim); #ol$sigdiff <- names(sigdiff);
+                     s <- toJSON(ol)
+                     res$header('Content-Type', 'application/javascript')
+                     if(!is.null(par$callback)) {
+                       res$write(paste(par$callback, "(", s, ")", sep = ""))
+                     } else {
+                       res$write(s)
+                     }
                    },
                    '/clinfo.json' = {
                      pathcl <- ifelse(is.null(req$params()$pathcl), 1, as.integer(req$params()$pathcl))
@@ -457,8 +466,8 @@ p2ViewPagodaApp <- setRefClass(
                      #tpi <- tpi[seq(1, min(length(tpi), 15))]
                      npc <- gsub("^#PC(\\d+)#.*", "\\1", names(ii[tpi]))
                      nams <- gsub("^#PC\\d+# ", "", names(ii[tpi]))
-                     if(exists("myGOTERM", envir = globalenv())) {
-                       tpn <- paste(nams, mget(nams, get("myGOTERM", envir = globalenv()), ifnotfound = ""), sep = " ")
+                     if(exists("GOTERM", envir = globalenv())) {
+                       tpn <- paste(nams, unlist(lapply(mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                      } else {
                        tpn <- nams;
                      }
@@ -467,7 +476,7 @@ p2ViewPagodaApp <- setRefClass(
 
                      # process additional filters
                      if(!is.null(req$params()$filter)) {
-                       fl <- fromJSON(URLdecode(req$params()$filter))
+                       fl <- fromJSON(url_decode(req$params()$filter))
                        for( fil in fl) {
                          lgt <- lgt[grep(fil$value, lgt[, fil$property], perl = TRUE, ignore.case = TRUE), ]
                            }
@@ -499,7 +508,7 @@ p2ViewPagodaApp <- setRefClass(
                    '/genes.json' = {
                      lgt <- genes
                      if(!is.null(req$params()$filter)) {
-                       fl <- fromJSON(URLdecode(req$params()$filter))
+                       fl <- fromJSON(url_decode(req$params()$filter))
                        for( fil in fl) {
                          lgt <- lgt[grep(fil$value, lgt[, fil$property], perl = TRUE, ignore.case = TRUE), ]
                        }
@@ -531,7 +540,7 @@ p2ViewPagodaApp <- setRefClass(
                    '/pathways.json' = {
                      lgt <- pathways
                      if(!is.null(req$params()$filter)) {
-                       fl <- fromJSON(URLdecode(req$params()$filter))
+                       fl <- fromJSON(url_decode(req$params()$filter))
                        for( fil in fl) {
                          lgt <- lgt[grep(fil$value, lgt[, fil$property], perl = TRUE, ignore.case = TRUE), ]
                        }
@@ -561,18 +570,18 @@ p2ViewPagodaApp <- setRefClass(
                      }
                    },
                    '/testenr.json' = { # run an enrichment test
-                       selgenes <- fromJSON(URLdecode(req$POST()$genes))
+                       selgenes <- fromJSON(url_decode(req$POST()$genes))
                        lgt <- calculate.go.enrichment(selgenes, colnames(results$p2$counts), pvalue.cutoff = 0.99, env = renv, over.only = TRUE)$over
                        lgt <- lgt[is.finite(lgt$Z),];
-                       if(exists("myGOTERM", envir = globalenv())) {
-                         lgt$nam <- paste(lgt$t, mget(as.character(lgt$t), get("myGOTERM", envir = globalenv()), ifnotfound = ""), sep = " ")
+                       if(exists("GOTERM", envir = globalenv())) {
+                         lgt$nam <- paste(lgt$t, unlist(lapply(mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                        } else {
                          lgt$name <- lgt$t
                        }
                        lgt <- data.frame(id = paste("#PC1#", lgt$t), name = lgt$nam, o = lgt$o, u = lgt$u, Z = lgt$Z, Za = lgt$Za, fe = lgt$fe, stringsAsFactors = FALSE)
 
                        if(!is.null(req$params()$filter)) {
-                         fl <- fromJSON(URLdecode(req$params()$filter))
+                         fl <- fromJSON(url_decode(req$params()$filter))
                          for( fil in fl) {
                            lgt <- lgt[grep(fil$value, lgt[, fil$property], perl = TRUE, ignore.case = TRUE), ]
                          }

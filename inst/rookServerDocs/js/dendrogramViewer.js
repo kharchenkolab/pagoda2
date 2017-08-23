@@ -1468,8 +1468,19 @@ dendrogramViewer.prototype.showRelatedGenes = function() {
         console.error("An unknown error occured");
       }
      }
-    } else { showError() }
-  } else { showError() }
+    } else if (queryGenes.length > 101) {
+      Ext.Msg.show({
+        title: 'Warning',
+        msg: 'The heatmap is currently displaying over 100 genes, please reduce and try again.',
+        buttons: Ext.Msg.OK
+      });
+    } else { 
+      showError() 
+    }
+  } else { // selection undefined
+    showError() 
+    
+  }
 
 }
 
