@@ -1370,14 +1370,15 @@ Pagoda2 <- setRefClass(
         cat("calculating distance ... ")
         if(distance=='L2') {
           cat("euclidean ... ")
-          d <- as.matrix(dist(x))
+          d <- dist(x)
         } else {
           cat("pearson ... ")
-          d <- as.matrix(1-cor(t(x), method = 'pearson'))
+          d <- as.dist(1-cor(t(x), method = 'pearson'))
         }
         cat("done\n")
+        cat("running tSNE using",n.cores,"cores:\n")
         emb <- Rtsne.multicore(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
-        rownames(emb) <- colnames(d)
+        rownames(emb) <- labels(d)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
         g <- graphs[[type]];
