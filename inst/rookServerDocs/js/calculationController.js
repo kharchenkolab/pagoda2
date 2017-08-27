@@ -292,4 +292,3 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
 calculationController.prototype.getAvailableDEmethods = function() {
   return this.methods;
 }
-
