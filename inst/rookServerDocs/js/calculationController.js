@@ -29,12 +29,12 @@ function calculationController(localAvailable, remoteAvailable) {
         help: 'Local Wilcoxon Method',
         repos: 'wilcoxon',
       },
-      /*{
-        name: 'localTtest',
-        displayName: 'Local Ttest',
-        help: 'Local T-test Method',
-        repos: 't_test',
-      }*/
+      {
+        name: 'wilcoxonFast',
+        displayName: 'wilcoxonFast',
+        help: 'Fast wilcoxon',
+        reps: 'wilcoxonfast'
+      }
     ];
 
     this.localWorker;
@@ -55,7 +55,9 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
     return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"wilcoxon");
   } else if(method === 'localTtest'){
     return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"tTest");
-  } else {
+  } else if(method === 'wilcoxonfast') {
+    returh this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback, "wilcoxonfast")
+  }  else {
     callback('Not implemented');
   }
 }
@@ -81,7 +83,8 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
 
 /**
  * Calculate differential expression for a group of selections against the background
- * @param selections An array of the cell selections to be used to perform differential expression analysis as an array of cell names
+ * @param selections An array of the cell selections to be used to perform 
+ * differential expression analysis as an array of cell names
  * @param callback
  * @param method the identifier for the local being used to calculate
  */
@@ -89,17 +92,19 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   var thisController = this;
   var dataCtrl = new dataController();
 
-  //Generates the new worker
+  // Generates the new worker
   if(typeof(this.localWorker) === "undefined") {
     this.localWorker = new Worker("js/statisticsWorker.js");
     dataCtrl.getGeneInformationStore(function(geneNameData){
       var geneNames = [];
+      
       //collects all gene names being analyzed
       for(var i = 0; i < geneNameData.localData.length; i++){
         geneNames.push(geneNameData.localData[i].genename);
       }
       geneNameData = undefined;
 
+      // Send worker the startup command
       var startUpPackage = {
         command:{
           type: "setup",
@@ -111,12 +116,32 @@ calculationController.prototype.calculateDELocal = function(selections, callback
           closed: false
         }
       }
-
-      //sends start up package to worker to begin communiation line
       thisController.localWorker.postMessage(startUpPackage)
 
       //builds non-modal progress bar window
-      Ext.create("Ext.window.Window", {
+      thisController.showDisplayBar();
+    });
+  } // if(typeof(this.localWorker) === "undefined")
+
+  // Handle the incoming message
+  this.localWorker.onmessage = thisController.handleWorkerMessage;
+
+  return {
+    //abort function for stop button functionality
+    abort: function(){
+      this.localWorker.postMessage({command:{type:"stop"}})
+    } // function abort
+  }; // return
+
+  
+}
+
+/**
+ * Show the display bar window
+ */
+calculationController.prototype.showDisplayBar = function() {
+  
+  Ext.create("Ext.window.Window", {
       title: "Processing Data Locally",
       internalPadding: '10 10 10 10',
       width: "300px",
@@ -136,13 +161,15 @@ calculationController.prototype.calculateDELocal = function(selections, callback
         },
       }
     }).show(0);
-    });
-  }
+}
 
-  var w = this.localWorker;
-  var cellSelCntr = new cellSelectionController();
+/**
+ * Handle an incoming message from the worker thread
+ */
+calculationController.prototype.handleWorkerMessage = function(e) {
+    var w = this.localWorker;
+    var cellSelCntr = new cellSelectionController();
 
-  this.localWorker.onmessage = function(e){
     var callParams = e.data;
 
     //in the event of the cell order request sends cell order back with cell selection names
@@ -169,18 +196,19 @@ calculationController.prototype.calculateDELocal = function(selections, callback
         document.getElementById("localProgressBar").style.width = execution + "%"
         document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
 
-        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0, callParams.params.numCells, function(data){
-          w.postMessage({
-            command:{
-              type: "process",
-              data: data
-            },
-            params: callParams.params
-          })
-        })
+                dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0,
+                  callParams.params.numCells, function(data){
+                  w.postMessage({
+                    command:{
+                      type: "process",
+                      data: data
+                    },
+                    params: callParams.params
+                  })
+                })
       }
     }
-    //during ompletion of execution a clean death is evoked
+    //during completion of execution a clean death is evoked
     else if(callParams.request.type === "clean death"){
 
       //if the clean death occures while an abrupt death is being evoked this if should prevent data race
@@ -202,14 +230,9 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       thisController.localWorker = undefined;
     }
 
-  }
-  return {
-    //abort function for stop button functionality
-    abort: function(){
-      w.postMessage({command:{type:"stop"}})
-    }
-  };
+  
 }
+
 
 /**
  * Calculate differential expression for 1 selection against the packground
@@ -234,6 +257,9 @@ calculationController.prototype.calculateDEfor2selectionsbyLocal = function(sele
   return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 }
 
+
+
+// Remote AJAX Stuff
 /**
  * Calculate differential expression between two groups of cells via connection to a remote server
  * @param selectionA the name of the first cell selection as registered in the cell selection controller
