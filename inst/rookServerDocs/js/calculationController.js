@@ -18,8 +18,8 @@ function calculationController(localAvailable, remoteAvailable) {
       },
       {
         name: 'localWilcoxon',
-        displayName: 'Local Wilcoxon',
-        help: 'Local Wilcoxon Method',
+        displayName: 'Local Mann-Whitney U test',
+        help: 'Tie Corrected Mann-Whitney U test run of the browser locally',
         repos: 'wilcoxon',
       }
     ];
