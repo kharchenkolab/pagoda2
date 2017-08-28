@@ -213,11 +213,12 @@ calculationController.prototype.handleWorkerMessage = function(e) {
         })
 
       } // if(document.getElementById("localProgressBar")
-    } else if(callParams.request.type === "clean death"){
+    } else if(callParams.request.type === "complete"){
+      debugger;
       var calcCtrl = new calculationController();
 
-      //during completion of execution a clean death is evoked
-      //if the clean death occures while an abrupt death is being evoked this if should prevent data race
+      //during completion of execution a complete is evoked
+      //if the complete occures while an abrupt death is being evoked this if should prevent data race
       if(document.getElementById("localProgressBar")){
         // TODO: This should be independent really
         w.terminate();
@@ -227,7 +228,7 @@ calculationController.prototype.handleWorkerMessage = function(e) {
 
         document.getElementById("localProgressLabel").innerHTML = "Finishing"
         setTimeout(function(){
-          calcCtrl.callback(callParams.params.results);
+          calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
         },1);
       }

@@ -1,5 +1,7 @@
 "use strict";
 
+self.collectedResults = [];
+
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
   var callParams = e.data;
@@ -32,6 +34,8 @@ function handleSetupCommand(e) {
 }
 
 function handleInitiateCommand(e) {
+  collectedResults
+
   var callParams = e.data;
        /*
        * Initiate command
@@ -113,8 +117,9 @@ function handleProcessCommand(e) {
   } else {
     postMessage({
       request:{
-        type: "clean death"
+        type: "complete"
       },
+      results: self.collectedResults,
       params: callParams.params
     })
   } // if.. else if(callParams.params.index < callParams.params.geneNames.length)
@@ -139,7 +144,7 @@ function handleStopCommand(e) {
  * @param params A compound object containing data, and information passed to this worker from the event listener
  * @param geneData A sparse matrix containing the gene names being read in and the expression values
  */
-function runWilcoxonOnGroup(params,geneData){
+function runWilcoxonOnGroup(params, geneData){
 
       //for each gene calculate differential expression
       for(var gene = 0; gene < geneData.array[0].length; gene++){
@@ -212,7 +217,7 @@ function runWilcoxonOnGroup(params,geneData){
 
         //accepts p < .05
         if(z >= 3.0){
-          params.results.push(
+          self.collectedResults.push(
             {
               Z:(z*zSign),
               absZ:z,
