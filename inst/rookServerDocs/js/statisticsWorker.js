@@ -203,15 +203,19 @@ function runWilcoxonOnGroup(params, geneData){
           }
         }
         
-        // TODO: Loop over rankCounts and calculate K
+        // TODO: Loop over rankCounts and calculate K value
+        
+        
         
         
         // var sigmaUcorr = Math.sqrt(lengthA * lengthB / 12 ( lengthA + lengthB + 1 ) - K)
         
         var z = (U - muU) / sigmaU;
+        // var z = (U - muU) / sigmaUcorr;
+        
         var zAbs = Math.abs(z);
 
-        //accepts p < .05
+        // accepts p < .05
         if(zAbs >= 3.0){
           self.collectedResults.push(
             {
