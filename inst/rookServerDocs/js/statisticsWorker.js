@@ -2,7 +2,7 @@
 
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
-  var callParams = e.data;
+var callParams = e.data;
 
   if(callParams.command.type === "setup"){
     handleSetupCommand(e);
@@ -11,7 +11,7 @@ self.addEventListener("message", function(e){
   } else if(callParams.command.type === "process"){
     handleProcessCommand(e);
   } else if(callParams.command.type === "stop"){
-    handleStopCommand(e);  
+    handleStopCommand(e);
   }
 },false);
 
@@ -22,6 +22,7 @@ function handleSetupCommand(e) {
     * Worker requests cell data from its master
     * request type: Cell order
     */
+    var callParams = e.data;
       var response = {
       request:{
         type: "cell order"
@@ -32,6 +33,7 @@ function handleSetupCommand(e) {
 }
 
 function handleInitiateCommand(e) {
+  var callParams = e.data;
     /*
    * Initiate command
    * Recieves cell name data from the master thread and initializes the selection index arrays
@@ -79,7 +81,7 @@ function handleInitiateCommand(e) {
     postMessage({
       request:{
         type: "expr vals",
-        data: callParams.params.geneNames.slice(callParams.params.index, 
+        data: callParams.params.geneNames.slice(callParams.params.index,
           Math.min(callParams.params.index + callParams.params.step,callParams.params.geneNames.length)),
       },
       params: callParams.params
@@ -87,10 +89,11 @@ function handleInitiateCommand(e) {
 }
 
 function handleProcessCommand(e) {
+  var callParams = e.data;
     /*
      * Process Command
      *
-     * Process a chunk of data based on the chosen method then requests more data 
+     * Process a chunk of data based on the chosen method then requests more data
      in a similar way to other unless no more data remains, otherwise requests death
      *
      * request 1
@@ -100,7 +103,7 @@ function handleProcessCommand(e) {
      * request 2
      * request type: clean death
      */
-  
+
     if(callParams.params.method === "default" || callParams.params.method === "ksTest"){
       runKSonGroup(callParams.params, callParams.command.data);
     }
@@ -109,7 +112,7 @@ function handleProcessCommand(e) {
     } else {
       // TODO: Handle error
     }
-    
+
     //advance index to current spot
     callParams.params.index += callParams.params.step;
 
@@ -118,7 +121,7 @@ function handleProcessCommand(e) {
       postMessage({
         request:{
           type: "expr vals",
-          data: callParams.params.geneNames.slice(callParams.params.index, 
+          data: callParams.params.geneNames.slice(callParams.params.index,
             Math.min(callParams.params.index + callParams.params.step, callParams.params.geneNames.length)),
         },
         params: callParams.params
@@ -133,7 +136,8 @@ function handleProcessCommand(e) {
     } // if.. else if(callParams.params.index < callParams.params.geneNames.length)
 }
 
-function handleStopCommand() {
+function handleStopCommand(e) {
+  var callParams = e.data;
     /*
    * User has issued a stop command
    * Halts progress of analysis and sends the main thread a message to kill this worker and not call the callback
@@ -142,118 +146,9 @@ function handleStopCommand() {
         request:{
           type: "abrupt death"
         },
-      })  
+      })
 }
 
-/**
- * Calculate differential expression between two groups of cells the Kologomorov Smirnov test
- * @param params A compound object containing data, and information passed to this worker from the event listener
- * @param geneData A sparse matrix containing the gene names being read in and the expression values
- */
-function runKSonGroup(params, geneData){
-      //for each gene calculate differential expression
-      for(var gene = 0; gene < geneData.array[0].length; gene++){
-
-        var selAexpr = [];
-        var selBexpr = [];
-
-        //retrieve expression data by indexes for selection A
-        for(var cell = 0; cell < params.selAidx.length; cell++){
-          selAexpr.push(geneData.array[params.selAidx[cell]][gene]);
-        }
-        //retrieve expression data by indexes for selection B
-        for(var cell = 0; cell < params.selBidx.length; cell++){
-          selBexpr.push(geneData.array[params.selBidx[cell]][gene]);
-        }
-
-        selAexpr.sort(function(x,y){return x-y});
-        selBexpr.sort(function(x,y){return x-y});
-
-        //remove all expression values of 0
-        while(selAexpr.length >0 && selAexpr[0] === 0){
-          selAexpr.shift();
-        }
-        while(selBexpr.length >0 && selBexpr[0] === 0){
-          selBexpr.shift();
-        }
-        //do not analyze genes if the number of expression values is less than 10 in either selection
-        if(selAexpr.length < 10 || selBexpr.length < 10){
-          continue;
-        }
-
-        var d = 0; //current maximum distance between two curves
-        var dSign = 0; //sign of the gene
-        var totalA = 0; //sum of all expression values for selection A
-        var totalB = 0; //sum of all expression values for selection B
-        var pdfStepA = selAexpr.length; //length of expression values in selection A
-        var pdfStepB = selBexpr.length; //length of expression values in selection B
-        var firstX = Math.min(selAexpr[0], selBexpr[0]); //first X value in the PDF
-        var prevX = firstX; // previous X value in PDF
-        var curX = prevX;
-        var currD = 0; // current distance for calculating integral of pdf difference
-        var fold = 0; // fold calculated as average difference between PDFs
-
-        //parse through each expression value of selection A and B to superimpose their PDFs onto each other
-        while(selAexpr.length > 0 && selBexpr.length > 0){
-          fold += (curX-prevX) * currD;
-          prevX = curX;
-          curX = Math.min(selAexpr[0], selBexpr[0]);
-
-          //remove minimums of each selection's expression one at a time
-          if(selAexpr[0] < selBexpr[0]){
-            totalA += selAexpr.shift();
-          } else if(selAexpr[0] > selBexpr[0]){
-            totalB += selBexpr.shift();
-          } else{
-            while(selAexpr[0] === selBexpr[0]){
-              totalA += selAexpr.shift();
-              totalB += selBexpr.shift();
-              if(selBexpr.length === 0 || selAexpr.length === 0){
-                break;
-              }
-            }
-          }
-          currD = (1-(selBexpr.length/pdfStepB)) - (1-(selAexpr.length/pdfStepA));
-          var instDSign = Math.sign(currD);
-          var instD = Math.abs(currD);
-
-          //replace current distance with highest magnitude distance
-          if(instD > d){
-            d = instD;
-            dSign = instDSign;
-          }
-
-        }
-
-        //remove rest of slection B if there is still some left and perform fold calculation
-        if(selAexpr.length === 0){
-          while(selBexpr.length > 0){
-            fold += (curX-prevX) * currD;
-            prevX = curX;
-            curX = selBexpr.shift()
-            currD = (1-(selBexpr.length/pdfStepB));
-          }
-        }
-        //remove rest of slection B if there is still some left and perform fold calculation
-        else if(selBexpr.length === 0){
-          while(selAexpr.length > 0){
-            fold += (curX-prevX) * currD;
-            prevX = curX;
-            curX = selAexpr.shift()
-            currD = -(1-(selAexpr.length/pdfStepA));
-          }
-        }
-        fold += (curX-prevX) * currD;
-
-        var mean = Math.log(totalA/pdfStepA)-Math.log(totalB/pdfStepB);
-        fold = Math.max(-1,Math.min(fold/(curX - firstX),1));
-        var z = d * Math.sqrt(pdfStepA*pdfStepB/(pdfStepA+pdfStepB));
-        //Checks for p < .05
-        if(z >= 3.0){
-          params.results.push({Z:(z*dSign), absZ:z, name: geneData.colnames[gene], fe: fold, M:mean, highest:(dSign >= 0)})
-        }
-      }
-}
 
 /**
  * Calculate differential expression between two groups of cells the Wilcoxon Mann-Whitney test
@@ -330,15 +225,15 @@ function runWilcoxonOnGroup(params,geneData){
 
         var z = Math.abs((Math.max(totalArank,totalBrank) - mu)/sigma);
         var zSign = (Math.max(totalBrank,totalArank) === totalArank ? 1 : -1);
-        
+
         //accepts p < .05
         if(z >= 3.0){
           params.results.push(
             {
-              Z:(z*zSign), 
-              absZ:z, 
-              name: geneData.colnames[gene], 
-              fe: fold, 
+              Z:(z*zSign),
+              absZ:z,
+              name: geneData.colnames[gene],
+              fe: fold,
               M:mean, highest:(zSign >= 0)
             }
           )
