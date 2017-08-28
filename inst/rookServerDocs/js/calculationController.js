@@ -189,7 +189,7 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     //in the event of the cell order request sends cell order back with cell selection names
     if(callParams.request.type === "cell order") {
       dataCtrl.getCellOrder(function(cellData){
-        //debugger;
+        debugger;
         w.postMessage({
           command:{
             type: "initiate",

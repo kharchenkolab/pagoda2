@@ -42,16 +42,6 @@ function handleInitiateCommand(e) {
   collectedResults
 
   var callParams = e.data;
-       /*
-       * Initiate command
-       * Recieves cell name data from the master thread and initializes the selection index arrays
-       * Requests a subset of the genes at a time
-       * params step set to number of genes requested per request made
-       * params index set to 0, index will represent next gene to interpret
-       * params numCells is the number of cells
-       * request expr vals
-       * request data: contains the gene names that are being asked for
-       */
 
     callParams.params.step = Math.max(Math.floor(self.geneNames.length/200),10);
     callParams.params.index = 0;
@@ -59,37 +49,38 @@ function handleInitiateCommand(e) {
 
     //if there is only one selection given make the second selection off of the indexes of the cellOrderData keys
     if(callParams.command.selections.length === 1){
-      callParams.params.selAidx = [];
-      callParams.params.selBidx = [...callParams.command.data.keys()];
+      // Only one selection
+      self.selAidx = [];
+      self.selBidx = [...callParams.command.data.keys()];
       //creates array of cell indexes based on their corresponding index in cell order array
       for(var i = 0; i < callParams.command.selections[0].length; i++){
         var idx = callParams.command.data.indexOf(callParams.command.selections[0][i]);
         if(idx !== -1){
-          callParams.params.selAidx.push(idx);
+          self.selAidx.push(idx);
         }
       }
-
-    }
-    //makes selection index arrays for two selections
-    else if(callParams.command.selections.length === 2){
-      callParams.params.selAidx = [];
-      callParams.params.selBidx = [];
+    } else if(callParams.command.selections.length === 2){
+      // Two selections
+      self.selAidx = [];
+      self.selBidx = [];
       for(var i = 0; i < callParams.command.selections[0].length; i++){
         var idx = callParams.command.data.indexOf(callParams.command.selections[0][i]);
         if(idx !== -1){
-          callParams.params.selAidx.push(idx);
+          self.selAidx.push(idx);
         }
       }
       for(var i = 0; i < callParams.command.selections[1].length; i++){
         var idx = callParams.command.data.indexOf(callParams.command.selections[1][i]);
         if(idx !== -1){
-          callParams.params.selBidx.push(idx);
+          self.selBidx.push(idx);
         }
       }
     }
 
-    var nextSliceGenes = self.geneNames.slice(callParams.params.index,
-          Math.min(callParams.params.index + callParams.params.step,self.geneNames.length));
+    var nextSliceGenes = self.geneNames.slice(
+          callParams.params.index,
+          Math.min(callParams.params.index + callParams.params.step,self.geneNames.length)
+    );
 
     postMessage({
       request:{
@@ -147,12 +138,12 @@ function runWilcoxonOnGroup(params, geneData){
         var selBexpr = [];
 
         //retrieve expression data by indexes for selection A
-        for(var cell = 0; cell < params.selAidx.length; cell++){
-          selAexpr.push(geneData.array[params.selAidx[cell]][gene]);
+        for(var cell = 0; cell < self.selAidx.length; cell++){
+          selAexpr.push(geneData.array[self.selAidx[cell]][gene]);
         }
         //retrieve expression data by indexes for selection B
-        for(var cell = 0; cell < params.selBidx.length; cell++){
-          selBexpr.push(geneData.array[params.selBidx[cell]][gene]);
+        for(var cell = 0; cell < self.selBidx.length; cell++){
+          selBexpr.push(geneData.array[self.selBidx[cell]][gene]);
         }
 
         selAexpr.sort(function(x,y){return x-y});
