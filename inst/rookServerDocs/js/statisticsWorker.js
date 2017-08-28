@@ -180,17 +180,17 @@ function runWilcoxonOnGroup(params, geneData){
           }
         }
 
+        // Calculate U values
         var lengthA = self.selAidx.length;
         var lengthB = self.selBidx.length;
-
         var u1 = totalRankA - (lengthA * (lengthA +1)) /2
         var u2 = totalRankB - (lengthB * (lengthB +1)) /2
-
         var U = Math.min(u1, u2);
 
-        // Normal approximation
-        var muU = lengthA * lengthB /2;
-        var sigmaU = Math.sqrt(lengthA * lengthB * (lengthA + lengthB + 1) / 12)
+        // Perform Normal approximation with tie correction
+        var lenghtAxlengthB = lengthA * lengthB;
+        var muU = lenghtAxlengthB /2;
+        var sigmaU = Math.sqrt(lenghtAxlengthB * (lengthA + lengthB + 1) / 12)
         
         // Calculate rank abundance 
         var rankCounts = {};
@@ -204,11 +204,8 @@ function runWilcoxonOnGroup(params, geneData){
         }
         
         // TODO: Loop over rankCounts and calculate K value
-        
-        
-        
-        
-        // var sigmaUcorr = Math.sqrt(lengthA * lengthB / 12 ( lengthA + lengthB + 1 ) - K)
+
+        // var sigmaUcorr = Math.sqrt(lenghtAxlengthB / 12 ( lengthA + lengthB + 1 ) - K)
         
         var z = (U - muU) / sigmaU;
         // var z = (U - muU) / sigmaUcorr;
