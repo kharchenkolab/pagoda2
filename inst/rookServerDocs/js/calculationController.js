@@ -79,14 +79,6 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
   }
 };
 
-
-
-
-
-
-
-
-
 /**
  * Calculate differential expression for a group of selections against the background
  * @param selections An array of the cell selections to be used to perform
@@ -188,26 +180,6 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     var dataCtrl = new dataController();
     var calcCtrl = new calculationController();
 
-
-
-    //in the event of the cell order request sends cell order back with cell selection names
-  /*
-    if(callParams.type === "cell order") {
-      dataCtrl.getCellOrder(function(cellData){
-        // Send the gene names here
-        callParams.geneNames = calcCtrl.geneNames;
-        w.postMessage({
-          command:{
-            type: "initiate",
-            data: cellData,
-            selections: calcCtrl.selections,
-          },
-          params: callParams.params
-        })
-      });
-    } else */
-
-
     if(callParams.type === "expr vals"){
       //debugger;
       //in the event of a expr vals request sends expression values back for a given chunk of gene names
@@ -229,7 +201,7 @@ calculationController.prototype.handleWorkerMessage = function(e) {
 
       } // if(document.getElementById("localProgressBar")
     } else if(callParams.type === "complete"){
-      //debugger;
+
       // FIXME
       if(document.getElementById("localProgressBar")){
         w.terminate();

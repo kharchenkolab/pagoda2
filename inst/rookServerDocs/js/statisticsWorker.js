@@ -9,26 +9,14 @@ self.method = null;
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
   var callParams = e.data;
-  if(callParams.type === "setup"){
-    handleSetupCommand(e);
-  } else if(callParams.type === "initiate"){
+
+  if(callParams.type === "initiate"){
     handleInitiateCommand(e);
   } else if(callParams.type === "process"){
     handleProcessCommand(e);
   }
-},false);
 
-// Handlers for the various commands
-/*
-function handleSetupCommand(e) {
-    var callParams = e.data;
-    var response = {
-        type: "cell order",
-      params: callParams.params
-    }
-    postMessage(response);
-}
-*/
+},false);
 
 function handleInitiateCommand(e) {
     self.geneNames = e.data.params.geneNames;
@@ -84,7 +72,6 @@ function handleInitiateCommand(e) {
 }
 
 function handleProcessCommand(e) {
-  //debugger;
   var callParams = e.data;
   if(self.method === "wilcoxon"){
     runWilcoxonOnGroup(callParams.params, callParams.data);
@@ -98,10 +85,12 @@ function handleProcessCommand(e) {
 
   //continue requesting data if data still needs to be read
   if(callParams.params.index < self.geneNames.length){
+    var nextGeneNames = self.geneNames.slice(callParams.params.index,
+          Math.min(callParams.params.index + callParams.params.step, self.geneNames.length));
+
     postMessage({
         type: "expr vals",
-        data: self.geneNames.slice(callParams.params.index,
-          Math.min(callParams.params.index + callParams.params.step, self.geneNames.length)),
+        data: nextGeneNames,
       params: callParams.params
     })
   } else {
