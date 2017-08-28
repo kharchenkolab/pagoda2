@@ -2,8 +2,7 @@
 
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
-var callParams = e.data;
-
+  var callParams = e.data;
   if(callParams.command.type === "setup"){
     handleSetupCommand(e);
   } else if(callParams.command.type === "initiate"){
@@ -34,17 +33,18 @@ function handleSetupCommand(e) {
 
 function handleInitiateCommand(e) {
   var callParams = e.data;
-    /*
-   * Initiate command
-   * Recieves cell name data from the master thread and initializes the selection index arrays
-   * Requests a subset of the genes at a time
-   * params step set to number of genes requested per request made
-   * params index set to 0, index will represent next gene to interpret
-   * params numCells is the number of cells
-   * request expr vals
-   * request data: contains the gene names that are being asked for
-   */
-      callParams.params.step = Math.max(Math.floor(callParams.params.geneNames.length/200),10);
+       /*
+       * Initiate command
+       * Recieves cell name data from the master thread and initializes the selection index arrays
+       * Requests a subset of the genes at a time
+       * params step set to number of genes requested per request made
+       * params index set to 0, index will represent next gene to interpret
+       * params numCells is the number of cells
+       * request expr vals
+       * request data: contains the gene names that are being asked for
+       */
+
+    callParams.params.step = Math.max(Math.floor(callParams.params.geneNames.length/200),10);
     callParams.params.index = 0;
     callParams.params.numCells = callParams.command.data.length;
 
@@ -90,50 +90,34 @@ function handleInitiateCommand(e) {
 
 function handleProcessCommand(e) {
   var callParams = e.data;
-    /*
-     * Process Command
-     *
-     * Process a chunk of data based on the chosen method then requests more data
-     in a similar way to other unless no more data remains, otherwise requests death
-     *
-     * request 1
-     * request type: expr vals
-     * request data: contains the gene names that are being asked for next
-     *
-     * request 2
-     * request type: clean death
-     */
+  if(callParams.params.method === "wilcoxon"){
+    runWilcoxonOnGroup(callParams.params, callParams.command.data);
+  } else {
+    // TODO: Handle error
+    console.log('Unknown method')
+  }
 
-    if(callParams.params.method === "default" || callParams.params.method === "ksTest"){
-      runKSonGroup(callParams.params, callParams.command.data);
-    }
-    else if(callParams.params.method === "wilcoxon"){
-      runWilcoxonOnGroup(callParams.params, callParams.command.data);
-    } else {
-      // TODO: Handle error
-    }
+  //advance index to current spot
+  callParams.params.index += callParams.params.step;
 
-    //advance index to current spot
-    callParams.params.index += callParams.params.step;
-
-    //continue requesting data if data still needs to be read
-    if(callParams.params.index < callParams.params.geneNames.length){
-      postMessage({
-        request:{
-          type: "expr vals",
-          data: callParams.params.geneNames.slice(callParams.params.index,
-            Math.min(callParams.params.index + callParams.params.step, callParams.params.geneNames.length)),
-        },
-        params: callParams.params
-      })
-    } else{
-      postMessage({
-        request:{
-          type: "clean death"
-        },
-        params: callParams.params
-      })
-    } // if.. else if(callParams.params.index < callParams.params.geneNames.length)
+  //continue requesting data if data still needs to be read
+  if(callParams.params.index < callParams.params.geneNames.length){
+    postMessage({
+      request:{
+        type: "expr vals",
+        data: callParams.params.geneNames.slice(callParams.params.index,
+          Math.min(callParams.params.index + callParams.params.step, callParams.params.geneNames.length)),
+      },
+      params: callParams.params
+    })
+  } else {
+    postMessage({
+      request:{
+        type: "clean death"
+      },
+      params: callParams.params
+    })
+  } // if.. else if(callParams.params.index < callParams.params.geneNames.length)
 }
 
 function handleStopCommand(e) {

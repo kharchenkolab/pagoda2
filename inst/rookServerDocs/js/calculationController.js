@@ -79,6 +79,14 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
   }
 };
 
+
+
+
+
+
+
+
+
 /**
  * Calculate differential expression for a group of selections against the background
  * @param selections An array of the cell selections to be used to perform
@@ -97,14 +105,7 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   // Generates the new worker
   if(typeof(this.localWorker) === "undefined") {
     this.localWorker = new Worker("js/statisticsWorker.js");
-    dataCtrl.getGeneInformationStore(function(geneNameData){
-      var geneNames = [];
-
-      //collects all gene names being analyzed
-      for(var i = 0; i < geneNameData.localData.length; i++){
-        geneNames.push(geneNameData.localData[i].genename);
-      }
-      geneNameData = undefined;
+    dataCtrl.getAllGeneNames(function(geneNames) {
 
       // Send worker the startup command
       var startUpPackage = {
@@ -118,7 +119,8 @@ calculationController.prototype.calculateDELocal = function(selections, callback
           closed: false
         }
       };
-      thisController.localWorker.postMessage(startUpPackage)
+
+      thisController.localWorker.postMessage(startUpPackage);
 
       //builds non-modal progress bar window
       thisController.showDisplayBar();
@@ -189,6 +191,7 @@ calculationController.prototype.handleWorkerMessage = function(e) {
         })
       });
     } else if(callParams.request.type === "expr vals"){
+      //debugger;
       //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
 

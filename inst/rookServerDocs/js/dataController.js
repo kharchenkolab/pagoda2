@@ -253,6 +253,24 @@ dataController.prototype.getGeneInformationStore = function(callback) {
 
 dataController.prototype.getGeneSetInformationStore = function(callback) {
   return this.internalController.getGeneSetInformationStore(callback);
+};
+
+/**
+ * Get all the genes names in an array
+ */
+dataController.prototype.getAllGeneNames = function(callback) {
+  this.internalController.getGeneInformationStore(function(geneNameData){
+      // TODO: consider caching thi
+      var geneNames = [];
+
+      //collects all gene names being analyzed
+      for(var i = 0; i < geneNameData.localData.length; i++){
+        geneNames.push(geneNameData.localData[i].genename);
+      }
+      geneNameData = undefined;
+
+      callback(geneNames);
+  });
 }
 
 /**
