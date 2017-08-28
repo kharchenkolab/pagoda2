@@ -107,24 +107,26 @@ calculationController.prototype.calculateDELocal = function(selections, callback
     this.localWorker = new Worker("js/statisticsWorker.js");
     dataCtrl.getAllGeneNames(function(geneNames) {
       calcCtrl.geneNames = geneNames;
+        dataCtrl.getCellOrder(function(cellData){
+          var callParams = {};
+          callParams.geneNames = geneNames;
 
-      // Send worker the startup command
-      var startUpPackage = {
-        command:{
-          type: "setup"
-        },
-        params:{
-          method: method,
-          geneNames: geneNames, // All the gene names
-          closed: false
-        }
-      };
 
-      thisController.localWorker.postMessage(startUpPackage);
+          thisController.localWorker.postMessage({
+
+              type: "initiate",
+              method: method,
+              data: cellData,
+              selections: calcCtrl.selections,
+            params: callParams
+          })
+
+        }); // getCellOrder
+
 
       //builds non-modal progress bar window
       thisController.showDisplayBar();
-    });
+    }); //getAllGeneNames
   }
 
   // Handle the incoming message
@@ -184,44 +186,50 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     var cellSelCntr = new cellSelectionController();
     var callParams = e.data;
     var dataCtrl = new dataController();
-    var calcCntr = new calculationController();
+    var calcCtrl = new calculationController();
+
+
 
     //in the event of the cell order request sends cell order back with cell selection names
-    if(callParams.request.type === "cell order") {
+  /*
+    if(callParams.type === "cell order") {
       dataCtrl.getCellOrder(function(cellData){
-        debugger;
+        // Send the gene names here
+        callParams.geneNames = calcCtrl.geneNames;
         w.postMessage({
           command:{
             type: "initiate",
             data: cellData,
-            selections: calcCntr.selections,
+            selections: calcCtrl.selections,
           },
           params: callParams.params
         })
       });
-    } else if(callParams.request.type === "expr vals"){
+    } else */
+
+
+    if(callParams.type === "expr vals"){
       //debugger;
       //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
 
         // Update the progress bar
         //HERE
-        calcCntr.updateProgressPercent(callParams.params.index/calcCntr.geneNames.length);
+        calcCtrl.updateProgressPercent(callParams.params.index/calcCtrl.geneNames.length);
 
         // Send the next chunk of data
-        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0,
+        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.data, 0,
           callParams.params.numCells, function(data){
           w.postMessage({
-            command:{
               type: "process",
-              data: data
-            },
+              data: data,
             params: callParams.params
           })
         })
 
       } // if(document.getElementById("localProgressBar")
-    } else if(callParams.request.type === "complete"){
+    } else if(callParams.type === "complete"){
+      //debugger;
       // FIXME
       if(document.getElementById("localProgressBar")){
         w.terminate();

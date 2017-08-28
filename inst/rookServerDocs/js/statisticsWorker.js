@@ -4,73 +4,67 @@ self.collectedResults = [];
 self.geneName = null;
 self.selAidx = null;
 self.selBidx = null;
+self.method = null;
 
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
   var callParams = e.data;
-  if(callParams.command.type === "setup"){
+  if(callParams.type === "setup"){
     handleSetupCommand(e);
-  } else if(callParams.command.type === "initiate"){
+  } else if(callParams.type === "initiate"){
     handleInitiateCommand(e);
-  } else if(callParams.command.type === "process"){
+  } else if(callParams.type === "process"){
     handleProcessCommand(e);
   }
 },false);
 
 // Handlers for the various commands
+/*
 function handleSetupCommand(e) {
-     /*
-    * Setup command
-    * Worker requests cell data from its master
-    * request type: Cell order
-    */
-    debugger;
-    self.geneNames = e.data.params.geneNames;
-    e.data.params.geneNames = null;
-
     var callParams = e.data;
     var response = {
-      request:{
-        type: "cell order"
-      },
+        type: "cell order",
       params: callParams.params
     }
     postMessage(response);
 }
+*/
 
 function handleInitiateCommand(e) {
-  collectedResults
+    self.geneNames = e.data.params.geneNames;
+    self.method = e.data.method;
+    e.data.params.geneNames = null;
 
-  var callParams = e.data;
+    var callParams = e.data;
 
     callParams.params.step = Math.max(Math.floor(self.geneNames.length/200),10);
     callParams.params.index = 0;
-    callParams.params.numCells = callParams.command.data.length;
+    callParams.params.numCells = callParams.data.length;
 
     //if there is only one selection given make the second selection off of the indexes of the cellOrderData keys
-    if(callParams.command.selections.length === 1){
+    if(callParams.selections.length === 1){
       // Only one selection
       self.selAidx = [];
-      self.selBidx = [...callParams.command.data.keys()];
+      self.selBidx = [...callParams.data.keys()];
       //creates array of cell indexes based on their corresponding index in cell order array
-      for(var i = 0; i < callParams.command.selections[0].length; i++){
-        var idx = callParams.command.data.indexOf(callParams.command.selections[0][i]);
+      for(var i = 0; i < callParams.selections[0].length; i++){
+        var idx = callParams.data.indexOf(callParams.selections[0][i]);
         if(idx !== -1){
           self.selAidx.push(idx);
         }
       }
-    } else if(callParams.command.selections.length === 2){
+    } else if(callParams.selections.length === 2){
       // Two selections
       self.selAidx = [];
       self.selBidx = [];
-      for(var i = 0; i < callParams.command.selections[0].length; i++){
-        var idx = callParams.command.data.indexOf(callParams.command.selections[0][i]);
+      for(var i = 0; i < callParams.selections[0].length; i++){
+        var idx = callParams.data.indexOf(callParams.selections[0][i]);
         if(idx !== -1){
           self.selAidx.push(idx);
         }
       }
-      for(var i = 0; i < callParams.command.selections[1].length; i++){
-        var idx = callParams.command.data.indexOf(callParams.command.selections[1][i]);
+      for(var i = 0; i < callParams.selections[1].length; i++){
+        var idx = callParams.data.indexOf(callParams.selections[1][i]);
         if(idx !== -1){
           self.selBidx.push(idx);
         }
@@ -83,18 +77,17 @@ function handleInitiateCommand(e) {
     );
 
     postMessage({
-      request:{
         type: "expr vals",
         data: nextSliceGenes,
-      },
       params: callParams.params
     });
 }
 
 function handleProcessCommand(e) {
+  //debugger;
   var callParams = e.data;
-  if(callParams.params.method === "wilcoxon"){
-    runWilcoxonOnGroup(callParams.params, callParams.command.data);
+  if(self.method === "wilcoxon"){
+    runWilcoxonOnGroup(callParams.params, callParams.data);
   } else {
     // TODO: Handle error
     console.log('Unknown method')
@@ -106,18 +99,15 @@ function handleProcessCommand(e) {
   //continue requesting data if data still needs to be read
   if(callParams.params.index < self.geneNames.length){
     postMessage({
-      request:{
         type: "expr vals",
         data: self.geneNames.slice(callParams.params.index,
           Math.min(callParams.params.index + callParams.params.step, self.geneNames.length)),
-      },
       params: callParams.params
     })
   } else {
+    debugger;
     postMessage({
-      request:{
-        type: "complete"
-      },
+      type: "complete",
       results: self.collectedResults,
       params: callParams.params
     })
