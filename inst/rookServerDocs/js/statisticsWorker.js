@@ -140,28 +140,49 @@ function runWilcoxonOnGroup(params, geneData){
 
         var lastVal = allValues[0].exprVal;
         var lastValStartIndex = 0;
-
+        var inTie = false;
+        
+        
+        // Calculate element ranks taking into account ties
         for (var i = 0; i < allValues.length; i++) {
-          if (allValues[i] === lastVal) {
-            // There is a tie
-
+          // Set the rank to the position in the array (1-indexed)
+          allValues[i].rank = i + 1;
+          
+          if (allValues[i].exprVal === lastVal) {
+            // In a tie
+            if (!inTie) {
+              // Just entered the tie
+              lastValStartIndex = i - 1;
+              inTie = true;
+            } 
+            // else we were already in a tie and we don't need to do anything
           } else {
-            allValues[i].rank = i + 1;
-          }
+            // Not in a tie
+            if (inTie) {
+              // Just exited the previous tie
+              var commonRank = (lastValStartIndex + 1) + (i + 1) / (i - lastValStartIndex);
+              for (var j = lastValStartIndex; j < i; j++) {
+                allValues[j].rank = commonRank;
+              } // for
+              
+              inTie = false;
+            } else { // Not in tie
+              lastVal = allValues[i].exprVal;
+              lastValStartIndex = i;
+            } // if inTie
+          } // if == lastVa else
+        } // for i
 
-
-          allValues[i].rank = i +  1;
-          /*
+        // Calculate rank sums
+        var totalRankA = 0;
+        var totalRankB = 0;
+        for (var i = 0; i < allValues.length; i++) {
           if (allValues[i].selection == 1){
             totalRankA += (i+1);
           } else {
             totalRankB += (i+1);
           }
-          */
         }
-
-        // var totalRankA = 0;
-        // var totalRankB = 0;
 
         // Sort out ties
         var startLastVal = 0;
