@@ -113,9 +113,6 @@ function runWilcoxonOnGroup(params, geneData){
 
       for(var geneindex = 0; geneindex < geneData.array[0].length; geneindex++){
 
-        //var selAexpr = [];
-        //var selBexpr = [];
-
         var allValues = [];
 
         //retrieve expression data by indexes for selection A
@@ -137,11 +134,10 @@ function runWilcoxonOnGroup(params, geneData){
         // Sort and calculate total ranks
         allValues.sort(function(x,y){return x.exprVal - y.exprVal});
 
-
+        // For keeping track of ties
         var lastVal = allValues[0].exprVal;
         var lastValStartIndex = 0;
         var inTie = false;
-        
         
         // Calculate element ranks taking into account ties
         for (var i = 0; i < allValues.length; i++) {
@@ -184,13 +180,6 @@ function runWilcoxonOnGroup(params, geneData){
           }
         }
 
-        // Sort out ties
-        var startLastVal = 0;
-        var lastVal = allValues[0].exprVal;
-        for (var i = 0; i < allValues.length; i++) {
-
-        }
-
         var lengthA = self.selAidx.length;
         var lengthB = self.selBidx.length;
 
@@ -202,6 +191,11 @@ function runWilcoxonOnGroup(params, geneData){
         // Normal approximation
         var muU = lengthA * lengthB /2;
         var sigmaU = Math.sqrt(lengthA * lengthB * (lengthA + lengthB + 1) / 12)
+        
+        // TODO: Get corrected sigma for ranks
+        // var K correction value..
+        // var sigmaUcorr = Math.sqrt(lengthA * lengthB / 12 ( lengthA + lengthB + 1 ) - K)
+        
         var z = (U - muU) / sigmaU;
         var zAbs = Math.abs(z);
 
