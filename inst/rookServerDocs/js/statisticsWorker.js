@@ -1,6 +1,9 @@
 "use strict";
 
 self.collectedResults = [];
+self.geneName = null;
+self.selAidx = null;
+self.selBidx = null;
 
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
@@ -11,8 +14,6 @@ self.addEventListener("message", function(e){
     handleInitiateCommand(e);
   } else if(callParams.command.type === "process"){
     handleProcessCommand(e);
-  } else if(callParams.command.type === "stop"){
-    handleStopCommand(e);
   }
 },false);
 
@@ -23,8 +24,12 @@ function handleSetupCommand(e) {
     * Worker requests cell data from its master
     * request type: Cell order
     */
+    debugger;
+    self.geneNames = e.data.params.geneNames;
+    e.data.params.geneNames = null;
+
     var callParams = e.data;
-      var response = {
+    var response = {
       request:{
         type: "cell order"
       },
@@ -48,7 +53,7 @@ function handleInitiateCommand(e) {
        * request data: contains the gene names that are being asked for
        */
 
-    callParams.params.step = Math.max(Math.floor(callParams.params.geneNames.length/200),10);
+    callParams.params.step = Math.max(Math.floor(self.geneNames.length/200),10);
     callParams.params.index = 0;
     callParams.params.numCells = callParams.command.data.length;
 
@@ -82,11 +87,14 @@ function handleInitiateCommand(e) {
         }
       }
     }
+
+    var nextSliceGenes = self.geneNames.slice(callParams.params.index,
+          Math.min(callParams.params.index + callParams.params.step,self.geneNames.length));
+
     postMessage({
       request:{
         type: "expr vals",
-        data: callParams.params.geneNames.slice(callParams.params.index,
-          Math.min(callParams.params.index + callParams.params.step,callParams.params.geneNames.length)),
+        data: nextSliceGenes,
       },
       params: callParams.params
     });
@@ -105,12 +113,12 @@ function handleProcessCommand(e) {
   callParams.params.index += callParams.params.step;
 
   //continue requesting data if data still needs to be read
-  if(callParams.params.index < callParams.params.geneNames.length){
+  if(callParams.params.index < self.geneNames.length){
     postMessage({
       request:{
         type: "expr vals",
-        data: callParams.params.geneNames.slice(callParams.params.index,
-          Math.min(callParams.params.index + callParams.params.step, callParams.params.geneNames.length)),
+        data: self.geneNames.slice(callParams.params.index,
+          Math.min(callParams.params.index + callParams.params.step, self.geneNames.length)),
       },
       params: callParams.params
     })
@@ -124,20 +132,6 @@ function handleProcessCommand(e) {
     })
   } // if.. else if(callParams.params.index < callParams.params.geneNames.length)
 }
-
-function handleStopCommand(e) {
-  var callParams = e.data;
-    /*
-   * User has issued a stop command
-   * Halts progress of analysis and sends the main thread a message to kill this worker and not call the callback
-   */
-      postMessage({
-        request:{
-          type: "abrupt death"
-        },
-      })
-}
-
 
 /**
  * Calculate differential expression between two groups of cells the Wilcoxon Mann-Whitney test

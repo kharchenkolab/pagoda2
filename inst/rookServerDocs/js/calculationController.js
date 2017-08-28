@@ -106,16 +106,16 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   if(typeof(this.localWorker) === "undefined") {
     this.localWorker = new Worker("js/statisticsWorker.js");
     dataCtrl.getAllGeneNames(function(geneNames) {
+      calcCtrl.geneNames = geneNames;
 
       // Send worker the startup command
       var startUpPackage = {
         command:{
-          type: "setup",
+          type: "setup"
         },
         params:{
           method: method,
-          geneNames: geneNames,
-          results: [],
+          geneNames: geneNames, // All the gene names
           closed: false
         }
       };
@@ -134,9 +134,19 @@ calculationController.prototype.calculateDELocal = function(selections, callback
     //abort function for stop button functionality
     abort: function(){
       var calcCtrl = new calculationController()
-      calcCtrl.localWorker.postMessage({command:{type:"stop"}})
+      calcCtrl.terminateWorker();
     } // function abort
   }; // return
+}
+
+calculationController.prototype.terminateWorker = function() {
+  if(Ext.getCmp("localProgressBarWindow")){
+    Ext.getCmp("localProgressBarWindow").close()
+  }
+
+  var calcCtrl = new calculationController();
+  calcCtrl.localWorker.terminate();
+  calcCtrl.localWorker = undefined;
 }
 
 /**
@@ -158,14 +168,12 @@ calculationController.prototype.showDisplayBar = function() {
         close: function(win){
           var actionUI = new actionPanelUIcontroller();
           if(actionUI.currentDErequest){
-            actionUI.stopAnalysisClickHandler()
+            actionUI.stopAnalysisClickHandler() // FIXME
           }
         },
       }
     }).show(0);
 }
-
-
 
 
 /**
@@ -191,12 +199,12 @@ calculationController.prototype.handleWorkerMessage = function(e) {
         })
       });
     } else if(callParams.request.type === "expr vals"){
-      //debugger;
+      debugger;
       //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
 
         // Update the progress bar
-        var execution = (callParams.params.index/callParams.params.geneNames.length) * 100;
+        var execution = (callParams.params.index/calcCntr.geneNames.length) * 100;
         document.getElementById("localProgressBar").style.width = execution + "%"
         document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
 
@@ -214,43 +222,26 @@ calculationController.prototype.handleWorkerMessage = function(e) {
 
       } // if(document.getElementById("localProgressBar")
     } else if(callParams.request.type === "complete"){
-      debugger;
-      var calcCtrl = new calculationController();
-
-      //during completion of execution a complete is evoked
-      //if the complete occures while an abrupt death is being evoked this if should prevent data race
+      // FIXME
       if(document.getElementById("localProgressBar")){
-        // TODO: This should be independent really
         w.terminate();
 
         var calcCtrl = new calculationController();
         calcCtrl.localWorker = undefined;
 
-        document.getElementById("localProgressLabel").innerHTML = "Finishing"
+        calcCtrl.setProgressLabel("Finishing...");
+
         setTimeout(function(){
           calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
         },1);
       }
-    } else if(callParams.request.type === "abrupt death"){
-      //if stop or another button like it is clicked cleanly shutsdown the worker without calling the call back
-      if(Ext.getCmp("localProgressBarWindow")){
-        Ext.getCmp("localProgressBarWindow").close()
-      }
-      w.terminate();
-      var calcCtrl = new calculationController();
-      calcCtrl.localWorker = undefined;
     }
 } // handleWorkerMessage
 
-
-
-
-
-
-
-
-
+calculationController.prototype.setProgressLabel = function(text) {
+  document.getElementById("localProgressLabel").innerHTML = text;
+}
 
 
 
