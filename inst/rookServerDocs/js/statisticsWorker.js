@@ -111,84 +111,89 @@ function handleProcessCommand(e) {
  */
 function runWilcoxonOnGroup(params, geneData){
 
-      //for each gene calculate differential expression
-      for(var gene = 0; gene < geneData.array[0].length; gene++){
+      for(var geneindex = 0; geneindex < geneData.array[0].length; geneindex++){
 
-        var selAexpr = [];
-        var selBexpr = [];
+        //var selAexpr = [];
+        //var selBexpr = [];
+
+        var allValues = [];
 
         //retrieve expression data by indexes for selection A
         for(var cell = 0; cell < self.selAidx.length; cell++){
-          selAexpr.push(geneData.array[self.selAidx[cell]][gene]);
+          allValues.push({
+            selection: 1,
+            exprVal: geneData.array[self.selAidx[cell]][geneindex]
+          });
         }
+
         //retrieve expression data by indexes for selection B
         for(var cell = 0; cell < self.selBidx.length; cell++){
-          selBexpr.push(geneData.array[self.selBidx[cell]][gene]);
+          allValues.push({
+            selection: 2,
+            exprVal: geneData.array[self.selBidx[cell]][geneindex]
+          });
         }
 
-        selAexpr.sort(function(x,y){return x-y});
-        selBexpr.sort(function(x,y){return x-y});
+        // Sort and calculate total ranks
+        allValues.sort(function(x,y){return x.exprVal - y.exprVal});
 
-        //removes all selections with a value of 0
-        while(selAexpr.length >0 && selAexpr[0] === 0){
-          selAexpr.shift();
-        }
-        while(selBexpr.length >0 && selBexpr[0] === 0){
-          selBexpr.shift();
-        }
 
-        //skips the gene if there aren't enough valid cells
-        if(selAexpr.length < 10 || selBexpr.length < 10){
-          continue;
-        }
+        var lastVal = allValues[0].exprVal;
+        var lastValStartIndex = 0;
 
-        var length = selAexpr.length;
-        var lengthPrime = selBexpr.length;
-        var index = 0;
+        for (var i = 0; i < allValues.length; i++) {
+          if (allValues[i] === lastVal) {
+            // There is a tie
 
-        var totalArank = 0;
-        var mean = 0;
-
-        //calculates ranks for cell selection A by way of wilcoxon ranking
-        for(var i = 0; i< selBexpr.length; i++){
-          while(index < selAexpr.length && selAexpr[index] <= selBexpr[i]){
-            if(selAexpr[index] === selBexpr[i]){
-              totalArank += (i + .5)
-            }
-            else{
-              totalArank += (i);
-            }
-            mean += selAexpr[index];
-            index++;
+          } else {
+            allValues[i].rank = i + 1;
           }
-          mean += selBexpr[i];
+
+
+          allValues[i].rank = i +  1;
+          /*
+          if (allValues[i].selection == 1){
+            totalRankA += (i+1);
+          } else {
+            totalRankB += (i+1);
+          }
+          */
         }
-        for(; index < selAexpr.length; index++){
-          totalArank += (selBexpr.length);
-          mean += selAexpr[index];
+
+        // var totalRankA = 0;
+        // var totalRankB = 0;
+
+        // Sort out ties
+        var startLastVal = 0;
+        var lastVal = allValues[0].exprVal;
+        for (var i = 0; i < allValues.length; i++) {
+
         }
-        mean = mean/(length + lengthPrime);
 
-        //calculates total of B's ranks using A's rank and sample size
-        var totalBrank = length * lengthPrime - totalArank;
+        var lengthA = self.selAidx.length;
+        var lengthB = self.selBidx.length;
 
-        var fold = (totalBrank === 0? 1: Math.min(totalArank/totalBrank,1));
+        var u1 = totalRankA - (lengthA * (lengthA +1)) /2
+        var u2 = totalRankB - (lengthB * (lengthB +1)) /2
 
-        var mu = (length * lengthPrime) / 2;
-        var sigma = Math.sqrt((length * lengthPrime) * (length+ lengthPrime +1)/12);
+        var U = Math.min(u1, u2);
 
-        var z = Math.abs((Math.max(totalArank,totalBrank) - mu)/sigma);
-        var zSign = (Math.max(totalBrank,totalArank) === totalArank ? 1 : -1);
+        // Normal approximation
+        var muU = lengthA * lengthB /2;
+        var sigmaU = Math.sqrt(lengthA * lengthB * (lengthA + lengthB + 1) / 12)
+        var z = (U - muU) / sigmaU;
+        var zAbs = Math.abs(z);
 
         //accepts p < .05
-        if(z >= 3.0){
+        if(zAbs >= 3.0){
           self.collectedResults.push(
             {
-              Z:(z*zSign),
-              absZ:z,
-              name: geneData.colnames[gene],
-              fe: fold,
-              M:mean, highest:(zSign >= 0)
+              Z: z,
+              absZ: zAbs,
+              name: geneData.colnames[geneindex],
+              fe: 0,
+              M: 0,
+              highest: false
             }
           )
         } // if(z >= 3.0)
