@@ -19,8 +19,8 @@ function calculationController(localAvailable, remoteAvailable) {
       },
       {
         name: 'localDefault',
-        displayName: 'Local Default',
-        help: 'Local Default Method',
+        displayName: 'Kolmogorov Smirnov',
+        help: 'Kolmogorov Smirnov Test',
         repos: 'KStest'
       },
       {
@@ -28,12 +28,6 @@ function calculationController(localAvailable, remoteAvailable) {
         displayName: 'Local Wilcoxon',
         help: 'Local Wilcoxon Method',
         repos: 'wilcoxon',
-      },
-      {
-        name: 'wilcoxonFast',
-        displayName: 'wilcoxonFast',
-        help: 'Fast wilcoxon',
-        reps: 'wilcoxonfast'
       }
     ];
 
@@ -55,8 +49,6 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
     return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"wilcoxon");
   } else if(method === 'localTtest'){
     return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"tTest");
-  } else if(method === 'wilcoxonfast') {
-    returh this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback, "wilcoxonfast")
   }  else {
     callback('Not implemented');
   }
@@ -121,6 +113,9 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       //builds non-modal progress bar window
       thisController.showDisplayBar();
     });
+  } else {
+    // Something is already running
+    // TODO: Show some kind of error
   } // if(typeof(this.localWorker) === "undefined")
 
   // Handle the incoming message
@@ -132,15 +127,12 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       this.localWorker.postMessage({command:{type:"stop"}})
     } // function abort
   }; // return
-
-  
 }
 
 /**
  * Show the display bar window
  */
 calculationController.prototype.showDisplayBar = function() {
-  
   Ext.create("Ext.window.Window", {
       title: "Processing Data Locally",
       internalPadding: '10 10 10 10',
@@ -183,10 +175,8 @@ calculationController.prototype.handleWorkerMessage = function(e) {
           params: callParams.params
         })
       });
-
-    }
-    //in the event of a expr vals request sends expression values back for a given chunk of gene names
-    else if(callParams.request.type === "expr vals"){
+    } else if(callParams.request.type === "expr vals"){
+      //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
 
         // Update the progress bar
@@ -207,9 +197,8 @@ calculationController.prototype.handleWorkerMessage = function(e) {
         })
         
       } // if(document.getElementById("localProgressBar")
-    }
-    //during completion of execution a clean death is evoked
-    else if(callParams.request.type === "clean death"){
+    } else if(callParams.request.type === "clean death"){
+      //during completion of execution a clean death is evoked
       //if the clean death occures while an abrupt death is being evoked this if should prevent data race
       if(document.getElementById("localProgressBar")){
         // TODO: This should be independent really
@@ -222,19 +211,15 @@ calculationController.prototype.handleWorkerMessage = function(e) {
           Ext.getCmp("localProgressBarWindow").close();
         },1);
       }
-
-    }
-    //if stop or another button like it is clicked cleanly shutsdown the worker without calling the call back
-    else if(callParams.request.type === "abrupt death"){
+    } else if(callParams.request.type === "abrupt death"){
+      //if stop or another button like it is clicked cleanly shutsdown the worker without calling the call back
       if(Ext.getCmp("localProgressBarWindow")){
         Ext.getCmp("localProgressBarWindow").close()
       }
       w.terminate();
       thisController.localWorker = undefined;
     }
-
-}
-
+} // handleWorkerMessage
 
 /**
  * Calculate differential expression for 1 selection against the packground
@@ -258,7 +243,6 @@ calculationController.prototype.calculateDEfor2selectionsbyLocal = function(sele
   var cellSelCntr = new cellSelectionController();
   return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 }
-
 
 
 // Remote AJAX Stuff

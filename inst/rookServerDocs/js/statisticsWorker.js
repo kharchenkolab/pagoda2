@@ -15,7 +15,6 @@ self.addEventListener("message", function(e){
   }
 },false);
 
-
 // Handlers for the various commands
 function handleSetupCommand(e) {
      /*
@@ -102,7 +101,7 @@ function handleProcessCommand(e) {
      * request type: clean death
      */
   
-      if(callParams.params.method === "default" || callParams.params.method === "ksTest"){
+    if(callParams.params.method === "default" || callParams.params.method === "ksTest"){
       runKSonGroup(callParams.params, callParams.command.data);
     }
     else if(callParams.params.method === "wilcoxon"){
