@@ -169,11 +169,10 @@ calculationController.prototype.showDisplayBar = function() {
 calculationController.prototype.handleWorkerMessage = function(e) {
     var w = this.localWorker;
     var cellSelCntr = new cellSelectionController();
-
     var callParams = e.data;
 
     //in the event of the cell order request sends cell order back with cell selection names
-    if(callParams.request.type === "cell order"){
+    if(callParams.request.type === "cell order") {
       dataCtrl.getCellOrder(function(cellData){
         w.postMessage({
           command:{
@@ -186,43 +185,47 @@ calculationController.prototype.handleWorkerMessage = function(e) {
       });
 
     }
-
     //in the event of a expr vals request sends expression values back for a given chunk of gene names
     else if(callParams.request.type === "expr vals"){
       if(document.getElementById("localProgressBar")){
 
-        //continues
+        // Update the progress bar
         var execution = (callParams.params.index/callParams.params.geneNames.length) * 100;
         document.getElementById("localProgressBar").style.width = execution + "%"
         document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
-
-                dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0,
-                  callParams.params.numCells, function(data){
-                  w.postMessage({
-                    command:{
-                      type: "process",
-                      data: data
-                    },
-                    params: callParams.params
-                  })
-                })
-      }
+    
+        // Send the next chunk of data
+        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0,
+          callParams.params.numCells, function(data){
+          w.postMessage({
+            command:{
+              type: "process",
+              data: data
+            },
+            params: callParams.params
+          })
+        })
+        
+      } // if(document.getElementById("localProgressBar")
     }
     //during completion of execution a clean death is evoked
     else if(callParams.request.type === "clean death"){
-
       //if the clean death occures while an abrupt death is being evoked this if should prevent data race
       if(document.getElementById("localProgressBar")){
+        // TODO: This should be independent really
         thisController.localWorker.terminate();
         thisController.localWorker = undefined;
+        
         document.getElementById("localProgressLabel").innerHTML = "Finishing"
-        setTimeout(function(){callback(callParams.params.results);Ext.getCmp("localProgressBarWindow").close();},1);
+        setTimeout(function(){
+          callback(callParams.params.results);
+          Ext.getCmp("localProgressBarWindow").close();
+        },1);
       }
 
     }
     //if stop or another button like it is clicked cleanly shutsdown the worker without calling the call back
     else if(callParams.request.type === "abrupt death"){
-
       if(Ext.getCmp("localProgressBarWindow")){
         Ext.getCmp("localProgressBarWindow").close()
       }
@@ -230,7 +233,6 @@ calculationController.prototype.handleWorkerMessage = function(e) {
       thisController.localWorker = undefined;
     }
 
-  
 }
 
 
