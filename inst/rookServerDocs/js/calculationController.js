@@ -169,7 +169,6 @@ calculationController.prototype.showDisplayBar = function() {
     }).show(0);
 }
 
-
 /**
  * Handle an incoming message from the worker thread
  */
@@ -223,15 +222,11 @@ calculationController.prototype.setProgressLabel = function(text) {
   document.getElementById("localProgressLabel").innerHTML = text;
 }
 
-
-
-
 calculationController.prototype.updateProgressPercent = function(val) {
   var execution = val * 100;
   document.getElementById("localProgressBar").style.width = execution + "%"
   document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
 }
-
 
 // Remote AJAX Stuff
 /**

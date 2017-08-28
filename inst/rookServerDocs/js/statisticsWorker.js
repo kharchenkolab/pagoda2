@@ -5,6 +5,8 @@ self.geneName = null;
 self.selAidx = null;
 self.selBidx = null;
 self.method = null;
+self.chunks = 50;
+self.minchunksize = 500;
 
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
@@ -25,7 +27,7 @@ function handleInitiateCommand(e) {
 
     var callParams = e.data;
 
-    callParams.params.step = Math.max(Math.floor(self.geneNames.length/200),10);
+    callParams.params.step = Math.max(Math.floor(self.geneNames.length/self.chunks),self.minchunksize);
     callParams.params.index = 0;
     callParams.params.numCells = callParams.data.length;
 
@@ -94,7 +96,6 @@ function handleProcessCommand(e) {
       params: callParams.params
     })
   } else {
-    debugger;
     postMessage({
       type: "complete",
       results: self.collectedResults,
