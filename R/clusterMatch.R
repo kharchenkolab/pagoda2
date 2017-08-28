@@ -8,6 +8,7 @@ getEmbeddingPlotWithClusters <- function(embedding, clusters) {
   p1
 }
 
+#' @import plyr
 #' @export getClusterMatch
 getClusterMatch <- function(r1, r2, cls1, cls2, var.scale=F, k = 100, log.scale=T) {
   require('plyr')
@@ -70,8 +71,13 @@ getClusterMatch <- function(r1, r2, cls1, cls2, var.scale=F, k = 100, log.scale=
   list(full=res, summarised = resSummary)
 }
 
+#' @import ggplot2
+#' @import gridExtra
 #' @export plotClusterMatch
 plotClusterMatch <- function(clusterMatch, cutoff = 0.25, plot =T ) {
+  require(ggplot2)
+  require(gridExtra)
+
   sumData <- clusterMatch$summarised
 
   # All connections
