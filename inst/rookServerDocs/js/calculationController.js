@@ -189,6 +189,7 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     //in the event of the cell order request sends cell order back with cell selection names
     if(callParams.request.type === "cell order") {
       dataCtrl.getCellOrder(function(cellData){
+        //debugger;
         w.postMessage({
           command:{
             type: "initiate",
@@ -199,14 +200,13 @@ calculationController.prototype.handleWorkerMessage = function(e) {
         })
       });
     } else if(callParams.request.type === "expr vals"){
-      debugger;
+      //debugger;
       //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
 
         // Update the progress bar
-        var execution = (callParams.params.index/calcCntr.geneNames.length) * 100;
-        document.getElementById("localProgressBar").style.width = execution + "%"
-        document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
+        //HERE
+        calcCntr.updateProgressPercent(callParams.params.index/calcCntr.geneNames.length);
 
         // Send the next chunk of data
         dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0,
@@ -246,14 +246,11 @@ calculationController.prototype.setProgressLabel = function(text) {
 
 
 
-
-
-
-
-
-
-
-
+calculationController.prototype.updateProgressPercent = function(val) {
+  var execution = val * 100;
+  document.getElementById("localProgressBar").style.width = execution + "%"
+  document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
+}
 
 
 // Remote AJAX Stuff
