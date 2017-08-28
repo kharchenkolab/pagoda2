@@ -192,8 +192,20 @@ function runWilcoxonOnGroup(params, geneData){
         var muU = lengthA * lengthB /2;
         var sigmaU = Math.sqrt(lengthA * lengthB * (lengthA + lengthB + 1) / 12)
         
-        // TODO: Get corrected sigma for ranks
-        // var K correction value..
+        // Calculate rank abundance 
+        var rankCounts = {};
+        for (var i = 0; i < allValues.length; i++) {
+          var rank = allValues[i].rank;
+          if(typeof rankCounts[rank] === 'undefined') {
+            rankCounts[rank]= 1;
+          } else {
+            rankCounts[rank] = rankCounts[rank] + 1;
+          }
+        }
+        
+        // TODO: Loop over rankCounts and calculate K
+        
+        
         // var sigmaUcorr = Math.sqrt(lengthA * lengthB / 12 ( lengthA + lengthB + 1 ) - K)
         
         var z = (U - muU) / sigmaU;
