@@ -10,7 +10,7 @@ getEmbeddingPlotWithClusters <- function(embedding, clusters) {
 
 #' @import plyr
 #' @export getClusterMatch
-getClusterMatch <- function(r1, r2, cls1, cls2, var.scale=F, k = 100, log.scale=T) {
+getClusterMatch <- function(r1, r2, cls1, cls2, var.scale=F, k = 100, log.scale=T, center = T) {
   require('plyr')
 
   if( !(class(r1) == 'Pagoda2' & class(r2) == 'Pagoda2')) {
@@ -38,8 +38,13 @@ getClusterMatch <- function(r1, r2, cls1, cls2, var.scale=F, k = 100, log.scale=
   }
 
   # Remove mean and convert to full matrix
-  x1 <- as.matrix(x1 - Matrix::rowMeans(x1))
-  x2 <- as.matrix(x2 - Matrix::rowMeans(x2))
+  if (center) {
+    x1 <- as.matrix(x1 - Matrix::rowMeans(x1))
+    x2 <- as.matrix(x2 - Matrix::rowMeans(x2))
+  } else {
+    x1 <- as.matrix(x1);
+    x2 <- as.matrix(x2);
+  }
 
   # Find mutual neighbours using constant k
   res <- mutualNN(x1,x2, k, k)
@@ -123,4 +128,18 @@ plotClusterMatch <- function(clusterMatch, cutoff = 0.25, plot =T ) {
 
 
   invisible(list(p0,p1,p2,p3));
+}
+
+#' @export getMaximalMatch
+getMaximalMatch <- function(clusterMatch) {
+  require('plyr')
+  sumData <- clusterMatch$summarised
+
+  r <- ddply(sumData, .(cluster2), function(x) {
+    x[which.max(x$pc2),]
+  })[,c('cluster1','cluster2')]
+
+  names(r) <- c('reference', 'matched')
+
+  r
 }
