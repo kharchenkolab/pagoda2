@@ -118,3 +118,17 @@ plotClusterMatch <- function(clusterMatch, cutoff = 0.25, plot =T ) {
 
   invisible(list(p0,p1,p2,p3));
 }
+
+#' @export getMaximalMatch
+getMaximalMatch <- function(clusterMatch) {
+  require('plyr')
+  sumData <- clm$summarised
+
+  r <- ddply(sumData, .(cluster2), function(x) {
+    x[which.max(x$pc2),]
+  })[,c('cluster1','cluster2')]
+
+  names(r) <- c('reference', 'matched')
+
+  r
+}
