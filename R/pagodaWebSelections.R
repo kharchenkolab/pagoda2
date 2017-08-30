@@ -115,7 +115,7 @@ factorToP2selection <- function(cl,col=NULL) {
   for (l in levels(cl)) {
     ns[[l]] <- list(
       name = l,
-      cells = names(mlvlcpy)[which(mlvlcpy == l)],
+      cells = names(cl)[which(cl == l)],
       color=col[l]
     )
   }
