@@ -140,21 +140,18 @@ getMaximalMatch <- function(clusterMatch) {
 
 
 #' @export callClusterMatch
-callClusterMatch <- function(clm) {
+callClusterMatch <- function (clm)
+{
   require(plyr)
+  summarize.cell <- ddply(clm$full, .(mA.id), function(x) {
+    t <- table(x$cluster2)
+    data.frame(cluster = as.character(x$cluster1[1]), referenceMatch = names(t)[which.max(t)])
+  })
 
-  # Call individual cells on the basis of the MNNs
-  j <- ddply(clm$full, .(mB.id), function(x) {
-    t <- table(x$cluster1)
-    data.frame(calledCluster=names(t)[which.max(t)], groundTruth=as.character(x$cluster2[1]))
-  });
+  called.clusters <- ddply(summarize.cell, .(cluster), function(x) {
+    t <- table(x$referenceMatch)
+    data.frame(cluster = x$cluster[1], match = names(t)[which.max(t)])
+  })
 
-
-  # Now let's summarise by cluster
-  k <- ddply(j, .(groundTruth), function(x) {
-    t <- table(x$calledCluster)
-    data.frame(calledCluster=names(t)[which.max(t)], groundTruth= as.character(x$groundTruth[1]))
-  });
-
-  k
+  called.clusters
 }
