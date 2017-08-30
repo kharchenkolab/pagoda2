@@ -155,3 +155,37 @@ callClusterMatch <- function (clm)
 
   called.clusters
 }
+
+#' @export callClusterMatchRev
+callClusterMatchRev <- function (clm)
+{
+  require(plyr)
+  summarize.cell <- ddply(clm$full, .(mB.id), function(x) {
+    t <- table(x$cluster1)
+    data.frame(cluster = as.character(x$cluster2[1]), referenceMatch = names(t)[which.max(t)])
+  })
+  called.clusters <- ddply(summarize.cell, .(cluster), function(x) {
+    t <- table(x$referenceMatch)
+    data.frame(cluster = x$cluster[1], match = names(t)[which.max(t)])
+  })
+  called.clusters
+}
+
+#' @export makeFactorFromCalledClusterMatch
+makeFactorFromCalledClusterMatch <- function(calledClusterMatch, clustersMatched)  {
+  # z is the map of clusters
+  z <- as.character(calledClusterMatch$cluster)
+  names(z) <- calledClusterMatch$match
+
+  # convert clustersMatched to character for matching
+  clusMatched <- as.character(clustersMatched)
+  names(clusMatched) <- names(clustersMatched)
+
+  # Do matching and convert back to factor
+  zp <- z[clusMatched]
+  names(zp) <- names(clusMatched)
+  zp <- as.factor(zp)
+
+  zp
+}
+
