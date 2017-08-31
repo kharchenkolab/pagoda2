@@ -301,6 +301,7 @@ Pagoda2 <- setRefClass(
       } else {
         stop("unknown distance measure specified")
       }
+
       if(weight.type=='rank') {
         xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
       }
