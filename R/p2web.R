@@ -144,12 +144,11 @@ pagoda2WebApp <- setRefClass(
 
         },
 
-
         generateDendrogramOfGroups = function(r, dendrogramCellGroups,innerOrder = NULL,orderDend=FALSE){
             cl0 <- dendrogramCellGroups
             # Generate an hclust objct of the above groups
             dendrogramCellGroups <- dendrogramCellGroups[match(rownames(r$counts),names(dendrogramCellGroups))]
-            lvec <- colSumByFac(r$misc[['rawCounts']],as.integer(cl0))[-1,] + 1
+            lvec <- colSumByFac(r$misc[['rawCounts']],as.integer(cl0))[-1,,drop=F] + 1
             lvec <- t(lvec/pmax(1,rowSums(lvec)))
             colnames(lvec) <- which(table(cl0)>0)
             rownames(lvec) <- colnames(r$misc[['rawCounts']])
