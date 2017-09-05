@@ -19,8 +19,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // mutualNN
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType);
-RcppExport SEXP _pagoda2_mutualNN(SEXP mASEXP, SEXP mBSEXP, SEXP kASEXP, SEXP kBSEXP, SEXP spaceTypeSEXP) {
+DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType, float lpSpaceP);
+RcppExport SEXP _pagoda2_mutualNN(SEXP mASEXP, SEXP mBSEXP, SEXP kASEXP, SEXP kBSEXP, SEXP spaceTypeSEXP, SEXP lpSpacePSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -29,7 +29,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type kA(kASEXP);
     Rcpp::traits::input_parameter< NumericVector >::type kB(kBSEXP);
     Rcpp::traits::input_parameter< int >::type spaceType(spaceTypeSEXP);
-    rcpp_result_gen = Rcpp::wrap(mutualNN(mA, mB, kA, kB, spaceType));
+    Rcpp::traits::input_parameter< float >::type lpSpaceP(lpSpacePSEXP);
+    rcpp_result_gen = Rcpp::wrap(mutualNN(mA, mB, kA, kB, spaceType, lpSpaceP));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -300,7 +301,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 2},
-    {"_pagoda2_mutualNN", (DL_FUNC) &_pagoda2_mutualNN, 5},
+    {"_pagoda2_mutualNN", (DL_FUNC) &_pagoda2_mutualNN, 6},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 2},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},

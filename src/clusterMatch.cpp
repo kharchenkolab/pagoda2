@@ -117,7 +117,7 @@ VectorSpace<float>* makeSpace(int spaceType, float p = 2.0) {
 }
 
 // [[Rcpp::export]]
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType = 2) {
+DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0) {
   bool verbose = true;
   int nThreads = 30;
   int kvalA = kA[0];
@@ -128,7 +128,7 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
   // initLibrary(LIB_LOGSTDERR, NULL);
 
   AnyParams empty;
-  VectorSpace<float> *space = makeSpace(spaceType);
+  VectorSpace<float> *space = makeSpace(spaceType, lpSpaceP);
 
   // Converting format for A
   if (verbose) cout << "reading points from mA..." << flush;
@@ -207,7 +207,7 @@ Index<float>* makeIndex(VectorSpace<float> *space, ObjectVector &dataSet, bool v
   } else if (spaceType == INDEX_TYPE_COSINE) {
     index = MethodFactoryRegistry<float>::Instance().CreateMethod(verbose,"hnsw", "consinesimil",*space, dataSet);
   } else if (spaceType == INDEX_TYPE_LP) {
-    index = MethodFactoryRegistry<float>::Instance().CreateMethod(verbose,"hnsw", "L1",*space, dataSet);
+    index = MethodFactoryRegistry<float>::Instance().CreateMethod(verbose,"hnsw", "L1",*space, dataSet); // "L1": string& space type is not actually used
   }
 
 
