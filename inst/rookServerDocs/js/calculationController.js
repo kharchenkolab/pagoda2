@@ -9,7 +9,6 @@ function calculationController(localAvailable, remoteAvailable) {
 	    return calculationController.instance;
     };
 
-    // TODO: Don't hard-code these
     this.methods = [
       {
         name: 'remoteDefault',
@@ -18,29 +17,39 @@ function calculationController(localAvailable, remoteAvailable) {
         repos: 'remote'
       },
       {
-        name: 'localDefault',
-        displayName: 'Local Default',
-        help: 'Local Default Method',
-        repos: 'KStest'
-      },
-      {
         name: 'localWilcoxon',
-        displayName: 'Local Wilcoxon',
-        help: 'Local Wilcoxon Method',
+        displayName: 'Local Mann-Whitney U test',
+        help: 'Tie Corrected Mann-Whitney U test run of the browser locally',
         repos: 'wilcoxon',
-      },
-      /*{
-        name: 'localTtest',
-        displayName: 'Local Ttest',
-        help: 'Local T-test Method',
-        repos: 't_test',
-      }*/
+      }
     ];
 
-    this.localWorker;
     calculationController.instance = this;
     return this;
 }
+
+/**
+ * Calculate differential expression for 1 selection against the packground
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ * @param callback
+ * @param method the identifier for the local being used to calculate
+ */
+calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback, method){
+  var cellSelCntr = new cellSelectionController();
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, method);
+};
+
+/**
+ * Calculate differential expression for 1 selection against the packground
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ * @param selectionB the name of the second cell selection as registered in the cell selection controller
+ * @param callback
+ * @param method the identifier for the local being used to calculate
+ */
+calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
+  var cellSelCntr = new cellSelectionController();
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
+};
 
 /**
  * Calculate differential expression between two cell sets
@@ -49,17 +58,12 @@ function calculationController(localAvailable, remoteAvailable) {
 calculationController.prototype.calculateDEfor2selections = function(selectionA, selectionB, method, callback) {
   if (method === 'remoteDefault') {
     return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
-  } else if(method=== 'localDefault'){
-    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"default");
   } else if(method === 'localWilcoxon'){
     return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"wilcoxon");
-  } else if(method === 'localTtest'){
-    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"tTest");
-  } else {
+  }  else {
     callback('Not implemented');
   }
-}
-
+};
 
 /**
  * Calculate differential expression between one cell set and everything else
@@ -69,54 +73,81 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
   if (method === 'remoteDefault') {
     return this.calculateDEfor1selectionbyRemote(selectionA, callback);
   } else if(method=== 'localDefault'){
-    return this.calculateDEfor1selectionbyLocal(selectionA, callback, "default");
-  } else if(method=== 'localWilcoxon'){
     return this.calculateDEfor1selectionbyLocal(selectionA, callback, "wilcoxon");
-  } else if(method === 'localTtest'){
-    return this.calculateDEfor1selectionbyLocal(selectionA, callback, "tTest");
   } else {
     callback('Not implemented');
   }
-}
+};
 
 /**
  * Calculate differential expression for a group of selections against the background
- * @param selections An array of the cell selections to be used to perform differential expression analysis as an array of cell names
+ * @param selections An array of the cell selections to be used to perform
+ * differential expression analysis as an array of cell names
  * @param callback
  * @param method the identifier for the local being used to calculate
  */
 calculationController.prototype.calculateDELocal = function(selections, callback, method){
   var thisController = this;
   var dataCtrl = new dataController();
+  var calcCtrl = new calculationController();
 
-  //Generates the new worker
+  calcCtrl.selections = selections;
+  calcCtrl.callback = callback;
+
+  // Generates the new worker
   if(typeof(this.localWorker) === "undefined") {
     this.localWorker = new Worker("js/statisticsWorker.js");
-    dataCtrl.getGeneInformationStore(function(geneNameData){
-      var geneNames = [];
-      //collects all gene names being analyzed
-      for(var i = 0; i < geneNameData.localData.length; i++){
-        geneNames.push(geneNameData.localData[i].genename);
-      }
-      geneNameData = undefined;
+    dataCtrl.getAllGeneNames(function(geneNames) {
+      calcCtrl.geneNames = geneNames;
+        dataCtrl.getCellOrder(function(cellData){
+          var callParams = {};
+          callParams.geneNames = geneNames;
 
-      var startUpPackage = {
-        command:{
-          type: "setup",
-        },
-        params:{
-          method: method,
-          geneNames: geneNames,
-          results: [],
-          closed: false
-        }
-      }
 
-      //sends start up package to worker to begin communiation line
-      thisController.localWorker.postMessage(startUpPackage)
+          thisController.localWorker.postMessage({
+
+              type: "initiate",
+              method: method,
+              data: cellData,
+              selections: calcCtrl.selections,
+            params: callParams
+          })
+
+        }); // getCellOrder
+
 
       //builds non-modal progress bar window
-      Ext.create("Ext.window.Window", {
+      thisController.showDisplayBar();
+    }); //getAllGeneNames
+  }
+
+  // Handle the incoming message
+  this.localWorker.onmessage = thisController.handleWorkerMessage;
+
+  return {
+    //abort function for stop button functionality
+    abort: function(){
+      var calcCtrl = new calculationController()
+      calcCtrl.terminateWorker();
+    } // function abort
+  }; // return
+}
+
+calculationController.prototype.terminateWorker = function() {
+  if(Ext.getCmp("localProgressBarWindow")){
+    Ext.getCmp("localProgressBarWindow").close()
+  }
+
+  var calcCtrl = new calculationController();
+  calcCtrl.localWorker.terminate();
+  calcCtrl.localWorker = undefined;
+}
+
+/**
+ * Show the display bar window
+ */
+calculationController.prototype.showDisplayBar = function() {
+  Ext.create("Ext.window.Window", {
       title: "Processing Data Locally",
       internalPadding: '10 10 10 10',
       width: "300px",
@@ -131,109 +162,73 @@ calculationController.prototype.calculateDELocal = function(selections, callback
         close: function(win){
           var actionUI = new actionPanelUIcontroller();
           if(actionUI.currentDErequest){
-            actionUI.stopAnalysisClickHandler()
+            actionUI.stopAnalysisClickHandler() // FIXME
           }
         },
       }
     }).show(0);
-    });
-  }
+}
 
-  var w = this.localWorker;
-  var cellSelCntr = new cellSelectionController();
-
-  this.localWorker.onmessage = function(e){
+/**
+ * Handle an incoming message from the worker thread
+ */
+calculationController.prototype.handleWorkerMessage = function(e) {
+    var w = this; // In worker context
+    var cellSelCntr = new cellSelectionController();
     var callParams = e.data;
+    var dataCtrl = new dataController();
+    var calcCtrl = new calculationController();
 
-    //in the event of the cell order request sends cell order back with cell selection names
-    if(callParams.request.type === "cell order"){
-      dataCtrl.getCellOrder(function(cellData){
-        w.postMessage({
-          command:{
-            type: "initiate",
-            data: cellData,
-            selections: selections,
-          },
-          params: callParams.params
-        })
-      });
-
-    }
-
-    //in the event of a expr vals request sends expression values back for a given chunk of gene names
-    else if(callParams.request.type === "expr vals"){
+    if(callParams.type === "expr vals"){
+      //debugger;
+      //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
 
-        //continues
-        var execution = (callParams.params.index/callParams.params.geneNames.length) * 100;
-        document.getElementById("localProgressBar").style.width = execution + "%"
-        document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
+        // Update the progress bar
+        //HERE
+        calcCtrl.updateProgressPercent(callParams.params.index/calcCtrl.geneNames.length);
 
-        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.request.data, 0, callParams.params.numCells, function(data){
+        // Send the next chunk of data
+        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.data, 0,
+          callParams.params.numCells, function(data){
           w.postMessage({
-            command:{
               type: "process",
-              data: data
-            },
+              data: data,
             params: callParams.params
           })
         })
-      }
-    }
-    //during ompletion of execution a clean death is evoked
-    else if(callParams.request.type === "clean death"){
 
-      //if the clean death occures while an abrupt death is being evoked this if should prevent data race
+      } // if(document.getElementById("localProgressBar")
+    } else if(callParams.type === "complete"){
+
+      // FIXME
       if(document.getElementById("localProgressBar")){
-        thisController.localWorker.terminate();
-        thisController.localWorker = undefined;
-        document.getElementById("localProgressLabel").innerHTML = "Finishing"
-        setTimeout(function(){callback(callParams.params.results);Ext.getCmp("localProgressBarWindow").close();},1);
+        w.terminate();
+
+        var calcCtrl = new calculationController();
+        calcCtrl.localWorker = undefined;
+
+        calcCtrl.setProgressLabel("Finishing...");
+
+        setTimeout(function(){
+          calcCtrl.callback(e.data.results);
+          Ext.getCmp("localProgressBarWindow").close();
+        },1);
       }
-
     }
-    //if stop or another button like it is clicked cleanly shutsdown the worker without calling the call back
-    else if(callParams.request.type === "abrupt death"){
+} // handleWorkerMessage
 
-      if(Ext.getCmp("localProgressBarWindow")){
-        Ext.getCmp("localProgressBarWindow").close()
-      }
-      w.terminate();
-      thisController.localWorker = undefined;
-    }
-
-  }
-  return {
-    //abort function for stop button functionality
-    abort: function(){
-      w.postMessage({command:{type:"stop"}})
-    }
-  };
+calculationController.prototype.setProgressLabel = function(text) {
+  document.getElementById("localProgressLabel").innerHTML = text;
 }
 
-/**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
- */
-calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, method);
+calculationController.prototype.updateProgressPercent = function(val) {
+  var execution = val * 100;
+  document.getElementById("localProgressBar").style.width = execution + "%"
+  document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
 }
 
-/**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param selectionB the name of the second cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
- */
-calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
-}
-
+// Remote AJAX Stuff
 /**
  * Calculate differential expression between two groups of cells via connection to a remote server
  * @param selectionA the name of the first cell selection as registered in the cell selection controller
@@ -292,180 +287,3 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
 calculationController.prototype.getAvailableDEmethods = function() {
   return this.methods;
 }
-
-
-//////////////////////////////////////////
-
-// TODO: Split this object to a new file
-
-/**
- * Stores differential expression results and accompanying metadata
- * Singleton
- * @constructor
- */
-function differentialExpressionStore() {
-    if ( typeof differentialExpressionStore.instance === 'object' ){
-	    return differentialExpressionStore.instance;
-    };
-
-    this.deSets = new Object();
-
-    differentialExpressionStore.instance = this;
-    return this;
-};
-
-/**
- * Get all available differential expression sets
- */
-differentialExpressionStore.prototype.getAvailableDEsets = function() {
-  var result = new Array();
-  var availKeys = Object.keys(this.deSets);
-
-  // Push key/display name pairs on an array
-  for (var i = 0; i < availKeys.length; i++) {
-    var curKey = availKeys[i];
-    var name = curKey;
-    var displayName = this.deSets[curKey].getName();
-
-    var date = this.deSets[curKey].getStartTime().valueOf();
-    result.push({'name': name, 'date': date, 'displayName': displayName});
-  }
-  return result;
-};
-
-/**
- * Get a de result by internal name
- */
-differentialExpressionStore.prototype.getResultSetByInternalName = function(internalName) {
-  //TODO: Implement some checks here
-  return this.deSets[internalName];
-}
-
-
-/**
- * Add differential expression result to the store
- */
-differentialExpressionStore.prototype.addResultSet = function(deset) {
-  var newid = this.getUniqueId();
-  this.deSets[newid] = deset;
-  return newid;
-};
-
-
-/**
- * Generate a unique identifier for a de set
- * @private
- */
-differentialExpressionStore.prototype.getUniqueId = function() {
-  var dobj = new Date();
-  var r = Math.floor(Math.random() * 1e12);
-  var d = dobj.getTime();
-  return  'deset_' +  d + '_' + r
-}
-
-
-///////////////////////////////
-// TODO: Split this object into a new file
-
-/**
- * Represents a differential expression result set and accompanying metadata
- * @constructor
- */
-function deResultSet() {
-  this.selectionA = null;
-  this.selectionB = null;
-  this.results = null;
-  this.name = null;
-  this.startTime = null;
-  this.endTime = null;
-};
-
-
-/**
- * get the name
- */
-deResultSet.prototype.getName = function() {
-  return this.name;
-};
-
-/**
- * set the name
- */
-deResultSet.prototype.setName = function(val) {
-  this.name = val;
-};
-
-/**
- * get the startTime
- */
-deResultSet.prototype.getStartTime = function() {
-  return this.startTime;
-};
-
-/**
- * set the startTime
- */
-deResultSet.prototype.setStartTime = function(val) {
-  this.startTime = val;
-};
-
-/**
- * get the endTime
- */
-deResultSet.prototype.getEndTime = function() {
-  return this.endTime;
-};
-
-/**
- * set the endTime
- */
-deResultSet.prototype.setEndTime = function(val) {
-  this.endTime = val;
-};
-
-
-/**
- * Get the first cell selection (an array of cell ids)
- */
-deResultSet.prototype.getSelectionA = function() {
-  return this.selectionA;
-};
-
-/**
- * Set the first cell selection (an array of cell ids)
- */
-deResultSet.prototype.setSelectionA = function(val) {
-  this.selectionA = val;
-};
-
-/**
- * Set the second cell selection (an array of cell ids)
- */
-deResultSet.prototype.getSelectionB = function() {
-  return this.selectionB;
-};
-
-
-/**
- * Get the second cell selection (an array of cell ids)
- */
-deResultSet.prototype.setSelectionB = function(val) {
-  this.selectionB = val;
-};
-
-
-/**
- * Get the table of results
- */
-deResultSet.prototype.getResults = function() {
-  return this.results;
-};
-
-
-/**
- * Set the table of results
- */
-deResultSet.prototype.setResults = function(val) {
-  this.results = val;
-};
-
