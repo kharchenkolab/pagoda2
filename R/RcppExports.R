@@ -5,8 +5,8 @@ WriteListToBinary <- function(expL, outfile) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile))
 }
 
-mutualNN <- function(mA, mB, kA, kB) {
-    .Call('_pagoda2_mutualNN', PACKAGE = 'pagoda2', mA, mB, kA, kB)
+mutualNN <- function(mA, mB, kA, kB, spaceType = 2L) {
+    .Call('_pagoda2_mutualNN', PACKAGE = 'pagoda2', mA, mB, kA, kB, spaceType)
 }
 
 non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L) {

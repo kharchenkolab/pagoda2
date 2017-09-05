@@ -12,6 +12,12 @@ using std::chrono::high_resolution_clock;
 using namespace std;
 using namespace Rcpp;
 
+
+// Defines
+#define INDEX_TYPE_JS 1
+#define INDEX_TYPE_COSINE 2
+#define INDEX_TYPE_LP 3
+
 // Data structures
 struct queryResult {
   int32_t s;
@@ -20,18 +26,22 @@ struct queryResult {
 };
 
 // Function Prototypes
+
+VectorSpace<float>* makeSpace(int spaceType, float p);
+
 void readNumericMatrixIntoObjectVector(NumericMatrix &m,
                                        ObjectVector &dataSet,
-                                       SpaceCosineSimilarity<float> &space);
+                                       VectorSpace<float>* space);
 
-Index<float>* makeIndex(SpaceCosineSimilarity<float> &space,
+Index<float>* makeIndex(VectorSpace<float> *space,
                         ObjectVector &dataSet,
                         bool verbose,
-                        int nThreads) ;
+                        int nThreads,
+                        int spaceType) ;
 
 
 forward_list<queryResult>* queryIndex(Index<float> *index,
-                                      ObjectVector &dataset, SpaceCosineSimilarity<float> &space,
+                                      ObjectVector &dataset, VectorSpace<float> *space,
                                       int k, bool verbose );
 
 
@@ -44,7 +54,7 @@ struct queryResultCompareNodes {
   }
 };
 
-
+// Given two lists of query results find mutual MNNs
 forward_list<queryResult>* findMNN(forward_list<queryResult>* qrA, forward_list<queryResult>* qrB, bool verbose = true) {
   std::chrono::time_point<std::chrono::high_resolution_clock> t1, t2;
 
@@ -88,8 +98,26 @@ forward_list<queryResult>* findMNN(forward_list<queryResult>* qrA, forward_list<
 }
 
 
+
+// Make a space of the requested type
+VectorSpace<float>* makeSpace(int spaceType, float p = 2.0) {
+  VectorSpace<float> *space = NULL;
+
+  if (spaceType == INDEX_TYPE_JS) {
+    space = new SpaceJSMetric<float> (SpaceJSBase<float>::kJSFastPrecompApprox);
+  } else if (spaceType == INDEX_TYPE_COSINE) {
+    space = new SpaceCosineSimilarity<float>();
+  } else if (spaceType == INDEX_TYPE_LP) {
+    space = new SpaceLp<float>(p);
+  } else {
+    cout << "Invalid index type specified" << endl << flush;
+  }
+
+  return space;
+}
+
 // [[Rcpp::export]]
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB) {
+DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType = 2) {
   bool verbose = true;
   int nThreads = 30;
   int kvalA = kA[0];
@@ -100,7 +128,7 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
   // initLibrary(LIB_LOGSTDERR, NULL);
 
   AnyParams empty;
-  SpaceCosineSimilarity<float> space;
+  VectorSpace<float> *space = makeSpace(spaceType);
 
   // Converting format for A
   if (verbose) cout << "reading points from mA..." << flush;
@@ -116,11 +144,11 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
 
   // Make the index for A
   Index<float> *indexA;
-  indexA = makeIndex(space, datasetA, verbose, nThreads);
+  indexA = makeIndex(space, datasetA, verbose, nThreads, spaceType);
 
   // Make the index for B
   Index<float> *indexB;
-  indexB = makeIndex(space, datasetB, verbose, nThreads);
+  indexB = makeIndex(space, datasetB, verbose, nThreads, spaceType);
 
   // query the index of B with objects from A
   forward_list<queryResult>* qrA;
@@ -154,7 +182,7 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
 }
 
 // Make an index
-Index<float>* makeIndex(SpaceCosineSimilarity<float> &space, ObjectVector &dataSet, bool verbose, int nThreads) {
+Index<float>* makeIndex(VectorSpace<float> *space, ObjectVector &dataSet, bool verbose, int nThreads, int spaceType) {
   std::chrono::time_point<std::chrono::high_resolution_clock> t1, t2;
 
   if (verbose) {
@@ -172,8 +200,17 @@ Index<float>* makeIndex(SpaceCosineSimilarity<float> &space, ObjectVector &dataS
     "efSearch=100",
   });
 
-  Index<float> *index = MethodFactoryRegistry<float>::Instance().CreateMethod(verbose,"hnsw",
-                                                               "consinesimil",space, dataSet);
+  // Make index for space type
+  Index<float> *index;
+  if (spaceType == INDEX_TYPE_JS) {
+    index = MethodFactoryRegistry<float>::Instance().CreateMethod(true,"hnsw", "jsmetrfastapprox",*space, dataSet);
+  } else if (spaceType == INDEX_TYPE_COSINE) {
+    index = MethodFactoryRegistry<float>::Instance().CreateMethod(verbose,"hnsw", "consinesimil",*space, dataSet);
+  } else if (spaceType == INDEX_TYPE_LP) {
+    index = MethodFactoryRegistry<float>::Instance().CreateMethod(verbose,"hnsw", "L1",*space, dataSet);
+  }
+
+
   index->CreateIndex(IndexParams);
   index->SetQueryTimeParams(QueryTimeParams);
 
@@ -191,7 +228,7 @@ Index<float>* makeIndex(SpaceCosineSimilarity<float> &space, ObjectVector &dataS
 
 // Convert a numeric matrix into object vector
 void readNumericMatrixIntoObjectVector(NumericMatrix &m, ObjectVector &dataSet,
-                                       SpaceCosineSimilarity<float> &space) {
+                                       VectorSpace<float> *space) {
 
   auto nrow = m.nrow();
 
@@ -199,7 +236,7 @@ void readNumericMatrixIntoObjectVector(NumericMatrix &m, ObjectVector &dataSet,
     NumericVector nv = m.row(i);
     vector<float> v = Rcpp::as<vector<float>>(nv);
 
-    Object *o = space.CreateObjFromVect(i, NULL, v);
+    Object *o = space->CreateObjFromVect(i, NULL, v);
     dataSet.push_back(o);
   }
 }
@@ -207,7 +244,7 @@ void readNumericMatrixIntoObjectVector(NumericMatrix &m, ObjectVector &dataSet,
 
 
 forward_list<queryResult>* queryIndex(Index<float> *index,
-                                      ObjectVector &dataset, SpaceCosineSimilarity<float> &space,
+                                      ObjectVector &dataset, VectorSpace<float> *space,
                                       int k, bool verbose ) {
 
   forward_list<queryResult> *queryResults = new forward_list<queryResult>();
@@ -226,7 +263,7 @@ forward_list<queryResult>* queryIndex(Index<float> *index,
   for (int i = 0; i < nqueries; i++) {
     const Object *queryObj = dataset[i];
 
-    KNNQuery<float> knnQ(space, queryObj, k);
+    KNNQuery<float> knnQ(*space, queryObj, k);
     index->Search(&knnQ);
 
     KNNQueue<float> *res = knnQ.Result()->Clone();

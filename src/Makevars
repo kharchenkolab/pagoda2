@@ -1,3 +1,4 @@
 # Set the path to your non metric space library here
+NMSLIB_PATH=/home/barkasn/work/pagoda2/package/libs/nmslib-1.5.3
 PKG_CXXFLAGS=-I"$(NMSLIB_PATH)/similarity_search/include" -I"../inst/include" -std=c++11 -I"$(NMSLIB_PATH)/similarity_search/lshkit/include"
 PKG_LIBS=-L/usr/lib/ -L$(NMSLIB_PATH)/similarity_search/release -lNonMetricSpaceLib -lgsl -lgslcblas -llshkit -lpthread -fopenmp  -lboost_filesystem -lboost_system   -lstdc++ `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
