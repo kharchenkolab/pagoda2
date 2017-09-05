@@ -100,7 +100,7 @@ forward_list<queryResult>* findMNN(forward_list<queryResult>* qrA, forward_list<
 
 
 // Make a space of the requested type
-VectorSpace<float>* makeSpace(int spaceType, float p = 2.0) {
+VectorSpace<float>* makeSpace(int spaceType, float p) {
   VectorSpace<float> *space = NULL;
 
   if (spaceType == INDEX_TYPE_JS) {
