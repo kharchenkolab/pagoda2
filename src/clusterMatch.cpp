@@ -117,8 +117,8 @@ VectorSpace<float>* makeSpace(int spaceType, float p) {
 }
 
 // [[Rcpp::export]]
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0) {
-  bool verbose = true;
+DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0,
+                   bool verbose = true) {
   int nThreads = 30;
   int kvalA = kA[0];
   int kvalB = kB[0];
