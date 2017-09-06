@@ -34,7 +34,8 @@ DataFrame hnswKnnLp(NumericMatrix m, int k = 5, int nThreads = 30, float p = 2.0
 DataFrame hnswKnn(NumericMatrix m, int k, int nThreads, float p, int efConstruction,
     int indexThreadQty, int searchMethod, int seed, bool verbose, int indexType) {
 
-  initLibrary(LIB_LOGSTDERR, NULL);
+  initLibrary(LIB_LOGNONE, NULL);
+  //  initLibrary(LIB_LOGSTDERR, NULL);
 
   // Use base class pointer for space to allow different space types
   VectorSpace<float> *space = NULL;

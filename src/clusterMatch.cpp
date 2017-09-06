@@ -152,13 +152,13 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
 
   // query the index of B with objects from A
   forward_list<queryResult>* qrA;
-  qrA = queryIndex(indexB, datasetA, space, kvalA, true);
+  qrA = queryIndex(indexB, datasetA, space, kvalA, verbose);
 
   // query the index of A with object from B
   forward_list<queryResult>* qrB;
-  qrB = queryIndex(indexA, datasetB, space, kvalB, true);
+  qrB = queryIndex(indexA, datasetB, space, kvalB, verbose);
 
-  forward_list<queryResult> *mnn= findMNN(qrA, qrB);
+  forward_list<queryResult> *mnn= findMNN(qrA, qrB, verbose);
 
   delete indexA;
   delete indexB;
