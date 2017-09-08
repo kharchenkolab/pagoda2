@@ -21,7 +21,10 @@ sn <- function(x) { names(x) <- x; return(x); }
 #' @exportClass Pagoda2
 Pagoda2 <- setRefClass(
   "Pagoda2",
-  fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes','pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
+
+  fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes',
+           'pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
+
   methods = list(
     initialize=function(x, ..., modelType='plain', batchNorm='glm',
                         n.cores=30, verbose=TRUE,
@@ -87,8 +90,11 @@ Pagoda2 <- setRefClass(
       }
 
       counts <<- t(countMatrix)
-      counts <<- counts[,diff(counts@p)>min.cells.per.gene] # HERE preserve keep.genes
 
+      # Keep genes of sufficient coverage or genes that are int he keep.genes list
+      counts <<- counts[,diff(counts@p)>min.cells.per.gene | colnames(counts) %in% keep.genes]
+
+      # Save the filtered count matrix in misc$rawCounts
       misc[['rawCounts']] <<- counts;
 
       cat(nrow(counts),"cells,",ncol(counts),"genes; normalizing ... ")
