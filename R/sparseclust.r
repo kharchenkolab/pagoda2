@@ -21,10 +21,15 @@ sn <- function(x) { names(x) <- x; return(x); }
 #' @exportClass Pagoda2
 Pagoda2 <- setRefClass(
   "Pagoda2",
-  fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes','pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
+
+  fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes',
+           'pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
+
   methods = list(
-    initialize=function(x, ..., modelType='plain', batchNorm='glm', n.cores=30, verbose=TRUE,
-                        min.cells.per.gene=30, trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE) {
+    initialize=function(x, ..., modelType='plain', batchNorm='glm',
+                        n.cores=30, verbose=TRUE,
+                        min.cells.per.gene=30, trim=round(min.cells.per.gene/2),
+                        lib.sizes=NULL, log.scale=FALSE, keep.genes = NULL) {
       # # init all the output lists
       embeddings <<- list();
       graphs <<- list();
@@ -49,12 +54,15 @@ Pagoda2 <- setRefClass(
           if(any(x@x < 0)) {
             stop("x contains negative values");
           }
-          setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale)
+          setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale,keep.genes=keep.genes)
         }
       }
     },
+
     # provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
-    setCountMatrix=function(countMatrix,depthScale=1e3,min.cells.per.gene=30,trim=round(min.cells.per.gene/2),lib.sizes=NULL,log.scale=FALSE) {
+    setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=30,
+                            trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE,
+                            keep.genes = NULL) {
       # check names
       if(any(duplicated(rownames(countMatrix)))) {
         stop("duplicate gene names are not allowed - please reduce")
@@ -82,8 +90,11 @@ Pagoda2 <- setRefClass(
       }
 
       counts <<- t(countMatrix)
-      counts <<- counts[,diff(counts@p)>min.cells.per.gene]
 
+      # Keep genes of sufficient coverage or genes that are int he keep.genes list
+      counts <<- counts[,diff(counts@p)>min.cells.per.gene | colnames(counts) %in% keep.genes]
+
+      # Save the filtered count matrix in misc$rawCounts
       misc[['rawCounts']] <<- counts;
 
       cat(nrow(counts),"cells,",ncol(counts),"genes; normalizing ... ")
