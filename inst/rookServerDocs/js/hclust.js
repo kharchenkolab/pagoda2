@@ -10,25 +10,25 @@
 
 var distances = {
     corrdist: function(a, b) {
-	// NOTE: using math.js
+    	// NOTE: using math.js
 
-	var a_mean = math.mean(a);
-	var b_mean = math.mean(b);
+    	var a_mean = math.mean(a);
+    	var b_mean = math.mean(b);
 
-	var a_std = math.std(a, 'uncorrected');
-	var b_std = math.std(b, 'uncorrected');
+    	var a_std = math.std(a, 'uncorrected');
+    	var b_std = math.std(b, 'uncorrected');
 
-	var covariance = math.mean(
-	    math.dotMultiply(math.subtract(a, a_mean),
-			     math.subtract(b, b_mean))
-	);
+    	var a_std_b_std = (a_std * b_std);
+    	if (a_std_b_std == 0) return 1; // If one of the two has std == 0
 
-	var correlation = covariance / (a_std * b_std);
+    	var covariance = math.mean(
+    	    math.dotMultiply(math.subtract(a, a_mean),
+    			     math.subtract(b, b_mean))
+    	);
+    	var correlation = covariance / a_std_b_std;
 
-	return 1 - (correlation + 1) / 2
+    	return 1 - (correlation + 1) / 2
     },
-
-
 
     euclidean: function(v1, v2) {
 	var total = 0;

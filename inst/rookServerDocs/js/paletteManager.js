@@ -57,16 +57,23 @@ paletteManager.prototype.getMeanClampedColorMapper = function(rowMean, maxAbsVal
     const trim = 0.3;
     maxAbsValue = maxAbsValue * trim;
 
-    return function(v) {
-	var plotValue = (v - rowMean) / (maxAbsValue * 2) + 0.5;
-	var palIndex = Math.floor(plotValue * palSize) - 1;
-	if (palIndex < 0) {
-	    palIndex = 0;
-	} else if (palIndex > palSize - 1) {
-	    palIndex = palSize -1;
-	}
+    if (rowMean == 0 && maxAbsValue == 0) {
+      return function(v) {return 0};
 
-	return palIndex;
+    } else {
+
+      return function(v) {
+      	var plotValue = (v - rowMean) / (maxAbsValue * 2) + 0.5;
+      	var palIndex = Math.floor(plotValue * palSize) - 1;
+      	if (palIndex < 0) {
+      	    palIndex = 0;
+      	} else if (palIndex > palSize - 1) {
+      	    palIndex = palSize -1;
+      	}
+
+  	    return palIndex;
+      }
+
     }
 }
 
