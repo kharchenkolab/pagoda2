@@ -1481,7 +1481,7 @@ Pagoda2 <- setRefClass(
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
-        require(Rtsne.multicore);
+        require(Rtsne);
         cat("calculating distance ... ")
         if(distance=='L2') {
           cat("euclidean ... ")
@@ -1492,7 +1492,7 @@ Pagoda2 <- setRefClass(
         }
         cat("done\n")
         cat("running tSNE using",n.cores,"cores:\n")
-        emb <- Rtsne.multicore(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
+        emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
