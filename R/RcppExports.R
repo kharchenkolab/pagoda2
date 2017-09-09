@@ -5,6 +5,10 @@ WriteListToBinary <- function(expL, outfile) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile))
 }
 
+mutualNN <- function(mA, mB, kA, kB) {
+    .Call('_pagoda2_mutualNN', PACKAGE = 'pagoda2', mA, mB, kA, kB)
+}
+
 non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L) {
     .Call('_pagoda2_non0LogColLmS', PACKAGE = 'pagoda2', sY, X, ldepth, maxCells)
 }
@@ -41,24 +45,16 @@ arma_mat_cor <- function(m) {
     .Call('_pagoda2_arma_mat_cor', PACKAGE = 'pagoda2', m)
 }
 
-hnswKnn <- function(m, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L) {
-    .Call('_pagoda2_hnswKnn', PACKAGE = 'pagoda2', m, efConstruction, indexThreadQty, searchMethod)
-}
-
-hnswKnn2 <- function(m, k = 5L, nThreads = 30L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
+hnswKnn2 <- function(m, k = 5L, nThreads = 20L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
     .Call('_pagoda2_hnswKnn2', PACKAGE = 'pagoda2', m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose)
 }
 
-hnswKnnJS <- function(m, k = 5L, nThreads = 20L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L) {
-    .Call('_pagoda2_hnswKnnJS', PACKAGE = 'pagoda2', m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed)
+hnswKnnJS <- function(m, k = 5L, nThreads = 20L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
+    .Call('_pagoda2_hnswKnnJS', PACKAGE = 'pagoda2', m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose)
 }
 
 hnswKnnLp <- function(m, k = 5L, nThreads = 30L, p = 2.0, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
     .Call('_pagoda2_hnswKnnLp', PACKAGE = 'pagoda2', m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose)
-}
-
-hnswKnn3test <- function(m, k = 5L, multiplex = 1L, nqueries = 1000L, nThreads = 30L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
-    .Call('_pagoda2_hnswKnn3test', PACKAGE = 'pagoda2', m, k, multiplex, nqueries, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose)
 }
 
 matWCorr <- function(Mat, Matw) {

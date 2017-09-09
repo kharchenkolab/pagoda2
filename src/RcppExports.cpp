@@ -18,6 +18,20 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// mutualNN
+DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB);
+RcppExport SEXP _pagoda2_mutualNN(SEXP mASEXP, SEXP mBSEXP, SEXP kASEXP, SEXP kBSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type mA(mASEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type mB(mBSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type kA(kASEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type kB(kBSEXP);
+    rcpp_result_gen = Rcpp::wrap(mutualNN(mA, mB, kA, kB));
+    return rcpp_result_gen;
+END_RCPP
+}
 // non0LogColLmS
 int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells);
 RcppExport SEXP _pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP) {
@@ -128,20 +142,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// hnswKnn
-vector<vector<int32_t> > hnswKnn(NumericMatrix m, int efConstruction, int indexThreadQty, int searchMethod);
-RcppExport SEXP _pagoda2_hnswKnn(SEXP mSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type efConstruction(efConstructionSEXP);
-    Rcpp::traits::input_parameter< int >::type indexThreadQty(indexThreadQtySEXP);
-    Rcpp::traits::input_parameter< int >::type searchMethod(searchMethodSEXP);
-    rcpp_result_gen = Rcpp::wrap(hnswKnn(m, efConstruction, indexThreadQty, searchMethod));
-    return rcpp_result_gen;
-END_RCPP
-}
 // hnswKnn2
 DataFrame hnswKnn2(NumericMatrix m, int k, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
 RcppExport SEXP _pagoda2_hnswKnn2(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
@@ -161,8 +161,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // hnswKnnJS
-DataFrame hnswKnnJS(NumericMatrix m, int k, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed);
-RcppExport SEXP _pagoda2_hnswKnnJS(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP) {
+DataFrame hnswKnnJS(NumericMatrix m, int k, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
+RcppExport SEXP _pagoda2_hnswKnnJS(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -173,7 +173,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type indexThreadQty(indexThreadQtySEXP);
     Rcpp::traits::input_parameter< int >::type searchMethod(searchMethodSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(hnswKnnJS(m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed));
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(hnswKnnJS(m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -193,26 +194,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     rcpp_result_gen = Rcpp::wrap(hnswKnnLp(m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// hnswKnn3test
-DataFrame hnswKnn3test(NumericMatrix m, int k, int multiplex, int nqueries, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
-RcppExport SEXP _pagoda2_hnswKnn3test(SEXP mSEXP, SEXP kSEXP, SEXP multiplexSEXP, SEXP nqueriesSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type multiplex(multiplexSEXP);
-    Rcpp::traits::input_parameter< int >::type nqueries(nqueriesSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< int >::type efConstruction(efConstructionSEXP);
-    Rcpp::traits::input_parameter< int >::type indexThreadQty(indexThreadQtySEXP);
-    Rcpp::traits::input_parameter< int >::type searchMethod(searchMethodSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(hnswKnn3test(m, k, multiplex, nqueries, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -318,6 +299,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 2},
+    {"_pagoda2_mutualNN", (DL_FUNC) &_pagoda2_mutualNN, 4},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 2},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},
@@ -327,11 +309,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_orderColumnRows", (DL_FUNC) &_pagoda2_orderColumnRows, 2},
     {"_pagoda2_smatColVecCorr", (DL_FUNC) &_pagoda2_smatColVecCorr, 3},
     {"_pagoda2_arma_mat_cor", (DL_FUNC) &_pagoda2_arma_mat_cor, 1},
-    {"_pagoda2_hnswKnn", (DL_FUNC) &_pagoda2_hnswKnn, 4},
     {"_pagoda2_hnswKnn2", (DL_FUNC) &_pagoda2_hnswKnn2, 8},
-    {"_pagoda2_hnswKnnJS", (DL_FUNC) &_pagoda2_hnswKnnJS, 7},
+    {"_pagoda2_hnswKnnJS", (DL_FUNC) &_pagoda2_hnswKnnJS, 8},
     {"_pagoda2_hnswKnnLp", (DL_FUNC) &_pagoda2_hnswKnnLp, 9},
-    {"_pagoda2_hnswKnn3test", (DL_FUNC) &_pagoda2_hnswKnn3test, 10},
     {"_pagoda2_matWCorr", (DL_FUNC) &_pagoda2_matWCorr, 2},
     {"_pagoda2_winsorizeMatrix", (DL_FUNC) &_pagoda2_winsorizeMatrix, 2},
     {"_pagoda2_plSemicompleteCor2", (DL_FUNC) &_pagoda2_plSemicompleteCor2, 1},

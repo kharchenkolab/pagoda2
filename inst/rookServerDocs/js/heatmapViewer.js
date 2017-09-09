@@ -31,12 +31,12 @@ function heatmapViewer() {
     this.currentOverlaySelectionName = null;
     this.currentOverlaySelectionNames = null;
     this.currentOverlaySelectionShown = false;
-    
+
      // Palette Manager init
     this.palManager = new paletteManager();
     this.palManager.setPalette(p2globalParams.heatmapViewer.defaultPaletteName);
     this.palManager.setNumberOfColors(p2globalParams.heatmapViewer.defaultPaletteLevels);
-    
+
     heatmapViewer.instance =  this;
 };
 
@@ -162,7 +162,7 @@ heatmapViewer.prototype.generatePalettesMenu = function() {
 heatmapViewer.prototype.generateHeatmapSettingsMenu = function(){
   var heatView = this;
   var paletteMenu = this.generatePalettesMenu();
-  
+
   return Ext.create('Ext.menu.Menu', {
 	id: 'heatmapSettingsMenu',
 	items: [
@@ -208,7 +208,7 @@ heatmapViewer.prototype.generateMenu = function() {
   //var toolbar = Ext.create('Ext.Toolbar');
   //var heatView = this;
 
-  
+
   //var heatmapSettingsMenu = this.generateHeatmapSettingsMenu();
 
 
@@ -457,7 +457,7 @@ heatmapViewer.prototype.setupOverlays = function() {
 
 
       }
-      
+
 
     });
 
@@ -486,12 +486,8 @@ heatmapViewer.prototype.setupOverlays = function() {
  * @param data a dgCMatrix reader with the sparse array data
  */
 heatmapViewer.prototype.getRowVisualOrder = function(data) {
-//    the bin size
-
-
     var ncols = data.Dim[0];
     var nrows = data.Dim[1];
-
 
     var binsize = Math.max(ncols / 30);
     var ncolsbin = Math.ceil(ncols / binsize);
@@ -545,42 +541,47 @@ heatmapViewer.prototype.getRowVisualOrder = function(data) {
     	    rowMean += row[i];
     	    maxAbsValue =  Math.abs(row[i]) > maxAbsValue ? Math.abs(row[i]) : maxAbsValue;
     	}
-    	rowMean /= row.length;
 
-    	for (var i =0; i< row.length; i++) {
-    	    row[i] = meanClampNorm(row[i], rowMean, maxAbsValue);
+    	if (rowMean != 0) { // to handle empty genes correctly
+      	rowMean /= row.length;
+
+    	  for (var i =0; i< row.length; i++) {
+    	     row[i] = meanClampNorm(row[i], rowMean, maxAbsValue);
+    	  }
     	}
-
-    	// This is probably not requried
     }
 
+    // Normalise
     var d = binsSumArray;
-
     for (var j = 0; j < d.length; j++) {
-	var maxAbsValue = 0;
-	var rowMean = 0;
-	for (var i = 0; i < d[j].length; i++) {
-	    rowMean += d[j][i];
-	    maxAbsValue = Math.abs(d[j][i]) > maxAbsValue ? Math.abs(d[j][i]) : maxAbsValue;
-	}
-	rowMean /= d[j].length;
-	for (var  i =0; i < d[j].length; i++) {
-	    d[j][i] = meanClampNorm(d[j][i], rowMean, maxAbsValue);
-	}
+    	var maxAbsValue = 0;
+    	var rowMean = 0;
+    	for (var i = 0; i < d[j].length; i++) {
+    	    rowMean += d[j][i];
+    	    maxAbsValue = Math.abs(d[j][i]) > maxAbsValue ? Math.abs(d[j][i]) : maxAbsValue;
+    	}
+    	if (rowMean != 0) {
+    	  // If it's not an empty row
+      	rowMean /= d[j].length;
+      	for (var  i =0; i < d[j].length; i++) {
+      	    d[j][i] = meanClampNorm(d[j][i], rowMean, maxAbsValue);
+      	}
+    	}
     }
 
     // Do hierarchical clustering
     var hc = hcluster(d, pagHelpers.seq(0, d.length - 1), 'corrdist', 'average')
+
     // Do a depth first search on the tree
     function getOrder(hc) {
-	var order = [];
-	if (hc.hasOwnProperty('left')) {
-	    order = order.concat(getOrder(hc.left));
-	    order = order.concat(getOrder(hc.right));
-	} else {
-	    order.push(hc.label);
-	}
-	return order;
+    	var order = [];
+    	if (hc.hasOwnProperty('left')) {
+    	    order = order.concat(getOrder(hc.left));
+    	    order = order.concat(getOrder(hc.right));
+    	} else {
+    	    order.push(hc.label);
+    	}
+    	return order;
     }
     var order = getOrder(hc);
 
@@ -1087,7 +1088,7 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
 	// Get a new row order
 	var rowOrder;
-	if (heatView.getRowReordering() === true) {
+	if (heatView.getRowReordering() === true && data.Dim[1] > 2) {
             rowOrder = heatView.getRowVisualOrder(data);
 	} else {
 	    rowOrder = pagHelpers.seq(0,data.Dim[1] -1);
@@ -1104,36 +1105,45 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 	    var rsi = data.p[j];
 	    var rei = data.p[j+1] -1;
 
-	    // Calculate row normalisation values
-	    var rowMin = 0; // data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
-	    var maxFn = function(a,b){ return Math.max(a,b) };
-	    var rowMax = data.x.slice(rsi, rei).reduce(maxFn);
+      if(rei < rsi) {
+        // We have an empty row and just want to print the background color
+        var colorMapper = heatView.palManager.getMeanClampedColorMapper(5, 10, palSize);
 
-	    var sumFn = function(a,b){ return a+b };
-	    var rowSum = data.x.slice(rsi, rei).reduce(sumFn);
-	    var rowMean = rowSum / ncells;
+         // Print row background
+        ctx.fillStyle = pal[colorMapper(0)];
+        ctx.fillRect(left, rowOrder[j] * cellHeight + top,heatmapWidth,cellHeight);
 
-	    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
+      } else {
+  	    // Calculate row normalisation values
+  	    var rowMin = 0; // data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
+  	    var maxFn = function(a,b){ return Math.max(a,b) };
+  	    var rowMax = data.x.slice(rsi, rei).reduce(maxFn);
 
-	    // color mapper is a function
-	    // use a color mapper to ensure consistency of coloring with
-	    // other views (eg embedding)
-	    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
+  	    var sumFn = function(a,b){ return a+b };
+  	    var rowSum = data.x.slice(rsi, rei).reduce(sumFn);
+  	    var rowMean = rowSum / ncells;
 
-      // Print row background
-      ctx.fillStyle = pal[colorMapper(0)];
-      ctx.fillRect(left, rowOrder[j] * cellHeight + top,heatmapWidth,cellHeight);
+  	    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
 
-	    // Plot row
-	    for (var k = rsi; k < rei; k++) {
-      		ctx.fillStyle = pal[colorMapper(data.x[k])];
+  	    // color mapper is a function
+  	    // use a color mapper to ensure consistency of coloring with
+  	    // other views (eg embedding)
+  	    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
 
-      		var x = data.i[k] * cellWidth + left;
-      		var y = rowOrder[j] * cellHeight + top; // reorder on the fly
+        // Print row background
+        ctx.fillStyle = pal[colorMapper(0)];
+        ctx.fillRect(left, rowOrder[j] * cellHeight + top,heatmapWidth,cellHeight);
 
-      		ctx.fillRect(x,y, cellWidth, cellHeight);
-	    } // for k
+  	    // Plot row
+  	    for (var k = rsi; k < rei; k++) {
+        		ctx.fillStyle = pal[colorMapper(data.x[k])];
 
+        		var x = data.i[k] * cellWidth + left;
+        		var y = rowOrder[j] * cellHeight + top; // reorder on the fly
+
+        		ctx.fillRect(x,y, cellWidth, cellHeight);
+  	    } // for k
+      } //if rei < rsi
 	} // for j
 
 	// Draw bounding box
