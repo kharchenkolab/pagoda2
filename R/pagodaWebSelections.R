@@ -328,3 +328,25 @@ plotMulticlassified <- function(sel) {
   p
 }
 
+#' Compares two clustering factors by drawing heatmap of normalised overlaps
+compareClusterings <- function(cl1, cl2, filename = NA) {
+  require(pheatmap)
+
+  n1 <- names(cl1);
+  n2 <- names(cl2);
+
+  if(!all(n1 %in% n2) && all(n2 %in% n1)) {
+    warn('Clusterings do not completely overlap!');
+    ns <- intersect(n1,n2)
+  } else {
+    ns <- n1
+  }
+
+  tbl  <- table(data.frame(cl1[ns],cl2[ns]))
+  tblNorm <- sweep(tbl, 2, colSums(tbl), FUN=`/`)
+
+  pheatmap(t(tblNorm), file=filename)
+
+  invisible(tblNorm)
+}
+
