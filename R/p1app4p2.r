@@ -2,7 +2,7 @@
 #' @import rjson
 
 #' @export p2.make.pagoda1.app
-p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
+p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
   # rcm - xv
   if(type=='counts') {
     x <- p2$counts;
@@ -84,6 +84,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
 
   if(is.null(p2$misc[['pathwayOD']])) stop("pathwayOD missing, please run testPathwayOverdispersion()")
   tamr <- p2$misc[['pathwayOD']];
+  env <- tamr$env; 
   if(is.null(zlim)) { zlim <- c(-1, 1)*quantile(tamr$xv, p = 0.95) }
 
   if(is.null(row.clustering) || is.null(row.clustering$order)) {
@@ -91,7 +92,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
   } else if(class(row.clustering)!="hclust") {
     # make a fake clustering to match the provided order
     or <- row.clustering$order;
-    row.clustering <- hclust(dist(tamr3$xv),method='single')
+    row.clustering <- hclust(dist(tamr$xv),method='single')
     names(or) <- as.character(-1*row.clustering$order)
     nmm <- -1*or[as.character(row.clustering$merge)]
     nmm[is.na(nmm)] <- as.character(row.clustering$merge)[is.na(nmm)]
