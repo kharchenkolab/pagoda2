@@ -508,7 +508,8 @@ Pagoda2 <- setRefClass(
     },
 
     geneKnnbyPCA = function() {
-      stop('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+      warn('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+      .self$makeGeneKnnGraph();
     },
 
     # Calculates gene Knn network for gene similarity
