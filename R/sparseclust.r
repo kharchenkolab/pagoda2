@@ -587,6 +587,7 @@ Pagoda2 <- setRefClass(
         dg <- lapply(dg,function(x) x[x$Z>=z.threshold,])
         # calculate average profiles
         x <- x[rownames(x) %in% unlist(lapply(dg,rownames)),]
+        if(nrow(x)<1) return(NULL);
         x <- x-rowMeans(x[,!is.na(g)])
         sf <- rep(1,nrow(x)); names(sf) <- rownames(x);
         if(nrow(dg[[1]])>0) {
@@ -602,6 +603,8 @@ Pagoda2 <- setRefClass(
         pt[is.na(g)] <- 0;
         return(list(dg=dg,pt=pt))
       },n.cores=n.cores)
+
+      dexp <- dexp[!unlist(lapply(dexp,is.null))]; # remove cases where nothing was reported
 
       # fake pathwayOD output
       tamr <- list(xv=do.call(rbind,lapply(dexp,function(x) x$pt)),
