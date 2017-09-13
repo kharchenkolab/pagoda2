@@ -458,6 +458,10 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T, center=T
 #' @export get.joint.clustering
 get.joint.clustering <- function(r.n, k=30, community.detection.method = walktrap.community,
                                  min.group.size = 10) {
+  if(is.null(names(r.n))) {
+    stop("r.n names are NULL");
+  }
+
   require('gtools')
   require('pbapply')
   require('igraph')
