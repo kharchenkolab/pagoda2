@@ -475,7 +475,7 @@ get.joint.clustering <- function(r.n, k=30, community.detection.method = walktra
 
   cat('Calculating MNN for application pairs ...\n')
   mnnres <- pblapply(combsl, function(x) {
-    getMNNforP2pair(r[[x[1]]], r[[x[2]]], k = k, verbose =F);
+    getMNNforP2pair(r.n[[x[1]]], r[[x[2]]], k = k, verbose =F);
   });
 
   ## Merge the results into a edge table
@@ -524,4 +524,22 @@ plotJointClusters <- function(r.n, cl) {
   });
 
   invisible(NULL);
+}
+
+#' Get list of genes for each cluster that are consistently diff expressed
+#' in all the apps in that cluster
+#' @param applist list of apps
+#' @param jc joint clusters
+#' @return a list of gene vectors one entry for each cluster
+#' @export getJointClusterMarkerGenes
+getJointClusterMarkerGenes <- function(applist, jc) {
+  t <- lapply(applist, function(x) {x$getDifferentialGenes(groups=jc)})
+
+  res <- list()
+  for (lvl in levels(jc)) {
+    t2 <- lapply(t, function(x) {rownames(x[[lvl]])})
+    res[[lvl]] <- Reduce(intersect, t2)
+  }
+
+  res
 }
