@@ -354,3 +354,36 @@ compareClusterings <- function(cl1, cl2, filename = NA) {
 
   invisible(tblNorm)
 }
+
+#' Perform differential expression on a p2 object given a
+#' set of web selections and two groups to compare
+#' @param p2 a pagoda2 object
+#' @param sel a web selection read with readPagoda2SelectionFile()
+#' @param group1name the name of the first selection
+#' @param group2name the names of the second selection
+diffExprOnP2FromWebSelection <- function(p2, sel, group1name, group2name) {
+  # Get cell names
+  grp1cells <- sel[[group1name]]$cells
+  grp2cells <- sel[[group2name]]$cells
+
+  # Make suitable factor
+  t1 <- rep(NA, length(rownames(p2$counts)))
+  names(t1) <- rownames(p2$counts)
+  t1[grp1cells] <- c(group1name)
+  t1[grp2cells] <- c(group2name)
+
+  p2$getDifferentialGenes(groups=t1)
+}
+
+#' Perform differential expression on a p2 object given a
+#' set of web selections and one group to compare against everything else
+#' @param p2 a pagoda2 object
+#' @param sel a web selection read with readPagoda2SelectionFile()
+#' @param groupname name of group to compare to everything else
+diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
+  grp1cells <- sel[[groupname]]$cells
+  t1 <- rep('other', length(rownames(p2$counts)))
+  names(t1) <- rownames(p2$counts)
+  t1[grp1cells] <- c(groupname)
+  p2$getDifferentialGenes(groups=t1)
+}
