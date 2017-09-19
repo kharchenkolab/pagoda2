@@ -8,13 +8,14 @@
 using namespace Rcpp;
 
 // WriteListToBinary
-void WriteListToBinary(List expL, std::string outfile);
-RcppExport SEXP _pagoda2_WriteListToBinary(SEXP expLSEXP, SEXP outfileSEXP) {
+void WriteListToBinary(List expL, std::string outfile, bool verbose);
+RcppExport SEXP _pagoda2_WriteListToBinary(SEXP expLSEXP, SEXP outfileSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< List >::type expL(expLSEXP);
     Rcpp::traits::input_parameter< std::string >::type outfile(outfileSEXP);
-    WriteListToBinary(expL, outfile);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    WriteListToBinary(expL, outfile, verbose);
     return R_NilValue;
 END_RCPP
 }
@@ -298,7 +299,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 2},
+    {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 3},
     {"_pagoda2_mutualNN", (DL_FUNC) &_pagoda2_mutualNN, 4},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 2},

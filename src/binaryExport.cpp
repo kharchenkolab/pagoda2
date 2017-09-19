@@ -11,19 +11,140 @@ struct binaryExportParams {
   bool verbose;
 };
 
+
+void addSparseMatrixToEntries(List spML,list<entry> &entries,char const &mattype,binaryExportParams *params)
+{
+  IntegerVector viData = spML["matsparse_i"];
+  list<uint32_t> *iData;
+  iData = IVtoL<uint32_t>(viData);
+
+  // Dim from R-export list and convert to list of pointers
+  IntegerVector vDim = spML["matsparse_dim"];
+  list<uint32_t> *Dim;
+  Dim = IVtoL<uint32_t>(vDim);
+
+  // pData from R-export list and convert to list of pointers
+  IntegerVector vpData = spML["matsparse_p"];
+  list<uint32_t> *pData;
+  pData = IVtoL<uint32_t>(vpData);
+
+  // xData from R-export list and convert to list of pointers
+  NumericVector vxData = spML["matsparse_x"];
+  list<float> *xData;
+  xData = NVtoL<float>(vxData);
+
+  if (params->verbose)
+  {
+    cout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << "]" << endl;
+    cout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
+    cout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
+  }
+
+  // Read the dimnames of the sparse matrices.
+  // Add a Nul to the end, because thats what happened in writing to a temporary txt file in R
+  string matsparseDimnames1 = spML["matsparse_dimnames1"];
+  matsparseDimnames1.push_back('\0');
+
+  string matsparseDimnames2 = spML["matsparse_dimnames2"];
+  matsparseDimnames2.push_back('\0');
+
+  // Create Header for sparse Matrix
+  // read Dimensions of Matrix by iterating through the list Dim
+  struct sparseMatrixHeader smh;
+  list<uint32_t>::iterator li = Dim->begin();
+  smh.dim1 = *li;
+  li++;
+  smh.dim2 = *li;
+
+  smh.pStartOffset = sizeof(struct sparseMatrixHeader);
+  smh.iStartOffset = smh.pStartOffset + sizeof(uint32_t) * pData->size();
+  smh.xStartOffset = smh.iStartOffset + sizeof(uint32_t) * iData->size();
+  smh.dimname1StartOffset = smh.xStartOffset + sizeof(uint32_t) * xData->size();
+  smh.dimname2StartOffset = smh.dimname1StartOffset + matsparseDimnames1.size();
+  smh.dimname2EndOffset = smh.dimname2StartOffset + matsparseDimnames2.size();
+
+  if (params->verbose)
+  {
+    cout << "\tSparse matrix header information" << endl;
+    cout << "\t\tdim1=" << smh.dim1 << endl;
+    cout << "\t\tdim2=" << smh.dim2 << endl;
+    cout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
+    cout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
+    cout << "\t\txStartOffset=" << smh.xStartOffset << endl;
+    cout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
+    cout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
+    cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
+  }
+
+  // Make an in-memorty string stream to hold the data
+  stringstream smhData(stringstream::in | stringstream::out | stringstream::binary);
+
+  // Write the header
+  smhData.write((const char *)&smh, sizeof(smh));
+
+  // Write the p object
+  for (list<uint32_t>::const_iterator iter = pData->begin(); iter != pData->end(); ++iter)
+  {
+    smhData.write((const char *)&*iter, sizeof(uint32_t));
+  }
+
+  // Write the i object
+  for (list<uint32_t>::const_iterator iter = iData->begin(); iter != iData->end(); ++iter)
+  {
+    smhData.write((const char *)&*iter, sizeof(uint32_t));
+  }
+
+  // Write the x object
+  for (list<float>::const_iterator iter = xData->begin(); iter != xData->end(); ++iter)
+  {
+    smhData.write((const char *)&*iter, sizeof(uint32_t));
+  }
+
+  // Clear pData, iData and xData
+  delete pData;
+  delete iData;
+  delete xData;
+
+  // Write the Dimnames as JSON string
+  smhData.write(matsparseDimnames1.c_str(), matsparseDimnames1.size());
+  smhData.write(matsparseDimnames2.c_str(), matsparseDimnames2.size());
+
+  // Convert the buffer to a string
+  string smhDataString = smhData.str();
+
+  struct entry *sparseMatrixEntry = make_entry_from_string(&mattype, smhDataString);
+  entries.push_back(*sparseMatrixEntry);
+}
+
+
+
+
+
+
+
 /**
  * Rcpp function called from R to write the web object
  * @description accepts a list of items to write and the name of a file to write to
  */
 // [[Rcpp::export]]
-void WriteListToBinary(List expL, std::string outfile)
+void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
 {
     // Define a parameter set
     struct binaryExportParams params;
 
-    // TODO: Make Rcpp param
-    params.verbose = false; // pass as a reference (&) to called  functions
+    params.verbose = verbose; // pass as a reference (&) to called  functions
 
+    CharacterVector elements = expL.names();
+
+    // Structure list<entry> as defined in pagoda2.h - List for all entries
+    list<entry> entries;
+
+    if(std::find(elements.begin(),elements.end(),"geneknn") != elements.end()) {
+      // JSON formatted gene knn and make entries in payload:
+      string geneKnn = expL["geneknn"];
+      struct entry *geneKnnEntry = make_entry_from_string("geneknn", geneKnn);
+      entries.push_back(*geneKnnEntry);
+    }
 
     // Read in JSON formatted strings from R List given by List expL
     string cellmetadataData = expL["cellmetadata"];
@@ -35,17 +156,12 @@ void WriteListToBinary(List expL, std::string outfile)
     string genesetsData = expL["genesets"];
     string genesetsgenesData = expL["genesetGenes"];
 
-    string geneKnn = expL["geneknn"];
-
+  
     // Reading in the names of exported Embeddings:
     vector<string> embedList = expL["embedList"];
 
-    // Structure list<entry> as defined in pagoda2.h - List for all entries
-    list<entry> entries;
 
     //Make entries for JSON items
-    struct entry *geneKnnEntry = make_entry_from_string("geneknn", geneKnn);
-    entries.push_back(*geneKnnEntry);
 
     // Cellmetadata
     struct entry *metadataEntry = make_entry_from_string("cellmetadata", cellmetadataData);
@@ -83,259 +199,60 @@ void WriteListToBinary(List expL, std::string outfile)
         struct entry *embEntry = make_entry_from_string(embedName.c_str(), embData);
         entries.push_back(*embEntry);
     }
+    // Write sparse expression Matrix to payload:
+    addSparseMatrixToEntries(expL["matsparse"], entries, *"sparseMatrix", &params);
 
-
-
-    // ------------------------  Sparse Count Matrix  ------------------------
-    // Read in iData from R-export list and convert to list of pointers
-    IntegerVector viData = expL["matsparse_i"];
-    list<uint32_t> *iData;
-    iData = IVtoL<uint32_t>(viData);
-
-    // Dim from R-export list and convert to list of pointers
-    IntegerVector vDim = expL["matsparse_dim"];
-    list<uint32_t> *Dim;
-    Dim = IVtoL<uint32_t>(vDim);
-
-    // pData from R-export list and convert to list of pointers
-    IntegerVector vpData = expL["matsparse_p"];
-    list<uint32_t> *pData;
-    pData = IVtoL<uint32_t>(vpData);
-
-    // xData from R-export list and convert to list of pointers
-    NumericVector vxData = expL["matsparse_x"];
-    list<float> *xData;
-    xData = NVtoL<float>(vxData);
-
-    if (params.verbose) {
-      cout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << "]" << endl;
-      cout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
-      cout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
+    // If sparse aspect matrix exists in the passed List write sparse aspect Matrix to payload:
+    if (std::find(elements.begin(), elements.end(), "mataspect") != elements.end()) {
+      addSparseMatrixToEntries(expL["mataspect"], entries, *"aspectMatrix", &params);
     }
 
-    // Read the dimnames of the sparse matrices.
-    // Add a Nul to the end, because thats what happened in writing to a temporary txt file in R
-    string matsparseDimnames1 = expL["matsparse_dimnames1"];
-    matsparseDimnames1.push_back('\0');
+      // Writing file
+      if (params.verbose)
+      {
+        cout << "Making File from payload..." << endl;
 
-    string matsparseDimnames2 = expL["matsparse_dimnames2"];
-    matsparseDimnames2.push_back('\0');
+        cout << "\tFile format information" << endl;
+        cout << "\t\tIndex entry size is " << sizeof(indexEntry) << " bytes" << endl;
+        cout << "\t\tFile header size is " << sizeof(fileHeader) << " bytes" << endl;
+      }
+      // Export entries to file
+      ofstream fs;
+      fs.open(outfile, ios::out | ios::binary);
 
-    // Create Header for sparse Matrix
-    // read Dimensions of Matrix by iterating through the list Dim
-    struct sparseMatrixHeader smh;
-    list<uint32_t>::iterator li = Dim->begin();
-    smh.dim1 = *li;
-    li++;
-    smh.dim2 = *li;
+      if (params.verbose)
+      {
+        cout << "\tPreparing header..." << endl;
+      }
+      struct fileHeader header;
 
-    smh.pStartOffset = sizeof(struct sparseMatrixHeader);
-    smh.iStartOffset = smh.pStartOffset + sizeof(uint32_t) * pData->size();
-    smh.xStartOffset = smh.iStartOffset + sizeof(uint32_t) * iData->size();
-    smh.dimname1StartOffset = smh.xStartOffset + sizeof(uint32_t) * xData->size();
-    smh.dimname2StartOffset = smh.dimname1StartOffset + matsparseDimnames1.size();
-    smh.dimname2EndOffset = smh.dimname2StartOffset + matsparseDimnames2.size();
+      // Clear the memory to avoid rubbish data written to the file
+      memset(&header, 0, sizeof(header));
 
-    if (params.verbose) {
-      cout << "\tExpression matrix header information" << endl;
-      cout << "\t\tdim1=" << smh.dim1 << endl;
-      cout << "\t\tdim2=" << smh.dim2 << endl;
-      cout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
-      cout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
-      cout << "\t\txStartOffset=" << smh.xStartOffset << endl;
-      cout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
-      cout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
-      cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
-    }
+      strcpy(header.identifier, "pagoda2datafile");
+      header.versionMajor = 1;
+      header.versionMinor = 0;
+      header.flags = 0xFFFF;
 
-    // Make an in-memorty string stream to hold the data
-    stringstream smhData(stringstream::in | stringstream::out | stringstream::binary);
+      header.blockSize = FILE_BLOCK_SIZE;
+      header.headerSize = sizeof(struct fileHeader);
+      header.indexSize = sizeof(indexEntry) * entries.size();
 
-    // Write the header
-    smhData.write((const char *)&smh, sizeof(smh));
+      if (params.verbose)
+      {
+        // TODO if verbose
+        cout << "\tTotal index size is: " << header.indexSize << " bytes" << endl;
 
-    // Write the p object
-    for (list<uint32_t>::const_iterator iter = pData->begin(); iter != pData->end(); ++iter)
-    {
-        smhData.write((const char *) &*iter, sizeof(uint32_t));
-    }
+        // Construct the index in memory
+        cout << "\tConstructing index..." << endl;
+      }
 
-    // Write the i object
-    for (list<uint32_t>::const_iterator iter = iData->begin(); iter != iData->end(); ++iter)
-    {
-        smhData.write((const char *) &*iter, sizeof(uint32_t));
-    }
+      list<indexEntry> indexEntries;
+      uint32_t curOffset = 0; // in blocks
 
-    // Write the x object
-    for (list<float>::const_iterator iter = xData->begin(); iter != xData->end(); ++iter)
-    {
-        smhData.write((const char *) &*iter, sizeof(uint32_t));
-    }
-
-    // Clear pData, iData and xData
-    delete pData;
-    delete iData;
-    delete xData;
-
-
-    // Write the Dimnames as JSON string
-    smhData.write(matsparseDimnames1.c_str(), matsparseDimnames1.size());
-    smhData.write(matsparseDimnames2.c_str(), matsparseDimnames2.size());
-
-    // Convert the buffer to a string
-    string smhDataString = smhData.str();
-
-    struct entry *sparseMatrixEntry = make_entry_from_string("sparseMatrix", smhDataString);
-    entries.push_back(*sparseMatrixEntry);
-
-
-
-
-
-
-
-
-
-    // ------------------------  Sparse Aspect Matrix  ------------------------
-    // Read in iData from R-export list and convert to list of pointers
-    IntegerVector AviData = expL["mataspect_i"];
-    list<uint32_t> *AiData;
-    AiData = IVtoL<uint32_t>(AviData);
-
-    // Read in pData from R-export list and convert to list of pointers
-    IntegerVector AvpData = expL["mataspect_p"];
-    list<uint32_t> *ApData;
-    ApData = IVtoL<uint32_t>(AvpData);
-
-    // Read in Dim from R-export list and convert to list of pointers
-    IntegerVector AvDim = expL["mataspect_dim"];
-    list<uint32_t> *ADim;
-    ADim = IVtoL<uint32_t>(AvDim);
-
-    // Read in xData from R-export list and convert to list of pointers
-    NumericVector AvxData = expL["mataspect_x"];
-    list<float> *AxData;
-    AxData = NVtoL<float>(AvxData);
-
-    if (params.verbose) {
-      cout << "\t\tp array size: " << ApData->size() << " [First entry value: " << ApData->front() << "]" << endl;
-      cout << "\t\ti array size: " << AiData->size() << " [First entry value: " << AiData->front() << "]" << endl;
-      cout << "\t\tx array size: " << AxData->size() << " [First entry value: " << AxData->front() << "]" << endl;
-    }
-
-    // Read the dimnames of the sparse matrices.
-    // Add a Nul to the end, because thats what happened in writing to a temporary txt file in R
-    string mataspectDimnames1 = expL["mataspect_dimnames1"];
-    mataspectDimnames1.push_back('\0');
-    string mataspectDimnames2 = expL["mataspect_dimnames2"];
-    mataspectDimnames2.push_back('\0');
-
-    // Create Header for sparse Aspect Matrix
-    // read Dimensions of Matrix by iterating through the list Dim
-    struct sparseMatrixHeader Asmh;
-    list<uint32_t>::iterator Ali = ADim->begin();
-    Asmh.dim1 = *Ali;
-    Ali++;
-    Asmh.dim2 = *Ali;
-
-    Asmh.pStartOffset = sizeof(struct sparseMatrixHeader);
-    Asmh.iStartOffset = Asmh.pStartOffset + sizeof(uint32_t) * ApData->size();
-    Asmh.xStartOffset = Asmh.iStartOffset + sizeof(uint32_t) * AiData->size();
-    Asmh.dimname1StartOffset = Asmh.xStartOffset + sizeof(uint32_t) * AxData->size();
-    Asmh.dimname2StartOffset = Asmh.dimname1StartOffset + mataspectDimnames1.size();
-    Asmh.dimname2EndOffset = Asmh.dimname2StartOffset + mataspectDimnames2.size();
-
-    if (params.verbose) {
-      cout << "\tAspect matrix header information" << endl;
-      cout << "\t\tdim1=" << Asmh.dim1 << endl;
-      cout << "\t\tdim2=" << Asmh.dim2 << endl;
-      cout << "\t\tpStartOffset=" << Asmh.pStartOffset << endl;
-      cout << "\t\tiStartOffset=" << Asmh.iStartOffset << endl;
-      cout << "\t\txStartOffset=" << Asmh.xStartOffset << endl;
-      cout << "\t\tdimnames1StartOffset=" << Asmh.dimname1StartOffset << endl;
-      cout << "\t\tdimnames2StartOffset=" << Asmh.dimname2StartOffset << endl;
-      cout << "\t\tdimnames2EndOffset=" << Asmh.dimname2EndOffset << endl;
-    }
-
-    // Make a memory holder for the data
-    stringstream AsmhData(stringstream::in | stringstream::out | stringstream::binary);
-
-    // Write the header
-    AsmhData.write((const char *) &Asmh, sizeof(Asmh));
-
-    // Write the p object
-    for (list<uint32_t>::const_iterator iter = ApData->begin(); iter != ApData->end(); ++iter)
-    {
-        AsmhData.write((const char *) &*iter, sizeof(uint32_t));
-    }
-
-    // Write the i object
-    for (list<uint32_t>::const_iterator iter = AiData->begin(); iter != AiData->end(); ++iter)
-    {
-        AsmhData.write((const char *) &*iter, sizeof(uint32_t));
-    }
-
-    // Write the x object
-    for (list<float>::iterator iter = AxData->begin(); iter != AxData->end(); ++iter)
-    {
-        AsmhData.write((const char *) &*iter, sizeof(uint32_t));
-    }
-
-    // Write the Dimnames as JSON string
-    AsmhData.write(mataspectDimnames1.c_str(), mataspectDimnames1.size());
-    AsmhData.write(mataspectDimnames2.c_str(), mataspectDimnames2.size());
-
-    // Convert the buffer to a string
-    string AsmhDataString = AsmhData.str();
-
-    struct entry *AsparseMatrixEntry = make_entry_from_string("aspectMatrix", AsmhDataString);
-    entries.push_back(*AsparseMatrixEntry);
-
-    /// End of aspect sparce matrix
-
-    // Writing file
-    if (params.verbose) {
-      cout << "Making File from payload..." << endl;
-
-      cout << "\tFile format information" << endl;
-      cout << "\t\tIndex entry size is " << sizeof(indexEntry) << " bytes" << endl;
-      cout << "\t\tFile header size is " << sizeof(fileHeader) << " bytes" << endl;
-    }
-    // Export entries to file
-    ofstream fs;
-    fs.open(outfile, ios::out | ios::binary);
-
-    if(params.verbose) {
-      cout << "\tPreparing header..." << endl;
-    }
-    struct fileHeader header;
-
-    // Clear the memory to avoid rubbish data written to the file
-    memset(&header, 0, sizeof(header));
-
-    strcpy(header.identifier, "pagoda2datafile");
-    header.versionMajor = 1;
-    header.versionMinor = 0;
-    header.flags = 0xFFFF;
-
-    header.blockSize = FILE_BLOCK_SIZE;
-    header.headerSize = sizeof(struct fileHeader);
-    header.indexSize = sizeof(indexEntry) * entries.size();
-
-    if (params.verbose) {
-    // TODO if verbose
-      cout << "\tTotal index size is: " << header.indexSize << " bytes" << endl;
-
-      // Construct the index in memory
-      cout << "\tConstructing index..." << endl;
-    }
-
-    list<indexEntry> indexEntries;
-    uint32_t curOffset = 0; // in blocks
-
-    // Calculate the index entry sizes
-    for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
-    {
+      // Calculate the index entry sizes
+      for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
+      {
         struct indexEntry ie;
 
         // Copy the key
