@@ -21,10 +21,15 @@ sn <- function(x) { names(x) <- x; return(x); }
 #' @exportClass Pagoda2
 Pagoda2 <- setRefClass(
   "Pagoda2",
-  fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes','pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
+
+  fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes',
+           'pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
+
   methods = list(
-    initialize=function(x, ..., modelType='plain', batchNorm='glm', n.cores=30, verbose=TRUE,
-                        min.cells.per.gene=30, trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE) {
+    initialize=function(x, ..., modelType='plain', batchNorm='glm',
+                        n.cores=30, verbose=TRUE,
+                        min.cells.per.gene=30, trim=round(min.cells.per.gene/2),
+                        lib.sizes=NULL, log.scale=FALSE, keep.genes = NULL) {
       # # init all the output lists
       embeddings <<- list();
       graphs <<- list();
@@ -49,12 +54,15 @@ Pagoda2 <- setRefClass(
           if(any(x@x < 0)) {
             stop("x contains negative values");
           }
-          setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale)
+          setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale,keep.genes=keep.genes)
         }
       }
     },
+
     # provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
-    setCountMatrix=function(countMatrix,depthScale=1e3,min.cells.per.gene=30,trim=round(min.cells.per.gene/2),lib.sizes=NULL,log.scale=FALSE) {
+    setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=30,
+                            trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE,
+                            keep.genes = NULL) {
       # check names
       if(any(duplicated(rownames(countMatrix)))) {
         stop("duplicate gene names are not allowed - please reduce")
@@ -82,8 +90,11 @@ Pagoda2 <- setRefClass(
       }
 
       counts <<- t(countMatrix)
-      counts <<- counts[,diff(counts@p)>min.cells.per.gene]
 
+      # Keep genes of sufficient coverage or genes that are int he keep.genes list
+      counts <<- counts[,diff(counts@p)>min.cells.per.gene | colnames(counts) %in% keep.genes]
+
+      # Save the filtered count matrix in misc$rawCounts
       misc[['rawCounts']] <<- counts;
 
       cat(nrow(counts),"cells,",ncol(counts),"genes; normalizing ... ")
@@ -345,8 +356,8 @@ Pagoda2 <- setRefClass(
         graphs[[type]] <<- g;
       }
     },
-    # calculate KNN-based clusters
-    getKnnClusters=function(type='counts',method=multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, metaclustering.method='ward.D', min.cluster.size=2, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
+    # calculate clusters based on the kNN graph
+    getKnnClusters=function(type='counts',method=multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=2, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
       if(is.null(g)) {
         if(is.null(graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
         g <- graphs[[type]];
@@ -497,7 +508,122 @@ Pagoda2 <- setRefClass(
     },
 
     geneKnnbyPCA = function() {
-      stop('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+      warn('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+      .self$makeGeneKnnGraph();
+    },
+
+    # take a given clustering and generate a hierarchical clustering
+    # TODO: add support for innerOrder
+    getHierarchicalDiffExpressionAspects = function(type='counts',groups=NULL,clusterName=NULL,method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=.self$n.cores, min.set.size=5 ) {
+      if(type=='counts') {
+        x <- counts;
+      } else {
+        x <- reductions[[type]];
+      }
+      if(is.null(groups)) {
+        # retrieve clustering
+        if(is.null(clusters)) stop("please generate clusters first")
+        if(is.null(clusters[[type]])) stop(paste("please generate clusters for",type,"first"))
+        if(is.null(clusterName)) { # use the first clustering
+          if(length(clusters[[type]])<1) stop(paste("please generate clusters for",type,"first"))
+          cl <- clusters[[type]][[1]];
+        } else {
+          cl <- clusters[[type]][[clusterName]]
+          if(is.null(cl)) stop(paste("unable to find clustering",clusterName,'for',type))
+          cat("using",clusterName," clustering for",type,"space\n")
+        }
+      } else {
+        if(!all(rownames(x) %in% names(groups))) { warning("provided cluster vector doesn't list groups for all of the cells")}
+        cl <- groups;
+      }
+      cl <- as.factor(cl[match(rownames(x),names(cl))]);
+
+      if(dist %in% c('pearson','spearman')) {
+        rx <- do.call(cbind,tapply(1:nrow(x),cl,function(ii) colMeans(x[ii,])))
+        d <- as.dist(1-cor(rx,method=dist))
+      } else if(dist=='euclidean') {
+        rx <- do.call(rbind,tapply(1:nrow(x),cl,function(ii) colMeans(x[ii,])))
+        d <- dist(rx)
+      } else if(dist=='JS') {
+        # this one has to be done on counts, even if we're working with a reduction
+        cl <- as.factor(cl[match(rownames(misc[['rawCounts']]),names(cl))]);
+        lvec <- colSumByFac(misc[['rawCounts']],as.integer(cl))[-1,] + 1
+        d <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))));
+        colnames(d) <- rownames(d) <- which(table(cl)>0)
+        d <- as.dist(d)
+      } else {
+        stop("unknwon distance",dist,"requested")
+      }
+
+      dd <- as.dendrogram(hclust(d,method=method))
+      
+      # walk down the dendrogram to generate diff. expression on every split
+      diffcontrasts <- function(l,env) {
+        v <- mget("contrasts",envir=env,ifnotfound=0)[[1]]
+        if(!is.list(v)) v <- list();
+        if(is.leaf(l)) return(NULL)
+        lcl <- rep(NA,nrow(x));
+        names(lcl) <- rownames(x)
+        lcl[names(lcl) %in% names(cl)[cl %in% unlist(l[[1]])]] <- paste(unlist(l[[1]]),collapse='.');
+        lcl[names(lcl) %in% names(cl)[cl %in% unlist(l[[2]])]] <- paste(unlist(l[[2]]),collapse='.');
+        v <- c(v,list(as.factor(lcl)))
+        assign("contrasts",v,envir=env)
+        return(1);
+      }
+
+      de <- environment()
+      assign('contrasts',NULL,envir=de)
+      dc <- dendrapply(dd,diffcontrasts,env=de)
+      dc <- get("contrasts",env=de)
+      names(dc) <- unlist(lapply(dc,function(x) paste(levels(x),collapse=".vs.")))
+
+      #dexp <- papply(dc,function(x) getDifferentialGenes(groups=x,z.threshold=z.threshold),n.cores=n.cores)
+      
+      x <- counts;
+      x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p)); # apply variance scaling
+      x <- t(x)
+      dexp <- papply(dc,function(g) {
+        dg <- getDifferentialGenes(groups=g,z.threshold=z.threshold)
+        dg <- lapply(dg,function(x) x[x$Z>=z.threshold,])
+        # calculate average profiles
+        x <- x[rownames(x) %in% unlist(lapply(dg,rownames)),]
+        if(nrow(x)<1) return(NULL);
+        x <- x-rowMeans(x[,!is.na(g)])
+        sf <- rep(1,nrow(x)); names(sf) <- rownames(x);
+        if(nrow(dg[[1]])>0) {
+          ig <- which(names(sf) %in% rownames(dg[[1]]))
+          sf[ig] <- 1/length(ig)
+        }
+        if(nrow(dg[[2]])>0) {
+          ig <- which(names(sf) %in% rownames(dg[[2]]))
+          sf[ig] <- -1/length(ig)
+        }
+        sf <- sf*sqrt(length(sf))
+        pt <- colSums(x*sf)
+        pt[is.na(g)] <- 0;
+        return(list(dg=dg,pt=pt))
+      },n.cores=n.cores)
+
+      dexp <- dexp[!unlist(lapply(dexp,is.null))]; # remove cases where nothing was reported
+
+      # fake pathwayOD output
+      tamr <- list(xv=do.call(rbind,lapply(dexp,function(x) x$pt)),
+                   cnam=lapply(sn(names(dexp)),function(n) c(n)))
+      
+      dgl <- lapply(dexp,function(d) as.character(unlist(lapply(d$dg,function(x) rownames(x)[x$Z>=z.threshold]))))
+      tamr$env <- list2env(dgl[unlist(lapply(dgl,length))>=min.set.size])
+      
+      misc[['pathwayOD']] <<- tamr;
+      
+      # fake pathwayODInfo
+      zs <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$Z)))))
+      mval <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$M)))))
+      vdf <- data.frame(i=1:nrow(tamr$xv),npc=1,valid=TRUE,sd=apply(tamr$xv,1,sd),cz=zs,z=zs,oe=mval,n=unlist(lapply(dexp,function(x) sum(unlist(lapply(x$dg,nrow))))))
+      vdf$name <- rownames(vdf) <- names(dexp);
+      misc[['pathwayODInfo']] <<- vdf
+      
+      return(invisible(tamr))
+
     },
 
     # Calculates gene Knn network for gene similarity
@@ -506,6 +632,7 @@ Pagoda2 <- setRefClass(
        # Transpose first
        x <- t(counts);
 
+      # TODO: factor out gene PCA calculation
       # Do the PCA
       require(irlba);
       if (center) {
@@ -1121,7 +1248,7 @@ Pagoda2 <- setRefClass(
     # test pathway overdispersion
     # this is a compressed version of the PAGODA1 approach
     # env - pathway to gene environment
-    testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, n.randomizations=10, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL,adjusted.pvalues=TRUE,z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE,name='pathwayPCA',correlation.distance.threshold=0.2,top.aspects=Inf,recalculate.pca=FALSE,save.pca=TRUE) {
+    testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, n.randomizations=10, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL,adjusted.pvalues=TRUE,z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE,name='pathwayPCA',correlation.distance.threshold=0.2,loading.distance.threshold=0.01,top.aspects=Inf,recalculate.pca=FALSE,save.pca=TRUE) {
       nPcs <- 1;
 
       if(type=='counts') {
@@ -1308,15 +1435,21 @@ Pagoda2 <- setRefClass(
 
       # collapse gene loading
       if(verbose) {
-        message("clustering aspects based on gene loading")
+        message("clustering aspects based on gene loading ... ",appendLF=FALSE)
       }
-      tam2 <- pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=F,n.cores=n.cores)
+      tam2 <- pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=F,distance.threshold=loading.distance.threshold,n.cores=n.cores)
       if(verbose) {
-        message("clustering aspects based on pattern similarity")
+        message(nrow(tam2$xv)," aspects remaining")
+      }
+      if(verbose) {
+        message("clustering aspects based on pattern similarity ... ",appendLF=FALSE)
       }
       tam3 <- pagoda.reduce.redundancy(tam2,distance.threshold=correlation.distance.threshold,top=top.aspects)
-
+      if(verbose) {
+        message(nrow(tam3$xv)," aspects remaining\n")
+      }
       tam2$xvw <- tam3$xvw <- NULL; # to save space
+      tam3$env <- setenv;
       misc[['pathwayOD']] <<- tam3;
       reductions[[name]] <<- tam3$xv;
       return(invisible(tam3))
@@ -1367,18 +1500,19 @@ Pagoda2 <- setRefClass(
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
-        require(Rtsne.multicore);
+        require(Rtsne);
         cat("calculating distance ... ")
         if(distance=='L2') {
           cat("euclidean ... ")
-          d <- as.matrix(dist(x))
+          d <- dist(x)
         } else {
           cat("pearson ... ")
-          d <- as.matrix(1-cor(t(x), method = 'pearson'))
+          d <- 1-cor(t(x))
         }
         cat("done\n")
-        emb <- Rtsne.multicore(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
-        rownames(emb) <- colnames(d)
+        cat("running tSNE using",n.cores,"cores:\n")
+        emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
+        rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
         g <- graphs[[type]];

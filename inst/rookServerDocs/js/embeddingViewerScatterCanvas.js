@@ -755,16 +755,12 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
     var embeddingType = config.embeddingType;
     var thisViewer = this;
 
-
     var extJsContainer = Ext.getCmp('embeddingExtJSWrapper');
     var plotHeight = extJsContainer.body.getHeight(true);
     var plotWidth = extJsContainer.body.getWidth(true);
 
-
     // Show the wait window
     embViewer.showWait();
-
-
 
     //var size = this.size;
     var size = Math.min(plotHeight, plotWidth);
@@ -776,7 +772,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 	// Generate the colors for the data points -- async
 	thisViewer.generateFillStyles(plotData, function(plotData, fillInfo) {
 
-	thisViewer.resizeElements();
+	    thisViewer.resizeElements();
 
 	    var embCanvas = document.getElementById('embedding-canvas');
 	    // Make the xscale
@@ -1152,6 +1148,8 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
   // For potential cancelling
 	evSC.colorAJAXrequest = dataCntr.getExpressionValuesSparseByCellIndex(
 		geneSelection, cellIndexStart, cellIndexEnd, function(data) {
+
+
 	    var heatView = new heatmapViewer();
 	    // Get palette
 	    var palSize = heatView.palManager.getNumberOfColors();

@@ -50,21 +50,18 @@ $ R
 
 Install pagoda2
 ```
-# Specify the NMSLIB_PATH enviroment to the location that you installed
-# and built nmslib above
-$ export NMSLIB_PATH=/path/to/nmslib-1.5.3/
 # Start R
 $ R
 # Install Bioconductor dependencies
 > source("http://bioconductor.org/biocLite.R")
 > biocLite(c("GO.db", "org.Hs.eg.db","pcaMethods"), suppressUpdates=TRUE)
 > library(devtools)
-> devtools::install_github("RGLab/Rtsne.multicore")
 > install_github("igraph/rigraph") # Don't install with install.packages()
-> install_github("pkharchenko/Rtsne.multicore",ref="precomputed_distance")
-> install.packages(‘Cairo’)
-> install.packages('urltools')
+> install_github("jkrijthe/Rtsne",ref="openmp")
+> install.packages(c("Cairo","urltools"))
 
+# Specify the location where nms lib was installed in a NMSLIB_PATH environment variable
+> Sys.setenv("NMSLIB_PATH"="/path/to/nmslib-1.5.3/")
 # Install pagoda
 > install_github("hms-dbmi/pagoda2")
 > library('pagoda2')

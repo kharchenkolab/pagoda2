@@ -2,7 +2,7 @@
 #' @import rjson
 
 #' @export p2.make.pagoda1.app
-p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
+p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
   # rcm - xv
   if(type=='counts') {
     x <- p2$counts;
@@ -84,6 +84,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
 
   if(is.null(p2$misc[['pathwayOD']])) stop("pathwayOD missing, please run testPathwayOverdispersion()")
   tamr <- p2$misc[['pathwayOD']];
+  env <- tamr$env; 
   if(is.null(zlim)) { zlim <- c(-1, 1)*quantile(tamr$xv, p = 0.95) }
 
   if(is.null(row.clustering) || is.null(row.clustering$order)) {
@@ -91,7 +92,7 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
   } else if(class(row.clustering)!="hclust") {
     # make a fake clustering to match the provided order
     or <- row.clustering$order;
-    row.clustering <- hclust(dist(tamr3$xv),method='single')
+    row.clustering <- hclust(dist(tamr$xv),method='single')
     names(or) <- as.character(-1*row.clustering$order)
     nmm <- -1*or[as.character(row.clustering$merge)]
     nmm[is.na(nmm)] <- as.character(row.clustering$merge)[is.na(nmm)]
@@ -173,8 +174,8 @@ p2.make.pagoda1.app <- function(p2, env,col.cols = NULL, row.clustering = NULL, 
 
   # prepare pathway df
   df <- data.frame(name = vdf$name, npc = vdf$npc, n = vdf$n, score = vdf$oe, z = vdf$z, adj.z = vdf$cz, stringsAsFactors = FALSE)
-  if(exists("GOTERM", envir = globalenv())) {
-    df$desc <- unlist(lapply(mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
+  if(is.element("GO.db",installed.packages()[,1])) {
+    df$desc <- unlist(lapply(BiocGenerics::mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
   } else {
     df$desc <- ""
   }
@@ -466,8 +467,8 @@ p2ViewPagodaApp <- setRefClass(
                      #tpi <- tpi[seq(1, min(length(tpi), 15))]
                      npc <- gsub("^#PC(\\d+)#.*", "\\1", names(ii[tpi]))
                      nams <- gsub("^#PC\\d+# ", "", names(ii[tpi]))
-                     if(exists("GOTERM", envir = globalenv())) {
-                       tpn <- paste(nams, unlist(lapply(mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
+                     if(is.element("GO.db",installed.packages()[,1])) {
+                       tpn <- paste(nams, unlist(lapply(BiocGenerics::mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                      } else {
                        tpn <- nams;
                      }
@@ -573,8 +574,8 @@ p2ViewPagodaApp <- setRefClass(
                        selgenes <- fromJSON(url_decode(req$POST()$genes))
                        lgt <- calculate.go.enrichment(selgenes, colnames(results$p2$counts), pvalue.cutoff = 0.99, env = renv, over.only = TRUE)$over
                        lgt <- lgt[is.finite(lgt$Z),];
-                       if(exists("GOTERM", envir = globalenv())) {
-                         lgt$nam <- paste(lgt$t, unlist(lapply(mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
+                       if(is.element("GO.db",installed.packages()[,1])) {
+                         lgt$nam <- paste(lgt$t, unlist(lapply(BiocGenerics::mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                        } else {
                          lgt$name <- lgt$t
                        }
