@@ -84,6 +84,9 @@ struct entry {
   uint32_t blockSize; // size in blocks as will be written in the index
 };
 
+struct binaryExportParams {
+  bool verbose;
+};
 
 ///////////////////////////////
 // Function Prototypes

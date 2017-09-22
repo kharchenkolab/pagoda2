@@ -7,11 +7,6 @@
 #include "pagoda2.h"
 #include "binaryExport.h"
 
-struct binaryExportParams {
-  bool verbose;
-};
-
-
 void addSparseMatrixToEntries(List spML,
                               list<entry> &entries,
                               char const *mattype,
