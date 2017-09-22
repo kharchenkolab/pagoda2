@@ -25,9 +25,9 @@ $ sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-de
 # so choose a location that will not be altered
 # something like ~/lib/nmslib/ will be suitable
 $ cd /path/of/choice
-$ wget https://github.com/searchivarius/nmslib/archive/v1.5.3.tar.gz
-$ tar xvzf v1.5.3.tar.gz
-$ cd nmslib-1.5.3
+$ wget https://github.com/searchivarius/nmslib/archive/v1.6.tar.gz
+$ tar xvzf v1.6.tar.gz
+$ cd nmslib-1.6
 $ cd similarity_search
 $ cmake .
 $ make
@@ -61,7 +61,7 @@ $ R
 > install.packages(c("Cairo","urltools"))
 
 # Specify the location where nms lib was installed in a NMSLIB_PATH environment variable
-> Sys.setenv("NMSLIB_PATH"="/path/to/nmslib-1.5.3/")
+> Sys.setenv("NMSLIB_PATH"="/path/to/nmslib-1.6/")
 # Install pagoda
 > install_github("hms-dbmi/pagoda2")
 > library('pagoda2')
