@@ -91,7 +91,7 @@ struct entry {
 template <class T>
 std::list<T>* IVtoL(Rcpp::IntegerVector f);
 
-  template <class T>
+template <class T>
   std::list<T>* NVtoL(Rcpp::NumericVector f);
 
 template <typename T> inline T intDivRoundUP(T a, T b) {
@@ -100,5 +100,10 @@ template <typename T> inline T intDivRoundUP(T a, T b) {
 
 struct entry *make_entry_from_string(char const *key, string &data);
 
+
+void addSparseMatrixToEntries(List spML,
+                              list<entry> &entries,
+                              char const *mattype,
+                              binaryExportParams *params);
 
 #endif
