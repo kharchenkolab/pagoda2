@@ -12,7 +12,10 @@ struct binaryExportParams {
 };
 
 
-void addSparseMatrixToEntries(List spML,list<entry> &entries,char const &mattype,binaryExportParams *params)
+void addSparseMatrixToEntries(List spML,
+                              list<entry> &entries,
+                              char const *mattype,
+                              binaryExportParams *params)
 {
   IntegerVector viData = spML["matsparse_i"];
   list<uint32_t> *iData;
@@ -112,8 +115,10 @@ void addSparseMatrixToEntries(List spML,list<entry> &entries,char const &mattype
   // Convert the buffer to a string
   string smhDataString = smhData.str();
 
-  struct entry *sparseMatrixEntry = make_entry_from_string(&mattype, smhDataString);
+  struct entry *sparseMatrixEntry = make_entry_from_string(mattype, smhDataString);
   entries.push_back(*sparseMatrixEntry);
+
+  // TODO: Memory manage the sparseMatrixEntry memory
 }
 
 
@@ -139,6 +144,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     // Structure list<entry> as defined in pagoda2.h - List for all entries
     list<entry> entries;
 
+    // Optional Gene KNN inclusion if present
     if(std::find(elements.begin(),elements.end(),"geneknn") != elements.end()) {
       // JSON formatted gene knn and make entries in payload:
       string geneKnn = expL["geneknn"];
@@ -156,7 +162,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     string genesetsData = expL["genesets"];
     string genesetsgenesData = expL["genesetGenes"];
 
-  
+
     // Reading in the names of exported Embeddings:
     vector<string> embedList = expL["embedList"];
 
@@ -199,13 +205,36 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
         struct entry *embEntry = make_entry_from_string(embedName.c_str(), embData);
         entries.push_back(*embEntry);
     }
+
+
+
     // Write sparse expression Matrix to payload:
-    addSparseMatrixToEntries(expL["matsparse"], entries, *"sparseMatrix", &params);
+//exportList[["sparsematnames"]] <- c("matsparse", "mataspect");
+    vector<string> sparseMatrixNames = expL["sparsematnames"];
+    for (auto it = sparseMatrixNames.begin(); it != sparseMatrixNames.end(); ++it) {
+      cout << "Writing... " << *it << endl << flush;
+
+      // Small hack to match internal and frontend names
+      // TODO: fix front end and update with backwards compatibility
+      string saveName;
+      if (*it == "matsparse") {
+        saveName = "sparseMatrix";
+      } else if (*it == "mataspect") {
+        saveName = "aspectMatrix";
+      } else {
+        saveName = *it;
+      }
+
+      addSparseMatrixToEntries(expL[*it], entries, saveName.c_str(), &params);
+    }
+
+    //addSparseMatrixToEntries(expL["matsparse"], entries, "sparseMatrix", &params);
+    //addSparseMatrixToEntries(expL["mataspect"], entries, "aspectMatrix", &params);
 
     // If sparse aspect matrix exists in the passed List write sparse aspect Matrix to payload:
-    if (std::find(elements.begin(), elements.end(), "mataspect") != elements.end()) {
-      addSparseMatrixToEntries(expL["mataspect"], entries, *"aspectMatrix", &params);
-    }
+    // if (std::find(elements.begin(), elements.end(), "mataspect") != elements.end()) {
+    //   addSparseMatrixToEntries(expL["mataspect"], entries, *"aspectMatrix", &params);
+    // }
 
       // Writing file
       if (params.verbose)
@@ -365,6 +394,7 @@ std::list<T>* NVtoL(Rcpp::NumericVector f)
   }
   return (s);
 }
+
 
 /**
  * Create the internal entry structure from a key and data

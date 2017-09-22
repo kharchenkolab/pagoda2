@@ -157,7 +157,7 @@ pagoda2WebApp <- setRefClass(
 
             #hcGroup is a hclust object of whatever cell groupings we provided above
             hcGroups <- hclust(as.dist(ld), method = 'ward.D');
-            
+
             if(orderDend){
                 require(dendsort)
                 hcGroups <- dendsort::dendsort(hcGroups)
@@ -172,7 +172,7 @@ pagoda2WebApp <- setRefClass(
             cellorder <- unlist(lapply(hcGroups$labels[hcGroups$order], function(x) {
                     if(is.null(innerOrder)){
                         base::sample(names(cl0)[cl0 == x]) # Sample for random order
-                        
+
                     } else {
                         if(length(names(cl0)[cl0 == x]) < 5){
                                base::sample(names(cl0)[cl0 == x]);
@@ -204,7 +204,7 @@ pagoda2WebApp <- setRefClass(
                             } else {
                                 celsel <- names(cl0)[cl0==x]
                                 sgraph <- igraph::induced_subgraph(r$graphs$PCA,(celsel))
-                                celsel[hclust(as.dist(1-WGCNA::cor(t(igraph::layout.auto(sgraph,dim=3)))))$order]                    
+                                celsel[hclust(as.dist(1-WGCNA::cor(t(igraph::layout.auto(sgraph,dim=3)))))$order]
                             }
 
                         } else if(innerOrder == "knn") {
@@ -212,25 +212,25 @@ pagoda2WebApp <- setRefClass(
 
                             celsel <- names(cl0)[cl0 == x]
                             k <- round(pmax(length(celsel)*0.20,5)) # Coarse estimate for k
-                            nv <- ceiling(pmax(length(celsel)*0.10,5)) # Coarse estimate for appropriate number of PCs 
-                            
+                            nv <- ceiling(pmax(length(celsel)*0.10,5)) # Coarse estimate for appropriate number of PCs
+
                             xx <- r$counts[celsel,] %*% irlba(r$counts[celsel,],nv = nv,nu=0)$v
                             colnames(xx) <- paste('PC',seq(ncol(xx)),sep='')
-                
+
                             xn <- hnswKnnLp(as.matrix(xx),k,nThreads=r$n.cores,p=2.0,verbose=0)
-                            
+
                             xn <- xn[!xn$s==xn$e,]
                             xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
-                        
+
                             df <- data.frame(from=rownames(xx)[xn$s+1],to=rownames(xx)[xn$e+1],weight=xn$d,stringsAsFactors=F)
-                            
+
                             df$weight <- pmax(0,df$weight);
                             xn <- cbind(xn,rd=df$weight)
                             edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(xx),nrow(xx)))
                             edgeMat <- edgeMat + t(edgeMat);
                             wij <- largeVis::buildWijMatrix(edgeMat,perplexity=100,threads=r$n.cores)
                             coords <- largeVis::projectKNNs(wij = wij, dim=1, M = 5, verbose = FALSE,sgd_batches = 2e6,gamma=1, seed=1)
-                            
+
                             rownames(xx)[order(coords)]
 
                         } else {
@@ -514,7 +514,7 @@ pagoda2WebApp <- setRefClass(
                                         # Discard values < 1/50 of the max
                                         #trimPoint <-  max(abs(matrixToSend)) / 50;
                                         #matrixToSend[abs(matrixToSend) < trimPoint] <- 0;
-                                        
+
 
                                         # Transpose and make sparse
                                         matrixToSend <- Matrix(t(matrixToSend), sparse = T);
@@ -1044,16 +1044,6 @@ pagoda2WebApp <- setRefClass(
             cellIndices <- mainDendrogram$cellorder;
             aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
 
-
-            # Discard values < 1/50 of overall max
-            #trimPoint <- max(abs(aspectMatrixToSave)) / 50;
-            #aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
-
-            # Discard values < 1/50 of row max
-            # rowmax <- apply(aspectMatrixToSave,1,max)
-            # blw <- which(apply(array(1:nrow(aspectMatrixToSave)),1,function(x) aspectMatrixToSave[x,] < rowmax[x]/50))
-            # aspectMatrixToSave[blw] <- 0
-
             aspectMatrixToSave <- t(aspectMatrixToSave);
             aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
 
@@ -1101,25 +1091,28 @@ pagoda2WebApp <- setRefClass(
 
             # The gene Knn is optional
             if(!is.null(originalP2object$genegraphs$graph)){
-               exportList[["geneknn"]] <- generateGeneKnnJSON(); 
+               exportList[["geneknn"]] <- generateGeneKnnJSON();
             } else if(verbose) {
                 warning("No genegraph provided. It allows you to search for similar genes in the webinterface. \n This is optional, but you can create it with the function makeGeneKnnGraph() \n")
             }
-            
+
 
             # Exports sparse Matrix as List with Dimnames converted to JSON
             ## Sparse Count Matrix & Sparse Aspect Matrix
-            exportList[["matsparse"]] <- sparseMatList(matsparseToSave);
-            exportList[["mataspect"]] <- sparseMatList(aspectMatrixToSave);
+            exportList[["matsparse"]] <- sparseMatList(matsparseToSave); ## This count values
+            exportList[["mataspect"]] <- sparseMatList(aspectMatrixToSave); ## This is the aspect values
+
+            # Tell Cpp what is a sparse matrix
+            exportList[["sparsematnames"]] <- c("matsparse", "mataspect");
 
             #binary.filename <- file.path(getwd(),binary.filename);
             WriteListToBinary(expL=exportList,outfile = binary.filename,verbose=verbose);
             return(invisible(exportList));
         },
         # Create simple List from sparse Matrix with Dimnames as JSON
-        # 
+        #
         # Arguments: sparse matrix
-        # Returns a list with slots i,p,x 
+        # Returns a list with slots i,p,x
         sparseMatList = function(matsparse){
                 mslist <- new("list")
                 mslist[["matsparse_i"]] <- matsparse@i
