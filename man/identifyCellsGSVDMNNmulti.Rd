@@ -2,8 +2,7 @@
 % Please edit documentation in R/clustermatch.R
 \name{identifyCellsGSVDMNNmulti}
 \alias{identifyCellsGSVDMNNmulti}
-\title{identify cells using teh identifyCellsGSVDMNN function using multiple input
-reference sets}
+\title{Classify cells in a pagoda2 application given a set of annotated reference applications}
 \usage{
 identifyCellsGSVDMNNmulti(referencesets, annotset, clustersOrig)
 }
@@ -18,6 +17,7 @@ identifyCellsGSVDMNNmulti(referencesets, annotset, clustersOrig)
 a named factor with labells for annotset
 }
 \description{
-identify cells using teh identifyCellsGSVDMNN function using multiple input
-reference sets
+This function is similar to identifyCellsGSVDMNN() but it can
+take as input a list of annotated pagoda2 objects. It then classifies cells
+against all applications and summarised the results.
 }

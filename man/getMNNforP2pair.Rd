@@ -5,7 +5,7 @@
 \title{Get mutual neighbours for 2 pagoda2 objects}
 \usage{
 getMNNforP2pair(r1, r2, var.scale = T, k = 30, log.scale = T,
-  center = T, verbose = T)
+  center = T, verbose = T, ncomps = 100, plot.projection = F)
 }
 \arguments{
 \item{r1}{first pagoda object}
@@ -21,10 +21,14 @@ getMNNforP2pair(r1, r2, var.scale = T, k = 30, log.scale = T,
 \item{center}{center the data}
 
 \item{verbose}{verbosity level}
+
+\item{ncomps}{number of components form the gsvd to use}
 }
 \value{
 a data frame with all the pairs of the mutual neighbours
 }
 \description{
-Get mutual neighbours for 2 pagoda2 objects
+Given two pagoda2 objects, place the objects on a common space
+of variation using GSVD and identify pairs of mutual neighbours, that are then
+returned as a data.frame
 }

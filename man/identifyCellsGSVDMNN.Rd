@@ -2,7 +2,7 @@
 % Please edit documentation in R/clustermatch.R
 \name{identifyCellsGSVDMNN}
 \alias{identifyCellsGSVDMNN}
-\title{Identify cells in GSVD space with MNN summarisation}
+\title{Classify cells in a pagoda2 application given an annotated pagoda2 object}
 \usage{
 identifyCellsGSVDMNN(referenceP2, r2, referenceP2labels, var.scale = T,
   k = 30, log.scale = T, center = T, verbose = T, extra.info = F)
@@ -27,5 +27,8 @@ identifyCellsGSVDMNN(referenceP2, r2, referenceP2labels, var.scale = T,
 \item{referenceP2lables}{a factor providing labels for every cell in reference P2}
 }
 \description{
-Identify cells in GSVD space with MNN summarisation
+Given a reference pagoda2 application an a set of labels for each
+cell, classify cells in a new application. This function works by placing both
+datasets onto a common GSVD and identifying mutual nearest neighbours. Only cells
+with mutual nearest neighbours are classified.
 }

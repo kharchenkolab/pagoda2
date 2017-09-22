@@ -2,20 +2,21 @@
 % Please edit documentation in R/clustermatch.R
 \name{getJointClusterMarkerGenes}
 \alias{getJointClusterMarkerGenes}
-\title{Get list of genes for each cluster that are consistently diff expressed
-in all the apps in that cluster}
+\title{This function identifies marker genes that support joint clustering
+among different pagoda2 application}
 \usage{
 getJointClusterMarkerGenes(applist, jc)
 }
 \arguments{
-\item{applist}{list of apps}
+\item{applist}{a list of Pagoda2 object}
 
-\item{jc}{joint clusters}
+\item{js}{a factor with joint clusters as returned by getJointClustering()}
 }
 \value{
-a list of gene vectors one entry for each cluster
+a list of markers for each cluster
 }
 \description{
-Get list of genes for each cluster that are consistently diff expressed
-in all the apps in that cluster
+This function performs differential expression between clusters
+identified with getJointClustering() and looks for genes that are consistently
+differentially regulated between different application
 }
