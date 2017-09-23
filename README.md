@@ -76,3 +76,4 @@ $ R
 
 # Basic analysis with generation of pagoda2 web application
 [Pagoda2 Web Application analysis](vignettes/pagoda2.Rmd)
+
