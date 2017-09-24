@@ -624,7 +624,10 @@ pagoda2WebApp <- setRefClass(
                                           print('Gene identifiers after decode')
                                           print(capture.output(str(geneIdentifiers)))
                                           print('------------------------')
+                                          print('Gene identifiers after split')
                                           geneIdentifiers <- strsplit(geneIdentifiers, split = "|", fixed =T)
+                                          print(capture.output(str(geneIdentifiers)))
+                                          print('------------------------')
 
                                           cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                                           cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
