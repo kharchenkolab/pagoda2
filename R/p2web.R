@@ -625,13 +625,19 @@ pagoda2WebApp <- setRefClass(
                                           print(capture.output(str(geneIdentifiers)))
                                           print('------------------------')
                                           print('Gene identifiers after split')
-                                          geneIdentifiers <- strsplit(geneIdentifiers, split = "|", fixed =T)
+                                          geneIdentifiers <- unlist(strsplit(geneIdentifiers, split = "|", fixed =T));
                                           print(capture.output(str(geneIdentifiers)))
                                           print('------------------------')
 
                                           cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                                           cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
                                           getCellNames <- url_decode(postArgs[['getCellNames']]);
+                                          print('------------------------')
+                                          print('Cell indexes')
+                                          print(cellIndexStart);
+                                          print(cellIndexEnd);
+                                          print('------------------------')
+
 
                                           if (!all(c(geneIdentifiers %in% colnames(matsparse)))) {
                                               serverLog("Error: The request contains gene names that are not in matsparse!");
