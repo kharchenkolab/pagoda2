@@ -97,6 +97,14 @@ factorFromP2Selection <- function (sel)
   f
 }
 
+#' @title get the colors for each selection from a p2 selection object
+#' @description retrieves the colors of each selection from a p2 selection object as
+#' a names vector of strings
+#' @return a named vector of hex colours
+#' @export getColorsFromP2Selection
+getColorsFromP2Selection <- function(sel) {
+  unlist(lapply(sel, function(x) { paste0('#',x$color); } ))
+}
 
 #' @title converts a factor to a p2 selection object
 #' @description converts a names factor to a p2 selection object
