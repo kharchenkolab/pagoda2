@@ -402,6 +402,10 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
   p2$getDifferentialGenes(groups=t1)
 }
 
+#' Get a mapping form internal to external names for the specified selection object
+#' @param x p2 selection object
+#' @export getIntExtNamesP2Selection
+getIntExtNamesP2Selection <- function(x) unlist(lapply(sel,function(y) {y$name}))
 
 #' Plot a specified pagoda2 embedding according to the selection object
 #' @description Plots the specified pagoda2 embedding according to the specified selection object
@@ -413,14 +417,15 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
 #' @example
 #' q <- plotEmbeddingColorByP2Selection(p2$embeddings$PCA$tSNE, readPagoda2SelectionFile('WebSelectionsFile'))
 #' @export plotEmbeddingColorByP2Selection
-plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE)  {
+plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = T, alpha = 0.7, show.axis =T )  {
   require(ggplot2)
 
   # Return the plot variable p
   p <- NULL
 
-  colsorig <- getColorsFromP2Selection(sel)
+  colsorig <- pagoda2:::getColorsFromP2Selection(sel)
   f <- factorFromP2Selection(sel, use.internal.name= T)
+
 
   dftmp <- data.frame(emb)
   dftmp$selname <- as.character(f[rownames(dftmp)])
@@ -430,15 +435,28 @@ plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, sh
     colsorig <- c(colsorig, 'no label' = 'grey50')
   }
 
+  guidesVar <- NULL
+  if (!show.guides) {
+    guidesVar <- theme(legend.position = "none")
+  }
+
+  themeVar <- theme_bw()
+  if (!show.axis) {
+    themeVar <- theme_void()
+  }
+
   if (show.labels) {
     clcnt <- aggregate(dftmp[,c(1:2)], by= list(sel=dftmp$selname), FUN=mean)
     clcnt <- clcnt[clcnt$sel != 'no label',]
-    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point() +
-      scale_color_manual(values =  colsorig, name='Type') + theme_bw() +
-      geom_text(aes(x = X1, y=X2, label=sel), data=clcnt, inherit.aes=FALSE)
+    # Display external names
+    clcnt$sel <- as.character(getIntExtNamesP2Selection(sel)[clcnt$sel])
+
+    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point( size = point.size, alpha = alpha) +
+      scale_color_manual(values =  colsorig, name='Type') + themeVar +
+      geom_text(aes(x = X1, y=X2, label=sel), data=clcnt, inherit.aes=FALSE, size=label.size, fontface = "bold") + guidesVar;
   } else {
-    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point() +
-      scale_color_manual(values =  colsorig, name='Type') + theme_bw()
+    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point( size = point.size, alpha = alpha ) +
+      scale_color_manual(values =  colsorig, name='Type') + themeVar + guidesVar;
   }
 
   invisible(p)
