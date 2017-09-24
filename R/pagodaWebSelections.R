@@ -401,3 +401,46 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
   t1[grp1cells] <- c(groupname)
   p2$getDifferentialGenes(groups=t1)
 }
+
+
+#' Plot a specified pagoda2 embedding according to the selection object
+#' @description Plots the specified pagoda2 embedding according to the specified selection object
+#' @param emb An embedding from a pagoda2 object
+#' @param sel a pagoda2 web selection object
+#' @param show.unlabelled display the plots without any associated selection as grey
+#' @param show.labels display the labels at the center of each cluster
+#' @return a ggplot2 object
+#' @example
+#' q <- plotEmbeddingColorByP2Selection(p2$embeddings$PCA$tSNE, readPagoda2SelectionFile('WebSelectionsFile'))
+#' @export plotEmbeddingColorByP2Selection
+plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE)  {
+  require(ggplot2)
+
+  # Return the plot variable p
+  p <- NULL
+
+  colsorig <- getColorsFromP2Selection(sel)
+  f <- factorFromP2Selection(sel, use.internal.name= T)
+
+  dftmp <- data.frame(emb)
+  dftmp$selname <- as.character(f[rownames(dftmp)])
+
+  if (show.unlabelled) {
+    dftmp$selname[is.na(dftmp$selname)] <- 'no label'
+    colsorig <- c(colsorig, 'no label' = 'grey50')
+  }
+
+  if (show.labels) {
+    clcnt <- aggregate(dftmp[,c(1:2)], by= list(sel=dftmp$selname), FUN=mean)
+    clcnt <- clcnt[clcnt$sel != 'no label',]
+    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point() +
+      scale_color_manual(values =  colsorig, name='Type') + theme_bw() +
+      geom_text(aes(x = X1, y=X2, label=sel), data=clcnt, inherit.aes=FALSE)
+  } else {
+    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point() +
+      scale_color_manual(values =  colsorig, name='Type') + theme_bw()
+  }
+
+  invisible(p)
+}
+
