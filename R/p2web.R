@@ -508,6 +508,9 @@ pagoda2WebApp <- setRefClass(
                                         cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                                         cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
 
+                                        # HERE
+                                        aspectIds <- unlist(strsplit(aspectIds, split = "|", fixed =T));
+
                                         cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
                                         matrixToSend <- pathways$xv[aspectIds,cellIndices,drop=F];
 
@@ -601,10 +604,13 @@ pagoda2WebApp <- setRefClass(
                                       'expressionmatrixsparsebyindexbinary' = {
                                           postArgs <- request$POST();
 
-                                          print('expressionmatrixsparsebyindexbinary debug information')
-                                          print(capture.output(str(postArgs,2)));
-                                          print('----------------------');
+                                          debug <- FALSE
 
+                                          if (debug) {
+                                            print('expressionmatrixsparsebyindexbinary debug information')
+                                            print(capture.output(str(postArgs,2)));
+                                            print('----------------------');
+                                          }
 
                                           if (is.null(postArgs[['geneids']])) {
                                             serverLog("Error postArgs[['geneids']] is NULL");
@@ -620,24 +626,33 @@ pagoda2WebApp <- setRefClass(
                                           }
 
                                           geneIdentifiers <- url_decode(postArgs[['geneids']]);
-                                          print('-----------------------')
-                                          print('Gene identifiers after decode')
-                                          print(capture.output(str(geneIdentifiers)))
-                                          print('------------------------')
-                                          print('Gene identifiers after split')
+
+                                          if (debug) {
+                                            print('-----------------------')
+                                            print('Gene identifiers after decode')
+                                            print(capture.output(str(geneIdentifiers)))
+                                            print('------------------------')
+                                            print('Gene identifiers after split')
+                                          }
+
                                           geneIdentifiers <- unlist(strsplit(geneIdentifiers, split = "|", fixed =T));
-                                          print(capture.output(str(geneIdentifiers)))
-                                          print('------------------------')
+
+                                          if (debug) {
+                                            print(capture.output(str(geneIdentifiers)))
+                                            print('------------------------')
+                                          }
 
                                           cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                                           cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
                                           getCellNames <- url_decode(postArgs[['getCellNames']]);
-                                          print('------------------------')
-                                          print('Cell indexes')
-                                          print(cellIndexStart);
-                                          print(cellIndexEnd);
-                                          print('------------------------')
 
+                                          if (debug) {
+                                            print('------------------------')
+                                            print('Cell indexes')
+                                            print(cellIndexStart);
+                                            print(cellIndexEnd);
+                                            print('------------------------')
+                                          }
 
                                           if (!all(c(geneIdentifiers %in% colnames(matsparse)))) {
                                               serverLog("Error: The request contains gene names that are not in matsparse!");
