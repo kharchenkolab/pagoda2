@@ -601,6 +601,10 @@ pagoda2WebApp <- setRefClass(
                                       'expressionmatrixsparsebyindexbinary' = {
                                           postArgs <- request$POST();
 
+                                          print('expressionmatrixsparsebyindexbinary debug information')
+                                          print(capture.output(str(postArgs,2)));
+                                          print('----------------------');
+
                                           if (is.null(postArgs[['geneids']])) {
                                             serverLog("Error postArgs[['geneids']] is NULL");
                                           }
