@@ -275,7 +275,7 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 	// Setup the request data
 	var requestData = {
 	    "dataidentifier": "expressionmatrixsparsebyindexbinary",
-	    "geneids": geneIds,
+	    "geneids": geneIds.join('|'),
 	    "cellindexstart": cellIndexStart,
 	    "cellindexend": cellIndexEnd,
 	    "getCellNames": getCellNames
@@ -584,10 +584,10 @@ DataControllerServer.prototype.getAspectMatrixByAspect = function(cellIndexStart
 	    throw new Error("cellIndexEnd must be an interger");
     }
 
-        // Setup the request data
+    // Setup the request data
     var requestData = {
     	"dataidentifier": "aspectmatrixbyaspect",
-    	"aspectids": aspectIds,
+    	"aspectids": aspectIds.join('|'),
     	"cellindexstart": cellIndexStart,
     	"cellindexend": cellIndexEnd,
     };

@@ -29,6 +29,29 @@ p2.generate.human.go <- function(r) {
 }
 
 
+#' @export p2.generate.mouse.go
+p2.generate.mouse.go <- function(r) {
+  # Generate GO environment
+  require(org.Mm.eg.db)
+  require(GO.db)
+  require(BiocGenerics)
+  require(AnnotationDbi)
+
+  # translate gene names to ids
+  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts),org.Mm.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+
+  # reverse map
+  rids <- names(ids); names(rids) <- ids;
+
+  # list all the ids per GO category
+  go.env <- AnnotationDbi::eapply(org.Mm.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
+  go.env <- go.env[unlist(lapply(go.env,length))>5];
+  go.env <- list2env(go.env);
+
+  go.env
+}
+
+
 #' @title Generate a metadata structure for a p2 web object from a named factor
 #' @description This function will generate a metadata structure that can be passed to
 #' p2 web object constructor as additional metadata given a named factor
