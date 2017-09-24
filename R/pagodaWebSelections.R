@@ -81,20 +81,22 @@ calcMulticlassified <- function(sel) {
 #' the factor only includes cells present in the selection. If the selection
 #' contains multiclassified cells an error is raised
 #' @export factorFromP2Selection
-factorFromP2Selection <- function(sel) {
-  if(!all(calcMulticlassified(sel) == 0)) {
-    stop('The selections provided are not mutually exclusive')
+factorFromP2Selection <- function (sel)
+{
+  if (!all(calcMulticlassified(sel) == 0)) {
+    stop("The selections provided are not mutually exclusive")
   }
   x <- lapply(sel, function(x) {
-    data.frame(cellid = x$cells, label=c(x$name))
+    if (length(x$cells) > 0) {
+      data.frame(cellid = x$cells, label = c(x$name))
+    }
   })
   d <- do.call(rbind, x)
-
   f <- as.factor(d$label)
   names(f) <- d$cellid
-
   f
 }
+
 
 #' @title converts a factor to a p2 selection object
 #' @description converts a names factor to a p2 selection object
