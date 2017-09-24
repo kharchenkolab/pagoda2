@@ -47,7 +47,7 @@ p2.generate.go.web <- function(gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL
     stop("gene.names needs to be a character vector of gene names");
   }
 
-  ids <- unlist(mclapply(BiocGenerics::mget(gene.names, , ifnotfound = NA), function(x) x[1]))
+  ids <- unlist(mclapply(BiocGenerics::mget(gene.names, egALIAS2EG, ifnotfound = NA), function(x) x[1]))
 
   # Swap names and ids
   rids <- names(ids)
