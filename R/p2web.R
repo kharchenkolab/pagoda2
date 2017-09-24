@@ -601,12 +601,23 @@ pagoda2WebApp <- setRefClass(
                                       'expressionmatrixsparsebyindexbinary' = {
                                           postArgs <- request$POST();
 
+                                          if (is.null(postArgs[['geneids']])) {
+                                            serverLog("Error postArgs[['geneids']] is NULL");
+                                          }
+                                          if (is.null(postArgs[['cellindexstart']])) {
+                                            serverLog("Error postArgs[['cellindexstart']] is NULL");
+                                          }
+                                          if (is.null(postArgs[['cellindexend']])) {
+                                            serverLog("Error postArgs[['cellindexend']] is NULL");
+                                          }
+                                          if (is.null(postArgs[['getCellNames']])) {
+                                            serverLog("Error postArgs[['getCellNames']] is NULL");
+                                          }
+
                                           geneIdentifiers <- url_decode(postArgs[['geneids']]);
                                           cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                                           cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
                                           getCellNames <- url_decode(postArgs[['getCellNames']]);
-
-
 
                                           if (!all(c(geneIdentifiers %in% colnames(matsparse)))) {
                                               serverLog("Error: The request contains gene names that are not in matsparse!");
