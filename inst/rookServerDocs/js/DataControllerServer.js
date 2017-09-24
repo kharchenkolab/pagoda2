@@ -275,7 +275,7 @@ DataControllerServer.prototype.getExpressionValuesSparseByCellIndexUnpacked =
 	// Setup the request data
 	var requestData = {
 	    "dataidentifier": "expressionmatrixsparsebyindexbinary",
-	    "geneids": geneIds,
+	    "geneids": geneIds.join('|'),
 	    "cellindexstart": cellIndexStart,
 	    "cellindexend": cellIndexEnd,
 	    "getCellNames": getCellNames

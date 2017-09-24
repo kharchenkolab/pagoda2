@@ -605,6 +605,7 @@ pagoda2WebApp <- setRefClass(
                                           print(capture.output(str(postArgs,2)));
                                           print('----------------------');
 
+
                                           if (is.null(postArgs[['geneids']])) {
                                             serverLog("Error postArgs[['geneids']] is NULL");
                                           }
@@ -619,6 +620,12 @@ pagoda2WebApp <- setRefClass(
                                           }
 
                                           geneIdentifiers <- url_decode(postArgs[['geneids']]);
+                                          print('-----------------------')
+                                          print('Gene identifiers after decode')
+                                          print(capture.output(str(geneIdentifiers)))
+                                          print('------------------------')
+                                          geneIdentifiers <- strsplit(geneIdentifiers, split = "|", fixed =T)
+
                                           cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                                           cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
                                           getCellNames <- url_decode(postArgs[['getCellNames']]);
