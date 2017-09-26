@@ -405,7 +405,7 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
 #' Get a mapping form internal to external names for the specified selection object
 #' @param x p2 selection object
 #' @export getIntExtNamesP2Selection
-getIntExtNamesP2Selection <- function(x) unlist(lapply(sel,function(y) {y$name}))
+getIntExtNamesP2Selection <- function(x) unlist(lapply(x,function(y) {y$name}))
 
 #' Plot a specified pagoda2 embedding according to the selection object
 #' @description Plots the specified pagoda2 embedding according to the specified selection object
