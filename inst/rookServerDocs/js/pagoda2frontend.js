@@ -213,7 +213,7 @@ function generateExtJsLayout() {
     var embedding =  Ext.create('Ext.panel.Panel', {
 	layout: 'fit',
 	id: 'embeddingExtJSWrapper',
-	title: 'Embedding',
+	title: '',
 	header: true, //Show the innermost title
 	padding: 0,
 	border: 0,
@@ -302,7 +302,7 @@ function generateExtJsLayout() {
     var tableViewerPanel = Ext.create('Ext.panel.Panel', {
 	layout: 'fit',
 	id: 'tableExtJSWrapper',
-	title: 'Table View',
+	title: '',
 	header: true, //Show the innermost title
 	padding: 0,
 	border: 0,
@@ -326,7 +326,7 @@ function generateExtJsLayout() {
 		//     glyph: 0xf0db,
 		// },
 		{
-		    
+
 		    title: 'All Genes',
 		    id: 'geneTableViewerExtJS',
 		    layout: 'fit',
@@ -437,14 +437,14 @@ function generateExtJsLayout() {
 	      header: false,
         layout: 'vbox',
         width: '33%',
-        title: 'Main Data Viewer',
+        title: '',
         items: [
             {
             	id: 'dendrogramPanel',
             	layout: 'fit',
             	width: '100%',
             	height: '10%',
-            	title: 'Main View',
+            	title: '',
             	padding: 0,
             	glyph: 0xf1fe,
             	bodyPadding: 0,
