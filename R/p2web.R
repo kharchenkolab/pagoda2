@@ -45,7 +45,6 @@ pagoda2WebApp <- setRefClass(
         "rookRoot"
     ),
 
-
     methods = list(
 
         # pagoda2obj: a pagoda2 object
@@ -76,7 +75,6 @@ pagoda2WebApp <- setRefClass(
                 cat("We have an error");
                 stop("ERROR: The provided dendGroups has a different number of cells than the pagoda 2 object")
             }
-
 
             # Keep the name for later (consistent) use
             name <<- appName;
@@ -260,7 +258,6 @@ pagoda2WebApp <- setRefClass(
             xSend
         },
 
-
         packCompressFloat64Array = function(v){
             rawConn <- rawConnection(raw(0), "wb");
             writeBin(v, rawConn);
@@ -274,15 +271,8 @@ pagoda2WebApp <- setRefClass(
         # Handle httpd server calls
         call = function(env) {
 
-            # DEBUG
-            #if (is.null(env)) {
-            #    response$write("An error occured: env is null");
-            #    response$finish();
-            #}
-
             # TODO: Extract this from request
             path <- env[['PATH_INFO']];
-
 
             request <- Request$new(env);
             response <- Response$new()
@@ -457,7 +447,6 @@ pagoda2WebApp <- setRefClass(
                                           return(response$finish());
                                       },
 
-
                                       # Request for reduced dendrogram, down to some
                                       # cell partitioning, this returns an hcluse object
                                       # as well as the number of cells in each cluster
@@ -474,29 +463,6 @@ pagoda2WebApp <- setRefClass(
                                           response$write(cellOrderJSON());
                                           return(response$finish());
                                       },
-                                      # This returns the full hierarchy -- deprecated
-                                      ## 'hierarchy' = {
-                                      ##     hierarchyName <- requestArguments[['type']];
-
-                                      ##     # TODO: Implement this for other hierarchies
-                                      ##     # as it is unlikely that we will want to implements
-                                      ##     # mutliple cell hierarchies for the moment this will suffice
-                                      ##     if (!is.null(hierarchyName) && hierarchyName == 'dummy') {
-                                      ##         h <- hierarchies$dummy
-                                      ##         l <- unclass(h)[c("merge","height","order")];
-
-                                      ##         # Append cell names
-                                      ##         #l[["names"]] = (rownames(r$counts));
-                                      ##         l[["names"]] = hclusts$dummy$labels;
-
-                                      ##         response$header("Content-type","application/javascript")
-                                      ##         response$write(toJSON(l));
-                                      ##         return(response$finish());
-                                      ##     } else {
-                                      ##         response$write('Not implemented: only the dummy hierarchy is implemented');
-                                      ##         return(response$finish());
-                                      ##     }
-                                      ## },
 
                                       # Get cell metadata information
                                       'cellmetadata' = {
@@ -946,7 +912,6 @@ pagoda2WebApp <- setRefClass(
 
                                  response$write(toJSON(p));
 
-
                                  #originalP2object
                                  return(response$finish());
 
@@ -990,7 +955,6 @@ pagoda2WebApp <- setRefClass(
 
                                     response$write(toJSON(p));
 
-
                                     #originalP2object
                                     return(response$finish());
                                  }
@@ -1004,11 +968,7 @@ pagoda2WebApp <- setRefClass(
                        #response$redirect('index.html');
                        app$call(env);
                    }
-            ) # switch(path
-
-            # DONT DO THIS INTERFERES WITH DEFERRED REQUESTS
-            #response$finish();
-
+            ) # switch
         }, # call = function(env)
 
         ## Various Helper functions
@@ -1265,170 +1225,8 @@ pagoda2WebApp <- setRefClass(
 		      }
 		      resp
 		    }
-		    ,
-
-		    # deprecated, use serialiseToStaticFast
-		    serialiseToStatic = function(text.file.directory = null, binary.filename = null) {
-		      dir <- text.file.directory;
-
-		      if (is.null(dir)) {
-		        stop('Please specify a directory');
-		      }
-
-		      # Simple save function for text data
-          writeDataToFile <- function(dir, filename, data) {
-             filename <- file.path(dir, filename);
-             conn <- file(filename);
-             writeChar(data, conn);
-             close(conn);
-          }
-
-          # Content that is delivered as JSON on Server backed up -- unchanged
-          writeDataToFile(dir, 'reduceddendrogram.json', reducedDendrogramJSON());
-          writeDataToFile(dir, 'cellorder.json', cellOrderJSON());
-          writeDataToFile(dir, 'cellmetadata.json', cellmetadataJSON());
-          writeDataToFile(dir, 'geneinformation.json', geneInformationJSON());
-
-          # Reduction and embedding hierarchy two different calls into one data structure
-          embStructure <- generateEmbeddingStructure()
-          writeDataToFile(dir, 'embeddingstructure.json', toJSON(embStructure));
-
-          # Now serialise the embeddings
-          for (reduc in names(embStructure)) {
-            for (embed in names(embStructure[[reduc]])) {
-              id <- embStructure[[reduc]][[embed]][[1]];
-              filename <- paste0(id, '.json');
-
-              a <- embeddings[[reduc]][[embed]];
-              ret <- list(
-                values = .self$packCompressFloat64Array(as.vector(a)),
-                dim =  dim(a),
-                rownames = rownames(a),
-                colnames = colnames(a)
-              );
-              e <- toJSON(ret);
-
-              writeDataToFile(dir, filename, e);
-            }
-          }
-
-          # Serialise the matsparse array
-
-          # Functions for serialising sparse arrays
-          simpleSerializeArrayToFile <- function(array, dir, filename) {
-            conn <- file(file.path(dir, filename), open='w');
-            x_length <- length(array);
-            for (i in 1:x_length) {
-              cat(array[i], file=conn);
-              cat(' ', file=conn);
-            }
-            close(conn);
-          }
-
-          serialiseSparseArray <- function(array, dir, filename) {
-            # Serialise the i
-            cat('Serialising i...\n')
-            simpleSerializeArrayToFile(array@i, dir, paste0(filename,'i.txt'))
-            cat('Serialising p...\n')
-            simpleSerializeArrayToFile(array@p, dir,  paste0(filename,'p.txt'))
-            cat('Serialising x...\n')
-            simpleSerializeArrayToFile(array@x, dir,  paste0(filename,'x.txt'))
-            cat('Serialising Dim...\n')
-            simpleSerializeArrayToFile(array@Dim, dir,  paste0(filename,'Dim.txt'))
-            cat('Serialising Dimnames1...\n')
-            writeDataToFile(dir, paste0(filename,'Dimnames1.json') , toJSON(array@Dimnames[[1]]));
-            cat('Serialising Dimnames2...\n')
-            writeDataToFile(dir, paste0(filename,'Dimnames2.json'), toJSON(array@Dimnames[[2]]));
-          }
-
-          # Serialise the main sparse matrix
-          matsparseToSave <- matsparse[mainDendrogram$cellorder,]
-          serialiseSparseArray(matsparseToSave, dir, 'matsparse_');
-
-          # Serialise aspect matrix
-          cellIndices <- mainDendrogram$cellorder;
-          aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
-          trimPoint <- max(abs(aspectMatrixToSave)) / 50;
-          aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
-          aspectMatrixToSave <- t(aspectMatrixToSave);
-          aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
-          serialiseSparseArray(aspectMatrixToSave, dir, 'mataspect_');
-
-          # Serialise the aspect information
 
 
-          cat('Serialising aspects..\n');
-          aspectInformation <- list();
-          for (curAspect in rownames(pathways$xv)) {
-            # Genesets in this aspect
-            curgenesets <- unname(pathways$cnam[[curAspect]]);
-
-            # Get the metadata for these gene sets
-            colOfInterest <- c("name","n","cz");
-            retTable <- pathwayODInfo[curgenesets, colOfInterest];
-
-            # Convert to JSON friendly format
-            aspectInformation[[curAspect]]  <- unname(apply(retTable, 1, function(x) {
-              # Must be in genesets for short description
-              desc <- geneSets[[x[[1]]]]$properties$shortdescription;
-
-              list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
-            }));
-          }
-          writeDataToFile(dir, 'aspectInformation.json', toJSON(aspectInformation));
-
-          cat('Serialising gene sets...\n');
-          writeDataToFile(dir, 'genesets.json',toJSON(unname(lapply(geneSets, function(x) {x$properties}))));
-
-          # TODO: Continue here
-          cat('Serialising geneset genes...\n');
-
-          geneListName <- names(geneSets);
-
-          geneListGenes <- list();
-          for(geneListName in names(geneSets)) {
-            # Get the genes in this geneset
-            geneList <- geneSets[[geneListName]]$genes
-            # Subset to genes that exist
-            geneList <- geneList[geneList %in% rownames(varinfo)];
-
-            # Generate dataset
-            dataset <-  varinfo[geneList, c("m","v")];
-            dataset$name <-  rownames(dataset);
-
-            # Convert to row format
-            retd <-  apply(dataset,
-                           1, function(x) {
-                             x[["name"]];
-                           #  list(genename = x[["name"]],
-                           #        dispersion =x[["v"]],
-                           #        meanExpr = x[["m"]])
-                           });
-            geneListGenes[[geneListName]] <- unname(retd);
-          }
-          writeDataToFile(dir, 'genesetsgenes.json',toJSON(geneListGenes));
-
-
-          #We want to make a binary file as well
-          if (!is.null(binary.filename)) {
-            p2packExec <- file.path(system.file(package='pagoda2'),'utilities','p2packSource','p2pack');
-
-            # Append trailing slash if missing
-            if (grepl('/$', text.file.directory)) {
-              dirVar = text.file.directory;
-            } else {
-              dirVar = paste0(text.file.directory, '/');
-            }
-
-            args <- paste0(' --input-directory ', dirVar, ' --output-file ', binary.filename)
-            cmdRetVal <- system2(p2packExec, args)
-            if(cmdRetVal != 0) {
-              cat('Error conversion to binary failed! Have you built the conversion utility? Go to ',
-                  file.path(system.file(package='pagoda2'),'utilities','p2packSource'), 'and run "make".');
-            }
-          }
-
-		    }
 
     ) # methods list
 ) # setRefClass
