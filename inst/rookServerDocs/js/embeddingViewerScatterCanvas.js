@@ -76,7 +76,7 @@ function embeddingViewerScatterCanvas() {
  * Returns the main canvas element for this embedding view
  */
 embeddingViewerScatterCanvas.prototype.getMainCanvasElement = function() {
-  return document.getElementById('embedding-canvas');
+    return document.getElementById('embedding-canvas');
 }
 
 /**
@@ -88,7 +88,7 @@ embeddingViewerScatterCanvas.prototype.getMainCanvasElement = function() {
  * and set the cell selection
  */
 embeddingViewerScatterCanvas.prototype.generateDragSelection =
-  function(verticies) {
+    function(verticies) {
 
 	var thisViewer = this;
 	var embViewer = new embeddingViewer();
@@ -129,17 +129,17 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
 
 	    // Reversed scales
-	var xScaleRev = pagHelpers.linearScaleGenerator(
-	    thisViewer.xScaleRangeMin,
-	    thisViewer.xScaleRangeMax,
-	    thisViewer.xScaleDomainMin,
-	    thisViewer.xScaleDomainMax);
+	    var xScaleRev = pagHelpers.linearScaleGenerator(
+		thisViewer.xScaleRangeMin,
+		thisViewer.xScaleRangeMax,
+		thisViewer.xScaleDomainMin,
+		thisViewer.xScaleDomainMax);
 
-	var yScaleRev = pagHelpers.linearScaleGenerator(
-	    thisViewer.yScaleRangeMin,
-	    thisViewer.yScaleRangeMax,
-	    thisViewer.yScaleDomainMin,
-	    thisViewer.yScaleDomainMax);
+	    var yScaleRev = pagHelpers.linearScaleGenerator(
+		thisViewer.yScaleRangeMin,
+		thisViewer.yScaleRangeMax,
+		thisViewer.yScaleDomainMin,
+		thisViewer.yScaleDomainMax);
 
 	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
 							 thisViewer.yScaleDomainMax,
@@ -154,10 +154,10 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    var cellsForSelection = new Array();
 	    ctx.strokeStyle = 'red';
 
-      // quick highlight
+	    // quick highlight
 	    for (var i = 0; i < plotData.length; i++) {
     		var point = plotData[i];
-        var xs = xScale(point[1]);
+		var xs = xScale(point[1]);
     		var ys = yScale(point[2]);
     		if(pointInPolygon([xs,ys],verticies)){
     		    // Point in selection
@@ -171,21 +171,21 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 	    var cellSelCntr = new cellSelectionController();
 	    var selectionName = cellSelCntr.setSelection( cellsForSelection, 'Embedding Selection', new Object(),'#ff0000', 'embSelection');
 
-      // TODO: Make this optional
+	    // TODO: Make this optional
 
 
-      var heatView = new heatmapViewer();
-      heatView.highlightCellSelectionByName(selectionName);
+	    var heatView = new heatmapViewer();
+	    heatView.highlightCellSelectionByName(selectionName);
 
-      var aspHeatView = new aspectHeatmapViewer();
-      aspHeatView.highlightCellSelectionByName(selectionName);
+	    var aspHeatView = new aspectHeatmapViewer();
+	    aspHeatView.highlightCellSelectionByName(selectionName);
 
-      var metaHeatView = new metaDataHeatmapViewer();
-      metaHeatView.highlightCellSelectionByName(selectionName);
+	    var metaHeatView = new metaDataHeatmapViewer();
+	    metaHeatView.highlightCellSelectionByName(selectionName);
 
 	});
 
-}
+    }
 
 /**
  * Highlight cells by selection name
@@ -193,89 +193,89 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
  * @param hasLabels Whether or not the name of the cell selection should be written on top of the highlighted cell selection
  */
 embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selectionName, hasLabels) {
-  var cellSelCntr = new cellSelectionController();
-  var cells = cellSelCntr.getSelection(selectionName);
+    var cellSelCntr = new cellSelectionController();
+    var cells = cellSelCntr.getSelection(selectionName);
 
-  var embViewer = new embeddingViewer();
-  var thisViewer = this;
+    var embViewer = new embeddingViewer();
+    var thisViewer = this;
 
-  var config =  embViewer.getConfig();
-  var dataCntr = new dataController();
-  var type = config.type;
-  var embeddingType = config.embeddingType;
+    var config =  embViewer.getConfig();
+    var dataCntr = new dataController();
+    var type = config.type;
+    var embeddingType = config.embeddingType;
 
-  var size = this.size;
+    var size = this.size;
 
-  dataCntr.getEmbedding(type, embeddingType, function(data){
-    var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+    dataCntr.getEmbedding(type, embeddingType, function(data){
+	var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
 
-	    // Make the xscale
-	    thisViewer.xScaleDomainMin = +Infinity;
-	    thisViewer.xScaleDomainMax = -Infinity;
-	    for (var j = 0; j < plotData.length; j++) {
-    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
-    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
-	    }
-	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
-	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
-							 thisViewer.xScaleDomainMax,
-							 thisViewer.xScaleRangeMin,
-							 thisViewer.xScaleRangeMax);
+	// Make the xscale
+	thisViewer.xScaleDomainMin = +Infinity;
+	thisViewer.xScaleDomainMax = -Infinity;
+	for (var j = 0; j < plotData.length; j++) {
+    	    thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    	    thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+	}
+	thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+						     thisViewer.xScaleDomainMax,
+						     thisViewer.xScaleRangeMin,
+						     thisViewer.xScaleRangeMax);
 
-	    // Make the y scale
-	    thisViewer.yScaleDomainMin = +Infinity;
-	    thisViewer.yScaleDomainMax = -Infinity;
-	    for (var j = 0; j < plotData.length; j++) {
-    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
-    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
-	    }
-	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
-	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
-							 thisViewer.yScaleDomainMax,
-							 thisViewer.yScaleRangeMin,
-							 thisViewer.yScaleRangeMax);
+	// Make the y scale
+	thisViewer.yScaleDomainMin = +Infinity;
+	thisViewer.yScaleDomainMax = -Infinity;
+	for (var j = 0; j < plotData.length; j++) {
+    	    thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    	    thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+	}
+	thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
+						     thisViewer.yScaleDomainMax,
+						     thisViewer.yScaleRangeMin,
+						     thisViewer.yScaleRangeMax);
 
 
-	    var pointsize = embViewer.getCurrentPointSize();
+	var pointsize = embViewer.getCurrentPointSize();
 
-	    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
-	    ctx.save();
-	    ctx.clearRect(0,0,5000,5000);
-	    thisViewer.hasLabels = hasLabels;
-	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
+	var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
+	ctx.save();
+	ctx.clearRect(0,0,5000,5000);
+	thisViewer.hasLabels = hasLabels;
+	ctx.strokeStyle = cellSelCntr.getColor(selectionName);
 
-	    var clusterCenter = {
-	      x: 0,
-	      y: 0,
-	      total: 0,
-	    }
+	var clusterCenter = {
+	    x: 0,
+	    y: 0,
+	    total: 0,
+	}
 
-	    for (var i = 0; i < plotData.length; i++) {
-    		var point = plotData[i];
-    		if ( cells.indexOf(point[0]) > -1 ) {
-    		    var xs = xScale(point[1]);
-    		    var ys = yScale(point[2]);
+	for (var i = 0; i < plotData.length; i++) {
+    	    var point = plotData[i];
+    	    if ( cells.indexOf(point[0]) > -1 ) {
+    		var xs = xScale(point[1]);
+    		var ys = yScale(point[2]);
 
-    		    ctx.beginPath();
-    		    clusterCenter.x += xs;
-    		    clusterCenter.y += ys;
-    		    clusterCenter.total++;
-    		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
-    		    ctx.stroke();
-    		}
-	    } // for
-	    if(clusterCenter.total > 0){
-	      ctx.fillStyle = "black";
-	      ctx.font = "bold " + ctx.font;
-	      ctx.textAlign = "center";
-	      ctx.textBaseline = "middle";
-	      ctx.fillText(cellSelCntr.getSelectionDisplayName(selectionName),clusterCenter.x/clusterCenter.total, clusterCenter.y)
-	    }
-	    ctx.restore();
+    		ctx.beginPath();
+    		clusterCenter.x += xs;
+    		clusterCenter.y += ys;
+    		clusterCenter.total++;
+    		ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+    		ctx.stroke();
+    	    }
+	} // for
+	if(clusterCenter.total > 0){
+	    ctx.fillStyle = "black";
+	    ctx.font = "bold " + ctx.font;
+	    ctx.textAlign = "center";
+	    ctx.textBaseline = "middle";
+	    ctx.fillText(cellSelCntr.getSelectionDisplayName(selectionName),clusterCenter.x/clusterCenter.total, clusterCenter.y)
+	}
+	ctx.restore();
 
-  });
+    });
 
 }
 
@@ -287,100 +287,100 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
  */
 embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(selectionNames, hasLabels) {
 
-  var cellSelCntr = new cellSelectionController();
-  var embViewer = new embeddingViewer();
-  var thisViewer = this;
-  thisViewer.hasLabels = hasLabels;
+    var cellSelCntr = new cellSelectionController();
+    var embViewer = new embeddingViewer();
+    var thisViewer = this;
+    thisViewer.hasLabels = hasLabels;
 
-  var config =  embViewer.getConfig();
-  var dataCntr = new dataController();
-  var type = config.type;
-  var embeddingType = config.embeddingType;
+    var config =  embViewer.getConfig();
+    var dataCntr = new dataController();
+    var type = config.type;
+    var embeddingType = config.embeddingType;
 
-  var size = this.size;
+    var size = this.size;
 
-  var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
-  ctx.clearRect(0,0,5000,5000);
+    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
+    ctx.clearRect(0,0,5000,5000);
 
-  dataCntr.getEmbedding(type, embeddingType, function(data){
+    dataCntr.getEmbedding(type, embeddingType, function(data){
 
-      var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+	var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
 
-	    // Make the xscale
-	    thisViewer.xScaleDomainMin = +Infinity;
-	    thisViewer.xScaleDomainMax = -Infinity;
-	    for (var j = 0; j < plotData.length; j++) {
-    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
-    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
-	    }
-	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
-	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
-							 thisViewer.xScaleDomainMax,
-							 thisViewer.xScaleRangeMin,
-							 thisViewer.xScaleRangeMax);
+	// Make the xscale
+	thisViewer.xScaleDomainMin = +Infinity;
+	thisViewer.xScaleDomainMax = -Infinity;
+	for (var j = 0; j < plotData.length; j++) {
+    	    thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    	    thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+	}
+	thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+						     thisViewer.xScaleDomainMax,
+						     thisViewer.xScaleRangeMin,
+						     thisViewer.xScaleRangeMax);
 
-	    // Make the y scale
-	    thisViewer.yScaleDomainMin = +Infinity;
-	    thisViewer.yScaleDomainMax = -Infinity;
-	    for (var j = 0; j < plotData.length; j++) {
-    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
-    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
-	    }
-	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
-	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
-							 thisViewer.yScaleDomainMax,
-							 thisViewer.yScaleRangeMin,
-							 thisViewer.yScaleRangeMax);
+	// Make the y scale
+	thisViewer.yScaleDomainMin = +Infinity;
+	thisViewer.yScaleDomainMax = -Infinity;
+	for (var j = 0; j < plotData.length; j++) {
+    	    thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    	    thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+	}
+	thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
+						     thisViewer.yScaleDomainMax,
+						     thisViewer.yScaleRangeMin,
+						     thisViewer.yScaleRangeMax);
 
 
-	    var pointsize = embViewer.getCurrentPointSize();
+	var pointsize = embViewer.getCurrentPointSize();
 
-   var clusterLabels = [];
-	 selectionNames.forEach(function(selectionName){
+	var clusterLabels = [];
+	selectionNames.forEach(function(selectionName){
 
-      var cells = cellSelCntr.getSelection(selectionName);
+	    var cells = cellSelCntr.getSelection(selectionName);
 	    ctx.save();
 	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
 	    var selData = {
-	      x: 0,
-	      y: 0,
-	      total: 0
+		x: 0,
+		y: 0,
+		total: 0
 	    }
 	    for (var i = 0; i < plotData.length; i++) {
     		var point = plotData[i];
     		if ( cells.indexOf(point[0]) > -1 ) {
     		    var xs = xScale(point[1]);
     		    var ys = yScale(point[2]);
-            selData.x += xs;
-            selData.y += ys;
-            selData.total++;
+		    selData.x += xs;
+		    selData.y += ys;
+		    selData.total++;
     		    ctx.beginPath();
     		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
     		    ctx.stroke();
     		}
 	    } // for
 	    if(selData.total !== 0){
-	      clusterLabels.push({x: selData.x/selData.total, y: selData.y/selData.total, name: cellSelCntr.getSelectionDisplayName(selectionName)})
+		clusterLabels.push({x: selData.x/selData.total, y: selData.y/selData.total, name: cellSelCntr.getSelectionDisplayName(selectionName)})
 	    }
 	    ctx.restore();
-    });
+	});
 
-    //adds label if it exists
-    if(hasLabels){
-      ctx.save();
-      ctx.fillStyle = "black";
-      var fontPieces = ctx.font.split(/\s/);
-      ctx.font = "bold " + Math.floor(new cellSelectionUIcontroller().selectionFont) + "px " + fontPieces[1];
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      for(var i = 0; i < clusterLabels.length; i++){
-        ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
-      }
-      ctx.restore();
-    }
-  });
+	//adds label if it exists
+	if(hasLabels){
+	    ctx.save();
+	    ctx.fillStyle = "black";
+	    var fontPieces = ctx.font.split(/\s/);
+	    ctx.font = "bold " + Math.floor(new cellSelectionUIcontroller().selectionFont) + "px " + fontPieces[1];
+	    ctx.textAlign = "center";
+	    ctx.textBaseline = "middle";
+	    for(var i = 0; i < clusterLabels.length; i++){
+		ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
+	    }
+	    ctx.restore();
+	}
+    });
 }
 
 /**
@@ -391,90 +391,90 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
  */
 embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = function(overlayCanvas, size, selectionNames) {
 
-  var cellSelCntr = new cellSelectionController();
-  var embViewer = new embeddingViewer();
-  var thisViewer = this;
+    var cellSelCntr = new cellSelectionController();
+    var embViewer = new embeddingViewer();
+    var thisViewer = this;
 
-  var config =  embViewer.getConfig();
-  var dataCntr = new dataController();
-  var type = config.type;
-  var embeddingType = config.embeddingType;
-  var ratio = size/this.size;
-  var pointsize = embViewer.getCurrentPointSize()*ratio;
-  var ctx = overlayCanvas.getContext('2d');
-  ctx.clearRect(0,0,5000,5000);
-  dataCntr.getEmbedding(type, embeddingType, function(data){
+    var config =  embViewer.getConfig();
+    var dataCntr = new dataController();
+    var type = config.type;
+    var embeddingType = config.embeddingType;
+    var ratio = size/this.size;
+    var pointsize = embViewer.getCurrentPointSize()*ratio;
+    var ctx = overlayCanvas.getContext('2d');
+    ctx.clearRect(0,0,5000,5000);
+    dataCntr.getEmbedding(type, embeddingType, function(data){
 
-      var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+	var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
 
-	    // Make the xscale
-	    thisViewer.xScaleDomainMin = +Infinity;
-	    thisViewer.xScaleDomainMax = -Infinity;
-	    for (var j = 0; j < plotData.length; j++) {
-    		thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
-    		thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
-	    }
-	    thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
-	    thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
-							 thisViewer.xScaleDomainMax,
-							 thisViewer.xScaleRangeMin,
-							 thisViewer.xScaleRangeMax);
-	    // Make the y scale
-	    thisViewer.yScaleDomainMin = +Infinity;
-	    thisViewer.yScaleDomainMax = -Infinity;
-	    for (var j = 0; j < plotData.length; j++) {
-    		thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
-    		thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
-	    }
-	    thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
-	    thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
-	    var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
-							 thisViewer.yScaleDomainMax,
-							 thisViewer.yScaleRangeMin,
-							 thisViewer.yScaleRangeMax);
+	// Make the xscale
+	thisViewer.xScaleDomainMin = +Infinity;
+	thisViewer.xScaleDomainMax = -Infinity;
+	for (var j = 0; j < plotData.length; j++) {
+    	    thisViewer.xScaleDomainMin = Math.min(thisViewer.xScaleDomainMin, plotData[j][1]);
+    	    thisViewer.xScaleDomainMax = Math.max(thisViewer.xScaleDomainMax, plotData[j][1]);
+	}
+	thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+						     thisViewer.xScaleDomainMax,
+						     thisViewer.xScaleRangeMin,
+						     thisViewer.xScaleRangeMax);
+	// Make the y scale
+	thisViewer.yScaleDomainMin = +Infinity;
+	thisViewer.yScaleDomainMax = -Infinity;
+	for (var j = 0; j < plotData.length; j++) {
+    	    thisViewer.yScaleDomainMin = Math.min(thisViewer.yScaleDomainMin, plotData[j][2]);
+    	    thisViewer.yScaleDomainMax = Math.max(thisViewer.yScaleDomainMax, plotData[j][2]);
+	}
+	thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+	thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
+	var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
+						     thisViewer.yScaleDomainMax,
+						     thisViewer.yScaleRangeMin,
+						     thisViewer.yScaleRangeMax);
 
-	    ctx.save();
-    var clusterLabels = [];
-    selectionNames.forEach(function(selectionName){
-      var cells = cellSelCntr.getSelection(selectionName);
+	ctx.save();
+	var clusterLabels = [];
+	selectionNames.forEach(function(selectionName){
+	    var cells = cellSelCntr.getSelection(selectionName);
 	    ctx.strokeStyle = cellSelCntr.getColor(selectionName);
 	    var selData = {
-	      x: 0,
-	      y: 0,
-	      total: 0
+		x: 0,
+		y: 0,
+		total: 0
 	    }
 	    for (var i = 0; i < plotData.length; i++) {
     		var point = plotData[i];
     		if ( cells.indexOf(point[0]) > -1 ) {
     		    var xs = xScale(point[1]);
     		    var ys = yScale(point[2]);
-            selData.x += xs;
-            selData.y += ys;
-            selData.total++;
+		    selData.x += xs;
+		    selData.y += ys;
+		    selData.total++;
     		    ctx.beginPath();
     		    ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
     		    ctx.stroke();
     		}
 	    } // for
 	    if(selData.total !== 0){
-	      clusterLabels.push({x: selData.x/selData.total, y: selData.y/selData.total, name: cellSelCntr.getSelectionDisplayName(selectionName)})
+		clusterLabels.push({x: selData.x/selData.total, y: selData.y/selData.total, name: cellSelCntr.getSelectionDisplayName(selectionName)})
 	    }
 	    ctx.restore();
+	});
+	if(thisViewer.hasLabels){
+	    ctx.save();
+	    ctx.fillStyle = "black";
+	    var fontPieces = ctx.font.split(/\s/);
+	    ctx.font = "bold " + ((new cellSelectionUIcontroller()).selectionFont * ratio) + "px " + fontPieces[1];
+	    ctx.textAlign = "center";
+	    ctx.textBaseline = "middle";
+	    for(var i = 0; i < clusterLabels.length; i++){
+		ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
+	    }
+	    ctx.restore();
+	}
     });
-    if(thisViewer.hasLabels){
-      ctx.save();
-      ctx.fillStyle = "black";
-      var fontPieces = ctx.font.split(/\s/);
-      ctx.font = "bold " + ((new cellSelectionUIcontroller()).selectionFont * ratio) + "px " + fontPieces[1];
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      for(var i = 0; i < clusterLabels.length; i++){
-        ctx.fillText(clusterLabels[i].name, clusterLabels[i].x, clusterLabels[i].y);
-      }
-      ctx.restore();
-    }
-  });
 
 }
 
@@ -520,61 +520,61 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     thisViewer.stopRadius = 7;
 
     overlayCanvasElement.addEventListener('mousedown', function(e) {
-      e.preventDefault();
-      if(thisViewer.highlight === "box"){
-     	  dragStartX = e.offsetX;
-    	  dragStartY = e.offsetY;
-    	  thisViewer.dragging = true;
-      }
+	e.preventDefault();
+	if(thisViewer.highlight === "box"){
+     	    dragStartX = e.offsetX;
+    	    dragStartY = e.offsetY;
+    	    thisViewer.dragging = true;
+	}
 
     });
 
     overlayCanvasElement.addEventListener('mouseup', function(e) {
 
-      if(thisViewer.highlight === "box"){
-      	if (thisViewer.dragging) {
-      	    // Dragging complete
-      	    var dragEndX = e.offsetX;
-      	    var dragEndY = e.offsetY;
-            var verticies = [[dragStartX, dragStartY],[dragStartX,dragEndY],[dragEndX, dragEndY],[dragEndX,dragStartY]];
-      	    thisViewer.generateDragSelection(verticies);
-      	}
-      	thisViewer.dragging = false;
-      }
+	if(thisViewer.highlight === "box"){
+      	    if (thisViewer.dragging) {
+      		// Dragging complete
+      		var dragEndX = e.offsetX;
+      		var dragEndY = e.offsetY;
+		var verticies = [[dragStartX, dragStartY],[dragStartX,dragEndY],[dragEndX, dragEndY],[dragEndX,dragStartY]];
+      		thisViewer.generateDragSelection(verticies);
+      	    }
+      	    thisViewer.dragging = false;
+	}
     });
 
     overlayCanvasElement.addEventListener('click', function(e){
 
-      var xPos = e.offsetX;
-      var yPos = e.offsetY;
+	var xPos = e.offsetX;
+	var yPos = e.offsetY;
 
-      //sets initial position for polygon highlighting if poly highlight is selected or creates a new vertex
-      if(thisViewer.highlight === "poly"){
-        if(thisViewer.dragging){
+	//sets initial position for polygon highlighting if poly highlight is selected or creates a new vertex
+	if(thisViewer.highlight === "poly"){
+            if(thisViewer.dragging){
 
-          if(Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius){
-            ctx.clearRect(0,0,4000,4000);
-            thisViewer.generateDragSelection(polygonVerts);
-            polygonVerts = [];
-            thisViewer.dragging = false;
-            document.body.style.cursor = 'crosshair'
-          }
-          else{
-            polygonVerts.push([xPos,yPos]);
-          }
-        }
-        else{
-          thisViewer.dragging = true;
-          polygonVerts.push([xPos,yPos]);
-        }
-      }
+		if(Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius){
+		    ctx.clearRect(0,0,4000,4000);
+		    thisViewer.generateDragSelection(polygonVerts);
+		    polygonVerts = [];
+		    thisViewer.dragging = false;
+		    document.body.style.cursor = 'crosshair'
+		}
+		else{
+		    polygonVerts.push([xPos,yPos]);
+		}
+            }
+            else{
+		thisViewer.dragging = true;
+		polygonVerts.push([xPos,yPos]);
+            }
+	}
 
     });
 
     //changes cursor to crosshair on hover
     overlayCanvasElement.addEventListener('mouseover', function(e) {
-      var xPos = e.offsetX;
-      var yPos = e.offsetY;
+	var xPos = e.offsetX;
+	var yPos = e.offsetY;
     	document.body.style.cursor = 'crosshair';
 
     });
@@ -583,73 +583,73 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
   	var xPos =  e.offsetX;
   	var yPos = e.offsetY;
 
-    //handles polygon highlighting of the selected region
-    if(thisViewer.highlight === "poly"){
+	//handles polygon highlighting of the selected region
+	if(thisViewer.highlight === "poly"){
 
-      //if there is a dragging event going on, draws the lines enclosing the space
-  	  if (thisViewer.dragging) {
-  	    ctx.clearRect(0,0,4000,4000);
-  	    ctx.save();
-  	    ctx.setLineDash([10,10]);
-  	    ctx.strokeStyle = 'rgba(255,0,0,1)';
-  	    ctx.lineWidth = 2;
-  	    ctx.beginPath();
-  	    ctx.moveTo(polygonVerts[0][0],polygonVerts[0][1]);
-  	    for(var i = 1; i < polygonVerts.length; i++){
-  	      var next = polygonVerts[i];
-  	      ctx.lineTo(next[0],next[1]);
+	    //if there is a dragging event going on, draws the lines enclosing the space
+  	    if (thisViewer.dragging) {
+  		ctx.clearRect(0,0,4000,4000);
+  		ctx.save();
+  		ctx.setLineDash([10,10]);
+  		ctx.strokeStyle = 'rgba(255,0,0,1)';
+  		ctx.lineWidth = 2;
+  		ctx.beginPath();
+  		ctx.moveTo(polygonVerts[0][0],polygonVerts[0][1]);
+  		for(var i = 1; i < polygonVerts.length; i++){
+  		    var next = polygonVerts[i];
+  		    ctx.lineTo(next[0],next[1]);
+  		}
+  		ctx.lineTo(xPos, yPos);
+  		ctx.stroke();
+  		ctx.closePath();
+
+  		ctx.beginPath()
+  		ctx.arc(polygonVerts[0][0],polygonVerts[0][1], thisViewer.stopRadius, 0, 2 * Math.PI, false);
+		ctx.fillStyle = 'red';
+		ctx.fill();
+		ctx.closePath();
+
+  		ctx.restore();
   	    }
-  	    ctx.lineTo(xPos, yPos);
-  	    ctx.stroke();
-  	    ctx.closePath();
+  	    //changes cursor if hovered over the end position
+  	    if(thisViewer.dragging && Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius){
+      		document.body.style.cursor = 'pointer';
+	    }
+	    else{
+      		document.body.style.cursor = 'crosshair';
+	    }
+	    //otherwise draws box for box highlighting
+	} else if(thisViewer.highlight === "box"){
+	    var dragEndX =  e.offsetX;
+	    var dragEndY = e.offsetY;
 
-  	    ctx.beginPath()
-  	    ctx.arc(polygonVerts[0][0],polygonVerts[0][1], thisViewer.stopRadius, 0, 2 * Math.PI, false);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-        ctx.closePath();
+	    lastCursorPositionX = dragEndX;
+	    lastCursorPositionY = dragEndY;
 
-  	    ctx.restore();
-  	  }
-  	  //changes cursor if hovered over the end position
-  	  if(thisViewer.dragging && Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius){
-      	  document.body.style.cursor = 'pointer';
-      }
-      else{
-      	  document.body.style.cursor = 'crosshair';
-      }
-      //otherwise draws box for box highlighting
-    } else if(thisViewer.highlight === "box"){
-      var dragEndX =  e.offsetX;
-      var dragEndY = e.offsetY;
-
-      lastCursorPositionX = dragEndX;
-      lastCursorPositionY = dragEndY;
-
-    	if (thisViewer.dragging) {
-    	    ctx.clearRect(0,0,4000,4000);
-    	    ctx.save();
-    	    ctx.setLineDash([10,10]);
-    	    ctx.strokeStyle = 'rgba(255,0,0,1)';
-    	    ctx.lineWidth = 2;
-    	    ctx.strokeRect(dragStartX, dragStartY, dragEndX - dragStartX, dragEndY - dragStartY);
-    	    ctx.restore();
-    	}
-    }
+    	    if (thisViewer.dragging) {
+    		ctx.clearRect(0,0,4000,4000);
+    		ctx.save();
+    		ctx.setLineDash([10,10]);
+    		ctx.strokeStyle = 'rgba(255,0,0,1)';
+    		ctx.lineWidth = 2;
+    		ctx.strokeRect(dragStartX, dragStartY, dragEndX - dragStartX, dragEndY - dragStartY);
+    		ctx.restore();
+    	    }
+	}
 
     });
 
     overlayCanvasElement.addEventListener('mouseleave', function(e) {
-        	if(thisViewer.dragging){
-        	  thisViewer.dragging = false;
+        if(thisViewer.dragging){
+            thisViewer.dragging = false;
             polygonVerts = [];
-           ctx.clearRect(0,0,4000,4000);
-           if(thisViewer.highlight === "box"){
-             var verticies = [[dragStartX, dragStartY],[dragStartX,lastCursorPositionY],[lastCursorPositionX, lastCursorPositionY],[lastCursorPositionX,dragStartY]];
-             thisViewer.generateDragSelection(verticies);
-           }
-         	}
-        	document.body.style.cursor = 'default';
+            ctx.clearRect(0,0,4000,4000);
+            if(thisViewer.highlight === "box"){
+		var verticies = [[dragStartX, dragStartY],[dragStartX,lastCursorPositionY],[lastCursorPositionX, lastCursorPositionY],[lastCursorPositionX,dragStartY]];
+		thisViewer.generateDragSelection(verticies);
+            }
+        }
+        document.body.style.cursor = 'default';
     });
 
 
@@ -659,9 +659,9 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
  * Clear hightlight selection
  */
 embeddingViewerScatterCanvas.prototype.clearHighlight = function() {
-  var overlayCanvasElement = document.getElementById('embedding-canvas-overlay');
-  var ctx = overlayCanvasElement.getContext('2d');
-  ctx.clearRect(0,0,4000,4000);
+    var overlayCanvasElement = document.getElementById('embedding-canvas-overlay');
+    var ctx = overlayCanvasElement.getContext('2d');
+    ctx.clearRect(0,0,4000,4000);
 }
 
 /**
@@ -957,16 +957,16 @@ embeddingViewerScatterCanvas.prototype.generateFillStyles = function(plotdata, c
     var colconfig = config.colors;
 
     if (colconfig === 'dendrogram') {
-	    this.generateFillStylesDendrogram(plotdata, callback);
+	this.generateFillStylesDendrogram(plotdata, callback);
     } else if (colconfig === 'metadata') {
-	    this.generateFillStylesMetadata(plotdata, callback);
+	this.generateFillStylesMetadata(plotdata, callback);
     } else if (colconfig === 'geneexpression')  {
-	    // Type and embedding type is passed here for caching the matches correctly
-	    this.generateFillStylesGeneExpression(plotdata, callback, type, embeddingType);
+	// Type and embedding type is passed here for caching the matches correctly
+	this.generateFillStylesGeneExpression(plotdata, callback, type, embeddingType);
     } else if(colconfig === 'aspect') {
-      this.generateFillStylesAspect(plotdata, callback, type, embeddingType);
+	this.generateFillStylesAspect(plotdata, callback, type, embeddingType);
     } else {
-	    this.generateDefaultFill(plotdata,callback);
+	this.generateDefaultFill(plotdata,callback);
     }
 }
 
@@ -1128,144 +1128,144 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
  * @param embeddingType the embedding type, used for caching the match indexes
  */
 embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = function(plotdata, callback, type, embeddingType) {
-  var evSC = this;
+    var evSC = this;
 
-  var ev = embeddingViewer();
-  var config = ev.getConfig();
-  var dataCntr = new dataController();
-  var alpha = ev.getCurrentAlpha();
+    var ev = embeddingViewer();
+    var config = ev.getConfig();
+    var dataCntr = new dataController();
+    var alpha = ev.getCurrentAlpha();
 
-  evSC.abortPendingRequest();
+    evSC.abortPendingRequest();
 
-  // We only end up using this for the number of cell
-  // which is a complete waste, but it takes less than 1ms so not worth removing
-  dataCntr.getCellOrder (function(data) {
+    // We only end up using this for the number of cell
+    // which is a complete waste, but it takes less than 1ms so not worth removing
+    dataCntr.getCellOrder (function(data) {
 
-  var cellIndexStart = 0;
-  var cellIndexEnd = data.length;
-  var geneSelection = [config.geneexpressionColorInfo.geneid];
+	var cellIndexStart = 0;
+	var cellIndexEnd = data.length;
+	var geneSelection = [config.geneexpressionColorInfo.geneid];
 
-  // For potential cancelling
+	// For potential cancelling
 	evSC.colorAJAXrequest = dataCntr.getExpressionValuesSparseByCellIndex(
-		geneSelection, cellIndexStart, cellIndexEnd, function(data) {
+	    geneSelection, cellIndexStart, cellIndexEnd, function(data) {
 
 
-	    var heatView = new heatmapViewer();
-	    // Get palette
-	    var palSize = heatView.palManager.getNumberOfColors();
-	    var pal = heatView.palManager.getPaletteColors();
+		var heatView = new heatmapViewer();
+		// Get palette
+		var palSize = heatView.palManager.getNumberOfColors();
+		var pal = heatView.palManager.getPaletteColors();
 
-	    // Calculate normalisation values
-	    // Copy-paste from heatmap plot
-	    // TODO: We need a better abstraction form palettes
-	    var rowSum = 0;
-	    var rowMax = data.array[0][0];
-	    var rowMin = 0;
-	    for (var j = 0; j < data.array.length; j++) {
-  			rowMax = Math.max(rowMax, data.array[j][0]);
-  			//rowMin = Math.min(rowMin, data.array[j][0]);
-  			rowSum += data.array[j][0];
-	    }
+		// Calculate normalisation values
+		// Copy-paste from heatmap plot
+		// TODO: We need a better abstraction form palettes
+		var rowSum = 0;
+		var rowMax = data.array[0][0];
+		var rowMin = 0;
+		for (var j = 0; j < data.array.length; j++) {
+  		    rowMax = Math.max(rowMax, data.array[j][0]);
+  		    //rowMin = Math.min(rowMin, data.array[j][0]);
+  		    rowSum += data.array[j][0];
+		}
 
-	    var rowMean = rowSum / data.array.length;
-	    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
+		var rowMean = rowSum / data.array.length;
+		var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
 
-	    // Update the palette colors with our alpha
-	    var palAlpha = evSC.updateColorAlpha(pal, alpha);
+		// Update the palette colors with our alpha
+		var palAlpha = evSC.updateColorAlpha(pal, alpha);
 
-	    // colorMapper is a function
-	    // use it for consistency with heatmap
-	    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
-	    var cacheId = type + '_' + embeddingType;
+		// colorMapper is a function
+		// use it for consistency with heatmap
+		var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
+		var cacheId = type + '_' + embeddingType;
 
-      // Check if the cache exists and build it if necessary
-	    if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
-  			evSC.fillStylesGeneExpressionOrder[cacheId] = [];
-  		  evSC.doMatching(plotdata, undefined, evSC, callback, data, cacheId, colorMapper, palAlpha);
-		  } else {
-  			var cache = evSC.fillStylesGeneExpressionOrder[cacheId];
-			  evSC.doMatchingFromCache(plotdata, undefined, callback, data, cache, colorMapper,  palAlpha);
-		  }
+		// Check if the cache exists and build it if necessary
+		if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
+  		    evSC.fillStylesGeneExpressionOrder[cacheId] = [];
+  		    evSC.doMatching(plotdata, undefined, evSC, callback, data, cacheId, colorMapper, palAlpha);
+		} else {
+  		    var cache = evSC.fillStylesGeneExpressionOrder[cacheId];
+		    evSC.doMatchingFromCache(plotdata, undefined, callback, data, cache, colorMapper,  palAlpha);
+		}
 
-		  return;
-		}); // getExpressionValuesSparseByCellIndex
-  }); // getCellOrder
+		return;
+	    }); // getExpressionValuesSparseByCellIndex
+    }); // getCellOrder
 } // generateFillStylesGeneExpression
 
 embeddingViewerScatterCanvas.prototype.doMatching = function(plotdata, i, evSC, callback, data, cacheId, colorMapper, palAlpha) {
-  if (i == undefined) {
-    i = 0;
-  }
-  if (i < plotdata.length) {
-    // The size of the batch is a trade off between slowing the
-    // processing and maintaining responsiveness
-    var batchSize = 500;
-    for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
-      var cellId = plotdata[j][0];
-      var index = data.rownames.indexOf(cellId);
-
-      evSC.fillStylesGeneExpressionOrder[cacheId][j] = index;
-
-      var color;
-      if (index < 0) {
-        console.warn('Embedding plotter found a cell that does not have and entry in the expression matrix. Cellid: "' +
-        cellId + '". This is an error with the data provided by server.');
-
-        color = '#000000'; // default to black
-      } else {
-        var palIndex = colorMapper(data.array[index][0]);
-        color = palAlpha[palIndex];
-      }
-      plotdata[j][3] = color;
-    } // for
-
-    if (j == plotdata.length) {
-      callback(plotdata);
+    if (i == undefined) {
+	i = 0;
     }
+    if (i < plotdata.length) {
+	// The size of the batch is a trade off between slowing the
+	// processing and maintaining responsiveness
+	var batchSize = 500;
+	for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
+	    var cellId = plotdata[j][0];
+	    var index = data.rownames.indexOf(cellId);
 
-    var nextBatch = function() { embeddingViewerScatterCanvas.prototype.doMatching(plotdata, i + batchSize, evSC, callback, data, cacheId, colorMapper, palAlpha); };
+	    evSC.fillStylesGeneExpressionOrder[cacheId][j] = index;
 
-    // Process the next batch immediately,
-    // Allowing other pending event to run in the meanwhile
-    setTimeout(nextBatch, 0);
-  }
+	    var color;
+	    if (index < 0) {
+		console.warn('Embedding plotter found a cell that does not have and entry in the expression matrix. Cellid: "' +
+			     cellId + '". This is an error with the data provided by server.');
+
+		color = '#000000'; // default to black
+	    } else {
+		var palIndex = colorMapper(data.array[index][0]);
+		color = palAlpha[palIndex];
+	    }
+	    plotdata[j][3] = color;
+	} // for
+
+	if (j == plotdata.length) {
+	    callback(plotdata);
+	}
+
+	var nextBatch = function() { embeddingViewerScatterCanvas.prototype.doMatching(plotdata, i + batchSize, evSC, callback, data, cacheId, colorMapper, palAlpha); };
+
+	// Process the next batch immediately,
+	// Allowing other pending event to run in the meanwhile
+	setTimeout(nextBatch, 0);
+    }
 }
 
 embeddingViewerScatterCanvas.prototype.doMatchingFromCache = function(plotdata, i, callback, data, cache, colorMapper,  palAlpha) {
-  var batchSize = 50000;
-  if (i == undefined) { i = 0; }
+    var batchSize = 50000;
+    if (i == undefined) { i = 0; }
 
-  if (i < plotdata.length) {
+    if (i < plotdata.length) {
 
-    for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
-      // Retrieve from cache
+	for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
+	    // Retrieve from cache
 	    var index = cache[plotdata[j][0]];
-      var index = cache[j];
-      if (index < 0) {
-        plotdata[j][3] = '#000000'; // default to black
-      } else {
-        var palIndex = colorMapper(data.array[index][0]);
-        plotdata[j][3] = palAlpha[palIndex];
-      }
+	    var index = cache[j];
+	    if (index < 0) {
+		plotdata[j][3] = '#000000'; // default to black
+	    } else {
+		var palIndex = colorMapper(data.array[index][0]);
+		plotdata[j][3] = palAlpha[palIndex];
+	    }
+	}
+
+	if (j == plotdata.length) { callback(plotdata); }
+
+	var nextBatch = function() { embeddingViewerScatterCanvas.prototype.doMatchingFromCache(plotdata, i + batchSize, callback, data, cache, colorMapper,  palAlpha); }
+
+	setTimeout(nextBatch, 0);
     }
-
-    if (j == plotdata.length) { callback(plotdata); }
-
-    var nextBatch = function() { embeddingViewerScatterCanvas.prototype.doMatchingFromCache(plotdata, i + batchSize, callback, data, cache, colorMapper,  palAlpha); }
-
-    setTimeout(nextBatch, 0);
-  }
 }
 
 embeddingViewerScatterCanvas.prototype.abortPendingRequest = function() {
     var evSC = this;
     // Check if there is a request running already
     if ((typeof evSC.colorAJAXrequest !== 'undefined') && evSC.colorAJAXrequest !== null) {
-        	if (evSC.colorAJAXrequest.readyState != 4) {  //Not DONE
-        	    // A previous request exists and is still running
-        	    // cancel it
-        	    evSC.colorAJAXrequest.abort();
-        	}
+        if (evSC.colorAJAXrequest.readyState != 4) {  //Not DONE
+            // A previous request exists and is still running
+            // cancel it
+            evSC.colorAJAXrequest.abort();
+        }
     }
 }
 
@@ -1277,58 +1277,58 @@ embeddingViewerScatterCanvas.prototype.abortPendingRequest = function() {
  * @param embeddingType the embedding type, used for caching the match indexes
  */
 embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotdata, callback, type, embeddingType){
-  var evSC = this;
-  var ev = new embeddingViewer();
-  var config = ev.getConfig();
-  var dataCntr = new dataController();
-  var alpha = ev.getCurrentAlpha();
-  var aspectId = [ev.getAspectColorInfo().aspectid];
+    var evSC = this;
+    var ev = new embeddingViewer();
+    var config = ev.getConfig();
+    var dataCntr = new dataController();
+    var alpha = ev.getCurrentAlpha();
+    var aspectId = [ev.getAspectColorInfo().aspectid];
 
-  evSC.abortPendingRequest();
-  dataCntr.getCellOrder (function(data) {
+    evSC.abortPendingRequest();
+    dataCntr.getCellOrder (function(data) {
   	var cellIndexStart = 0;
   	var cellIndexEnd = data.length;
 
-	  evSC.colorAJAXrequest = dataCntr.getAspectMatrixByAspect(cellIndexStart, cellIndexEnd, aspectId, function(data) {
+	evSC.colorAJAXrequest = dataCntr.getAspectMatrixByAspect(cellIndexStart, cellIndexEnd, aspectId, function(data) {
 
-		    var heatView = new aspectHeatmapViewer();
-		    // Get palette
-		    var palSize = heatView.palManager.getNumberOfColors();
-		    var pal = heatView.palManager.getPaletteColors();
+	    var heatView = new aspectHeatmapViewer();
+	    // Get palette
+	    var palSize = heatView.palManager.getNumberOfColors();
+	    var pal = heatView.palManager.getPaletteColors();
 
-		    // Calculate normalisation values
-		    // Copy-paste from heatmap plot
-		    // TODO: We need a better abstraction form palettes
-		    var rowSum = 0;
-		    var rowMax = data.array[0][0];
-		    var rowMin = data.array[0][0];
-		    for (var j = 0; j < data.array.length; j++) {
-    			rowMax = Math.max(rowMax, data.array[j][0]);
-    			rowMin = Math.min(rowMin, data.array[j][0]);
-    			rowSum += data.array[j][0];
-		    }
+	    // Calculate normalisation values
+	    // Copy-paste from heatmap plot
+	    // TODO: We need a better abstraction form palettes
+	    var rowSum = 0;
+	    var rowMax = data.array[0][0];
+	    var rowMin = data.array[0][0];
+	    for (var j = 0; j < data.array.length; j++) {
+    		rowMax = Math.max(rowMax, data.array[j][0]);
+    		rowMin = Math.min(rowMin, data.array[j][0]);
+    		rowSum += data.array[j][0];
+	    }
 
-		    var rowMean = rowSum / data.array.length;
-		    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
+	    var rowMean = rowSum / data.array.length;
+	    var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
 
-		    // Update the palette colors with our alpha
-		    var palAlpha = evSC.updateColorAlpha(pal, alpha);
+	    // Update the palette colors with our alpha
+	    var palAlpha = evSC.updateColorAlpha(pal, alpha);
 
-		    // colorMapper is a function
-		    // use it for consistency with heatmap
-		    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
+	    // colorMapper is a function
+	    // use it for consistency with heatmap
+	    var colorMapper = heatView.palManager.getMeanClampedColorMapper(rowMean, maxAbsValue, palSize);
 
-		    var cacheId = type + '_' + embeddingType;
+	    var cacheId = type + '_' + embeddingType;
 
-	     if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
-    			evSC.fillStylesGeneExpressionOrder[cacheId] = [];
-    			evSC.doMatching(plotdata, undefined, evSC, callback, data, cacheId, colorMapper, palAlpha);
-	     } else {
-	       var cache = evSC.fillStylesGeneExpressionOrder[cacheId];
-		      evSC.doMatchingFromCache(plotdata, undefined, callback, data, cache, colorMapper,  palAlpha);
-	     } // if ... else
+	    if ( typeof evSC.fillStylesGeneExpressionOrder[cacheId] === 'undefined') {
+    		evSC.fillStylesGeneExpressionOrder[cacheId] = [];
+    		evSC.doMatching(plotdata, undefined, evSC, callback, data, cacheId, colorMapper, palAlpha);
+	    } else {
+		var cache = evSC.fillStylesGeneExpressionOrder[cacheId];
+		evSC.doMatchingFromCache(plotdata, undefined, callback, data, cache, colorMapper,  palAlpha);
+	    } // if ... else
 
-    }); //dataCntr.getAspectMatrixByAspect
-  });   // dataCntr.getCellOrder
+	}); //dataCntr.getAspectMatrixByAspect
+    });   // dataCntr.getCellOrder
 }; //generateFillStylesAspect
 
