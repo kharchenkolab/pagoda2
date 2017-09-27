@@ -15,7 +15,7 @@ function geneSelectionTableViewer()  {
     this.geneFilter = [];
     this.initialize();
 
-
+    this.autoShow = true; // changing a selection automatically reloads heatmap
 };
 
 
@@ -71,6 +71,9 @@ geneSelectionTableViewer.prototype.initialize = function() {
 			width: 100,
 			listeners: {
 			    'change': {buffer: 50, fn: function(f, newValue, oldValues, eOpts) {
+
+			      var gstv = new geneSelectionTableViewer();
+			      gstv.autoShow = false;
 				var g = Ext.getCmp('extjsgeneselectiontable');
 				var store = g.getStore();
 				store.clearFilter();
@@ -84,6 +87,8 @@ geneSelectionTableViewer.prototype.initialize = function() {
 				    }); // store filter by
 				} // if new values
 				(new geneSelectionTableViewer()).filterThroughSelection();
+				gstv.autoShow = true;
+
 			    }} //change listener and buffer
 			} // listeners
 		    }
@@ -102,9 +107,13 @@ geneSelectionTableViewer.prototype.initialize = function() {
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 
+			      var gstv = new geneSelectionTableViewer();
+			      if(gstv.autoShow ){
+
 		    			    var heatmapV = new heatmapViewer();
 			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
 			    heatmapV.drawHeatmap();
+			      }
 		}
 
 	    }, // listeners
