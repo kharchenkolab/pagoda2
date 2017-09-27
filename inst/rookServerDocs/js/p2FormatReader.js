@@ -82,7 +82,20 @@ p2FormatReader.prototype.readHeaderIndex = function() {
 	var fileIdentifierArray = new Uint8Array(data.slice(0,15));
 	var fileIdentifierString = String.fromCharCode.apply(null, fileIdentifierArray);
 	if (fileIdentifierString != 'pagoda2datafile') {
-	    throw new Error('File is not a pagoda2 data file');
+	  var msgBox = Ext.Msg.show({
+	    title:"Error: Invalid File",
+	    message: "<b>Error: invalid file provided.</b><br/> You are trying to open a file that is not a pagoda2 binary file. You either accidentally selected to wrong file or there is something wrong with the link you have.",
+	    closable: false,
+	    width: 200
+	    //buttons: [{}]
+	  });
+	  //msgBox.show();
+
+	 //   Ext.Msg.alert('Error','Error: The specified static is not a pagoda2 data file', buttons );
+
+	    var error = new Error('File is not a pagoda2 data file');
+	    throw error;
+
 	}
 
 	// Check File version
