@@ -346,7 +346,7 @@ function generateExtJsLayout() {
 		  tooltip: 'This tab displays a table of genes from one or more provided selections'
 		},
 		{
-		    title: 'Gene Sets of Interest',
+		    title: 'Gene Sets',
 		    id: 'geneSetsOfInterestExtJS',
 		    layout: 'border',
 		    split: true,

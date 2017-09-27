@@ -71,7 +71,7 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
     var toolbar = this.generateToolbar();
     var cellTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     var cellSelectionTable = Ext.create('Ext.grid.Panel',{
-    	title: 'Available Cell Selections',
+    	title: 'Cell Selections',
     	id: 'cellSelectionTable',
     	height: "100%",
     	width: "100%",

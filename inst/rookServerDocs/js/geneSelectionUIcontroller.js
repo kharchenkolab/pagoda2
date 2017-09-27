@@ -76,7 +76,7 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 
 
     var geneSelectionTable = Ext.create('Ext.grid.Panel', {
-	title: 'Available Gene Selections',
+	title: 'Gene Selections',
 	tools: [toolbar],
 	id: 'geneSelectionTable',
 	height: '100%',
