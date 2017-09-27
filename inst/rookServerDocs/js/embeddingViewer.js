@@ -678,37 +678,28 @@ embeddingViewer.prototype.clearHighlight = function() {
 embeddingViewer.prototype.populateMenu = function() {
     // Populate the menu using the data controller -- async
     var datCntr = new dataController();
-    datCntr.getAvailableReductionTypes(function(reductions){
+    datCntr.getEmbeddingStructure(function(d) {
+      var embeddingOptionstore =  Ext.data.StoreManager.lookup('embeddingOptionsStore');
+      for (var reduction in d) {
+        for (var embedding in d[reduction]) {
+            var embeddingIdentifier =  reduction + ':' + embedding;
+        		var embeddingLabel =  reduction + ' --> ' + embedding;
 
-	for ( var i = 0; i < reductions.length; i++ ) {
-  	    var currReduction = reductions[i];
-
-  	    datCntr.getAvailableEmbeddings(currReduction, function(embeddings, currReduction) {
-      		var embeddingOptionstore =  Ext.data.StoreManager.lookup('embeddingOptionsStore');
-
-      		if (embeddings !== null) {
-     		    for (var j = 0; j < embeddings.length; j++) {
-
-        		var embeddingIdentifier =  currReduction + ':' + embeddings[j];
-        		var embeddingLabel =  currReduction + ' --> ' + embeddings[j];
-
-        		if (currReduction === p2globalParams.embedding.defaultEmbedding.reduction &&
-        		    embeddings[j] === p2globalParams.embedding.defaultEmbedding.embedding) {
+        		if (reduction === p2globalParams.embedding.defaultEmbedding.reduction &&
+        		    embedding === p2globalParams.embedding.defaultEmbedding.embedding) {
         		    // The default
+
         		}
 
         		embeddingOptionstore.add({
-        		    'reduction': currReduction,
-        		    'embedding':  embeddings[j],
+        		    'reduction': reduction,
+        		    'embedding':  embedding,
         		    "label": embeddingLabel,
         		    "value": embeddingIdentifier
         		});
-    		    } // for j
-    		} // if
-  	    }, currReduction // For the callback extra information
-					  ) // getAvailableEmbeddings
-  	} //for
-    }); // getAvailableReductionTypes
+        }
+      }
+    });
 }
 
 /**
