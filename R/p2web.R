@@ -189,12 +189,12 @@ pagoda2WebApp <- setRefClass(
                             }
 
                         } else if (innerOrder == "reductdist") {
-                            if(!"PCA" %in% names(r$reductions)){
+                            if(!"PCA" %in% names(reductions)){
                                 stop("Missing PCA reduction, , run calculatePcaReduction first");
                             } else {
 
                                 celsel <- names(cl0)[cl0 == x]
-                                celsel[hclust(as.dist(1-WGCNA::cor(t(r$reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
+                                celsel[hclust(as.dist(1-WGCNA::cor(t(reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
                             }
 
                         } else if(innerOrder == "graphbased") {
@@ -1047,18 +1047,13 @@ pagoda2WebApp <- setRefClass(
         # Takes the other objects to export from RefClass
         # Returns the exportList which could be passed to the WriteListToBinary
 
-        serializeToStaticFast = function(binary.filename=NULL){
+        serializeToStaticFast = function(binary.filename=NULL, verbose = FALSE){
             if (is.null(binary.filename)) {
               stop('Please specify a directory');
             }
 
-            # TODO: Add the gene Knn information if the p2 object is available. They need to reformated in to JSON
-            #   for fast js lookups
-
-
-
             exportList <- new("list");
-            # TODO: optimize the R-part, move stuff over to Rcpp
+            
             # Preparation of objects to pass to Rcpp
             # Create embedding strucutre for export
             embStructure <- generateEmbeddingStructure();
@@ -1131,25 +1126,7 @@ pagoda2WebApp <- setRefClass(
             # Serialise geneset Genes:
             geneListName <- names(geneSets);
 
-            # This is super inefficient. Adapted to to the same with a sapply
-            # geneListGenes <- list();
-            # for(geneListName in names(geneSets)) {
-            #     # Get the genes in this geneset
-            #     geneList <- geneSets[[geneListName]]$genes
-            #     # Subset to genes that exist
-            #     geneList <- geneList[geneList %in% rownames(varinfo)];
-
-            #     # Generate dataset
-            #     dataset <-  varinfo[geneList, c("m","v")];
-            #     dataset$name <-  rownames(dataset);
-
-            #     # Convert to row format
-            #     retd <-  apply(dataset,
-            #                 1, function(x) {
-            #                     x[["name"]];
-            #                 });
-            #     geneListGenes[[geneListName]] <- unname(retd);
-            # }
+            # Export gene names in the gos
             geneListGenes <- lapply( geneSets, function(gos) make.unique(gos$genes))
 
             # Creation of the export List for Rcpp
@@ -1165,33 +1142,38 @@ pagoda2WebApp <- setRefClass(
             exportList[["genesets"]] <- toJSON(genesetInformation);
             exportList[["genesetGenes"]] <- toJSON(geneListGenes);
 
-            # The gene Knn
-            exportList[["geneknn"]] <- generateGeneKnnJSON();
+            # The gene Knn is optional
+            if(!is.null(originalP2object$genegraphs$graph)){
+                exportList[["geneknn"]] <- generateGeneKnnJSON();
+            } else if(verbose) {
+                warning("No genegraph provided. It allows you to search for similar genes in the webinterface. \n This is optional, but you can create it with the function makeGeneKnnGraph() \n")
+            }
+            
+            # Exports sparse Matrix as List with Dimnames converted to JSON
+            ## Sparse Count Matrix & Sparse Aspect Matrix
+            exportList[["matsparse"]] <- sparseMatList(matsparseToSave); ## This count values
+            exportList[["mataspect"]] <- sparseMatList(aspectMatrixToSave); ## This is the aspect values
 
-            ## Sparse Count Matrix & dimnames as JSON.
-            # TODO: export matsparse as S4 object and move "splitting" over to Rcpp.
-            #exportList[["matsparse"]] <- matsparseToSave;
-            exportList[["matsparse_i"]] <- matsparseToSave@i;
-            exportList[["matsparse_p"]] <- matsparseToSave@p;
-            exportList[["matsparse_x"]] <- matsparseToSave@x;
-            exportList[["matsparse_dim"]] <- matsparseToSave@Dim;
-            exportList[["matsparse_dimnames1"]] <- toJSON(matsparseToSave@Dimnames[[1]]);
-            exportList[["matsparse_dimnames2"]] <- toJSON(matsparseToSave@Dimnames[[2]]);
+            # Tell Cpp what is a sparse matrix
+            exportList[["sparsematnames"]] <- c("matsparse", "mataspect");
 
-            ## Sparse Aspect Matrix & dimnames as JSON.
-            # TODO: export mataspect as S4 object and move "splitting" over to Rcpp.
-            #exportList[["mataspect"]] <- aspectMatrixToSave;
-            exportList[["mataspect_i"]] <- aspectMatrixToSave@i;
-            exportList[["mataspect_p"]] <- aspectMatrixToSave@p;
-            exportList[["mataspect_x"]] <- aspectMatrixToSave@x;
-            exportList[["mataspect_dim"]] <- aspectMatrixToSave@Dim;
-            exportList[["mataspect_dimnames1"]] <- toJSON(aspectMatrixToSave@Dimnames[[1]]);
-            exportList[["mataspect_dimnames2"]] <- toJSON(aspectMatrixToSave@Dimnames[[2]]);
-
-
-            #binary.filename <- file.path(getwd(),binary.filename);
-            WriteListToBinary(expL=exportList,outfile = binary.filename);
+            # Call Rcpp function to write to static file
+            WriteListToBinary(expL=exportList,outfile = binary.filename,verbose=verbose);
             return(invisible(exportList));
+        },
+        # Create simple List from sparse Matrix with Dimnames as JSON
+        #
+        # Arguments: sparse matrix
+        # Returns a list with slots i,p,x
+        sparseMatList = function(matsparse){
+                mslist <- new("list")
+                mslist[["matsparse_i"]] <- matsparse@i
+                mslist[["matsparse_p"]] <- matsparse@p
+                mslist[["matsparse_x"]] <- matsparse@x
+                mslist[["matsparse_dim"]] <- matsparse@Dim
+                mslist[["matsparse_dimnames1"]] <- toJSON(matsparse@Dimnames[[1]])
+                mslist[["matsparse_dimnames2"]] <- toJSON(matsparse@Dimnames[[2]])
+                return(mslist)
         },
 
         # Serialise an R array to a JSON object
