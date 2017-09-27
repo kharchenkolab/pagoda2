@@ -326,6 +326,11 @@ pagoda2WebApp <- setRefClass(
                                         return(response$finish());
                                       },
 
+                                      'embeddingstructure' = {
+                                        response$write(toJSON(generateEmbeddingStructure()));
+                                        return(response$finish());
+                                      },
+
                                       # Return a gene information table
                                       # for all the genes
                                       'geneinformation' = {
@@ -1053,7 +1058,7 @@ pagoda2WebApp <- setRefClass(
             }
 
             exportList <- new("list");
-            
+
             # Preparation of objects to pass to Rcpp
             # Create embedding strucutre for export
             embStructure <- generateEmbeddingStructure();
@@ -1148,7 +1153,7 @@ pagoda2WebApp <- setRefClass(
             } else if(verbose) {
                 warning("No genegraph provided. It allows you to search for similar genes in the webinterface. \n This is optional, but you can create it with the function makeGeneKnnGraph() \n")
             }
-            
+
             # Exports sparse Matrix as List with Dimnames converted to JSON
             ## Sparse Count Matrix & Sparse Aspect Matrix
             exportList[["matsparse"]] <- sparseMatList(matsparseToSave); ## This count values

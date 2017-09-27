@@ -216,6 +216,13 @@ dataController.prototype.getEmbedding = function(type, embeddingType, callback) 
 };
 
 /**
+ * Get the hierarchy of embeddings and reductions
+ */
+dataController.prototype.getEmbeddingStructure = function(callback) {
+  return this.internalController.getEmbeddingStructure(callback);
+};
+
+/**
  * Get the available reduction types
  * @param the callback
  */

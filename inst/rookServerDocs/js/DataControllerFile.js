@@ -143,7 +143,6 @@ DataControllerFile.prototype.getGeneInformationStore = function(callback) {
 
 /**
  * Get the hierarchy of embeddings and reductions
- * @private
  */
 DataControllerFile.prototype.getEmbeddingStructure = function(callback) {
   var fr = this.formatReader;

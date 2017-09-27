@@ -72,6 +72,21 @@ DataControllerServer.prototype.getCellOrder = function(callback) {
 }
 
 /**
+ * Get the hierarchy of embeddings and reductions
+ */
+DataControllerServer.prototype.getEmbeddingStructure = function(callback) {
+  	$.ajax({
+  	    type: "GET",
+  	    dataType: "json",
+  	    url: "getData.php",
+  	    data: { "dataidentifier": "embeddingstructure" },
+  	    success: function(data) {
+    		  callback(data);
+	      } // success
+    }); //ajax
+}
+
+/**
  * Get an extjs store with
  * the available aspects
  */
