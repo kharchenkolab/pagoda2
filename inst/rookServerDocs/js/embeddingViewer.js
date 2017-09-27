@@ -104,18 +104,19 @@ embeddingViewer.prototype.generateToolbar = function() {
 
     // Define a store for the options
     var embeddingOptionsStore = Ext.create('Ext.data.Store', {
-	fields: ['reduction', 'embedding', 'label', 'value'],
-	id: 'embeddingOptionsStore'
+  	  fields: ['reduction', 'embedding', 'label', 'value'],
+	    id: 'embeddingOptionsStore'
     });
 
     // Make a combobox
     var comboBox = Ext.create('Ext.form.ComboBox', {
-	//	fieldLabel: 'Select Embedding',
-	store: embeddingOptionsStore,
-	queryMode: 'local',
-	displayField: 'label',
-	editable: false,
-	valueField: 'value'
+    	store: embeddingOptionsStore,
+    	queryMode: 'local',
+    	displayField: 'label',
+    	editable: false,
+    	valueField: 'value',
+    	id: 'embeddingSelectCombo',
+    	forceSelection: true
     });
 
     // Set the option change listener
@@ -651,10 +652,7 @@ embeddingViewer.prototype.generateToolbar = function() {
 
     embeddingPanelHeader.add(toolbar);
 
-
-    // Delay populating the menu above as this will not be used
-    // as soon as the app loads and it helps reduce the inital swarm of requests
-    setTimeout(this.populateMenu, 500)
+    this.populateMenu();
 
 }; // generateToolbar
 
@@ -676,7 +674,6 @@ embeddingViewer.prototype.clearHighlight = function() {
  * Also embedding will now need to have a plot type
  */
 embeddingViewer.prototype.populateMenu = function() {
-    // Populate the menu using the data controller -- async
     var datCntr = new dataController();
     datCntr.getEmbeddingStructure(function(d) {
       var embeddingOptionstore =  Ext.data.StoreManager.lookup('embeddingOptionsStore');
@@ -685,18 +682,18 @@ embeddingViewer.prototype.populateMenu = function() {
             var embeddingIdentifier =  reduction + ':' + embedding;
         		var embeddingLabel =  reduction + ' --> ' + embedding;
 
-        		if (reduction === p2globalParams.embedding.defaultEmbedding.reduction &&
-        		    embedding === p2globalParams.embedding.defaultEmbedding.embedding) {
-        		    // The default
-
-        		}
-
         		embeddingOptionstore.add({
         		    'reduction': reduction,
         		    'embedding':  embedding,
         		    "label": embeddingLabel,
         		    "value": embeddingIdentifier
         		});
+
+        		if (reduction === p2globalParams.embedding.defaultEmbedding.reduction &&
+        		    embedding === p2globalParams.embedding.defaultEmbedding.embedding) {
+        		    Ext.getCmp('embeddingSelectCombo').setValue(embeddingIdentifier);
+        		}
+
         }
       }
     });
