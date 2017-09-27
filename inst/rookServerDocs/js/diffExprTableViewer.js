@@ -21,6 +21,8 @@ function diffExprTableViewer() {
 
   this.changeListenerEnabled = true;
 
+  this.autoShow = true;
+
   diffExprTableViewer.instance = this;
 };
 
@@ -258,20 +260,28 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 			width: 100,
 			listeners: {
 			    'change': {buffer: 50, fn: function(f, newValue, oldValues, eOpts) {
-				var g = Ext.getCmp('deResultsGenes');
-				var store = g.getStore();
-				store.clearFilter();
-				if (newValue !== '') {
-				    store.filterBy(function(rec) {
-					if (rec.get('name').match(new RegExp(newValue,'i'))) {
-					    return true;
-					} else {
-					    return false;
-					} // if genename
-				    }); // store filter by
-				} // if new values
-			    }} //change listener and buffer
-			} // listeners
+
+			      var detb = new diffExprTableViewer();
+            detb.autoShow = false;
+
+    				var g = Ext.getCmp('deResultsGenes');
+    				var store = g.getStore();
+    				store.clearFilter();
+    				if (newValue !== '') {
+    				    store.filterBy(function(rec) {
+    					if (rec.get('name').match(new RegExp(newValue,'i'))) {
+    					    return true;
+    					} else {
+    					    return false;
+    					} // if genename
+    				    }); // store filter by
+    				} // if new values
+
+    							    detb.autoShow = true;
+    			    }} //change listener and buffer
+    			} // listeners
+
+
 		    },
 
 /*
@@ -321,9 +331,13 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 
+
+			      var detb = new diffExprTableViewer();
+            if(detb.autoShow) {
 		        			    var heatmapV = new heatmapViewer();
     			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
     			    heatmapV.drawHeatmap();
+            }
 
 		}}
   });

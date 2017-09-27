@@ -6,14 +6,14 @@
  */
 function geneSetsTableViewer() {
     if (typeof geneSetsTableViewer.instance === 'object') {
-	return geneSetsTableViewer.instance;
+	    return geneSetsTableViewer.instance;
     }
 
+    geneSetsTableViewer.instance = this;
+
     console.log('Initializing geneSetsTableViewer...');
-
     this.generateTables();
-
-    geneSetsTableViewer = this;
+    this.autoShow = true;
 };
 
 /**
@@ -74,6 +74,9 @@ geneSetsTableViewer.prototype.generateTables = function() {
 			width: 100,
 			listeners: {
 			    'change': {buffer: 50, fn: function(f, newValue, oldValues, eOpts) {
+			      var gstv = new geneSetsTableViewer();
+			      gstv.autoShow = false;
+
 				var g = Ext.getCmp('genesettable');
 				var store = g.getStore();
 				store.clearFilter();
@@ -88,6 +91,7 @@ geneSetsTableViewer.prototype.generateTables = function() {
 					}
 				    }) // filterBy
 				}
+				gstv.autoShow = true;
 			    }} // change listener and buffer
 			}
 		    }
@@ -130,9 +134,13 @@ geneSetsTableViewer.prototype.generateTables = function() {
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 
+
+var gstv = new geneSetsTableViewer();
+if (gstv.autoShow) {
 		    			    var heatmapV = new heatmapViewer();
 			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
 			    heatmapV.drawHeatmap();
+}
 		}
 	    }, // listeners
 	    tbar: Ext.create('Ext.PagingToolbar', {
