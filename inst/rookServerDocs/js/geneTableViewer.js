@@ -6,12 +6,13 @@
  */
 function geneTableViewer()  {
     if (typeof geneTableViewer.instance === 'object') {
-	return geneTableViewer.instance;
+	    return geneTableViewer.instance;
     }
 
     console.log('Initializing geneTableViewer...');
 
     this.generateGeneTable();
+    this.autoShow = true; // changing a selection automatically reloads heatmap
 
     geneTableViewer.instance = this;
 };
@@ -67,18 +68,24 @@ geneTableViewer.prototype.generateGeneTable = function() {
 			width: 100,
 			listeners: {
 			    'change': {buffer: 50, fn: function(f, newValue, oldValues, eOpts) {
-				var g = Ext.getCmp('extjsgenetable');
-				var store = g.getStore();
-				store.clearFilter();
-				if (newValue !== '') {
-				    store.filterBy(function(rec) {
-					if (rec.get('genename').match(new RegExp(newValue,'i'))) {
-					    return true;
-					} else {
-					    return false;
-					} // if genename
-				    }); // store filter by
-				} // if new values
+			        var gtv = new geneTableViewer();
+			        gtv.autoShow = false;
+
+      				var g = Ext.getCmp('extjsgenetable');
+      				var store = g.getStore();
+      				store.clearFilter();
+      				if (newValue !== '') {
+      				    store.filterBy(function(rec) {
+      					if (rec.get('genename').match(new RegExp(newValue,'i'))) {
+      					    return true;
+      					} else {
+      					    return false;
+      					} // if genename
+      				    }); // store filter by
+      				} // if new values
+
+			        gtv.autoShow = true;
+
 			    }} //change listener and buffer
 			} // listeners
 		    },
@@ -97,9 +104,12 @@ geneTableViewer.prototype.generateGeneTable = function() {
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 
-		    			    var heatmapV = new heatmapViewer();
-			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
-			    heatmapV.drawHeatmap();
+        var gtv = new geneTableViewer();
+        if(gtv.autoShow){
+          var heatmapV = new heatmapViewer();
+          heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
+          heatmapV.drawHeatmap();
+        }
 		}
 
 	    } // listeners
