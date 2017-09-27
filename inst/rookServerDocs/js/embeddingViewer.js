@@ -110,7 +110,7 @@ embeddingViewer.prototype.generateToolbar = function() {
 
     // Make a combobox
     var comboBox = Ext.create('Ext.form.ComboBox', {
-	fieldLabel: 'Select Embedding',
+//	fieldLabel: 'Select Embedding',
 	store: embeddingOptionsStore,
 	queryMode: 'local',
 	displayField: 'label',
