@@ -342,24 +342,25 @@ pagoda2WebApp <- setRefClass(
                                           return(response$finish());
                                       },
 
-                                      'odgeneinformation' = {
-                                          # Only genes in the odgene list
-                                          dataset <- varinfo[odgenes,c("m","v")];
-                                          dataset$name <- rownames(dataset);
+                                      # 'odgeneinformation' = {
+                                      #     # Only genes in the odgene list
+                                      #     dataset <- varinfo[odgenes,c("m","v")];
+                                      #     dataset$name <- rownames(dataset);
+                                      #
+                                      #     # Convert to row format
+                                      #     retd <-  apply(dataset,
+                                      #                    1, function(x) {
+                                      #                        list(genename = x[["name"]],
+                                      #                             dispersion =x[["v"]],
+                                      #                             meanExpr = x[["m"]])
+                                      #                    });
+                                      #     retd <- unname(retd);
+                                      #
+                                      #     response$header("Content-type", "application/javascript");
+                                      #     response$write(toJSON(retd));
+                                      #     return(response$finish());
+                                      #  },
 
-                                          # Convert to row format
-                                          retd <-  apply(dataset,
-                                                         1, function(x) {
-                                                             list(genename = x[["name"]],
-                                                                  dispersion =x[["v"]],
-                                                                  meanExpr = x[["m"]])
-                                                         });
-                                          retd <- unname(retd);
-
-                                          response$header("Content-type", "application/javascript");
-                                          response$write(toJSON(retd));
-                                          return(response$finish());
-                                       },
 
                                       # Very similar to 'geneinformation'
                                       # but only returns information for the genes that belong
@@ -457,8 +458,6 @@ pagoda2WebApp <- setRefClass(
                                       },
 
                                       'cellorder' = {
-
-
                                           response$header("Content-type", "application/javascript");
                                           response$write(cellOrderJSON());
                                           return(response$finish());
@@ -670,34 +669,6 @@ pagoda2WebApp <- setRefClass(
 
                                       },
 
-                                      # Get available clusters for a specific reduction type
-                                      #
-                                      # GET Arguments accepted
-                                      # type -- the reduction type (e.g. mat, odgenes, PCA)
-                                      'availableclusterings' = {
-                                          reductionname <- url_decode(requestArguments[['type']]);
-
-                                          if (!is.null(reductionname) &&
-                                              reductionname %in% c("mat", names(reductions))) {
-                                              # TODO: Get clusterings for this reduction ....
-                                              # CONTINUE HERE
-                                          } else {
-                                              response$write("Unknown reduction type requested");
-                                              return(response$finish());
-                                          }
-                                      },
-
-
-
-                                      # Return a list of available reduction types
-                                      # Does not take any GET arguments
-                                      'availablereductiontypes' = {
-                                          availReductions <- c("mat", names(reductions));
-                                          response$header("Content-type","application/javascript");
-                                          response$write(toJSON(availReductions));
-                                          return(response$finish());
-                                      }, # availablereductiontypes
-
                                       # Get a reduction
                                       #
                                       # GET Arguments accepted
@@ -765,34 +736,6 @@ pagoda2WebApp <- setRefClass(
 
                                       }, # 'reduction'
 
-                                      # Get available embeddings for a specific type
-                                      #
-                                      # GET arguments accepted
-                                      # type -- specifies the dataset transformation/reduction for
-                                      #         which to return available embeddings
-                                      #         e.g. mat, PCA, etc..., values for this can be obtained
-                                      #         from the 'availablereductiontypes' call
-                                      'availableembeddings' = {
-
-                                          type <- url_decode(requestArguments[['type']]);
-
-                                          if (!is.null(type)) {
-                                              if( type %in% c( names(embeddings), "mat") ) {
-                                                  response$header('Content-type', "application/javascript");
-                                                  response$write(toJSON( names(embeddings[[type]]) ));
-                                                  return(response$finish());
-                                              } else {
-                                                  # TODO: Set the headers and possibly return a JSON encoded error
-                                                  response$write("Error: Unknown type specified");
-                                                  return(response$finish());
-                                              }
-                                          } else {
-                                              # TODO: Set the headers and possibly return a JSON encoded error
-                                              response$write("Error: No type specified");
-                                              return(response$finish());
-                                          }
-                                      },
-
                                       # Get data for an embedding
                                       #
                                       # GET Arguments accepted
@@ -849,18 +792,6 @@ pagoda2WebApp <- setRefClass(
 
                                ) # switch(dataidentifier
                            } #if(!is.null(dataIdentifier
-
-
-                           # DEBUG Code
-                           if (F) {
-                               response$write("<pre>");
-                               dataIdentifier <- request$GET();
-                               response$write(capture.output(str(dataIdentifier)));
-                               response$write("</pre>");
-                               return(response$finish());
-                           }
-
-
                    },
 
                    # Perform a computation and return the results
@@ -884,7 +815,6 @@ pagoda2WebApp <- setRefClass(
 
                                  allcells <- rownames(originalP2object$counts)
                                  othercells <- allcells[!allcells %in% selectionA]
-
 
                                  # Generate factor for de
                                  v1 <- c(rep('selectionA',length(selectionA)),rep('othercells',length(othercells)))
@@ -1051,16 +981,6 @@ pagoda2WebApp <- setRefClass(
             cellIndices <- mainDendrogram$cellorder;
             aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
 
-
-            # Discard values < 1/50 of overall max
-            #trimPoint <- max(abs(aspectMatrixToSave)) / 50;
-            #aspectMatrixToSave[abs(aspectMatrixToSave) < trimPoint] <- 0;
-
-            # Discard values < 1/50 of row max
-            # rowmax <- apply(aspectMatrixToSave,1,max)
-            # blw <- which(apply(array(1:nrow(aspectMatrixToSave)),1,function(x) aspectMatrixToSave[x,] < rowmax[x]/50))
-            # aspectMatrixToSave[blw] <- 0
-
             aspectMatrixToSave <- t(aspectMatrixToSave);
             aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
 
@@ -1225,8 +1145,5 @@ pagoda2WebApp <- setRefClass(
 		      }
 		      resp
 		    }
-
-
-
     ) # methods list
 ) # setRefClass

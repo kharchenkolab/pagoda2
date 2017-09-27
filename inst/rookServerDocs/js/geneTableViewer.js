@@ -46,7 +46,6 @@ geneTableViewer.prototype.generateGeneTable = function() {
 		  },
 		},
 		{ text: 'Dispersion', dataIndex: 'dispersion', width: '20%' },
-//		{ text: 'Score', dataIndex: 'score', width: '20%' }
 	    ], // columns
 	    height: '100%',
 	    width: '100%',
