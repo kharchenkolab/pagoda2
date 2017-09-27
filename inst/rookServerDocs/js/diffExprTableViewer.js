@@ -105,7 +105,7 @@ diffExprTableViewer.prototype.generateTables = function() {
 			tooltip: 'Retrieve Cell Selection',
 			glyph: 0xf0e2,
 			handler: function() {
-			  
+
 			 var selectedItems = Ext.getCmp("deResultSetsTableExtJS").getSelectionModel().getSelected();
 			 if(selectedItems.length === 1){
 			  var diffExprStore = differentialExpressionStore();
@@ -116,7 +116,7 @@ diffExprTableViewer.prototype.generateTables = function() {
           fieldLabel: "New Selection A Name",
           value: resultsDEset.getName() + "_A"
         }];
-        
+
 			  if(resultsDEset.getSelectionB()){
 			    selectionTextFields.push({
 			      id: "selectionBName",
@@ -132,7 +132,7 @@ diffExprTableViewer.prototype.generateTables = function() {
 			    height: "25%",
 			    margin: "5 5 5 5",
 			    handler: function(){
-			      
+
 			      var selAName = Ext.getCmp("selectionAName").getValue();
 			      var cellSelCntr = new cellSelectionController();
 			      var re = new RegExp('[^A-Za-z0-9_]');
@@ -143,7 +143,7 @@ diffExprTableViewer.prototype.generateTables = function() {
     			  else if (selAName.match(re) ) {
     				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
     				    return;
-    			  } 
+    			  }
     			  else if (cellSelCntr.getSelection(selAName)) {
     				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!');
     				    return;
@@ -157,7 +157,7 @@ diffExprTableViewer.prototype.generateTables = function() {
     			    else if (selBName.match(re) ) {
     				    Ext.MessageBox.alert('Error', 'The name must only contain letters, numbers and underscores (_)');
     				    return;
-    			    } 
+    			    }
     			    else if (cellSelCntr.getSelection(selBName)) {
     				    Ext.MessageBox.alert('Error', 'A selection with this name already exists!');
     				    return;
@@ -182,7 +182,7 @@ diffExprTableViewer.prototype.generateTables = function() {
 			      Ext.getCmp("retrieveCellSelectionsWindow").close();
 			    }
 			  });
-			  
+
     Ext.create('Ext.window.Window', {
         height: 170,
         width: 400,
@@ -274,7 +274,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 			} // listeners
 		    },
 
-
+/*
 		    {
     			type: "button",
     			text: 'Show selected',
@@ -285,7 +285,7 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
     			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
     			    heatmapV.drawHeatmap();
     			} //handler
-		    }, //button
+		    }, */ //button
 		    {
 		      type: 'button',
 		      text: 'Export',
@@ -320,6 +320,10 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
+
+		        			    var heatmapV = new heatmapViewer();
+    			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
+    			    heatmapV.drawHeatmap();
 
 		}}
   });

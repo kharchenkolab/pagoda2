@@ -136,24 +136,15 @@ aspectsTableViewer.prototype.generateTables = function() {
 
       		    var geneSelCntr =  new geneSelectionController();
       		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
+
+      		          			    var heatmapV = new heatmapViewer();
+      			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
+      			    heatmapV.drawHeatmap();
         } // selection change
       }, // listeners
       tbar: Ext.create('Ext.PagingToolbar', {
       		displayInfo: true,
 		      prependButtons: true,
-		      items: [
-            {
-      			type: 'button',
-      			text: 'Show selected',
-      			tooltip: 'Show selected genes in the main heatmap',
-      			glyph: 0xf0ce,
-      			handler: function() {
-      			    var heatmapV = new heatmapViewer();
-      			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
-      			    heatmapV.drawHeatmap();
-      			} //handler
-          }, //item
-         ] //items
       }) //tbar
   });
 

@@ -24,9 +24,9 @@ function geneTableViewer()  {
  */
 geneTableViewer.prototype.generateGeneTable = function() {
     var dataCntr = new dataController();
-    
+
     dataCntr.getGeneInformationStore(function(geneTableEntryStore) {
-      
+
 	// For checkboxes on table
 	var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 
@@ -83,19 +83,6 @@ geneTableViewer.prototype.generateGeneTable = function() {
 			    }} //change listener and buffer
 			} // listeners
 		    },
-		    {
-			type: "button",
-			text: 'Show selected',
-			tooltip: 'Show selected genes in main heatmap',
-			glyph: 0xf0ce,
-			handler: function() {
-			    pagHelpers.regC(0xF1);
-			    var heatmapV = new heatmapViewer();
-			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
-			    heatmapV.drawHeatmap();
-			} //handler
-		    }, //button
-		    {xtype: 'tbseparator'},
 
 		]
 	    }), //tbar
@@ -104,12 +91,16 @@ geneTableViewer.prototype.generateGeneTable = function() {
 		    var selectedGeneNames =  [];
 
 		    var selectedItems = selected.getSelected();
-		    selectedItems.each(function(item,index,length){
-			selectedGeneNames.push(item.data.genename);
+		      selectedItems.each(function(item,index,length){
+			    selectedGeneNames.push(item.data.genename);
 		    });
 
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
+
+		    			    var heatmapV = new heatmapViewer();
+			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
+			    heatmapV.drawHeatmap();
 		}
 
 	    } // listeners

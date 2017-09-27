@@ -8,14 +8,14 @@ function geneSelectionTableViewer()  {
     if (typeof geneSelectionTableViewer.instance === 'object') {
 	return geneSelectionTableViewer.instance;
     }
-    
+
     geneSelectionTableViewer.instance = this;
     console.log('Initializing geneSelectionTableViewer...');
     this.selectionTable = null;
     this.geneFilter = [];
     this.initialize();
-    
-    
+
+
 };
 
 
@@ -28,7 +28,7 @@ geneSelectionTableViewer.prototype.initialize = function() {
     var dataCntr = new dataController();
     var thisViewer = this;
     dataCntr.getGeneInformationStore(function(geneTableEntryStore) {
-      
+
 	// For checkboxes on table
 	var geneSelectionTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 
@@ -86,20 +86,7 @@ geneSelectionTableViewer.prototype.initialize = function() {
 				(new geneSelectionTableViewer()).filterThroughSelection();
 			    }} //change listener and buffer
 			} // listeners
-		    },
-		    {
-			type: "button",
-			text: 'Show selected',
-			tooltip: 'Show selected genes in main heatmap',
-			glyph: 0xf0ce,
-			handler: function() {
-			    pagHelpers.regC(0xF1);
-			    var heatmapV = new heatmapViewer();
-			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
-			    heatmapV.drawHeatmap();
-			} //handler
-		    }, //button
-		    {xtype: 'tbseparator'},
+		    }
 
 		]
 	    }), //tbar
@@ -114,15 +101,19 @@ geneSelectionTableViewer.prototype.initialize = function() {
 
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
+
+		    			    var heatmapV = new heatmapViewer();
+			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
+			    heatmapV.drawHeatmap();
 		}
 
 	    }, // listeners
-	     
+
 	});
 	geneTable.add(thisViewer.selectionTable);
   thisViewer.filterThroughSelection();
     });
-    
+
 }
 
 geneSelectionTableViewer.prototype.generateTableFromSelection = function(geneSelections){
@@ -137,7 +128,7 @@ geneSelectionTableViewer.prototype.generateTableFromSelection = function(geneSel
       genes[gene] = true;
     })
   });
-  
+
   Ext.getCmp("selectionTableSearchBar").setValue("");
   thisViewer.geneFilter = Object.keys(genes);
   thisViewer.filterThroughSelection();

@@ -39,10 +39,12 @@ geneSetsTableViewer.prototype.generateTables = function() {
 	    var dataCntr =  new dataController();
 	    dataCntr.getGeneSetStoreByName(selectedSet, function(store) {
 
-		// Update the store on the sub table
-		var genesetTable =  Ext.getCmp('genesetGenesTable');
-		store.sort({property: 'dispersion', direction: 'DESC'});
-		genesetTable.bindStore(store);
+  		// Update the store on the sub table
+  		var genesetTable =  Ext.getCmp('genesetGenesTable');
+  		store.sort({property: 'dispersion', direction: 'DESC'});
+  		genesetTable.bindStore(store);
+
+
 
 	    });
 	}
@@ -127,6 +129,10 @@ geneSetsTableViewer.prototype.generateTables = function() {
 
 		    var geneSelCntr =  new geneSelectionController();
 		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
+
+		    			    var heatmapV = new heatmapViewer();
+			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
+			    heatmapV.drawHeatmap();
 		}
 	    }, // listeners
 	    tbar: Ext.create('Ext.PagingToolbar', {
@@ -134,22 +140,12 @@ geneSetsTableViewer.prototype.generateTables = function() {
 		prependButtons: true,
 		items: [
 		    {
-			type: 'button',
-			text: 'Show selected',
-			tooltip: 'Show selected genes in the main heatmap',
-			glyph: 0xf0ce,
-			handler: function() {
-			    var heatmapV = new heatmapViewer();
-			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
-			    heatmapV.drawHeatmap();
-			}
-		    },
-		    {
 			emptyText: 'Search...',
 			xtype: 'textfield',
 			width: 100,
 			listeners: {
 			    'change': {buffer: 50, fn: function(f, newValue, oldValue, eOpts) {
+
 				var g = Ext.getCmp('genesetGenesTable');
 				var store = g.getStore();
 				store.clearFilter();
@@ -162,7 +158,10 @@ geneSetsTableViewer.prototype.generateTables = function() {
 					}
 				    }); // filterBy
 				}// new value
-			    }} //change listener and buffer
+			    }}
+			    //change listener and buffer
+
+
 			} // listeners
 		    } // search textbox
 		] // items
