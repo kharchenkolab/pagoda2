@@ -156,7 +156,7 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 #' @export make.p2.app
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
                         show.batch = T, show.clusters = T, appname = "Pagoda2 Application",
-                        innerOrder=NULL, orderDend=FALSE, appmetadata=appmetadata) {
+                        innerOrder=NULL, orderDend=FALSE, appmetadata = NULL) {
     # Build the metadata
     metadata <- list();
 
