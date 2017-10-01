@@ -42,7 +42,8 @@ pagoda2WebApp <- setRefClass(
         "pathways",
         "pathwayODInfo", # Information about the pathways
         "originalP2object",
-        "rookRoot"
+        "rookRoot",
+        "appmetadata"
     ),
 
     methods = list(
@@ -55,7 +56,8 @@ pagoda2WebApp <- setRefClass(
         # keepOriginal: maintain a copy to the original RF object -- this allows for some extra capabilities
 
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
-                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE, innerOrder=NULL,orderDend=FALSE) {
+                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE,
+                              innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
 
             # Keep the original pagoda 2 object
             # This is required for things like differential expression and
@@ -111,6 +113,9 @@ pagoda2WebApp <- setRefClass(
             geneSets <<- geneSets;
             # The cell metadata
             cellmetadata <<- metadata;
+
+            # The application metadata for things like the title
+            appmetadata <<- appmetadata;
 
              # Rook sever root directory to be changed to package subdirectory
             # this holds all the static files required by the app
@@ -302,6 +307,11 @@ pagoda2WebApp <- setRefClass(
                            if (!is.null(dataIdentifier)) {
                                # Handle a getData request
                                switch(dataIdentifier,
+                                      'appmetadata' = {
+                                        response$write(toJSON(appmetadata));
+                                        return(response$finish());
+                                      },
+
                                       'relatedgenes' = {
                                         # This requires the original object -- must add check
                                         postArgs <- request$POST();
@@ -1026,6 +1036,8 @@ pagoda2WebApp <- setRefClass(
             exportList[["aspectInformation"]] <- toJSON(aspectInformation);
             exportList[["genesets"]] <- toJSON(genesetInformation);
             exportList[["genesetGenes"]] <- toJSON(geneListGenes);
+
+            exportList[["appmetadata"]] <- toJSON(appmetadata);
 
             # The gene Knn is optional
             if(!is.null(originalP2object$genegraphs$graph)){

@@ -39,7 +39,7 @@ var p2globalParams = {
         local or remote file [ NOT IMPLEMENTED ]
   */
   dataLoadingParams: {
-    configuration: "server", // server | fileremote-static | fileremote-from-url | filelocal FUTURE:| fileremote-user-select | user-select
+    configuration: "filelocal", // server | fileremote-static | fileremote-from-url | filelocal FUTURE:| fileremote-user-select | user-select
     fileRemoteURL: ""
   },
 

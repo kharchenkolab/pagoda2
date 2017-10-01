@@ -324,3 +324,11 @@ dataController.prototype.getGeneNeighbours = function(queryGenes, callback) {
   this.internalController.getGeneNeighbours(queryGenes, callback);
 }
 
+/**
+ * Retuns the application metadata for things like application title
+ * @param callback function to return the results
+ */
+dataController.prototype.getAppMetadata = function(callback) {
+ var dc = this;
+ this.internalController.getAppMetadata(callback);
+}

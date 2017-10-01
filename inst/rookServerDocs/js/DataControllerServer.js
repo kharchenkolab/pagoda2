@@ -662,6 +662,15 @@ DataControllerServer.prototype.getAspectMatrixByAspect = function(cellIndexStart
     return request;
 }
 
+DataControllerServer.prototype.getAppMetadata = function(callback) {
+    var request = $.ajax({
+    	dataType: "json",
+    	url: "getData.php?dataidentifier=appmetadata",
+    	success: function(data) {
+        callback(data);
+    	}
+    });
+}
 
 DataControllerServer.prototype.getGeneNeighbours = function(queryGenes, callback) {
     // Setup the request data

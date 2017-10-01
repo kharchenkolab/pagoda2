@@ -156,6 +156,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     string aspectInformationData = expL["aspectInformation"];
     string genesetsData = expL["genesets"];
     string genesetsgenesData = expL["genesetGenes"];
+    string appmetadata = expL["appmetadata"];
 
 
     // Reading in the names of exported Embeddings:
@@ -163,6 +164,10 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
 
 
     //Make entries for JSON items
+
+    // Application metadata
+    struct entry *appmetadataEntry = make_entry_from_string("appmetadata", appmetadata);
+    entries.push_back(*appmetadataEntry);
 
     // Cellmetadata
     struct entry *metadataEntry = make_entry_from_string("cellmetadata", cellmetadataData);

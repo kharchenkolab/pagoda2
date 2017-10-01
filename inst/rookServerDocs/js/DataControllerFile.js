@@ -875,6 +875,16 @@ DataControllerFile.prototype.getGeneSetStoreByName = function(name, callback) {
   }
 }
 
+DataControllerFile.prototype.getAppMetadata = function(callback) {
+  var fr = this.formatReader;
+  var fn = function() {
+    fr.getEntryAsTextTrimmed('appmetadata', function(textTrimmed){
+      var allData = JSON.parse(textTrimmed);
+      callback(allData);
+    })
+  }
+}
+
 
 DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) {
   // FIXME: Assume format reader is ready here

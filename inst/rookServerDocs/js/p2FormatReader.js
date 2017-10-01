@@ -247,8 +247,31 @@ p2FormatReader.prototype.getEntryAsText = function(entryKey, callback, context) 
     } else {
       throw new RuntimeException(STATIC_FILE_FIELD_MISSING, 'Unknown index: '.concat(entryKey))
     }
-
 }
+
+/**
+ *  Read a file entry as text data after removed the trailing nuls
+ */
+p2FormatReader.prototype.getEntryAsTextTrimmed = function(entryKey, callback, context) {
+    if (typeof context === 'undefined') { context = this; }
+
+    var entryIndexInfo = context.index[entryKey];
+
+    if (typeof entryIndexInfo !== 'undefined') {
+      var start = context.dataOffset + entryIndexInfo.offset * context.blockSize;
+      var end = context.dataOffset + (entryIndexInfo.offset + entryIndexInfo.size) * context.blockSize;
+
+      context.filereader.readRangeAsText(start,end, function(text) {
+              var dataLength =  DataControllerFile.prototype.getNullTerminatedStringLength(text);
+              var textTrimmed = text.slice(0, dataLength);
+              var allData = JSON.parse(textTrimmed);
+              callback(allData);
+      });
+    } else {
+      throw new RuntimeException(STATIC_FILE_FIELD_MISSING, 'Unknown index: '.concat(entryKey))
+    }
+}
+
 
 /**
  * Get the specified byte range from the indicated variable size block
