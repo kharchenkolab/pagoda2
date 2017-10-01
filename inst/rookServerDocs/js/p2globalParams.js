@@ -6,12 +6,6 @@
 * parameters for this pagoda app.
 */
 var p2globalParams = {
-  /* --- PARAMS START --- */
-  generalParams: {
-    applicationName: "Development Pagoda Application",
-    applicationGenerated: "Saturday, January 28th 2017",
-  },
-
   /*
     Specifies the data loading parameters for the application deployment
     This section controlls the behaviour of the global getDataLoadingParams

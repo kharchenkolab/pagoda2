@@ -264,8 +264,8 @@ p2FormatReader.prototype.getEntryAsTextTrimmed = function(entryKey, callback, co
       context.filereader.readRangeAsText(start,end, function(text) {
               var dataLength =  DataControllerFile.prototype.getNullTerminatedStringLength(text);
               var textTrimmed = text.slice(0, dataLength);
-              var allData = JSON.parse(textTrimmed);
-              callback(allData);
+              //var allData = JSON.parse(textTrimmed);
+              callback(textTrimmed);
       });
     } else {
       throw new RuntimeException(STATIC_FILE_FIELD_MISSING, 'Unknown index: '.concat(entryKey))

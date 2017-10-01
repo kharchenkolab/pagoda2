@@ -130,8 +130,6 @@ function initialise() {
         var geneSelUICntr = new geneSelectionUIcontroller();
         var actionPanelUICntr = new actionPanelUIcontroller();
 
-        // Set the page title
-        document.title = p2globalParams.generalParams.applicationName;
 
         // Initialize page components
         var embView = new embeddingViewer();
@@ -151,6 +149,9 @@ function initialise() {
         // Update status bar
         stsBar.showMessage("Ready");
 
+        // Load the application metadata after a delay (to allow the dataControler to initalise)
+        setTimeout(loadApplicationMetadata, 100);
+
         // Continue with initialisation
         initialise2();
       });
@@ -158,6 +159,23 @@ function initialise() {
     }
 };
 
+/**
+ * Get the application metadata and load any necessary information
+ * at the moment this sets the document title
+ */
+function loadApplicationMetadata() {
+    var dc = new dataController();
+    try{
+      dc.getAppMetadata(function(metadata){
+        // Set the page title
+        if (metadata !== null) {
+          document.title = metadata.apptitle;
+        }
+      });
+    } catch (e) {
+      console.log('Application metadata not found!')
+    }
+}
 
 /**
  * Second step of initialisation.
