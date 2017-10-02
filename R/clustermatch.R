@@ -377,3 +377,145 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     mnnres
 }
+
+#' Classify cells in a pagoda2 application given multiple pagoda2 objects
+#' @description This function is similar to identifyCellsGSVDRF() but it can
+#' take as input a list of annotated pagoda2 objects. It then classifies cells
+#' against all applications and summarises the results.
+#' @param referencesets input datasets (p2 objects in a names list)
+#' @param annotset p2 dataset to be annotated
+#' @param clustersOrigin a names factor with cluster assignments for referenceset cells
+#' @param n.trees number of trees to use per app in total
+#' @param n.cores number of cores to use for the random forests
+#' @return a named factor with labells for annotset
+#' @export identifyCellsGSVDMNNmulti
+identifyGSVDRFMulti <- function(referencesets, annotset, clustersOrig,
+                                n.trees = 100, n.cores = 1) {
+  require(dplyr)
+  d1 <- lapply(seq_along(referencesets), function(i) {
+    cat(paste0('Processing reference set ', names(referencesets)[i]), '\n')
+    curset <- referencesets[[i]]
+    cl1 <- clustersOrig[rownames(curset$counts)]
+    ident <- identifyCellsGSVDRF(curset, annotset, cl1, n.cores=n.cores, n.trees=n.trees)
+  })
+
+  cat('Summarizing ... ');
+  d2 <- unlist(lapply(d1, function(x) {n <- names(x); t <- as.character(x); names(t) <- n; t}))
+  d2 <- data.frame(cell.id = names(d2), match=d2)
+  d3 <- ddply(d2, .(cell.id), function(x) {data.frame(cell.id=x$cell.id[1], match=Mode(x$match))})
+  d4 <- as.factor(d3$match)
+  names(d4) <- as.character(d3$cell.id)
+  cat('done\n');
+
+  d4
+}
+
+
+#' Classify cells in a pagoda2 application given an annotated pagoda2 object
+#' @description Given a reference pagoda2 application an a set of labels for each
+#' cell, classify cells in a new application. This function works by placing both
+#' datasets onto a common GSVD and using random forests in that sapce
+#' @param referenceP2 pagoda2 object to use as reference for the annotation
+#' @param r2 pagoda2 object to the annotation of
+#' @param referenceP2lables a factor providing labels for every cell in reference P2
+#' @param var.scale perform variance scaling (according to p2 variance estimate)
+#' @param center perform centering
+#' @param verbose print progress messages
+#' @param extra.info return extra information from the run
+#' @param n.cores number of cores to use
+#' @param n.trees number of trees to use in total
+#' @export identifyCellsGSVDMNN
+identifyCellsGSVDRF <- function (referenceP2, r2, referenceP2labels,
+                                 var.scale =T, log.scale =T , center =T,
+                                 verbose = T, extra.info = F, n.cores = 1, n.trees = 1000) {
+
+  require('plyr')
+  require('geigen')
+  require('randomForest')
+  require('doMC')
+
+  ## Check referenceP2 and r2 objects
+  if( !(class(referenceP2) == 'Pagoda2' & class(r2) == 'Pagoda2')) {
+    stop('Both referenceP2 and r2 have to be objects of type Pagoda2');
+  }
+
+  ## Add check for referenceP2labels
+  if (verbose) cat('Preparing data... ');
+
+  ## Get overdispersed genes, or some other relevant geneset
+  odgenes <- union(referenceP2$misc$odgenes, r2$misc$odgenes)
+  odgenes <- intersect(odgenes, colnames(referenceP2$counts))
+  odgenes <- intersect(odgenes, colnames(r2$counts))
+
+  ## Get matrices
+  x1 <- referenceP2$counts[,odgenes]
+  x2 <- r2$counts[,odgenes]
+
+  ## Optionally variance scale
+  if (var.scale) {
+    x1 <- sweep(x1, 2, referenceP2$misc$varinfo[odgenes,]$gsf, FUN='*')
+    x2 <- sweep(x2, 2, r2$misc$varinfo[odgenes,]$gsf, FUN='*')
+  }
+
+  ## Optionally log scale
+  pseudocount <- 1e-6;
+  if (log.scale) {
+    x1 <- log10(x1 + pseudocount);
+    x2 <- log10(x2 + pseudocount);
+  }
+
+  ## Remove mean and convert to full matrix
+  if (center) {
+    x1.colMean <- Matrix::colMeans(x1)
+    x2.colMean <- Matrix::colMeans(x2)
+    x1 <- sweep(x1, 2, x1.colMean, FUN='-')
+    x2 <- sweep(x2, 2, x2.colMean, FUN='-')
+  }
+
+  ## Convert to full matrix
+  x1 <- as.matrix(x1);
+  x2 <- as.matrix(x2);
+  if (verbose) cat('done\n');
+
+  if (verbose) cat('Performing GSVD... ');
+  ## Perform gsvd on the two matrices
+  o <- gsvd(x1,x2)
+  if (verbose) cat('done\n');
+
+  ## Calculate rotated matrices
+  if (verbose) cat('Calculating PCs... ');
+  x1.rot <- x1 %*% o$Q
+  x2.rot <- x2 %*% o$Q
+
+  if (verbose) cat('done\n');
+
+  # Use RF in the rotated space to classify the cells
+
+  if (verbose) cat('Building random forest...')
+
+  ## Make the target labels
+  resp <- referenceP2labels[rownames(x1.rot)]
+  resp <- droplevels(resp[!is.na(resp)])
+
+  x <- x1.rot[names(resp),]
+  y <- resp
+
+  registerDoMC(n.cores)
+
+  # Allocate jobs per core
+  n.per.core <- n.trees %/% n.cores
+  s <- rep(n.per.core, n.cores)
+  modulo <- n.trees %% n.cores
+  if (modulo) { s[1:modulo] <- s[1:modulo] + 1 }
+
+  # Run the random forests
+  rf <- foreach(ntree=s, .combine = randomForest::combine, .multicombine =T, .packages='randomForest' ) %dopar%
+    randomForest(x=x, y=y , ntree= ntree)
+  cat('done\n');
+
+  cat('Classifying target dataset... ')
+  p <- predict(rf,newdata = x2.rot)
+  cat('done.\n')
+
+  p
+}
