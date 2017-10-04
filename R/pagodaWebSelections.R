@@ -414,8 +414,6 @@ getIntExtNamesP2Selection <- function(x) unlist(lapply(x,function(y) {y$name}))
 #' @param show.unlabelled display the plots without any associated selection as grey
 #' @param show.labels display the labels at the center of each cluster
 #' @return a ggplot2 object
-#' @example
-#' q <- plotEmbeddingColorByP2Selection(p2$embeddings$PCA$tSNE, readPagoda2SelectionFile('WebSelectionsFile'))
 #' @export plotEmbeddingColorByP2Selection
 plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = T, alpha = 0.7, show.axis =T )  {
   require(ggplot2)
