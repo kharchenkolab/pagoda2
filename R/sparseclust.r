@@ -48,8 +48,11 @@ Pagoda2 <- setRefClass(
       } else {
         callSuper(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose);
         if(!missing(x) && is.null(counts)) { # interpret x as a countMatrix
-          if(!class(x) == 'dgCMatrix') {
-            stop("x is not of class dgCMatrix");
+          if (class(x) == 'matrix') {
+            x <- Matrix(m, sparse=T)
+          }
+          if(!(class(x) == 'dgCMatrix')) {
+            stop("x is not of class dgCMatrix or matrix");
           }
           if(any(x@x < 0)) {
             stop("x contains negative values");
@@ -556,7 +559,7 @@ Pagoda2 <- setRefClass(
       }
 
       dd <- as.dendrogram(hclust(d,method=method))
-      
+
       # walk down the dendrogram to generate diff. expression on every split
       diffcontrasts <- function(l,env) {
         v <- mget("contrasts",envir=env,ifnotfound=0)[[1]]
@@ -578,7 +581,7 @@ Pagoda2 <- setRefClass(
       names(dc) <- unlist(lapply(dc,function(x) paste(levels(x),collapse=".vs.")))
 
       #dexp <- papply(dc,function(x) getDifferentialGenes(groups=x,z.threshold=z.threshold),n.cores=n.cores)
-      
+
       x <- counts;
       x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p)); # apply variance scaling
       x <- t(x)
@@ -609,19 +612,19 @@ Pagoda2 <- setRefClass(
       # fake pathwayOD output
       tamr <- list(xv=do.call(rbind,lapply(dexp,function(x) x$pt)),
                    cnam=lapply(sn(names(dexp)),function(n) c(n)))
-      
+
       dgl <- lapply(dexp,function(d) as.character(unlist(lapply(d$dg,function(x) rownames(x)[x$Z>=z.threshold]))))
       tamr$env <- list2env(dgl[unlist(lapply(dgl,length))>=min.set.size])
-      
+
       misc[['pathwayOD']] <<- tamr;
-      
+
       # fake pathwayODInfo
       zs <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$Z)))))
       mval <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$M)))))
       vdf <- data.frame(i=1:nrow(tamr$xv),npc=1,valid=TRUE,sd=apply(tamr$xv,1,sd),cz=zs,z=zs,oe=mval,n=unlist(lapply(dexp,function(x) sum(unlist(lapply(x$dg,nrow))))))
       vdf$name <- rownames(vdf) <- names(dexp);
       misc[['pathwayODInfo']] <<- vdf
-      
+
       return(invisible(tamr))
 
     },
