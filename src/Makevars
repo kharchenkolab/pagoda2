@@ -1,5 +1,5 @@
 # Set the path to your non metric space library here
-NMSLIB_PATH=${NMSLIB_PATH:-${HOME}/libs/nmslib-1.6}
+#NMSLIB_PATH=${HOME}/libs/nmslib-1.6
 PKG_CXXFLAGS=-I"$(NMSLIB_PATH)/similarity_search/include" -I"../inst/include" -std=c++11 -I"$(NMSLIB_PATH)/similarity_search/lshkit/include" $(SHLIB_OPENMP_CXXFLAGS)
 PKG_CFLAGS = $(SHLIB_OPENMP_CFLAGS)
 PKG_LIBS=-L/usr/lib/ -L$(NMSLIB_PATH)/similarity_search/release -lNonMetricSpaceLib -lgsl -lgslcblas -lpthread -fopenmp  -lboost_filesystem -lboost_system   -lstdc++ `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CFLAGS)
