@@ -1055,7 +1055,11 @@ Pagoda2 <- setRefClass(
     },
 
     # show embedding
-    plotEmbedding=function(type='counts', embeddingType=NULL, clusterType=NULL, groups=NULL, colors=NULL, do.par=T, cex=0.6, alpha=0.4, gradientPalette=NULL, zlim=NULL, s=1, v=0.8, min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2, shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F, unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
+    plotEmbedding=function(type='counts', embeddingType=NULL, clusterType=NULL, groups=NULL, colors=NULL,
+                           do.par=T, cex=0.6, alpha=0.4, gradientPalette=NULL, zlim=NULL, s=1, v=0.8,
+                           min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2,
+                           shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F,
+                           unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
       if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
       if(is.null(embeddingType)) {
         # take the first one

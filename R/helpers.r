@@ -6,6 +6,8 @@
 NULL
 
 
+
+
 #' @export p2.generate.human.go
 p2.generate.human.go <- function(r) {
   # Generate GO environment
@@ -406,4 +408,13 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
   names(deSets) <- unlist(lapply(deSets, function(x){x$properties$genesetname}));
 
   deSets
+}
+
+#' Find the mode of a vector
+#' @description return the mode of a vector
+#' @param x the vector to return the mode of
+#' @return the mode elements
+Mode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
 }
