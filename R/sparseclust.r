@@ -1075,8 +1075,8 @@ Pagoda2 <- setRefClass(
         }
 
         groups <- as.factor(groups[rownames(emb)]);
-        if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- as.factor(groups); }
-        factor.colors <- fac2col(groups,s=s,v=v,shuffle=shuffle.colors,min.group.size=min.group.size,level.colors=group.level.colors,return.details=T)
+        if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
+        factor.colors <- fac2col(groups,s=s,v=v,shuffle=shuffle.colors,min.group.size=1,level.colors=group.level.colors,return.details=T)
         cols <- factor.colors$colors[rownames(emb)]
         factor.mapping=TRUE;
       } else {
@@ -1126,29 +1126,50 @@ Pagoda2 <- setRefClass(
             if(!quiet) cat("using provided groups as a factor\n")
             factor.mapping=TRUE;
             # set up a rainbow color on the factor
-            factor.colors <- fac2col(groups,s=s,v=v,shuffle=shuffle.colors,min.group.size=min.group.size,unclassified.cell.color=unclassified.cell.color,level.colors=group.level.colors,return.details=T)
+            if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
+            factor.colors <- fac2col(groups,s=s,v=v,shuffle=shuffle.colors,min.group.size=1,unclassified.cell.color=unclassified.cell.color,level.colors=group.level.colors,return.details=T)
             cols <- factor.colors$colors;
           }
         }
         names(cols) <- rownames(emb)
       }
 
-      if(do.par) {
-        par(mar = c(0.5,0.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
-      }
-      plot(emb,col=adjustcolor(cols,alpha=alpha),cex=cex,pch=19,axes=F, panel.first=grid(), ...); box();
-      if(mark.clusters) {
-        if(!is.null(groups)) {
-          cent.pos <- do.call(rbind,tapply(1:nrow(emb),groups,function(ii) apply(emb[ii,,drop=F],2,median)))
-          #rownames(cent.pos) <- levels(groups);
-          cent.pos <- na.omit(cent.pos);
-          text(cent.pos[,1],cent.pos[,2],labels=rownames(cent.pos),cex=mark.cluster.cex)
+      if(ncol(emb)==2) { # 2D
+        if(do.par) {
+          par(mar = c(0.5,0.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
-      }
-      if(show.legend) {
-        if(factor.mapping) {
-          legend(x=legend.x,pch=rep(19,length(levels(groups))),bty='n',col=factor.colors$palette,legend=names(factor.colors$palette))
+        plot(emb,col=adjustcolor(cols,alpha=alpha),cex=cex,pch=19,axes=F, panel.first=grid(), ...); box();
+        if(mark.clusters) {
+          if(!is.null(groups)) {
+            cent.pos <- do.call(rbind,tapply(1:nrow(emb),groups,function(ii) apply(emb[ii,,drop=F],2,median)))
+            #rownames(cent.pos) <- levels(groups);
+            cent.pos <- na.omit(cent.pos);
+            text(cent.pos[,1],cent.pos[,2],labels=rownames(cent.pos),cex=mark.cluster.cex)
+          }
         }
+        if(show.legend) {
+          if(factor.mapping) {
+            legend(x=legend.x,pch=rep(19,length(levels(groups))),bty='n',col=factor.colors$palette,legend=names(factor.colors$palette))
+          }
+        }
+      } else if(ncol(emb)==3) { #3D
+        require(rgl)
+        plot3d(emb[,1],emb[,2],emb[,3],col=cols,size=cex,type='s',alpha=alpha)
+        if(mark.clusters) {
+          if(!is.null(groups)) {
+            cent.pos <- do.call(rbind,tapply(1:nrow(emb),groups,function(ii) apply(emb[ii,,drop=F],2,median)))
+            #rownames(cent.pos) <- levels(groups);
+            cent.pos <- na.omit(cent.pos);
+            text3d(cent.pos[,1],cent.pos[,2],cent.pos[,3],text=rownames(cent.pos),cex=mark.cluster.cex)
+          }
+        }
+        if(show.legend) {
+          if(factor.mapping) {
+            legend3d(x=legend.x,pch=rep(19,length(levels(groups))),col=factor.colors$palette,legend=names(factor.colors$palette))
+          }
+        }
+      } else {
+        stop("only 2D and 3D embeddings are supported")
       }
 
     },
@@ -1455,7 +1476,8 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', ... ) {
+      if(dims<1) stop("dimensions must be >=1")
       if(type=='counts') {
         x <- counts;
       } else {
@@ -1496,7 +1518,7 @@ Pagoda2 <- setRefClass(
           #browser()
           wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
         }
-        coords <- projectKNNs(wij = wij, M = M, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, ...)
+        coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, ...)
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
@@ -1511,7 +1533,7 @@ Pagoda2 <- setRefClass(
         }
         cat("done\n")
         cat("running tSNE using",n.cores,"cores:\n")
-        emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores, ... )$Y;
+        emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
