@@ -79,7 +79,6 @@ function handleProcessCommand(e) {
     runMannWhitneyIteration(callParams.params, callParams.data);
   } else {
     // TODO: Handle error
-    console.log('Unknown method')
   }
 
   //advance index to current spot

@@ -14,7 +14,6 @@ function aspectHeatmapViewer() {
   if (typeof aspectHeatmapViewer.instance === 'object') {
     return aspectHeatmapViewer.instance;
   }
-  console.log('Initializing aspect heatmap viewer...');
 
   // Handle extjs resize
   var extJsContainer = Ext.getCmp('aspectPanel');

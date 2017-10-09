@@ -173,7 +173,7 @@ function loadApplicationMetadata() {
         }
       });
     } catch (e) {
-      console.log('Application metadata not found!')
+      // This is fine, the app just doesn't have metadata
     }
 }
 

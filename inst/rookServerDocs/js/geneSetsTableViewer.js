@@ -11,7 +11,6 @@ function geneSetsTableViewer() {
 
     geneSetsTableViewer.instance = this;
 
-    console.log('Initializing geneSetsTableViewer...');
     this.generateTables();
     this.autoShow = true;
 };

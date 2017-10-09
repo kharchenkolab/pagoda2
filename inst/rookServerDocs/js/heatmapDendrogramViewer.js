@@ -20,8 +20,6 @@ function heatmapDendrogramViewer() {
 	    return heatmapDendrogramViewer.instance;
     };
 
-    console.log("Initializing heatmapDendrogramViewer...");
-
     // Initialise subobjects
     var heatmapV =  new heatmapViewer();
     var metaV = new metaDataHeatmapViewer();

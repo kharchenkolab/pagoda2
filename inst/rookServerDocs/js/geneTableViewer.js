@@ -9,8 +9,6 @@ function geneTableViewer()  {
 	    return geneTableViewer.instance;
     }
 
-    console.log('Initializing geneTableViewer...');
-
     this.generateGeneTable();
     this.autoShow = true; // changing a selection automatically reloads heatmap
 

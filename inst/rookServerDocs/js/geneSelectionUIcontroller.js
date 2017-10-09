@@ -88,24 +88,9 @@ geneSelectionUIcontroller.prototype.generateUI = function() {
 	],
 	emptyText: 'No gene selections are currently available',
 	selModel: geneTableSelectionModel,
-	listeners: {
-	  sortChange: function(){
-	    console.log("hello");
-	  }
-	}
     });
 
-    /*var formPanel = Ext.create('Ext.form.Panel', {
-	height: '100%',
-	width: '100%',
-	bodyPadding: 10,
-	defaultType: 'textfield',
-	items: [geneSelectionTable]
-    });*/
-
     uipanel.add(geneSelectionTable);
-
-
 
 }
 
@@ -430,11 +415,11 @@ geneSelectionUIcontroller.prototype.generateToolbar = function(){
                   for(var i = 0; i < geneInformationStore.localData.length; i++){
                       params.geneOrder.push(geneInformationStore.localData[i].genename)
                   }
-                  console.log(params.geneOrder);
+
 	                var functionStep = function(params,i, step, max){
 	                  for(var line = 0; line < step; line++){
 	                    var selection = params.lines[i + line].split(",");
-	                    console.log(selection);
+
 	                    var dispName = selection.shift();
 	                    params.removedGenes[dispName] = 0;
 	                    var pureSelection = [];

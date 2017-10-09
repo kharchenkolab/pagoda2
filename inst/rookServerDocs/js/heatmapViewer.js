@@ -14,7 +14,6 @@ function heatmapViewer() {
     if (typeof heatmapViewer.instance ===  'object') {
 	return heatmapViewer.instance;
     }
-    console.log('Initializing heatmap viewer...');
 
     // NOTE: Actual init is done by parent object
 

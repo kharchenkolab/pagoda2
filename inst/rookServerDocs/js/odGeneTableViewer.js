@@ -10,8 +10,6 @@ function odGeneTableViewer() {
 	return odGeneTableViewer.instance;
     }
 
-    console.log('Initializing odGeneTableViewer...');
-
     this.generateTable();
 
     odGeneTableViewer.instance = this;

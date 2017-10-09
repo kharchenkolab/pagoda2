@@ -140,7 +140,7 @@ graphViewer.prototype.drawBarGraph = function(canvas){
         }
       }
     }
-    console.log("no hit");
+
     $("#barplot_tooltip").remove();
   })
 }

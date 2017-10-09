@@ -58,7 +58,6 @@ metaDataHeatmapViewer.prototype.getWidth  = function() {
  * are ready
  */
 metaDataHeatmapViewer.prototype.initialize = function () {
-    console.log('Initializing Metadata viewer...');
 
     var metadataContainer = $('#metadata-area-container');
     var contextMenuOpen = false;

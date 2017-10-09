@@ -22,9 +22,6 @@ function p2FormatReader(opt_FileReader) {
 
     this.dataOffset = null; // Where the data starts
 
-    //this.readHeaderIndex(); // Load the file header and index
-
-
     this.INITIALIZING = 0;
     this.READY = 1;
 
@@ -202,8 +199,6 @@ p2FormatReader.prototype.readHeaderIndex = function() {
       // Fire onready event
 	    context.dispatchEvent('onready');
 
-	    // DEBUG
-	    //console.log('Index structure: ', context.index);
 	});
     });
 

@@ -14,8 +14,6 @@ function diffExprTableViewer() {
     return diffExprTableViewer.instance;
   }
 
-  console.log('Initializing aspects table viewer...');
-
   this.declareExtJStypes();
   this.generateTables();
 

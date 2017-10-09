@@ -14,8 +14,6 @@ function statusBar() {
 	return statusBar.instance;
     };
 
-    console.log('Initialising status bar...');
-
     statusBar.instance = this;
 };
 

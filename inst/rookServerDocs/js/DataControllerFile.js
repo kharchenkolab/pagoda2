@@ -19,7 +19,7 @@ function DataControllerFile(loadParams) {
   // the format reader handles the top level index and resolution to file locations
   // the file reader is responsible for obtaining the data in the requested range
   this.formatReader = new p2FormatReader(frTemp);
-  this.formatReader.onReady = function() { console.log('Format reader is ready.'); }
+  this.formatReader.onReady = function() { }
   this.formatReader.readHeaderIndex();
 
   // object for storing the preloaded information for the sparse array

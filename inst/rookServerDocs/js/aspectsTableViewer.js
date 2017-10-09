@@ -14,8 +14,6 @@ function aspectsTableViewer() {
     return aspectsTableViewer.instance;
   }
 
-  console.log('Initializing aspects table viewer...');
-
   // Generate the extjs elemetns
   this.generateTables();
 

@@ -1370,8 +1370,6 @@ dendrogramViewer.prototype.clearHighlight = function() {
  *
  */
 dendrogramViewer.prototype.initialize = function() {
-    console.log('Initializing dendrogramViewer...');
-
     this.setupDOM();
     this.setupListeners();
 
@@ -1443,7 +1441,6 @@ dendrogramViewer.prototype.showRelatedGenes = function() {
       var dc = new dataController();
       try {
         dc.getGeneNeighbours(queryGenes, function(results){
-            console.log("Genes are back:", results);
 
             // TODO: check that we got at least one gene back
 
@@ -1474,12 +1471,12 @@ dendrogramViewer.prototype.showRelatedGenes = function() {
         msg: 'The heatmap is currently displaying over 100 genes, please reduce and try again.',
         buttons: Ext.Msg.OK
       });
-    } else { 
-      showError() 
+    } else {
+      showError()
     }
   } else { // selection undefined
-    showError() 
-    
+    showError()
+
   }
 
 }

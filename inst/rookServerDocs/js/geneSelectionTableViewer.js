@@ -10,7 +10,7 @@ function geneSelectionTableViewer()  {
     }
 
     geneSelectionTableViewer.instance = this;
-    console.log('Initializing geneSelectionTableViewer...');
+
     this.selectionTable = null;
     this.geneFilter = [];
     this.initialize();
