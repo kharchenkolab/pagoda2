@@ -32,8 +32,7 @@ function embeddingViewerScatterCanvas() {
     // plotting on the edges
     this.rangeScaleFactor = 0.97;
 
-    // Flag to recalculate domain only if embedding has changed
-    this.domainStale = true;
+    this.domainCacheId = null;
 
     // These are used to keep track of the
     // Transformation applied to the embedding points
@@ -60,9 +59,10 @@ embeddingViewerScatterCanvas.prototype.getMainCanvasElement = function() {
     return document.getElementById('embedding-canvas');
 }
 
-embeddingViewerScatterCanvas.prototype.calculateDomain = function(plotData) {
+embeddingViewerScatterCanvas.prototype.calculateDomain = function(plotData, type, embeddingType) {
   // Calculate the scale domains if required
-  if (this.domainStale) {
+  var cacheId = type + '_' + embeddingType;
+  if (this.domainCacheId !== cacheId) {
     this.xScaleDomainMin = +Infinity;
     this.xScaleDomainMax = -Infinity;
     this.yScaleDomainMin = +Infinity;
@@ -73,6 +73,7 @@ embeddingViewerScatterCanvas.prototype.calculateDomain = function(plotData) {
         this.yScaleDomainMin = Math.min(this.yScaleDomainMin, plotData[j][2]);
         this.yScaleDomainMax = Math.max(this.yScaleDomainMax, plotData[j][2]);
     }
+    this.domainCacheId =  cacheId;
   }
 }
 
@@ -97,7 +98,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
         var size = this.size;
 
         dataCntr.getEmbedding(type, embeddingType, function(plotData) {
-            thisViewer.calculateDomain(plotData);
+            thisViewer.calculateDomain(plotData, type, embeddingType);
 
             // Make the scales
             thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
@@ -135,7 +136,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
                     ctx.arc(xs, ys, pointsize, 0, PI_2, false);
                     ctx.stroke();
                 }
-            } // for
+            }
 
             var cellSelCntr = new cellSelectionController();
             var selectionName = cellSelCntr.setSelection(cellsForSelection, 'Embedding Selection', new Object(), '#ff0000', 'embSelection');
@@ -150,9 +151,7 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
             metaHeatView.highlightCellSelectionByName(selectionName);
 
         });
-
     }
-
 
 /**
  * Highlight cells by selection name
@@ -176,8 +175,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
     dataCntr.getEmbedding(type, embeddingType, function(data) {
         var plotData = data;
 
-
-        thisViewer.calculateDomain(plotData);
+        thisViewer.calculateDomain(plotData, type, embeddingType);
 
         thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
         thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
@@ -257,7 +255,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
     dataCntr.getEmbedding(type, embeddingType, function(data) {
         var plotData = data;
 
-        thisViewer.calculateDomain(plotData);
+        thisViewer.calculateDomain(plotData, type, embeddingType);
 
         // Make the xscale
         thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
@@ -350,7 +348,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
     dataCntr.getEmbedding(type, embeddingType, function(data) {
         var plotData = data;
 
-        thisViewer.calculateDomain(plotData);
+        thisViewer.calculateDomain(plotData, type, embeddingType);
 
         // Make the xscale
         thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
@@ -711,7 +709,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 
             thisViewer.resizeElements();
 
-            thisViewer.calculateDomain(plotData);
+            thisViewer.calculateDomain(plotData, type, embeddingType);
 
 
             var embCanvas = document.getElementById('embedding-canvas');

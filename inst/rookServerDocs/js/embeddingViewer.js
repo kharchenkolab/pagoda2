@@ -220,9 +220,7 @@ embeddingViewer.prototype.generateToolbar = function() {
         }
     });
 
-
     toolbar.add({xtype: 'tbseparator'});
-
 
     toolbar.add({
         text: "",
