@@ -648,7 +648,7 @@ embeddingViewer.prototype.populateMenu = function() {
         for (var reduction in d) {
             for (var embedding in d[reduction]) {
                 var embeddingIdentifier = reduction + ':' + embedding;
-                var embeddingLabel = reduction + ' --> ' + embedding;
+                var embeddingLabel = reduction + ' \u2192 ' + embedding;
 
                 embeddingOptionstore.add({
                     'reduction': reduction,
@@ -707,17 +707,7 @@ embeddingViewer.prototype.showEmbedding = function(type, embeddingType) {
     this.currentConfiguration.embeddingType = embeddingType;
 
     this.plotEmbedding();
-} // embeddingViewer.prototype.showEmbedding
-
-
-/**
- * Redraw the current view
- * @description It just calles plotEmbedding
- * @deprecated Use plotEmbedding() instead; this was used in pre ExtJS code for throttling
- */
-embeddingViewer.prototype.redraw = function() {
-    this.plotEmbedding();
-};
+}
 
 /**
  * Plot the embedding from scratch
@@ -725,7 +715,6 @@ embeddingViewer.prototype.redraw = function() {
 embeddingViewer.prototype.plotEmbedding = function() {
     this.currentViewer.plotEmbedding();
 }
-
 
 /**
  * Highlight the selection specified by name, delegates to current viewer
