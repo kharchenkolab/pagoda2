@@ -118,10 +118,9 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 
             var pointsize = embViewer.getCurrentPointSize();
 
-            var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
-
-            // TODO
-            ctx.clearRect(0, 0, 5000, 5000);
+            var canvas = document.getElementById('embedding-canvas-overlay');
+            var ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             var cellsForSelection = new Array();
             ctx.strokeStyle = 'red';
@@ -198,9 +197,11 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 
         var pointsize = embViewer.getCurrentPointSize();
 
-        var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
+        var canvas = document.getElementById('embedding-canvas-overlay');
+        var ctx = canvas.getContext('2d');
         ctx.save();
-        ctx.clearRect(0, 0, 5000, 5000);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
         thisViewer.hasLabels = hasLabels;
         ctx.strokeStyle = cellSelCntr.getColor(selectionName);
 
@@ -254,8 +255,9 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
 
     var size = this.size;
 
-    var ctx = document.getElementById('embedding-canvas-overlay').getContext('2d');
-    ctx.clearRect(0, 0, 5000, 5000);
+    var canvas = document.getElementById('embedding-canvas-overlay');
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     dataCntr.getEmbedding(type, embeddingType, function(data) {
         var plotData = data;
@@ -336,7 +338,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
  * @param size Square dimmension of the plot's dimmension
  * @param selectionNames the names of each selection to be highlighted
  */
-embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = function(overlayCanvas, size, selectionNames) {
+embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = function(canvas, size, selectionNames) {
 
     var cellSelCntr = new cellSelectionController();
     var embViewer = new embeddingViewer();
@@ -348,8 +350,13 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
     var embeddingType = config.embeddingType;
     var ratio = size / this.size;
     var pointsize = embViewer.getCurrentPointSize() * ratio;
-    var ctx = overlayCanvas.getContext('2d');
-    ctx.clearRect(0, 0, 5000, 5000);
+
+
+
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
     dataCntr.getEmbedding(type, embeddingType, function(data) {
         var plotData = data;
 
@@ -499,7 +506,9 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
             if (thisViewer.dragging) {
 
                 if (Math.sqrt(Math.pow(xPos - polygonVerts[0][0], 2) + Math.pow(yPos - polygonVerts[0][1], 2)) < thisViewer.stopRadius) {
-                    ctx.clearRect(0, 0, 4000, 4000);
+                    ctx.clearRect(0, 0, overlayCanvasElement.width, overlayCanvasElement.height);
+
+
                     thisViewer.generateDragSelection(polygonVerts);
                     polygonVerts = [];
                     thisViewer.dragging = false;
@@ -532,7 +541,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
 
             //if there is a dragging event going on, draws the lines enclosing the space
             if (thisViewer.dragging) {
-                ctx.clearRect(0, 0, 4000, 4000);
+                ctx.clearRect(0, 0, overlayCanvasElement.width, overlayCanvasElement.height);
                 ctx.save();
                 ctx.setLineDash([10, 10]);
                 ctx.strokeStyle = 'rgba(255,0,0,1)';
@@ -570,7 +579,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
             lastCursorPositionY = dragEndY;
 
             if (thisViewer.dragging) {
-                ctx.clearRect(0, 0, 4000, 4000);
+                ctx.clearRect(0, 0, overlayCanvasElement.width, overlayCanvasElement.height);
                 ctx.save();
                 ctx.setLineDash([10, 10]);
                 ctx.strokeStyle = 'rgba(255,0,0,1)';
@@ -586,7 +595,7 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
         if (thisViewer.dragging) {
             thisViewer.dragging = false;
             polygonVerts = [];
-            ctx.clearRect(0, 0, 4000, 4000);
+            ctx.clearRect(0, 0, overlayCanvasElement.width, overlayCanvasElement.height);
             if (thisViewer.highlight === "box") {
                 var vertices = [
                     [dragStartX, dragStartY],
@@ -605,9 +614,9 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
  * Clear hightlight selection
  */
 embeddingViewerScatterCanvas.prototype.clearHighlight = function() {
-    var overlayCanvasElement = document.getElementById('embedding-canvas-overlay');
-    var ctx = overlayCanvasElement.getContext('2d');
-    ctx.clearRect(0, 0, 4000, 4000);
+    var canvas = document.getElementById('embedding-canvas-overlay');
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 /**
@@ -762,7 +771,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 
             // Get 2d context and plot
             var ctx = embCanvas.getContext('2d');
-            ctx.clearRect(0, 0, 5000, 5000);
+            ctx.clearRect(0, 0, embCanvas.width, embCanvas.height);
 
             // Calculate 2 * pi only once
             const PI_2 = 2 * Math.PI;
@@ -1215,8 +1224,9 @@ embeddingViewerScatterCanvas.prototype.getCellPositionFromCache = function(type,
 }
 
 embeddingViewerScatterCanvas.prototype.clearHighlightCell = function() {
-  var ctx = document.getElementById('embedding-canvas-hover').getContext('2d');
-  ctx.clearRect(0, 0, 5000, 5000);
+  var canvas = document.getElementById('embedding-canvas-hover');
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 /**
