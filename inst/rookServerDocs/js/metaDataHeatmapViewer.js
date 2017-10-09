@@ -229,6 +229,9 @@ metaDataHeatmapViewer.prototype.initialize = function () {
     	            var stsBar = new statusBar();
     	            var msg = 'Cell: ' + params.cellid + ' ' + '(' + params.keyLabel + ': ' + params.valueLabel +')';
     	            stsBar.showMessage(msg);
+
+    	            var embViewer = new embeddingViewer();
+    	            embViewer.highlightCell(params.cellid);
     	          });
               }
             },
