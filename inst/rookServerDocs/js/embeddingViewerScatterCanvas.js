@@ -828,7 +828,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
  * @param {embCanvas} canvas to draw to
  * @param {dimension} the square dimension of the canvas
  */
-embeddingViewerScatterCanvas.prototype.drawToCanvas = function(embCanvas, dimension) {
+embeddingViewerScatterCanvas.prototype.drawToCanvas = function(embCanvas, size) {
     var dataCntr = new dataController();
     var embViewer = new embeddingViewer();
     var config = embViewer.getConfig();
@@ -836,13 +836,12 @@ embeddingViewerScatterCanvas.prototype.drawToCanvas = function(embCanvas, dimens
     var embeddingType = config.embeddingType;
     var thisViewer = this;
 
-    //var size = this.size;
-    var size = dimension;
     var pointsize = embViewer.getCurrentPointSize() * size / this.size;
 
     // Embeddings are cached
     dataCntr.getEmbedding(type, embeddingType, function(data) {
         var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+
         // Generate the colors for the data points -- async
         thisViewer.generateFillStyles(plotData, function(plotData, fillInfo) {
             // Make the xscale
@@ -1228,6 +1227,9 @@ embeddingViewerScatterCanvas.prototype.doMatchingFromCache = function(plotdata, 
     }
 }
 
+/**
+ * Aborts a pernding AJAX request
+ */
 embeddingViewerScatterCanvas.prototype.abortPendingRequest = function() {
     var evSC = this;
     // Check if there is a request running already
