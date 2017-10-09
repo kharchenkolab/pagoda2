@@ -200,6 +200,7 @@ DataControllerFile.prototype.getEmbedding = function(type, embeddingType, callba
         		// TODO: Check that the arrays contain numbers
         		var unpackedValues = DataControllerServer.prototype.unpackCompressedBase64Float64Array(data.values);
         		data.values = unpackedValues;
+        		data = pagHelpers.jsonSerialisedToArrayOfArrays(data);
 
     		    callback(data);
 
