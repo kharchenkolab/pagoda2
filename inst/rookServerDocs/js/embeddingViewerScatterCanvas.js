@@ -78,7 +78,8 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
         var size = this.size;
 
         dataCntr.getEmbedding(type, embeddingType, function(data) {
-            var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+            var plotData = data;
+
             // Make the xscale
             thisViewer.xScaleDomainMin = +Infinity;
             thisViewer.xScaleDomainMax = -Infinity;
@@ -179,7 +180,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
     var size = this.size;
 
     dataCntr.getEmbedding(type, embeddingType, function(data) {
-        var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+        var plotData = data;
 
         // Make the xscale
         thisViewer.xScaleDomainMin = +Infinity;
@@ -270,8 +271,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
     ctx.clearRect(0, 0, 5000, 5000);
 
     dataCntr.getEmbedding(type, embeddingType, function(data) {
-
-        var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+        var plotData = data;
 
         // Make the xscale
         thisViewer.xScaleDomainMin = +Infinity;
@@ -374,8 +374,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
     var ctx = overlayCanvas.getContext('2d');
     ctx.clearRect(0, 0, 5000, 5000);
     dataCntr.getEmbedding(type, embeddingType, function(data) {
-
-        var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+        var plotData = data;
 
         // Make the xscale
         thisViewer.xScaleDomainMin = +Infinity;
@@ -744,7 +743,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
 
     // Embeddings are cached
     dataCntr.getEmbedding(type, embeddingType, function(data) {
-        var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+        var plotData = data;
 
         // Generate the colors for the data points -- async
         thisViewer.generateFillStyles(plotData, function(plotData, fillInfo) {
@@ -840,7 +839,7 @@ embeddingViewerScatterCanvas.prototype.drawToCanvas = function(embCanvas, size) 
 
     // Embeddings are cached
     dataCntr.getEmbedding(type, embeddingType, function(data) {
-        var plotData = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+        var plotData = data;
 
         // Generate the colors for the data points -- async
         thisViewer.generateFillStyles(plotData, function(plotData, fillInfo) {

@@ -428,11 +428,9 @@ DataControllerServer.prototype.getEmbedding = function(type, embeddingType, call
         		    throw new Error('data.dim is not of length 2');
         		}
 
-    		    dataCntr.cache.embeddings[cacheId] = data;
-
-    		    // TODO: Check that the arrays contain numbers
-        		var unpackedValues = dataCntr.unpackCompressedBase64Float64Array(data.values);
-        		data.values = unpackedValues;
+        		data.values = dataCntr.unpackCompressedBase64Float64Array(data.values);
+        		data = pagHelpers.jsonSerialisedToArrayOfArrays(data);
+            dataCntr.cache.embeddings[cacheId] = data;
 
     		    callback(data);
     	    }
