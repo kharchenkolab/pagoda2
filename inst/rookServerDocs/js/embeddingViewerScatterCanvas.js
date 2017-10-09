@@ -1062,10 +1062,8 @@ embeddingViewerScatterCanvas.prototype.doMatchingFromCache = function(plotdata, 
     }
 
     if (i < plotdata.length) {
-
         for (var j = i; j < i + batchSize && j < plotdata.length; j++) {
             // Retrieve from cache
-            var index = cache[plotdata[j][0]];
             var index = cache[j];
             if (index < 0) {
                 plotdata[j][3] = '#000000'; // default to black
