@@ -124,7 +124,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                         fn: function(f, v) {
                             var embViewer = new embeddingViewer();
                             embViewer.setCurrentPointSize(v);
-                            embViewer.redraw();
+                            embViewer.plotEmbedding();
                         }
                     } // change buffered listener
                 } // listeners
@@ -144,7 +144,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                         fn: function(f, v) {
                             var embViewer = new embeddingViewer();
                             embViewer.setCurrentAlpha(v);
-                            embViewer.redraw();
+                            embViewer.plotEmbedding();
                         }
                     } // change
                 } // listeners
@@ -155,7 +155,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                 checkHandler: function(f, v) {
                     var embViewer = new embeddingViewer();
                     embViewer.setCurrentBorder(v);
-                    embViewer.redraw();
+                    embViewer.plotEmbedding();
                 }
             },
             {
@@ -173,7 +173,7 @@ embeddingViewer.prototype.generateToolbar = function() {
                         fn: function(f, v) {
                             var embViewer = new embeddingViewer();
                             embViewer.setCurrentBorderWidth(v);
-                            embViewer.redraw();
+                            embViewer.plotEmbedding();
                         }
                     } // change and buffer
                 }
