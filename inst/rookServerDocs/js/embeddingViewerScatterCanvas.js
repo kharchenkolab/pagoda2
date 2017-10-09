@@ -1214,6 +1214,11 @@ embeddingViewerScatterCanvas.prototype.getCellPositionFromCache = function(type,
   }
 }
 
+embeddingViewerScatterCanvas.prototype.clearHighlightCell = function() {
+  var ctx = document.getElementById('embedding-canvas-hover').getContext('2d');
+  ctx.clearRect(0, 0, 5000, 5000);
+}
+
 /**
  * Highlight the position of a specific cell
  */

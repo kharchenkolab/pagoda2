@@ -314,12 +314,34 @@ metaDataHeatmapViewer.prototype.initialize = function() {
     }); // contextmenu event listener
 
     (metadataAreaOverlay[0]).addEventListener('mousemove', function(e) {
-        var x = e.offsetX;
         var metaV = new metaDataHeatmapViewer();
-        metaV.showOverlay(x);
         var heatV = new heatmapViewer();
-        heatV.showOverlay(x);
         var aspeV = new aspectHeatmapViewer();
+        var heatDendView = new heatmapDendrogramViewer();
+        var dendV = new dendrogramViewer();
+
+        // Calculate cell index
+        var drawConsts = metaV.getDrawConstants();
+        var metaWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+        var posPC = (e.offsetX - drawConsts.left) / metaWidth;
+
+        if (posPC > 0 && posPC < 1) {
+          var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
+          var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0]));
+
+          (new dataController()).getCellOrder(function(data) {
+            var embV = new embeddingViewer();
+            embV.highlightCell(data[cellindex]);
+          });
+        } else {
+            var embV = new embeddingViewer();
+            embV.clearHighlightCell();
+        }
+
+        var x = e.offsetX;
+
+        metaV.showOverlay(x);
+        heatV.showOverlay(x);
         aspeV.showOverlay(x);
 
         var metaV = new metaDataHeatmapViewer();

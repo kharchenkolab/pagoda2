@@ -50,7 +50,11 @@ embeddingViewer.prototype.showWait = function() {
 
 embeddingViewer.prototype.highlightCell = function(cellid) {
   this.currentViewer.highlightCell(cellid);
-}
+};
+
+embeddingViewer.prototype.clearHighlightCell = function() {
+  this.currentViewer.clearHighlightCell();
+};
 
 /**
  * Hides the wait overlay
