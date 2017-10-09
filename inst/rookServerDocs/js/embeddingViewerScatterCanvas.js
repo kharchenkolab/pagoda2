@@ -1251,16 +1251,18 @@ embeddingViewerScatterCanvas.prototype.highlightCell = function(cellid) {
 
         var pointsize = embViewer.getCurrentPointSize();
 
-        var ctx = document.getElementById('embedding-canvas-hover').getContext('2d');
+        var canvas = document.getElementById('embedding-canvas-hover');
+        var ctx = canvas.getContext('2d');
 
         ctx.save();
-        ctx.clearRect(0, 0, 5000, 5000);
-        ctx.strokeStyle = 'red';
-        ctx.fillStyle = 'red';
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 4;
+        ctx.fillStyle = '#FF2222';
 
         var xs = xScale(point[1]);
         var ys = yScale(point[2]);
 
+        ctx.strokeStyle = 'black';
         ctx.beginPath();
         ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
         ctx.stroke();
