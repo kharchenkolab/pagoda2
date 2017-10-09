@@ -661,7 +661,6 @@ embeddingViewer.prototype.populateMenu = function() {
                     embedding === p2globalParams.embedding.defaultEmbedding.embedding) {
                     Ext.getCmp('embeddingSelectCombo').setValue(embeddingIdentifier);
                 }
-
             }
         }
     });
@@ -695,7 +694,7 @@ embeddingViewer.prototype.updateColorsGeneexpression = function() {
  */
 embeddingViewer.prototype.updateColors = function() {
     this.currentViewer.updateColors();
-} // function
+}
 
 /**
  * Update to show a specific embedding
@@ -705,7 +704,6 @@ embeddingViewer.prototype.updateColors = function() {
 embeddingViewer.prototype.showEmbedding = function(type, embeddingType) {
     this.currentConfiguration.type = type;
     this.currentConfiguration.embeddingType = embeddingType;
-
     this.plotEmbedding();
 }
 
