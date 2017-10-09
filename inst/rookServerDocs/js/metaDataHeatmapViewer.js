@@ -384,7 +384,6 @@ metaDataHeatmapViewer.prototype.initialize = function() {
     }); // mousemove addEventListener
 
     (metadataAreaOverlay[0]).addEventListener('mouseout', function(e) {
-      console.log('mouse out');
         var metaV = new metaDataHeatmapViewer();
         var heatV = new heatmapViewer();
 
