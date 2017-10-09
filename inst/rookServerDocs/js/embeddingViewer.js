@@ -96,7 +96,8 @@ embeddingViewer.prototype.generateToolbar = function() {
         editable: false,
         valueField: 'value',
         id: 'embeddingSelectCombo',
-        forceSelection: true
+        forceSelection: true,
+        width: 110
     });
 
     // Set the option change listener
@@ -708,7 +709,7 @@ embeddingViewer.prototype.showEmbedding = function(type, embeddingType) {
 }
 
 /**
- * Plot the embedding from scratch
+ * Plot the embedding
  */
 embeddingViewer.prototype.plotEmbedding = function() {
     this.currentViewer.plotEmbedding();
