@@ -318,32 +318,26 @@ metaDataHeatmapViewer.prototype.initialize = function() {
         var aspeV = new aspectHeatmapViewer();
         var heatDendView = new heatmapDendrogramViewer();
         var dendV = new dendrogramViewer();
+        var embV = new embeddingViewer();
+
+        var x = e.offsetX;
 
         // Calculate cell index for embedding hover
         var drawConsts = metaV.getDrawConstants();
         var metaWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
-        var posPC = (e.offsetX - drawConsts.left) / metaWidth;
+        var posPC = (x - drawConsts.left) / metaWidth;
+
         if (posPC > 0 && posPC < 1) {
           var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
           var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0])) + curDisplayIdxs[0];
-
-          (new dataController()).getCellOrder(function(data) {
-            var embV = new embeddingViewer();
-            //embV.highlightCellByID(data[cellindex]);
-            embV.highlightCellByIndex(cellindex);
-          });
+          embV.highlightCellByIndex(cellindex);
         } else {
-            var embV = new embeddingViewer();
             embV.clearHighlightCell();
         }
-
-        var x = e.offsetX;
 
         metaV.showOverlay(x);
         heatV.showOverlay(x);
         aspeV.showOverlay(x);
-
-        var metaV = new metaDataHeatmapViewer();
 
         if (metaV.primaryMouseButtonDown) {
             if (!metaV.dragging) {
@@ -380,7 +374,7 @@ metaDataHeatmapViewer.prototype.initialize = function() {
             ctx.fillStyle = 'rgba(255,0,0,0.5)';
             ctx.fillRect(metaV.dragStartX, drawConsts.top, boundedX - metaV.dragStartX, actualPlotHeight);
             ctx.restore();
-        }
+        } //if (metaV.primaryMouseButtonDown)
 
     }); // mousemove addEventListener
 

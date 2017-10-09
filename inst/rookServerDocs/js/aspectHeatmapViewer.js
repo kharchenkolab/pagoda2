@@ -319,6 +319,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         var metaV = new metaDataHeatmapViewer();
         var heatDendView = new heatmapDendrogramViewer();
         var dendV = new dendrogramViewer();
+        var embV = new embeddingViewer();
 
         var x = e.offsetX;
         var y = e.offsetY;
@@ -326,19 +327,13 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         var drawConsts = aspHeatView.getDrawConstants();
 
         // Calculate cell index for embedding hover
-
         var metaWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
         var posPC = (e.offsetX - drawConsts.left) / metaWidth;
         if (posPC > 0 && posPC < 1) {
             var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
             var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0]))  + curDisplayIdxs[0];
-
-            (new dataController()).getCellOrder(function(data) {
-                var embV = new embeddingViewer();
-                embV.highlightCellByIndex(cellindex);
-            });
+            embV.highlightCellByIndex(cellindex);
         } else {
-            var embV = new embeddingViewer();
             embV.clearHighlightCell();
         }
 
