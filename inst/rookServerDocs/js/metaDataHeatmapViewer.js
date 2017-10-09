@@ -325,7 +325,7 @@ metaDataHeatmapViewer.prototype.initialize = function() {
         var posPC = (e.offsetX - drawConsts.left) / metaWidth;
         if (posPC > 0 && posPC < 1) {
           var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
-          var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0]));
+          var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0])) + curDisplayIdxs[0];
 
           (new dataController()).getCellOrder(function(data) {
             var embV = new embeddingViewer();
