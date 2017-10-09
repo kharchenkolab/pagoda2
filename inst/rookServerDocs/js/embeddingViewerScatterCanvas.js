@@ -783,11 +783,9 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
             var pointsize = embViewer.getCurrentPointSize();
 
             // The border
-            var stroke;
-            var strokeColor;
-            var strokeWidth = 1;
-
             var stroke = embViewer.getCurrentBorder();
+            var strokeColor;
+            var strokeWidth;
 
             if (stroke === true) {
                 strokeColor = embViewer.getCurrentBorderColor();
@@ -798,6 +796,9 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
             var ctx = embCanvas.getContext('2d');
             ctx.clearRect(0, 0, 5000, 5000);
 
+            // Calculate 2 * pi only once
+            const PI_2 = 2 * Math.PI;
+
             // Main plot loop
             for (var i = 0; i < plotData.length; i++) {
                 var point = plotData[i];
@@ -806,7 +807,7 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
                 var ys = yScale(point[2]);
 
                 ctx.beginPath();
-                ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+                ctx.arc(xs, ys, pointsize, 0, PI_2, false);
                 ctx.fillStyle = point[3];
                 ctx.fill();
 
