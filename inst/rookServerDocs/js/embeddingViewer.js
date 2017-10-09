@@ -648,7 +648,7 @@ embeddingViewer.prototype.populateMenu = function() {
         for (var reduction in d) {
             for (var embedding in d[reduction]) {
                 var embeddingIdentifier = reduction + ':' + embedding;
-                var embeddingLabel = reduction + ' \u2192 ' + embedding;
+                var embeddingLabel = reduction + ' \u21e8 ' + embedding;
 
                 embeddingOptionstore.add({
                     'reduction': reduction,
