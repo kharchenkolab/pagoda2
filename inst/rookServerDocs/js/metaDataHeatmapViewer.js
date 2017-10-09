@@ -168,7 +168,6 @@ metaDataHeatmapViewer.prototype.initialize = function() {
 
                 var ncells = curDisplayIdxs[1] - curDisplayIdxs[0];
 
-
                 var startIndex = Math.floor(startPC * ncells)
                 var endIndex = Math.floor(endPC * ncells);
 
@@ -210,7 +209,6 @@ metaDataHeatmapViewer.prototype.initialize = function() {
         }
 
     });
-
 
     (metadataAreaOverlay[0]).addEventListener('contextmenu', function(e) {
         e.preventDefault();
@@ -264,8 +262,6 @@ metaDataHeatmapViewer.prototype.initialize = function() {
                                                 // Make the slection here
                                                 var key = params.key;
                                                 var value = params.value;
-
-
                                                 mdhv.makeCellSelectionFromMetadata(key, value, newSelectionDisplayName, true, true);
                                             }
                                         } // if lenth == 0
@@ -332,7 +328,8 @@ metaDataHeatmapViewer.prototype.initialize = function() {
             if (!metaV.dragging) {
                 // The first mouse move after the mouse down
                 // Initiate dragging process
-                metaV.clearSelectionOverlay(); // This is for resetting the current selection params not for the actual clear
+                // This is for resetting the current selection params not for the actual clear
+                metaV.clearSelectionOverlay();
                 metaV.dragging = true;
             }
 
@@ -343,10 +340,8 @@ metaDataHeatmapViewer.prototype.initialize = function() {
             var height = canvas.height;
             ctx.clearRect(0, 0, width, height);
 
-
             var drawConsts = metaV.getDrawConstants();
             var actualPlotHeight = drawConsts.height;
-
 
             var heatDendView = new heatmapDendrogramViewer();
 
@@ -358,7 +353,6 @@ metaDataHeatmapViewer.prototype.initialize = function() {
             } else {
                 boundedX = x;
             }
-
 
             ctx.save();
             ctx.beginPath();
@@ -388,88 +382,9 @@ metaDataHeatmapViewer.prototype.initialize = function() {
         document.body.style.cursor = "default";
     });
 
-    // Make the menu
-
-    //var toolbar = Ext.create('Ext.Toolbar');
-    /*toolbar.add({
-            text: "",
-          type: "button",
-          tooltip: 'Download current view',
-          glyph: 0xf0ed,
-          handler: function(){
-              pagHelpers.regC(25);
-              var canvas = document.getElementById('metadata-area');
-                  const maxSize = 2000;
-                  if (canvas.width > maxSize | canvas.height >maxSize){
-                      Ext.Msg.show({
-                        title: 'Warning',
-                        msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
-                         'This may cause problems during exporting. Do you want to continue?',
-                         buttons: Ext.Msg.OKCANCEL,
-                         fn: function(s) {
-                           if (s == 'ok') {
-                              canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png', canvas)})
-                           } //if
-                         } //fn
-                      }) // Ext.Msg.show
-                  } else {
-                            canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'metadata.png', canvas)})
-              }
-
-
-          } // handler
-    });*/
-
-    /*toolbar.add({
-    text: '',
-    xtype: 'button',
-    tooltip: 'Clear selection overlay',
-    glyph: 0xf12d,
-    handler: function() {
-      var obj = new metaDataHeatmapViewer();
-      obj.clearSelectionOverlay();
-    }
-    });*/
-
-    /*toolbar.add({
-      text: '',
-      xtype: 'button',
-      tooltip: 'Help',
-      glyph: 0xf128,
-      handler: function() {
-            Ext.create('Ext.window.Window', {
-              height: 300,
-              width: 400,
-              title: 'Help: Metadata Heatmap',
-              scrollable: true,
-              bodyPadding: 10,
-              html: '<h2>Metadata heatmap</h2>' +
-                '<p>The heatmap displays metadata information about the cells, such as batch of origin and sequencing depth.</p>' +
-                '<p>Single click to identify individuals cell and corresponding metadata entry. The information can be seen in the status bar at the bottom left. Double click to color the embedding by the metadata row under your cursor. You can right-click on a cell for more options. This will allow you to select all the cells that belong to the same cluster as the given cell. The new cell selection will appear in the cell selections panel with the name you specify</p>' +
-
-                '<p>You can download the current view using the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon. In some cases the downloaded file will not have the correct extension, please rename it to end in ".png" if that happens. You can clear highlighting of cells using the <span style="font-family: FontAwesome">&#xf12d</span> (clear) icon.</p>',
-
-
-              constrain: true,
-              closable: true,
-              resizable: false
-            }).show();
-      } // handler
-    });*/ // toolbar add
-
-
-
-
-    //var aspectPanel = Ext.getCmp('metadataPanel').getHeader().add(toolbar);
-
-
-
-
     this.updateCanvasSize();
     this.drawMetadata();
 }
-
-
 
 /**
  * Show an overlay vertical line
@@ -521,7 +436,6 @@ metaDataHeatmapViewer.prototype.clearSelectionOverlayInternal = function() {
     var height = canvas.height;
     ctx.clearRect(0, 0, width, height);
 }
-
 
 /**
  * Update the canvas size of this element with the
@@ -686,7 +600,6 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
                 ctx.fillText(curLabel, labelx, y + labelYpad);
             }
 
-
             // Register a click region for this metadata row
             var y1 = j * cellHeight + top;
             var y2 = (j + 1) * cellHeight + top;
@@ -815,8 +728,6 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(select
     // Get the cells in the cell selection to highlight
     var cellSelCntr = new cellSelectionController();
 
-
-
     // Get the cell order
     var dataCntr = new dataController();
     dataCntr.getCellOrderHash(function(cellorderHash) {
@@ -862,7 +773,6 @@ metaDataHeatmapViewer.prototype.highlightCellSelectionsByNames = function(select
         });
     }); // get the cell order
 }
-
 
 /**
  * Make a cell selection from metadata
@@ -927,6 +837,7 @@ metaDataHeatmapViewer.prototype.makeCellSelectionFromMetadata = function(metadat
     });
 
 }
+
 metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(metadataName, selNamePrefix, restriction) {
     // Generate a cell selection
 
@@ -962,8 +873,8 @@ metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadata = function(met
         metadataName: metadataName,
         selNamePrefix: selNamePrefix
     });
-
 }
+
 metaDataHeatmapViewer.prototype.makeAllCellSelectionsFromMetadataProgress = function(metadataName, selNamePrefix, restriction) {
     // Generate a cell selection
 
@@ -1081,9 +992,7 @@ metaDataHeatmapViewer.prototype.generateLegend = function(metadataName) {
         items: [cellSelectionTable]
 
     }).show();
-
 }
-
 
 metaDataHeatmapViewer.prototype.downloadImage = function() {
     var canvas = document.getElementById('metadata-area');
