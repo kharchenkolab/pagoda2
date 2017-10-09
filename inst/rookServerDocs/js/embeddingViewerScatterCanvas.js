@@ -30,7 +30,7 @@ function embeddingViewerScatterCanvas() {
 
     // Used to slightly shrink the plotting area to prevent
     // plotting on the edges
-    this.rangeScaleFactor = 0.95;
+    this.rangeScaleFactor = 0.97;
 
     // These are used to keep track of the
     // Transformation applied to the embedding points
