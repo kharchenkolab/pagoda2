@@ -335,7 +335,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
 
             (new dataController()).getCellOrder(function(data) {
                 var embV = new embeddingViewer();
-                embV.highlightCell(data[cellindex]);
+                embV.highlightCellByIndex(cellindex);
             });
         } else {
             var embV = new embeddingViewer();

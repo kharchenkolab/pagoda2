@@ -48,7 +48,8 @@ function embeddingViewerScatterCanvas() {
     this.yScaleRangeMax;
     this.highlight = "box";
 
-    this.cellPositionCache = {};
+    this.cellPositionCacheByID = {};
+    this.cellPositionCacheByIndex = {};
 
     // Generates the html structure required for the viewer
     this.generateStructure();
@@ -1190,35 +1191,66 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
     }); // dataCntr.getCellOrder
 }; //generateFillStylesAspect
 
-embeddingViewerScatterCanvas.prototype.buildCellPositionCache = function(type, embeddingType, callback) {
+embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByID = function(type, embeddingType, callback) {
   var thisViewer = this;
   var cacheId = type + '_' + embeddingType;
 
   var dataCntr = new dataController();
   dataCntr.getEmbedding(type, embeddingType, function(plotData) {
 
-        thisViewer.cellPositionCache[cacheId] = {};
+        thisViewer.cellPositionCacheByID[cacheId] = {};
 
         for (var i = 0; i < plotData.length; i++) {
             var point = plotData[i];
-            thisViewer.cellPositionCache[cacheId][point[0]] = point;
+            thisViewer.cellPositionCacheByID[cacheId][point[0]] = point;
         }
 
         callback();
   });
 }
 
+embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByIndex = function(type, embeddingType, callback) {
+  var thisViewer = this;
+  var cacheId = type + '_' + embeddingType;
+
+  var dataCntr = new dataController();
+  dataCntr.getEmbedding(type, embeddingType, function(plotData) {
+        dataCntr.getCellOrderHash( function(cellorderData) {
+          thisViewer.cellPositionCacheByIndex[cacheId] = {};
+
+          for (var i = 0; i < plotData.length; i++) {
+              var point = plotData[i];
+              thisViewer.cellPositionCacheByIndex[cacheId][cellorderData[point[0]]] = point;
+          }
+
+          callback();
+        });
+  });
+}
+
+embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByIndex = function(type, embeddingType, cellindex, callback){
+  var thisViewer = this;
+  var cacheId = type + '_' + embeddingType;
+  if(typeof thisViewer.cellPositionCacheByIndex[cacheId] !== 'undefined')  {
+    callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
+  } else {
+    thisViewer.buildCellPositionCacheByIndex(type, embeddingType, function() {
+      callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
+    });
+  }
+}
+
 /**
  * Get the cell position from cache building the index if required
  */
-embeddingViewerScatterCanvas.prototype.getCellPositionFromCache = function(type, embeddingType, cellid, callback){
+embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByID = function(type, embeddingType, cellid, callback){
   var thisViewer = this;
   var cacheId = type + '_' + embeddingType;
-  if(typeof thisViewer.cellPositionCache[cacheId] !== 'undefined')  {
-    callback(thisViewer.cellPositionCache[cacheId][cellid]);
+  if(typeof thisViewer.cellPositionCacheByID[cacheId] !== 'undefined')  {
+    callback(thisViewer.cellPositionCacheByID[cacheId][cellid]);
   } else {
-    thisViewer.buildCellPositionCache(type, embeddingType, function() {
-      callback(thisViewer.cellPositionCache[cacheId][cellid]);
+    thisViewer.buildCellPositionCacheByID(type, embeddingType, function() {
+      callback(thisViewer.cellPositionCacheByID[cacheId][cellid]);
     });
   }
 }
@@ -1232,7 +1264,7 @@ embeddingViewerScatterCanvas.prototype.clearHighlightCell = function() {
 /**
  * Highlight the position of a specific cell
  */
-embeddingViewerScatterCanvas.prototype.highlightCell = function(cellid) {
+embeddingViewerScatterCanvas.prototype.highlightCellByID = function(cellid) {
     var embViewer = new embeddingViewer();
     var thisViewer = this;
 
@@ -1243,7 +1275,7 @@ embeddingViewerScatterCanvas.prototype.highlightCell = function(cellid) {
 
     var size = this.size;
 
-    this.getCellPositionFromCache(type, embeddingType, cellid, function(point) {
+    this.getCellPositionFromCacheByID(type, embeddingType, cellid, function(point) {
         thisViewer.calculateDomain(null, type, embeddingType);
         thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
         thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
@@ -1281,3 +1313,57 @@ embeddingViewerScatterCanvas.prototype.highlightCell = function(cellid) {
         ctx.restore();
     });
 }
+
+/**
+ * Highlight the position of a specific cell given its index in cell order
+ */
+embeddingViewerScatterCanvas.prototype.highlightCellByIndex = function(cellindex) {
+    var embViewer = new embeddingViewer();
+    var thisViewer = this;
+
+    var config = embViewer.getConfig();
+    var dataCntr = new dataController();
+    var type = config.type;
+    var embeddingType = config.embeddingType;
+
+    var size = this.size;
+
+    this.getCellPositionFromCacheByIndex(type, embeddingType, cellindex, function(point) {
+        thisViewer.calculateDomain(null, type, embeddingType);
+        thisViewer.xScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+        thisViewer.xScaleRangeMax = size * thisViewer.rangeScaleFactor;
+        var xScale = pagHelpers.linearScaleGenerator(thisViewer.xScaleDomainMin,
+            thisViewer.xScaleDomainMax,
+            thisViewer.xScaleRangeMin,
+            thisViewer.xScaleRangeMax, thisViewer.hpad);
+
+        thisViewer.yScaleRangeMin = (size * (1 - thisViewer.rangeScaleFactor));
+        thisViewer.yScaleRangeMax = size * thisViewer.rangeScaleFactor;
+        var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
+            thisViewer.yScaleDomainMax,
+            thisViewer.yScaleRangeMin,
+            thisViewer.yScaleRangeMax, thisViewer.vpad);
+
+        var pointsize = embViewer.getCurrentPointSize();
+
+        var canvas = document.getElementById('embedding-canvas-hover');
+        var ctx = canvas.getContext('2d');
+
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineWidth = 4;
+        ctx.fillStyle = '#FF2222';
+
+        var xs = xScale(point[1]);
+        var ys = yScale(point[2]);
+
+        ctx.strokeStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(xs, ys, pointsize, 0, 2 * Math.PI, false);
+        ctx.stroke();
+        ctx.fill();
+
+        ctx.restore();
+    });
+}
+

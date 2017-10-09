@@ -48,8 +48,12 @@ embeddingViewer.prototype.showWait = function() {
     });
 }
 
-embeddingViewer.prototype.highlightCell = function(cellid) {
-  this.currentViewer.highlightCell(cellid);
+embeddingViewer.prototype.highlightCellByIndex = function(cellindex) {
+  this.currentViewer.highlightCellByIndex(cellindex);
+};
+
+embeddingViewer.prototype.highlightCellByID = function(cellid) {
+  this.currentViewer.highlightCellByID(cellid);
 };
 
 embeddingViewer.prototype.clearHighlightCell = function() {

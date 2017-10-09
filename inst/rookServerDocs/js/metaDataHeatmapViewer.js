@@ -231,7 +231,7 @@ metaDataHeatmapViewer.prototype.initialize = function() {
                                 stsBar.showMessage(msg);
 
                                 var embViewer = new embeddingViewer();
-                                embViewer.highlightCell(params.cellid);
+                                embViewer.highlightCellByID(params.cellid);
                             });
                         }
                     },
@@ -329,7 +329,8 @@ metaDataHeatmapViewer.prototype.initialize = function() {
 
           (new dataController()).getCellOrder(function(data) {
             var embV = new embeddingViewer();
-            embV.highlightCell(data[cellindex]);
+            //embV.highlightCellByID(data[cellindex]);
+            embV.highlightCellByIndex(cellindex);
           });
         } else {
             var embV = new embeddingViewer();
