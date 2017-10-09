@@ -310,18 +310,37 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
     });
 
   heatmapOverlayArea.addEventListener('mousemove', function(e) {
-
     var aspHeatView =  new aspectHeatmapViewer();
+    var heatV = new heatmapViewer();
+  	var metaV = new metaDataHeatmapViewer();
+  	var heatDendView = new heatmapDendrogramViewer();
+  	var dendV = new dendrogramViewer();
 
     var x = e.offsetX;
     var y = e.offsetY;
 
-  	var heatV = new heatmapViewer();
-  	var metaV = new metaDataHeatmapViewer();
+    var drawConsts = aspHeatView.getDrawConstants();
+//
+        // Calculate cell index for embedding hover
+        //var drawConsts = metaV.getDrawConstants();
+        var metaWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
+        var posPC = (e.offsetX - drawConsts.left) / metaWidth;
+        if (posPC > 0 && posPC < 1) {
+          var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
+          var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0]));
 
+          (new dataController()).getCellOrder(function(data) {
+            var embV = new embeddingViewer();
+            embV.highlightCell(data[cellindex]);
+          });
+        } else {
+            var embV = new embeddingViewer();
+            embV.clearHighlightCell();
+        }
+
+//
   	heatV.showOverlay(x);
   	metaV.showOverlay(x);
-
   	aspHeatView.showOverlay(x, y);
 
     if(aspHeatView.primaryMouseButtonDown) {
@@ -332,7 +351,6 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
           aspHeatView.dragging = true;
         }
 
-
         // Clear the canvas
         var canvas = document.getElementById('aspect-heatmap-area-selection');
         var ctx = canvas.getContext('2d');
@@ -341,11 +359,9 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         ctx.clearRect(0,0,width, height);
 
 
-        var drawConsts = aspHeatView.getDrawConstants();
         var actualPlotHeight = aspHeatView.getActualPlotHeight();
 
 
-        var heatDendView = new heatmapDendrogramViewer();
 
         var boundedX;
         if (x < drawConsts.left) {
@@ -355,7 +371,6 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         } else {
           boundedX = x;
         }
-
 
         ctx.save();
         ctx.beginPath();

@@ -207,7 +207,6 @@ metaDataHeatmapViewer.prototype.initialize = function() {
                 });
             }
         }
-
     });
 
     (metadataAreaOverlay[0]).addEventListener('contextmenu', function(e) {
@@ -320,11 +319,10 @@ metaDataHeatmapViewer.prototype.initialize = function() {
         var heatDendView = new heatmapDendrogramViewer();
         var dendV = new dendrogramViewer();
 
-        // Calculate cell index
+        // Calculate cell index for embedding hover
         var drawConsts = metaV.getDrawConstants();
         var metaWidth = drawConsts.width - heatDendView.getPlotAreaRightPadding();
         var posPC = (e.offsetX - drawConsts.left) / metaWidth;
-
         if (posPC > 0 && posPC < 1) {
           var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
           var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0]));
@@ -386,13 +384,19 @@ metaDataHeatmapViewer.prototype.initialize = function() {
     }); // mousemove addEventListener
 
     (metadataAreaOverlay[0]).addEventListener('mouseout', function(e) {
+      console.log('mouse out');
         var metaV = new metaDataHeatmapViewer();
         var heatV = new heatmapViewer();
 
         metaV.clearOverlay();
         heatV.clearOverlay();
+
         var aspeV = new aspectHeatmapViewer();
-        aspeV.clearOverlay()
+        aspeV.clearOverlay();
+
+        // Clear embedding hover
+        var embV = new embeddingViewer();
+        embV.clearHighlightCell();
     });
 
     // Pointer change to cross hairs when over the heatmap
