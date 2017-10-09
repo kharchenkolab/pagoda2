@@ -204,12 +204,13 @@ var pagHelpers = {
             (outputMax) + outputMin)
     },
 
-    linearScaleGenerator: function(domainMin, domainMax, rangeMin, rangeMax) {
-        // This whole thing can be precalculated
+    linearScaleGenerator: function(domainMin, domainMax, rangeMin, rangeMax, offset) {
+        offset = (typeof offset !== 'undefined') ? offset : 0;
         const factor = 1 / (domainMax - domainMin) * (rangeMax - rangeMin);
+        const totalOffset = rangeMin + offset;
 
         return function(x) {
-            return (x - domainMin) * factor + rangeMin;
+            return (x - domainMin) * factor + totalOffset;
         }
     },
 
