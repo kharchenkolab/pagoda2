@@ -204,97 +204,8 @@ heatmapViewer.prototype.generateHeatmapSettingsMenu = function(){
  * Generates the heatmap configuration menu
  */
 heatmapViewer.prototype.generateMenu = function() {
-  //var toolbar = Ext.create('Ext.Toolbar');
-  //var heatView = this;
 
-
-  //var heatmapSettingsMenu = this.generateHeatmapSettingsMenu();
-
-
-    /*toolbar.add({
-          text: "",
-        type: "button",
-        tooltip: 'Download current view',
-        glyph: 0xf0ed,
-        handler: function(){
-            var canvas = document.getElementById('heatmap-area');
-            const maxSize = 2000;
-            if (canvas.width > maxSize | canvas.height >maxSize){
-                Ext.Msg.show({
-                  title: 'Warning',
-                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimension.' +
-                   'This may cause problems during exporting. Do you want to continue?',
-                   buttons: Ext.Msg.OKCANCEL,
-                   fn: function(s) {
-                     if (s == 'ok') {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
-                     } //if
-                   } //fn
-                }) // Ext.Msg.show
-            } else {
-                          canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'heatmap.png',canvas)})
-            }// if
-        } // handler
-});*/
-
-
-
-    /*toolbar.add({
-  text: '',
-  xtype: 'button',
-  tooltip: 'Clear selection overlay',
-  glyph: 0xf12d,
-  handler: function() {
-    var heatV = new heatmapViewer();
-    heatV.clearSelectionOverlay();
-
-  }
-
-});*/
-
-      // Add plot configuration menu button
-    /*toolbar.add({
-    	text: '',
-    	xtype: 'button',
-    	tooltip: 'Configure heatmap plot settings',
-    	glyph: 0xf013,
-    	menu: heatmapSettingsMenu
-    });*/
-
-
-      /*toolbar.add({
-    text: '',
-    xtype: 'button',
-    tooltip: 'Help',
-    glyph: 0xf128,
-    handler: function() {
-          Ext.create('Ext.window.Window', {
-            height: 300,
-            width: 400,
-            title: 'Help: Main Heatmap',
-            scrollable: true,
-            bodyPadding: 10,
-            html: '<h2>Main heatmap</h2>' +
-              '<p>The heatmap displays expression values for the selected genes.' +
-              ' Genes are shown as rows and cells as columns</p>'+
-              '<p>Double click to color the embedding by the selected gene expression.' +
-              'You can hover with your mouse to identify genes and see the correspondence '+
-              ' of the underlying cell in other heatmaps.</p>' +
-              '<p>You can download the current view using the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon. In some cases the downloaded file will not have the correct extension, please rename it to end in ".png" if that happens. You can clear highlighting of cells using the <span style="font-family: FontAwesome">&#xf12d</span> (clear) icon. Finally, you can use the <span style="font-family: FontAwesome">&#xf013</span> (settings) icon to adjust the view of the heatmap. Specifically you can adjust the color palette used for plotting and the number of colours available. Some palettes only support a limited range or a fixed number of colours and this may limit the number of values you can enter. The reorder rows option (default: on) enabled reordering of the gene rows. When the checkbox is selected the genes will appear in the order that they appear in the table used to select them. When the checkbox is selected the genes will be reordered on the fly. Reordering is performed by kmeans clustering of the rows.</p>',
-            constrain: true,
-            closable: true,
-            resizable: false
-          }).show();
-    } // handler
-  });*/ // toolbar add
-
-
-    //var heatmapPanel = Ext.getCmp('heatmapPanel');
-    //heatmapPanel.getHeader().add(toolbar);
 }
-
-
-
 
 /**
  * Setup all the overlay canvas events
@@ -406,6 +317,26 @@ heatmapViewer.prototype.setupOverlays = function() {
     	var heatV = new heatmapViewer();
     	var metaV = new metaDataHeatmapViewer();
     	var aspeV = new aspectHeatmapViewer();
+    	var heatDendView = new heatmapDendrogramViewer();
+    	var dendV = new dendrogramViewer();
+
+    	var drawConsts = heatV.getDrawConstants();
+
+        // Calculate cell index for embedding hover
+        var posPC = (e.offsetX - drawConsts.left) / drawConsts.width;
+        if (posPC > 0 && posPC < 1) {
+
+          var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
+          var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0]));
+
+          (new dataController()).getCellOrder(function(data) {
+            var embV = new embeddingViewer();
+            embV.highlightCell(data[cellindex]);
+          });
+        } else {
+            var embV = new embeddingViewer();
+            embV.clearHighlightCell();
+        }
 
     	var label;
 
@@ -434,7 +365,7 @@ heatmapViewer.prototype.setupOverlays = function() {
         ctx.clearRect(0,0,width, height);
 
 
-        var drawConsts = heatV.getDrawConstants();
+
         var actualPlotHeight = heatV.getActualPlotHeight();
 
         var boundedX;
@@ -446,18 +377,12 @@ heatmapViewer.prototype.setupOverlays = function() {
           boundedX = x;
         }
 
-
         ctx.save();
         ctx.beginPath();
         ctx.fillStyle = 'rgba(255,0,0,0.5)';
         ctx.fillRect(heatV.dragStartX, drawConsts.top, boundedX - heatV.dragStartX, actualPlotHeight);
         ctx.restore();
-
-
-
       }
-
-
     });
 
     // Remove the cursor when done
