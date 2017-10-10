@@ -32,8 +32,8 @@ namespace fs = ::boost::filesystem;
 // Number.MAX_SAFE_INTEGER = 9007199254740991
 // Max Int32 Value: 4294967295
 // Number.MAX_SAFE_INTEGER / 4294967295 = 2097152 =  2 * (1024)^2
-#define FILE_BLOCK_SIZE ((uint64_t) 2097152)
-
+//#define FILE_BLOCK_SIZE ((uint64_t) 2097152) // This allows max file size allowable by integer but produces larger files
+#define FILE_BLOCK_SIZE ((uint64_t) 32768) // 32k block size
 
 
 ////////////////////////////////////
