@@ -636,13 +636,15 @@ embeddingViewerScatterCanvas.prototype.generateStructure = function() {
     // Add a canvas
     embeddingContainerInner.append('<canvas id="embedding-canvas"></canvas>');
 
+    // Add the overlay canvas
+    embeddingContainerInner.append('<canvas id="embedding-canvas-overlay"></canvas>');
+
     // Add the hover cell highlight canvas
     embeddingContainerInner.append('<canvas id="embedding-canvas-hover"></canvas>');
 
-    // Add the overlay canvas
-    embeddingContainerInner.append('<canvas id="embedding-canvas-overlay"></canvas>');
-    var embCanvasOverlay = document.getElementById('embedding-canvas-overlay');
-    this.setupOverlayEvents(embCanvasOverlay);
+    // Add event listeners to the top canvas
+    var eventCanvas = document.getElementById('embedding-canvas-hover');
+    this.setupOverlayEvents(eventCanvas);
 
     this.resizeElements();
 }
