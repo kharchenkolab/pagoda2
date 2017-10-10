@@ -56,15 +56,12 @@ pagoda2WebApp <- setRefClass(
         # keepOriginal: maintain a copy to the original RF object -- this allows for some extra capabilities
 
         initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
-                              verbose = 0, debug, geneSets, metadata=metadata, keepOriginal=TRUE,
+                              verbose = 0, debug, geneSets, metadata=metadata,
                               innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
 
             # Keep the original pagoda 2 object
-            # This is required for things like differential expression and
-            # gene KNN lookups
-            if (keepOriginal) {
-              originalP2object <<- pagoda2obj
-            }
+            originalP2object <<- pagoda2obj
+
 
 		        # Check that the object we are getting is what it should be
             if (class(pagoda2obj) != "Pagoda2") {
