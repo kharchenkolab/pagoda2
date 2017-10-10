@@ -14,8 +14,7 @@ http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.ht
 
 # Installation Instructions
 
-Installation of pagoda2 requires installation of the Non-metric space library (nmslib)
-and a custom built largeVis package. Pagoda 2 has been tested with nmslib v1.5.3 and nmslib v1.6 and it should work with any subsequent version. To install pagoda2 please follow the instructions below.
+Installation of pagoda2 requires installation of the Non-metric space library (nmslib) and a custom built largeVis package. Pagoda 2 has been tested with nmslib v1.5.3 and nmslib v1.6. The current package has configured to be compiled with nmslib v1.6 and this is the recommended version. To install pagoda2 please follow the instructions below.
 
 ## System dependencies
 
