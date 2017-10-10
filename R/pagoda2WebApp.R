@@ -29,18 +29,10 @@ pagoda2WebApp <- setRefClass(
     fields = c(
         "name", # The name of this application for display purposes
         "verbose", # Server verbosity level
-        "odgenes", # List of overdispersed genes
-        "embeddings",
-        "clusters",
         "mat",
-        "matsparse",
         "cellmetadata",
-        "reductions",
         "mainDendrogram",
         "geneSets",
-        "varinfo",
-        "pathways",
-        "pathwayODInfo", # Information about the pathways
         "originalP2object",
         "rookRoot",
         "appmetadata"
@@ -59,8 +51,7 @@ pagoda2WebApp <- setRefClass(
                               verbose = 0, debug, geneSets, metadata=metadata,
                               innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
 
-            # Keep the original pagoda 2 object
-            originalP2object <<- pagoda2obj
+
 
 
 		        # Check that the object we are getting is what it should be
@@ -69,39 +60,22 @@ pagoda2WebApp <- setRefClass(
                 stop("ERROR: The provided object is not a pagoda 2 object")
             }
 
+            # Keep the original pagoda 2 object
+            originalP2object <<- pagoda2obj
+
             # Check that the dendGroups we are getting is what it should be
             if (length(dendGroups) != nrow(pagoda2obj$counts)) {
-                cat("We have an error");
                 stop("ERROR: The provided dendGroups has a different number of cells than the pagoda 2 object")
             }
 
             # Keep the name for later (consistent) use
             name <<- appName;
 
-            # Copy data we need
-            embeddings <<- pagoda2obj$embeddings;
-            clusters <<- pagoda2obj$clusters;
-
-            # Data matrix kept as sparse matrix
-            matsparse <<- pagoda2obj$counts;
-
-            # Get the pathways
-            pathways <<- pagoda2obj$misc$pathwayOD;
-
             # Using the cell grouping provided in dendGroups
             # Generate an hclust object of these cell groups
             # a cell ordering compatible with these groups
             # an the number of cells in each group (for plotting purposes)
             mainDendrogram <<- .self$generateDendrogramOfGroups(pagoda2obj,dendGroups,innerOrder,orderDend);
-
-            # Available reductions
-            reductions <<- pagoda2obj$reductions;
-
-            # Gene variance information
-            varinfo <<- pagoda2obj$misc$varinfo;
-
-            # List of overdispersed genes
-            odgenes <<- pagoda2obj$misc$odgenes
 
             # Verbosity level
             verbose <<- verbose;
@@ -114,11 +88,9 @@ pagoda2WebApp <- setRefClass(
             # The application metadata for things like the title
             appmetadata <<- appmetadata;
 
-             # Rook sever root directory to be changed to package subdirectory
+            # Rook sever root directory to be changed to package subdirectory
             # this holds all the static files required by the app
             rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
-
-            pathwayODInfo <<- pagoda2obj$misc$pathwayODInfo;
 
             # This Uses Middleware to process all the requests that
             # our class doesn't process
@@ -139,9 +111,7 @@ pagoda2WebApp <- setRefClass(
                               cat("\n");
                               res$finish();
                           })
-
                       ));
-
         },
 
         generateDendrogramOfGroups = function(r, dendrogramCellGroups,innerOrder = NULL,orderDend=FALSE){
@@ -189,12 +159,12 @@ pagoda2WebApp <- setRefClass(
                             }
 
                         } else if (innerOrder == "reductdist") {
-                            if(!"PCA" %in% names(reductions)){
+                            if(!"PCA" %in% names(originalP2object$reductions)){
                                 stop("Missing PCA reduction, , run calculatePcaReduction first");
                             } else {
 
                                 celsel <- names(cl0)[cl0 == x]
-                                celsel[hclust(as.dist(1-WGCNA::cor(t(reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
+                                celsel[hclust(as.dist(1-WGCNA::cor(t(originalP2object$reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
                             }
 
                         } else if(innerOrder == "graphbased") {
@@ -331,7 +301,7 @@ pagoda2WebApp <- setRefClass(
                                       # Return a gene information table
                                       # for all the genes
                                       'geneinformation' = {
-                                          dataset <- varinfo[,c("m","v")];
+                                          dataset <- originalP2object$misc$varinfo[,c("m","v")];
                                           dataset$name <- rownames(dataset);
 
                                           # Convert to row format
@@ -348,26 +318,6 @@ pagoda2WebApp <- setRefClass(
                                           response$write(toJSON(retd));
                                           return(response$finish());
                                       },
-
-                                      # 'odgeneinformation' = {
-                                      #     # Only genes in the odgene list
-                                      #     dataset <- varinfo[odgenes,c("m","v")];
-                                      #     dataset$name <- rownames(dataset);
-                                      #
-                                      #     # Convert to row format
-                                      #     retd <-  apply(dataset,
-                                      #                    1, function(x) {
-                                      #                        list(genename = x[["name"]],
-                                      #                             dispersion =x[["v"]],
-                                      #                             meanExpr = x[["m"]])
-                                      #                    });
-                                      #     retd <- unname(retd);
-                                      #
-                                      #     response$header("Content-type", "application/javascript");
-                                      #     response$write(toJSON(retd));
-                                      #     return(response$finish());
-                                      #  },
-
 
                                       # Very similar to 'geneinformation'
                                       # but only returns information for the genes that belong
@@ -387,10 +337,10 @@ pagoda2WebApp <- setRefClass(
                                         geneList <- geneSets[[geneListName]]$genes
 
                                         # Subset to genes that exist
-                                        geneList <- geneList[geneList %in% rownames(varinfo)];
+                                        geneList <- geneList[geneList %in% rownames(originalP2object$misc$varinfo)];
 
                                         # Generate dataset
-                                        dataset <-  varinfo[geneList, c("m","v")];
+                                        dataset <-  originalP2object$misc$varinfo[geneList, c("m","v")];
                                         dataset$name <-  rownames(dataset);
 
                                         # Convert to row format
@@ -423,7 +373,7 @@ pagoda2WebApp <- setRefClass(
                                       'availableaspects' = {
                                         # /getData.php?dataidentifier=availableaspects
                                         response$header("Content-type", "application/javascript");
-                                        response$write(toJSON(rownames(pathways$xv)));
+                                        response$write(toJSON(rownames(originalP2object$misc$pathwayOD$xv)));
                                         return(response$finish());
                                       },
 
@@ -432,11 +382,11 @@ pagoda2WebApp <- setRefClass(
                                           aspectId <- url_decode(requestArguments[['aspectId']]);
 
                                           # Genesets in this aspect
-                                          genesets <- unname(pathways$cnam[[aspectId]]);
+                                          genesets <- unname(originalP2object$misc$pathwayOD$cnam[[aspectId]]);
 
                                           # Get the metadata for these gene sets
                                           colOfInterest <- c("name","n","cz");
-                                          retTable <- pathwayODInfo[genesets, colOfInterest];
+                                          retTable <- originalP2object$misc$pathwayODInfo[genesets, colOfInterest];
 
                                           # Convert to JSON friendly format
                                           retObj <- unname(apply(retTable, 1, function(x) {
@@ -489,7 +439,7 @@ pagoda2WebApp <- setRefClass(
                                         aspectIds <- unlist(strsplit(aspectIds, split = "|", fixed =T));
 
                                         cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
-                                        matrixToSend <- pathways$xv[aspectIds,cellIndices,drop=F];
+                                        matrixToSend <- originalP2object$misc$pathwayOD$xv[aspectIds,cellIndices,drop=F];
 
                                         # Discard values < 1/50 of the max
                                         #trimPoint <-  max(abs(matrixToSend)) / 50;
@@ -535,7 +485,7 @@ pagoda2WebApp <- setRefClass(
                                           getCellNames <- url_decode(postArgs[['getcellnames']]);
 
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
-                                          matrixToSend <- pathways$xv[,cellIndices,drop=F];
+                                          matrixToSend <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
 
                                           # Discard values < 1/50 of the max
                                           #trimPoint <-  max(abs(matrixToSend)) / 50;
@@ -631,14 +581,14 @@ pagoda2WebApp <- setRefClass(
                                             print('------------------------')
                                           }
 
-                                          if (!all(c(geneIdentifiers %in% colnames(matsparse)))) {
-                                              serverLog("Error: The request contains gene names that are not in matsparse!");
-                                              geneIdentifiers <- geneIdentifiers[geneIdentifiers %in% colnames(matsparse)];
+                                          if (!all(c(geneIdentifiers %in% colnames(originalP2object$counts)))) {
+                                              serverLog("Error: The request contains gene names that are not in originalP2object$counts!");
+                                              geneIdentifiers <- geneIdentifiers[geneIdentifiers %in% colnames(originalP2object$counts)];
                                           }
 
                                           # Ordering of the matrix according to the hclust
                                           cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)]
-                                          matrixToSend <- matsparse[cellIndices,geneIdentifiers,drop=F];
+                                          matrixToSend <- originalP2object$counts[cellIndices,geneIdentifiers,drop=F];
 
 
                                           # FOR DEBUGGING HEATMAP
@@ -694,13 +644,13 @@ pagoda2WebApp <- setRefClass(
 
                                            # Is the requested reduction available?
                                            if (!is.null(reductionname) &&
-                                               reductionname  %in% c("mat", names(reductions)) ) {
+                                               reductionname  %in% c("mat", names(originalP2object$reductions)) ) {
 
                                               workingReduction <- NULL;
                                               if (reductionname == "mat") {
                                                   workingReduction <- mat;
                                               } else {
-                                                  workingReduction <- reductions[[reductionname]];
+                                                  workingReduction <- originalP2object$reductions[[reductionname]];
                                               }
 
                                               selColNames <- requestArguments[['colnames']];
@@ -757,16 +707,16 @@ pagoda2WebApp <- setRefClass(
                                           type <- url_decode(requestArguments[['type']]);
 
                                           if (!is.null(type)) {
-                                              if ( type %in% c( names(embeddings), "mat") ) {
+                                              if ( type %in% c( names(originalP2object$embeddings), "mat") ) {
                                                   response$header('Content-type', "application/javascript");
 
                                                   # Which embedding?
                                                   embeddingType <- url_decode(requestArguments[['embeddingtype']]);
 
                                                   if ( (!is.null(embeddingType)) &&
-                                                       embeddingType %in% names(embeddings[[type]]) ) {
+                                                       embeddingType %in% names(originalP2object$embeddings[[type]]) ) {
 
-                                                      a <- embeddings[[type]][[embeddingType]];
+                                                      a <- originalP2object$embeddings[[type]][[embeddingType]];
                                                       ret <- list(
                                                           values = .self$packCompressFloat64Array(as.vector(a)),
                                                           dim =  dim(a),
@@ -780,8 +730,6 @@ pagoda2WebApp <- setRefClass(
                                                       return(response$finish());
                                                   }
 
-
-                                                  #response$write(toJSON( embeddings[[type]] ));
                                               } else {
                                                   # TODO: Set the headers and possibly return a JSON encoded error
                                                   response$write("Error: Unknown type specified");
@@ -966,7 +914,7 @@ pagoda2WebApp <- setRefClass(
                 id <- embStructure[[reduc]][[embed]][[1]];
                 filename <- paste0(id, '.json');
 
-                a <- embeddings[[reduc]][[embed]];
+                a <- originalP2object$embeddings[[reduc]][[embed]];
                 ret <- list(
                     values = .self$packCompressFloat64Array(as.vector(a)),
                     dim =  dim(a),
@@ -982,11 +930,11 @@ pagoda2WebApp <- setRefClass(
             exportList[["embedList"]] <- grep("emb_",names(exportList),value=T);
 
             # Main Sparse count matrix to save
-            matsparseToSave <- matsparse[mainDendrogram$cellorder,]
+            matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,]
 
             # Serialise aspect matrix
             cellIndices <- mainDendrogram$cellorder;
-            aspectMatrixToSave <- pathways$xv[,cellIndices,drop=F];
+            aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
 
             aspectMatrixToSave <- t(aspectMatrixToSave);
             aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
@@ -994,13 +942,13 @@ pagoda2WebApp <- setRefClass(
             # Serialise the aspect information
 
             aspectInformation <- list();
-            for (curAspect in rownames(pathways$xv)) {
+            for (curAspect in rownames(originalP2object$misc$pathwayOD$xv)) {
                 # Genesets in this aspect
-                curgenesets <- unname(pathways$cnam[[curAspect]]);
+                curgenesets <- unname(originalP2object$misc$pathwayOD$cnam[[curAspect]]);
 
                 # Get the metadata for these gene sets
                 colOfInterest <- c("name","n","cz");
-                retTable <- pathwayODInfo[curgenesets, colOfInterest];
+                retTable <- originalP2object$misc$pathwayODInfo[curgenesets, colOfInterest];
 
                 # Convert to JSON friendly format
                 aspectInformation[[curAspect]]  <- unname(apply(retTable, 1, function(x) {
@@ -1101,7 +1049,7 @@ pagoda2WebApp <- setRefClass(
 	      },
 
 		    availableAspectsJSON = function() {
-		      toJSON(rownames(pathways$xv));
+		      toJSON(rownames(originalP2object$misc$pathwayOD$xv));
 		    },
 
 		    cellmetadataJSON = function() {
@@ -1109,7 +1057,7 @@ pagoda2WebApp <- setRefClass(
 		    },
 
 		    geneInformationJSON = function() {
-		      dataset <- varinfo[,c("m","v")];
+		      dataset <- originalP2object$misc$varinfo[,c("m","v")];
 		      dataset$name <- rownames(dataset);
 
 		      # Convert to row format
