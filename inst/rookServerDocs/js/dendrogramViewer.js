@@ -1482,70 +1482,8 @@ dendrogramViewer.prototype.showRelatedGenes = function() {
 }
 
 dendrogramViewer.prototype.downloadImagePopUp = function(){
-  Ext.create("Ext.window.Window", {
-    title: "Print Selections",
-    id: "printSelectionMenu",
-    modal: true,
-    resizeable: false,
-
-    items:[
-      {
-        html: "<h3>Which of the following do you want to print?</h3>",
-      },
-      {
-        xtype: "checkbox",
-        id: "printDendrogram",
-        boxLabel: "Dendrogram",
-        padding: "5 5 3 3"
-      },
-      {
-        xtype: "checkbox",
-        id: "printMetaDataHeatmap",
-        boxLabel: "Metadata Heatmap",
-        padding: "5 5 3 3"
-      },
-      {
-        xtype: "checkbox",
-        id: "printAspectHeatmap",
-        boxLabel: "Aspect Heatmap",
-        padding: "5 5 3 3"
-      },
-      {
-        xtype: "checkbox",
-        id: "printHeatmap",
-        boxLabel: "Gene Heatmap",
-        padding: "5 5 3 3"
-      },
-      {
-        xtype: "button",
-        text: "Ok",
-        handler: function(){
-          if(Ext.getCmp("printDendrogram").getValue()){
-            (new dendrogramViewer()).downloadImage()
-          }
-          if(Ext.getCmp("printMetaDataHeatmap").getValue()){
-            (new metaDataHeatmapViewer()).downloadImage()
-          }
-          if(Ext.getCmp("printAspectHeatmap").getValue()){
-            (new aspectHeatmapViewer()).downloadImage()
-          }
-          if(Ext.getCmp("printHeatmap").getValue()){
-            (new heatmapViewer()).downloadImage()
-          }
-          Ext.getCmp("printSelectionMenu").close();
-        }
-      },
-      {
-        xtype: "button",
-        text: "Cancel",
-        handler: function(){
-          Ext.getCmp("printSelectionMenu").close();
-        }
-      },
-    ]
-  }).show();
-  var heatView = new heatmapViewer();
-  if (typeof heatView.displayGenes === 'undefined' || heatView.displayGenes.length === 0) {
-    Ext.getCmp("printHeatmap").disable();
-  }
+            (new dendrogramViewer()).downloadImage();
+            (new metaDataHeatmapViewer()).downloadImage();
+            (new aspectHeatmapViewer()).downloadImage();
+            (new heatmapViewer()).downloadImage();
 }
