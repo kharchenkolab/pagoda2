@@ -118,105 +118,6 @@ aspectHeatmapViewer.prototype.generateAspectHeatmapSettingsMenu = function() {
 }
 
 /**
- * Genereate the menu
- * @private
- * @deprecated
- */
-aspectHeatmapViewer.prototype.generateMenu = function() {
-    //var toolbar = Ext.create('Ext.Toolbar');
-
-
-    //var aspHeatView = new aspectHeatmapViewer();
-    //var settingsMenu = aspHeatView.generateAspectHeatmapSettingsMenu();
-
-    /*toolbar.add({
-          text: "",
-        type: "button",
-        tooltip: 'Download current view',
-        glyph: 0xf0ed,
-        handler: function(){
-            var canvas = document.getElementById('aspect-heatmap-area');
-
-            const maxSize = 2000;
-            if (canvas.width > maxSize | canvas.height >maxSize){
-                Ext.Msg.show({
-                  title: 'Warning',
-                  msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
-                   'This may cause problems during exporting. Do you want to continue?',
-                   buttons: Ext.Msg.OKCANCEL,
-                   fn: function(s) {
-                     if (s == 'ok') {
-                        canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
-                     } //if
-                   } //fn
-                }) // Ext.Msg.show
-            } else {
-                canvas.toBlob(function(data){pagHelpers.downloadURL(data, 'aspects.png',canvas)})
-            } // if
-        } // handler
-});*/
-
-    /*toolbar.add({
-  text: '',
-  xtype: 'button',
-  tooltip: 'Clear selection overlay',
-  glyph: 0xf12d,
-  handler: function() {
-    var obj = new aspectHeatmapViewer();
-    obj.clearSelectionOverlay();
-  }
-
-});*/
-
-
-    // Add plot configuration menu button
-    /*toolbar.add({
-      	text: '',
-      	xtype: 'button',
-      	tooltip: 'Configure aspect heatmap plot settings',
-      	glyph: 0xf013,
-      	menu: settingsMenu
-      });*/
-
-
-
-    /*toolbar.add({
-      text: '',
-      xtype: 'button',
-      tooltip: 'Help',
-      glyph: 0xf128,
-      handler: function() {
-            Ext.create('Ext.window.Window', {
-              height: 300,
-              width: 400,
-              title: 'Help: Aspect heatmap',
-              scrollable: true,
-              bodyPadding: 10,
-              html: '<h2>Aspect heatmap</h2>' +
-                '<p>The heatmap displays cell weight values for the aspects.' +
-                ' Aspects are shown as rows and cells as columns</p>'+
-                '<p>Double click to color the embedding by the selected aspect.' +
-                'You can hover with your mouse to identify genes and see the correspondence '+
-                ' of the underlying cell in other heatmaps.</p>' +
-                '<p>You can download the current view using the <span style="font-family: FontAwesome">&#xf0ed</span> (download) icon. In some cases the downloaded file will not have the correct extension, please rename it to end in ".png" if that happens. You can clear highlighting of cells using the <span style="font-family: FontAwesome">&#xf12d</span> (clear) icon. Finally, you can use the <span style="font-family: FontAwesome">&#xf013</span> (settings) icon to adjust the view of the heatmap. Specifically you can adjust the color palette used for plotting and the number of colours available. Some palettes only support a limited range or a fixed number of colours and this may limit the number of values you can enter.</p>',
-
-
-
-              constrain: true,
-              closable: true,
-              resizable: false
-            }).show();
-      } // handler
-    }); // toolbar add*/
-
-
-    //var aspectPanel = Ext.getCmp('aspectPanel');
-    //aspectPanel.getHeader().add(toolbar);
-
-}
-
-
-/**
  * Get the area height
  */
 aspectHeatmapViewer.prototype.getHeight = function() {
@@ -331,7 +232,7 @@ aspectHeatmapViewer.prototype.setupOverlays = function() {
         var posPC = (e.offsetX - drawConsts.left) / metaWidth;
         if (posPC > 0 && posPC < 1) {
             var curDisplayIdxs = dendV.getCurrentDisplayCellsIndexes();
-            var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0]))  + curDisplayIdxs[0];
+            var cellindex = Math.floor(posPC * (curDisplayIdxs[1] - curDisplayIdxs[0])) + curDisplayIdxs[0];
             embV.highlightCellByIndex(cellindex);
         } else {
             embV.clearHighlightCell();
