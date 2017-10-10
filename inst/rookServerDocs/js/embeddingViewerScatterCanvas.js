@@ -63,21 +63,21 @@ embeddingViewerScatterCanvas.prototype.getMainCanvasElement = function() {
 }
 
 embeddingViewerScatterCanvas.prototype.calculateDomain = function(plotData, type, embeddingType) {
-  // Calculate the scale domains if required
-  var cacheId = type + '_' + embeddingType;
-  if (this.domainCacheId !== cacheId) {
-    this.xScaleDomainMin = +Infinity;
-    this.xScaleDomainMax = -Infinity;
-    this.yScaleDomainMin = +Infinity;
-    this.yScaleDomainMax = -Infinity;
-    for (var j = 0; j < plotData.length; j++) {
-        this.xScaleDomainMin = Math.min(this.xScaleDomainMin, plotData[j][1]);
-        this.xScaleDomainMax = Math.max(this.xScaleDomainMax, plotData[j][1]);
-        this.yScaleDomainMin = Math.min(this.yScaleDomainMin, plotData[j][2]);
-        this.yScaleDomainMax = Math.max(this.yScaleDomainMax, plotData[j][2]);
+    // Calculate the scale domains if required
+    var cacheId = type + '_' + embeddingType;
+    if (this.domainCacheId !== cacheId) {
+        this.xScaleDomainMin = +Infinity;
+        this.xScaleDomainMax = -Infinity;
+        this.yScaleDomainMin = +Infinity;
+        this.yScaleDomainMax = -Infinity;
+        for (var j = 0; j < plotData.length; j++) {
+            this.xScaleDomainMin = Math.min(this.xScaleDomainMin, plotData[j][1]);
+            this.xScaleDomainMax = Math.max(this.xScaleDomainMax, plotData[j][1]);
+            this.yScaleDomainMin = Math.min(this.yScaleDomainMin, plotData[j][2]);
+            this.yScaleDomainMax = Math.max(this.yScaleDomainMax, plotData[j][2]);
+        }
+        this.domainCacheId = cacheId;
     }
-    this.domainCacheId =  cacheId;
-  }
 }
 
 /**
@@ -200,6 +200,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionByName = function(selec
 
         var canvas = document.getElementById('embedding-canvas-overlay');
         var ctx = canvas.getContext('2d');
+        (new embeddingViewer()).currentViewer.highlight
         ctx.save();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -279,7 +280,7 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNames = function(sel
         var yScale = pagHelpers.linearScaleGenerator(thisViewer.yScaleDomainMin,
             thisViewer.yScaleDomainMax,
             thisViewer.yScaleRangeMin,
-            thisViewer.yScaleRangeMax,thisViewer.vpad);
+            thisViewer.yScaleRangeMax, thisViewer.vpad);
 
         var pointsize = embViewer.getCurrentPointSize();
 
@@ -351,8 +352,6 @@ embeddingViewerScatterCanvas.prototype.highlightSelectionsByNamesOntoCanvas = fu
     var embeddingType = config.embeddingType;
     var ratio = size / this.size;
     var pointsize = embViewer.getCurrentPointSize() * ratio;
-
-
 
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -453,6 +452,43 @@ embeddingViewerScatterCanvas.prototype.updateColorsMetadata = function() {
  */
 embeddingViewerScatterCanvas.prototype.plotEmbedding = function() {
     this.draw();
+}
+
+/**
+ * Download the current view with the overlay but not the hover
+ */
+embeddingViewerScatterCanvas.prototype.download = function() {
+    var canvasOverlay = document.getElementById('embedding-canvas-overlay');
+    var canvasMain = document.getElementById('embedding-canvas');
+
+    var canvas = document.createElement('canvas');
+    canvas.width = canvasOverlay.width;
+    canvas.height = canvasOverlay.height;
+
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(canvasMain, 0, 0);
+    ctx.drawImage(canvasOverlay, 0, 0);
+
+    const maxSize = 2000;
+    if (canvas.width > maxSize | canvas.height > maxSize) {
+        Ext.Msg.show({
+            title: 'Warning',
+            msg: 'The current canvas size exceeds ' + maxSize + 'px in at least one dimention.' +
+                'This may cause problems during exporting. Do you want to continue?',
+            buttons: Ext.Msg.OKCANCEL,
+            fn: function(s) {
+                if (s == 'ok') {
+                    canvas.toBlob(function(data) {
+                        pagHelpers.downloadURL(data, 'embedding.png', canvas)
+                    })
+                } //if
+            } //fn
+        }) // Ext.Msg.show
+    } else {
+        canvas.toBlob(function(data) {
+            pagHelpers.downloadURL(data, 'embedding.png', canvas)
+        })
+    }
 }
 
 embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanvasElement) {
@@ -1194,11 +1230,11 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
 }; //generateFillStylesAspect
 
 embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByID = function(type, embeddingType, callback) {
-  var thisViewer = this;
-  var cacheId = type + '_' + embeddingType;
+    var thisViewer = this;
+    var cacheId = type + '_' + embeddingType;
 
-  var dataCntr = new dataController();
-  dataCntr.getEmbedding(type, embeddingType, function(plotData) {
+    var dataCntr = new dataController();
+    dataCntr.getEmbedding(type, embeddingType, function(plotData) {
 
         thisViewer.cellPositionCacheByID[cacheId] = {};
 
@@ -1208,59 +1244,59 @@ embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByID = function(typ
         }
 
         callback();
-  });
+    });
 }
 
 embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByIndex = function(type, embeddingType, callback) {
-  var thisViewer = this;
-  var cacheId = type + '_' + embeddingType;
+    var thisViewer = this;
+    var cacheId = type + '_' + embeddingType;
 
-  var dataCntr = new dataController();
-  dataCntr.getEmbedding(type, embeddingType, function(plotData) {
-        dataCntr.getCellOrderHash( function(cellorderData) {
-          thisViewer.cellPositionCacheByIndex[cacheId] = {};
+    var dataCntr = new dataController();
+    dataCntr.getEmbedding(type, embeddingType, function(plotData) {
+        dataCntr.getCellOrderHash(function(cellorderData) {
+            thisViewer.cellPositionCacheByIndex[cacheId] = {};
 
-          for (var i = 0; i < plotData.length; i++) {
-              var point = plotData[i];
-              thisViewer.cellPositionCacheByIndex[cacheId][cellorderData[point[0]]] = point;
-          }
+            for (var i = 0; i < plotData.length; i++) {
+                var point = plotData[i];
+                thisViewer.cellPositionCacheByIndex[cacheId][cellorderData[point[0]]] = point;
+            }
 
-          callback();
+            callback();
         });
-  });
+    });
 }
 
-embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByIndex = function(type, embeddingType, cellindex, callback){
-  var thisViewer = this;
-  var cacheId = type + '_' + embeddingType;
-  if(typeof thisViewer.cellPositionCacheByIndex[cacheId] !== 'undefined')  {
-    callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
-  } else {
-    thisViewer.buildCellPositionCacheByIndex(type, embeddingType, function() {
-      callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
-    });
-  }
+embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByIndex = function(type, embeddingType, cellindex, callback) {
+    var thisViewer = this;
+    var cacheId = type + '_' + embeddingType;
+    if (typeof thisViewer.cellPositionCacheByIndex[cacheId] !== 'undefined') {
+        callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
+    } else {
+        thisViewer.buildCellPositionCacheByIndex(type, embeddingType, function() {
+            callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
+        });
+    }
 }
 
 /**
  * Get the cell position from cache building the index if required
  */
-embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByID = function(type, embeddingType, cellid, callback){
-  var thisViewer = this;
-  var cacheId = type + '_' + embeddingType;
-  if(typeof thisViewer.cellPositionCacheByID[cacheId] !== 'undefined')  {
-    callback(thisViewer.cellPositionCacheByID[cacheId][cellid]);
-  } else {
-    thisViewer.buildCellPositionCacheByID(type, embeddingType, function() {
-      callback(thisViewer.cellPositionCacheByID[cacheId][cellid]);
-    });
-  }
+embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByID = function(type, embeddingType, cellid, callback) {
+    var thisViewer = this;
+    var cacheId = type + '_' + embeddingType;
+    if (typeof thisViewer.cellPositionCacheByID[cacheId] !== 'undefined') {
+        callback(thisViewer.cellPositionCacheByID[cacheId][cellid]);
+    } else {
+        thisViewer.buildCellPositionCacheByID(type, embeddingType, function() {
+            callback(thisViewer.cellPositionCacheByID[cacheId][cellid]);
+        });
+    }
 }
 
 embeddingViewerScatterCanvas.prototype.clearHighlightCell = function() {
-  var canvas = document.getElementById('embedding-canvas-hover');
-  var ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var canvas = document.getElementById('embedding-canvas-hover');
+    var ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
 /**
@@ -1368,4 +1404,3 @@ embeddingViewerScatterCanvas.prototype.highlightCellByIndex = function(cellindex
         ctx.restore();
     });
 }
-

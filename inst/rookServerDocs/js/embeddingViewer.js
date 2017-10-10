@@ -231,6 +231,15 @@ embeddingViewer.prototype.generateToolbar = function() {
     toolbar.add({xtype: 'tbseparator'});
 
     toolbar.add({
+      text: "",
+      tooltip: "Download current View",
+      glyph: 0xf0ed,
+      handler: function() {
+        (new embeddingViewer()).currentViewer.download();
+      }
+    });
+
+    toolbar.add({
         text: "",
         tooltip: "Information about View",
         glyph: 0xf05a,
@@ -250,9 +259,8 @@ embeddingViewer.prototype.generateToolbar = function() {
                 colorConfigHtml = '.'
             }
 
-
             var config = ev.getConfig();
-            var html = "<p>You are currently viewing embedding " + config.type + "-->" + config.embeddingType +
+            var html = "<p>You are currently viewing embedding " + config.type + " \u21e8 " + config.embeddingType +
                 colorConfigHtml + "</p>";
 
             Ext.create('Ext.window.Window', {
