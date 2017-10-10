@@ -119,6 +119,12 @@ embeddingViewerScatterCanvas.prototype.generateDragSelection =
 
             var pointsize = embViewer.getCurrentPointSize();
 
+            // Clear the hover canvas (contains the rectangle)
+            var canvasHover = document.getElementById('embedding-canvas-hover');
+            var ctxHover = canvasHover.getContext('2d');
+            ctxHover.clearRect(0, 0, canvasHover.width, canvasHover.height);
+
+            // Clear the overlay canvas
             var canvas = document.getElementById('embedding-canvas-overlay');
             var ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -515,7 +521,6 @@ embeddingViewerScatterCanvas.prototype.setupOverlayEvents = function(overlayCanv
     });
 
     overlayCanvasElement.addEventListener('mouseup', function(e) {
-
         if (thisViewer.highlight === "box") {
             if (thisViewer.dragging) {
                 // Dragging complete
@@ -990,7 +995,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
             }
 
             if (typeof clusterColor == 'undefined') {
-                debugger;
+                console.error('Undefined  color found');
             }
 
             // TODO use objct function here
