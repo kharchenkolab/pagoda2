@@ -1,5 +1,3 @@
-# Overview of pagoda 2
-
 # Demo Web Application
 
 10X sorted PBMCs
@@ -8,11 +6,15 @@ https://tinyurl.com/pagoda2demo
 10X PBMC Dataset
 http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/10xPBMC.bin
 
+# Basic analysis walkthrough
+[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
+
+# Basic analysis with generation of pagoda2 web application
+[Pagoda2 Web Application analysis](vignettes/pagoda2.Rmd)
+
 # Installation Instructions
 
-Installation of pagoda2 requires installation of the Non-metric space library (nmslib)
-and a custom built largeVis package. Pagoda 2 has been tested with nmslib v1.5.3 and nmslib v1.6 and it should work with any subsequent version. To install pagoda2 please follow the instructions below.
-
+Installation of pagoda2 requires installation of the Non-metric space library (nmslib) and a custom built largeVis package. Pagoda 2 has been tested with nmslib v1.5.3 and nmslib v1.6. The current package has configured to be compiled with nmslib v1.6 and this is the recommended version. To install pagoda2 please follow the instructions below.
 
 ## System dependencies
 
@@ -21,19 +23,19 @@ Install system dependencies for building nmslib, example here provided for Ubunt
 ```sh
 sudo apt-get update
 sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libcurl4-gnutls-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
-
 ```
+
 ### Mac 
 You need R >=3.4.0 to install this package on a mac. 
 For installation please refer to [cran](https://cran.r-project.org/)  
 
 You need the [homebrew package manager](https://brew.sh/)  
 Run these commands in a terminal:
+
 ```sh
 brew update
 brew install cmake boost eigen gsl curl openssl
 ```
-
 To enable R to use the parallelized functions in the C++ code, you need another version of the clang++-Compiler for mac.   
 This is compatible with Mac OS >= 10.11 
 
@@ -95,12 +97,5 @@ library('pagoda2')
 # Pagoda2 is now ready to use
 ```
 
-# Install padoga2 as a docker container
+## Alternative Install padoga2 as a docker container
 [Instructions for installing docker container with pagoda2](vignettes/Docker.md)
-
-# Basic analysis walkthrough
-[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
-
-# Basic analysis with generation of pagoda2 web application
-[Pagoda2 Web Application analysis](vignettes/pagoda2.Rmd)
-
