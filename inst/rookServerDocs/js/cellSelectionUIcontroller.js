@@ -618,10 +618,11 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
                                                 params.lines = reader.result.split("\n");
                                                 params.removedCells = {};
                                                 params.cellOrder = cellOrder;
-                                                for (var i = 0; i < params.lines.length; i++) {
-                                                    while (params.lines[i].length === 0 && i < params.lines.length) {
-                                                        params.lines.splice(i, 1)
-                                                    }
+
+                                                for (var i = params.lines.length -1; i > 0; i--) {
+                                                  if (params.lines[i].length === 0) {
+                                                    params.lines.splice(i, 1)
+                                                  }
                                                 }
 
                                                 var functionStep = function(params, i, step, max) {
