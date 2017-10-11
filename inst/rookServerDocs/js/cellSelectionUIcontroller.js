@@ -171,7 +171,6 @@ cellSelectionUIcontroller.prototype.generateUI = function() {
 
     uipanel.add(cellSelectionTable);
     this.generateToolbar();
-
 }
 
 /**
@@ -323,7 +322,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
                 }
             }
         ]
-    })
+    });
 
     toolbar.add({
         xtype: 'button',
@@ -333,7 +332,6 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
             var selectionTable = Ext.getCmp('cellSelectionTable');
             var selectedItems = selectionTable.getSelectionModel().getSelected();
             if (selectedItems.length >= 2) {
-
                 var selectionNames = [];
                 for (var i = 0; i < selectedItems.length; i++) {
                     selectionNames.push(selectedItems.getAt(i).getData().selectionname);
@@ -345,11 +343,9 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
                         cellSelCntr.mergeSelectionsIntoNew(selectionNames, newDisplayName);
                     }
                 })
-
             } else {
                 Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to merge first.');
             }
-
         }
 
     });
@@ -371,7 +367,6 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
                         cellSelCntr.differenceSelectionsIntoNew(selectionNames, newDisplayName);
                     }
                 })
-
 
             } else {
                 Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to find the difference of first.');
@@ -396,12 +391,9 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
                         cellSelCntr.intersectSelectionsIntoNew(selectionNames, newDisplayName);
                     }
                 })
-
-
             } else {
                 Ext.MessageBox.alert('Warning', 'Please pick at least two cell selections to intersect first.');
             }
-
         }
     });
     toolbar.add({
@@ -557,88 +549,20 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
         glyph: 0xf0c7, //fa-floppy-o
         tooltip: 'Export Selected',
         handler: function() {
-            var importOptionsStore = Ext.create('Ext.data.Store', {
-                fields: ['label', 'value'],
-                id: 'importOptionsStore'
-            });
-            importOptionsStore.add({
-                label: "Pagoda CSV",
-                value: "csv"
-            });
-
-            // Make a combobox
-            var importComboBox = Ext.create('Ext.form.ComboBox', {
-                fieldLabel: 'Export Format:',
-                store: importOptionsStore,
-                queryMode: 'local',
-                displayField: 'label',
-                editable: false,
-                valueField: 'value',
-                required: true,
-                columnWidth: "100%",
-                margin: "5 5 5 5",
-            });
-            importComboBox.setValue("csv");
-
             var selectionTable = Ext.getCmp('cellSelectionTable');
             var selectedItems = selectionTable.getSelectionModel().getSelected();
             if (selectedItems.length >= 1) {
-                Ext.create('Ext.window.Window', {
-                    title: 'Cell File Selection',
-                    id: 'cellFileCreationWindow',
-                    height: 100,
-                    width: 300,
-                    align: "center",
-                    modal: true,
-                    resizeable: false,
-                    items: [
-                        importComboBox,
-                        {
-                            xtype: 'button',
-                            text: 'Ok',
-                            width: "45px",
-                            height: "25px",
-                            columnWidth: "20%",
-                            margin: "5 5 5 5",
-                            align: "center",
-                            handler: function() {
 
-                                if (importComboBox.getValue() === "csv") {
-                                    var selectionFormatted = [];
-                                    var cellSelCntr = new cellSelectionController();
-                                    for (var index = 0; index < selectedItems.length; index++) {
-                                        var selectionName = selectedItems.getAt(index).getData().selectionname;
-                                        var displayName = selectedItems.getAt(index).getData().displayname;
-                                        var color = selectedItems.getAt(index).getData().color.substring(1);
-                                        var selection = cellSelCntr.getSelection(selectionName);
-                                        selectionFormatted.push(color + "," + displayName + "," + selection.join(","));
-                                    }
-                                    window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
-                                } else if (importComboBox.getValue() === "json") {
-                                    Ext.Msg.alert("Warning", "File format not yet supported");
-                                } else {
-                                    Ext.Msg.alert("Error", "No file format specified");
-                                    Ext.getCmp('cellFileCreationWindow').close();
-                                    return;
-                                }
-                                Ext.getCmp('cellFileCreationWindow').close();
-                            }
-                        },
-                        {
-                            xtype: 'button',
-                            text: 'Cancel',
-                            width: "70px",
-                            height: "25px",
-                            columnWidth: "20%",
-                            margin: "5 5 5 5",
-                            align: "center",
-                            handler: function() {
-                                Ext.getCmp('cellFileCreationWindow').close();
-                            }
-                        },
-                    ],
-                }).show();
-
+                var selectionFormatted = [];
+                var cellSelCntr = new cellSelectionController();
+                for (var index = 0; index < selectedItems.length; index++) {
+                    var selectionName = selectedItems.getAt(index).getData().selectionname;
+                    var displayName = selectedItems.getAt(index).getData().displayname;
+                    var color = selectedItems.getAt(index).getData().color.substring(1);
+                    var selection = cellSelCntr.getSelection(selectionName);
+                    selectionFormatted.push(color + "," + displayName + "," + selection.join(","));
+                }
+                window.open('data:application/csv;charset=utf-8,' + encodeURI(selectionFormatted.join("\n")));
             } else {
                 Ext.MessageBox.alert('Warning', 'Please choose one or more cell selections first');
             }
@@ -651,29 +575,6 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
         tooltip: 'Import Selections',
         handler: function() {
             // Define a store for the options
-            var importOptionsStore = Ext.create('Ext.data.Store', {
-                fields: ['label', 'value'],
-                id: 'importOptionsStore'
-            });
-            importOptionsStore.add({
-                label: "Pagoda CSV",
-                value: "csv"
-            });
-
-            // Make a combobox
-            var importComboBox = Ext.create('Ext.form.ComboBox', {
-                fieldLabel: 'Import Format:',
-                store: importOptionsStore,
-                queryMode: 'local',
-                id: 'importComboBox',
-                displayField: 'label',
-                editable: false,
-                valueField: 'value',
-                required: true,
-                columnWidth: "100%",
-                margin: "5 5 5 5",
-            });
-            importComboBox.setValue("csv")
 
             if (!Ext.getCmp('cellFileSelectionWindow')) {
                 Ext.create('Ext.window.Window', {
@@ -700,78 +601,71 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
                                     align: "center",
                                     handler: function() {
 
+                                        // Import the selected file
+
                                         var dataCntr = new dataController();
                                         var cellSelFile = document.getElementById("selectedCellFile").files[0];
                                         var cellSelFileName = cellSelFile.name;
                                         var reader = new FileReader();
-                                        var selection = Ext.getCmp("importComboBox").getValue()
-                                        if (selection === "csv") {
-                                            reader.onload = function(progressEvent) {
-                                                var reader = this;
 
-                                                dataCntr.getCellOrder(function(cellOrder) {
+                                        reader.onload = function(progressEvent) {
+                                            var reader = this;
 
-                                                    var params = {};
-                                                    params.total = 0;
-                                                    params.lines = reader.result.split("\n");
-                                                    params.removedCells = {};
-                                                    params.cellOrder = cellOrder;
-                                                    for (var i = 0; i < params.lines.length; i++) {
-                                                        while (params.lines[i].length === 0 && i < params.lines.length) {
-                                                            params.lines.splice(i, 1)
-                                                        }
+                                            dataCntr.getCellOrder(function(cellOrder) {
+
+                                                var params = {};
+                                                params.total = 0;
+                                                params.lines = reader.result.split("\n");
+                                                params.removedCells = {};
+                                                params.cellOrder = cellOrder;
+                                                for (var i = 0; i < params.lines.length; i++) {
+                                                    while (params.lines[i].length === 0 && i < params.lines.length) {
+                                                        params.lines.splice(i, 1)
                                                     }
+                                                }
 
-                                                    var functionStep = function(params, i, step, max) {
-                                                        var cellSelCntrl = new cellSelectionController();
-                                                        for (var line = 0; line < step; line++) {
-                                                            var selection = params.lines[line + i].split(",");
-                                                            var color = "#" + selection.shift();
-                                                            var dispName = selection.shift();
-                                                            params.removedCells[dispName] = 0;
-                                                            var pureSelection = [];
-                                                            for (var elem = 0; elem < selection.length; elem++) {
-                                                                if (params.cellOrder.includes(selection[elem])) {
-                                                                    pureSelection.push(selection[elem]);
-                                                                } else {
-                                                                    params.removedCells[dispName]++;
-                                                                }
-                                                            } // ensure all cells are rightfully containers
-
-                                                            if (params.removedCells[dispName] !== selection.length) {
-                                                                while (cellSelCntrl.displayNameExists(dispName)) {
-                                                                    dispName = dispName + "~RecentlyLoaded"
-                                                                }
-                                                                cellSelCntrl.setSelection(pureSelection, dispName, {}, color, undefined, true);
-                                                                params.total++;
-                                                            } //confirm
-                                                        }
-                                                    }
-
-                                                    var callback = function(params) {
-                                                        var extraInfo = "";
-                                                        for (var selName in params.removedCells) {
-                                                            if (params.removedCells[selName] > 0) {
-                                                                extraInfo += "<br>" + params.removedCells[selName] + " cell(s) could not be loaded from selection " + selName;
+                                                var functionStep = function(params, i, step, max) {
+                                                    var cellSelCntrl = new cellSelectionController();
+                                                    for (var line = 0; line < step; line++) {
+                                                        var selection = params.lines[line + i].split(",");
+                                                        var color = "#" + selection.shift();
+                                                        var dispName = selection.shift();
+                                                        params.removedCells[dispName] = 0;
+                                                        var pureSelection = [];
+                                                        for (var elem = 0; elem < selection.length; elem++) {
+                                                            if (params.cellOrder.includes(selection[elem])) {
+                                                                pureSelection.push(selection[elem]);
+                                                            } else {
+                                                                params.removedCells[dispName]++;
                                                             }
                                                         }
-                                                        Ext.MessageBox.alert('Load Cell Selections Complete', params.total + " selections were generated from the data within " + cellSelFileName + extraInfo)
-                                                        var cellSel = new cellSelectionController();
-                                                        cellSel.raiseSelectionChangedEvent();
+                                                        if (params.removedCells[dispName] !== selection.length) {
+                                                            while (cellSelCntrl.displayNameExists(dispName)) {
+                                                                dispName = dispName + "~RecentlyLoaded"
+                                                            }
+                                                            cellSelCntrl.setSelection(pureSelection, dispName, {}, color, undefined, true);
+                                                            params.total++;
+                                                        }
                                                     }
+                                                }
 
-                                                    pagHelpers.generateProgressBar(functionStep, params.lines.length, 1, callback, params);
+                                                var callback = function(params) {
+                                                    var extraInfo = "";
+                                                    for (var selName in params.removedCells) {
+                                                        if (params.removedCells[selName] > 0) {
+                                                            extraInfo += "<br>" + params.removedCells[selName] + " cell(s) could not be loaded from selection " + selName;
+                                                        }
+                                                    }
+                                                    Ext.MessageBox.alert('Load Cell Selections Complete', params.total + " selections were generated from the data within " + cellSelFileName + extraInfo)
+                                                    var cellSel = new cellSelectionController();
+                                                    cellSel.raiseSelectionChangedEvent();
+                                                }
 
-                                                });
-                                            };
-                                        } else if (selection === "json") {
+                                                pagHelpers.generateProgressBar(functionStep, params.lines.length, 1, callback, params);
 
-                                        } else if (selection === "pagbin") {
+                                            });
+                                        };
 
-                                        } else {
-                                            Ext.Msg.alert("Error", "An unexpected error has occured");
-                                            return;
-                                        }
                                         reader.readAsText(cellSelFile);
                                         Ext.getCmp('cellFileSelectionWindow').close();
                                     }
@@ -787,9 +681,7 @@ cellSelectionUIcontroller.prototype.generateToolbar = function() {
                                     handler: function() {
                                         Ext.getCmp('cellFileSelectionWindow').close();
                                     }
-                                },
-                                importComboBox
-
+                                }
                             ]
                         })
                     ],
@@ -834,5 +726,4 @@ cellSelectionUIcontroller.prototype.promptName = function(curDisplay, callback) 
             callback(false);
         }
     }, {}, false, curDisplay);
-
 }
