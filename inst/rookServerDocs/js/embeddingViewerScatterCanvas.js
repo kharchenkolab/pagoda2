@@ -51,6 +51,8 @@ function embeddingViewerScatterCanvas() {
     this.cellPositionCacheByID = {};
     this.cellPositionCacheByIndex = {};
 
+    this.indexCacheBuilding = false;
+
     // Generates the html structure required for the viewer
     this.generateStructure();
 }
@@ -1253,7 +1255,9 @@ embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByID = function(typ
 }
 
 embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByIndex = function(type, embeddingType, callback) {
+
     var thisViewer = this;
+    thisViewer.indexCacheBuilding = true;
     var cacheId = type + '_' + embeddingType;
 
     var dataCntr = new dataController();
@@ -1265,7 +1269,7 @@ embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByIndex = function(
                 var point = plotData[i];
                 thisViewer.cellPositionCacheByIndex[cacheId][cellorderData[point[0]]] = point;
             }
-
+            thisViewer.indexCacheBuilding = false;
             callback();
         });
     });
@@ -1274,12 +1278,15 @@ embeddingViewerScatterCanvas.prototype.buildCellPositionCacheByIndex = function(
 embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByIndex = function(type, embeddingType, cellindex, callback) {
     var thisViewer = this;
     var cacheId = type + '_' + embeddingType;
-    if (typeof thisViewer.cellPositionCacheByIndex[cacheId] !== 'undefined') {
-        callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
-    } else {
-        thisViewer.buildCellPositionCacheByIndex(type, embeddingType, function() {
-            callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
-        });
+
+    if (!(this.indexCacheBuilding)) {
+      if (typeof thisViewer.cellPositionCacheByIndex[cacheId] !== 'undefined') {
+          callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
+      } else {
+          thisViewer.buildCellPositionCacheByIndex(type, embeddingType, function() {
+              callback(thisViewer.cellPositionCacheByIndex[cacheId][cellindex]);
+          });
+      }
     }
 }
 
@@ -1298,6 +1305,10 @@ embeddingViewerScatterCanvas.prototype.getCellPositionFromCacheByID = function(t
     }
 }
 
+
+/**
+ * Remove the hover cell hightlight
+ */
 embeddingViewerScatterCanvas.prototype.clearHighlightCell = function() {
     var canvas = document.getElementById('embedding-canvas-hover');
     var ctx = canvas.getContext('2d');
