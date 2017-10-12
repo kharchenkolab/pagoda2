@@ -344,7 +344,7 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
         D2d <- diag(D2);
 
         if (ncomps > length(D1d)) {
-            warn('More components than available were specified');
+            warning('More components than available were specified');
             ncomps <- length(D1d);
         }
 
@@ -359,7 +359,7 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
                  col=c(rep('red',dim(x1.rot)[1]),rep('blue',dim(x2.rot)[1])),
                  pch=16,cex=0.2)
             } else {
-                warn('plot.projection set to TRUE and comps.keep > 5: Can\'t plot that many components')
+                warning('plot.projection set to TRUE and comps.keep > 5: Can\'t plot that many components')
             }
         }
 
