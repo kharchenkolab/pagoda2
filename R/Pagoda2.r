@@ -267,6 +267,8 @@ Pagoda2 <- setRefClass(
     # note: for reproducibility, set.seed() and set n.cores=1
     makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='none',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL) {
       require(igraph)
+      require(Matrix)
+
       if(is.null(x)) {
         x.was.given <- FALSE;
         if(type=='counts') {

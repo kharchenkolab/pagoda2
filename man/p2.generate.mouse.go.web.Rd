@@ -4,7 +4,7 @@
 \alias{p2.generate.mouse.go.web}
 \title{Generates mouse go annotation for the web object}
 \usage{
-p2.generate.mouse.go.web(gene.names)
+p2.generate.mouse.go.web(gene.names, n.cores = 1)
 }
 \arguments{
 \item{gene.names}{a character vector of genes to include}
