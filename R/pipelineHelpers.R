@@ -5,6 +5,7 @@
 #' make knn graph, identify clusters with infomap, multilevel and walktrap and make
 #' largeVis and tSNE embeddings
 #' @return a new pagoda2 object
+#' @export basicP2proc
 basicP2proc <- function(cd, n.cores = 20) {
   require(Matrix)
 
@@ -26,6 +27,7 @@ basicP2proc <- function(cd, n.cores = 20) {
 #' Perform extended pagoda2 processing
 #' @description generate organism specific GO environment and
 #' calculate pathway overdispersion
+#' @export extendedP2proc
 extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
@@ -50,6 +52,7 @@ extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
 #' @param factor.list a list of factors named by the cell identifier
 #' @param p2 optional, a pagoda2 app to filter the factors by
 #' @return a pagoda2 web metadata object
+#' @export factorListToMetadata
 factorListToMetadata <- function(factor.list, p2 = NULL) {
   if(! class(p2) %in% c('Pagoda2', 'NULL')) error('p2 must be NULL or a pagoda2 app');
   ## A pagoda 2 object has been provided, filter the factors by the
@@ -86,6 +89,7 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 #' @param organism organisms hs or mm
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @return a pagoda2 web application
+#' @export webP2proc
 webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.cores =20,
                       make.go.sets = TRUE, make.de.sets = TRUE, organism = 'hs',
                       make.gene.graph = TRUE) {
@@ -129,6 +133,7 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
 #' @description This is a wrapper function for generating a go envirnoment
 #' @param r a pagoda2 object
 #' @param organism the organism, current hs and mm are supported for the human and mouse
+#' @export p2.generate.go
 p2.generate.go <- function(r, organism = NULL) {
   if (is.null(organism)) {
     stop('organism must be specified');
