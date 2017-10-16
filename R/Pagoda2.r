@@ -269,6 +269,8 @@ Pagoda2 <- setRefClass(
       require(igraph)
       require(Matrix)
 
+
+
       if(is.null(x)) {
         x.was.given <- FALSE;
         if(type=='counts') {
@@ -276,8 +278,11 @@ Pagoda2 <- setRefClass(
         } else {
           if(type %in% names(reductions)) {
             x <- reductions[[type]];
+          } else {
+            stop('Specified reduction does not exist');
           }
         }
+
         if(!is.null(odgenes)) {
           if(!all(odgenes %in% rownames(x))) { warning("not all of the provided odgenes are present in the selected matrix")}
           if(verbose) cat("using provided odgenes ... ")
@@ -290,9 +295,10 @@ Pagoda2 <- setRefClass(
           x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         }
 
-      } else {
+      } else { # is.null(x)
         x.was.given <- TRUE;
       }
+
 
       # TODO: enable sparse matrix support for hnsKnn2
 
