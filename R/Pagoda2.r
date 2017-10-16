@@ -275,6 +275,8 @@ Pagoda2 <- setRefClass(
         x.was.given <- FALSE;
         if(type=='counts') {
           x <- counts;
+          # Scale Raw counts
+          x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         } else {
           if(type %in% names(reductions)) {
             x <- reductions[[type]];
@@ -287,12 +289,6 @@ Pagoda2 <- setRefClass(
           if(!all(odgenes %in% rownames(x))) { warning("not all of the provided odgenes are present in the selected matrix")}
           if(verbose) cat("using provided odgenes ... ")
           x <- x[,odgenes]
-        }
-
-        # apply scaling if using raw counts
-        if(type=='counts') {
-          #x <- t(t(x)*misc[['varinfo']][colnames(x),'gsf'])
-          x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         }
 
       } else { # is.null(x)
