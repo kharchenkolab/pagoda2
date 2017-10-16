@@ -362,6 +362,9 @@ Pagoda2 <- setRefClass(
     },
     # calculate clusters based on the kNN graph
     getKnnClusters=function(type='counts',method=multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=2, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
+      old.par <- par();
+      on.exit(par(old.par));
+
       if(is.null(g)) {
         if(is.null(graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
         g <- graphs[[type]];
@@ -1064,6 +1067,10 @@ Pagoda2 <- setRefClass(
                            min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2,
                            shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F,
                            unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
+      old.par <- par();
+      on.exit(par(old.par));
+
+
       if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
       if(is.null(embeddingType)) {
         # take the first one
