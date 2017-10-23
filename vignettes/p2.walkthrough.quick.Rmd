@@ -8,7 +8,7 @@ output: html_document
 # Pagoda 2 Quick Walkthrough
 
 The following describes how to get quickly from a count matrix to to a viewable pagoda2 app that allows you to view your data.
-This currently only works for human datasets.
+This currently only works for human (organism='hs') and mouse (organism='mm') datasets.
 
 ```{r eval=FALSE}
 
@@ -36,7 +36,7 @@ metadata.listfactors <- list(
 metadata.forweb <- factorListToMetadata(metadata.listfactors)
 
 # Make the web object
-p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application')
+p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application', organism = 'hs')
 
 # Serialize to file
 # The serialisedApp.bin file will now contain all the information
