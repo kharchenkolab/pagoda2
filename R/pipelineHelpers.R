@@ -33,6 +33,8 @@ basicP2proc <- function(cd, n.cores = 20, batch = NULL) {
 extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
+  } else if (organism = 'mm') {
+    go.env <- p2.generate.mouse.go(p2);
   } else {
     stop('unknown organism');
   }
@@ -101,6 +103,8 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
   if (make.go.sets) {
     if (organism == 'hs') {
       goSets <- p2.generate.human.go.web(gene.names, n.cores = n.cores);
+    } else if (organism == 'mm') {
+      goSets <- p2.generate.mouse.go.web(gene.names, n.cores = n.cores);
     } else {
       error(paste0('Unknown organism: ', organism));
     }
