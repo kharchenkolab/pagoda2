@@ -26,14 +26,14 @@ This currently only works for human datasets.
 p2 <- basicP2proc(countMatrix, n.cores = 4)
 p2 <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
 
-# Make some metadata
-# This step is optional, you can just omit the additionalMetadata parameter
-# when you call webP2proc() if you don't want any additional metadata
-# Note: The factors need to be named with the cell names
-
-metadata.forweb <- NULL
-#metadata.listFactors <- list( factor(...), factor(...) )
-#metadata.forweb <- factorListToMetadata(metadata.listFactors)
+# Make cell metadata from the default clusters generated during basicP2proc()
+# This is optional, metadata.forweb can also be NULL
+metadata.listfactors <- list(
+    infomap = p2$clusters$PCA$infomap,
+    multilevel = p2$clusters$PCA$multilevel,
+    walktrap = p2$clusters$PCA$walktrap
+);
+metadata.forweb <- factorListToMetadata(metadata.listfactors)
 
 # Make the web object
 p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application')
