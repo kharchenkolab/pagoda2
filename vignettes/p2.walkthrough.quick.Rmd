@@ -5,10 +5,6 @@ date: "October 23, 2017"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Pagoda 2 Quick Walkthrough
 
 The following describes how to get quickly from a count matrix to to a viewable pagoda2 app that allows you to view your data.
@@ -23,6 +19,9 @@ This currently only works for human datasets.
 # This matrix can be sparse matrix object from the Matrix package
 
 # countMatrix <- load_my_count_matrix()
+# Rows correspond to genes and Columns to cells
+# If you experience problems with duplicate cells you can use
+# rownames(countMatrix) <- make.unique(rownames(countMatrix))
 
 p2 <- basicP2proc(countMatrix, n.cores = 4)
 p2 <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
