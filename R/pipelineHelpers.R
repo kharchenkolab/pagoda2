@@ -33,7 +33,7 @@ basicP2proc <- function(cd, n.cores = 20, batch = NULL) {
 extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
-  } else if (organism = 'mm') {
+  } else if (organism == 'mm') {
     go.env <- p2.generate.mouse.go(p2);
   } else {
     stop('unknown organism');
