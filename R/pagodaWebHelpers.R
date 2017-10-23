@@ -55,7 +55,7 @@ p2.generate.go.web  <-
     ## Put the GO Term annotation generated in a format suitable for the web interface                                                                                                                   
     nms <- names(go.env);                                                                                                                                                                                
     names(nms) <- nms;                                                                                                                                                                                   
-    geneSets <- lapply(names(go.env), function(x) {                                                                                                                                                      
+    geneSets <- lapply(nms, function(x) {                                                                                                                                                      
       list(                                                                                                                                                                                            
         properties = list(                                                                                                                                                                           
           locked = T,                                                                                                                                                                              
