@@ -6,11 +6,16 @@ https://tinyurl.com/pagoda2demo
 10X PBMC Dataset
 http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/10xPBMC.bin
 
-# Basic analysis walkthrough
+# Analysis walkthroughs
+
+## Basic analysis walkthrough
 [PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
 
-# Basic analysis with generation of pagoda2 web application
+## Basic analysis with generation of pagoda2 web application
 [Pagoda2 Web Application analysis](vignettes/pagoda2.Rmd)
+
+## Quick analysis from matrix to pagoda2 web application
+[Pagoda2 Quick analysis](vignettes/p2.walkthrough.quick.Rmd)
 
 # Installation Instructions
 

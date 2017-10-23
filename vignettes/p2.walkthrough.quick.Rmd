@@ -1,0 +1,53 @@
+---
+title: "Pagoda2 Quick Walkthrough"
+author: "Nikolas Barkas"
+date: "October 23, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pagoda 2 Quick Walkthrough
+
+The following describes how to get quickly from a count matrix to to a viewable pagoda2 app that allows you to view your data.
+This currently only works for human datasets.
+
+```{r eval=FALSE}
+
+# Get your count matrix in sparse or full format
+# For example you can use the 
+# readMM() from the Matrix package or the
+# read10xMatrix() function from the github barkasn/nbHelpers package
+# This matrix can be sparse matrix object from the Matrix package
+
+# countMatrix <- load_my_count_matrix()
+
+p2 <- basicP2proc(countMatrix, n.cores = 4)
+p2 <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
+
+# Make some metadata
+# This step is optional, you can just omit the additionalMetadata parameter
+# when you call webP2proc() if you don't want any additional metadata
+# Note: The factors need to be named with the cell names
+
+metadata.forweb <- NULL
+#metadata.listFactors <- list( factor(...), factor(...) )
+#metadata.forweb <- factorListToMetadata(metadata.listFactors)
+
+# Make the web object
+p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application')
+
+# Serialize to file
+# The serialisedApp.bin file will now contain all the information
+# required to view the files via the web browser
+p2.webobject$serializeToStaticFast('serialisedApp.bin');
+
+# Alternatively you can view your dataset from the R session
+# show.app(p2.webobject, browse = T)
+
+```
+
+You can now navigate to <http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/> and open the 'serialisedApp.bin' file when prompted to view your data.
+
