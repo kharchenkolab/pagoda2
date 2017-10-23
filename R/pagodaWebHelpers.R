@@ -46,7 +46,7 @@ p2.generate.go.web  <-
       stop("gene.names needs to be a character vector of gene names")                                                                                                                                  
     }                                                                                                                                                                                                    
     
-    ids <- unlist(mclapply(AnnotationDbi::mget(myGeneNames, org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1], mc.cores = n.cores))                                                                                 
+    ids <- unlist(mclapply(AnnotationDbi::mget(gene.names, org.Hs.egALIAS2EG, ifnotfound = NA), function(x) x[1], mc.cores = n.cores))                                                                                 
     rids <- names(ids)                                                                                                                                                                                   
     names(rids) <- ids                                                                                                                                                                                   
     go.env <- AnnotationDbi::eapply(org.Hs.egGO2ALLEGS, function(x) as.character(na.omit(rids[x])))                                                                                                      
