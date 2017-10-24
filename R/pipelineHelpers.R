@@ -105,7 +105,7 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
       goSets <- p2.generate.human.go.web(gene.names, n.cores = n.cores);
     } else if (organism == 'mm') {
       goSets <- p2.generate.mouse.go.web(gene.names, n.cores = n.cores);
-    } else if (organism = 'dr') {
+    } else if (organism == 'dr') {
       goSets <- p2.generate.dr.go.web(gene.names, n.cores = n.cores);  
     } else {
       error(paste0('Unknown organism: ', organism));
