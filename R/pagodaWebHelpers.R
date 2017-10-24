@@ -24,6 +24,15 @@ p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
   p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Mm.egALIAS2EG, egGO2ALLEGS = org.Mm.egGO2ALLEGS, n.cores = n.cores);
 }
 
+#' Generates mouse go annotation for the web object
+#' @description generates a danio rerio go annotation for the pagoda2 web object
+#' @param gene.names a character vector of genes to include
+#' @export p2.generate.dr.go.web
+p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
+  require(org.Dr.eg.db)
+  p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Dr.egALIAS2EG, egGO2ALLEGS = org.Dr.egGO2ALLEGS, n.cores = n.cores);
+}
+
 
 #' Generates human go annotation for the web object for any species
 #' @description generates a humna go annotation for the pagoda2 web object

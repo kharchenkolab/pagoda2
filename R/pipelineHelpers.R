@@ -105,6 +105,8 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
       goSets <- p2.generate.human.go.web(gene.names, n.cores = n.cores);
     } else if (organism == 'mm') {
       goSets <- p2.generate.mouse.go.web(gene.names, n.cores = n.cores);
+    } else if (organism = 'dr') {
+      goSets <- p2.generate.dr.go.web(gene.names, n.cores = n.cores);  
     } else {
       error(paste0('Unknown organism: ', organism));
     }
@@ -138,7 +140,7 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
 #' Generate a GO environment for the organism specified
 #' @description This is a wrapper function for generating a go envirnoment
 #' @param r a pagoda2 object
-#' @param organism the organism, current hs and mm are supported for the human and mouse
+#' @param organism the organism, current hs, mm and dr are supported for the human and mouse
 #' @export p2.generate.go
 p2.generate.go <- function(r, organism = NULL) {
   if (is.null(organism)) {
@@ -149,11 +151,39 @@ p2.generate.go <- function(r, organism = NULL) {
     ret <- p2.generate.human.go(r);
   } else if (organism == 'mm') {
     ret <- p2.generate.mouse.go(r);
+  } else if (organism = 'dr') {
+    ret <- p2.generate.dr.go(r);
   } else {
     stop('Unknown organism specified')
   }
   ret;
 }
+
+#' Generate a GO environment for human for overdispersion analysis for the the back end
+#' @param r a pagoda2 object
+#' @return a go environment object
+#' @export p2.generate.dr.go
+p2.generate.dr.go <- function(r) {                                                                                                                        
+  # Generate GO environment                                                                                                                               
+  require(org.Dr.eg.db)                                                                                                                                   
+  require(GO.db)                                                                                                                                          
+  require(BiocGenerics)                                                                                                                                   
+  require(AnnotationDbi)                                                                                                                                  
+  
+  # translate gene names to ids                                                                                                                           
+  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts),org.Dr.egALIAS2EG,ifnotfound=NA),function(x) x[1]))                                          
+  
+  # reverse map                                                                                                                                           
+  rids <- names(ids); names(rids) <- ids;                                                                                                                 
+  
+  # list all the ids per GO category                                                                                                                      
+  go.env <- AnnotationDbi::eapply(org.Dr.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))                                                          
+  go.env <- go.env[unlist(lapply(go.env,length))>5];                                                                                                      
+  go.env <- list2env(go.env);                                                                                                                             
+  
+  go.env                                                                                                                                                  
+}                                                                                                                                                             
+
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' @param r a pagoda2 object
