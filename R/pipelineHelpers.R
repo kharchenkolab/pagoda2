@@ -151,7 +151,7 @@ p2.generate.go <- function(r, organism = NULL) {
     ret <- p2.generate.human.go(r);
   } else if (organism == 'mm') {
     ret <- p2.generate.mouse.go(r);
-  } else if (organism = 'dr') {
+  } else if (organism == 'dr') {
     ret <- p2.generate.dr.go(r);
   } else {
     stop('Unknown organism specified')
