@@ -7,7 +7,7 @@ https://tinyurl.com/pagoda2demo
 http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/10xPBMC.bin
 
 # Analysis walkthroughs
-[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
+[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/pbmc8k.nb.html)
 
 [PCA-based basic walkthrough with pagoda2 web application generation](vignettes/pagoda2.Rmd)
 
