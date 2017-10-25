@@ -24,7 +24,12 @@ This currently only works for human (organism='hs') and mouse (organism='mm') da
 # rownames(countMatrix) <- make.unique(rownames(countMatrix))
 
 p2 <- basicP2proc(countMatrix, n.cores = 4)
-p2 <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
+ext.res <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
+
+
+p2 <- ext.res$p2
+go.env <- ext.res$go.env
+rm(ext.res)
 
 # Make cell metadata from the default clusters generated during basicP2proc()
 # This is optional, metadata.forweb can also be NULL
@@ -36,7 +41,7 @@ metadata.listfactors <- list(
 metadata.forweb <- factorListToMetadata(metadata.listfactors)
 
 # Make the web object
-p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application', organism = 'hs')
+p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application', go.env = go.env)
 
 # Serialize to file
 # The serialisedApp.bin file will now contain all the information

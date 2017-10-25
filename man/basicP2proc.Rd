@@ -4,7 +4,12 @@
 \alias{basicP2proc}
 \title{Perform basic pagoda2 processing}
 \usage{
-basicP2proc(cd, n.cores = 20)
+basicP2proc(cd, n.cores = 20, batch = NULL)
+}
+\arguments{
+\item{n.cores}{number of cores to use}
+
+\item{batch}{optional batch factor}
 }
 \value{
 a new pagoda2 object

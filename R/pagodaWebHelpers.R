@@ -28,7 +28,7 @@ p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
 #' Generates human go annotation for the web object for any species
 #' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.human.go.web
+#' @export p2.generate.go.web
 p2.generate.go.web  <-                                                                                                                                                                                   
   function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL, n.cores = 1)                                                                                                                            
   {                                                                                                                                                                                                        
@@ -51,6 +51,33 @@ p2.generate.go.web  <-
     names(rids) <- ids                                                                                                                                                                                   
     go.env <- AnnotationDbi::eapply(org.Hs.egGO2ALLEGS, function(x) as.character(na.omit(rids[x])))                                                                                                      
     go.env <- go.env[unlist(lapply(go.env, length)) > 5]                                                                                                                                                 
+    
+    ## Put the GO Term annotation generated in a format suitable for the web interface                                                                                                                   
+    nms <- names(go.env);                                                                                                                                                                                
+    names(nms) <- nms;                                                                                                                                                                                   
+    geneSets <- lapply(nms, function(x) {                                                                                                                                                      
+      list(                                                                                                                                                                                            
+        properties = list(                                                                                                                                                                           
+          locked = T,                                                                                                                                                                              
+          genesetname = x,                                                                                                                                                                         
+          shortdescription = GOTERM[[x]]@Term                                                                                                                                                      
+        ),                                                                                                                                                                                           
+        genes = c(go.env[[x]])                                                                                                                                                                       
+      )                                                                                                                                                                                                
+    })                                                                                                                                                                                                   
+    
+    invisible(geneSets)                                                                                                                                                                                         
+  }   
+
+#' Generates GO annotation for the web object
+#' @description Generates GO annotation for the web object from the go environment used for 
+#' enrichment analysis
+#' @param go.env GO enviroment generated with p2.generate.go
+#' @export p2.generate.go.web.fromGOEnv
+p2.generate.go.web.fromGOEnv  <-                                                                                                                                                                                   
+  function (go.env)                                                                                                                            
+  {                                                                                                                                                                                                        
+    go.env <- as.list(go.env)                                                                                                                                           
     
     ## Put the GO Term annotation generated in a format suitable for the web interface                                                                                                                   
     nms <- names(go.env);                                                                                                                                                                                

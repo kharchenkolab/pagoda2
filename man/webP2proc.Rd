@@ -5,7 +5,7 @@
 \title{Generate a pagoda2 web object}
 \usage{
 webP2proc(p2, additionalMetadata = NULL, title = "Pagoda 2", n.cores = 20,
-  make.go.sets = TRUE, make.de.sets = TRUE, organism = "hs",
+  make.go.sets = TRUE, make.de.sets = TRUE, go.env = NULL,
   make.gene.graph = TRUE)
 }
 \arguments{
@@ -21,7 +21,7 @@ webP2proc(p2, additionalMetadata = NULL, title = "Pagoda 2", n.cores = 20,
 
 \item{make.de.sets}{logical specifying if differential expression sets should be made}
 
-\item{organism}{organisms hs or mm}
+\item{go.env}{the go environment used for the overdispersion analysis}
 
 \item{make.gene.graph}{logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app}
 }

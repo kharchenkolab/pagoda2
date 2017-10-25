@@ -6,6 +6,13 @@
 \usage{
 extendedP2proc(p2, n.cores = 20, organism = "hs")
 }
+\arguments{
+\item{p2}{the pagoda 2 object}
+
+\item{n.cores}{number of cores to use}
+
+\item{organism}{organisms hs or mm}
+}
 \description{
 generate organism specific GO environment and
 calculate pathway overdispersion

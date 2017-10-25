@@ -29,12 +29,17 @@ basicP2proc <- function(cd, n.cores = 20, batch = NULL) {
 #' Perform extended pagoda2 processing
 #' @description generate organism specific GO environment and
 #' calculate pathway overdispersion
+#' @param p2 the pagoda 2 object 
+#' @param n.cores number of cores to use
+#' @param organism organisms hs or mm
 #' @export extendedP2proc
 extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
   } else if (organism == 'mm') {
     go.env <- p2.generate.mouse.go(p2);
+  } else if (organism == 'dr') {
+    go.env <- p2.generate.dr.go(p2);
   } else {
     stop('unknown organism');
   }
@@ -47,7 +52,7 @@ extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
     min.pathway.size = 50,
     max.pathway.size = 1000)
 
-  invisible(p2)
+  invisible(list(p2 = p2, go.env = go.env))
 }
 
 #' Convert a list of factors to pagoda2 web metadata
@@ -90,27 +95,26 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 #' @param n.cores number of cores to use
 #' @param make.go.sets logical specifying if go sets hould be made
 #' @param make.de.sets logical specifying if differential expression sets should be made
-#' @param organism organisms hs or mm
+#' @param go.env the go environment used for the overdispersion analysis
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @return a pagoda2 web application
 #' @export webP2proc
 webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.cores =20,
-                      make.go.sets = TRUE, make.de.sets = TRUE, organism = 'hs',
+                      make.go.sets = TRUE, make.de.sets = TRUE, go.env = NULL,
                       make.gene.graph = TRUE) {
   # Get the gene names
   gene.names <- colnames(p2$counts);
   # Build go terms for the web apps
   if (make.go.sets) {
-    if (organism == 'hs') {
-      goSets <- p2.generate.human.go.web(gene.names, n.cores = n.cores);
-    } else if (organism == 'mm') {
-      goSets <- p2.generate.mouse.go.web(gene.names, n.cores = n.cores);
+    if (is.null(go.env)) {
+      warning("make.go.sets is TRUE and go.env is null");
     } else {
-      error(paste0('Unknown organism: ', organism));
+      goSets <- p2.generate.go.web.fromGOEnv(go.env);
     }
   } else {
     goSets <- NULL
   }
+  
   # Get differentially expressed genes for each group
   if (make.de.sets) {
     deSets <- get.de.geneset(p2, groups = p2$clusters$PCA[[1]], prefix = 'de_')
