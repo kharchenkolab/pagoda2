@@ -63,7 +63,7 @@ extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
 #' @return a pagoda2 web metadata object
 #' @export factorListToMetadata
 factorListToMetadata <- function(factor.list, p2 = NULL) {
-  if(! class(p2) %in% c('Pagoda2', 'NULL')) error('p2 must be NULL or a pagoda2 app');
+  if(! class(p2) %in% c('Pagoda2', 'NULL')) stop('p2 must be NULL or a pagoda2 app');
   ## A pagoda 2 object has been provided, filter the factors by the
   ## cells in the app
   if (!is.null(p2)) {
