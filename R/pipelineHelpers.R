@@ -32,6 +32,7 @@ basicP2proc <- function(cd, n.cores = 20, batch = NULL) {
 #' @param p2 the pagoda 2 object 
 #' @param n.cores number of cores to use
 #' @param organism organisms hs or mm
+#' @return a list of a p2 object and a go.env
 #' @export extendedP2proc
 extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
   if (organism == 'hs') {
