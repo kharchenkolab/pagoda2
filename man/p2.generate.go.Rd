@@ -9,7 +9,7 @@ p2.generate.go(r, organism = NULL)
 \arguments{
 \item{r}{a pagoda2 object}
 
-\item{organism}{the organism, current hs and mm are supported for the human and mouse}
+\item{organism}{the organism, current hs, mm and dr are supported for the human and mouse}
 }
 \description{
 This is a wrapper function for generating a go envirnoment

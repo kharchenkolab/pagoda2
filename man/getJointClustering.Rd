@@ -6,7 +6,8 @@
 \usage{
 getJointClustering(r.n, k = 30,
   community.detection.method = walktrap.community, min.group.size = 10,
-  ncomps = 100)
+  ncomps = 100, include.sample.internal.edges = TRUE, mnn.edge.weight = 1,
+  internal.edge.weight = 1, extra.info = F)
 }
 \arguments{
 \item{r.n}{a named list of pagoda2 apps}
@@ -18,9 +19,17 @@ getJointClustering(r.n, k = 30,
 \item{min.group.size}{minimum group size to keep after matching}
 
 \item{ncomps}{number of components to use}
+
+\item{include.sample.internal.edges}{augment MNN network with intra app network}
+
+\item{internal.edge.weight}{weigth of edges from intra-sample matches (sample KNN)}
+
+\item{extra.info}{return extra debugging information (modifies return value structure)}
+
+\item{mnn.edge.weigth}{weight of edges from inter-sample matches}
 }
 \value{
-a named (by cell name) factor of groups
+a named (by cell name) factor of groups if extra.info is false, otherwise a list the factor and the extra information
 }
 \description{
 obtain joint clustering between multiple pagoda2 applications

@@ -13,6 +13,9 @@ extendedP2proc(p2, n.cores = 20, organism = "hs")
 
 \item{organism}{organisms hs or mm}
 }
+\value{
+a list of a p2 object and a go.env
+}
 \description{
 generate organism specific GO environment and
 calculate pathway overdispersion

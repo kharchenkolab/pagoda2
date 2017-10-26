@@ -150,6 +150,7 @@ identifyCellsGSVDMNNmulti <- function(referencesets, annotset, clustersOrig) {
     d4
 }
 
+
 #' Obtain joint clustering between multiple pagoda2 applications
 #' @description obtain joint clustering between multiple pagoda2 applications
 #' by identifying mutual nearest neighbours pairwise and constructing
@@ -159,48 +160,77 @@ identifyCellsGSVDMNNmulti <- function(referencesets, annotset, clustersOrig) {
 #' @param community.detection.method one of the igraph package community detection methods (or compatible fn)
 #' @param min.group.size minimum group size to keep after matching
 #' @param ncomps number of components to use
-#' @return a named (by cell name) factor of groups
+#' @param include.sample.internal.edges augment MNN network with intra app network
+#' @param mnn.edge.weigth weight of edges from inter-sample matches
+#' @param internal.edge.weight weigth of edges from intra-sample matches (sample KNN)
+#' @param extra.info return extra debugging information (modifies return value structure)
+#' @return a named (by cell name) factor of groups if extra.info is false, otherwise a list the factor and the extra information
 #' @export getJointClustering
 getJointClustering <- function(r.n, k=30, community.detection.method = walktrap.community,
-                                 min.group.size = 10,ncomps=100) {
-    require('gtools')
-    require('pbapply')
-    require('igraph')
-    ## Get all non-redundant pair of apps
-    nms <- names(r.n)
-    combs <- combinations(n = length(nms), r = 2, v = nms, repeats.allowed =F)
-    ## Convert to list for lapply
-    combsl <- split(t(combs), rep(1:nrow(combs), each=ncol(combs)))
-
-    ## get MNN pairs from all possible app pairs
-
-    cat('Calculating MNN for application pairs ...\n')
-    mnnres <- pblapply(combsl, function(x) {
-        getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F, ncomps = ncomps);
-    });
-
-    ## Merge the results into a edge table
-    mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
-
-    ## Make a graph with the MNNs
-    el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
-    g  <- graph_from_edgelist(el, directed =FALSE)
-
-    ## Do community detection on this graph
-    cat('Detecting clusters ...');
-    cls <- community.detection.method(g)
-    cat('done\n')
-    ## Extract groups from this graph
-    cls.mem <- membership(cls)
-    cls.groups <- as.character(cls.mem)
-    names(cls.groups) <- names(cls.mem)
-
-    ## Filter groups
-    lvls.keep <- names(which(table(cls.groups)  > min.group.size))
-    cls.groups[! as.character(cls.groups) %in% as.character(lvls.keep)] <- NA
-    cls.groups <- as.factor(cls.groups)
-
-    cls.groups
+                               min.group.size = 10,ncomps=100,include.sample.internal.edges=TRUE,
+                               mnn.edge.weight = 1, internal.edge.weight =1,
+                               extra.info = F) {
+  
+  require('gtools')
+  require('pbapply')
+  require('igraph')
+  
+  ## Get all non-redundant pair of apps
+  nms <- names(r.n)
+  combs <- combinations(n = length(nms), r = 2, v = nms, repeats.allowed =F)
+  
+  ## Convert to list for lapply
+  combsl <- split(t(combs), rep(1:nrow(combs), each=ncol(combs)))
+  
+  ## get MNN pairs from all possible app pairs
+  cat('Calculating MNN for application pairs ...\n')
+  mnnres <- pblapply(combsl, function(x) {
+    getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F, ncomps = ncomps);
+  });
+  
+  ## Merge the results into a edge table
+  mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
+  summary(mnnres.all)
+  mnnres.all$weight <- c(mnn.edge.weight)
+  
+  ## Optionally use the sample internal edges as an extra source of information
+  if (include.sample.internal.edges) {
+    withinappedges <- lapply(r.n, function(x) {
+      as_edgelist(x$graphs$PCA)
+    })
+    withinappedges <- as.data.frame(do.call(rbind, withinappedges),stringsAsFactors=F)
+    colnames(withinappedges) <- c('mA.lab','mB.lab')
+    withinappedges$weight <- c(internal.edge.weight)
+    # Append internal edges to the mnn edges
+    mnnres.all <- rbind(withinappedges, mnnres.all)
+  }
+  
+  ## Make a graph with the MNNs
+  el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
+  g  <- graph_from_edgelist(el, directed =FALSE)
+  
+  # Add weights
+  E(g)$weight <- as.numeric(mnnres.all$weight)
+  
+  ## Do community detection on this graph
+  cat('Detecting clusters ...');
+  cls <- community.detection.method(g)
+  cat('done\n')
+  ## Extract groups from this graph
+  cls.mem <- membership(cls)
+  cls.groups <- as.character(cls.mem)
+  names(cls.groups) <- names(cls.mem)
+  
+  ## Filter groups
+  lvls.keep <- names(which(table(cls.groups)  > min.group.size))
+  cls.groups[! as.character(cls.groups) %in% as.character(lvls.keep)] <- NA
+  cls.groups <- as.factor(cls.groups)
+  
+  ret <- cls.groups;
+  if (extra.info) {
+    ret <- list(cls.groups = cls.groups, el = el);
+  }
+  ret;
 }
 
 #' Side by side plot jointly called clusters from getJointClustering()
