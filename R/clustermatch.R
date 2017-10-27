@@ -357,12 +357,12 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     ## Calculate rotated matrices
     if (verbose) cat('Calculating PCs... ');
-    #x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.R(o)
-    #x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.R(o)
+    x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.R(o)
+    x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.R(o)
 
-    # This is the same thing but faster
-    x1.rot <- x1 %*% o$Q
-    x2.rot <- x2 %*% o$Q
+    # This is the same thing 
+    #x1.rot <- x1 %*% solve(t(o$Q))
+    #x2.rot <- x2 %*% solve(t(o$Q))
     if (verbose) cat('done\n');
 
     # If ncomps is specified take only those from each dataset
