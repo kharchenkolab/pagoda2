@@ -357,8 +357,8 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     ## Calculate rotated matrices
     if (verbose) cat('Calculating PCs... ');
-    x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.R(o)
-    x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.R(o)
+    x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.oR(o)
+    x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.oR(o)
 
     # This is the same thing 
     #x1.rot <- x1 %*% solve(t(o$Q))
