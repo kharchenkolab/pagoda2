@@ -136,8 +136,7 @@ aspectHeatmapViewer.prototype.getWidth = function() {
  * @description This is called by the parent heatmapDendrogram object
  * when initialization has finished.
  */
-aspectHeatmapViewer.prototype.initialize = function() {
-
+aspectHeatmapViewer.prototype.initialize = function(callback) {
     // Clickable regions for cross hairs and navigating
     this.aspectRegions = new clickableRegions();
 
@@ -187,9 +186,9 @@ aspectHeatmapViewer.prototype.initialize = function() {
     // Make the menu
     //this.generateMenu();
 
-
+// Callback from here for init load
     // Draw the heatmap
-    this.drawHeatmap();
+    this.drawHeatmap(callback);
 
 };
 
@@ -512,7 +511,7 @@ aspectHeatmapViewer.prototype.clearHeatmap = function(ctx) {
 /**
  * Draw the heatmap. Will clear heatmap if required
  */
-aspectHeatmapViewer.prototype.drawHeatmap = function() {
+aspectHeatmapViewer.prototype.drawHeatmap = function(callback) {
     var aspHeatView = this;
     var heatDendView = new heatmapDendrogramViewer();
     var dendV = new dendrogramViewer();
@@ -542,9 +541,9 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
         'padding-top': tpad + 'px'
     });
 
+
     var dataCntr = new dataController();
     dataCntr.getAspectMatrix(cellIndexStart, cellIndexEnd, false, function(data) {
-
         loadingDomItem.remove();
 
         var naspects = data.Dim[1];
@@ -647,8 +646,7 @@ aspectHeatmapViewer.prototype.drawHeatmap = function() {
                 aspHeatView.highlightCellSelectionsByNames(aspHeatView.currentOverlaySelectionNames);
             }
         }
-
-
+      
     }); // dataController callback
 
 };

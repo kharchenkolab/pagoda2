@@ -111,6 +111,7 @@ function initialise() {
       // Get the data loading params before initialising the app
       getDataLoadingParams(function(loadParams) {
         // Generate the overall layout
+        var loadingProgressTracker = new LoadingProgressTracker();
 
 
         var dataCntr = new dataController(loadParams);
@@ -135,7 +136,11 @@ function initialise() {
         var embView = new embeddingViewer();
         // Load the default embedding
         embView.showEmbedding(p2globalParams.embedding.defaultEmbedding.reduction,
-    			  p2globalParams.embedding.defaultEmbedding.embedding);
+    			  p2globalParams.embedding.defaultEmbedding.embedding, function() {
+    			    var eb = new eventBus();
+    			    eb.publish('initialEmbeddingPlotComplete');
+    			    
+    			  });
 
 
         // Generate the tables

@@ -61,7 +61,11 @@ heatmapDendrogramViewer.prototype.initializeComponents = function() {
     metaView.initialize();
 
     var aspectHeatView = new aspectHeatmapViewer();
-    aspectHeatView.initialize();
+    aspectHeatView.initialize(function() {
+      var eb = new eventBus();
+      eb.publish('initialAspectHeatmapLoadComplete');
+      
+    });
 
     // Unregister this handler
     var evtBus = new eventBus();

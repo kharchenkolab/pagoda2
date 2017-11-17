@@ -403,7 +403,12 @@ metaDataHeatmapViewer.prototype.initialize = function() {
     });
 
     this.updateCanvasSize();
-    this.drawMetadata();
+    
+    // Do the intial draw and notify LoadingProgressTracker
+    this.drawMetadata(function(){
+      var eB = new eventBus();
+      eB.publish('initialMetadataLoadComplete');
+    });
 }
 
 /**
@@ -513,7 +518,7 @@ metaDataHeatmapViewer.prototype.getDrawConstants = function() {
  * Draw an updated metadata heatmap
  *
  */
-metaDataHeatmapViewer.prototype.drawMetadata = function() {
+metaDataHeatmapViewer.prototype.drawMetadata = function(callback) {
     // Get cells currently displayed in the dendrogram
     var dendV = new dendrogramViewer();
     var cellSelection = dendV.getCurrentDisplayCells();
@@ -653,6 +658,11 @@ metaDataHeatmapViewer.prototype.drawMetadata = function() {
             } else {
                 mdhv.highlightCellSelectionsByNames(mdhv.currentOverlaySelectionNames);
             }
+        }
+
+        // If a callback has been provided call it
+        if(typeof callback == "function") {
+          callback();
         }
 
     });

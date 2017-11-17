@@ -413,10 +413,10 @@ embeddingViewer.prototype.updateColors = function() {
  * @param type the reduction from which to get this embedding from
  * @param embeddingType the embedding type for this reduction to show
  */
-embeddingViewer.prototype.showEmbedding = function(type, embeddingType) {
+embeddingViewer.prototype.showEmbedding = function(type, embeddingType, callback) {
     this.currentConfiguration.type = type;
     this.currentConfiguration.embeddingType = embeddingType;
-    this.plotEmbedding();
+    this.currentViewer.draw(callback);
 }
 
 /**
