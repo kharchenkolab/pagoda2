@@ -164,12 +164,14 @@ identifyCellsGSVDMNNmulti <- function(referencesets, annotset, clustersOrig) {
 #' @param mnn.edge.weigth weight of edges from inter-sample matches
 #' @param internal.edge.weight weigth of edges from intra-sample matches (sample KNN)
 #' @param extra.info return extra debugging information (modifies return value structure)
+#' @param neighbourhood.average logical, average cell neighbourhoods before doing MNN lookup
 #' @return a named (by cell name) factor of groups if extra.info is false, otherwise a list the factor and the extra information
 #' @export getJointClustering
 getJointClustering <- function(r.n, k=30, community.detection.method = walktrap.community,
                                min.group.size = 10,ncomps=100,include.sample.internal.edges=TRUE,
                                mnn.edge.weight = 1, internal.edge.weight =1,
-                               extra.info = F) {
+                               extra.info = F, neighbourhood.average = TRUE,
+                               neighbourhood.k = 20) {
   
   require('gtools')
   require('pbapply')
@@ -185,7 +187,9 @@ getJointClustering <- function(r.n, k=30, community.detection.method = walktrap.
   ## get MNN pairs from all possible app pairs
   cat('Calculating MNN for application pairs ...\n')
   mnnres <- pblapply(combsl, function(x) {
-    getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F, ncomps = ncomps);
+    getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F,
+                    ncomps = ncomps, neighbourhood.average = neighbourhood.average,
+                    neighbourhood.k, neighbourhood.k);
   });
   
   ## Merge the results into a edge table
@@ -295,7 +299,8 @@ getJointClusterMarkerGenes <- function(applist, jc) {
 #' @return a data frame with all the pairs of the mutual neighbours
 #' @export getMNNforP2pair
 getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
-                            center=T, verbose =T, ncomps = 100, plot.projection = F) {
+                            center=T, verbose =T, ncomps = 100, plot.projection = F,
+                            neighbourhood.average = TRUE) {
     require('plyr')
     require('geigen')
 
@@ -360,9 +365,10 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
     x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.oR(o)
     x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.oR(o)
 
-    # This is the same thing 
-    #x1.rot <- x1 %*% solve(t(o$Q))
-    #x2.rot <- x2 %*% solve(t(o$Q))
+    # This is the same thing
+    # toqi <- solve(t(o$Q))
+    #x1.rot <- x1 %*% toqi
+    #x2.rot <- x2 %*% toqi
     if (verbose) cat('done\n');
 
     # If ncomps is specified take only those from each dataset
@@ -399,7 +405,8 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     ## In this space assign cells by mutual NNs
     if (verbose) {cat('Finding MNNs... ');}
-    mnnres <- pagoda2:::mutualNN(x1.rot,x2.rot,k1,k2,2,verbose=F)
+    mnnres <- pagoda2:::mutualNN(x1.rot,x2.rot,k1,k2,2,verbose= verbose, 
+                                 neighbourhoodAverage = neighbourhood.average)
     if (verbose) cat('done\n');
 
     mnnres$mA.lab <- rownames(r1$counts)[mnnres$mA.id]

@@ -5,8 +5,12 @@ WriteListToBinary <- function(expL, outfile, verbose = FALSE) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile, verbose))
 }
 
-mutualNN <- function(mA, mB, kA, kB, spaceType = 2L, lpSpaceP = 2.0, verbose = TRUE) {
-    .Call('_pagoda2_mutualNN', PACKAGE = 'pagoda2', mA, mB, kA, kB, spaceType, lpSpaceP, verbose)
+mutualNN <- function(mA, mB, kA, kB, spaceType = 2L, lpSpaceP = 2.0, verbose = TRUE, neighbourhoodAverage = TRUE, neighbourAvgKA = 10L, neighbourAvgKB = 10L) {
+    .Call('_pagoda2_mutualNN', PACKAGE = 'pagoda2', mA, mB, kA, kB, spaceType, lpSpaceP, verbose, neighbourhoodAverage, neighbourAvgKA, neighbourAvgKB)
+}
+
+neighbourhoodAverageMatrix <- function(mA, verbose = TRUE, lpSpaceP = 2.0, spaceType = 2L, nThreads = 30L, k = 10L) {
+    .Call('_pagoda2_neighbourhoodAverageMatrix', PACKAGE = 'pagoda2', mA, verbose, lpSpaceP, spaceType, nThreads, k)
 }
 
 non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L) {

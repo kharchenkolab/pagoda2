@@ -44,6 +44,12 @@ forward_list<queryResult>* queryIndex(Index<float> *index,
                                       ObjectVector &dataset, VectorSpace<float> *space,
                                       int k, bool verbose );
 
+NumericMatrix neighbourhoodAverageMatrix(NumericMatrix mA, 
+					 bool verbose, 
+					 float lpSpaceP,
+					 int spaceType, 
+					 int nThreads, 
+					 int k);
 
 
 // A functor that compares two query results
@@ -117,8 +123,10 @@ VectorSpace<float>* makeSpace(int spaceType, float p) {
 }
 
 // [[Rcpp::export]]
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0,
-                   bool verbose = true) {
+DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA,
+		   NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0,
+		   bool verbose = true, bool neighbourhoodAverage = true,
+		   NumericVector neighbourAvgKA = 10, NumericVector neighbourAvgKB = 10) {
   int nThreads = 30;
   int kvalA = kA[0];
   int kvalB = kB[0];
@@ -129,6 +137,13 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
 
   AnyParams empty;
   VectorSpace<float> *space = makeSpace(spaceType, lpSpaceP);
+
+  // Perform neighbourhood averaging if required
+  if (neighbourhoodAverage) {
+    cout << "DEBUG: Neighbourhood Averaging...";
+    mA = neighbourhoodAverageMatrix(mA, verbose, lpSpaceP, spaceType, nThreads, neighbourAvgKA[0]);
+    mB = neighbourhoodAverageMatrix(mB, verbose, lpSpaceP, spaceType, nThreads, neighbourAvgKB[0]);
+  }
 
   // Converting format for A
   if (verbose) cout << "reading points from mA..." << flush;
@@ -288,6 +303,67 @@ forward_list<queryResult>* queryIndex(Index<float> *index,
   }
 
   return queryResults;
-}
+};
 
+/**
+ * Return a new matrix by performing neighbourhood averaging of every cell
+ */
+// [[Rcpp::export]]
+NumericMatrix neighbourhoodAverageMatrix(NumericMatrix mA, bool verbose = true, 
+		float lpSpaceP = 2.0, int spaceType = 2, int nThreads = 30, int k = 10) {
+  if (verbose) cout << "Neighbourhood averaging matrix...";
 
+  initLibrary(LIB_LOGNONE, NULL);
+  
+  AnyParams empty;
+  VectorSpace<float> *space = makeSpace(spaceType, lpSpaceP);
+
+  ObjectVector dataset;
+  readNumericMatrixIntoObjectVector(mA, dataset, space);
+
+  Index<float> *index;
+  index = makeIndex(space, dataset, verbose, nThreads, spaceType);
+
+  NumericMatrix mAnew(mA.nrow(), mA.ncol());
+
+  int nqueries = dataset.size();
+
+  for (int i = 0; i < nqueries; i++) {
+    //    cout << "Outer for loop i = " << i << endl << flush;
+    const Object *queryObj = dataset[i];
+
+    KNNQuery<float> knnQ(*space, queryObj, k);
+    index->Search(&knnQ);
+    KNNQueue<float> *res = knnQ.Result()->Clone();
+
+    int neighbourCount = 0;
+    auto ncol = mA.ncol();
+
+    // Vector to sum neighbours in
+    NumericVector avgCell(ncol);
+    int vcSize = ncol;
+
+    while(!res->Empty()) {
+      int neighbourId = res->TopObject()->id();
+      NumericVector vc = mA(neighbourId,_); // Vector of cell
+      
+      // Add vc to avgCell
+      for (int i = 0; i < vcSize; i++) avgCell(i) += vc(i);
+
+      res->Pop();
+      ++neighbourCount;
+    }
+    
+    for (int i = 0; i < vcSize; i++) {
+      avgCell(i) /= neighbourCount;
+    }
+
+    // Set the corresponding column of mAnew
+    NumericMatrix::Row cellCol = mAnew(i,_);
+    cellCol = avgCell;
+  }
+
+  if (verbose) cout << "done." << endl;
+
+  return mAnew;
+};
