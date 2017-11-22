@@ -61,7 +61,7 @@ struct queryResultCompareNodes {
 };
 
 // Given two lists of query results find mutual MNNs
-forward_list<queryResult>* findMNN(forward_list<queryResult>* qrA, forward_list<queryResult>* qrB, bool verbose = true, bool mutualOnly = true) {
+forward_list<queryResult>* findNN(forward_list<queryResult>* qrA, forward_list<queryResult>* qrB, bool verbose = true, bool mutualOnly = true) {
   std::chrono::time_point<std::chrono::high_resolution_clock> t1, t2;
 
   if (verbose) {
@@ -132,8 +132,13 @@ VectorSpace<float>* makeSpace(int spaceType, float p) {
   return space;
 }
 
+/**
+ * Find nearest neighbours between two datasets a and b, by default 
+ * only return mutual NNs.
+ */
+
 // [[Rcpp::export]]
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA,
+DataFrame interNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA,
 		   NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0,
 		   bool verbose = true, bool neighbourhoodAverage = true,
 		   NumericVector neighbourAvgKA = 10, NumericVector neighbourAvgKB = 10,
@@ -184,7 +189,7 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA,
   forward_list<queryResult>* qrB;
   qrB = queryIndex(indexA, datasetB, space, kvalB, verbose);
 
-  forward_list<queryResult> *mnn= findMNN(qrA, qrB, verbose, mutualOnly);
+  forward_list<queryResult> *mnn= findNN(qrA, qrB, verbose, mutualOnly);
 
   delete indexA;
   delete indexB;

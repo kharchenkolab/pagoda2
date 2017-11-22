@@ -5,9 +5,11 @@
 \title{Obtain joint clustering between multiple pagoda2 applications}
 \usage{
 getJointClustering(r.n, k = 30,
-  community.detection.method = walktrap.community, min.group.size = 10,
-  ncomps = 100, include.sample.internal.edges = TRUE, mnn.edge.weight = 1,
-  internal.edge.weight = 1, extra.info = F)
+  community.detection.method = walktrap.community,
+  community.detection.params = list(), min.group.size = 10, ncomps = 100,
+  include.sample.internal.edges = TRUE, mnn.edge.weight = 1,
+  internal.edge.weight = 1, extra.info = F, neighbourhood.average = TRUE,
+  neighbourhood.k = 20, mutualOnly = TRUE)
 }
 \arguments{
 \item{r.n}{a named list of pagoda2 apps}
@@ -25,6 +27,8 @@ getJointClustering(r.n, k = 30,
 \item{internal.edge.weight}{weigth of edges from intra-sample matches (sample KNN)}
 
 \item{extra.info}{return extra debugging information (modifies return value structure)}
+
+\item{neighbourhood.average}{logical, average cell neighbourhoods before doing MNN lookup}
 
 \item{mnn.edge.weigth}{weight of edges from inter-sample matches}
 }

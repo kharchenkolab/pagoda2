@@ -19,9 +19,9 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// mutualNN
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType, float lpSpaceP, bool verbose, bool neighbourhoodAverage, NumericVector neighbourAvgKA, NumericVector neighbourAvgKB, bool mutualOnly);
-RcppExport SEXP _pagoda2_mutualNN(SEXP mASEXP, SEXP mBSEXP, SEXP kASEXP, SEXP kBSEXP, SEXP spaceTypeSEXP, SEXP lpSpacePSEXP, SEXP verboseSEXP, SEXP neighbourhoodAverageSEXP, SEXP neighbourAvgKASEXP, SEXP neighbourAvgKBSEXP, SEXP mutualOnlySEXP) {
+// interNN
+DataFrame interNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType, float lpSpaceP, bool verbose, bool neighbourhoodAverage, NumericVector neighbourAvgKA, NumericVector neighbourAvgKB, bool mutualOnly);
+RcppExport SEXP _pagoda2_interNN(SEXP mASEXP, SEXP mBSEXP, SEXP kASEXP, SEXP kBSEXP, SEXP spaceTypeSEXP, SEXP lpSpacePSEXP, SEXP verboseSEXP, SEXP neighbourhoodAverageSEXP, SEXP neighbourAvgKASEXP, SEXP neighbourAvgKBSEXP, SEXP mutualOnlySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -36,7 +36,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type neighbourAvgKA(neighbourAvgKASEXP);
     Rcpp::traits::input_parameter< NumericVector >::type neighbourAvgKB(neighbourAvgKBSEXP);
     Rcpp::traits::input_parameter< bool >::type mutualOnly(mutualOnlySEXP);
-    rcpp_result_gen = Rcpp::wrap(mutualNN(mA, mB, kA, kB, spaceType, lpSpaceP, verbose, neighbourhoodAverage, neighbourAvgKA, neighbourAvgKB, mutualOnly));
+    rcpp_result_gen = Rcpp::wrap(interNN(mA, mB, kA, kB, spaceType, lpSpaceP, verbose, neighbourhoodAverage, neighbourAvgKA, neighbourAvgKB, mutualOnly));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -339,7 +339,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 3},
-    {"_pagoda2_mutualNN", (DL_FUNC) &_pagoda2_mutualNN, 11},
+    {"_pagoda2_interNN", (DL_FUNC) &_pagoda2_interNN, 11},
     {"_pagoda2_neighbourhoodAverageMatrix", (DL_FUNC) &_pagoda2_neighbourhoodAverageMatrix, 6},
     {"_pagoda2_neighbourhoodAverageMatrix2", (DL_FUNC) &_pagoda2_neighbourhoodAverageMatrix2, 6},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},

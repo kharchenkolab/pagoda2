@@ -88,7 +88,7 @@ identifyCellsGSVDMNN <- function(referenceP2, r2, referenceP2labels,
 
     ## In this space assign cells by mutual NNs
     if (verbose) {cat('Finding MNNs... ');}
-    mnnres <- pagoda2:::mutualNN(x1.rot, x2.rot, k1, k2, 2, verbose=F)
+    mnnres <- pagoda2:::interNN(x1.rot, x2.rot, k1, k2, 2, verbose=F)
     if (verbose) cat('done\n');
 
     if (verbose) cat('Summarising... ');
@@ -274,7 +274,8 @@ plotJointClustering <- function(r.n, cl, alpha =0.3, main=NULL) {
         r$plotEmbedding(type='PCA',
                         embeddingType ='tSNE',
                         groups=cl[rownames(r$embeddings$PCA$tSNE)],
-                        mark.clusters =T
+                        mark.clusters =T,
+                        main = n
                        );
                         
         ##plot(r$embeddings$PCA$tSNE, col = pal[cl[rownames(r$embeddings$PCA$tSNE)]], pch=20, cex=2,main=n)
@@ -425,7 +426,7 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     ## In this space assign cells by mutual NNs
     if (verbose) {cat('Finding MNNs... ');}
-    mnnres <- pagoda2:::mutualNN(x1.rot,x2.rot,k1,k2,2,verbose= verbose, 
+    mnnres <- pagoda2:::interNN(x1.rot,x2.rot,k1,k2,2,verbose= verbose, 
                                  neighbourhoodAverage = neighbourhood.average,
                                  mutualOnly = mutualOnly)
     if (verbose) cat('done\n');
