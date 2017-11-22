@@ -167,11 +167,19 @@ identifyCellsGSVDMNNmulti <- function(referencesets, annotset, clustersOrig) {
 #' @param neighbourhood.average logical, average cell neighbourhoods before doing MNN lookup
 #' @return a named (by cell name) factor of groups if extra.info is false, otherwise a list the factor and the extra information
 #' @export getJointClustering
-getJointClustering <- function(r.n, k=30, community.detection.method = walktrap.community,
-                               min.group.size = 10,ncomps=100,include.sample.internal.edges=TRUE,
-                               mnn.edge.weight = 1, internal.edge.weight =1,
-                               extra.info = F, neighbourhood.average = TRUE,
-                               neighbourhood.k = 20) {
+getJointClustering <- function(r.n,
+                               k=30,
+                               community.detection.method = walktrap.community,
+                               community.detection.params = list(),
+                               min.group.size = 10,
+                               ncomps=100,
+                               include.sample.internal.edges=TRUE,
+                               mnn.edge.weight = 1,
+                               internal.edge.weight =1,
+                               extra.info = F,
+                               neighbourhood.average = TRUE,
+                               neighbourhood.k = 20,
+                               mutualOnly = TRUE) {
   
   require('gtools')
   require('pbapply')
@@ -189,7 +197,7 @@ getJointClustering <- function(r.n, k=30, community.detection.method = walktrap.
   mnnres <- pblapply(combsl, function(x) {
     getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F,
                     ncomps = ncomps, neighbourhood.average = neighbourhood.average,
-                    neighbourhood.k, neighbourhood.k);
+                    neighbourhood.k, neighbourhood.k, mutualOnly = mutualOnly);
   });
   
   ## Merge the results into a edge table
@@ -218,7 +226,9 @@ getJointClustering <- function(r.n, k=30, community.detection.method = walktrap.
   
   ## Do community detection on this graph
   cat('Detecting clusters ...');
-  cls <- community.detection.method(g)
+  community.detection.params$graph <- g  
+  cls <- do.call(community.detection.method, community.detection.params);
+  # cls <- community.detection.method(g)
   cat('done\n')
   ## Extract groups from this graph
   cls.mem <- membership(cls)
@@ -254,11 +264,21 @@ plotJointClustering <- function(r.n, cl, alpha =0.3, main=NULL) {
         par(mfrow=c(plot.size,plot.size))
     }
 
+    if (is.null(main)) main <- names(r.n);
+    
     pal <- rainbow(nlevels(cl), v = 0.8)
     pal <- alpha(pal, alpha)
-    lapply(r.n, function(r) {
-        plot(r$embeddings$PCA$tSNE, col = pal[cl[rownames(r$embeddings$PCA$tSNE)]], pch=20, cex=2,main=main)
-    });
+    names(pal) <- levels(cl)
+    
+    mapply(function(r,n) {
+        r$plotEmbedding(type='PCA',
+                        embeddingType ='tSNE',
+                        groups=cl[rownames(r$embeddings$PCA$tSNE)],
+                        mark.clusters =T
+                       );
+                        
+        ##plot(r$embeddings$PCA$tSNE, col = pal[cl[rownames(r$embeddings$PCA$tSNE)]], pch=20, cex=2,main=n)
+    },r.n, main);
 
     invisible(NULL);
 }
@@ -300,7 +320,7 @@ getJointClusterMarkerGenes <- function(applist, jc) {
 #' @export getMNNforP2pair
 getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
                             center=T, verbose =T, ncomps = 100, plot.projection = F,
-                            neighbourhood.average = TRUE) {
+                            neighbourhood.average = TRUE, mutualOnly = TRUE) {
     require('plyr')
     require('geigen')
 
@@ -406,7 +426,8 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
     ## In this space assign cells by mutual NNs
     if (verbose) {cat('Finding MNNs... ');}
     mnnres <- pagoda2:::mutualNN(x1.rot,x2.rot,k1,k2,2,verbose= verbose, 
-                                 neighbourhoodAverage = neighbourhood.average)
+                                 neighbourhoodAverage = neighbourhood.average,
+                                 mutualOnly = mutualOnly)
     if (verbose) cat('done\n');
 
     mnnres$mA.lab <- rownames(r1$counts)[mnnres$mA.id]
