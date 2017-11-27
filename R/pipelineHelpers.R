@@ -8,10 +8,10 @@
 #' @param batch optional batch factor
 #' @return a new pagoda2 object
 #' @export basicP2proc
-basicP2proc <- function(cd, n.cores = 20, batch = NULL) {
+basicP2proc <- function(cd, n.cores = 20, batch = NULL, keep.genes = NULL) {
   require(Matrix)
 
-  p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch);
+  p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes);
   p2$adjustVariance(plot=F, gam.k=10);
   p2$calculatePcaReduction(nPcs = 300, n.odgenes = 3.e3, maxit = 1000)
   p2$makeKnnGraph(k = 30, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
