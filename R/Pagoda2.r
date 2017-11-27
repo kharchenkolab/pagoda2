@@ -521,7 +521,7 @@ Pagoda2 <- setRefClass(
     },
 
     geneKnnbyPCA = function() {
-      warn('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+      warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
       .self$makeGeneKnnGraph();
     },
 
