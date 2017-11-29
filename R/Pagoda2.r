@@ -897,7 +897,11 @@ Pagoda2 <- setRefClass(
       if(inner.clustering) {
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
-          ii[hclust(as.dist(1-cor(em[,ii])),method='complete')$order]
+          if(length(ii)>3) {
+            ii[hclust(as.dist(1-cor(em[,ii,drop=F])),method='complete')$order]
+          } else {
+            ii
+          }
         })
       } else {
         clco <- tapply(1:ncol(em),cols,I)
@@ -1024,7 +1028,11 @@ Pagoda2 <- setRefClass(
       if(inner.clustering) {
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
-          ii[hclust(as.dist(1-cor(em[,ii])),method='single')$order]
+          if(length(ii)>3) {
+            ii[hclust(as.dist(1-cor(em[,ii,drop=F])),method='single')$order]
+          } else {
+            ii
+          }
           # TODO: implement smoothing span support
         })
       } else {
@@ -1044,7 +1052,7 @@ Pagoda2 <- setRefClass(
       if(drawGroupNames) {
         clpos <- (c(0,bp[-length(bp)])+bp)/2;
         labpos <- rev(seq(0,length(bp)+1)/(length(bp)+1)*nrow(em)); labpos <- labpos[-1]; labpos <- labpos[-length(labpos)]
-        text(x=clpos,y=labpos,labels = levels(col),cex=1)
+        text(x=clpos,y=labpos,labels = levels(cols),cex=1)
         # par(xpd=TRUE)
         # clpos <- (c(0,bp[-length(bp)])+bp)/2;
         # labpos <- seq(0,length(bp)+1)/(length(bp)+1)*max(bp); labpos <- labpos[-1]; labpos <- labpos[-length(labpos)]
