@@ -88,7 +88,7 @@ identifyCellsGSVDMNN <- function(referenceP2, r2, referenceP2labels,
 
     ## In this space assign cells by mutual NNs
     if (verbose) {cat('Finding MNNs... ');}
-    mnnres <- pagoda2:::mutualNN(x1.rot, x2.rot, k1, k2, 2, verbose=F)
+    mnnres <- pagoda2:::interNN(x1.rot, x2.rot, k1, k2, 2, verbose=F)
     if (verbose) cat('done\n');
 
     if (verbose) cat('Summarising... ');
@@ -150,6 +150,7 @@ identifyCellsGSVDMNNmulti <- function(referencesets, annotset, clustersOrig) {
     d4
 }
 
+
 #' Obtain joint clustering between multiple pagoda2 applications
 #' @description obtain joint clustering between multiple pagoda2 applications
 #' by identifying mutual nearest neighbours pairwise and constructing
@@ -159,48 +160,91 @@ identifyCellsGSVDMNNmulti <- function(referencesets, annotset, clustersOrig) {
 #' @param community.detection.method one of the igraph package community detection methods (or compatible fn)
 #' @param min.group.size minimum group size to keep after matching
 #' @param ncomps number of components to use
-#' @return a named (by cell name) factor of groups
+#' @param include.sample.internal.edges augment MNN network with intra app network
+#' @param mnn.edge.weigth weight of edges from inter-sample matches
+#' @param internal.edge.weight weigth of edges from intra-sample matches (sample KNN)
+#' @param extra.info return extra debugging information (modifies return value structure)
+#' @param neighbourhood.average logical, average cell neighbourhoods before doing MNN lookup
+#' @return a named (by cell name) factor of groups if extra.info is false, otherwise a list the factor and the extra information
 #' @export getJointClustering
-getJointClustering <- function(r.n, k=30, community.detection.method = walktrap.community,
-                                 min.group.size = 10,ncomps=100) {
-    require('gtools')
-    require('pbapply')
-    require('igraph')
-    ## Get all non-redundant pair of apps
-    nms <- names(r.n)
-    combs <- combinations(n = length(nms), r = 2, v = nms, repeats.allowed =F)
-    ## Convert to list for lapply
-    combsl <- split(t(combs), rep(1:nrow(combs), each=ncol(combs)))
-
-    ## get MNN pairs from all possible app pairs
-
-    cat('Calculating MNN for application pairs ...\n')
-    mnnres <- pblapply(combsl, function(x) {
-        getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F, ncomps = ncomps);
-    });
-
-    ## Merge the results into a edge table
-    mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
-
-    ## Make a graph with the MNNs
-    el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
-    g  <- graph_from_edgelist(el, directed =FALSE)
-
-    ## Do community detection on this graph
-    cat('Detecting clusters ...');
-    cls <- community.detection.method(g)
-    cat('done\n')
-    ## Extract groups from this graph
-    cls.mem <- membership(cls)
-    cls.groups <- as.character(cls.mem)
-    names(cls.groups) <- names(cls.mem)
-
-    ## Filter groups
-    lvls.keep <- names(which(table(cls.groups)  > min.group.size))
-    cls.groups[! as.character(cls.groups) %in% as.character(lvls.keep)] <- NA
-    cls.groups <- as.factor(cls.groups)
-
-    cls.groups
+getJointClustering <- function(r.n,
+                               k=30,
+                               community.detection.method = walktrap.community,
+                               community.detection.params = list(),
+                               min.group.size = 10,
+                               ncomps=100,
+                               include.sample.internal.edges=TRUE,
+                               mnn.edge.weight = 1,
+                               internal.edge.weight =1,
+                               extra.info = F,
+                               neighbourhood.average = TRUE,
+                               neighbourhood.k = 20,
+                               mutualOnly = TRUE) {
+  
+  require('gtools')
+  require('pbapply')
+  require('igraph')
+  
+  ## Get all non-redundant pair of apps
+  nms <- names(r.n)
+  combs <- combinations(n = length(nms), r = 2, v = nms, repeats.allowed =F)
+  
+  ## Convert to list for lapply
+  combsl <- split(t(combs), rep(1:nrow(combs), each=ncol(combs)))
+  
+  ## get MNN pairs from all possible app pairs
+  cat('Calculating MNN for application pairs ...\n')
+  mnnres <- pblapply(combsl, function(x) {
+    getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F,
+                    ncomps = ncomps, neighbourhood.average = neighbourhood.average,
+                    neighbourhood.k, neighbourhood.k, mutualOnly = mutualOnly);
+  });
+  
+  ## Merge the results into a edge table
+  mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
+  summary(mnnres.all)
+  mnnres.all$weight <- c(mnn.edge.weight)
+  
+  ## Optionally use the sample internal edges as an extra source of information
+  if (include.sample.internal.edges) {
+    withinappedges <- lapply(r.n, function(x) {
+      as_edgelist(x$graphs$PCA)
+    })
+    withinappedges <- as.data.frame(do.call(rbind, withinappedges),stringsAsFactors=F)
+    colnames(withinappedges) <- c('mA.lab','mB.lab')
+    withinappedges$weight <- c(internal.edge.weight)
+    # Append internal edges to the mnn edges
+    mnnres.all <- rbind(withinappedges, mnnres.all)
+  }
+  
+  ## Make a graph with the MNNs
+  el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
+  g  <- graph_from_edgelist(el, directed =FALSE)
+  
+  # Add weights
+  E(g)$weight <- as.numeric(mnnres.all$weight)
+  
+  ## Do community detection on this graph
+  cat('Detecting clusters ...');
+  community.detection.params$graph <- g  
+  cls <- do.call(community.detection.method, community.detection.params);
+  # cls <- community.detection.method(g)
+  cat('done\n')
+  ## Extract groups from this graph
+  cls.mem <- membership(cls)
+  cls.groups <- as.character(cls.mem)
+  names(cls.groups) <- names(cls.mem)
+  
+  ## Filter groups
+  lvls.keep <- names(which(table(cls.groups)  > min.group.size))
+  cls.groups[! as.character(cls.groups) %in% as.character(lvls.keep)] <- NA
+  cls.groups <- as.factor(cls.groups)
+  
+  ret <- cls.groups;
+  if (extra.info) {
+    ret <- list(cls.groups = cls.groups, el = el);
+  }
+  ret;
 }
 
 #' Side by side plot jointly called clusters from getJointClustering()
@@ -220,11 +264,22 @@ plotJointClustering <- function(r.n, cl, alpha =0.3, main=NULL) {
         par(mfrow=c(plot.size,plot.size))
     }
 
+    if (is.null(main)) main <- names(r.n);
+    
     pal <- rainbow(nlevels(cl), v = 0.8)
     pal <- alpha(pal, alpha)
-    lapply(r.n, function(r) {
-        plot(r$embeddings$PCA$tSNE, col = pal[cl[rownames(r$embeddings$PCA$tSNE)]], pch=20, cex=2,main=main)
-    });
+    names(pal) <- levels(cl)
+    
+    mapply(function(r,n) {
+        r$plotEmbedding(type='PCA',
+                        embeddingType ='tSNE',
+                        groups=cl[rownames(r$embeddings$PCA$tSNE)],
+                        mark.clusters =T,
+                        main = n
+                       );
+                        
+        ##plot(r$embeddings$PCA$tSNE, col = pal[cl[rownames(r$embeddings$PCA$tSNE)]], pch=20, cex=2,main=n)
+    },r.n, main);
 
     invisible(NULL);
 }
@@ -265,7 +320,8 @@ getJointClusterMarkerGenes <- function(applist, jc) {
 #' @return a data frame with all the pairs of the mutual neighbours
 #' @export getMNNforP2pair
 getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
-                            center=T, verbose =T, ncomps = 100, plot.projection = F) {
+                            center=T, verbose =T, ncomps = 100, plot.projection = F,
+                            neighbourhood.average = TRUE, mutualOnly = TRUE) {
     require('plyr')
     require('geigen')
 
@@ -327,12 +383,13 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     ## Calculate rotated matrices
     if (verbose) cat('Calculating PCs... ');
-    #x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.R(o)
-    #x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.R(o)
+    x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.oR(o)
+    x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.oR(o)
 
-    # This is the same thing but faster
-    x1.rot <- x1 %*% o$Q
-    x2.rot <- x2 %*% o$Q
+    # This is the same thing
+    # toqi <- solve(t(o$Q))
+    #x1.rot <- x1 %*% toqi
+    #x2.rot <- x2 %*% toqi
     if (verbose) cat('done\n');
 
     # If ncomps is specified take only those from each dataset
@@ -344,7 +401,7 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
         D2d <- diag(D2);
 
         if (ncomps > length(D1d)) {
-            warn('More components than available were specified');
+            warning('More components than available were specified');
             ncomps <- length(D1d);
         }
 
@@ -359,7 +416,7 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
                  col=c(rep('red',dim(x1.rot)[1]),rep('blue',dim(x2.rot)[1])),
                  pch=16,cex=0.2)
             } else {
-                warn('plot.projection set to TRUE and comps.keep > 5: Can\'t plot that many components')
+                warning('plot.projection set to TRUE and comps.keep > 5: Can\'t plot that many components')
             }
         }
 
@@ -369,7 +426,9 @@ getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     ## In this space assign cells by mutual NNs
     if (verbose) {cat('Finding MNNs... ');}
-    mnnres <- pagoda2:::mutualNN(x1.rot,x2.rot,k1,k2,2,verbose=F)
+    mnnres <- pagoda2:::interNN(x1.rot,x2.rot,k1,k2,2,verbose= verbose, 
+                                 neighbourhoodAverage = neighbourhood.average,
+                                 mutualOnly = mutualOnly)
     if (verbose) cat('done\n');
 
     mnnres$mA.lab <- rownames(r1$counts)[mnnres$mA.id]

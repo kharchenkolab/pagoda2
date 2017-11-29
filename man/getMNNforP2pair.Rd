@@ -5,7 +5,8 @@
 \title{Get mutual neighbours for 2 pagoda2 objects}
 \usage{
 getMNNforP2pair(r1, r2, var.scale = T, k = 30, log.scale = T,
-  center = T, verbose = T, ncomps = 100, plot.projection = F)
+  center = T, verbose = T, ncomps = 100, plot.projection = F,
+  neighbourhood.average = TRUE, mutualOnly = TRUE)
 }
 \arguments{
 \item{r1}{first pagoda object}

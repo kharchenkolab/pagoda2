@@ -44,6 +44,12 @@ forward_list<queryResult>* queryIndex(Index<float> *index,
                                       ObjectVector &dataset, VectorSpace<float> *space,
                                       int k, bool verbose );
 
+NumericMatrix neighbourhoodAverageMatrix(NumericMatrix mA, 
+					 bool verbose, 
+					 float lpSpaceP,
+					 int spaceType, 
+					 int nThreads, 
+					 int k);
 
 
 // A functor that compares two query results
@@ -55,14 +61,13 @@ struct queryResultCompareNodes {
 };
 
 // Given two lists of query results find mutual MNNs
-forward_list<queryResult>* findMNN(forward_list<queryResult>* qrA, forward_list<queryResult>* qrB, bool verbose = true) {
+forward_list<queryResult>* findNN(forward_list<queryResult>* qrA, forward_list<queryResult>* qrB, bool verbose = true, bool mutualOnly = true) {
   std::chrono::time_point<std::chrono::high_resolution_clock> t1, t2;
 
   if (verbose) {
     t1 = high_resolution_clock::now();
     cout << "finding MNN..." << flush;
   }
-
 
   // Put results of A into a set that ignores the distances
   // Sets are the fastest for lookup
@@ -75,18 +80,29 @@ forward_list<queryResult>* findMNN(forward_list<queryResult>* qrA, forward_list<
 
   forward_list<queryResult> *MNN = new forward_list<queryResult>();
 
-  for (queryResult &qr: *qrB) {
-    queryResult qrTmp;
-    qrTmp.s = qr.e;
-    qrTmp.e = qr.s;
-    qrTmp.d = qr.d;  // don't care about d here
+  if (mutualOnly) {
+    
+    for (queryResult &qr: *qrB) {
+      queryResult qrTmp;
+      qrTmp.s = qr.e;
+      qrTmp.e = qr.s;
+      qrTmp.d = qr.d;  // don't care about d here
 
-    auto search = setA.find(qrTmp);
-    if (search != setA.end()) {
+      auto search = setA.find(qrTmp);
+      if (search != setA.end()) {
+	MNN->push_front(qr);
+      }
+    }
+  } else {
+    // Optionally return all edges without the mutuality criterion
+    for (queryResult &qr: *qrB) {
       MNN->push_front(qr);
     }
+    for (queryResult &qr: *qrB) {
+      MNN->push_front(qr);
+    }
+    // NOTE: above will lead to duplicate edges
   }
-
 
   if (verbose) {
     t2 = high_resolution_clock::now();
@@ -116,9 +132,17 @@ VectorSpace<float>* makeSpace(int spaceType, float p) {
   return space;
 }
 
+/**
+ * Find nearest neighbours between two datasets a and b, by default 
+ * only return mutual NNs.
+ */
+
 // [[Rcpp::export]]
-DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0,
-                   bool verbose = true) {
+DataFrame interNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA,
+		   NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0,
+		   bool verbose = true, bool neighbourhoodAverage = true,
+		   NumericVector neighbourAvgKA = 10, NumericVector neighbourAvgKB = 10,
+		   bool mutualOnly = true) {
   int nThreads = 30;
   int kvalA = kA[0];
   int kvalB = kB[0];
@@ -129,6 +153,13 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
 
   AnyParams empty;
   VectorSpace<float> *space = makeSpace(spaceType, lpSpaceP);
+
+  // Perform neighbourhood averaging if required
+  if (neighbourhoodAverage) {
+    cout << "DEBUG: Neighbourhood Averaging...";
+    mA = neighbourhoodAverageMatrix(mA, verbose, lpSpaceP, spaceType, nThreads, neighbourAvgKA[0]);
+    mB = neighbourhoodAverageMatrix(mB, verbose, lpSpaceP, spaceType, nThreads, neighbourAvgKB[0]);
+  }
 
   // Converting format for A
   if (verbose) cout << "reading points from mA..." << flush;
@@ -158,7 +189,7 @@ DataFrame mutualNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, Numeric
   forward_list<queryResult>* qrB;
   qrB = queryIndex(indexA, datasetB, space, kvalB, verbose);
 
-  forward_list<queryResult> *mnn= findMNN(qrA, qrB, verbose);
+  forward_list<queryResult> *mnn= findNN(qrA, qrB, verbose, mutualOnly);
 
   delete indexA;
   delete indexB;
@@ -288,6 +319,127 @@ forward_list<queryResult>* queryIndex(Index<float> *index,
   }
 
   return queryResults;
-}
+};
+
+/**
+ * Return a new matrix by performing neighbourhood averaging of every cell
+ */
+// [[Rcpp::export]]
+NumericMatrix neighbourhoodAverageMatrix(NumericMatrix mA, bool verbose = true, 
+		float lpSpaceP = 2.0, int spaceType = 2, int nThreads = 30, int k = 10) {
+  if (verbose) cout << "Neighbourhood averaging matrix...";
+
+  initLibrary(LIB_LOGNONE, NULL);
+  
+  AnyParams empty;
+  VectorSpace<float> *space = makeSpace(spaceType, lpSpaceP);
+
+  ObjectVector dataset;
+  readNumericMatrixIntoObjectVector(mA, dataset, space);
+
+  Index<float> *index;
+  index = makeIndex(space, dataset, verbose, nThreads, spaceType);
+
+  NumericMatrix mAnew(mA.nrow(), mA.ncol());
+
+  int nqueries = dataset.size();
+
+  for (int i = 0; i < nqueries; i++) {
+    //    cout << "Outer for loop i = " << i << endl << flush;
+    const Object *queryObj = dataset[i];
+
+    KNNQuery<float> knnQ(*space, queryObj, k);
+    index->Search(&knnQ);
+    KNNQueue<float> *res = knnQ.Result()->Clone();
+
+    int neighbourCount = 0;
+    auto ncol = mA.ncol();
+
+    // Vector to sum neighbours in
+    NumericVector avgCell(ncol);
+    int vcSize = ncol;
+
+    while(!res->Empty()) {
+      int neighbourId = res->TopObject()->id();
+      NumericVector vc = mA(neighbourId,_); // Vector of cell
+      
+      // Add vc to avgCell
+      for (int i = 0; i < vcSize; i++) avgCell(i) += vc(i);
+
+      res->Pop();
+      ++neighbourCount;
+    }
+    
+    for (int i = 0; i < vcSize; i++) {
+      avgCell(i) /= neighbourCount;
+    }
+
+    // Set the corresponding column of mAnew
+    NumericMatrix::Row cellCol = mAnew(i,_);
+    cellCol = avgCell;
+  }
+
+  if (verbose) cout << "done." << endl;
+
+  return mAnew;
+};
 
 
+// [[Rcpp::export]]
+NumericMatrix neighbourhoodAverageMatrix2(NumericMatrix mA, bool verbose = true, 
+		float lpSpaceP = 2.0, int spaceType = 2, int nThreads = 30, int k = 10) {
+  if (verbose) cout << "Neighbourhood averaging matrix...";
+
+  initLibrary(LIB_LOGNONE, NULL);
+  
+  AnyParams empty;
+  VectorSpace<float> *space = makeSpace(spaceType, lpSpaceP);
+
+  ObjectVector dataset;
+  readNumericMatrixIntoObjectVector(mA, dataset, space);
+
+  Index<float> *index;
+  index = makeIndex(space, dataset, verbose, nThreads, spaceType);
+
+  NumericMatrix mAnew(mA.nrow(), mA.ncol());
+
+  int nqueries = dataset.size();
+
+  for (int i = 0; i < nqueries; i++) {
+    const Object *queryObj = dataset[i];
+
+    KNNQuery<float> knnQ(*space, queryObj, k);
+    index->Search(&knnQ);
+    KNNQueue<float> *res = knnQ.Result()->Clone();
+
+    int neighbourCount = 0;
+    auto ncol = mA.ncol();
+
+    // Vector to sum neighbours in
+    NumericVector avgCell(ncol);
+    int vcSize = ncol;
+
+    while(!res->Empty()) {
+      int neighbourId = res->TopObject()->id();
+      NumericVector vc = mA(neighbourId,_); // Vector of cell
+      
+      // Add vc to avgCell
+      for (int i = 0; i < vcSize; i++) avgCell(i) += vc(i);
+
+      res->Pop();
+      ++neighbourCount;
+    }
+    
+    for (int i = 0; i < vcSize; i++) {
+      avgCell(i) /= neighbourCount;
+    }
+
+    // Set the corresponding column of mAnew
+    NumericMatrix::Row cellCol = mAnew(i,_);
+    cellCol = avgCell;
+  }
+
+  if (verbose) cout << "done." << endl;
+
+  return mAnew;
+};

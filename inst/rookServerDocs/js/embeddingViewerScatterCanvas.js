@@ -755,7 +755,7 @@ embeddingViewerScatterCanvas.prototype.resizeElements = function() {
 /**
  * Draws the embedding
  */
-embeddingViewerScatterCanvas.prototype.draw = function() {
+embeddingViewerScatterCanvas.prototype.draw = function(callback) {
     var dataCntr = new dataController();
     var embViewer = new embeddingViewer();
     var config = embViewer.getConfig();
@@ -842,6 +842,10 @@ embeddingViewerScatterCanvas.prototype.draw = function() {
                 }
             }
             embViewer.hideWait();
+            
+            if (typeof callback =='function') {
+              callback();
+            }
         }, type, embeddingType); // GenerateFillStyles
     });
 }

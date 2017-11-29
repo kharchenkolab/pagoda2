@@ -4,7 +4,8 @@
 \alias{p2.generate.go.web}
 \title{Generates human go annotation for the web object for any species}
 \usage{
-p2.generate.go.web(gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL)
+p2.generate.go.web(gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL,
+  n.cores = 1)
 }
 \arguments{
 \item{gene.names}{a character vector of genes to include}

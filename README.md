@@ -1,16 +1,15 @@
 # Demo Web Application
 
-10X sorted PBMCs
-https://tinyurl.com/pagoda2demo
+[10X sorted PBMCs](https://tinyurl.com/pagoda2demo)
 
-10X PBMC Dataset
-http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/10xPBMC.bin
+[10X PBMC Dataset](http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/10xPBMC.bin)
 
-# Basic analysis walkthrough
-[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2.walkthrough.html)
+# Analysis walkthroughs
+[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 
-# Basic analysis with generation of pagoda2 web application
-[Pagoda2 Web Application analysis](vignettes/pagoda2.Rmd)
+[PCA-based basic walkthrough with pagoda2 web application generation](vignettes/pagoda2.Rmd)
+
+[Pagoda2 Quick analysis](vignettes/p2.walkthrough.quick.Rmd)
 
 # Installation Instructions
 
@@ -22,7 +21,7 @@ Installation of pagoda2 requires installation of the Non-metric space library (n
 Install system dependencies for building nmslib, example here provided for Ubuntu
 ```sh
 sudo apt-get update
-sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libcurl4-gnutls-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
+sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
 ```
 
 ### Mac 
@@ -83,7 +82,7 @@ Install pagoda2 inside of R:
 ```r
 # Install Bioconductor dependencies
 source("http://bioconductor.org/biocLite.R")
-biocLite(c("GO.db", "org.Hs.eg.db","pcaMethods"), suppressUpdates=TRUE)
+biocLite(c("GO.db", "org.Hs.eg.db","org.Mm.eg.db", "pcaMethods"), suppressUpdates=TRUE)
 library(devtools)
 install_github("igraph/rigraph") # Don't install with install.packages()
 install_github("jkrijthe/Rtsne",ref="openmp")

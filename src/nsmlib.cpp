@@ -2,7 +2,10 @@
 
 #include "pagoda2.h"
 
+
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 // [[Rcpp::plugins(openmp)]]
 
 #define INDEX_TYPE_JS 1
@@ -100,10 +103,13 @@ DataFrame hnswKnn(NumericMatrix m, int k, int nThreads, float p, int efConstruct
   vector<vector<int32_t> > ids(nqueries);
   vector<vector<float> > dists(nqueries);
 
-  // omp_set_num_threads(nThreads);
+  #ifdef _OPENMP
+  omp_set_num_threads(nThreads);
+  #endif
+  
   unique_ptr<boost::progress_display> query_bar(verbose ? new boost::progress_display(nqueries) : NULL);
 
-  // #pragma omp parallel for shared(index,ids,dists) schedule(auto)
+  #pragma omp parallel for
   for(int i=0;i <nqueries;i++) {
     const Object* queryObj=dataSet[i];
     KNNQuery<float> knnQ(*space, queryObj, k);
