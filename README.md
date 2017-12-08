@@ -46,6 +46,9 @@ MD5 Hash: `f49df42ccc84ec529c489e8e3f02248`
 
 Here is a more in depth explanation what is going on and a script to do what the GUI-Installer does by yourself. For Pagoda2 you only need the clang part, not the gfortran part. [openmp in r on Mac OS](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/#after-3-4-0)
 
+## Install X windows system for mac
+Go to https://www.xquartz.org/ and follow the instructions for installing the package.
+
 ## Install gfortran for Mac
 ```sh
 curl -O http://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2
