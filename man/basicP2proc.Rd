@@ -4,7 +4,7 @@
 \alias{basicP2proc}
 \title{Perform basic pagoda2 processing}
 \usage{
-basicP2proc(cd, n.cores = 20, batch = NULL)
+basicP2proc(cd, n.cores = 20, batch = NULL, keep.genes = NULL)
 }
 \arguments{
 \item{n.cores}{number of cores to use}

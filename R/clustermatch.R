@@ -165,6 +165,8 @@ identifyCellsGSVDMNNmulti <- function(referencesets, annotset, clustersOrig) {
 #' @param internal.edge.weight weigth of edges from intra-sample matches (sample KNN)
 #' @param extra.info return extra debugging information (modifies return value structure)
 #' @param neighbourhood.average logical, average cell neighbourhoods before doing MNN lookup
+#' @param neighbourhood.k number of nearest neighbours to average over
+#' @param mutualOnly logical if true (defalt) only interapp links that are mutual are used, otherwise the links don'e need to be mutual (experimental) 
 #' @return a named (by cell name) factor of groups if extra.info is false, otherwise a list the factor and the extra information
 #' @export getJointClustering
 getJointClustering <- function(r.n,
@@ -179,7 +181,11 @@ getJointClustering <- function(r.n,
                                extra.info = F,
                                neighbourhood.average = TRUE,
                                neighbourhood.k = 20,
-                               mutualOnly = TRUE) {
+                               mutualOnly = TRUE,
+                               neighbourhood.cleanup = FALSE,
+                               custom.neighbourhood.cleanup = NULL,
+                               neighbourhood.cleanup.params = list(),
+                               stop.return.graph = FALSE) {
   
   require('gtools')
   require('pbapply')
@@ -195,7 +201,7 @@ getJointClustering <- function(r.n,
   ## get MNN pairs from all possible app pairs
   cat('Calculating MNN for application pairs ...\n')
   mnnres <- pblapply(combsl, function(x) {
-    getMNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F,
+    getNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F,
                     ncomps = ncomps, neighbourhood.average = neighbourhood.average,
                     neighbourhood.k, neighbourhood.k, mutualOnly = mutualOnly);
   });
@@ -204,6 +210,7 @@ getJointClustering <- function(r.n,
   mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
   summary(mnnres.all)
   mnnres.all$weight <- c(mnn.edge.weight)
+  mnnres.all$type <- c('inter')
   
   ## Optionally use the sample internal edges as an extra source of information
   if (include.sample.internal.edges) {
@@ -213,6 +220,7 @@ getJointClustering <- function(r.n,
     withinappedges <- as.data.frame(do.call(rbind, withinappedges),stringsAsFactors=F)
     colnames(withinappedges) <- c('mA.lab','mB.lab')
     withinappedges$weight <- c(internal.edge.weight)
+    withinappedges$type <- c('intra')
     # Append internal edges to the mnn edges
     mnnres.all <- rbind(withinappedges, mnnres.all)
   }
@@ -220,10 +228,29 @@ getJointClustering <- function(r.n,
   ## Make a graph with the MNNs
   el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
   g  <- graph_from_edgelist(el, directed =FALSE)
+    
   
   # Add weights
   E(g)$weight <- as.numeric(mnnres.all$weight)
-  
+
+  # Add type
+  E(g)$type <- mnnres.all$type
+
+  if (stop.return.graph) {
+      return(g);
+  }
+    
+  if (neighbourhood.cleanup) {
+      if (is.null(custom.neighbourhood.cleanup)) {
+          g <- cleanupGraph(g)
+      } else {
+          # optionally use custom provided cleanup function
+          neighbourhood.cleanup.params$graph <- g;
+          g <- do.call(custom.neighbourhood.cleanup, neighbourhood.cleanup.params);
+          # g <- custom.neighbourhood.cleanup(g)
+      }
+  }
+    
   ## Do community detection on this graph
   cat('Detecting clusters ...');
   community.detection.params$graph <- g  
@@ -318,8 +345,8 @@ getJointClusterMarkerGenes <- function(applist, jc) {
 #' @param verbose verbosity level
 #' @param ncomps number of components form the gsvd to use
 #' @return a data frame with all the pairs of the mutual neighbours
-#' @export getMNNforP2pair
-getMNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
+#' @export getNNforP2pair
+getNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
                             center=T, verbose =T, ncomps = 100, plot.projection = F,
                             neighbourhood.average = TRUE, mutualOnly = TRUE) {
     require('plyr')
@@ -577,4 +604,311 @@ identifyCellsGSVDRF <- function (referenceP2, r2, referenceP2labels,
   cat('done.\n')
 
   p
+}
+
+#' Clean up an inter-sample graph
+#' @param g the graph to cleanup
+#' @param min.neigh.con the number of neighbour matches to require
+#' @return a new cleaned up graph
+#' @export cleanupGraph
+cleanupGraph <- function(g, min.neigh.con = 1, show.progress = TRUE) {
+
+#    g <- g3; min.neigh.con <- 2; show.progress <- T
+
+    ## Get a copy of the graph with out intersample edges
+    g.intra <- g
+    g.intra <- delete_edges(g.intra,E(g.intra)[type == 'inter'])
+
+    ## Keep info about edges
+    nes <- c()
+    netype <- c()
+    neweight <- c()
+
+    edgeList <- E(g)
+    vertexList <- V(g)
+    edgeCount <- length(edgeList)
+
+    if(show.progress) pb <- txtProgressBar(min=0,max=edgeCount, style =3)
+
+    # igraph doesn't work well with apply
+    # so using an env here for speed
+    res.counter <- 0
+    res <- new.env()
+
+
+    
+    for (ei in 1:edgeCount) {
+        if (show.progress) setTxtProgressBar(pb, ei);
+
+        e <- edgeList[ei]
+
+        ## Get the ends of the edge
+        cur.ends <- ends(g,e)
+        v1 <- cur.ends[1]
+        v2 <- cur.ends[2]
+
+        if (e$type == 'inter') {        
+            ## Intra-sample neighbours
+            nv1 <- names(neighbors(g.intra, v1))
+            nv2 <- names(neighbors(g.intra, v2))
+
+            c <- 0;
+            for (i in 1:length(nv1)) {
+                if (are.connected(g, vertexList[nv1[i]], v2))  {
+                    c <- c + 1;
+                    if (c >= min.neigh.con) {
+                        break
+                    }
+                }
+            }
+
+            
+            if (c < min.neigh.con) {
+                for (i in 1:length(nv2)) {
+                    if (are.connected(g, vertexList[nv2[i]], v1)) {
+                        c <- c + 1;
+                        if (c >= min.neigh.con) {
+                            break
+                        }
+                    }
+                }
+            }
+
+            ## Keep edge if sufficiently connected
+            if (c >= min.neigh.con) {
+                res[[as.character(res.counter)]] <- c(v1=v1,v2=v2,type='inter',weight=e$weight)
+                res.counter <- res.counter + 1
+            }
+        } else {
+            res[[as.character(res.counter)]] <- c(v1=v1,v2=v2,type='intra',weight=e$weight)
+            res.counter <- res.counter + 1
+        } ## Edge type
+    } ## For
+
+    ## Recover results
+    res <- as.list(res)
+    nFrom <- unname(unlist(lapply(res,'[',1)))
+    nTo <- unname(unlist(lapply(res,'[',2)))
+    nType <-unname(unlist(lapply(res,'[',3)))
+    nWeight <-unname(unlist(lapply(res,'[',4)))
+
+    nes <- c(rbind(nFrom,nTo))
+    
+    if (show.progress) close(pb)
+                                        ## Make and return a graph just with the desired edges
+    gn <- delete_edges(g, E(g))
+    gn <- add_edges(gn, nes, attr=list(type=nType,weight = nWeight))
+
+    gn
+}
+
+
+#' A replacement function of getMNNforP2pairCustom
+#' @export getMNNforP2pairCustom
+getMNNforP2pairCustom <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
+                            center=T, verbose =T, ncomps = 100, plot.projection = F) {
+
+    require('plyr')
+    require('geigen')
+
+    ## Check r1 and r2 objects
+    if( !(class(r1) == 'Pagoda2' & class(r2) == 'Pagoda2')) {
+        stop('Both r1 and r2 have to be objects of type Pagoda2');
+    }
+
+    ## Add check for r1labels
+
+    if (verbose) cat('Preparing data... ');
+
+    ## For the moment use the same k for both datasets
+    k1 <- k
+    k2 <- k
+
+    ## Get overdispersed genes, or some other relevant geneset
+    odgenes <- union(r1$misc$odgenes, r2$misc$odgenes)
+    odgenes <- intersect(odgenes, colnames(r1$counts))
+    odgenes <- intersect(odgenes, colnames(r2$counts))
+
+    ## Get matrices
+    x1 <- r1$counts[,odgenes]
+    x2 <- r2$counts[,odgenes]
+
+    ## Optionally variance scale
+    if (var.scale) {
+        x1 <- sweep(x1, 2, r1$misc$varinfo[odgenes,]$gsf, FUN='*')
+        x2 <- sweep(x2, 2, r2$misc$varinfo[odgenes,]$gsf, FUN='*')
+    }
+
+    ## Optionally log scale
+    pseudocount <- 1e-6;
+    if (log.scale) {
+        x1 <- log10(x1 + pseudocount);
+        x2 <- log10(x2 + pseudocount);
+    }
+
+    ## Remove mean, jointly
+    if (center) {
+        x1.colMean <- Matrix::colMeans(x1)
+        x2.colMean <- Matrix::colMeans(x2)
+        means <- (x1.colMean + x2.colMean) /2
+        x1 <- sweep(x1, 2, means, FUN='-')
+        x2 <- sweep(x2, 2, means, FUN='-')
+    }
+
+    ## Convert to full matrix
+    x1 <- as.matrix(x1);
+    x2 <- as.matrix(x2);
+
+    if (verbose) cat('done\n');
+
+
+    if (verbose) cat('Performing GSVD... ');
+    ## Perform gsvd on the two matrices
+    o <- gsvd(x1,x2)
+    if (verbose) cat('done\n');
+
+    ## Calculate rotated matrices
+    if (verbose) cat('Calculating PCs... ');
+    #x1.rot <- o$U %*% gsvd.D1(o) %*% gsvd.oR(o)
+    #x2.rot <- o$V %*% gsvd.D2(o) %*% gsvd.oR(o)
+
+    ## This is the same thing
+    stoq <- solve(t(o$Q)) 
+    x1.rot <- x1 %*% stoq
+    x2.rot <- x2 %*% stoq
+    
+    if (verbose) cat('done\n');
+
+                                        # If ncomps is specified take only those from each dataset
+    if (!is.null(ncomps)) {
+        D1 <- gsvd.D1(o)
+        D2 <- gsvd.D2(o)
+
+        D1d <- diag(D1);
+        D2d <- diag(D2);
+
+        if (ncomps > length(D1d)) {
+            warning('More components than available were specified');
+            ncomps <- length(D1d);
+        }
+
+        D1.cutoff <- sort(D1d,decr=T)[ncomps]
+        D2.cutoff <- sort(D2d,decr=T)[ncomps]
+
+        comps.keep <- c(which(D1d > D1.cutoff), which(D2d > D2.cutoff))
+
+        if (plot.projection) {
+            if (comps.keep <= 5) {
+                plot(as.data.frame(rbind(x1.rot,x2.rot)[,comps.keep]),
+                     col=c(rep('red',dim(x1.rot)[1]),rep('blue',dim(x2.rot)[1])),
+                     pch=16,cex=0.2)
+            } else {
+                warning('plot.projection set to TRUE and comps.keep > 5: Can\'t plot that many components')
+            }
+        }
+
+        x1.rot <- x1.rot[,comps.keep]
+        x2.rot <- x2.rot[,comps.keep]
+    }
+
+    if (verbose) {cat('Finding inter-app network...')}
+    all.data <- rbind(x1.rot, x2.rot);
+    xn <- pagoda2:::hnswKnn2(all.data,k=30,nThreads=n.cores, verbose=T)
+
+    ## Now from this network only keep intersample connections
+    xn$s.cell <- rownames(all.data)[xn$s + 1]
+    xn$e.cell <- rownames(all.data)[xn$e + 1]
+
+    ## Identify sample of origin
+    xn$s.cell.sample <- c(1)
+    xn[as.character(xn$s.cell) %in% rownames(x2.rot),]$s.cell.sample <- c(2)
+    xn$e.cell.sample <- c(1);
+    xn[as.character(xn$e.cell) %in% rownames(x2.rot),]$e.cell.sample <- c(2)
+
+    ## Keep only intersample nodes
+    xn <- xn[xn$s.cell.sample != xn$e.cell.sample,]
+
+    if (verbose) {cat('done\n')} ## finding interapp net
+
+    ## Make a suitable data.frame
+    mnnres <- data.frame();
+    mnnres$mA.lab <- rownames(r1$counts)[mnnres$mA.id]
+    mnnres$mB.lab <- rownames(r2$counts)[mnnres$mB.id]
+
+    mnnres
+}
+
+
+
+#' Devel version of getJointClustering
+#' @export getJointClustering2
+getJointClustering2<- function(r.n, k=30,
+                                     community.detection.method = walktrap.community,
+                                     min.group.size = 10,ncomps=100,
+                                     include.sample.internal.edges=TRUE,
+                                     mnn.edge.weight = 1, internal.edge.weight =1,
+                                     extra.info = F, mnnPairFunction =  NULL) {
+      if (is.null(mnnPairFunction)) { error('No mnnPairFunction provided') }
+    
+      require('gtools')
+      require('pbapply')
+      require('igraph')
+
+      ## Get all non-redundant pair of apps
+      nms <- names(r.n)
+      combs <- combinations(n = length(nms), r = 2, v = nms, repeats.allowed =F)
+
+      ## Convert to list for lapply
+      combsl <- split(t(combs), rep(1:nrow(combs), each=ncol(combs)))
+
+    
+      ## get MNN pairs from all possible app pairs
+      cat('Calculating MNN for application pairs ...\n')
+      mnnres <- pblapply(combsl, function(x) {
+          mnnPairFunction(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F, ncomps = ncomps);
+      });
+
+      ## Merge the results into a edge table
+      mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
+      summary(mnnres.all)
+      mnnres.all$weight <- c(mnn.edge.weight)
+
+      ## Optionally use the sample internal edges as an extra source of information
+      if (include.sample.internal.edges) {
+              withinappedges <- lapply(r.n, function(x) {
+                        as_edgelist(x$graphs$PCA)
+                            })
+                  withinappedges <- as.data.frame(do.call(rbind, withinappedges),stringsAsFactors=F)
+                  colnames(withinappedges) <- c('mA.lab','mB.lab')
+                  withinappedges$weight <- c(internal.edge.weight)
+                  # Append internal edges to the mnn edges
+                  mnnres.all <- rbind(withinappedges, mnnres.all)
+                }
+
+      ## Make a graph with the MNNs
+      el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
+      g  <- graph_from_edgelist(el, directed =FALSE)
+
+      # Add weights
+      E(g)$weight <- as.numeric(mnnres.all$weight)
+
+      ## Do community detection on this graph
+      cat('Detecting clusters ...');
+      cls <- community.detection.method(g)
+      cat('done\n')
+      ## Extract groups from this graph
+      cls.mem <- membership(cls)
+      cls.groups <- as.character(cls.mem)
+      names(cls.groups) <- names(cls.mem)
+
+      ## Filter groups
+      lvls.keep <- names(which(table(cls.groups)  > min.group.size))
+      cls.groups[! as.character(cls.groups) %in% as.character(lvls.keep)] <- NA
+      cls.groups <- as.factor(cls.groups)
+
+      ret <- cls.groups;
+      if (extra.info) {
+          ret <- list(cls.groups = cls.groups, el = el);
+      }
+      ret;
 }
