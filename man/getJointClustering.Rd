@@ -9,7 +9,9 @@ getJointClustering(r.n, k = 30,
   community.detection.params = list(), min.group.size = 10, ncomps = 100,
   include.sample.internal.edges = TRUE, mnn.edge.weight = 1,
   internal.edge.weight = 1, extra.info = F, neighbourhood.average = TRUE,
-  neighbourhood.k = 20, mutualOnly = TRUE)
+  neighbourhood.k = 20, mutualOnly = TRUE, neighbourhood.cleanup = FALSE,
+  custom.neighbourhood.cleanup = NULL,
+  neighbourhood.cleanup.params = list(), stop.return.graph = FALSE)
 }
 \arguments{
 \item{r.n}{a named list of pagoda2 apps}
@@ -29,6 +31,10 @@ getJointClustering(r.n, k = 30,
 \item{extra.info}{return extra debugging information (modifies return value structure)}
 
 \item{neighbourhood.average}{logical, average cell neighbourhoods before doing MNN lookup}
+
+\item{neighbourhood.k}{number of nearest neighbours to average over}
+
+\item{mutualOnly}{logical if true (defalt) only interapp links that are mutual are used, otherwise the links don'e need to be mutual (experimental)}
 
 \item{mnn.edge.weigth}{weight of edges from inter-sample matches}
 }
