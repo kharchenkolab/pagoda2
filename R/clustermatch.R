@@ -360,7 +360,7 @@ getJointClusterMarkerGenes <- function(applist, jc) {
 #' @export getNNforP2pair
 getNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
                             center=T, verbose =T, ncomps = 100, plot.projection = F,
-                            neighbourhood.average = TRUE, mutualOnly = TRUE) {
+                            neighbourhood.average = TRUE, mutualOnly = TRUE, var.scale.joint = FALSE) {
     require('plyr')
     require('geigen')
 
@@ -388,8 +388,14 @@ getNNforP2pair <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
     ## Optionally variance scale
     if (var.scale) {
-        x1 <- sweep(x1, 2, r1$misc$varinfo[odgenes,]$gsf, FUN='*')
-        x2 <- sweep(x2, 2, r2$misc$varinfo[odgenes,]$gsf, FUN='*')
+        if (var.scale.joint) {
+            joint.var <- sqrt((r1$misc$varinfo[odgenes,]$gsf ^ 2 + r2$misc$varinfo[odgenes,]$gsf ^ 2) / 2 )
+            x1 <- sweep(x1, 2, joint.var, FUN='*')
+            x2 <- sweep(x2, 2, joint.var, FUN='*')
+        } else {
+            x1 <- sweep(x1, 2, r1$misc$varinfo[odgenes,]$gsf, FUN='*')
+            x2 <- sweep(x2, 2, r2$misc$varinfo[odgenes,]$gsf, FUN='*')
+        }
     }
 
     ## Optionally log scale
