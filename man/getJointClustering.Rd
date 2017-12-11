@@ -11,7 +11,8 @@ getJointClustering(r.n, k = 30,
   internal.edge.weight = 1, extra.info = F, neighbourhood.average = TRUE,
   neighbourhood.k = 20, mutualOnly = TRUE, neighbourhood.cleanup = FALSE,
   custom.neighbourhood.cleanup = NULL,
-  neighbourhood.cleanup.params = list(), stop.return.graph = FALSE)
+  neighbourhood.cleanup.params = list(), stop.return.graph = FALSE,
+  networkPairFunction = NULL)
 }
 \arguments{
 \item{r.n}{a named list of pagoda2 apps}

@@ -18,7 +18,7 @@
 identifyCellsGSVDMNN <- function(referenceP2, r2, referenceP2labels,
                                  var.scale = T, k = 30, log.scale = T,
                                  center =T, verbose = T,
-                                 extra.info = F) {
+                                 extra.info = F, var.scale.joint = F) {
     require('plyr')
     require('geigen')
 
@@ -45,8 +45,15 @@ identifyCellsGSVDMNN <- function(referenceP2, r2, referenceP2labels,
 
     ## Optionally variance scale
     if (var.scale) {
-        x1 <- sweep(x1, 2, referenceP2$misc$varinfo[odgenes,]$gsf, FUN='*')
-        x2 <- sweep(x2, 2, r2$misc$varinfo[odgenes,]$gsf, FUN='*')
+        if (var.scale.joint) {
+            joint.var <- sqrt((referenceP2$misc$varinfo[odgenes,]$gsf ^ 2 + r2$misc$varinfo[odgenes,]$gsf ^ 2) / 2 )
+            x1 <- sweep(x1, 2, joint.var, FUN='*')
+            x2 <- sweep(x2, 2, joint.var, FUN='*')
+        } else {
+            x1 <- sweep(x1, 2, referenceP2$misc$varinfo[odgenes,]$gsf, FUN='*')
+            x2 <- sweep(x2, 2, r2$misc$varinfo[odgenes,]$gsf, FUN='*')
+        }
+        
     }
 
     ## Optionally log scale
@@ -185,11 +192,16 @@ getJointClustering <- function(r.n,
                                neighbourhood.cleanup = FALSE,
                                custom.neighbourhood.cleanup = NULL,
                                neighbourhood.cleanup.params = list(),
-                               stop.return.graph = FALSE) {
+                               stop.return.graph = FALSE,
+                               networkPairFunction = NULL) {
   
   require('gtools')
   require('pbapply')
   require('igraph')
+
+  if (is.null(networkPairFunction)) {
+      networkPairFunction <- getNNforP2pair;
+  }
   
   ## Get all non-redundant pair of apps
   nms <- names(r.n)
@@ -201,7 +213,7 @@ getJointClustering <- function(r.n,
   ## get MNN pairs from all possible app pairs
   cat('Calculating MNN for application pairs ...\n')
   mnnres <- pblapply(combsl, function(x) {
-    getNNforP2pair(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F,
+    networkPairFunction(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F,
                     ncomps = ncomps, neighbourhood.average = neighbourhood.average,
                     neighbourhood.k, neighbourhood.k, mutualOnly = mutualOnly);
   });
@@ -840,75 +852,75 @@ getMNNforP2pairCustom <- function(r1, r2, var.scale =T , k = 30, log.scale=T,
 
 
 
-#' Devel version of getJointClustering
-#' @export getJointClustering2
-getJointClustering2<- function(r.n, k=30,
-                                     community.detection.method = walktrap.community,
-                                     min.group.size = 10,ncomps=100,
-                                     include.sample.internal.edges=TRUE,
-                                     mnn.edge.weight = 1, internal.edge.weight =1,
-                                     extra.info = F, mnnPairFunction =  NULL) {
-      if (is.null(mnnPairFunction)) { error('No mnnPairFunction provided') }
+## #' Devel version of getJointClustering
+## #' @export getJointClustering2
+## getJointClustering2<- function(r.n, k=30,
+##                                      community.detection.method = walktrap.community,
+##                                      min.group.size = 10,ncomps=100,
+##                                      include.sample.internal.edges=TRUE,
+##                                      mnn.edge.weight = 1, internal.edge.weight =1,
+##                                      extra.info = F, mnnPairFunction =  NULL) {
+##       if (is.null(mnnPairFunction)) { error('No mnnPairFunction provided') }
     
-      require('gtools')
-      require('pbapply')
-      require('igraph')
+##       require('gtools')
+##       require('pbapply')
+##       require('igraph')
 
-      ## Get all non-redundant pair of apps
-      nms <- names(r.n)
-      combs <- combinations(n = length(nms), r = 2, v = nms, repeats.allowed =F)
+##       ## Get all non-redundant pair of apps
+##       nms <- names(r.n)
+##       combs <- combinations(n = length(nms), r = 2, v = nms, repeats.allowed =F)
 
-      ## Convert to list for lapply
-      combsl <- split(t(combs), rep(1:nrow(combs), each=ncol(combs)))
+##       ## Convert to list for lapply
+##       combsl <- split(t(combs), rep(1:nrow(combs), each=ncol(combs)))
 
     
-      ## get MNN pairs from all possible app pairs
-      cat('Calculating MNN for application pairs ...\n')
-      mnnres <- pblapply(combsl, function(x) {
-          mnnPairFunction(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F, ncomps = ncomps);
-      });
+##       ## get MNN pairs from all possible app pairs
+##       cat('Calculating MNN for application pairs ...\n')
+##       mnnres <- pblapply(combsl, function(x) {
+##           mnnPairFunction(r.n[[x[1]]], r.n[[x[2]]], k = k, verbose =F, ncomps = ncomps);
+##       });
 
-      ## Merge the results into a edge table
-      mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
-      summary(mnnres.all)
-      mnnres.all$weight <- c(mnn.edge.weight)
+##       ## Merge the results into a edge table
+##       mnnres.all <- do.call(rbind, mnnres)[,c('mA.lab','mB.lab')]
+##       summary(mnnres.all)
+##       mnnres.all$weight <- c(mnn.edge.weight)
 
-      ## Optionally use the sample internal edges as an extra source of information
-      if (include.sample.internal.edges) {
-              withinappedges <- lapply(r.n, function(x) {
-                        as_edgelist(x$graphs$PCA)
-                            })
-                  withinappedges <- as.data.frame(do.call(rbind, withinappedges),stringsAsFactors=F)
-                  colnames(withinappedges) <- c('mA.lab','mB.lab')
-                  withinappedges$weight <- c(internal.edge.weight)
-                  # Append internal edges to the mnn edges
-                  mnnres.all <- rbind(withinappedges, mnnres.all)
-                }
+##       ## Optionally use the sample internal edges as an extra source of information
+##       if (include.sample.internal.edges) {
+##               withinappedges <- lapply(r.n, function(x) {
+##                         as_edgelist(x$graphs$PCA)
+##                             })
+##                   withinappedges <- as.data.frame(do.call(rbind, withinappedges),stringsAsFactors=F)
+##                   colnames(withinappedges) <- c('mA.lab','mB.lab')
+##                   withinappedges$weight <- c(internal.edge.weight)
+##                   # Append internal edges to the mnn edges
+##                   mnnres.all <- rbind(withinappedges, mnnres.all)
+##                 }
 
-      ## Make a graph with the MNNs
-      el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
-      g  <- graph_from_edgelist(el, directed =FALSE)
+##       ## Make a graph with the MNNs
+##       el <- matrix(c(mnnres.all$mA.lab, mnnres.all$mB.lab), ncol=2)
+##       g  <- graph_from_edgelist(el, directed =FALSE)
 
-      # Add weights
-      E(g)$weight <- as.numeric(mnnres.all$weight)
+##       # Add weights
+##       E(g)$weight <- as.numeric(mnnres.all$weight)
 
-      ## Do community detection on this graph
-      cat('Detecting clusters ...');
-      cls <- community.detection.method(g)
-      cat('done\n')
-      ## Extract groups from this graph
-      cls.mem <- membership(cls)
-      cls.groups <- as.character(cls.mem)
-      names(cls.groups) <- names(cls.mem)
+##       ## Do community detection on this graph
+##       cat('Detecting clusters ...');
+##       cls <- community.detection.method(g)
+##       cat('done\n')
+##       ## Extract groups from this graph
+##       cls.mem <- membership(cls)
+##       cls.groups <- as.character(cls.mem)
+##       names(cls.groups) <- names(cls.mem)
 
-      ## Filter groups
-      lvls.keep <- names(which(table(cls.groups)  > min.group.size))
-      cls.groups[! as.character(cls.groups) %in% as.character(lvls.keep)] <- NA
-      cls.groups <- as.factor(cls.groups)
+##       ## Filter groups
+##       lvls.keep <- names(which(table(cls.groups)  > min.group.size))
+##       cls.groups[! as.character(cls.groups) %in% as.character(lvls.keep)] <- NA
+##       cls.groups <- as.factor(cls.groups)
 
-      ret <- cls.groups;
-      if (extra.info) {
-          ret <- list(cls.groups = cls.groups, el = el);
-      }
-      ret;
-}
+##       ret <- cls.groups;
+##       if (extra.info) {
+##           ret <- list(cls.groups = cls.groups, el = el);
+##       }
+##       ret;
+## }
