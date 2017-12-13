@@ -4,6 +4,7 @@
 #' @description adjust variance, calculate pca reduction
 #' make knn graph, identify clusters with infomap, multilevel and walktrap and make
 #' largeVis and tSNE embeddings
+#' @param cd count matrix, rows are genes, columns are cells
 #' @param n.cores number of cores to use
 #' @param batch optional batch factor
 #' @return a new pagoda2 object
@@ -11,6 +12,9 @@
 basicP2proc <- function(cd, n.cores = 20, batch = NULL, keep.genes = NULL) {
   require(Matrix)
 
+  
+  rownames(cd) <- make.unique(rownames(cd))
+  
   p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes);
   p2$adjustVariance(plot=F, gam.k=10);
   p2$calculatePcaReduction(nPcs = 300, n.odgenes = 3.e3, maxit = 1000)
