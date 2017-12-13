@@ -714,6 +714,18 @@ Pagoda2 <- setRefClass(
       return(invisible(cols))
     },
     # determine subpopulation-specific genes
+    ##' @title determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
+    ##' @param type data type (currently only default 'counts' is supported)
+    ##' @param clusterType optional cluster type to use as a group-defining factor
+    ##' @param groups explicit cell group specification - a named cell factor (use NA in the factor to exclude cells from the comparison)
+    ##' @param name name slot to store the results in
+    ##' @param z.threshold minimal absolute Z score (adjusted) to report
+    ##' @param upregulated.only whether to report only genes that are expressed significantly higher in each group
+    ##' @param verbose verbose flag
+    ##' @return a list, with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels); Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest; M - log2 fold change; highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group; fe - fraction of cells in a given group having non-zero expression level of a given gene;
+    ##' @examples
+    ##' result <- r$getDifferentialGenes(groups=r$clusters$PCA$multilevel);
+    ##' str(r$diffgenes)
     getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE) {
       # restrict counts to the cells for which non-NA value has been specified in groups
 
