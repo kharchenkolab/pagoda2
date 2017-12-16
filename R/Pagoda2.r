@@ -247,7 +247,6 @@ Pagoda2 <- setRefClass(
       ## }
       if(plot) {
         if(do.par) {
-          old.par <- par();
           par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
         smoothScatter(df$m,df$v,main='',xlab='log10[ magnitude ]',ylab='log10[ variance ]')
@@ -260,9 +259,6 @@ Pagoda2 <- setRefClass(
         abline(h=1,lty=2,col=8)
         if(is.finite(max.adjusted.variance)) { abline(h=max.adjusted.variance,lty=2,col=1) }
         points(df$m[ods],df$qv[ods],col=2,pch='.')
-        if(do.par) {
-          suppressWarnings(par(old.par)); 
-        }
       }
       if(verbose) cat("done.\n")
       return(invisible(df));
@@ -366,10 +362,6 @@ Pagoda2 <- setRefClass(
     },
     # calculate clusters based on the kNN graph
     getKnnClusters=function(type='counts',method=multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=2, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
-        if (plot) {
-            old.par <- par();
-            on.exit(suppressWarnings(par(old.par)));
-        }
         
       if(is.null(g)) {
         if(is.null(graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
@@ -496,11 +488,9 @@ Pagoda2 <- setRefClass(
 
           if(plot) {
             #.self$plotEmbedding(type='PCA',groups=cls.groups,show.legend=T)
-            old.par <- par()
             par(mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
             hcd %>% plot();
             z <- get_nodes_xy(hcd); text(z,labels=round(stevl,2),adj=c(0.4,0.4),cex=0.7)
-            suppressWarnings(par(old.par));
           }
 
           # return details
@@ -1095,9 +1085,6 @@ Pagoda2 <- setRefClass(
                            min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2,
                            shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F,
                            unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
-      old.par <- par();
-      on.exit(suppressWarnings(par(old.par)));
-
 
       if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
       if(is.null(embeddingType)) {
@@ -1179,7 +1166,7 @@ Pagoda2 <- setRefClass(
 
       if(ncol(emb)==2) { # 2D
         if(do.par) {
-          old.par <- par(mar = c(0.5,0.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
+          par(mar = c(0.5,0.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
         plot(emb,col=adjustcolor(cols,alpha=alpha),cex=cex,pch=19,axes=F, panel.first=grid(), ...); box();
         if(mark.clusters) {
@@ -1194,9 +1181,6 @@ Pagoda2 <- setRefClass(
           if(factor.mapping) {
             legend(x=legend.x,pch=rep(19,length(levels(groups))),bty='n',col=factor.colors$palette,legend=names(factor.colors$palette))
           }
-        }
-        if (do.par) {
-          suppressWarnings(par(old.par)); 
         }
         
       } else if(ncol(emb)==3) { #3D
@@ -1445,7 +1429,6 @@ Pagoda2 <- setRefClass(
       vdf$ub.stringent <- RMTstat::qWishartMax(score.alpha/nrow(vdf)/2, n.cells, vdf$n, var = basevar, lower.tail = FALSE)
 
       if(plot) {
-        old.par < par();
         par(mfrow = c(1, 1), mar = c(3.5, 3.5, 1.0, 1.0), mgp = c(2, 0.65, 0))
         un <- sort(unique(vdf$n))
         on <- order(vdf$n, decreasing = FALSE)
@@ -1453,7 +1436,6 @@ Pagoda2 <- setRefClass(
         plot(vdf$n, vdf$var/vdf$n, xlab = "gene set size", ylab = "PC1 var/n", ylim = c(0, max(vdf$var/vdf$n)), col = adjustcolor(pccol[vdf$npc],alpha=0.1),pch=19)
         lines(vdf$n[on], (vdf$exp/vdf$n)[on], col = 2, lty = 1)
         lines(vdf$n[on], (vdf$ub.stringent/vdf$n)[on], col = 2, lty = 2)
-        suppressWarnings(par(old.par));
       }
 
       rs <- (vshift-ev)*vdf$n
