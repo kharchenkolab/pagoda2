@@ -7,6 +7,8 @@
 basicP2proc(cd, n.cores = 20, batch = NULL, keep.genes = NULL)
 }
 \arguments{
+\item{cd}{count matrix, rows are genes, columns are cells}
+
 \item{n.cores}{number of cores to use}
 
 \item{batch}{optional batch factor}
