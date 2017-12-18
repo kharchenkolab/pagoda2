@@ -2,7 +2,6 @@
 
 #include "pagoda2.h"
 
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -12,42 +11,25 @@
 #define INDEX_TYPE_COSINE 2
 #define INDEX_TYPE_LP 3
 
-// Function Prototype
-DataFrame hnswKnn(NumericMatrix m,int k=5,int nThreads=30,float p=2.0,
-    int efConstruction=20,int indexThreadQty=4,  int searchMethod=4,int seed=-1,bool verbose=true,int indexType = 1);
-
 // [[Rcpp::export]]
-DataFrame hnswKnn2(NumericMatrix m, int k=5, int nThreads=20,
-    int efConstruction=20, int indexThreadQty=4,int searchMethod=4, int seed=-1,bool verbose=true) {
-  return hnswKnn(m, k, nThreads, 1.0, efConstruction, indexThreadQty, searchMethod, seed, verbose, INDEX_TYPE_COSINE);
-};
-
-// [[Rcpp::export]]
-DataFrame hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20,int efConstruction=20,
-    int indexThreadQty=4, int searchMethod=4, int seed=-1,bool verbose=true) {
-  return hnswKnn(m, k, nThreads, 1.0, efConstruction, indexThreadQty, searchMethod, seed, verbose, INDEX_TYPE_JS);
-};
-
-// [[Rcpp::export]]
-DataFrame hnswKnnLp(NumericMatrix m, int k = 5, int nThreads = 30, float p = 2.0,
-    int efConstruction = 20,int indexThreadQty = 4, int searchMethod = 4, int seed = -1,bool verbose = true) {
-  return hnswKnn(m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose, INDEX_TYPE_LP);
-};
-
-DataFrame hnswKnn(NumericMatrix m, int k, int nThreads, float p, int efConstruction,
-    int indexThreadQty, int searchMethod, int seed, bool verbose, int indexType) {
+arma::sp_mat hnswKnn(NumericMatrix m, int k=5, int nThreads=30, float p=2.0, int efConstruction=20,
+    int indexThreadQty=4, int searchMethod=4, int seed=-1, bool verbose=true, int indexType=1) {
 
   initLibrary(LIB_LOGNONE, NULL);
 
   // Use base class pointer for space to allow different space types
   VectorSpace<float> *space = NULL;
+  VectorSpace<float> *space2 = NULL;
 
   if (indexType == INDEX_TYPE_JS) {
     space = new SpaceJSMetric<float> (SpaceJSBase<float>::kJSFastPrecompApprox);
+    space2 = new SpaceJSMetric<float> (SpaceJSBase<float>::kJSFastPrecompApprox); // used for real distance calculations
   } else if (indexType == INDEX_TYPE_COSINE) {
     space = new SpaceCosineSimilarity<float>();
+    space2 = new SpaceCosineSimilarity<float>();
   } else if (indexType == INDEX_TYPE_LP) {
     space = new SpaceLp<float>(p);
+    space2 = new SpaceLp<float>(p);
   } else {
      cout << "Invalid index type specified" << endl << flush;
   }
@@ -95,13 +77,12 @@ DataFrame hnswKnn(NumericMatrix m, int k, int nThreads, float p, int efConstruct
   if(verbose) cout << endl<<"done (" << elapsed_time <<"s)"<< endl;
 
   int nqueries=m.nrow();
-  vector<vector<int32_t> > answers(nqueries);
 
   if(verbose) cout << "running queries with k="<<k<<" ... " << flush;
   t1 = high_resolution_clock::now();
   int nanswers=nqueries*k;
-  vector<vector<int32_t> > ids(nqueries);
-  vector<vector<float> > dists(nqueries);
+  arma::vec ansdist(nanswers);
+  arma::umat ansloc(2,nanswers,arma::fill::zeros);
 
   #ifdef _OPENMP
   omp_set_num_threads(nThreads);
@@ -118,14 +99,17 @@ DataFrame hnswKnn(NumericMatrix m, int k, int nThreads, float p, int efConstruct
     KNNQueue<float>* res = knnQ.Result()->Clone();
     vector<int32_t> candidates;
     vector<float> candidateDists;
-    while (!res->Empty()) {
-      candidates.push_back(res->TopObject()->id());
-      candidateDists.push_back(res->TopDistance());
+    int j=0;
+    while (j<k && !res->Empty()) {
+      int l=i*k+j;
+      ansloc(0,l)=res->TopObject()->id(); //row
+      ansloc(1,l)=i; // column 
+      //ansdist(l)= res->TopDistance();
+      ansdist(l)= space2->IndexTimeDistance(dataSet[ansloc(0,l)],dataSet[i]);
       res->Pop();
+      j++;
     }
-
-    ids[i]=candidates;
-    dists[i]=candidateDists;
+    
     if(query_bar) { ++(*query_bar); }
   }
   t2 = high_resolution_clock::now();
@@ -133,27 +117,27 @@ DataFrame hnswKnn(NumericMatrix m, int k, int nThreads, float p, int efConstruct
 
   if(verbose) cout << endl << "done (" << elapsed_time << "s)"<< endl;
 
-  // recode into an edge data frame ($s $e $d)
-  if(verbose) cout << "creating report data frame ... " << flush;
-
-  vector<int> startV,endV;
-  vector<float> distV;
-  for(auto i=0;i<nqueries;i++) {
-    auto k = dists[i].begin();
-    for(auto j = ids[i].begin(); j != ids[i].end(); ++j, ++k) {
-      startV.push_back(i);
-      endV.push_back(*j);
-      distV.push_back(*k);
-    }
-  }
-
-  if(verbose) cout<<"done"<<endl;
-
-  return DataFrame::create(_["s"] = startV,
-                           _["e"] = endV,
-                           _["d"] = distV);
-
+  arma::sp_mat r(ansloc,ansdist,m.nrow(),m.nrow(),true);
+  return(r);
 };
 
 
+
+// [[Rcpp::export]]
+arma::sp_mat hnswKnn2(NumericMatrix m, int k=5, int nThreads=20,
+    int efConstruction=20, int indexThreadQty=4,int searchMethod=4, int seed=-1,bool verbose=true) {
+  return hnswKnn(m, k, nThreads, 1.0, efConstruction, indexThreadQty, searchMethod, seed, verbose, INDEX_TYPE_COSINE);
+};
+
+// [[Rcpp::export]]
+arma::sp_mat hnswKnnJS(NumericMatrix m, int k=5, int nThreads=20,int efConstruction=20,
+    int indexThreadQty=4, int searchMethod=4, int seed=-1,bool verbose=true) {
+  return hnswKnn(m, k, nThreads, 1.0, efConstruction, indexThreadQty, searchMethod, seed, verbose, INDEX_TYPE_JS);
+};
+
+// [[Rcpp::export]]
+arma::sp_mat hnswKnnLp(NumericMatrix m, int k = 5, int nThreads = 30, float p = 2.0,
+    int efConstruction = 20,int indexThreadQty = 4, int searchMethod = 4, int seed = -1,bool verbose = true) {
+  return hnswKnn(m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose, INDEX_TYPE_LP);
+};
 

@@ -5,7 +5,11 @@ WriteListToBinary <- function(expL, outfile, verbose = FALSE) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile, verbose))
 }
 
-interNN <- function(mA, mB, kA, kB, spaceType = 2L, lpSpaceP = 2.0, verbose = TRUE, neighbourhoodAverage = TRUE, neighbourAvgKA = 10L, neighbourAvgKB = 10L, mutualOnly = TRUE) {
+crossNN <- function(mA, mB, k, spaceType = 2L, lpSpaceP = 2.0, verbose = FALSE, nThreads = 30L) {
+    .Call('_pagoda2_crossNN', PACKAGE = 'pagoda2', mA, mB, k, spaceType, lpSpaceP, verbose, nThreads)
+}
+
+interNN <- function(mA, mB, kA, kB, spaceType = 2L, lpSpaceP = 2.0, verbose = FALSE, neighbourhoodAverage = FALSE, neighbourAvgKA = 10L, neighbourAvgKB = 10L, mutualOnly = TRUE) {
     .Call('_pagoda2_interNN', PACKAGE = 'pagoda2', mA, mB, kA, kB, spaceType, lpSpaceP, verbose, neighbourhoodAverage, neighbourAvgKA, neighbourAvgKB, mutualOnly)
 }
 
@@ -51,6 +55,10 @@ smatColVecCorr <- function(sY, sv, parallel = TRUE) {
 
 arma_mat_cor <- function(m) {
     .Call('_pagoda2_arma_mat_cor', PACKAGE = 'pagoda2', m)
+}
+
+hnswKnn <- function(m, k = 5L, nThreads = 30L, p = 2.0, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE, indexType = 1L) {
+    .Call('_pagoda2_hnswKnn', PACKAGE = 'pagoda2', m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose, indexType)
 }
 
 hnswKnn2 <- function(m, k = 5L, nThreads = 20L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {

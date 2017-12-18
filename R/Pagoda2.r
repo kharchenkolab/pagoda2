@@ -269,7 +269,7 @@ Pagoda2 <- setRefClass(
     },
     # make a Knn graph
     # note: for reproducibility, set.seed() and set n.cores=1
-    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='none',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL) {
+    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL) {
       require(igraph)
       require(Matrix)
 
@@ -320,19 +320,23 @@ Pagoda2 <- setRefClass(
       } else {
         stop("unknown distance measure specified")
       }
-
-      if(weight.type=='rank') {
-        xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
-      }
-      xn <- xn[!xn$s==xn$e,]
-
-      if(n.cores==1) { # for reproducibility, sort by node names
-        if(verbose) cat("ordering neighbors for reproducibility ... ");
-        xn <- xn[order(xn$s+xn$e),]
-        if(verbose) cat("done\n");
-      }
-      df <- data.frame(from=rownames(x)[xn$s+1],to=rownames(x)[xn$e+1],weight=xn$d,stringsAsFactors=F)
-      if(weight.type=='rank') { df$rank <- xn$r }
+      colnames(xn) <- rownames(xn) <- rownames(x);
+      
+      #if(weight.type=='rank') {
+      #  xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
+      #}
+      #xn <- xn[!xn$s==xn$e,]
+      diag(xn) <- 0;
+      xn <- drop0(xn);
+      
+      #if(n.cores==1) { # for reproducibility, sort by node names
+      #  if(verbose) cat("ordering neighbors for reproducibility ... ");
+      #  xn <- xn[order(xn$s+xn$e),]
+      #  if(verbose) cat("done\n");
+      #}
+      #df <- data.frame(from=rownames(x)[xn$s+1],to=rownames(x)[xn$e+1],weight=xn$d,stringsAsFactors=F)
+      #if(weight.type=='rank') { df$rank <- xn$r }
+      
       if(weight.type %in% c("cauchy","normal") && ncol(x)>sqrt(nrand)) {
         # generate some random pair data for scaling
         if(distance=='cosine') {
@@ -347,27 +351,29 @@ Pagoda2 <- setRefClass(
         }
         suppressWarnings(rd.model <- fitdistr(rd,weight.type))
         if(weight.type=='cauchy') {
-          df$weight <- 1/pcauchy(df$weight,location=rd.model$estimate['location'],scale=rd.model$estimate['scale'])-1
+          xn@x <- 1/pcauchy(xn@x,location=rd.model$estimate['location'],scale=rd.model$estimate['scale'])-1
         } else {
-          df$weight <- 1/pnorm(df$weight,mean=rd.model$estimate['mean'],sd=rd.model$estimate['sd'])-1
+          xn@x <- 1/pnorm(xn@x,mean=rd.model$estimate['mean'],sd=rd.model$estimate['sd'])-1
         }
       }
-      df$weight <- pmax(0,df$weight);
-      if(weight.type=='constant') { df$weight <- 1}
-      if(weight.type=='rank') { df$weight <- sqrt(df$rank) };
+      xn@x <- pmax(0,xn@x);
+      if(weight.type=='constant') { xn@x <- 1}
+      if(weight.type=='1m') { xn@x <- pmax(0,1-xn@x) }
+      #if(weight.type=='rank') { xn@x <- sqrt(df$rank) };
       # make a weighted edge matrix for the largeVis as well
-      if(x.was.given) {
-        return(invisible(as.undirected(graph.data.frame(df))))
-      } else {
-        misc[['edgeMat']][[type]] <<- cbind(xn,rd=df$weight);
-        g <- as.undirected(graph.data.frame(df))
+      sxn <- (xn+t(xn))/2;
+      g <- graph_from_adjacency_matrix(sxn,mode='undirected',weighted=TRUE)
+      if(!x.was.given) {
+        if(is.null(misc[['edgeMat']])) { misc[['edgeMat']] <<- list() }
+        misc[['edgeMat']][[type]] <<- xn;
         graphs[[type]] <<- g;
       }
+      return(invisible(g))
     },
     # calculate clusters based on the kNN graph
     getKnnClusters=function(type='counts',method=multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=2, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
-      old.par <- par();
-      on.exit(suppressWarnings(par(old.par)));
+      #old.par <- par();
+      #on.exit(suppressWarnings(par(old.par)));
 
       if(is.null(g)) {
         if(is.null(graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
@@ -677,15 +683,10 @@ Pagoda2 <- setRefClass(
         pcas <- pcas - Matrix::rowMeans(pcas)
       }
       xn <- hnswKnn2(pcas, k, nThreads= n.cores, verbose=verbose)
-
-      # Remove self edges
-      xn <- xn [!xn$s == xn$e,]
-
-      # Turn into a dataframe
-      df <- data.frame(from=rownames(pcas)[xn$s+1], to=rownames(x)[xn$e+1],weight=xn$d, stringsAsFactors=F)
-
-      # Min weight is 0
-      df$weight <- pmax(0, df$weight)
+      diag(xn) <- 0; # Remove self edges
+      xn <- as(xn,'dgTMatrix'); # will drop 0s
+      # Turn into a dataframe, convert from correlation distance into weight
+      df <- data.frame('from'=rownames(pcas)[xn@i+1],'to'=rownames(pcas)[xn@j+1],'w'=pmax(1-xn@x,0),stringsAsFactors=F)
 
       genegraphs$graph <<- df;
     },
@@ -712,6 +713,19 @@ Pagoda2 <- setRefClass(
       return(invisible(cols))
     },
     # determine subpopulation-specific genes
+
+    ##' @title determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
+    ##' @param type data type (currently only default 'counts' is supported)
+    ##' @param clusterType optional cluster type to use as a group-defining factor
+    ##' @param groups explicit cell group specification - a named cell factor (use NA in the factor to exclude cells from the comparison)
+    ##' @param name name slot to store the results in
+    ##' @param z.threshold minimal absolute Z score (adjusted) to report
+    ##' @param upregulated.only whether to report only genes that are expressed significantly higher in each group
+    ##' @param verbose verbose flag
+    ##' @return a list, with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels); Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest; M - log2 fold change; highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group; fe - fraction of cells in a given group having non-zero expression level of a given gene;
+    ##' @examples
+    ##' result <- r$getDifferentialGenes(groups=r$clusters$PCA$multilevel);
+    ##' str(r$diffgenes)
     getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE) {
       # restrict counts to the cells for which non-NA value has been specified in groups
 
@@ -1081,8 +1095,8 @@ Pagoda2 <- setRefClass(
                            min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2,
                            shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F,
                            unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
-      old.par <- par();
-      on.exit(suppressWarnings(par(old.par)));
+      ##old.par <- par();
+      ##on.exit(suppressWarnings(par(old.par)));
 
 
       if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
@@ -1296,6 +1310,224 @@ Pagoda2 <- setRefClass(
       ## colnames(reductions[['ICA']]) <<- paste('IC',seq(ncol(reductions[['ICA']])),sep='');
 
       return(invisible(pcas))
+    },
+
+    localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL , k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,recursive=TRUE,euclidean=FALSE,perplexity=k,debug=F) {
+      if(type=='counts') {
+        x <- counts;
+      } else {
+        if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
+        x <- reductions[[type]]
+      }
+
+
+      if(is.null(groups)) {
+        # look up the clustering based on a specified type
+        if(is.null(clusterType)) {
+          # take the first one
+          groups <- clusters[[type]][[1]]
+        } else {
+          groups <- clusters[[type]][[clusterType]]
+          if(is.null(cols)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+        }
+      } else {
+        groups <- as.factor(groups[names(groups) %in% rownames(x)]);
+        groups <- droplevels(groups); 
+        
+      }
+      if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
+      if(sum(!is.na(groups))<min.group.size) { stop("clustering specifies fewer cells than min.group.size") }
+
+      
+      if(recursive) {
+        cat("recursive group enumeration ...")
+        # derive cluster hierarchy
+        rowFac <- rep(-1,nrow(x)); names(rowFac) <- rownames(x);
+        rowFac[names(groups)] <- as.integer(groups);
+        tc <- colSumByFac(x,as.integer(rowFac))[-1,]
+        rownames(tc) <- levels(groups)
+        #tc <- rbind("total"=Matrix::colSums(tc),tc)
+        #d <- jsDist(t(((tc/pmax(1,Matrix::rowSums(tc)))))); rownames(d) <- colnames(d) <- rownames(tc)
+        d <- 1-cor(t(tc))
+        hc <- hclust(as.dist(d),method='ward.D')
+        
+        dlab <- function(l) {
+          if(is.leaf(l)) {
+            return(list(labels(l)))
+          } else {
+            return(c(list(labels(l)),dlab(l[[1]]),dlab(l[[2]])))
+          }
+        }
+        
+        # for each level in the cluster hierarchy, except for the top
+        rgroups <- dlab(as.dendrogram(hc))[-1]
+        rgroups <- c(list(levels(groups)),rgroups)
+        cat("done.\n");
+      } else {
+        rgroups <- lapply(levels(groups),I)
+      }
+      names(rgroups) <- unlist(lapply(rgroups,paste,collapse="+"))
+      
+
+      cat("determining local PCs ");
+      # run variance normalization, determine PCs
+      gpcs <- papply(rgroups,function(group) {
+        cells <- names(groups)[groups %in% group]
+        
+        # variance normalization
+        df <- .self$adjustVariance(persist=FALSE,gam.k=gam.k,verbose=FALSE,cells=cells)
+        if(!is.null(n.odgenes)) {
+          odgenes <- rownames(df)[order(df$lp,decreasing=F)[1:n.odgenes]]
+        } else {
+          odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log(od.alpha)]
+        }
+        if(length(odgenes)<min.odgenes) {
+          return(NULL);
+        }
+        sf <- df$gsf[match(odgenes,rownames(df))];
+        y <- t(t(x[cells,odgenes])*sf)
+        cm <- Matrix::colMeans(y)
+        # PCA
+        pcs <- irlba(y, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=T,reorth=T)
+        rownames(pcs$v) <- colnames(y); 
+        pcs$center <- cm;
+        # row-randomize x to get a sense for the pcs
+        m1 <- y;
+        if(euclidean) {
+          #for (i in 1:nrow(m1)) m1[i,] <- m1[i,order(runif(length(m1[i,])))]
+          m1@i <- sample(m1@i)
+          rpcas <- t(t(m1 %*% pcs$v) - t(pcs$center %*% pcs$v))
+          pcs$rsd <- apply(rpcas,2,sd)
+          pcs$trsd <- sd(dist(rpcas))
+        }
+
+        # sample within-cluster distances (based on main PCA)
+        
+        pcas <- as.matrix(t(t(t(t(x[,odgenes])*sf) %*% pcs$v) - t(pcs$center %*% pcs$v)))
+        cat(".")        
+        return(list(pcs=pcs,sf=sf,df=df,cells=cells,pcas=pcas))
+      },n.cores=n.cores)
+      cat(" done\n");
+
+      ivi <- unlist(lapply(gpcs,is.null))
+      if(any(ivi)) { gpcs <- gpcs[!ivi]; rgroups <- rgroups[!ivi]; }
+
+      if(debug) { browser() }
+
+      
+      # calculate cell relevance to each cluster (p_k,i matrix)
+      # use global PCA distances
+      cat("calculating global distances ...");
+      gcdist <- as.matrix(dist(gpcs[[1]]$pcas))
+      cat(" done.\n")
+
+      # for each PCA
+        # for each cell, determine p_k_i
+        # for each PC
+          # determine cell projections
+            # subset genes
+            # subtract center
+            # scale, multiply
+          # for each pair, determine cell distances
+          # use cell distances to complete weight matrix
+          # add to the w*d^2 and w matrices
+      # normalize by the sqrt(sum(w))
+
+      
+      if(euclidean) {
+        cat("calculating local Euclidean distances .");
+        dcs <- papply(gpcs,function(p) {
+          pk <- rep(1,nrow(p$pcas)); names(pk) <- rownames(p$pcas);
+          nci <- setdiff(rownames(gcdist),p$cells)
+          if(length(nci)>0) {
+            # determine within cluster sd
+            scells <- sample(p$cells,min(1e3,length(p$cells)))
+            cldsd <- sd(as.numeric(gcdist[scells,scells]))
+            ncid <- rowMeans(gcdist[nci,scells])
+            pk[nci] <- exp(-b*(ncid/cldsd)^2)
+          }
+          dsq <- as.matrix(dist(p$pcas)^2)
+          w <- (1-exp(-a*(dsq)/(p$pcs$trsd^2))) * (pk %o% pk)
+          cat(".")
+          list(dsq=dsq,w=w)
+        },n.cores=n.cores)
+        cat(".")
+        d <- Reduce('+',lapply(dcs,function(x) x$dsq*x$w))
+        cat(".")
+        d <- sqrt(d/Reduce('+',lapply(dcs,function(x) x$w))); 
+        diag(d) <- 0
+        cat(" done.\n")
+      } else {
+        # weighted correlation
+        cat("calculating local correlation distances .");
+        dcs <- papply(gpcs,function(p) {
+          pk <- rep(1,nrow(p$pcas)); names(pk) <- rownames(p$pcas);
+          nci <- setdiff(rownames(gcdist),p$cells)
+          if(length(nci)>0) {
+            # determine within cluster sd
+            scells <- sample(p$cells,min(1e3,length(p$cells)))
+            cldsd <- sd(as.numeric(gcdist[scells,scells]))
+            ncid <- rowMeans(gcdist[nci,scells])
+            pk[nci] <- exp(-b*(ncid/cldsd)^2)
+          }
+          x <- cov(t(p$pcas))*(ncol(p$pcas)-1)
+          xc <- x / sqrt(diag(x) %o% diag(x)) # correlation
+          w <- (1-exp(-a*(1-xc))) * (pk %o% pk)
+          
+          cat(".")
+          list(x=x,w=w)
+        },n.cores=n.cores)
+        cat(".")
+        # calculate sum_{k}_{w_k*v} matrix
+        wm <- Reduce('+',lapply(dcs,function(z) z$w*diag(z$x)))
+        d <- Reduce('+',lapply(dcs,function(z) z$x*z$w))
+        d <- 1-d/sqrt(wm*t(wm))
+        diag(d) <- 0
+        cat(" done.\n")
+      }
+        
+      
+
+      ## d <- dcs[[1]]$dsq
+      ## d <- as.matrix(dist(r$reductions$PCA))
+      ## knn <- apply(d,2,function(x) order(x,decreasing=F)[1:(k+1)])
+      ## cat(".")
+      ## m <- sparseMatrix(i=as.numeric(knn),p=c(0,(1:ncol(knn))*nrow(knn)),dims=rep(ncol(knn),2),x=rep(1,nrow(knn)*ncol(knn)))
+      ## m <- m+t(m); # symmetrize
+      ## diag(m) <- 0;
+      ## rownames(m) <- colnames(m) <- rownames(d)
+      ## x <- list(m=m)
+      ## i <- 5; cl <- rep(NA,nrow(x$m)); names(cl) <- rownames(x$m); cl[rownames(x$m)[i]] <- 1; cl[which(x$m[,i]>0)] <- 2; cl <- as.factor(cl);
+      ## r$plotEmbedding(type='PCA',embeddingType='tSNE',groups=cl,alpha=0.2,min.group.size=00,mark.clusters = TRUE, mark.cluster.cex=0.8,unclassified.cell.color=adjustcolor(1,alpha=0.1))
+      
+      ## i <- 5; cl <- 1/(dcs[[1]]$dsq[,i]+1e-6); names(cl) <- rownames(x$m);
+      ## i <- 5; cl <- 1/(d[,i]+1e-6); names(cl) <- rownames(x$m);
+      ## r$plotEmbedding(type='PCA',embeddingType='tSNE',colors=cl,alpha=0.2,min.group.size=00,mark.clusters = TRUE, mark.cluster.cex=0.8,unclassified.cell.color=adjustcolor(1,alpha=0.1))
+      
+      # kNN
+      cat("creating kNN graph .");
+      knn <- apply(d,2,function(x) order(x,decreasing=F)[1:(k+1)])
+      cat(".")
+      #m <- sparseMatrix(i=as.numeric(knn),p=c(0,(1:ncol(knn))*nrow(knn)),dims=rep(ncol(knn),2),x=rep(1,nrow(knn)*ncol(knn)))
+      m <- sparseMatrix(i=as.numeric(knn),p=c(0,(1:ncol(knn))*nrow(knn)),dims=rep(ncol(knn),2),x=d[as.integer(t(t(knn)+((1:ncol(knn))-1)*nrow(d)))])
+      m <- m+t(m); # symmetrize
+      diag(m) <- 0;
+      rownames(m) <- colnames(m) <- rownames(d)
+      cat(".")
+      g <- graph_from_adjacency_matrix(m,mode='undirected',weighted=TRUE);
+      cat(".")
+      graphs[[name]] <<- g;
+      cat(" done.\n")
+
+      emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores)$Y;
+      rownames(emb) <- colnames(d)
+      embeddings[[type]][[name]] <<- emb;
+      
+      # calculate cell-cell distance, considering weighting
+
+      # getting total cell-cell distance
+
+      return(invisible(list(d=d,m=m,gpcs=gpcs)))
     },
 
 
@@ -1519,10 +1751,10 @@ Pagoda2 <- setRefClass(
       }
       if(is.null(name)) { name <- embeddingType }
       if(embeddingType=='largeVis') {
-        xn <- misc[['edgeMat']][[type]];
-        if(is.null(xn)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
-        edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(x),nrow(x)))
-        edgeMat <- edgeMat + t(edgeMat); # symmetrize
+        edgeMat <- misc[['edgeMat']][[type]];
+        if(is.null(edgeMat)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
+        #edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(x),nrow(x)))
+        edgeMat <- (edgeMat + t(edgeMat))/2; # symmetrize
         #edgeMat <- sparseMatrix(i=c(xn$s,xn$e)+1,j=c(xn$e,xn$s)+1,x=c(xn$rd,xn$rd),dims=c(nrow(x),nrow(x)))
         # if(diffusion.steps>0) {
         #   Dinv <- Diagonal(nrow(edgeMat),1/colSums(edgeMat))

@@ -1,5 +1,9 @@
 #include "pagoda2.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 using namespace similarity;
 
 using std::chrono::duration;
@@ -11,6 +15,7 @@ using std::chrono::high_resolution_clock;
 
 using namespace std;
 using namespace Rcpp;
+
 
 
 // Defines
@@ -61,7 +66,7 @@ struct queryResultCompareNodes {
 };
 
 // Given two lists of query results find mutual MNNs
-forward_list<queryResult>* findNN(forward_list<queryResult>* qrA, forward_list<queryResult>* qrB, bool verbose = true, bool mutualOnly = true) {
+forward_list<queryResult>* findNN(forward_list<queryResult>* qrA, forward_list<queryResult>* qrB, bool verbose = false, bool mutualOnly = true) {
   std::chrono::time_point<std::chrono::high_resolution_clock> t1, t2;
 
   if (verbose) {
@@ -132,6 +137,94 @@ VectorSpace<float>* makeSpace(int spaceType, float p) {
   return space;
 }
 
+
+arma::sp_mat queryIndexMat(Index<float> *index,ObjectVector &dataset1, ObjectVector &dataset2, VectorSpace<float> *space,VectorSpace<float> *space2, int k, bool verbose ) {
+
+  std::chrono::time_point<std::chrono::high_resolution_clock> t1, t2;
+
+  int nqueries = dataset1.size(); // ObjectVector is just a std::vector
+  int nanswers=nqueries*k;
+  arma::vec ansdist(nanswers);
+  arma::umat ansloc(2,nanswers,arma::fill::zeros);
+
+  if (verbose) {
+    cout << "running queries with k=" << k << " ..." << flush;
+    t1 = high_resolution_clock::now();
+  }
+
+  unique_ptr<boost::progress_display> query_bar(verbose ? new boost::progress_display(nqueries) : NULL);
+
+  #pragma omp parallel for
+  for (int i = 0; i < nqueries; i++) {
+    const Object *queryObj = dataset1[i];
+
+    KNNQuery<float> knnQ(*space, queryObj, k);
+    index->Search(&knnQ);
+
+    KNNQueue<float> *res = knnQ.Result()->Clone();
+
+    int j=0;
+    while (j<k && !res->Empty()) {
+      int l=i*k+j;
+      ansloc(0,l)=res->TopObject()->id(); //row
+      ansloc(1,l)=i; // column 
+      ansdist(l)= space2->IndexTimeDistance(dataset2[ansloc(0,l)],dataset1[i]);
+      res->Pop();
+      j++;
+    }
+
+    if(query_bar) { ++(*query_bar); }
+  }
+
+  if (verbose) {
+    t2 = high_resolution_clock::now();
+    auto elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
+    cout << endl << "done (" << elapsed_time << "s)" << endl;
+  }
+  arma::sp_mat r(ansloc,ansdist,dataset2.size(),dataset1.size(),true);
+  return(r);
+
+};
+
+
+/** 
+ * Find nearest neighbors of A in B
+ */
+// [[Rcpp::export]]
+arma::sp_mat crossNN(NumericMatrix mA, NumericMatrix mB,int k,int spaceType = 2, float lpSpaceP = 2.0,bool verbose = false,int nThreads=30) {
+  
+  initLibrary(LIB_LOGNONE, NULL);
+
+#ifdef _OPENMP
+  omp_set_num_threads(nThreads);
+#endif
+
+  AnyParams empty;
+  VectorSpace<float> *space = makeSpace(spaceType, lpSpaceP);
+  VectorSpace<float> *space2 = makeSpace(spaceType, lpSpaceP);
+
+  // Converting format for A
+  if (verbose) cout << "reading points from mA..." << flush;
+  ObjectVector datasetA;
+  readNumericMatrixIntoObjectVector(mA, datasetA, space);
+  if (verbose) cout << "done (" << datasetA.size() << " points)" << endl;
+
+  // Converting format for B
+  if (verbose) cout << "reading points from mB ..." << flush;
+  ObjectVector datasetB;
+  readNumericMatrixIntoObjectVector(mB, datasetB, space);
+  if (verbose) cout << "done (" << datasetB.size() << " points)" << endl;
+
+  // Make the index for B
+  Index<float> *indexB;
+  indexB = makeIndex(space, datasetB, verbose, nThreads, spaceType);
+
+  // query the index of B with objects from A
+  forward_list<queryResult>* qrA;
+  return(queryIndexMat(indexB, datasetA, datasetB,space, space2, k, verbose));
+  
+}
+
 /**
  * Find nearest neighbours between two datasets a and b, by default 
  * only return mutual NNs.
@@ -140,7 +233,7 @@ VectorSpace<float>* makeSpace(int spaceType, float p) {
 // [[Rcpp::export]]
 DataFrame interNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA,
 		   NumericVector kB, int spaceType = 2, float lpSpaceP = 2.0,
-		   bool verbose = true, bool neighbourhoodAverage = true,
+		   bool verbose = false, bool neighbourhoodAverage = false,
 		   NumericVector neighbourAvgKA = 10, NumericVector neighbourAvgKB = 10,
 		   bool mutualOnly = true) {
   int nThreads = 30;
@@ -304,6 +397,7 @@ forward_list<queryResult>* queryIndex(Index<float> *index,
       qr.s = i;
       qr.e = res->TopObject()->id();
       qr.d = res->TopDistance();
+      //qr.d = space->IndexTimeDistance(dataset[qr.s],dataset[qr.e]);
       queryResults->push_front(qr);
 
       res->Pop();
@@ -323,6 +417,7 @@ forward_list<queryResult>* queryIndex(Index<float> *index,
 
 /**
  * Return a new matrix by performing neighbourhood averaging of every cell
+ * TODO: use standard kNN and sparse matrix multiplication
  */
 // [[Rcpp::export]]
 NumericMatrix neighbourhoodAverageMatrix(NumericMatrix mA, bool verbose = true, 
@@ -404,7 +499,6 @@ NumericMatrix neighbourhoodAverageMatrix2(NumericMatrix mA, bool verbose = true,
   NumericMatrix mAnew(mA.nrow(), mA.ncol());
 
   int nqueries = dataset.size();
-
   for (int i = 0; i < nqueries; i++) {
     const Object *queryObj = dataset[i];
 
