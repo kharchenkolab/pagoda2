@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Perform compulations on the data
+ * Perform computations on the data
  * @constructor
  */
 function calculationController(localAvailable, remoteAvailable) {
@@ -29,29 +29,6 @@ function calculationController(localAvailable, remoteAvailable) {
 }
 
 /**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
- */
-calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, method);
-};
-
-/**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param selectionB the name of the second cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
- */
-calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
-};
-
-/**
  * Calculate differential expression between two cell sets
  * given a specific (local or remote method)
  */
@@ -72,12 +49,31 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
 calculationController.prototype.calculateDEfor1selection = function(selectionA, method, callback) {
   if (method === 'remoteDefault') {
     return this.calculateDEfor1selectionbyRemote(selectionA, callback);
-  } else if(method=== 'localDefault'){
-    return this.calculateDEfor1selectionbyLocal(selectionA, callback, "wilcoxon");
+  } else if(method=== 'localWilcoxon'){
+    var cellSelCntr = new cellSelectionController();
+    return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, "wilcoxon");
   } else {
     callback('Not implemented');
   }
 };
+
+
+
+
+
+/**
+ * Calculate differential expression for 1 selection against the packground
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ * @param selectionB the name of the second cell selection as registered in the cell selection controller
+ * @param callback
+ * @param method the identifier for the local being used to calculate
+ */
+calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
+  var cellSelCntr = new cellSelectionController();
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
+};
+
+
 
 /**
  * Calculate differential expression for a group of selections against the background
@@ -87,6 +83,8 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
  * @param method the identifier for the local being used to calculate
  */
 calculationController.prototype.calculateDELocal = function(selections, callback, method){
+  debugger;
+  
   var thisController = this;
   var dataCtrl = new dataController();
   var calcCtrl = new calculationController();
@@ -180,7 +178,6 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     var calcCtrl = new calculationController();
 
     if(callParams.type === "expr vals"){
-      //debugger;
       //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
 

@@ -13,7 +13,7 @@
  */
 function actionPanelUIcontroller() {
     if (typeof actionPanelUIcontroller.instance === 'object') {
-	return actionPanelUIcontroller.instance;
+	    return actionPanelUIcontroller.instance;
     }
 
     this.generateCellSelectionStore();
@@ -26,10 +26,8 @@ function actionPanelUIcontroller() {
 	    actPaneUICntr.syncCellSelectionStore();
     });
 
-
     this.currentDErequest = null;
     actionPanelUIcontroller.instance = this;
-
 };
 
 
@@ -88,15 +86,13 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 
     // Data store for the available diff expr methods
     var deMethodsStore = Ext.create('Ext.data.Store', {
-	id: 'availableDEmethodStore',
-	fields: [{name: 'name', type: 'string'},
-	       {name:'displayname', type: 'string'}]
+	      id: 'availableDEmethodStore',
+	      fields: [{name: 'name', type: 'string'}, {name:'displayname', type: 'string'}]
     });
 
     // Populate the store
     var calcCntr = new calculationController();
     var availableMethods = calcCntr.getAvailableDEmethods();
-
 
     for (var i in availableMethods) {
 	    deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
@@ -133,7 +129,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
           listeners: {
             change: function(obj, newValue, oldValue, eOpts) {
               var selectionBcontrol = Ext.getCmp('selectionB');
-              //debugger;
               if (newValue.analysisTypeSelection == 'vsSelection') {
                 selectionBcontrol.enable();
               } else if (newValue.analysisTypeSelection == 'vsBackground') {
@@ -231,7 +226,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
           listeners: {
             change: function(obj, newValue, oldValue, eOpts) {
               var selectionControl = Ext.getCmp('cellSelectionESP');
-              //debugger;
               if (newValue.analysisTypeSelection == 'vsSelection') {
                 selectionControl.enable();
               } else if (newValue.analysisTypeSelection == 'vsBackground') {
@@ -523,7 +517,6 @@ actionPanelUIcontroller.prototype.stopAnalysisClickHandler = function() {
  * @private
  */
 actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
-
   var form = Ext.getCmp("formPanelDE").getForm();
 
   var analysisType = form.findField("analysisType").getValue();

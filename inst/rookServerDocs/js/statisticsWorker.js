@@ -32,17 +32,19 @@ function handleInitiateCommand(e) {
     callParams.params.numCells = callParams.data.length;
 
     //if there is only one selection given make the second selection off of the indexes of the cellOrderData keys
+    debugger;
     if(callParams.selections.length === 1){
       // Only one selection
       self.selAidx = [];
-      self.selBidx = [...callParams.data.keys()];
-      //creates array of cell indexes based on their corresponding index in cell order array
-      for(var i = 0; i < callParams.selections[0].length; i++){
-        var idx = callParams.data.indexOf(callParams.selections[0][i]);
-        if(idx !== -1){
-          self.selAidx.push(idx);
+      self.selBidx = [];
+        for (var i = 0; i < callParams.data.length; i++) {
+          var idx = callParams.selections[0].indexOf(callParams.data[i]);
+          if (idx === -1) {
+            self.selAidx.push(i);
+          } else {
+            self.selBidx.push(i);
+          }
         }
-      }
     } else if(callParams.selections.length === 2){
       // Two selections
       self.selAidx = [];
@@ -60,6 +62,7 @@ function handleInitiateCommand(e) {
         }
       }
     }
+    debugger;
 
     var nextSliceGenes = self.geneNames.slice(
           callParams.params.index,
