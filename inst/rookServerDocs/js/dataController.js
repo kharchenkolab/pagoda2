@@ -173,8 +173,7 @@ dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd
  */
 dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked = function(geneIds, cellIndexStart, cellIndexEnd,
                                                                                  getCellNames, callback) {
-
-      return this.internalController.getExpressionValuesSparseByCellIndexUnpacked(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
+      return this.internalController.getExpressionValuesSparseByCellIndexUnpacked(geneIds, cellIndexStart, cellIndexEnd, true, callback);
 }
 
 /**

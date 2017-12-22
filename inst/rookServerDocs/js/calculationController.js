@@ -57,10 +57,6 @@ calculationController.prototype.calculateDEfor1selection = function(selectionA, 
   }
 };
 
-
-
-
-
 /**
  * Calculate differential expression for 1 selection against the packground
  * @param selectionA the name of the first cell selection as registered in the cell selection controller
@@ -73,8 +69,6 @@ calculationController.prototype.calculateDEfor2selectionsbyLocal = function(sele
   return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 };
 
-
-
 /**
  * Calculate differential expression for a group of selections against the background
  * @param selections An array of the cell selections to be used to perform
@@ -83,8 +77,6 @@ calculationController.prototype.calculateDEfor2selectionsbyLocal = function(sele
  * @param method the identifier for the local being used to calculate
  */
 calculationController.prototype.calculateDELocal = function(selections, callback, method){
-  debugger;
-  
   var thisController = this;
   var dataCtrl = new dataController();
   var calcCtrl = new calculationController();
@@ -101,14 +93,12 @@ calculationController.prototype.calculateDELocal = function(selections, callback
           var callParams = {};
           callParams.geneNames = geneNames;
 
-
           thisController.localWorker.postMessage({
-
               type: "initiate",
               method: method,
               data: cellData,
               selections: calcCtrl.selections,
-            params: callParams
+              params: callParams
           })
 
         }); // getCellOrder
@@ -180,21 +170,20 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     if(callParams.type === "expr vals"){
       //in the event of a expr vals request sends expression values back for a given chunk of gene names
       if(document.getElementById("localProgressBar")){
-
         // Update the progress bar
-        //HERE
         calcCtrl.updateProgressPercent(callParams.params.index/calcCtrl.geneNames.length);
-
         // Send the next chunk of data
-        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.data, 0,
-          callParams.params.numCells, function(data){
+        dataCtrl.getExpressionValuesSparseByCellIndexUnpacked(callParams.data, 0, callParams.params.numCells, true, function(data){
+          // Remove row and column names to reduce the io with the thread
+          data.Dimnames1 = null;
+          data.Dimnames2 = null;
           w.postMessage({
               type: "process",
               data: data,
-            params: callParams.params
+              params: callParams.params
           })
+          //w.postMessage({type:"process",data:null,params:null})
         })
-
       } // if(document.getElementById("localProgressBar")
     } else if(callParams.type === "complete"){
 
@@ -210,7 +199,7 @@ calculationController.prototype.handleWorkerMessage = function(e) {
         setTimeout(function(){
           calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
-        },1);
+        },0.100);
       }
     }
 } // handleWorkerMessage

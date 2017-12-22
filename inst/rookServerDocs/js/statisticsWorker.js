@@ -6,7 +6,7 @@ self.selAidx = null;
 self.selBidx = null;
 self.method = null;
 self.chunks = 20;
-self.minchunksize = 500;
+self.minchunksize = 250;
 
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
@@ -32,7 +32,6 @@ function handleInitiateCommand(e) {
     callParams.params.numCells = callParams.data.length;
 
     //if there is only one selection given make the second selection off of the indexes of the cellOrderData keys
-    debugger;
     if(callParams.selections.length === 1){
       // Only one selection
       self.selAidx = [];
@@ -62,7 +61,6 @@ function handleInitiateCommand(e) {
         }
       }
     }
-    debugger;
 
     var nextSliceGenes = self.geneNames.slice(
           callParams.params.index,
@@ -78,20 +76,20 @@ function handleInitiateCommand(e) {
 
 function handleProcessCommand(e) {
   var callParams = e.data;
-  if(self.method === "wilcoxon"){
-    runMannWhitneyIteration(callParams.params, callParams.data);
-  } else {
-    // TODO: Handle error
-  }
+
+
+  // Unpack in the thread
+  callParams.data = getFullMatrix(callParams.data);
+
+  runMannWhitneyIteration(callParams.params, callParams.data);
 
   //advance index to current spot
   callParams.params.index += callParams.params.step;
 
   //continue requesting data if data still needs to be read
   if(callParams.params.index < self.geneNames.length){
-    var nextGeneNames = self.geneNames.slice(callParams.params.index,
-          Math.min(callParams.params.index + callParams.params.step, self.geneNames.length));
-
+    var nextGeneNames = self.geneNames.slice(callParams.params.index, Math.min(callParams.params.index + callParams.params.step, self.geneNames.length));
+    
     postMessage({
         type: "expr vals",
         data: nextGeneNames,
@@ -112,11 +110,14 @@ function handleProcessCommand(e) {
  * @param geneData A sparse matrix containing the gene names being read in and the expression values
  */
 function runMannWhitneyIteration(params, geneData){
+      const zcutoff = 4.0;
+      const log2 = Math.log(2);
+      var geneCount = geneData.array[0].length;
 
-      for(var geneindex = 0; geneindex < geneData.array[0].length; geneindex++){
+      for(var geneindex = 0; geneindex < geneCount; geneindex++){
 
         var allValues = [];
-
+        
         var nNonZeroA = 0;
         var nNonZeroB = 0;
 
@@ -124,7 +125,8 @@ function runMannWhitneyIteration(params, geneData){
         var sparseFractionCutoff = 0.10;
 
         //retrieve expression data by indexes for selection A
-        for(var cell = 0; cell < self.selAidx.length; cell++){
+        var selAlength = self.selAidx.length;
+        for(var cell = 0; cell < selAlength; cell++){
           var eVal = geneData.array[self.selAidx[cell]][geneindex];
           if (eVal != 0) nNonZeroA++;
           allValues.push({
@@ -132,10 +134,12 @@ function runMannWhitneyIteration(params, geneData){
             exprVal: eVal
           });
         }
-        if(nNonZeroA < self.selAidx.length * sparseFractionCutoff) continue;
+        // Skip gene if too many cells missing
+        if(nNonZeroA < selAlength * sparseFractionCutoff) continue;
 
         //retrieve expression data by indexes for selection B
-        for(var cell = 0; cell < self.selBidx.length; cell++){
+        var selBlength = self.selBidx.length;
+        for(var cell = 0; cell < selBlength; cell++){
           var eVal = geneData.array[self.selBidx[cell]][geneindex];
           if (eVal != 0) nNonZeroB++;
           allValues.push({
@@ -143,7 +147,8 @@ function runMannWhitneyIteration(params, geneData){
             exprVal: eVal
           });
         }
-        if(nNonZeroB < self.selBidx.length * sparseFractionCutoff) continue;
+        // Skip gene if too many cells missing
+        if(nNonZeroB < selBlength * sparseFractionCutoff) continue;
 
         // Sort and calculate total ranks
         allValues.sort(function(x,y){return x.exprVal - y.exprVal});
@@ -154,7 +159,8 @@ function runMannWhitneyIteration(params, geneData){
         var inTie = false;
 
         // Calculate element ranks taking into account ties
-        for (var i = 0; i < allValues.length; i++) {
+        var allValueslength = allValues.length
+        for (var i = 0; i < allValueslength; i++) {
           // Set the rank to the position in the array (1-indexed)
           allValues[i].rank = i + 1;
 
@@ -175,7 +181,6 @@ function runMannWhitneyIteration(params, geneData){
               for (var j = lastValStartIndex; j < i; j++) {
                 allValues[j].rank = commonRank;
               } // for
-
               inTie = false;
             } else { // Not in tie
               lastVal = allValues[i].exprVal;
@@ -186,26 +191,21 @@ function runMannWhitneyIteration(params, geneData){
 
         // Calculate rank sum for A
         var totalRankA = 0;
-        for (var i = 0; i < allValues.length; i++) {
+        for (var i = 0; i < allValueslength; i++) {
           if (allValues[i].selection === 1){
             totalRankA += (i+1);
           }
         }
 
         // Calculate U values
-        var lengthA = self.selAidx.length;
-        var lengthB = self.selBidx.length;
-        var lenghtAxlengthB = lengthA * lengthB; //u1u2
-        var u1 = totalRankA - (lengthA * (lengthA +1)) /2;
+        var lenghtAxlengthB = selAlength * selBlength; //u1u2
+        var u1 = totalRankA - (selAlength * (selAlength +1)) /2;
         var u2 = lenghtAxlengthB - u1;
         var U = Math.min(u1, u2);
 
-        // Perform Normal approximation with tie correction
-        var muU = lenghtAxlengthB / 2;
-
         // Calculate rank abundance and Loop over rank counts and calculate K
-        var rankCounts = {};
-        for (var i = 0; i < allValues.length; i++) {
+        var rankCounts = [];
+        for (var i = 0; i < allValueslength; i++) {
           var rank = allValues[i].rank;
           if(typeof rankCounts[rank] === 'undefined') {
             rankCounts[rank]= 1;
@@ -214,49 +214,87 @@ function runMannWhitneyIteration(params, geneData){
           }
         }
         var K = 0;
-        var n = lengthA + lengthB;
+        var n = selAlength + selBlength;
         var ranks = Object.keys(rankCounts);
-        for (var i = 0; i < ranks.length; i++) {
+        var ranksLength = ranks.length;
+        for (var i = 0; i < ranksLength; i++) {
           var ti = rankCounts[ranks[i]];
           K = K + ( (Math.pow(ti,3) - ti) / (n * (n-1) ) );
         }
 
         // Calculate corrected sigma
-        var sigmaUcorr = Math.sqrt( lenghtAxlengthB / 12 * ( n + 1 ) - K);
+        var sigmaUcorr = Math.sqrt( (lenghtAxlengthB / 12) * ( n + 1 ) - K);
 
+        // Perform Normal approximation with tie correction
         // Calculate corrected Z score
-        var z = (U - muU) / sigmaUcorr;
+        //var muU = lenghtAxlengthB / 2;        
+        //var z = (U - muU) / sigmaUcorr;
+        var z = (U - (lenghtAxlengthB / 2)) / sigmaUcorr;
 
-        const zcutoff = 4.0;
         var zAbs = Math.abs(z);
         if(zAbs >= zcutoff){
-          // TODO: Calculate fe and M
-
           var sumA = 0;
-          var nA = self.selAidx.length;
-          for(var cell = 0; cell < nA; cell++){
+          for(var cell = 0; cell < selAlength; cell++){
             sumA += geneData.array[self.selAidx[cell]][geneindex];
           }
-          var meanA = sumA / nA;
+          var meanA = sumA / selAlength;
 
           var sumB = 0;
-          var nB = self.selBidx.length;
-          for(var cell = 0; cell < nB; cell++){
+          for(var cell = 0; cell < selBlength; cell++){
             sumB += geneData.array[self.selBidx[cell]][geneindex];
           }
-          var meanB = sumB /nB;
+          var meanB = sumB /selBlength;
 
-          self.collectedResults.push(
-            {
+          self.collectedResults.push({
               Z: z,
               absZ: zAbs,
               name: geneData.colnames[geneindex],
-              fe: Math.log(meanA/meanB)/ Math.log(10),
-              M: (sumA+sumB)/(nA+nB),
+              fe: 0,
+              M: Math.log(meanA/meanB) / log2,
               highest: false
-            }
-          )
+            })
+
         } // zAbs >= zcutoff
 
       }
+}
+
+
+
+function getFullMatrix(data) {
+
+    // Make a zero filled array
+    var out = Array(data.Dim[0]);
+    for (var k = 0; k < data.Dim[0]; k++) {
+    	var row = Array(data.Dim[1]);
+    	for (var j = 0; j < data.Dim[1]; j++) {
+    	    row[j] = 0;
+    	}
+    	out[k] = row;
+    }
+
+
+    // index in p (the column number)
+    for (var j = 0; j < data.p.length - 1; j++) {
+    	// row start index, row end index (in x and i)
+    	var rsi = data.p[j];
+    	var rei = data.p[j+1] - 1;
+
+    	// k is an index in x and i with the current column
+    	for (var k = rsi; k < rei; k++) {
+    	    // row number
+    	    var rn = data.i[k];
+
+    	    // x[k] is the value for the element in rn, j
+    	    out[rn][j] = data.x[k];
+    	}
+    }
+
+    var retVal = {
+	array:  out,
+	rownames:  data.DimNames1,
+	colnames:  data.DimNames2
+    };
+
+    return retVal;
 }
