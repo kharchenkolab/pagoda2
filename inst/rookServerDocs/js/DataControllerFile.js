@@ -941,4 +941,9 @@ DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) 
  */
 DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback){
   console.error('Not implemented');
+  
+  // TODO: Check that the key for the transposed data exists
+  // if it doesn't simulate the call with the whole matrix and subset as we currently do
+  // otherwise get only the required cells on a per row basis and put them together
+  
 }
