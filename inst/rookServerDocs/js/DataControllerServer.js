@@ -238,6 +238,49 @@ DataControllerServer.prototype.getAspectMatrix = function(cellIndexStart, cellIn
 	return ajaxRequest;
 }
 
+/** 
+ * Get all expression values for the specified cells
+ */
+DataControllerServer.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback){
+	// Setup the request data
+	var requestData = {
+	    "dataidentifier": "expressionmatrixsparsebycellname",
+	    "cellnames": cellNames.join('|')
+	};
+	
+  var dataCntr = this;
+	
+	// Does the function return via callback, factored out to avoid duplication
+	function doReturn(data) {
+		// Unpack the data
+		var x = dataCntr.unpackCompressedBase64Float64Array(data.x);
+		var i = dataCntr.unpackCompressedBase64Int32Array(data.i);
+		var p = dataCntr.unpackCompressedBase64Int32Array(data.p);
+
+		// This is a fix for the way R toJSON encodes one element arrays
+		if (typeof data.Dimnames1 === 'string') {data.Dimnames1 = [ data.Dimnames1 ]; }
+		if (typeof data.Dimnames2 === 'string') {data.Dimnames2 = [ data.Dimnames2 ]; }
+
+		//Convert to matrix reader and return
+		var m = new dgCMatrixReader(i, p, data.Dim, data.Dimnames1,
+					    data.Dimnames2, x);
+
+		callback(m);
+	}
+
+	var ajaxRequest = $.ajax({
+	    type: "POST",
+	    dataType: "json",
+	    url: "getData.php?dataidentifier=expressionmatrixsparsebycellname",
+	    data: requestData,
+	    success: function(data) {
+        doReturn(data);
+	    }
+	});
+
+	return ajaxRequest;
+}
+
 /**
  * Get a subset of the expression matrix specified but only
  * transfer lz compressed binary array data. Cells are specified

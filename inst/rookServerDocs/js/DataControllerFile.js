@@ -931,3 +931,14 @@ DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) 
     fr.addEventListener('onready',fn);
   }
 }
+
+
+/**
+ * Get expression values for all genes in the specified cells using the 
+ * transposed expression values index if available
+ * @param cellNames the names of the cells to get the expression values for
+ * @param callback the callback function
+ */
+DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback){
+  console.error('Not implemented');
+}

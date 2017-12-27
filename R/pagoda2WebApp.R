@@ -297,6 +297,47 @@ pagoda2WebApp <- setRefClass(
                                         response$write(toJSON(generateEmbeddingStructure()));
                                         return(response$finish());
                                       },
+                                      
+                                      'expressionmatrixsparsebycellname' = {
+                                        cat('Got Request 1');
+                                        postArgs <- request$POST();
+                                        cellNames <- url_decode(postArgs[['cellnames']]);
+                                        cellNames <- unlist(strsplit(cellNames, split = "|", fixed =T));
+                                        
+                                        getCellNames <- TRUE;
+                                      
+                                        counts.transposed <- t(originalP2object$counts)
+                                        
+                                        ## Matrix to send
+                                        matrixToSend <- counts.transposed[,cellNames,drop = F]
+                                       
+                                        # Bit pack and compress arrays
+                                        xSend <- .self$packCompressFloat64Array(matrixToSend@x);
+                                        iSend <- .self$packCompressInt32Array(matrixToSend@i);
+                                        pSend <- .self$packCompressInt32Array(matrixToSend@p);
+                                        
+                                        Dimnames1Send <- "";
+                                        if (getCellNames) {
+                                          Dimnames1Send <- matrixToSend@Dimnames[[1]];
+                                        };
+                                        
+                                        # Convert the attributes to list for JSON packing
+                                        objToSend <- list(
+                                          i = iSend,
+                                          p = pSend,
+                                          Dim = matrixToSend@Dim,
+                                          Dimnames1 = Dimnames1Send,
+                                          Dimnames2 = matrixToSend@Dimnames[[2]],
+                                          x = xSend
+                                        )
+                                        
+                                        response$header("Content-type", "application/javascript" );
+                                        response$write(toJSON(objToSend));
+                                        
+                                        return(response$finish());
+                                        
+                                        
+                                      },
 
                                       # Return a gene information table
                                       # for all the genes
