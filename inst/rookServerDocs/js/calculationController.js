@@ -86,39 +86,55 @@ calculationController.prototype.calculateDELocal = function(selections, callback
 
   // Generates the new worker
   if(typeof(this.localWorker) === "undefined") {
-    this.localWorker = new Worker("js/statisticsWorker.js");
-    dataCtrl.getAllGeneNames(function(geneNames) {
-      calcCtrl.geneNames = geneNames;
-        dataCtrl.getCellOrder(function(cellData){
-          var callParams = {};
-          callParams.geneNames = geneNames;
+      this.localWorker = new Worker('js/lightDeWorker.js');
+    
+      // There are the cells we want
+      var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
+      
+      // We want all the genes for these cells
+      // A progress bar would be nice for online requests
+      // Where the data comes in chunks
+      dataCtrl.getExpressionValuesSparseByCellName(cellsRetrieve, function(data){
+        thisController.updateProgressPercent(50);
+        thisController.setProgressLabel("Calculating...");  
+        
+        // Now we have the data
+        // We just want to pass it to a worker thread and get our results back
+        // In the future we would like multiple threads
+        
+        // If we are in 1 selection mode
+        // dump all the cells that are not in selection[0] into
+        // selection[1]
+        // This can actually be done in the thread much 
+        // more efficiently, but this is a patch for the minute
+        var selections =  calcCtrl.selections;
+        if(selections.length === 1){
+          selections[1] = [];
+          for(var i = 0 ; i < data.DimNames2.length; i++) {
+            if(selections[0].indexOf(data.DimNames2[i]) == -1) {
+              selections[1].push(data.DimNames2[i]);
+            }
+          }
+        }
 
-          thisController.localWorker.postMessage({
-              type: "initiate",
-              method: method,
-              data: cellData,
-              selections: calcCtrl.selections,
-              params: callParams
-          })
-
-        }); // getCellOrder
-
+        
+        calculationController.instance.localWorker.postMessage({
+          type: "rundiffexpr",
+          data: data, // The sparse array
+          selections: calcCtrl.selections // The selections to know what is compared with what
+        });
+        
+      }); // getExpressionValuesSparseByCellName
+      
 
       //builds non-modal progress bar window
       thisController.showDisplayBar();
-    }); //getAllGeneNames
-  }
+      thisController.setProgressLabel("Downloading...");
+    } // localWorker undefined
 
   // Handle the incoming message
   this.localWorker.onmessage = thisController.handleWorkerMessage;
 
-  return {
-    //abort function for stop button functionality
-    abort: function(){
-      var calcCtrl = new calculationController()
-      calcCtrl.terminateWorker();
-    } // function abort
-  }; // return
 }
 
 calculationController.prototype.terminateWorker = function() {
@@ -167,25 +183,7 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     var dataCtrl = new dataController();
     var calcCtrl = new calculationController();
 
-    if(callParams.type === "expr vals"){
-      //in the event of a expr vals request sends expression values back for a given chunk of gene names
-      if(document.getElementById("localProgressBar")){
-        // Update the progress bar
-        calcCtrl.updateProgressPercent(callParams.params.index/calcCtrl.geneNames.length);
-        // Send the next chunk of data
-        dataCtrl.getExpressionValuesSparseByCellIndexUnpacked(callParams.data, 0, callParams.params.numCells, true, function(data){
-          // Remove row and column names to reduce the io with the thread
-          data.Dimnames1 = null;
-          data.Dimnames2 = null;
-          w.postMessage({
-              type: "process",
-              data: data,
-              params: callParams.params
-          })
-          //w.postMessage({type:"process",data:null,params:null})
-        })
-      } // if(document.getElementById("localProgressBar")
-    } else if(callParams.type === "complete"){
+    if(callParams.type === "complete"){
 
       // FIXME
       if(document.getElementById("localProgressBar")){
