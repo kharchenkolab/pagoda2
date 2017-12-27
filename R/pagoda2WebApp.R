@@ -972,6 +972,9 @@ pagoda2WebApp <- setRefClass(
 
             # Main Sparse count matrix to save
             matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,]
+            
+            # Main Sparse count matrix TRANSPOSED for de
+            matsparseTransposedToSave <- t(originalP2object$counts)
 
             # Serialise aspect matrix
             cellIndices <- mainDendrogram$cellorder;
@@ -1036,9 +1039,10 @@ pagoda2WebApp <- setRefClass(
             ## Sparse Count Matrix & Sparse Aspect Matrix
             exportList[["matsparse"]] <- sparseMatList(matsparseToSave); ## This count values
             exportList[["mataspect"]] <- sparseMatList(aspectMatrixToSave); ## This is the aspect values
+            exportList[["sparseMatrixTransp"]] <- sparseMatList(matsparseTransposedToSave); ## To save transposed expr for de
 
             # Tell Cpp what is a sparse matrix
-            exportList[["sparsematnames"]] <- c("matsparse", "mataspect");
+            exportList[["sparsematnames"]] <- c("matsparse", "mataspect","sparseMatrixTransp");
 
             # Call Rcpp function to write to static file
             WriteListToBinary(expL=exportList,outfile = binary.filename,verbose=verbose);
