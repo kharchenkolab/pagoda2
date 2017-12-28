@@ -28,6 +28,10 @@ function DataControllerFile(loadParams) {
   this.aspectArrayPreloadInfo = null;
   this.aspectInformation = null;
   this.geneInformationMapCache = null;
+  
+  // For the transposed expression array (for de)
+  this.sparseArrayTranspPreloadInfo = null;
+  
 }
 
 /**
@@ -935,15 +939,97 @@ DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) 
 
 /**
  * Get expression values for all genes in the specified cells using the 
- * transposed expression values index if available
+ * transposed expression values matrix
  * @param cellNames the names of the cells to get the expression values for
  * @param callback the callback function
  */
 DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback){
-  console.error('Not implemented');
+    // This assumes that the array always exists
   
-  // TODO: Check that the key for the transposed data exists
-  // if it doesn't simulate the call with the whole matrix and subset as we currently do
-  // otherwise get only the required cells on a per row basis and put them together
+    var dcf = this;
+
+    if(this.sparseArrayTranspPreloadInfo === null) {
+      // Need to preload
+      var dcf = this;
+      this.getSparseArrayPreloadInformation('sparseMatrixTransp', 'sparseArrayTranspPreloadInfo', function() {
+        dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback);
+      })
+    } else {
+      dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback);
+    }
+ 
   
 }
+
+
+/**
+ * Get expression values by cell 
+ * @description this is to be called by the object only as it assumes that
+ * the correct initialisation is done
+ * @private
+ */
+DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
+  function(cellNames, callback){
+  
+  console.error('Not implemented!')
+  // TODO: Implement
+  
+}; // getExpressionValuesSparseByCellNameInternal
+
+
+//sparseArrayTranspPreloadInfo
+
+/**
+ * Get a single gene column from the file sparse matrix
+ * @private
+ */
+DataControllerFile.prototype.getCellColumn = function(cellName, cellindex, callback) {
+  var dcf = this;
+  var fr = this.formatReader;
+
+  // Index of the cell
+  var cellIndexInSparse = dcf.sparseArrayTranspPreloadInfo.dimnames2DataReverse[cellName];
+
+  // Column start and end index
+  var csi = dcf.sparseArrayTranspPreloadInfo.parray[cellIndexInSparse] - 1;
+  var cei = dcf.sparseArrayTranspPreloadInfo.parray[cellIndexInSparse + 1]  - 1;
+
+  // Zero filled array with the data for all the cells
+  var fullRowArray = new Float32Array(dcf.sparseArrayTranspPreloadInfo.dim1);
+
+  // Get csi to cei for the x array
+  const BYTES_PER_FLOAT32 = 4;
+  var xArrayOffset = dcf.sparseArrayTranspPreloadInfo.xStartOffset + BYTES_PER_FLOAT32;
+
+  // Byte position in the file that corresponds to the csi and cei indexes
+  var csiBytes = xArrayOffset + csi * BYTES_PER_FLOAT32;
+  var ceiBytes = xArrayOffset + cei * BYTES_PER_FLOAT32;
+
+  // Get the number of bytes to retrieve
+  var xRowLength = ceiBytes - csiBytes;
+
+  // Get the x array bytes (the raw information)
+  fr.getBytesInEntry('sparseMatrixTransp', csiBytes, xRowLength, function(buffer) {
+    var rowXArray = new Float32Array(buffer);
+
+    // Calculate positions of i array entries in the file
+    var iArrayOffset = dcf.sparseArrayTranspPreloadInfo.iStartOffset + BYTES_PER_FLOAT32;
+    var csiBytesI = iArrayOffset + csi * BYTES_PER_FLOAT32;
+    var ceiBytesI = iArrayOffset + cei * BYTES_PER_FLOAT32;
+    var xRowLengthI = ceiBytes - csiBytes;
+
+    // Get the p array bytes
+    fr.getBytesInEntry('sparseMatrixTransp', csiBytesI, xRowLengthI, function(buffer2) {
+      var rowIArray = new Uint32Array(buffer2);
+
+      // Expand the array to a full array
+      for (var k =0; k < rowIArray.length; k++) {
+        var ki = rowIArray[k];
+        fullRowArray[ki] = rowXArray[k];
+      }
+
+      // Done, do the callback
+      callback(cellName, cellindex, fullRowArray);
+    });
+  });
+};
