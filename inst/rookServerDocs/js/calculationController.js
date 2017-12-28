@@ -95,7 +95,7 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       // A progress bar would be nice for online requests
       // Where the data comes in chunks
       dataCtrl.getExpressionValuesSparseByCellName(cellsRetrieve, function(data){
-        thisController.updateProgressPercent(50);
+        thisController.updateProgressPercent(0.5);
         thisController.setProgressLabel("Calculating...");  
         
         // Now we have the data
@@ -177,6 +177,7 @@ calculationController.prototype.showDisplayBar = function() {
  * Handle an incoming message from the worker thread
  */
 calculationController.prototype.handleWorkerMessage = function(e) {
+//  debugger;
     var w = this; // In worker context
     var cellSelCntr = new cellSelectionController();
     var callParams = e.data;
@@ -198,8 +199,13 @@ calculationController.prototype.handleWorkerMessage = function(e) {
           calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
         },0.100);
+      } 
+    } else if (callParams.type === "progressupdate") {
+       debugger;
+       var thisController = new calculationController();
+        var totalProgress = 0.5+(callParams.current / callParams.outoff)*0.5
+        thisController.updateProgressPercent(totalProgress);
       }
-    }
 } // handleWorkerMessage
 
 calculationController.prototype.setProgressLabel = function(text) {

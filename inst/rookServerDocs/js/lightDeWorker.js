@@ -14,11 +14,6 @@ self.addEventListener("message", function(e){
   if(messageData.type === "rundiffexpr"){
     // Just process the data and signal the result when ready
 
-    // Actually working with a non-transposed matrix will be faster
-    // on the t() matrix every row (1st dim is a cell)
-    // having every gene as 1st dim, will reduce lookups
-    
-
     // This is inefficient
     var selAidx = [];
     var selBidx = [];
@@ -63,6 +58,16 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
       var geneCount = geneData.array.length;
 
       for(var geneindex = 0; geneindex < geneCount; geneindex++){
+        
+        // Notify the parent thread of progress every n iterations
+        if (geneindex % 100 === 0) {
+         // debugger;
+          postMessage({
+            type: "progressupdate",
+            current: geneindex,
+            outoff: geneCount
+          });
+        } 
 
         var allValues = [];
         
