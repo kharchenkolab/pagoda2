@@ -1,5 +1,12 @@
 "use strict";
 
+/*
+ * Filename: lightDeWorker.js
+ * Author: Nikolas Barkas
+ * Date: December 2017
+ * Description: a light-weight worker thread for differential expression
+ */
+
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
   var messageData = e.data;
@@ -10,7 +17,7 @@ self.addEventListener("message", function(e){
     // Actually working with a non-transposed matrix will be faster
     // on the t() matrix every row (1st dim is a cell)
     // having every gene as 1st dim, will reduce lookups
-    var exprMatrix = getFullMatrixTransposed(messageData.data);
+    
 
     // This is inefficient
     var selAidx = [];
@@ -23,7 +30,13 @@ self.addEventListener("message", function(e){
         selBidx.push(i);
       }
     }
+    
+    // Perform differential expression
+    var t0 = performance.now();
+    var exprMatrix = getFullMatrix(messageData.data);
     var deres = runMannWhitneyIteration(exprMatrix, selAidx, selBidx);
+    var t1 = performance.now();
+    console.log("Diff expression took " + (t1 - t0) + "ms.");
 
     postMessage({
       type: "complete",
@@ -46,7 +59,8 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
   
       const zcutoff = 4.0;
       const log2 = Math.log(2);
-      var geneCount = geneData.array[0].length;
+      //var geneCount = geneData.array[0].length;
+      var geneCount = geneData.array.length;
 
       for(var geneindex = 0; geneindex < geneCount; geneindex++){
 
@@ -61,7 +75,8 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
         //retrieve expression data by indexes for selection A
         var selAlength = selAidx.length;
         for(var cell = 0; cell < selAlength; cell++){
-          var eVal = geneData.array[selAidx[cell]][geneindex];
+          //var eVal = geneData.array[selAidx[cell]][geneindex];
+          var eVal = geneData.array[geneindex][selAidx[cell]];
           if (eVal != 0) nNonZeroA++;
           allValues.push({
             selection: 1,
@@ -74,7 +89,8 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
         //retrieve expression data by indexes for selection B
         var selBlength = selBidx.length;
         for(var cell = 0; cell < selBlength; cell++){
-          var eVal = geneData.array[selBidx[cell]][geneindex];
+          //var eVal = geneData.array[selBidx[cell]][geneindex];
+          var eVal = geneData.array[geneindex][selBidx[cell]];
           if (eVal != 0) nNonZeroB++;
           allValues.push({
             selection: 2,
@@ -169,20 +185,20 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
         if(zAbs >= zcutoff){
           var sumA = 0;
           for(var cell = 0; cell < selAlength; cell++){
-            sumA += geneData.array[selAidx[cell]][geneindex];
+            sumA += geneData.array[geneindex][selAidx[cell]];
           }
           var meanA = sumA / selAlength;
 
           var sumB = 0;
           for(var cell = 0; cell < selBlength; cell++){
-            sumB += geneData.array[selBidx[cell]][geneindex];
+            sumB += geneData.array[geneindex][selBidx[cell]];
           }
           var meanB = sumB /selBlength;
 
           collectedResults.push({
               Z: z,
               absZ: zAbs,
-              name: geneData.colnames[geneindex],
+              name: geneData.rownames[geneindex],
               fe: 0,
               M: Math.log(meanA/meanB) / log2,
               highest: false
@@ -197,18 +213,17 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
 
 
 
-function getFullMatrixTransposed(data) {
+function getFullMatrix(data) {
 
     // Make a zero filled array (transposed)
-    var out = Array(data.Dim[1]);
-    for (var k = 0; k < data.Dim[1]; k++) {
-    	var row = Array(data.Dim[0]);
-    	for (var j = 0; j < data.Dim[0]; j++) {
+    var out = Array(data.Dim[0]);
+    for (var k = 0; k < data.Dim[0]; k++) {
+    	var row = Array(data.Dim[1]);
+    	for (var j = 0; j < data.Dim[1]; j++) {
     	    row[j] = 0;
     	}
     	out[k] = row;
     }
-
 
     // index in p (the column number)
     for (var j = 0; j < data.p.length - 1; j++) {
@@ -220,19 +235,16 @@ function getFullMatrixTransposed(data) {
     	for (var k = rsi; k < rei; k++) {
     	    // row number
     	    var rn = data.i[k];
-
-    	    // x[k] is the value for the element in rn, j
-    	    //out[rn][j] = data.x[k];
     	    
     	    // We want the transpose
-    	    out[j][rn] = data.x[k];
+    	    out[rn][j] = data.x[k];
     	}
     }
 
     var retVal = {
     	array:  out,
-    	rownames:  data.DimNames2, // transpose 
-    	colnames:  data.DimNames1 // transpose
+    	rownames:  data.DimNames1,  
+    	colnames:  data.DimNames2 
     };
 
     return retVal;

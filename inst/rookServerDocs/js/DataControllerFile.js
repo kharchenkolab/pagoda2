@@ -1,5 +1,12 @@
 "use strict";
 
+/*
+ * Filename: DataControllerFile.js
+ * Author: Nikolas Barkas
+ * Date: July 2017
+ * Description: data controller for connecting to a static file
+ */
+
 /**
  * Handles data access to pagoda2 files
  * @description provides a dataController interface backed by pagoda2 files
