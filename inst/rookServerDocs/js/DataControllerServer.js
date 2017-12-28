@@ -240,8 +240,11 @@ DataControllerServer.prototype.getAspectMatrix = function(cellIndexStart, cellIn
 
 /** 
  * Get all expression values for the specified cells
+ * @param cellNames names of cells to get
+ * @param callback the function to call when complete
+ * @param progressCallback not implemented
  */
-DataControllerServer.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback){
+DataControllerServer.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback, progressCallback){
 	// Setup the request data
 	var requestData = {
 	    "dataidentifier": "expressionmatrixsparsebycellname",

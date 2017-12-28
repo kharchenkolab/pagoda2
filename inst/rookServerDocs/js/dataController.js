@@ -170,8 +170,8 @@ dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd
  * @param cellNames the cells to get the expression values for
  * @param callback callback function
  */
-dataController.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback) {
-  return this.internalController.getExpressionValuesSparseByCellName(cellNames, callback);
+dataController.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback, progressCallback) {
+  return this.internalController.getExpressionValuesSparseByCellName(cellNames, callback, progressCallback);
 }
 
 /**

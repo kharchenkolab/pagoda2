@@ -950,7 +950,7 @@ DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) 
  * @param cellNames the names of the cells to get the expression values for
  * @param callback the callback function
  */
-DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback){
+DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback, progressCallback){
     var dcf = this;
     
     if (typeof(dcf.formatReader.index.sparseMatrixTransp) !== 'undefined') {
@@ -958,10 +958,10 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cell
         // Need to preload
         var dcf = this;
         this.getSparseArrayPreloadInformation('sparseMatrixTransp', 'sparseArrayTranspPreloadInfo', function() {
-          dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback);
+          dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback, progressCallback);
         })
       } else {
-        dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback);
+        dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback, progressCallback);
       }
     } else {
       //This file does not have a transposed expression matrix
@@ -978,7 +978,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cell
  * @private
  */
 DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
-  function(cellNames, callback){
+  function(cellNames, callback, progressCallback){
   
   var dcf = this;
   var fr = this.formatReader;
@@ -993,15 +993,22 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
   // Check if all tasks are done and call callback if so
   function checkIfDone(callback) {
     var done = true;
-    for(var i = 0; i < progressArray.length; i++) {
+    var jobsDone = 0;
+    var progressArrayLength = progressArray.length;
+    for(var i = 0; i < progressArrayLength; i++) {
       if (progressArray[i] !==  1) {
         done = false;
-        break;
+      } else {
+        jobsDone++;
       }
     }
     if (done) {
       if(typeof callback === 'function') {
         callback();
+      }
+    } else {
+      if (typeof progressCallback === "function") {
+        progressCallback(jobsDone/progressArrayLength);
       }
     }
   };

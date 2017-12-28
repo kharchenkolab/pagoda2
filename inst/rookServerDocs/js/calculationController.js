@@ -95,18 +95,14 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       // A progress bar would be nice for online requests
       // Where the data comes in chunks
       dataCtrl.getExpressionValuesSparseByCellName(cellsRetrieve, function(data){
-        thisController.updateProgressPercent(0.5);
+        
+        //thisController.updateProgressPercent(0.5);
         thisController.setProgressLabel("Calculating...");  
         
-        // Now we have the data
-        // We just want to pass it to a worker thread and get our results back
-        // In the future we would like multiple threads
+        // Make a worker, in future we can make multiple
         
-        // If we are in 1 selection mode
-        // dump all the cells that are not in selection[0] into
-        // selection[1]
-        // This can actually be done in the thread much 
-        // more efficiently, but this is a patch for the minute
+        
+        // if in 1 selection mode build the background
         var selections =  calcCtrl.selections;
         if(selections.length === 1){
           selections[1] = [];
@@ -117,13 +113,15 @@ calculationController.prototype.calculateDELocal = function(selections, callback
           }
         }
 
-        
         calculationController.instance.localWorker.postMessage({
           type: "rundiffexpr",
           data: data, // The sparse array
           selections: calcCtrl.selections // The selections to know what is compared with what
         });
         
+      },function(percent) {
+          // For download progress updates
+        thisController.updateProgressPercent(percent*0.5);
       }); // getExpressionValuesSparseByCellName
       
 
@@ -177,7 +175,6 @@ calculationController.prototype.showDisplayBar = function() {
  * Handle an incoming message from the worker thread
  */
 calculationController.prototype.handleWorkerMessage = function(e) {
-//  debugger;
     var w = this; // In worker context
     var cellSelCntr = new cellSelectionController();
     var callParams = e.data;
@@ -201,7 +198,6 @@ calculationController.prototype.handleWorkerMessage = function(e) {
         },0.100);
       } 
     } else if (callParams.type === "progressupdate") {
-       debugger;
        var thisController = new calculationController();
         var totalProgress = 0.5+(callParams.current / callParams.outoff)*0.5
         thisController.updateProgressPercent(totalProgress);
