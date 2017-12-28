@@ -944,21 +944,22 @@ DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) 
  * @param callback the callback function
  */
 DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback){
-    // This assumes that the array always exists
-  
     var dcf = this;
-
-    if(this.sparseArrayTranspPreloadInfo === null) {
-      // Need to preload
-      var dcf = this;
-      this.getSparseArrayPreloadInformation('sparseMatrixTransp', 'sparseArrayTranspPreloadInfo', function() {
+    
+    if (typeof(dcf.formatReader.index.sparseMatrixTransp) !== 'undefined') {
+      if(this.sparseArrayTranspPreloadInfo === null) {
+        // Need to preload
+        var dcf = this;
+        this.getSparseArrayPreloadInformation('sparseMatrixTransp', 'sparseArrayTranspPreloadInfo', function() {
+          dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback);
+        })
+      } else {
         dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback);
-      })
+      }
     } else {
-      dcf.getExpressionValuesSparseByCellNameInternal(cellNames, callback);
+      //This file does not have a transposed expression matrix
     }
- 
-  
+
 }
 
 
@@ -971,13 +972,81 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cell
 DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
   function(cellNames, callback){
   
-  console.error('Not implemented!')
-  // TODO: Implement
+  var dcf = this;
+  var fr = this.formatReader;
+  
+  // Array to track progress of row generation with the async calls
+  // Each request corresponds to the cell index
+  var progressArray = new Uint32Array(cellNames.length);
+  
+  // The array to store the results as they come back
+  var resultsArray = [];
+  
+  // Check if all tasks are done and call callback if so
+  function checkIfDone(callback) {
+    var done = true;
+    for(var i = 0; i < progressArray.length; i++) {
+      if (progressArray[i] !==  1) {
+        done = false;
+        break;
+      }
+    }
+    if (done) {
+      if(typeof callback === 'function') {
+        callback();
+      }
+    }
+  };
+  
+    // Runs when all the data is available
+  function handleComplete(callback, dcf, cellIndexStart, cellIndexEnd) {
+        // Convert to sparse matrix and return to callback
+        var x = new Array();
+        var i = new Array();
+        var p = new Array()
+
+        var dim1Length = resultsArray.length;
+        var dim2Length = resultsArray[0].length;
+
+        // Pack the subsetted array back into a sparse array
+        // That the downstream functions expect
+        var pos = 0;
+        for (var k = 0; k < dim1Length; k++) {
+          p.push(pos); // Start of the column
+          for (var j =0; j < dim2Length; j++) {
+              if (resultsArray[k][j] != 0) { // TODO: perhaps 1e-16
+                x.push(resultsArray[k][j]); // The value
+                i.push(j); // corresponding index j or K?
+                pos++;
+              }
+          }
+        }
+        p.push(pos); // p push number of elements
+
+        var geneNames = dcf.sparseArrayTranspPreloadInfo.dimnames1Data;
+        var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], geneNames, cellNames, x, null);
+
+        // Done, do callback
+        callback(retVal);
+  }
+
+// Initiate callbacks for each row
+  for(var cellIndexInRequest in cellNames) {
+    var cellName = cellNames[cellIndexInRequest];
+    
+    dcf.getCellColumn(cellName, cellIndexInRequest, function(cellname, cellindex, row) {
+      
+      progressArray[cellindex] = 1;
+      resultsArray[cellindex] = row;
+      checkIfDone(function(){
+        handleComplete(callback, dcf);
+      }); // checkIfDone
+      
+    }); // getCellColumn
+  } // for each cell
   
 }; // getExpressionValuesSparseByCellNameInternal
 
-
-//sparseArrayTranspPreloadInfo
 
 /**
  * Get a single gene column from the file sparse matrix
