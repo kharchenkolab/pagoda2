@@ -32,11 +32,11 @@ self.addEventListener("message", function(e){
     }
     
     // Perform differential expression
-    var t0 = performance.now();
+    //var t0 = performance.now();
     var exprMatrix = getFullMatrix(messageData.data);
     var deres = runMannWhitneyIteration(exprMatrix, selAidx, selBidx);
-    var t1 = performance.now();
-    console.log("Diff expression took " + (t1 - t0) + "ms.");
+    //var t1 = performance.now();
+    //console.log("Diff expression took " + (t1 - t0) + "ms.");
 
     postMessage({
       type: "complete",
