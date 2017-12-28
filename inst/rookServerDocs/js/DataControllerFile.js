@@ -965,6 +965,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cell
       }
     } else {
       //This file does not have a transposed expression matrix
+      throw new RuntimeException(STATIC_FILE_FIELD_MISSING,"This file does not support fast local differential expression.")
     }
 
 }

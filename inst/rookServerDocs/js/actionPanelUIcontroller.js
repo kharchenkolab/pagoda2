@@ -518,13 +518,14 @@ actionPanelUIcontroller.prototype.stopAnalysisClickHandler = function() {
  */
 actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
   var form = Ext.getCmp("formPanelDE").getForm();
-
   var analysisType = form.findField("analysisType").getValue();
   var selectionA = form.findField("selectionA").getValue();
   var selectionB = form.findField("selectionB").getValue();
   var method = form.findField('selectionMethod').getValue();
   var resultName = form.findField("resultName").getValue();
   var start = new Date();
+  var actionUI = new actionPanelUIcontroller();
+  var calcCntr = new calculationController(); 
 
   if (method === null) {
         Ext.MessageBox.alert('Warning', 'Please enter a method for the differential expression',function(){});
@@ -535,78 +536,75 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
       if (selectionA === selectionB) {
           Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
       } else {
-
-          var actionUI = new actionPanelUIcontroller();
           actionUI.disableRunButton();
-
-          var calcCntr = new calculationController();
-
-          actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, method,  function(results) {
-            actionUI.enableRunButton();
-              actionUI.currentDErequest = null;
-
-              // Get the cell names in the selection for storing
-              var cellSelCntr = new cellSelectionController();
-              var selAcells = cellSelCntr.getSelection(selectionA);
-              var selBcells = cellSelCntr.getSelection(selectionB);
-
-              // Make a deResult set for saving the results
-              // and save metadata related to this de result
-
-              var end = new Date();
-              var resultSet = new deResultSet();
-              resultSet.setResults(results);
-              resultSet.setName(resultName);
-              resultSet.setSelectionA(selAcells);
-              resultSet.setSelectionB(selBcells);
-              resultSet.setStartTime(start);
-              resultSet.setEndTime(end);
-              // Save this de result set in the differentialExpresionStore
-              var diffExprStore = new differentialExpressionStore();
-              var setId = diffExprStore.addResultSet(resultSet);
-
-              // Notify the DE results table to updata from the store
-              var diffExpreTblView = new diffExprTableViewer();
-              diffExpreTblView.update();
-
-              diffExpreTblView.showSelectedSet(setId);
-
-              // TODO: Change focus to the table and hightlight new de set
-          } );
-      }  // if .. else
+          try {
+            actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, method,  function(results) {
+                actionUI.enableRunButton();
+                actionUI.currentDErequest = null;
+                // Get the cell names in the selection for storing
+                var cellSelCntr = new cellSelectionController();
+                var selAcells = cellSelCntr.getSelection(selectionA);
+                var selBcells = cellSelCntr.getSelection(selectionB);
+                // Make a deResult set for saving the results and save metadata related to this de result
+                var resultSet = new deResultSet();
+                resultSet.setResults(results);
+                resultSet.setName(resultName);
+                resultSet.setSelectionA(selAcells);
+                resultSet.setSelectionB(selBcells);
+                resultSet.setStartTime(start);
+                resultSet.setEndTime(new Date());
+                // Save this de result set in the differentialExpresionStore
+                var diffExprStore = new differentialExpressionStore();
+                var setId = diffExprStore.addResultSet(resultSet);
+                // Notify the DE results table to updata from the store
+                var diffExpreTblView = new diffExprTableViewer();
+                diffExpreTblView.update();
+                diffExpreTblView.showSelectedSet(setId);
+            });
+          } catch (e) {
+            if (e.code == STATIC_FILE_FIELD_MISSING) {
+              Ext.MessageBox.alert('Warning', 'This file does not support fast differential expression. You can use an older version of the web application to run slow differential expression on this file.');
+            } else {
+              Ext.MessageBox.alert('Warning', 'An unknown error occured.');
+            }
+          }
+      }  // if sela != selb
     } else if (analysisType.analysisTypeSelection == 'vsBackground') {
-          var actionUI = new actionPanelUIcontroller();
           actionUI.disableRunButton();
-          var calcCntr = new calculationController();
-          actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, method,  function(results) {
-              actionUI.enableRunButton();
-              actionUI.currentDErequest = null;
-              // Get the cell names in the selection for storing
-              var cellSelCntr = new cellSelectionController();
-              var selAcells = cellSelCntr.getSelection(selectionA);
-
-              // Make a deResult set for saving the results
-              // and save metadata related to this de result
-              var end = new Date();
-              var resultSet = new deResultSet();
-              resultSet.setResults(results);
-              resultSet.setName(resultName);
-              resultSet.setSelectionA(selAcells);
-              resultSet.setStartTime(start);
-              resultSet.setEndTime(end);
-              // Save this de result set in the differentialExpresionStore
-              var diffExprStore = new differentialExpressionStore();
-              var setId = diffExprStore.addResultSet(resultSet);
-
-              // Notify the DE results table to updata from the store
-              var diffExpreTblView = new diffExprTableViewer();
-              diffExpreTblView.update();
-
-              diffExpreTblView.showSelectedSet(setId);
-          } );
+          try {
+            actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, method,  function(results) {
+                actionUI.enableRunButton();
+                actionUI.currentDErequest = null;
+                // Get the cell names in the selection for storing
+                var cellSelCntr = new cellSelectionController();
+                var selAcells = cellSelCntr.getSelection(selectionA);
+                // Make a deResult set for saving the results and save metadata related to this de result
+                var end = new Date();
+                var resultSet = new deResultSet();
+                resultSet.setResults(results);
+                resultSet.setName(resultName);
+                resultSet.setSelectionA(selAcells);
+                resultSet.setStartTime(start);
+                resultSet.setEndTime(end);
+                // Save this de result set in the differentialExpresionStore
+                var diffExprStore = new differentialExpressionStore();
+                var setId = diffExprStore.addResultSet(resultSet);
+                // Notify the DE results table to updata from the store
+                var diffExpreTblView = new diffExprTableViewer();
+                diffExpreTblView.update();
+                diffExpreTblView.showSelectedSet(setId);
+            });
+          } catch (e) {
+            if (e.code == STATIC_FILE_FIELD_MISSING) {
+              Ext.MessageBox.alert('Warning', 'This file does not support fast differential expression. You can use an older version of the web application to run slow differential expression on this file.');
+            } else {
+              Ext.MessageBox.alert('Warning', 'An unknown error occured.');
+            }
+          }
     } // else.. if
   }
 } // runAnalysisClickHandler
+
 
 
 /**
