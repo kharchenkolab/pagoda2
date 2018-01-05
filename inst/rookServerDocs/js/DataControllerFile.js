@@ -1045,7 +1045,10 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
         callback(retVal);
   }
 
-// Initiate callbacks for each row
+  // TODO This generates huge overhead of requests.
+  
+  
+  // Initiate callbacks for each row
   for(var cellIndexInRequest in cellNames) {
     var cellName = cellNames[cellIndexInRequest];
     
@@ -1062,6 +1065,46 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
   
 }; // getExpressionValuesSparseByCellNameInternal
 
+/**
+ * Get the byte positions for a specified cell
+ */
+DataControllerFile.prototype.getCellColumnBytes = function(cellName,cellindex,callback) {
+  // TODO: get getCellColumn to use this
+  
+  var dcf = this;
+
+  // Index of the cell
+  var cellIndexInSparse = dcf.sparseArrayTranspPreloadInfo.dimnames2DataReverse[cellName];
+
+  // Column start and end index
+  var csi = dcf.sparseArrayTranspPreloadInfo.parray[cellIndexInSparse] - 1;
+  var cei = dcf.sparseArrayTranspPreloadInfo.parray[cellIndexInSparse + 1]  - 1;
+
+  // Get csi to cei for the x array
+  const BYTES_PER_FLOAT32 = 4;
+  var xArrayOffset = dcf.sparseArrayTranspPreloadInfo.xStartOffset + BYTES_PER_FLOAT32;
+
+  // Byte position in the file that corresponds to the csi and cei indexes
+  var csiBytes = xArrayOffset + csi * BYTES_PER_FLOAT32;
+  var ceiBytes = xArrayOffset + cei * BYTES_PER_FLOAT32;
+
+  // Get the number of bytes to retrieve
+  var xRowLength = ceiBytes - csiBytes;
+
+  // Calculate positions of i array entries in the file
+  var iArrayOffset = dcf.sparseArrayTranspPreloadInfo.iStartOffset + BYTES_PER_FLOAT32;
+  var csiBytesI = iArrayOffset + csi * BYTES_PER_FLOAT32;
+  var ceiBytesI = iArrayOffset + cei * BYTES_PER_FLOAT32;
+  var xRowLengthI = ceiBytes - csiBytes;
+  
+  var retValue = {};
+  retValue.csiBytes = csiBytes;
+  retValue.xRowLength = xRowLength;
+  retValue.csiBytesI = csiBytesI;
+  retValue.xRowLengthI = xRowLengthI;  
+
+  return(retValue);
+};
 
 /**
  * Get a single gene column from the file sparse matrix
