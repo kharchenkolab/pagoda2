@@ -1068,7 +1068,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
 /**
  * Get the byte positions for a specified cell
  */
-DataControllerFile.prototype.getCellColumnBytes = function(cellName,cellindex,callback) {
+DataControllerFile.prototype.getCellColumnBytes = function(cellName,cellindex) {
   // TODO: get getCellColumn to use this
   
   var dcf = this;
@@ -1113,40 +1113,19 @@ DataControllerFile.prototype.getCellColumnBytes = function(cellName,cellindex,ca
 DataControllerFile.prototype.getCellColumn = function(cellName, cellindex, callback) {
   var dcf = this;
   var fr = this.formatReader;
+  
+  // Get the column bytes
+  var colBytes = dcf.getCellColumnBytes(cellName, cellindex)
 
-  // Index of the cell
-  var cellIndexInSparse = dcf.sparseArrayTranspPreloadInfo.dimnames2DataReverse[cellName];
-
-  // Column start and end index
-  var csi = dcf.sparseArrayTranspPreloadInfo.parray[cellIndexInSparse] - 1;
-  var cei = dcf.sparseArrayTranspPreloadInfo.parray[cellIndexInSparse + 1]  - 1;
-
-  // Zero filled array with the data for all the cells
+  // The full row array
   var fullRowArray = new Float32Array(dcf.sparseArrayTranspPreloadInfo.dim1);
 
-  // Get csi to cei for the x array
-  const BYTES_PER_FLOAT32 = 4;
-  var xArrayOffset = dcf.sparseArrayTranspPreloadInfo.xStartOffset + BYTES_PER_FLOAT32;
-
-  // Byte position in the file that corresponds to the csi and cei indexes
-  var csiBytes = xArrayOffset + csi * BYTES_PER_FLOAT32;
-  var ceiBytes = xArrayOffset + cei * BYTES_PER_FLOAT32;
-
-  // Get the number of bytes to retrieve
-  var xRowLength = ceiBytes - csiBytes;
-
   // Get the x array bytes (the raw information)
-  fr.getBytesInEntry('sparseMatrixTransp', csiBytes, xRowLength, function(buffer) {
+  fr.getBytesInEntry('sparseMatrixTransp', colBytes.csiBytes, colBytes.xRowLength, function(buffer) {
     var rowXArray = new Float32Array(buffer);
 
-    // Calculate positions of i array entries in the file
-    var iArrayOffset = dcf.sparseArrayTranspPreloadInfo.iStartOffset + BYTES_PER_FLOAT32;
-    var csiBytesI = iArrayOffset + csi * BYTES_PER_FLOAT32;
-    var ceiBytesI = iArrayOffset + cei * BYTES_PER_FLOAT32;
-    var xRowLengthI = ceiBytes - csiBytes;
-
     // Get the p array bytes
-    fr.getBytesInEntry('sparseMatrixTransp', csiBytesI, xRowLengthI, function(buffer2) {
+    fr.getBytesInEntry('sparseMatrixTransp', colBytes.csiBytesI, colBytes.xRowLengthI, function(buffer2) {
       var rowIArray = new Uint32Array(buffer2);
 
       // Expand the array to a full array

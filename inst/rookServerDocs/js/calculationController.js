@@ -101,7 +101,8 @@ calculationController.prototype.calculateDELocal = function(selections, callback
         
         // Make a worker, in future we can make multiple
         
-        
+        // FIXME: This needs to be done before the data is requested
+        // and these cells need to be included in the request
         // if in 1 selection mode build the background
         var selections =  calcCtrl.selections;
         if(selections.length === 1){
