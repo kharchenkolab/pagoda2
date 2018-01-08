@@ -970,6 +970,59 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cell
 
 }
 
+DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal = function(cellNames, callback, progressCallback) {
+  var fr = this.formatReader;
+  // If the reader support multiple region loading use it
+  // otherwise fallback to multiple independent requests
+  if (fr.supportsMultiRequest()) {
+     this.getExpressionValuesSparseByCellNameInternal_Singlerequest(cellNames, callback, progressCallback);
+  } else {
+    this.getExpressionValuesSparseByCellNameInternal_Multirequest(cellNames, callback, progressCallback);
+  }
+}
+
+/**
+ * Get expression values by cell using a single request
+ */
+DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singlerequest = 
+  function(cellNames, callback, progressCallback) {
+
+  
+  // Prepare the request ranges
+  var requestRanges = [];
+  var reqId = 0;
+  for (var cellId = 0; cellId < cellNames.length; cellId++){
+    var cellName = cellNames[cellId];
+    var colBytes = this.getCellColumnBytes(cellName);
+
+    // Request 1 for x
+    requestRanges[reqId] = {
+      requestId: reqId,
+      metadata: {cellId: cellNames[cellId], type: 'x'},
+      startOffset: colBytes.csiBytes,
+      entryLength: colBytes.xRowLength
+    }
+    reqId++;
+    
+    // Request 2 for p
+    requestRanges[reqId] = {
+      requestId: reqId,
+      metadata: {cellId: cellNames[cellId], type: 'p'},
+      startOffset: colBytes.csiBytesI,
+      entryLength: colBytes.xRowLengthI
+    }
+    reqId++;
+  };
+  
+  
+  var fr = this.formatReader;
+  fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(){
+    debugger;
+  });
+
+  
+}
+
 
 /**
  * Get expression values by cell 
@@ -977,7 +1030,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cell
  * the correct initialisation is done
  * @private
  */
-DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
+DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Multirequest =
   function(cellNames, callback, progressCallback){
   
   var dcf = this;
@@ -1068,7 +1121,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal =
 /**
  * Get the byte positions for a specified cell
  */
-DataControllerFile.prototype.getCellColumnBytes = function(cellName,cellindex) {
+DataControllerFile.prototype.getCellColumnBytes = function(cellName) {
   // TODO: get getCellColumn to use this
   
   var dcf = this;
@@ -1115,7 +1168,7 @@ DataControllerFile.prototype.getCellColumn = function(cellName, cellindex, callb
   var fr = this.formatReader;
   
   // Get the column bytes
-  var colBytes = dcf.getCellColumnBytes(cellName, cellindex)
+  var colBytes = dcf.getCellColumnBytes(cellName);
 
   // The full row array
   var fullRowArray = new Float32Array(dcf.sparseArrayTranspPreloadInfo.dim1);
