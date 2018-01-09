@@ -16,7 +16,7 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return true; // set to true for development of code below, false will use the older per cell code
+  return false; // set to true for development of code below, false will use the older per cell code
 }
 
 
@@ -193,6 +193,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
           } else {
             // Problem 
             // TODO: handle this esp 406 and 200
+            console.error('An error occurred processing multi partial http request!')
           }
         }
       }

@@ -1016,7 +1016,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
   
   
   var fr = this.formatReader;
-  fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(){
+  fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(data){
+    // HERE
     debugger;
   });
 

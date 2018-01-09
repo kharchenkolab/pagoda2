@@ -69,7 +69,7 @@ p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finis
     }
     
     context.filereader.readMultiRange(rangeList, function(data) {
-	    debugger;
+	    finishCallback(data);
     });
     
     
