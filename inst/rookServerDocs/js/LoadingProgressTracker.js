@@ -17,7 +17,9 @@ function LoadingProgressTracker() {
         // The gene table from the gene table viewer
         var geneTable = Ext.getCmp('extjsgenetable');
         //geneTable.getSelectionModel().selectRange(0,50);
-        geneTable.getSelectionModel().selectAll();
+        if (typeof geneTable !== 'undefined') {
+          geneTable.getSelectionModel().selectAll();
+        }
   })
 
   // We are only tracking 3 events here, do it manually
