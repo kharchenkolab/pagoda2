@@ -16,7 +16,7 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return false; // set to true for development of code below, false will use the older per cell code
+  return true; // set to true for development of code below, false will use the older per cell code
 }
 
 
@@ -53,8 +53,12 @@ RemoteFileReader.prototype.mergeRanges = function(ranges) {
 
 /**
  * Implementation in progress
+ * @param rangeList a list of ranges
+ * @param callback function to call when complete
  */
 RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
+  var rfr = this;
+  
   // There are limitations in the size of the Range request header
   // The the maximum length is between 3812 and 3831 characters long
   // For this reason it is beneficial to merge adjacent requests
@@ -63,45 +67,90 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   // Merge adjacent ranges
   var rangesMerged = this.mergeRanges(rangeList);
   
-  // Now these ranges continue to be too many for a single request
+  // Split the ranges into multiple request requesting no more than nRanges 
+  // ranges per request
+  var nRanges = 10;
+  nRanges = nRanges + 1;
   
-  debugger;
+  // Array of arrays, each sub array holds ranges for the corresponding request
+  var requestRanges = [];
   
-  var bytesArg = "bytes=";
-  var isFirst = true;
-  for (var i = 0; i < rangeList.length; i++) {
-    if(!isFirst) {bytesArg = bytesArg.concat(', ')};
-    bytesArg = bytesArg.concat(rangeList[i].start, '-', rangeList[i].end-1);
-    isFirst=false;
+  // Array to keep track of the status of requests
+  // 0 -- Not complete
+  // 1 -- Complete
+  var requestStatus = [];
+  
+  // Array of resulting data
+  var requestData = [];
+  
+  var rangesMergedLength = rangesMerged.length;
+  var kMax = Math.ceil(rangesMergedLength/nRanges)
+  for (var k = 0; k < kMax; k++ ) {
+    var startRangeIndex = k * nRanges;
+    var endRangeIndex = Math.min((k + 1) * nRanges - 1,rangesMergedLength);
+    requestRanges[k] = rangesMerged.slice(startRangeIndex,endRangeIndex)
+    // Array for request status
+    requestStatus[k] = 0;
+    // Array for returned data
+    requestData[k] = null;
   }
   
-  var xhr = new XMLHttpRequest;
-  xhr.onreadystatechange = function(evt) {
-    if (xhr.readyState == XMLHttpRequest.DONE) {
-      var httpStatus = evt.target.status;
-      if (httpStatus == 206) {
-        // Partial content returned as requested
-      } else if(httpStatus == 200) {
-        console.error('Complete file returned by server!')
-      } else if(httpStatus == 400) {
-        
-      } else if(httpStatus == 416) {
-       // Requested Range Not Satisfiable 
-      } else {
-        console.error('Unknown http Status')
-      }
-      // Let's see what we got!
-      console.log(evt.target);
-      debugger;
-      
+  // Return true if all requests are completed, false otherwise
+  var isComplete = function() {
+    for (var i = 0; i < requestStatus.length; i++) {
+      if (requestStatus[i] == 0) return false;
+    }
+    return true;
+  }
+  
+  var checkComplete = function() {
+    if(isComplete()) {
+      console.log('complete!')
+      // TODO:
+      // Break data down the to the original ranges requested
+      // Return via callback
     }
   }
   
-  xhr.open('GET', this.url, true);
-  xhr.setRequestHeader('Range', bytesArg);
-  xhr.responseType = "arraybuffer";
-  xhr.send(null);
-}
+  var dispatchRequest = function(rangeList, requestid) {
+      // Construct bytes argument
+      var bytesArg = "bytes=";
+      var isFirst = true;
+      for (var i = 0; i < rangeList.length; i++) {
+        if(!isFirst) {bytesArg = bytesArg.concat(', ')};
+        bytesArg = bytesArg.concat(rangeList[i][0], '-', rangeList[i][1]-1);
+        isFirst=false;
+      }
+      
+      // Make the request
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function(evt) {
+        if (xhr.readyState == XMLHttpRequest.DONE) {
+          var httpStatus = evt.target.status;
+          console.log("Req ", requestid, ' complete. status: ', httpStatus)
+          if (httpStatus == "206") {
+            requestStatus[requestid] = 1;
+            requestData[requestid] = evt.target.response;
+            checkComplete();
+          } else {
+            // Problem 
+            // TODO: handle this espt 406 and 200
+          }
+        }
+      }
+      
+      // Dispatch request
+      xhr.open('GET', rfr.url, true);
+      xhr.setRequestHeader('Range', bytesArg);
+      xhr.responseType = "arraybuffer";
+      xhr.send(null);      
+  }
+
+  // Dispatch all requests
+  for (var u = 0; u < requestRanges.length; u++) {
+    dispatchRequest(requestRanges[u], u);
+  }
+}  // readMultiRange()
 
 /**
   * Read range of specified file
