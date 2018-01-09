@@ -16,8 +16,40 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return false; // set to true for debug
+  return false; // set to true for development of code below, false will use the older per cell code
 }
+
+
+/** 
+ * Given a set of ranges in a format of array of array of start end positions
+ * Merge any adjacent ranges into one and return the new ranges
+ */
+RemoteFileReader.prototype.mergeRanges = function(ranges) {
+  //Sort by starting position
+  var compareIntervals = function(a,b){
+    if(a[0] < b[0]) { return -1; }
+    if(a[0] > b[0]) { return 1;  }
+    return 0;
+  };
+  var arr = ranges.sort(compareIntervals);
+  // A stack
+  var s = [];
+  s.push(arr[0]);
+  // Find adjacent regions
+  var n = arr.length;
+  for (var i = 1; i < n; i++) {
+    var top = s[s.length - 1]; // top element
+    // If no overlap push to stack
+    if (top[1] < arr[i][0]) {
+      s.push(arr[i]);
+    } else if (top[1] < arr[i][1]) {
+      top[1] = arr[i][1];
+      s.pop();
+      s.push(top);
+    }
+  }
+  return s;
+};
 
 /**
  * Implementation in progress
@@ -27,6 +59,13 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   // The the maximum length is between 3812 and 3831 characters long
   // For this reason it is beneficial to merge adjacent requests
   // Beyond that the only option is to perform multiple requests
+
+  // Merge adjacent ranges
+  var rangesMerged = this.mergeRanges(rangeList);
+  
+  // Now these ranges continue to be too many for a single request
+  
+  debugger;
   
   var bytesArg = "bytes=";
   var isFirst = true;

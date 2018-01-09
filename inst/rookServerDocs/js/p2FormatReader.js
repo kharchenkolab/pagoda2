@@ -62,10 +62,10 @@ p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finis
     
     var rangeList = [];
     for (var i = 0; i < ranges.length; i++) {
-      rangeList[i] = {
-        start: ranges[i].startOffset + entryOffset,
-        end: ranges[i].startOffset + entryOffset + ranges[i].entryLength //?+1
-      }
+      rangeList[i] = [
+        ranges[i].startOffset + entryOffset,
+        ranges[i].startOffset + entryOffset + ranges[i].entryLength 
+      ]
     }
     
     context.filereader.readMultiRange(rangeList, function(data) {
