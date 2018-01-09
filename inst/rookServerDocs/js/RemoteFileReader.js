@@ -52,6 +52,34 @@ RemoteFileReader.prototype.mergeRanges = function(ranges) {
 };
 
 /**
+ * Given a range and an array of ranges
+ * find where the range comes from
+ */
+RemoteFileReader.prototype.findRangeInMergedRanges = function(range, mergedRanges) {
+  var queryStart = range[0];
+  var queryEnd = range[1];
+  
+  var containerRange = null;
+  var containerRangeOffset = null;
+  
+  for (var i = 0; i < mergedRanges.length; i++){
+    var s = mergedRanges[i][0]; // start
+    var e = mergedRanges[i][1]; // end
+    if( queryStart >= s && queryEnd <= e ) {
+      containerRange = i;
+      containerRangeOffset = queryStart - s;
+      break;
+    }
+  };
+  
+  return {
+    containerRange: containerRange, 
+    containerRangeOffset: containerRangeOffset,
+    rangeLength: queryEnd - queryStart
+  };
+};
+
+/**
  * Implementation in progress
  * @param rangeList a list of ranges
  * @param callback function to call when complete
@@ -101,16 +129,46 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
       if (requestStatus[i] == 0) return false;
     }
     return true;
-  }
+  };
   
   var checkComplete = function() {
     if(isComplete()) {
-      console.log('complete!')
-      // TODO:
-      // Break data down the to the original ranges requested
-      // Return via callback
+      console.log('complete!');
+      
+      var returnData = [];
+      
+      // For each original range
+      for (var l = 0; l < rangeList.length; l++) {
+        // This is the position of the original requested range in the merged ranges
+        // We get the position of the relevant range in the rangesMergedArray,
+        // the offset of that data in the range and the length of the data
+        // This can be optimised and calcualated for all ranges in one go.
+        var posMergedRanges = rfr.findRangeInMergedRanges(rangeList[l], rangesMerged);
+        
+        // Now we need to find in which http request the merged range: 
+        // rangesMerge[posMergedRanges.containerRangeOffset]
+        // was in. We can actually calculate that, we don't need to search
+        var mergedrangeRequest = Math.floor(posMergedRanges.containerRange / (nRanges));
+        var mergedRangeRequestPosition = posMergedRanges.containerRange % (nRanges) - 1;
+        
+        // Now we need to find the offset of the merged range in the request
+        // This will be the length of all the previous ranges in that request + 1
+        var mergedRangeOffsetInRequest = 1;
+        for (var e = 0; e < mergedRangeRequestPosition; e++){
+          var cr = requestRanges[mergedrangeRequest][e];
+          mergedRangeOffsetInRequest += cr[1] - cr[0];
+        } 
+        
+        // Finally extract the data from the request
+        var dataStartInRequest = mergedRangeOffsetInRequest + posMergedRanges.containerRangeOffset;
+        var dataEndInRequest = dataStartInRequest + posMergedRanges.rangeLength;
+        returnData[l] = requestData[mergedrangeRequest].slice(dataStartInRequest, dataEndInRequest);
+      }
+      
+      // We now have an array of array buffers that matches the original ranges in rangeList 
+      callback(returnData);
     }
-  }
+  };
   
   var dispatchRequest = function(rangeList, requestid) {
       // Construct bytes argument
@@ -134,7 +192,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
             checkComplete();
           } else {
             // Problem 
-            // TODO: handle this espt 406 and 200
+            // TODO: handle this esp 406 and 200
           }
         }
       }
