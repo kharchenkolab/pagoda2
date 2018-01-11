@@ -999,18 +999,19 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     // Request 1 for x
     requestRanges[reqId] = [
       colBytes.csiBytes,
-      colBytes.csiBytes + colBytes.xRowLength - 1 
+      colBytes.xRowLength
     ]
     reqId++;
     
     // Request 2 for p
     requestRanges[reqId] = [
       colBytes.csiBytesI,
-      colBytes.csiBytesI + colBytes.xRowLengthI - 1
+      colBytes.xRowLengthI
     ]
     reqId++;
   };
   
+  debugger;
   
   var fr = this.formatReader;
   fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(data){
@@ -1020,6 +1021,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     
     var resultArray = [];
     
+    debugger;
+    
     // For each requested cell
     for (var cellId = 0; cellId < cellNames.length; cellId++) {
       var cellName = cellNames[cellId];
@@ -1027,10 +1030,10 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
       // Get the buffers
       
       // FIXME: These values come back corrupted!!!
-      debugger;
       var rowXArray = new Float32Array(data[cellId * 2]);
       var rowIArray = new Uint32Array(data[cellId * 2 + 1]);
       
+      /*
       // Zero filled array
       var fullColumnArray = [];
       for (var j = 0; j < ngenes; j++) fullColumnArray[j] = 0;
@@ -1042,6 +1045,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
       }
       
       resultArray[cellId] = fullColumnArray;
+      */
     }
     
     // Need to transform these values to something that can be used (efficently later)

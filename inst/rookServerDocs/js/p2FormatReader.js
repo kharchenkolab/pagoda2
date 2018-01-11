@@ -289,14 +289,17 @@ p2FormatReader.prototype.getBytesInEntryAsText = function(entryKey, start, end, 
 
 /**
  * Get the specified byte range from the indicated variable size block
+ * @param entryKey the key of the entry to get the bytes form
+ * @param start start offset in the entry
+ * @param length number of bytes to retrive 
  */
-p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, end, callback, context) {
+p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, length, callback, context) {
     // TODO
     if (typeof context === 'undefined') {context = this;}
 
     var entryIndexInfo = context.index[entryKey];
     var start = context.dataOffset + entryIndexInfo.offset * context.blockSize + start;
-    var end = start + end;
+    var end = start + length;
 
 
     context.filereader.readRange(start,end, function(data) {
@@ -315,11 +318,8 @@ p2FormatReader.prototype.supportsMultiRequest = function() {
 /** 
  * Returns multiple ranges from the specified entry using a single request
  * @param entryKey the key of the entry to get the data from
- * @param ranges an array describing the ranges requested, each entry in the array is a 
- * hash with the following values: requestId (a numeric identifier of the request),
- * metadata: a hash that can contain any metadata for this request and will be returned intact
- * startOffset: the starting offset of the data to get within the entry
- * length: the size of the data to retrieve
+ * @param ranges an array describing the ranges requested, an array of two elements
+ * the first is the starting offset the second is the length
  * @param finishCallback callback function to call when done
  * @param progressCallback callback function to call to provide updates on download progess
  */
@@ -335,7 +335,7 @@ p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finis
     var rangeList = [];
     for (var i = 0; i < ranges.length; i++) {
       var rangeStart = entryOffset + ranges[i][0];
-      var rangeEnd = entryOffset + ranges[i][1];
+      var rangeEnd = entryOffset + ranges[i][0] + ranges[i][1];
       rangeList[i] = [rangeStart, rangeEnd];
     }
     
