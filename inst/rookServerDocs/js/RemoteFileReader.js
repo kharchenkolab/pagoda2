@@ -16,7 +16,7 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return true; // set to true for development of code below, false will use the older per cell code
+  return false; // set to true for development of code below, false will use the older per cell code
 }
 
 
@@ -98,7 +98,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   
   // Split the ranges into multiple request requesting no more than nRanges 
   // ranges per request
-  var nRanges = 10;
+  var nRanges = 2;
 
   // Array of arrays, each sub array holds ranges for the corresponding request
   var requestRanges = [];
@@ -136,6 +136,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
     if(isComplete()) {
       var returnData = [];
       
+      // TODO: Fix Bug
       // For each original range
       for (var l = 0; l < rangeList.length; l++) {
         // This is the position of the original requested range in the merged ranges
@@ -148,7 +149,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
         // rangesMerge[posMergedRanges.containerRangeOffset]
         // was in. We can actually calculate that, we don't need to search
         var mergedrangeRequest = Math.floor(posMergedRanges.containerRange / (nRanges));
-        var mergedRangeRequestPosition = posMergedRanges.containerRange % (nRanges) - 1;
+        var mergedRangeRequestPosition = posMergedRanges.containerRange % (nRanges);
         
         // Now we need to find the offset of the merged range in the request
         // This will be the end of the last request (sum all of all previous lengths -1)
@@ -160,7 +161,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
         } 
         
         // Finally extract the data from the request
-        if (posMergedRanges.containerRangeOffset != 0) {console.log('Error!')}
+        //if (posMergedRanges.containerRangeOffset != 0) {console.log('Error!')}
         var dataStartInRequest = mergedRangeOffsetInRequest + posMergedRanges.containerRangeOffset;
         var dataEndInRequest = dataStartInRequest + posMergedRanges.rangeLength;
         returnData[l] = requestData[mergedrangeRequest].slice(dataStartInRequest, dataEndInRequest);

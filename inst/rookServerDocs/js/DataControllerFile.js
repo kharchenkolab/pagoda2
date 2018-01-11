@@ -987,6 +987,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal = funct
 DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singlerequest = 
   function(cellNames, callback, progressCallback) {
 
+  var dcf = this;
   
   // Prepare the request ranges
   var requestRanges = [];
@@ -997,8 +998,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
 
     // Request 1 for x
     requestRanges[reqId] = {
-      requestId: reqId,
-      metadata: {cellId: cellNames[cellId], type: 'x'},
+      //requestId: reqId,
+      //metadata: {cellId: cellNames[cellId], type: 'x'},
       startOffset: colBytes.csiBytes,
       entryLength: colBytes.xRowLength
     }
@@ -1006,8 +1007,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     
     // Request 2 for p
     requestRanges[reqId] = {
-      requestId: reqId,
-      metadata: {cellId: cellNames[cellId], type: 'p'},
+      //requestId: reqId,
+      //metadata: {cellId: cellNames[cellId], type: 'i'},
       startOffset: colBytes.csiBytesI,
       entryLength: colBytes.xRowLengthI
     }
@@ -1017,24 +1018,37 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
   
   var fr = this.formatReader;
   fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(data){
+    
+    debugger;
+
+    var ngenes = dcf.sparseArrayTranspPreloadInfo.dim1;
+    
+    var resultArray = [];
+    
+    // For each requested cell
     for (var cellId = 0; cellId < cellNames.length; cellId++) {
       var cellName = cellNames[cellId];
       
-      var reqXid = cellId * 2;
-      var reqPid = cellId * 2 + 1;
+      // Get the buffers
       
-      var xbuf = data[reqXid];
-      var pbuf = data[reqPid];
+      // These buffers are corrupted -- some calculation is wrong
+      var rowXArray = new Float32Array(data[cellId * 2]);
+      var rowIArray = new Uint32Array(data[cellId * 2 + 1]);
       
-      var rowXArray = new Float32Array(xbuf);
-      var rowPArray = new Uint32Array(pbuf);
+      // Zero filled array
+      var fullColumnArray = [];
+      for (var j = 0; j < ngenes; j++) fullColumnArray[j] = 0;
       
-      // Respective requests
-      var x = requestRanges[reqXid];
-      var p = requestRanges[reqPid];
-      debugger;
+      // Set non-empty values
+      for (var k = 0; k < rowIArray.length; k++) {
+        var ki = rowIArray[k];
+        fullColumnArray[ki] = rowXArray[k];
+      }
+      
+      resultArray[cellId] = fullColumnArray;
     }
     
+    debugger;
     // Need to transform these values to something that can be used (efficently later)
     // data is an array of ArrayBuffers with raw byte values
     
@@ -1140,11 +1154,9 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Multire
 }; // getExpressionValuesSparseByCellNameInternal
 
 /**
- * Get the byte positions for a specified cell
+ * Get the byte positions for a specified cell in the transposed array for de
  */
 DataControllerFile.prototype.getCellColumnBytes = function(cellName) {
-  // TODO: get getCellColumn to use this
-  
   var dcf = this;
 
   // Index of the cell
