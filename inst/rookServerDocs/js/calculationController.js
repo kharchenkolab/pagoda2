@@ -87,48 +87,38 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   // Generates the new worker
   if(typeof(this.localWorker) === "undefined") {
       this.localWorker = new Worker('js/lightDeWorker.js');
-    
-      // There are the cells we want
-      var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
       
-      // We want all the genes for these cells
-      // A progress bar would be nice for online requests
-      // Where the data comes in chunks
-      dataCtrl.getExpressionValuesSparseByCellName(cellsRetrieve, function(data){
-        
-        //thisController.updateProgressPercent(0.5);
-        thisController.setProgressLabel("Calculating...");  
-        
-        // Make a worker, in future we can make multiple
-        
-        // FIXME: This needs to be done before the data is requested
-        // and these cells need to be included in the request
-        // if in 1 selection mode build the background
+        var executeDE =  function() {
+            var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
+            dataCtrl.getExpressionValuesSparseByCellName(cellsRetrieve, function(data){
+              thisController.setProgressLabel("Calculating...");  
+              calculationController.instance.localWorker.postMessage({
+                type: "rundiffexpr",
+                data: data, // The sparse array
+                selections: calcCtrl.selections // The selections to know what is compared with what
+              });
+            },function(percent) {
+              thisController.updateProgressPercent(percent*0.5);
+            }); // getExpressionValuesSparseByCellName
+            //builds non-modal progress bar window
+            thisController.showDisplayBar();
+            thisController.setProgressLabel("Downloading...");
+        }
+      
         var selections =  calcCtrl.selections;
         if(selections.length === 1){
-          selections[1] = [];
-          for(var i = 0 ; i < data.DimNames2.length; i++) {
-            if(selections[0].indexOf(data.DimNames2[i]) == -1) {
-              selections[1].push(data.DimNames2[i]);
+          dataCtrl.getCellOrder(function(cellnames){
+            selections[1] = [];
+            for(var i = 0 ; i < cellnames.length; i++) {
+              if(selections[0].indexOf(cellnames[i]) === -1) {
+                selections[1].push(cellnames[i]);
+              }
             }
-          }
+            executeDE();
+          })
+        } else {
+           executeDE();
         }
-
-        calculationController.instance.localWorker.postMessage({
-          type: "rundiffexpr",
-          data: data, // The sparse array
-          selections: calcCtrl.selections // The selections to know what is compared with what
-        });
-        
-      },function(percent) {
-          // For download progress updates
-        thisController.updateProgressPercent(percent*0.5);
-      }); // getExpressionValuesSparseByCellName
-      
-
-      //builds non-modal progress bar window
-      thisController.showDisplayBar();
-      thisController.setProgressLabel("Downloading...");
     } // localWorker undefined
 
   // Handle the incoming message
