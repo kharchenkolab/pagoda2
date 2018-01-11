@@ -98,7 +98,9 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   
   // Split the ranges into multiple request requesting no more than nRanges 
   // ranges per request
-  var nRanges = 1; // DEBUG
+  // FIXME: The code below breaks if we put more than 1 range in a request
+  // defeating the purpose of multirange requests
+  var nRanges = 1; 
 
   // Array of arrays, each sub array holds ranges for the corresponding request
   var requestRanges = [];
@@ -158,13 +160,13 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
         var mergedRangeOffsetInRequest = 0;
         for (var e = 0; e < mergedRangeRequestPosition; e++){
           var cr = requestRanges[mergedrangeRequest][e];
-          mergedRangeOffsetInRequest += (cr[1] - cr[0] + 1);
+          mergedRangeOffsetInRequest += (cr[1] - cr[0]);
         } 
         
         // Finally extract the data from the request
         //if (posMergedRanges.containerRangeOffset != 0) {console.log('Error!')}
         var dataStartInRequest = mergedRangeOffsetInRequest + posMergedRanges.containerRangeOffset;
-        var dataEndInRequest = dataStartInRequest + posMergedRanges.rangeLength;
+        var dataEndInRequest = dataStartInRequest + posMergedRanges.rangeLength - 1;
         returnData[l] = requestData[mergedrangeRequest].slice(dataStartInRequest, dataEndInRequest);
       }
       

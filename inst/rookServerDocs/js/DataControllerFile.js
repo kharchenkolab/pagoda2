@@ -1011,8 +1011,6 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     reqId++;
   };
   
-  debugger;
-  
   var fr = this.formatReader;
   fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(data){
     
@@ -1020,8 +1018,6 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     var ngenes = dcf.sparseArrayTranspPreloadInfo.dim1;
     
     var resultArray = [];
-    
-    debugger;
     
     // For each requested cell
     for (var cellId = 0; cellId < cellNames.length; cellId++) {
