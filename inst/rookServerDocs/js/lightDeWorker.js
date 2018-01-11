@@ -52,7 +52,7 @@ self.addEventListener("message", function(e){
 function runMannWhitneyIteration(geneData, selAidx, selBidx){
     var collectedResults = [];
   
-      const zcutoff = 4.0;
+      const zcutoff = 3.0;
       const log2 = Math.log(2);
       //var geneCount = geneData.array[0].length;
       var geneCount = geneData.array.length;
