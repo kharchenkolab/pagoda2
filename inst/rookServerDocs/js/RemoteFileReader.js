@@ -16,7 +16,7 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return false; // set to true for development of code below, false will use the older per cell code
+  return true; // set to true for development of code below, false will use the older per cell code
 }
 
 
@@ -180,7 +180,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
       var isFirst = true;
       for (var i = 0; i < rangeList.length; i++) {
         if(!isFirst) {bytesArg = bytesArg.concat(', ')};
-        bytesArg = bytesArg.concat(rangeList[i][0], '-', rangeList[i][1]);
+        bytesArg = bytesArg.concat(rangeList[i][0], '-', rangeList[i][1]-1);
         isFirst=false;
       }
       

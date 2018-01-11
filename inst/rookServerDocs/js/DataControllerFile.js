@@ -997,21 +997,17 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     var colBytes = this.getCellColumnBytes(cellName);
 
     // Request 1 for x
-    requestRanges[reqId] = {
-      //requestId: reqId,
-      //metadata: {cellId: cellNames[cellId], type: 'x'},
-      startOffset: colBytes.csiBytes,
-      entryLength: colBytes.xRowLength
-    }
+    requestRanges[reqId] = [
+      colBytes.csiBytes,
+      colBytes.csiBytes + colBytes.xRowLength - 1 
+    ]
     reqId++;
     
     // Request 2 for p
-    requestRanges[reqId] = {
-      //requestId: reqId,
-      //metadata: {cellId: cellNames[cellId], type: 'i'},
-      startOffset: colBytes.csiBytesI,
-      entryLength: colBytes.xRowLengthI
-    }
+    requestRanges[reqId] = [
+      colBytes.csiBytesI,
+      colBytes.csiBytesI + colBytes.xRowLengthI - 1
+    ]
     reqId++;
   };
   

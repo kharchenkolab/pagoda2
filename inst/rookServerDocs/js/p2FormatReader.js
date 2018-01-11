@@ -32,49 +32,7 @@ function p2FormatReader(opt_FileReader) {
 
 }
 
-/**
- * Returns true if the underlying connection supports requests
- * that retrieve multiple regions of the file at once and false otherwise
- */
-p2FormatReader.prototype.supportsMultiRequest = function() {
-  return this.filereader.supportsMultiRequest();
-};
 
-/** 
- * Returns multiple ranges from the specified entry using a single request
- * @param entryKey the key of the entry to get the data from
- * @param ranges an array describing the ranges requested, each entry in the array is a 
- * hash with the following values: requestId (a numeric identifier of the request),
- * metadata: a hash that can contain any metadata for this request and will be returned intact
- * startOffset: the starting offset of the data to get within the entry
- * length: the size of the data to retrieve
- * @param finishCallback callback function to call when done
- * @param progressCallback callback function to call to provide updates on download progess
- */
-p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finishCallback, progressCallback) {
-  var context = this;
-  
-  if(this.supportsMultiRequest()) {
-    // Calculate the entry offset
-    var entryIndexInfo = context.index[entryKey];
-    var entryOffset = context.dataOffset + entryIndexInfo.offset * context.blockSize;
-    
-    // Calculate the ranges that we need from
-    var rangeList = [];
-    for (var i = 0; i < ranges.length; i++) {
-      var rangeStart = entryOffset + ranges[i].startOffset;
-      var rangeEnd = entryOffset + ranges[i].startOffset + ranges[i].entryLength - 1;
-      rangeList[i] = [rangeStart, rangeEnd];
-    }
-    context.filereader.readMultiRange(rangeList, function(data) {
-	    finishCallback(data);
-    });
-
-  } else {
-    // This is an error in the upstream code, should have never called this on this object
-    throw new RuntimeException(FUNCTIONALITY_NOT_SUPPORTED,"Called getMultiBytesInEntry() on an format reader than does not support multi-range retrieval!")
-  }
-};
 
 p2FormatReader.prototype.dispatchEvent = function(eventName) {
   if (Array.isArray(this.listeners[eventName])) {
@@ -340,7 +298,54 @@ p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, end, callba
     var start = context.dataOffset + entryIndexInfo.offset * context.blockSize + start;
     var end = start + end;
 
+
     context.filereader.readRange(start,end, function(data) {
 	    callback(data);
     });
 }
+
+/**
+ * Returns true if the underlying connection supports requests
+ * that retrieve multiple regions of the file at once and false otherwise
+ */
+p2FormatReader.prototype.supportsMultiRequest = function() {
+  return this.filereader.supportsMultiRequest();
+};
+
+/** 
+ * Returns multiple ranges from the specified entry using a single request
+ * @param entryKey the key of the entry to get the data from
+ * @param ranges an array describing the ranges requested, each entry in the array is a 
+ * hash with the following values: requestId (a numeric identifier of the request),
+ * metadata: a hash that can contain any metadata for this request and will be returned intact
+ * startOffset: the starting offset of the data to get within the entry
+ * length: the size of the data to retrieve
+ * @param finishCallback callback function to call when done
+ * @param progressCallback callback function to call to provide updates on download progess
+ */
+p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finishCallback, progressCallback, context) {
+  if (typeof context === 'undefined') {context = this;}
+  
+  if(this.supportsMultiRequest()) {
+    // Calculate the entry offset
+    var entryIndexInfo = context.index[entryKey];
+    var entryOffset = context.dataOffset + entryIndexInfo.offset * context.blockSize;
+    
+    // Calculate the ranges that we need from
+    var rangeList = [];
+    for (var i = 0; i < ranges.length; i++) {
+      var rangeStart = entryOffset + ranges[i][0];
+      var rangeEnd = entryOffset + ranges[i][1];
+      rangeList[i] = [rangeStart, rangeEnd];
+    }
+    
+    
+    context.filereader.readMultiRange(rangeList, function(data) {
+	    finishCallback(data);
+    });
+
+  } else {
+    // This is an error in the upstream code, should have never called this on this object
+    throw new RuntimeException(FUNCTIONALITY_NOT_SUPPORTED,"Called getMultiBytesInEntry() on an format reader than does not support multi-range retrieval!")
+  }
+};
