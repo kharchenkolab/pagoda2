@@ -995,19 +995,11 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
   for (var cellId = 0; cellId < cellNames.length; cellId++){
     var cellName = cellNames[cellId];
     var colBytes = this.getCellColumnBytes(cellName);
-
     // Request 1 for x
-    requestRanges[reqId] = [
-      colBytes.csiBytes,
-      colBytes.xRowLength
-    ]
+    requestRanges[reqId] = [colBytes.csiBytes,colBytes.xRowLength];
     reqId++;
-    
     // Request 2 for p
-    requestRanges[reqId] = [
-      colBytes.csiBytesI,
-      colBytes.xRowLengthI
-    ]
+    requestRanges[reqId] = [colBytes.csiBytesI, colBytes.xRowLengthI];
     reqId++;
   };
   
@@ -1018,18 +1010,14 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     var ngenes = dcf.sparseArrayTranspPreloadInfo.dim1;
     
     var resultArray = [];
-    
     // For each requested cell
     for (var cellId = 0; cellId < cellNames.length; cellId++) {
       var cellName = cellNames[cellId];
       
       // Get the buffers
-      
-      // FIXME: These values come back corrupted!!!
       var rowXArray = new Float32Array(data[cellId * 2]);
       var rowIArray = new Uint32Array(data[cellId * 2 + 1]);
       
-      /*
       // Zero filled array
       var fullColumnArray = [];
       for (var j = 0; j < ngenes; j++) fullColumnArray[j] = 0;
@@ -1039,14 +1027,12 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
         var ki = rowIArray[k];
         fullColumnArray[ki] = rowXArray[k];
       }
-      
       resultArray[cellId] = fullColumnArray;
-      */
     }
-    
-    // Need to transform these values to something that can be used (efficently later)
-    // data is an array of ArrayBuffers with raw byte values
-    
+
+    // TODO: Convert this array to the same thing that 
+    // getExpressionValuesSparseByCellNameInternal_Singlerequest() returns
+
   });
 }
 
