@@ -1030,6 +1030,9 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
       resultArray[cellId] = fullColumnArray;
     }
 
+    
+    console.log(resultArray);debugger;
+
     // TODO: Convert this array to the same thing that 
     // getExpressionValuesSparseByCellNameInternal_Singlerequest() returns
 

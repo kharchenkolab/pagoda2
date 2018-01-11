@@ -16,7 +16,7 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return true; // set to true for development of code below, false will use the older per cell code
+  return true; // T for debug
 }
 
 
@@ -87,23 +87,18 @@ RemoteFileReader.prototype.findRangeInMergedRanges = function(range, mergedRange
 RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   var rfr = this;
   
-  // There are limitations in the size of the Range request header
-  // The the maximum length is between 3812 and 3831 characters long
-  // For this reason it is beneficial to merge adjacent requests
-  // Beyond that the only option is to perform multiple requests
-
   // Merge adjacent ranges
-  //var rangesMerged = this.mergeRanges(rangeList);
-  var rangesMerged = rangeList;
+  var rangesMerged;
+  var merge = false; // True breaks things
+  if (merge) {
+    rangesMerged = this.mergeRanges(rangeList);
+  } else {
+    rangesMerged = rangeList;
+  }
   
-  // Split the ranges into multiple request requesting no more than nRanges 
-  // ranges per request
   
+  var nRangesPerRequest = 10;
   
-  // FIXME: The code below breaks if we put more than 1 range in a request
-  // defeating the purpose of multirange requests
-  var nRanges = 1; 
-
   // Array of arrays, each sub array holds ranges for the corresponding request
   var requestRanges = [];
   
@@ -116,12 +111,12 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   var requestData = [];
   
   var rangesMergedLength = rangesMerged.length;
-  var kMax = Math.ceil(rangesMergedLength/nRanges)
+  var kMax = Math.ceil(rangesMergedLength/nRangesPerRequest)
   for (var k = 0; k < kMax; k++ ) {
-    var startRangeIndex = k * (nRanges);
-    var endRangeIndex = (k + 1) * nRanges;
+    var startRangeIndex = k * (nRangesPerRequest);
+    var endRangeIndex = (k + 1) * nRangesPerRequest;
     
-    Math.min(((k + 1) * nRanges) - 1,rangesMergedLength);
+    Math.min(((k + 1) * nRangesPerRequest) - 1,rangesMergedLength);
     requestRanges[k] = rangesMerged.slice(startRangeIndex,endRangeIndex)
     // Array for request status
     requestStatus[k] = 0;
@@ -145,31 +140,11 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
       // For each original range
       for (var l = 0; l < rangeList.length; l++) {
         // This is the position of the original requested range in the merged ranges
-        // We get the position of the relevant range in the rangesMergedArray,
-        // the offset of that data in the range and the length of the data
-        // This can be optimised and calcualated for all ranges in one go.
         var posMergedRanges = rfr.findRangeInMergedRanges(rangeList[l], rangesMerged);
-        
-        // Now we need to find in which http request the merged range: 
-        // rangesMerge[posMergedRanges.containerRangeOffset]
-        // was in. We can actually calculate that, we don't need to search
-        var mergedrangeRequest = Math.floor(posMergedRanges.containerRange / (nRanges));
-        var mergedRangeRequestPosition = posMergedRanges.containerRange % (nRanges);
-        
-        // Now we need to find the offset of the merged range in the request
-        // This will be the end of the last request (sum all of all previous lengths -1)
-        // plus 1
-        var mergedRangeOffsetInRequest = 0;
-        for (var e = 0; e < mergedRangeRequestPosition; e++){
-          var cr = requestRanges[mergedrangeRequest][e];
-          mergedRangeOffsetInRequest += (cr[1] - cr[0]);
-        } 
-        
-        // Finally extract the data from the request
-        //if (posMergedRanges.containerRangeOffset != 0) {console.log('Error!')}
-        var dataStartInRequest = mergedRangeOffsetInRequest + posMergedRanges.containerRangeOffset;
-        var dataEndInRequest = dataStartInRequest + posMergedRanges.rangeLength - 1;
-        returnData[l] = requestData[mergedrangeRequest].slice(dataStartInRequest, dataEndInRequest);
+        // Now we need to find in which http request the merged range request
+        var mergedrangeRequest = Math.floor(posMergedRanges.containerRange / (nRangesPerRequest));
+        var mergedRangeRequestPosition = posMergedRanges.containerRange % (nRangesPerRequest);
+        returnData[l] = requestData[mergedrangeRequest][mergedRangeRequestPosition];
       }
       
       // We now have an array of array buffers that matches the original ranges in rangeList 
@@ -187,16 +162,60 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
         isFirst=false;
       }
       
+      // Convert binary string to array buffer
+      var _binaryToArrayBuffer = function(binary_string) {
+        var len = binary_string.length;
+        var bytes = new Uint8Array( len );
+        for (var i = 0; i < len; i++)        {
+            bytes[i] = binary_string.charCodeAt(i);
+        }
+        return bytes.buffer;
+      }
+      
+      var ab2str = function(buf) {
+        // Apply causes stack issues with long strings
+        var a = new Uint8Array(buf);
+        var b = [];
+        for (var i = 0; i < buf.length; i++) {
+          b[i] = String.fromCharCode(a[i]);
+        }
+        return b.join("")
+      }
+      
+      var processMultipart = function(response, boundary) {
+        var responseText = ab2str(response);
+        var responseSplit = responseText.split(`--${boundary}`);
+        var data = [];
+        // Ignore 1st and last entry
+        for (var i = 1; i < responseSplit.length - 1; i++ ){
+          var entry = responseSplit[i];
+          entry = entry.substr(2,entry.length-4); // remove leading and training new lines
+          // Note if the /r/n/r/n seq exists int he bninary data there is a problem
+          var [ head, body ] = entry.split(/\r\n\r\n/g);
+          data[i-1] = _binaryToArrayBuffer(body);
+        }
+        return data; // an array of buffers
+      }
+      
       // Make the request
       var xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function(evt) {
         if (xhr.readyState == XMLHttpRequest.DONE) {
           var httpStatus = evt.target.status;
-          console.log("Req ", requestid, ' complete. status: ', httpStatus)
           if (httpStatus == "206") {
+            // Get the multipart field separator
+            var boundaryArray = xhr.getResponseHeader('Content-Type').match(/boundary=(.+)$/i);
+            if (boundaryArray !== null) {
+              // Its a response in chunks
+              requestData[requestid] = processMultipart(xhr.response,boundaryArray[1]);
+            } else {
+                // Came back as a single request -- dont' need to tdo anything
+                requestData[requestid] = [xhr.response];
+            }
+            
             requestStatus[requestid] = 1;
-            requestData[requestid] = evt.target.response;
-            checkComplete();
+            checkComplete();  
+
           } else {
             // Problem 
             // TODO: handle this esp 406 and 200
@@ -206,7 +225,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
       }
       
       // Dispatch request
-      xhr.open('GET', rfr.url, true);
+      xhr.open('GET', rfr.url, true); // TODO: Try POST for longer ranger requests
       xhr.setRequestHeader('Range', bytesArg);
       xhr.responseType = "arraybuffer";
       xhr.send(null);      
