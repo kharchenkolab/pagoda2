@@ -16,7 +16,7 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return false; // set to true for development of code below, false will use the older per cell code
+  return true; // set to true for development of code below, false will use the older per cell code
 }
 
 
@@ -40,7 +40,7 @@ RemoteFileReader.prototype.mergeRanges = function(ranges) {
   for (var i = 1; i < n; i++) {
     var top = s[s.length - 1]; // top element
     // If no overlap push to stack
-    if (top[1] < arr[i][0]) {
+    if (top[1] + 1 < arr[i][0]) {
       s.push(arr[i]);
     } else if (top[1] < arr[i][1]) {
       top[1] = arr[i][1];
@@ -75,7 +75,7 @@ RemoteFileReader.prototype.findRangeInMergedRanges = function(range, mergedRange
   return {
     containerRange: containerRange, 
     containerRangeOffset: containerRangeOffset,
-    rangeLength: queryEnd - queryStart
+    rangeLength: queryEnd - queryStart + 1
   };
 };
 
@@ -93,13 +93,13 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   // Beyond that the only option is to perform multiple requests
 
   // Merge adjacent ranges
-  var rangesMerged = this.mergeRanges(rangeList);
+  //var rangesMerged = this.mergeRanges(rangeList);
+  var rangesMerged = rangeList;
   
   // Split the ranges into multiple request requesting no more than nRanges 
   // ranges per request
   var nRanges = 10;
-  nRanges = nRanges + 1;
-  
+
   // Array of arrays, each sub array holds ranges for the corresponding request
   var requestRanges = [];
   
@@ -114,8 +114,8 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   var rangesMergedLength = rangesMerged.length;
   var kMax = Math.ceil(rangesMergedLength/nRanges)
   for (var k = 0; k < kMax; k++ ) {
-    var startRangeIndex = k * nRanges;
-    var endRangeIndex = Math.min((k + 1) * nRanges - 1,rangesMergedLength);
+    var startRangeIndex = k * (nRanges);
+    var endRangeIndex = Math.min(((k + 1) * nRanges) - 1,rangesMergedLength);
     requestRanges[k] = rangesMerged.slice(startRangeIndex,endRangeIndex)
     // Array for request status
     requestStatus[k] = 0;
@@ -131,10 +131,9 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
     return true;
   };
   
+  // Check if we have all the data and return
   var checkComplete = function() {
     if(isComplete()) {
-      console.log('complete!');
-      
       var returnData = [];
       
       // For each original range
@@ -152,14 +151,16 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
         var mergedRangeRequestPosition = posMergedRanges.containerRange % (nRanges) - 1;
         
         // Now we need to find the offset of the merged range in the request
-        // This will be the length of all the previous ranges in that request + 1
-        var mergedRangeOffsetInRequest = 1;
+        // This will be the end of the last request (sum all of all previous lengths -1)
+        // plus 1
+        var mergedRangeOffsetInRequest = 0;
         for (var e = 0; e < mergedRangeRequestPosition; e++){
           var cr = requestRanges[mergedrangeRequest][e];
-          mergedRangeOffsetInRequest += cr[1] - cr[0];
+          mergedRangeOffsetInRequest += (cr[1] - cr[0] + 1);
         } 
         
         // Finally extract the data from the request
+        if (posMergedRanges.containerRangeOffset != 0) {console.log('Error!')}
         var dataStartInRequest = mergedRangeOffsetInRequest + posMergedRanges.containerRangeOffset;
         var dataEndInRequest = dataStartInRequest + posMergedRanges.rangeLength;
         returnData[l] = requestData[mergedrangeRequest].slice(dataStartInRequest, dataEndInRequest);
@@ -176,7 +177,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
       var isFirst = true;
       for (var i = 0; i < rangeList.length; i++) {
         if(!isFirst) {bytesArg = bytesArg.concat(', ')};
-        bytesArg = bytesArg.concat(rangeList[i][0], '-', rangeList[i][1]-1);
+        bytesArg = bytesArg.concat(rangeList[i][0], '-', rangeList[i][1]);
         isFirst=false;
       }
       

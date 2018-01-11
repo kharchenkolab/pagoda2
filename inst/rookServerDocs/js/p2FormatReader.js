@@ -64,15 +64,13 @@ p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finis
     for (var i = 0; i < ranges.length; i++) {
       rangeList[i] = [
         ranges[i].startOffset + entryOffset,
-        ranges[i].startOffset + entryOffset + ranges[i].entryLength 
+        ranges[i].startOffset + entryOffset + ranges[i].entryLength - 1
       ]
     }
-    
     context.filereader.readMultiRange(rangeList, function(data) {
 	    finishCallback(data);
     });
-    
-    
+
   } else {
     // This is an error in the upstream code, should have never called this on this object
     throw new RuntimeException(FUNCTIONALITY_NOT_SUPPORTED,"Called getMultiBytesInEntry() on an format reader than does not support multi-range retrieval!")

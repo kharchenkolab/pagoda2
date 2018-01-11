@@ -1017,8 +1017,28 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
   
   var fr = this.formatReader;
   fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(data){
-    // HERE
-    debugger;
+    for (var cellId = 0; cellId < cellNames.length; cellId++) {
+      var cellName = cellNames[cellId];
+      
+      var reqXid = cellId * 2;
+      var reqPid = cellId * 2 + 1;
+      
+      var xbuf = data[reqXid];
+      var pbuf = data[reqPid];
+      
+      var rowXArray = new Float32Array(xbuf);
+      var rowPArray = new Uint32Array(pbuf);
+      
+      // Respective requests
+      var x = requestRanges[reqXid];
+      var p = requestRanges[reqPid];
+      debugger;
+    }
+    
+    // Need to transform these values to something that can be used (efficently later)
+    // data is an array of ArrayBuffers with raw byte values
+    
+    
   });
 
   
