@@ -115,7 +115,9 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   var kMax = Math.ceil(rangesMergedLength/nRanges)
   for (var k = 0; k < kMax; k++ ) {
     var startRangeIndex = k * (nRanges);
-    var endRangeIndex = Math.min(((k + 1) * nRanges) - 1,rangesMergedLength);
+    var endRangeIndex = (k + 1) * nRanges
+    
+    Math.min(((k + 1) * nRanges) - 1,rangesMergedLength);
     requestRanges[k] = rangesMerged.slice(startRangeIndex,endRangeIndex)
     // Array for request status
     requestStatus[k] = 0;
