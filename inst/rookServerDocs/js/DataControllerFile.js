@@ -1019,8 +1019,7 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
   var fr = this.formatReader;
   fr.getMultiBytesInEntry('sparseMatrixTransp',requestRanges, function(data){
     
-    debugger;
-
+    // The number of genes (for the row length)
     var ngenes = dcf.sparseArrayTranspPreloadInfo.dim1;
     
     var resultArray = [];
@@ -1031,7 +1030,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
       
       // Get the buffers
       
-      // These buffers are corrupted -- some calculation is wrong
+      // FIXME: These values come back corrupted!!!
+      debugger;
       var rowXArray = new Float32Array(data[cellId * 2]);
       var rowIArray = new Uint32Array(data[cellId * 2 + 1]);
       
@@ -1048,14 +1048,10 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
       resultArray[cellId] = fullColumnArray;
     }
     
-    debugger;
     // Need to transform these values to something that can be used (efficently later)
     // data is an array of ArrayBuffers with raw byte values
     
-    
   });
-
-  
 }
 
 

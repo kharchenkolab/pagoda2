@@ -60,7 +60,6 @@ p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finis
     var entryOffset = context.dataOffset + entryIndexInfo.offset * context.blockSize;
     
     // Calculate the ranges that we need from
-    debugger;
     var rangeList = [];
     for (var i = 0; i < ranges.length; i++) {
       var rangeStart = entryOffset + ranges[i].startOffset;
