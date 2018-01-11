@@ -1029,13 +1029,29 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
       }
       resultArray[cellId] = fullColumnArray;
     }
-
     
-    console.log(resultArray);debugger;
-
-    // TODO: Convert this array to the same thing that 
-    // getExpressionValuesSparseByCellNameInternal_Singlerequest() returns
-
+    // Put result in sparse array format
+    var x = new Array()
+    var i = new Array();
+    var p = new Array();
+    
+    var dim1Length = resultArray.length;
+    var dim2Length = resultArray[0].length;
+    var pos =0;
+    for (var k =0; k < dim1Length; k++) {
+      p.push(pos);
+      for (var j = 0; j < dim2Length; j++){
+        if (resultArray[k][j] != 0) {
+          x.push(resultArray[k][j]);
+          i.push(j);
+          pos++;
+        }
+      }
+    }
+    p.push(pos);
+    var geneNames = dcf.sparseArrayTranspPreloadInfo.dimnames1Data;
+    var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], geneNames, cellNames, x, null);
+    callback(retVal);
   });
 }
 
@@ -1109,7 +1125,6 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Multire
 
         var geneNames = dcf.sparseArrayTranspPreloadInfo.dimnames1Data;
         var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], geneNames, cellNames, x, null);
-
         // Done, do callback
         callback(retVal);
   }

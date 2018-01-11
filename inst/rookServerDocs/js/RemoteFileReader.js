@@ -16,7 +16,7 @@ function RemoteFileReader(opt_url) {
  * Always returns true
  */
 RemoteFileReader.prototype.supportsMultiRequest = function() {
-  return true; // T for debug
+  return true; 
 }
 
 
@@ -89,15 +89,17 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   
   // Merge adjacent ranges
   var rangesMerged;
-  var merge = false; // True breaks things
+  
+  // TODO: Get this to work
+  var merge = false; 
   if (merge) {
     rangesMerged = this.mergeRanges(rangeList);
   } else {
     rangesMerged = rangeList;
   }
   
-  
-  var nRangesPerRequest = 10;
+  // Number of ranges per request
+  var nRangesPerRequest = 20;
   
   // Array of arrays, each sub array holds ranges for the corresponding request
   var requestRanges = [];
@@ -176,7 +178,7 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
         // Apply causes stack issues with long strings
         var a = new Uint8Array(buf);
         var b = [];
-        for (var i = 0; i < buf.length; i++) {
+        for (var i = 0; i < a.length; i++) {
           b[i] = String.fromCharCode(a[i]);
         }
         return b.join("")
