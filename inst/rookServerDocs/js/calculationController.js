@@ -11,21 +11,26 @@ function calculationController(localAvailable, remoteAvailable) {
 
     this.methods = [
       {
+        name: 'localWilcoxon',
+        displayName: 'Local Mann-Whitney U test',
+        help: 'Tie Corrected Mann-Whitney U test run on the browser locally',
+        repos: 'wilcoxon',
+      },
+      {
         name: 'remoteDefault',
         displayName: 'Remote Default',
         help: 'Remote Default Method',
         repos: 'remote'
-      },
-      {
-        name: 'localWilcoxon',
-        displayName: 'Local Mann-Whitney U test',
-        help: 'Tie Corrected Mann-Whitney U test run of the browser locally',
-        repos: 'wilcoxon',
       }
     ];
+    this.defaultMethod = 'localWilcoxon';
 
     calculationController.instance = this;
     return this;
+}
+
+calculationController.prototype.getDefaultMethodName = function(){
+  return this.defaultMethod;
 }
 
 /**

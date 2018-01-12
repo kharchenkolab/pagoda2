@@ -72,15 +72,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 		height: '100%',
 		width: '100%',
 	    }
-	    /*,
-	    {
-		layout: 'fit',
-		title: 'Enrichment',
-		glyph: 0xf200, // pie chart
-		tooltip: 'Perform enrichment analysis',
-		height: '100%',
-		width: '100%'
-	    } */
 	]
     });
 
@@ -95,9 +86,32 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     var availableMethods = calcCntr.getAvailableDEmethods();
 
     for (var i in availableMethods) {
-	    deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
+	    deMethodsStore.add({
+	      name: availableMethods[i].name, 
+	      displayname: availableMethods[i].displayName
+	    });
     }
     this.generateMetaDataStore();
+    
+    var deOptionsChangeListener = function() {
+      var form = Ext.getCmp("formPanelDE").getForm();
+      var analysisType = form.findField("analysisType").getValue();
+      var selectionA = form.findField("selectionA").getDisplayValue();
+      var selectionB = form.findField("selectionB").getDisplayValue();
+
+      var name = '';
+      if(analysisType.analysisTypeSelection === 'vsSelection') {
+        if (selectionA !== '' && selectionB !== '') {
+          name = selectionA + ' VS ' + selectionB;
+        }
+      } else {
+        if (selectionA !== '') {
+          name = selectionA + ' VS Background';
+        }
+      }
+      form.findField("resultName").setValue(name);
+      
+    };
 
     var deTab = Ext.getCmp('differentialExpressionTab');
     var espTab = Ext.getCmp('expressionScatterPlotTab');
@@ -136,6 +150,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
               } else {
                 //Something is wrong
               }
+              deOptionsChangeListener();
             }
           }
         },
@@ -147,7 +162,11 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
     	    displayField: 'displayname',
-    	    valueField: 'selectionname'
+    	    valueField: 'selectionname',
+    	    listeners: {
+            change: function() {deOptionsChangeListener()
+            }
+    	    }
     	},
     	{
     	    id: 'selectionB',
@@ -157,7 +176,11 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
     	    displayField: 'displayname',
-    	    valueField: 'selectionname'
+    	    valueField: 'selectionname',
+    	    listeners: {
+            change: function() {deOptionsChangeListener()
+            }
+    	    }
     	},{
     	    id: 'selectionMethod',
     	    xtype: 'combo',
@@ -166,7 +189,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('availableDEmethodStore'),
     	    displayField: 'displayname',
-    	    valueField: 'name'
+    	    valueField: 'name',
+    	    value: (new calculationController).getDefaultMethodName()
     	},{
     	  id: 'resultName',
     	  xtype: 'textfield',
@@ -470,7 +494,9 @@ actionPanelUIcontroller.prototype.generateMDBGwindow = function(){
       }
       barGraphData.data.push(nextArray);
     }
-    for(var cellId in data[metaDataReference].data){barGraphData.data[data[metaDataReference].data[cellId]][data[metaDataComparison].data[cellId]]++}
+    for(var cellId in data[metaDataReference].data){
+      barGraphData.data[data[metaDataReference].data[cellId]][data[metaDataComparison].data[cellId]]++
+    }
     barGraphData.compPalette = data[metaDataComparison].palette;
     barGraphData.refPalette = data[metaDataReference].palette;
     barGraphData.title = "Cluster comparison bar graph";
