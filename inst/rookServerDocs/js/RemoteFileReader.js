@@ -84,7 +84,7 @@ RemoteFileReader.prototype.findRangeInMergedRanges = function(range, mergedRange
  * @param rangeList a list of ranges
  * @param callback function to call when complete
  */
-RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
+RemoteFileReader.prototype.readMultiRange = function(rangeList, callback, progressCallback) {
   var rfr = this;
   
   // Merge adjacent ranges
@@ -128,10 +128,23 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback) {
   
   // Return true if all requests are completed, false otherwise
   var isComplete = function() {
-    for (var i = 0; i < requestStatus.length; i++) {
-      if (requestStatus[i] == 0) return false;
+    var completeCount = 0;
+    const reqStatusLength = requestStatus.length
+    for (var i = 0; i < reqStatusLength; i++) {
+      if (requestStatus[i] === 1) 
+        completeCount++
     }
-    return true;
+    
+    //console.log(completeCount/reqStatusLength);
+    
+    if(completeCount === reqStatusLength) {
+      return true;
+    } else {
+      if (typeof progressCallback === 'function') {
+        progressCallback(completeCount/reqStatusLength);
+      } 
+      return false;      
+    }
   };
   
   // Check if we have all the data and return

@@ -26,7 +26,6 @@ function actionPanelUIcontroller() {
 	    actPaneUICntr.syncCellSelectionStore();
     });
 
-    this.currentDErequest = null;
     actionPanelUIcontroller.instance = this;
 };
 
@@ -532,7 +531,7 @@ actionPanelUIcontroller.prototype.showMDBGhelpDialog = function(){
  */
 actionPanelUIcontroller.prototype.stopAnalysisClickHandler = function() {
  var actionUI = new actionPanelUIcontroller();
- actionUI.currentDErequest.abort();
+ (new calculationController).abort();
  actionUI.currentDErequest = null;
  actionUI.enableRunButton();
 }
@@ -564,9 +563,8 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
       } else {
           actionUI.disableRunButton();
           try {
-            actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, method,  function(results) {
+            calcCntr.calculateDEfor2selections(selectionA, selectionB, method,  function(results) {
                 actionUI.enableRunButton();
-                actionUI.currentDErequest = null;
                 // Get the cell names in the selection for storing
                 var cellSelCntr = new cellSelectionController();
                 var selAcells = cellSelCntr.getSelection(selectionA);
@@ -598,9 +596,8 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
     } else if (analysisType.analysisTypeSelection == 'vsBackground') {
           actionUI.disableRunButton();
           try {
-            actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, method,  function(results) {
+            calcCntr.calculateDEfor1selection(selectionA, method,  function(results) {
                 actionUI.enableRunButton();
-                actionUI.currentDErequest = null;
                 // Get the cell names in the selection for storing
                 var cellSelCntr = new cellSelectionController();
                 var selAcells = cellSelCntr.getSelection(selectionA);
@@ -689,5 +686,40 @@ actionPanelUIcontroller.prototype.generateMetaDataStore = function(){
   });
 }
 
+
+
+
+actionPanelUIcontroller.prototype.showDisplayBar = function() {
+  Ext.create("Ext.window.Window", {
+      title: "Processing Data Locally",
+      internalPadding: '10 10 10 10',
+      width: "300px",
+      id: "localProgressBarWindow",
+      resizeable: false,
+      items: [
+        {
+          html:'<div style="width:100%;background-color:#DDDDDD;height:30px"> <div id="localProgressBar" style="width:0%;background-color:#B0E2FF;height:30px; text-align: center;vertical-align: middle;line-height: 30px;"><div id="localProgressLabel" style="float: left; width: 100%; height: 100%; position: absolute; vertical-align: middle;">0%</div></div></div>'
+        }
+      ],
+      listeners:{
+        close: function(win){
+          var actionUI = new actionPanelUIcontroller();
+          if(actionUI.currentDErequest){
+            actionUI.stopAnalysisClickHandler() // FIXME
+          }
+        },
+      }
+    }).show(0);
+}
+
+actionPanelUIcontroller.prototype.setProgressLabel = function(text) {
+  document.getElementById("localProgressLabel").innerHTML = text;
+}
+
+actionPanelUIcontroller.prototype.updateProgressPercent = function(val) {
+  var execution = val * 100;
+  document.getElementById("localProgressBar").style.width = execution + "%"
+  document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
+}
 
 
