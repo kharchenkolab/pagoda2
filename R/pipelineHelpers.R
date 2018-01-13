@@ -106,7 +106,7 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 #' @export webP2proc
 webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.cores =20,
                       make.go.sets = TRUE, make.de.sets = TRUE, go.env = NULL,
-                      make.gene.graph = TRUE) {
+                      make.gene.graph = TRUE, appmetadata = NULL) {
   # Get the gene names
   gene.names <- colnames(p2$counts);
   # Build go terms for the web apps
