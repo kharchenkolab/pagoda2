@@ -39,8 +39,6 @@ aspectsTableViewer.prototype.updateGeneSetsInAspectTable = function(selectedAspe
           var table = Ext.getCmp('genesetsAspectTable');
           store.sort({property: 'cz', direction: 'DESC'});
           table.bindStore(store);
-
-
       });
 };
 

@@ -37,8 +37,8 @@ p2FileReader.prototype.supportsMultiRequest = function() {
   return(this.internalReader.supportsMultiRequest());
 };
 
-p2FileReader.prototype.readMultiRange = function(rangeList, callback) {
-  this.internalReader.readMultiRange(rangeList, callback);
+p2FileReader.prototype.readMultiRange = function(rangeList, callback, progressCallback) {
+  this.internalReader.readMultiRange(rangeList, callback, progressCallback);
 }
 
 /**

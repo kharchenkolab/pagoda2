@@ -11,21 +11,43 @@ function calculationController(localAvailable, remoteAvailable) {
 
     this.methods = [
       {
+        name: 'localWilcoxon',
+        displayName: 'Local Mann-Whitney U test',
+        help: 'Tie Corrected Mann-Whitney U test run on the browser locally',
+        repos: 'wilcoxon',
+      },
+      {
         name: 'remoteDefault',
         displayName: 'Remote Default',
         help: 'Remote Default Method',
         repos: 'remote'
-      },
-      {
-        name: 'localWilcoxon',
-        displayName: 'Local Mann-Whitney U test',
-        help: 'Tie Corrected Mann-Whitney U test run of the browser locally',
-        repos: 'wilcoxon',
       }
     ];
+    this.defaultMethod = 'localWilcoxon';
 
     calculationController.instance = this;
     return this;
+}
+
+/**
+ * Return the methods that are available for performing DE
+ */
+calculationController.prototype.getAvailableDEmethods = function() {
+  return this.methods;
+}
+
+/**
+ * Get the current method name
+ */
+calculationController.prototype.getDefaultMethodName = function(){
+  return this.defaultMethod;
+}
+
+/**
+ * Abort the current processing
+ */ 
+calculationController.prototype.abort = function() {
+  this.localWorker.postMessage({ type: "abort" });
 }
 
 /**
@@ -90,20 +112,29 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       
         var executeDE =  function() {
             var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
-            dataCtrl.getExpressionValuesSparseByCellName(cellsRetrieve, function(data){
-              thisController.setProgressLabel("Calculating...");  
-              calculationController.instance.localWorker.postMessage({
-                type: "rundiffexpr",
-                data: data, // The sparse array
-                selections: calcCtrl.selections // The selections to know what is compared with what
-              });
-            },function(percent) {
-              thisController.updateProgressPercent(percent*0.5);
-            }); // getExpressionValuesSparseByCellName
+            
             //builds non-modal progress bar window
-            thisController.showDisplayBar();
-            thisController.setProgressLabel("Downloading...");
-        }
+            (new actionPanelUIcontroller()).showDisplayBar();
+            (new actionPanelUIcontroller()).setProgressLabel("Downloading...");
+            
+            // Run de
+            dataCtrl.getExpressionValuesSparseByCellName(
+              cellsRetrieve, 
+              function(data){
+                (new actionPanelUIcontroller()).setProgressLabel("Calculating...");  
+                calculationController.instance.localWorker.postMessage({
+                  type: "rundiffexpr",
+                  data: data, // The sparse array
+                  selections: calcCtrl.selections // The selections to know what is compared with what
+                });
+              },
+              function(percent) {
+                (new actionPanelUIcontroller()).updateProgressPercent(percent*0.5);
+              }
+            ); // getExpressionValuesSparseByCellName
+              
+
+        }; // executeDE
       
         var selections =  calcCtrl.selections;
         if(selections.length === 1){
@@ -123,43 +154,6 @@ calculationController.prototype.calculateDELocal = function(selections, callback
 
   // Handle the incoming message
   this.localWorker.onmessage = thisController.handleWorkerMessage;
-
-}
-
-calculationController.prototype.terminateWorker = function() {
-  if(Ext.getCmp("localProgressBarWindow")){
-    Ext.getCmp("localProgressBarWindow").close()
-  }
-
-  var calcCtrl = new calculationController();
-  calcCtrl.localWorker.terminate();
-  calcCtrl.localWorker = undefined;
-}
-
-/**
- * Show the display bar window
- */
-calculationController.prototype.showDisplayBar = function() {
-  Ext.create("Ext.window.Window", {
-      title: "Processing Data Locally",
-      internalPadding: '10 10 10 10',
-      width: "300px",
-      id: "localProgressBarWindow",
-      resizeable: false,
-      items: [
-        {
-          html:'<div style="width:100%;background-color:#DDDDDD;height:30px"> <div id="localProgressBar" style="width:0%;background-color:#B0E2FF;height:30px; text-align: center;vertical-align: middle;line-height: 30px;"><div id="localProgressLabel" style="float: left; width: 100%; height: 100%; position: absolute; vertical-align: middle;">0%</div></div></div>'
-        }
-      ],
-      listeners:{
-        close: function(win){
-          var actionUI = new actionPanelUIcontroller();
-          if(actionUI.currentDErequest){
-            actionUI.stopAnalysisClickHandler() // FIXME
-          }
-        },
-      }
-    }).show(0);
 }
 
 /**
@@ -174,38 +168,42 @@ calculationController.prototype.handleWorkerMessage = function(e) {
 
     if(callParams.type === "complete"){
 
-      // FIXME
+      // This shouldn't be here
       if(document.getElementById("localProgressBar")){
-        w.terminate();
-
         var calcCtrl = new calculationController();
         calcCtrl.localWorker = undefined;
-
-        calcCtrl.setProgressLabel("Finishing...");
-
+        (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
         setTimeout(function(){
           calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
         },0.100);
+        
       } 
     } else if (callParams.type === "progressupdate") {
-       var thisController = new calculationController();
-        var totalProgress = 0.5+(callParams.current / callParams.outoff)*0.5
-        thisController.updateProgressPercent(totalProgress);
-      }
-} // handleWorkerMessage
+      
+      var thisController = new calculationController();
+      var totalProgress = 0.5 + (callParams.current / callParams.outoff) * 0.5;
+      (new actionPanelUIcontroller()).updateProgressPercent(totalProgress);
+      
+    } else if (callParams.type === "aborted") {
+        w.terminate();
+        calcCtrl.localWorker = undefined;
+        (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
+                setTimeout(function(){
+          calcCtrl.callback(e.data.results);
+          Ext.getCmp("localProgressBarWindow").close();
+        },0.100);
+        
+    }
+}; // handleWorkerMessage
 
-calculationController.prototype.setProgressLabel = function(text) {
-  document.getElementById("localProgressLabel").innerHTML = text;
-}
+/**
+ * Show the display bar window
+ */
 
-calculationController.prototype.updateProgressPercent = function(val) {
-  var execution = val * 100;
-  document.getElementById("localProgressBar").style.width = execution + "%"
-  document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
-}
 
-// Remote AJAX Stuff
+/// Server backed calculations below
+
 /**
  * Calculate differential expression between two groups of cells via connection to a remote server
  * @param selectionA the name of the first cell selection as registered in the cell selection controller
@@ -258,9 +256,4 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
 	return ajaxObj;
 }
 
-/**
- * Return the methods that are available for performing DE
- */
-calculationController.prototype.getAvailableDEmethods = function() {
-  return this.methods;
-}
+

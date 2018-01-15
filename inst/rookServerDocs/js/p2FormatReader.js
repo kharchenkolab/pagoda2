@@ -338,11 +338,8 @@ p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finis
       var rangeEnd = entryOffset + ranges[i][0] + ranges[i][1];
       rangeList[i] = [rangeStart, rangeEnd];
     }
-    
-    
-    context.filereader.readMultiRange(rangeList, function(data) {
-	    finishCallback(data);
-    });
+
+    context.filereader.readMultiRange(rangeList, finishCallback,progressCallback);
 
   } else {
     // This is an error in the upstream code, should have never called this on this object

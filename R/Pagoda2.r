@@ -544,10 +544,22 @@ Pagoda2 <- setRefClass(
       cl <- as.factor(cl[match(rownames(x),names(cl))]);
 
       if(dist %in% c('pearson','spearman')) {
-        rx <- do.call(cbind,tapply(1:nrow(x),cl,function(ii) colMeans(x[ii,])))
+        rx <- do.call(cbind,tapply(1:nrow(x),cl,function(ii) {
+            if (length(ii) > 1) {
+                Matrix::colMeans(x[ii,])
+            } else {
+                x[ii,]
+            }
+        }))
         d <- as.dist(1-cor(rx,method=dist))
       } else if(dist=='euclidean') {
-        rx <- do.call(rbind,tapply(1:nrow(x),cl,function(ii) colMeans(x[ii,])))
+        rx <- do.call(rbind,tapply(1:nrow(x),cl,function(ii) {
+            if (legnth(ii) > 1) {
+                Matrix::colMeans(x[ii,])
+            } else {
+                x[ii,]
+            }
+        }))
         d <- dist(rx)
       } else if(dist=='JS') {
         # this one has to be done on counts, even if we're working with a reduction

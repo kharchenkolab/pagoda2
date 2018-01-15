@@ -10,6 +10,7 @@
 // Main event listener for the worker thread
 self.addEventListener("message", function(e){
   var messageData = e.data;
+  self.abort = false;
 
   if(messageData.type === "rundiffexpr"){
     // Just process the data and signal the result when ready
@@ -24,7 +25,7 @@ self.addEventListener("message", function(e){
       } else {
         selBidx.push(i);
       }
-    }
+    } 
     
     // Perform differential expression
     //var t0 = performance.now();
@@ -32,16 +33,20 @@ self.addEventListener("message", function(e){
     var deres = runMannWhitneyIteration(exprMatrix, selAidx, selBidx);
     //var t1 = performance.now();
     //console.log("Diff expression took " + (t1 - t0) + "ms.");
-
-    postMessage({
-      type: "complete",
-      results: deres,
-      params: null
-    });
+    if (!self.abort) {
+      postMessage({
+        type: "complete",
+        results: deres,
+        params: null
+      });
+    } else {
+      postMessage({ type: 'aborted' });
+    }
+  } else if (messageData.type === "abort") {
+    self.abort = true;
   } else {
     console.error('Unknown action')
   }
-
 },false);
 
 
@@ -58,6 +63,8 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
       var geneCount = geneData.array.length;
 
       for(var geneindex = 0; geneindex < geneCount; geneindex++){
+        
+        if (self.abort) break;
         
         // Notify the parent thread of progress every n iterations
         if (geneindex % 100 === 0) {
@@ -213,7 +220,11 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
 
       }
       
-      return collectedResults;
+      if (self.abort) {
+        return null
+      } else {
+       return collectedResults;
+      }
 }
 
 

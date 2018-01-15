@@ -1052,8 +1052,8 @@ DataControllerFile.prototype.getExpressionValuesSparseByCellNameInternal_Singler
     var geneNames = dcf.sparseArrayTranspPreloadInfo.dimnames1Data;
     var retVal = new dgCMatrixReader(i, p , [dim2Length,dim1Length], geneNames, cellNames, x, null);
     callback(retVal);
-  });
-}
+  }, progressCallback);
+} // getExpressionValuesSparseByCellNameInternal_Singlerequest
 
 
 /**
