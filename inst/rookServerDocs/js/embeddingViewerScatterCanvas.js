@@ -1065,6 +1065,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
                     //rowMin = Math.min(rowMin, data.array[j][0]);
                     rowSum += data.array[j][0];
                 }
+                rowMax = Math.max(rowMax, 1e-2);
 
                 var rowMean = rowSum / data.array.length;
                 var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
