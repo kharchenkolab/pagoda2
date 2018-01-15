@@ -569,7 +569,7 @@ Pagoda2 <- setRefClass(
         colnames(d) <- rownames(d) <- which(table(cl)>0)
         d <- as.dist(d)
       } else {
-        stop("unknwon distance",dist,"requested")
+        stop("unknown distance",dist,"requested")
       }
 
       dd <- as.dendrogram(hclust(d,method=method))
@@ -621,7 +621,9 @@ Pagoda2 <- setRefClass(
         return(list(dg=dg,pt=pt))
       },n.cores=n.cores)
 
+      
       dexp <- dexp[!unlist(lapply(dexp,is.null))]; # remove cases where nothing was reported
+      dexp <- dexp[!unlist(lapply(dexp,function(x){class(x) == 'try-error'}))] ## remove cases that failed
 
       # fake pathwayOD output
       tamr <- list(xv=do.call(rbind,lapply(dexp,function(x) x$pt)),

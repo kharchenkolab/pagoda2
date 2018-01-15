@@ -1,7 +1,7 @@
-                                        # Filename: pagoda2WebApp.R
-                                        # Author: Nikolas Barkas
-                                        # Date: Jan - Mar 2017
-                                        # Description: The rook server for pagoda 2
+## Filename: pagoda2WebApp.R
+## Author: Nikolas Barkas
+## Date: Jan - Mar 2017
+## Description: The rook server for pagoda 2
 
 
 #' @import Rook
@@ -342,21 +342,9 @@ pagoda2WebApp <- setRefClass(
                                         # Return a gene information table
                                         # for all the genes
                                   'geneinformation' = {
-                                      dataset <- originalP2object$misc$varinfo[,c("m","v")];
-                                      dataset$name <- rownames(dataset);
-
-                                        # Convert to row format
-                                      retd <-  apply(dataset,
-                                                     1, function(x) {
-                                                         list(genename = x[["name"]],
-                                                              dispersion =x[["v"]],
-                                                              meanExpr = x[["m"]])
-                                                     });
-                                      retd <- unname(retd);
-
-
+                                      retd <- geneInformationJSON();
                                       response$header("Content-type", "application/javascript");
-                                      response$write(toJSON(retd));
+                                      response$write(retd);
                                       return(response$finish());
                                   },
 
@@ -1108,8 +1096,11 @@ pagoda2WebApp <- setRefClass(
             dataset <- originalP2object$misc$varinfo[,c("m","v")];
             dataset$name <- rownames(dataset);
             # Don't allow NaNs in dispesion, replace with  negative value
-            dataset$v[is.nan(dataset$v)] <- 1e3L
-            dataset$v[!is.finite(dataset$v)] <- 1e3L
+            dataset$v[is.nan(dataset$v)] <- -1e3L
+            dataset$v[!is.finite(dataset$v)] <- -1e3L
+
+            dataset$m[is.nan(dataset$m)] <- 0
+            dataset$m[!is.finite(dataset$m)] <- 0
             
 
             ## Convert to row format
