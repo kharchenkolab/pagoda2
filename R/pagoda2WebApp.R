@@ -1108,7 +1108,7 @@ pagoda2WebApp <- setRefClass(
             dataset <- originalP2object$misc$varinfo[,c("m","v")];
             dataset$name <- rownames(dataset);
             # Don't allow NaNs in dispesion, replace with  negative value
-            dataset$v[is.nan(dataset$v)] < -1e3L
+            dataset$v[is.nan(dataset$v)] <- 1e3L
 
             ## Convert to row format
             retd <-  apply(dataset,
