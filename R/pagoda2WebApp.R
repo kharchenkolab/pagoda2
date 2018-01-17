@@ -1096,8 +1096,8 @@ pagoda2WebApp <- setRefClass(
             dataset <- originalP2object$misc$varinfo[,c("m","qv")];
             dataset$name <- rownames(dataset);
             # Don't allow NaNs in dispesion, replace with  negative value
-            dataset$v[is.nan(dataset$qv)] <- 0
-            dataset$v[!is.finite(dataset$qv)] <- 0
+            dataset$qv[is.nan(dataset$qv)] <- 0
+            dataset$qv[!is.finite(dataset$qv)] <- 0
 
             dataset$m[is.nan(dataset$m)] <- 0
             dataset$m[!is.finite(dataset$m)] <- 0
