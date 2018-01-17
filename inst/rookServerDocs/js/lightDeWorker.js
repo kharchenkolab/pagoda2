@@ -82,7 +82,7 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
         var nNonZeroB = 0;
 
         // Skip sparse genes
-        var sparseFractionCutoff = 0.10;
+        var sparseFractionCutoff = 0.001;
 
         //retrieve expression data by indexes for selection A
         var selAlength = selAidx.length;
@@ -207,12 +207,19 @@ function runMannWhitneyIteration(geneData, selAidx, selBidx){
           }
           var meanB = sumB /selBlength;
 
+          var M = Math.log(meanA/meanB) / log2;
+          if (M > 0) {
+            z =  zAbs;
+          } else {
+            z = -zAbs;
+          }
+
           collectedResults.push({
               Z: z,
               absZ: zAbs,
               name: geneData.rownames[geneindex],
               fe: 0,
-              M: Math.log(meanA/meanB) / log2,
+              M: M,
               highest: false
             })
 
