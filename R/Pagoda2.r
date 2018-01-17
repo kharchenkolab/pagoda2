@@ -1567,7 +1567,7 @@ Pagoda2 <- setRefClass(
       } else if(embeddingType=='tSNE') {
         require(Rtsne);
         cat("running tSNE using",n.cores,"cores:\n")
-        emb <- Rtsne(x,pca=F, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
+        emb <- Rtsne(x, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
