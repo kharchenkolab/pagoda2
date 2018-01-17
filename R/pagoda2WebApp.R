@@ -1093,11 +1093,11 @@ pagoda2WebApp <- setRefClass(
         },
 
         geneInformationJSON = function() {
-            dataset <- originalP2object$misc$varinfo[,c("m","v")];
+            dataset <- originalP2object$misc$varinfo[,c("m","qv")];
             dataset$name <- rownames(dataset);
             # Don't allow NaNs in dispesion, replace with  negative value
-            dataset$v[is.nan(dataset$v)] <- -1e3L
-            dataset$v[!is.finite(dataset$v)] <- -1e3L
+            dataset$v[is.nan(dataset$qv)] <- 0
+            dataset$v[!is.finite(dataset$qv)] <- 0
 
             dataset$m[is.nan(dataset$m)] <- 0
             dataset$m[!is.finite(dataset$m)] <- 0
@@ -1107,7 +1107,7 @@ pagoda2WebApp <- setRefClass(
             retd <-  apply(dataset,
                            1, function(x) {
                                list(genename = x[["name"]],
-                                    dispersion =x[["v"]],
+                                    dispersion =x[["qv"]],
                                     meanExpr = x[["m"]])
                            });
             retd <- unname(retd);
