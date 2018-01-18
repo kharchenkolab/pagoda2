@@ -985,23 +985,24 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
         var colorData = metadata[metadataName].data;
         var colorPalette = metadata[metadataName].palette;
 
+	var cellsWithoutMetadata = [];
+	var undefinedColor = false;
+
         for (var i = 0; i < plotdata.length; i++) {
             var cellId = plotdata[i][0];
             var clusterId = colorData[cellId];
             var clusterColor;
 
             if (typeof clusterId === 'undefined') {
-                // There is a cell that is not in the metadata
-                console.warn('Embedding plotter found a cell that does not have and entry ' +
-                    'in the selected metadata. Cellid: "' + cellId + '" metadata: "' +
-                    metadataName + '". This is an error with the data provided by server.');
+		cellsWithoutMetadata.push(cellId);
                 clusterColor = '#000000'; // default to black
             } else {
                 clusterColor = colorPalette[clusterId];
             }
 
             if (typeof clusterColor == 'undefined') {
-                console.error('Undefined  color found');
+		undefinedColor = true;
+		clusterColor = '#000000';
             }
 
             // TODO use objct function here
@@ -1014,7 +1015,17 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
             clusterColor = 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
 
             plotdata[i][3] = clusterColor;
-        }
+        } // for
+
+	// Report any errors to the console
+	if (undefinedColor) {
+	    console.warn('Missing color found');
+	}
+	if (cellsWithoutMetadata.lenth > 0) {
+	    console.warn('At least one cell has missing metadata');
+	}
+	
+
         callback(plotdata);
         return;
     });
