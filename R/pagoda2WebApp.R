@@ -619,17 +619,9 @@ pagoda2WebApp <- setRefClass(
                                # Which embedding?
                                embeddingType <- url_decode(requestArguments[['embeddingtype']]);
                                
-                               if ( (!is.null(embeddingType)) &&
-                                    embeddingType %in% names(originalP2object$embeddings[[type]]) ) {
-                                 
-                                 a <- originalP2object$embeddings[[type]][[embeddingType]];
-                                 ret <- list(
-                                   values = .self$packCompressFloat64Array(as.vector(a)),
-                                   dim =  dim(a),
-                                   rownames = rownames(a),
-                                   colnames = colnames(a)
-                                 );
-                                 response$write(toJSON(ret));
+                               if ( (!is.null(embeddingType)) &&  embeddingType %in% names(originalP2object$embeddings[[type]]) ) {
+                                 compEmb <- getCompressedEmbedding(type,embeddingType)
+                                 response$write(compEmb);
                                  return(response$finish());
                                } else {
                                  response$write(paste0("Error: Unknown embedding specified: ",embeddingType));
@@ -785,9 +777,7 @@ pagoda2WebApp <- setRefClass(
     },
     
     serializeToStaticFast = function(binary.filename=NULL, verbose = FALSE){
-      if (is.null(binary.filename)) {
-        stop('Please specify a directory');
-      }
+      if (is.null(binary.filename)) { stop('Please specify a directory'); }
       
       exportList <- new("list");
       
@@ -800,15 +790,7 @@ pagoda2WebApp <- setRefClass(
         for (embed in names(embStructure[[reduc]])) {
           id <- embStructure[[reduc]][[embed]][[1]];
           filename <- paste0(id, '.json');
-          
-          a <- originalP2object$embeddings[[reduc]][[embed]];
-          ret <- list(
-            values = .self$packCompressFloat64Array(as.vector(a)),
-            dim =  dim(a),
-            rownames = rownames(a),
-            colnames = colnames(a)
-          );
-          e <- toJSON(ret);
+          e <- getCompressedEmbedding(reduc,embed)
           exportList[filename] <- e;
         }
       }
@@ -927,6 +909,20 @@ pagoda2WebApp <- setRefClass(
       }
     },
     
+    getCompressedEmbedding = function(reduc, embed) {
+      emb <- originalP2object$embeddings[[reduc]][[embed]];
+      ## Flip Y coordinate
+      emb[,2] <- (-1) * emb[,2]
+      ret <- list(
+        values = .self$packCompressFloat64Array(as.vector(emb)),
+        dim =  dim(emb),
+        rownames = rownames(emb),
+        colnames = colnames(emb)
+      );
+      toJSON(ret)
+    },
+    
+    
     # Logging function for console
     serverLog = function(message) {
       print(message);
@@ -1003,6 +999,7 @@ pagoda2WebApp <- setRefClass(
         }
       }
       resp
-    }
+    } ## generateEmbeddingStructure
+    
   ) # methods list
 ) # setRefClass
