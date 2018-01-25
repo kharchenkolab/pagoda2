@@ -2,3 +2,13 @@
 .Rhistory
 .RData
 *~
+inst/lib
+.Rproj.user
+src/*.o
+src/*.so
+src/*.dll
+src/RcppExports.cpp
+src/symbols.rds
+.Rhistory
+.RData
+.DS_Store
