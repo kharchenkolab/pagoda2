@@ -447,3 +447,23 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 
   deSets
 }
+
+#' Converts the output of hierarchical differential expression aspects
+#' into genesets that can be loaded into a p2 web app to retrive the genes
+#' that make the geneset interactively
+#' @param o output of getHierarchicalDiffExpressionAspects
+#' @return a geneset that can be loaded into p2 web genesets
+#' @export hierDiffToGenesets
+hierDiffToGenesets <- function(o) {
+  l <- as.list(o$env)
+  lapply(namedNames(l), function(n) {
+    list(
+      properties = list(locked = T, genesetname=n,shortdescription=n),
+      genes = l[[n]]
+    )
+  })
+}
+
+
+
+
