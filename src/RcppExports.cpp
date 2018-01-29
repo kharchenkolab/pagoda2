@@ -19,76 +19,6 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// crossNN
-arma::sp_mat crossNN(NumericMatrix mA, NumericMatrix mB, int k, int spaceType, float lpSpaceP, bool verbose, int nThreads);
-RcppExport SEXP _pagoda2_crossNN(SEXP mASEXP, SEXP mBSEXP, SEXP kSEXP, SEXP spaceTypeSEXP, SEXP lpSpacePSEXP, SEXP verboseSEXP, SEXP nThreadsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type mA(mASEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type mB(mBSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type spaceType(spaceTypeSEXP);
-    Rcpp::traits::input_parameter< float >::type lpSpaceP(lpSpacePSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(crossNN(mA, mB, k, spaceType, lpSpaceP, verbose, nThreads));
-    return rcpp_result_gen;
-END_RCPP
-}
-// interNN
-DataFrame interNN(NumericMatrix mA, NumericMatrix mB, NumericVector kA, NumericVector kB, int spaceType, float lpSpaceP, bool verbose, bool neighbourhoodAverage, NumericVector neighbourAvgKA, NumericVector neighbourAvgKB, bool mutualOnly);
-RcppExport SEXP _pagoda2_interNN(SEXP mASEXP, SEXP mBSEXP, SEXP kASEXP, SEXP kBSEXP, SEXP spaceTypeSEXP, SEXP lpSpacePSEXP, SEXP verboseSEXP, SEXP neighbourhoodAverageSEXP, SEXP neighbourAvgKASEXP, SEXP neighbourAvgKBSEXP, SEXP mutualOnlySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type mA(mASEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type mB(mBSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type kA(kASEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type kB(kBSEXP);
-    Rcpp::traits::input_parameter< int >::type spaceType(spaceTypeSEXP);
-    Rcpp::traits::input_parameter< float >::type lpSpaceP(lpSpacePSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< bool >::type neighbourhoodAverage(neighbourhoodAverageSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type neighbourAvgKA(neighbourAvgKASEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type neighbourAvgKB(neighbourAvgKBSEXP);
-    Rcpp::traits::input_parameter< bool >::type mutualOnly(mutualOnlySEXP);
-    rcpp_result_gen = Rcpp::wrap(interNN(mA, mB, kA, kB, spaceType, lpSpaceP, verbose, neighbourhoodAverage, neighbourAvgKA, neighbourAvgKB, mutualOnly));
-    return rcpp_result_gen;
-END_RCPP
-}
-// neighbourhoodAverageMatrix
-NumericMatrix neighbourhoodAverageMatrix(NumericMatrix mA, bool verbose, float lpSpaceP, int spaceType, int nThreads, int k);
-RcppExport SEXP _pagoda2_neighbourhoodAverageMatrix(SEXP mASEXP, SEXP verboseSEXP, SEXP lpSpacePSEXP, SEXP spaceTypeSEXP, SEXP nThreadsSEXP, SEXP kSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type mA(mASEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< float >::type lpSpaceP(lpSpacePSEXP);
-    Rcpp::traits::input_parameter< int >::type spaceType(spaceTypeSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(neighbourhoodAverageMatrix(mA, verbose, lpSpaceP, spaceType, nThreads, k));
-    return rcpp_result_gen;
-END_RCPP
-}
-// neighbourhoodAverageMatrix2
-NumericMatrix neighbourhoodAverageMatrix2(NumericMatrix mA, bool verbose, float lpSpaceP, int spaceType, int nThreads, int k);
-RcppExport SEXP _pagoda2_neighbourhoodAverageMatrix2(SEXP mASEXP, SEXP verboseSEXP, SEXP lpSpacePSEXP, SEXP spaceTypeSEXP, SEXP nThreadsSEXP, SEXP kSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type mA(mASEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< float >::type lpSpaceP(lpSpacePSEXP);
-    Rcpp::traits::input_parameter< int >::type spaceType(spaceTypeSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    rcpp_result_gen = Rcpp::wrap(neighbourhoodAverageMatrix2(mA, verbose, lpSpaceP, spaceType, nThreads, k));
-    return rcpp_result_gen;
-END_RCPP
-}
 // non0LogColLmS
 int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells);
 RcppExport SEXP _pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP) {
@@ -199,78 +129,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// hnswKnn
-arma::sp_mat hnswKnn(NumericMatrix m, int k, int nThreads, float p, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose, int indexType);
-RcppExport SEXP _pagoda2_hnswKnn(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP pSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP) {
+// n2Knn
+arma::sp_mat n2Knn(NumericMatrix m, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
+RcppExport SEXP _pagoda2_n2Knn(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< float >::type p(pSEXP);
-    Rcpp::traits::input_parameter< int >::type efConstruction(efConstructionSEXP);
-    Rcpp::traits::input_parameter< int >::type indexThreadQty(indexThreadQtySEXP);
-    Rcpp::traits::input_parameter< int >::type searchMethod(searchMethodSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< int >::type indexType(indexTypeSEXP);
-    rcpp_result_gen = Rcpp::wrap(hnswKnn(m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose, indexType));
-    return rcpp_result_gen;
-END_RCPP
-}
-// hnswKnn2
-arma::sp_mat hnswKnn2(NumericMatrix m, int k, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
-RcppExport SEXP _pagoda2_hnswKnn2(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< int >::type efConstruction(efConstructionSEXP);
-    Rcpp::traits::input_parameter< int >::type indexThreadQty(indexThreadQtySEXP);
-    Rcpp::traits::input_parameter< int >::type searchMethod(searchMethodSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(hnswKnn2(m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// hnswKnnJS
-arma::sp_mat hnswKnnJS(NumericMatrix m, int k, int nThreads, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
-RcppExport SEXP _pagoda2_hnswKnnJS(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< int >::type efConstruction(efConstructionSEXP);
-    Rcpp::traits::input_parameter< int >::type indexThreadQty(indexThreadQtySEXP);
-    Rcpp::traits::input_parameter< int >::type searchMethod(searchMethodSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(hnswKnnJS(m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
-// hnswKnnLp
-arma::sp_mat hnswKnnLp(NumericMatrix m, int k, int nThreads, float p, int efConstruction, int indexThreadQty, int searchMethod, int seed, bool verbose);
-RcppExport SEXP _pagoda2_hnswKnnLp(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP pSEXP, SEXP efConstructionSEXP, SEXP indexThreadQtySEXP, SEXP searchMethodSEXP, SEXP seedSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
-    Rcpp::traits::input_parameter< float >::type p(pSEXP);
-    Rcpp::traits::input_parameter< int >::type efConstruction(efConstructionSEXP);
-    Rcpp::traits::input_parameter< int >::type indexThreadQty(indexThreadQtySEXP);
-    Rcpp::traits::input_parameter< int >::type searchMethod(searchMethodSEXP);
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(hnswKnnLp(m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose));
+    Rcpp::traits::input_parameter< string >::type indexType(indexTypeSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int >::type MaxM0(MaxM0SEXP);
+    rcpp_result_gen = Rcpp::wrap(n2Knn(m, k, nThreads, verbose, indexType, M, MaxM0));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -376,10 +248,6 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 3},
-    {"_pagoda2_crossNN", (DL_FUNC) &_pagoda2_crossNN, 7},
-    {"_pagoda2_interNN", (DL_FUNC) &_pagoda2_interNN, 11},
-    {"_pagoda2_neighbourhoodAverageMatrix", (DL_FUNC) &_pagoda2_neighbourhoodAverageMatrix, 6},
-    {"_pagoda2_neighbourhoodAverageMatrix2", (DL_FUNC) &_pagoda2_neighbourhoodAverageMatrix2, 6},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 2},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},
@@ -389,10 +257,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_orderColumnRows", (DL_FUNC) &_pagoda2_orderColumnRows, 2},
     {"_pagoda2_smatColVecCorr", (DL_FUNC) &_pagoda2_smatColVecCorr, 3},
     {"_pagoda2_arma_mat_cor", (DL_FUNC) &_pagoda2_arma_mat_cor, 1},
-    {"_pagoda2_hnswKnn", (DL_FUNC) &_pagoda2_hnswKnn, 10},
-    {"_pagoda2_hnswKnn2", (DL_FUNC) &_pagoda2_hnswKnn2, 8},
-    {"_pagoda2_hnswKnnJS", (DL_FUNC) &_pagoda2_hnswKnnJS, 8},
-    {"_pagoda2_hnswKnnLp", (DL_FUNC) &_pagoda2_hnswKnnLp, 9},
+    {"_pagoda2_n2Knn", (DL_FUNC) &_pagoda2_n2Knn, 7},
     {"_pagoda2_matWCorr", (DL_FUNC) &_pagoda2_matWCorr, 2},
     {"_pagoda2_winsorizeMatrix", (DL_FUNC) &_pagoda2_winsorizeMatrix, 2},
     {"_pagoda2_plSemicompleteCor2", (DL_FUNC) &_pagoda2_plSemicompleteCor2, 1},

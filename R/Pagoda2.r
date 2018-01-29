@@ -46,7 +46,7 @@ Pagoda2 <- setRefClass(
         callSuper(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose);
         if(!missing(x) && is.null(counts)) { # interpret x as a countMatrix
           if (class(x) == 'matrix') {
-            x <- Matrix(m, sparse=T)
+            x <- Matrix(x, sparse=T)
           }
           if(!(class(x) == 'dgCMatrix')) {
             stop("x is not of class dgCMatrix or matrix");
@@ -299,24 +299,13 @@ Pagoda2 <- setRefClass(
         x.was.given <- TRUE;
       }
 
-
-      # TODO: enable sparse matrix support for hnsKnn2
-
       if(distance=='cosine') {
         if(center) {
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
-        xn <- hnswKnn2(x,k,nThreads=n.cores,verbose=verbose)
-      } else if(distance=='JS') {
-        x <- x/pmax(1,Matrix::rowSums(x));
-        xn <- hnswKnnJS(x,k,nThreads=n.cores)
+        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='angular')
       } else if(distance=='L2') {
-        xn <- hnswKnnLp(x,k,nThreads=n.cores,p=2.0,verbose=verbose)
-      } else if(distance=='L1') {
-        xn <- hnswKnnLp(x,k,nThreads=n.cores,p=1.0,verbose=verbose)
-      } else if(distance=='Lp') {
-        if(is.null(p)) stop("p argument must be provided when using Lp distance")
-        xn <- hnswKnnLp(x,k,nThreads=n.cores,p=p,verbose=verbose)
+        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='L2r')
       } else {
         stop("unknown distance measure specified")
       }
@@ -682,7 +671,7 @@ Pagoda2 <- setRefClass(
       if(center) {
         pcas <- pcas - Matrix::rowMeans(pcas)
       }
-      xn <- hnswKnn2(pcas, k, nThreads= n.cores, verbose=verbose)
+      xn <- n2Knn(pcas, k, nThreads= n.cores, verbose=verbose)
       diag(xn) <- 0; # Remove self edges
       xn <- as(xn,'dgTMatrix'); # will drop 0s
       # Turn into a dataframe, convert from correlation distance into weight
@@ -1312,7 +1301,7 @@ Pagoda2 <- setRefClass(
       return(invisible(pcas))
     },
 
-    localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL , k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,recursive=TRUE,euclidean=FALSE,perplexity=k,debug=F) {
+    localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL , k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,take.top.odgenes=FALSE, recursive=TRUE,euclidean=FALSE,perplexity=k,debug=F,return.pca=F) {
       if(type=='counts') {
         x <- counts;
       } else {
@@ -1382,7 +1371,11 @@ Pagoda2 <- setRefClass(
           odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log(od.alpha)]
         }
         if(length(odgenes)<min.odgenes) {
-          return(NULL);
+          if(take.top.odgenes) {
+            odgenes <- rownames(df)[order(df$lp,decreasing=F)[1:min.odgenes]]
+          } else {
+            return(NULL);
+          }
         }
         sf <- df$gsf[match(odgenes,rownames(df))];
         y <- t(t(x[cells,odgenes])*sf)
@@ -1405,10 +1398,11 @@ Pagoda2 <- setRefClass(
         
         pcas <- as.matrix(t(t(t(t(x[,odgenes])*sf) %*% pcs$v) - t(pcs$center %*% pcs$v)))
         cat(".")        
-        return(list(pcs=pcs,sf=sf,df=df,cells=cells,pcas=pcas))
+        return(list(pcs=pcs,sf=sf,df=df,cells=cells,pcas=pcas,odgenes=odgenes))
       },n.cores=n.cores)
       cat(" done\n");
-
+      if(return.pca) return(gpcs)
+      
       ivi <- unlist(lapply(gpcs,is.null))
       if(any(ivi)) { gpcs <- gpcs[!ivi]; rgroups <- rgroups[!ivi]; }
 

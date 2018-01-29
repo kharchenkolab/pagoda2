@@ -9,10 +9,11 @@
 #include <vector>
 #include <queue>
 #include <list>
+#include <omp.h>
 
 #include <boost/progress.hpp>
 
-#include "space.h"
+/*#include "space.h"
 #include "space/space_scalar.h"
 #include "space/space_js.h"
 #include "lshkit.h"
@@ -26,10 +27,10 @@
 #include "methodfactory.h"
 #include "spacefactory.h"
 #include "ztimer.h"
-
+*/
 using namespace std;
 using namespace Rcpp;
-using namespace similarity;
+//using namespace similarity;
 
 using std::chrono::duration;
 using std::chrono::duration_cast;

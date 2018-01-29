@@ -5,22 +5,6 @@ WriteListToBinary <- function(expL, outfile, verbose = FALSE) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile, verbose))
 }
 
-crossNN <- function(mA, mB, k, spaceType = 2L, lpSpaceP = 2.0, verbose = FALSE, nThreads = 30L) {
-    .Call('_pagoda2_crossNN', PACKAGE = 'pagoda2', mA, mB, k, spaceType, lpSpaceP, verbose, nThreads)
-}
-
-interNN <- function(mA, mB, kA, kB, spaceType = 2L, lpSpaceP = 2.0, verbose = FALSE, neighbourhoodAverage = FALSE, neighbourAvgKA = 10L, neighbourAvgKB = 10L, mutualOnly = TRUE) {
-    .Call('_pagoda2_interNN', PACKAGE = 'pagoda2', mA, mB, kA, kB, spaceType, lpSpaceP, verbose, neighbourhoodAverage, neighbourAvgKA, neighbourAvgKB, mutualOnly)
-}
-
-neighbourhoodAverageMatrix <- function(mA, verbose = TRUE, lpSpaceP = 2.0, spaceType = 2L, nThreads = 30L, k = 10L) {
-    .Call('_pagoda2_neighbourhoodAverageMatrix', PACKAGE = 'pagoda2', mA, verbose, lpSpaceP, spaceType, nThreads, k)
-}
-
-neighbourhoodAverageMatrix2 <- function(mA, verbose = TRUE, lpSpaceP = 2.0, spaceType = 2L, nThreads = 30L, k = 10L) {
-    .Call('_pagoda2_neighbourhoodAverageMatrix2', PACKAGE = 'pagoda2', mA, verbose, lpSpaceP, spaceType, nThreads, k)
-}
-
 non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L) {
     .Call('_pagoda2_non0LogColLmS', PACKAGE = 'pagoda2', sY, X, ldepth, maxCells)
 }
@@ -57,20 +41,8 @@ arma_mat_cor <- function(m) {
     .Call('_pagoda2_arma_mat_cor', PACKAGE = 'pagoda2', m)
 }
 
-hnswKnn <- function(m, k = 5L, nThreads = 30L, p = 2.0, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE, indexType = 1L) {
-    .Call('_pagoda2_hnswKnn', PACKAGE = 'pagoda2', m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose, indexType)
-}
-
-hnswKnn2 <- function(m, k = 5L, nThreads = 20L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
-    .Call('_pagoda2_hnswKnn2', PACKAGE = 'pagoda2', m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose)
-}
-
-hnswKnnJS <- function(m, k = 5L, nThreads = 20L, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
-    .Call('_pagoda2_hnswKnnJS', PACKAGE = 'pagoda2', m, k, nThreads, efConstruction, indexThreadQty, searchMethod, seed, verbose)
-}
-
-hnswKnnLp <- function(m, k = 5L, nThreads = 30L, p = 2.0, efConstruction = 20L, indexThreadQty = 4L, searchMethod = 4L, seed = -1L, verbose = TRUE) {
-    .Call('_pagoda2_hnswKnnLp', PACKAGE = 'pagoda2', m, k, nThreads, p, efConstruction, indexThreadQty, searchMethod, seed, verbose)
+n2Knn <- function(m, k, nThreads = 10L, verbose = TRUE, indexType = "angular", M = 12L, MaxM0 = 24L) {
+    .Call('_pagoda2_n2Knn', PACKAGE = 'pagoda2', m, k, nThreads, verbose, indexType, M, MaxM0)
 }
 
 matWCorr <- function(Mat, Matw) {

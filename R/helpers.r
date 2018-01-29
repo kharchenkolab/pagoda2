@@ -84,6 +84,7 @@ fast.pca <- function(m,nPcs=2,tol=1e-10,scale=F,center=F,transpose=F) {
 
 # a utility function to translate factor into colors
 fac2col <- function(x,s=1,v=1,shuffle=FALSE,min.group.size=1,return.details=F,unclassified.cell.color='gray50',level.colors=NULL) {
+  nx <- names(x);
   x <- as.factor(x);
   if(min.group.size>1) {
     x <- factor(x,exclude=levels(x)[unlist(tapply(rep(1,length(x)),x,length))<min.group.size])
@@ -100,6 +101,7 @@ fac2col <- function(x,s=1,v=1,shuffle=FALSE,min.group.size=1,return.details=F,un
 
   y <- col[as.integer(x)]; names(y) <- names(x);
   y[is.na(y)] <- unclassified.cell.color;
+  names(y) <- nx;
   if(return.details) {
     return(list(colors=y,palette=col))
   } else {
@@ -108,6 +110,7 @@ fac2col <- function(x,s=1,v=1,shuffle=FALSE,min.group.size=1,return.details=F,un
 }
 
 val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.95) {
+  nx <- names(x);
   if(all(sign(x)>=0)) {
     if(is.null(gradientPalette)) {
       gradientPalette <- colorRampPalette(c('gray90','red'), space = "Lab")(1024)
@@ -136,7 +139,9 @@ val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.9
 
   }
 
-  gradientPalette[x*(length(gradientPalette)-1)+1]
+  col <- gradientPalette[x*(length(gradientPalette)-1)+1]
+  names(col) <- nx;
+  col
 }
 
 
