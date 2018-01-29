@@ -5,24 +5,24 @@ WriteListToBinary <- function(expL, outfile, verbose = FALSE) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile, verbose))
 }
 
-non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L) {
-    .Call('_pagoda2_non0LogColLmS', PACKAGE = 'pagoda2', sY, X, ldepth, maxCells)
+non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L, ncores = 1L) {
+    .Call('_pagoda2_non0LogColLmS', PACKAGE = 'pagoda2', sY, X, ldepth, maxCells, ncores)
 }
 
-colMeanVarS <- function(sY, rowSel) {
-    .Call('_pagoda2_colMeanVarS', PACKAGE = 'pagoda2', sY, rowSel)
+colMeanVarS <- function(sY, rowSel, ncores = 1L) {
+    .Call('_pagoda2_colMeanVarS', PACKAGE = 'pagoda2', sY, rowSel, ncores)
 }
 
 colSumByFac <- function(sY, rowSel) {
     .Call('_pagoda2_colSumByFac', PACKAGE = 'pagoda2', sY, rowSel)
 }
 
-inplaceColMult <- function(sY, mult, rowSel) {
-    .Call('_pagoda2_inplaceColMult', PACKAGE = 'pagoda2', sY, mult, rowSel)
+inplaceColMult <- function(sY, mult, rowSel, ncores = 1L) {
+    .Call('_pagoda2_inplaceColMult', PACKAGE = 'pagoda2', sY, mult, rowSel, ncores)
 }
 
-inplaceWinsorizeSparseCols <- function(sY, n) {
-    .Call('_pagoda2_inplaceWinsorizeSparseCols', PACKAGE = 'pagoda2', sY, n)
+inplaceWinsorizeSparseCols <- function(sY, n, ncores = 1L) {
+    .Call('_pagoda2_inplaceWinsorizeSparseCols', PACKAGE = 'pagoda2', sY, n, ncores)
 }
 
 jsDist <- function(m) {

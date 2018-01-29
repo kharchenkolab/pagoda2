@@ -164,7 +164,7 @@ Pagoda2 <- setRefClass(
         if(trim>0) {
           cat("winsorizing ... ")
           counts <<- counts/as.numeric(depth);
-          inplaceWinsorizeSparseCols(counts,trim);
+          inplaceWinsorizeSparseCols(counts,trim,n.cores);
           counts <<- counts*as.numeric(depth);
           if(is.null(lib.sizes)) {
             depth <<- round(Matrix::rowSums(counts))
@@ -185,7 +185,7 @@ Pagoda2 <- setRefClass(
     },
 
     # adjust variance of the residual matrix, determine overdispersed sites
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells)) {
+    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
       #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if(!is.null(cells)) { # translate cells into a rowSel boolean vector
         if(!(is.logical(cells) && length(cells)==nrow(counts))) {
@@ -200,7 +200,7 @@ Pagoda2 <- setRefClass(
       }
 
       if(verbose) cat("calculating variance fit ...")
-      df <- colMeanVarS(counts,rowSel);
+      df <- colMeanVarS(counts,rowSel,n.cores);
 
       df$m <- log(df$m); df$v <- log(df$v);
       rownames(df) <- colnames(counts);
@@ -299,15 +299,15 @@ Pagoda2 <- setRefClass(
         x.was.given <- TRUE;
       }
 
-      if(distance=='cosine') {
+      if(distance %in% c('cosine','angular')) {
         if(center) {
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
         xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='angular')
-      } else if(distance=='L2') {
-        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='L2r')
+      } else if(distance %in% c('L2','euclidean')) {
+        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='L2')
       } else {
-        stop("unknown distance measure specified")
+        stop("unknown distance measure specified. Currently supported: angular, L2")
       }
       colnames(xn) <- rownames(xn) <- rownames(x);
       

@@ -20,8 +20,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // non0LogColLmS
-int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells);
-RcppExport SEXP _pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP) {
+int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells, int ncores);
+RcppExport SEXP _pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -29,19 +29,21 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type ldepth(ldepthSEXP);
     Rcpp::traits::input_parameter< const int >::type maxCells(maxCellsSEXP);
-    rcpp_result_gen = Rcpp::wrap(non0LogColLmS(sY, X, ldepth, maxCells));
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(non0LogColLmS(sY, X, ldepth, maxCells, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
 // colMeanVarS
-Rcpp::DataFrame colMeanVarS(SEXP sY, SEXP rowSel);
-RcppExport SEXP _pagoda2_colMeanVarS(SEXP sYSEXP, SEXP rowSelSEXP) {
+Rcpp::DataFrame colMeanVarS(SEXP sY, SEXP rowSel, int ncores);
+RcppExport SEXP _pagoda2_colMeanVarS(SEXP sYSEXP, SEXP rowSelSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type sY(sYSEXP);
     Rcpp::traits::input_parameter< SEXP >::type rowSel(rowSelSEXP);
-    rcpp_result_gen = Rcpp::wrap(colMeanVarS(sY, rowSel));
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(colMeanVarS(sY, rowSel, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -58,27 +60,29 @@ BEGIN_RCPP
 END_RCPP
 }
 // inplaceColMult
-int inplaceColMult(SEXP sY, const arma::vec& mult, SEXP rowSel);
-RcppExport SEXP _pagoda2_inplaceColMult(SEXP sYSEXP, SEXP multSEXP, SEXP rowSelSEXP) {
+int inplaceColMult(SEXP sY, const arma::vec& mult, SEXP rowSel, int ncores);
+RcppExport SEXP _pagoda2_inplaceColMult(SEXP sYSEXP, SEXP multSEXP, SEXP rowSelSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type sY(sYSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type mult(multSEXP);
     Rcpp::traits::input_parameter< SEXP >::type rowSel(rowSelSEXP);
-    rcpp_result_gen = Rcpp::wrap(inplaceColMult(sY, mult, rowSel));
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(inplaceColMult(sY, mult, rowSel, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
 // inplaceWinsorizeSparseCols
-int inplaceWinsorizeSparseCols(SEXP sY, const int n);
-RcppExport SEXP _pagoda2_inplaceWinsorizeSparseCols(SEXP sYSEXP, SEXP nSEXP) {
+int inplaceWinsorizeSparseCols(SEXP sY, const int n, int ncores);
+RcppExport SEXP _pagoda2_inplaceWinsorizeSparseCols(SEXP sYSEXP, SEXP nSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type sY(sYSEXP);
     Rcpp::traits::input_parameter< const int >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(inplaceWinsorizeSparseCols(sY, n));
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(inplaceWinsorizeSparseCols(sY, n, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -130,12 +134,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // n2Knn
-arma::sp_mat n2Knn(NumericMatrix m, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
+arma::sp_mat n2Knn(const NumericMatrix& m, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
 RcppExport SEXP _pagoda2_n2Knn(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type m(mSEXP);
     Rcpp::traits::input_parameter< int >::type k(kSEXP);
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
@@ -248,11 +252,11 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 3},
-    {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 4},
-    {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 2},
+    {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 5},
+    {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 3},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},
-    {"_pagoda2_inplaceColMult", (DL_FUNC) &_pagoda2_inplaceColMult, 3},
-    {"_pagoda2_inplaceWinsorizeSparseCols", (DL_FUNC) &_pagoda2_inplaceWinsorizeSparseCols, 2},
+    {"_pagoda2_inplaceColMult", (DL_FUNC) &_pagoda2_inplaceColMult, 4},
+    {"_pagoda2_inplaceWinsorizeSparseCols", (DL_FUNC) &_pagoda2_inplaceWinsorizeSparseCols, 3},
     {"_pagoda2_jsDist", (DL_FUNC) &_pagoda2_jsDist, 1},
     {"_pagoda2_orderColumnRows", (DL_FUNC) &_pagoda2_orderColumnRows, 2},
     {"_pagoda2_smatColVecCorr", (DL_FUNC) &_pagoda2_smatColVecCorr, 3},
