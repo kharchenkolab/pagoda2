@@ -163,6 +163,18 @@ dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd
 }
 
 /**
+ * Get expression values for the specified cells
+ * @description this function will return all the expression values for the specified cells
+ * this is to support fast differential expression analysis. Unlike the getExpressionValuesSparseByCellIndexUnpacked()
+ * function this will use a cell-ordered sparse matrix if available to fetch the requested values
+ * @param cellNames the cells to get the expression values for
+ * @param callback callback function
+ */
+dataController.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback, progressCallback) {
+  return this.internalController.getExpressionValuesSparseByCellName(cellNames, callback, progressCallback);
+}
+
+/**
  * Get a subset of the expression matrix specified but only
  * transfer lz compressed binary array data. Cells are specified
  * using indices on the basis of the default cell order
@@ -173,8 +185,7 @@ dataController.prototype.getAspectMatrix = function(cellIndexStart, cellIndexEnd
  */
 dataController.prototype.getExpressionValuesSparseByCellIndexUnpacked = function(geneIds, cellIndexStart, cellIndexEnd,
                                                                                  getCellNames, callback) {
-
-      return this.internalController.getExpressionValuesSparseByCellIndexUnpacked(geneIds, cellIndexStart, cellIndexEnd, getCellNames, callback);
+      return this.internalController.getExpressionValuesSparseByCellIndexUnpacked(geneIds, cellIndexStart, cellIndexEnd, true, callback);
 }
 
 /**

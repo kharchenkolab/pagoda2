@@ -247,7 +247,6 @@ Pagoda2 <- setRefClass(
       ## }
       if(plot) {
         if(do.par) {
-          old.par <- par();
           par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
         smoothScatter(df$m,df$v,main='',xlab='log10[ magnitude ]',ylab='log10[ variance ]')
@@ -260,9 +259,6 @@ Pagoda2 <- setRefClass(
         abline(h=1,lty=2,col=8)
         if(is.finite(max.adjusted.variance)) { abline(h=max.adjusted.variance,lty=2,col=1) }
         points(df$m[ods],df$qv[ods],col=2,pch='.')
-        if(do.par) {
-          suppressWarnings(par(old.par)); 
-        }
       }
       if(verbose) cat("done.\n")
       return(invisible(df));
@@ -366,9 +362,7 @@ Pagoda2 <- setRefClass(
     },
     # calculate clusters based on the kNN graph
     getKnnClusters=function(type='counts',method=multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=2, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
-      old.par <- par();
-      on.exit(suppressWarnings(par(old.par)));
-
+        
       if(is.null(g)) {
         if(is.null(graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
         g <- graphs[[type]];
@@ -494,11 +488,9 @@ Pagoda2 <- setRefClass(
 
           if(plot) {
             #.self$plotEmbedding(type='PCA',groups=cls.groups,show.legend=T)
-            old.par <- par()
             par(mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
             hcd %>% plot();
             z <- get_nodes_xy(hcd); text(z,labels=round(stevl,2),adj=c(0.4,0.4),cex=0.7)
-            suppressWarnings(par(old.par));
           }
 
           # return details
@@ -521,7 +513,7 @@ Pagoda2 <- setRefClass(
     },
 
     geneKnnbyPCA = function() {
-      warn('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
+      warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
       .self$makeGeneKnnGraph();
     },
 
@@ -552,10 +544,22 @@ Pagoda2 <- setRefClass(
       cl <- as.factor(cl[match(rownames(x),names(cl))]);
 
       if(dist %in% c('pearson','spearman')) {
-        rx <- do.call(cbind,tapply(1:nrow(x),cl,function(ii) colMeans(x[ii,])))
+        rx <- do.call(cbind,tapply(1:nrow(x),cl,function(ii) {
+            if (length(ii) > 1) {
+                Matrix::colMeans(x[ii,])
+            } else {
+                x[ii,]
+            }
+        }))
         d <- as.dist(1-cor(rx,method=dist))
       } else if(dist=='euclidean') {
-        rx <- do.call(rbind,tapply(1:nrow(x),cl,function(ii) colMeans(x[ii,])))
+        rx <- do.call(rbind,tapply(1:nrow(x),cl,function(ii) {
+            if (legnth(ii) > 1) {
+                Matrix::colMeans(x[ii,])
+            } else {
+                x[ii,]
+            }
+        }))
         d <- dist(rx)
       } else if(dist=='JS') {
         # this one has to be done on counts, even if we're working with a reduction
@@ -565,7 +569,7 @@ Pagoda2 <- setRefClass(
         colnames(d) <- rownames(d) <- which(table(cl)>0)
         d <- as.dist(d)
       } else {
-        stop("unknwon distance",dist,"requested")
+        stop("unknown distance",dist,"requested")
       }
 
       dd <- as.dendrogram(hclust(d,method=method))
@@ -617,7 +621,9 @@ Pagoda2 <- setRefClass(
         return(list(dg=dg,pt=pt))
       },n.cores=n.cores)
 
+      
       dexp <- dexp[!unlist(lapply(dexp,is.null))]; # remove cases where nothing was reported
+      dexp <- dexp[!unlist(lapply(dexp,function(x){class(x) == 'try-error'}))] ## remove cases that failed
 
       # fake pathwayOD output
       tamr <- list(xv=do.call(rbind,lapply(dexp,function(x) x$pt)),
@@ -712,6 +718,18 @@ Pagoda2 <- setRefClass(
       return(invisible(cols))
     },
     # determine subpopulation-specific genes
+    ##' @title determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
+    ##' @param type data type (currently only default 'counts' is supported)
+    ##' @param clusterType optional cluster type to use as a group-defining factor
+    ##' @param groups explicit cell group specification - a named cell factor (use NA in the factor to exclude cells from the comparison)
+    ##' @param name name slot to store the results in
+    ##' @param z.threshold minimal absolute Z score (adjusted) to report
+    ##' @param upregulated.only whether to report only genes that are expressed significantly higher in each group
+    ##' @param verbose verbose flag
+    ##' @return a list, with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels); Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest; M - log2 fold change; highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group; fe - fraction of cells in a given group having non-zero expression level of a given gene;
+    ##' @examples
+    ##' result <- r$getDifferentialGenes(groups=r$clusters$PCA$multilevel);
+    ##' str(r$diffgenes)
     getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE) {
       # restrict counts to the cells for which non-NA value has been specified in groups
 
@@ -910,7 +928,11 @@ Pagoda2 <- setRefClass(
       if(inner.clustering) {
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
-          ii[hclust(as.dist(1-cor(em[,ii])),method='complete')$order]
+          if(length(ii)>3) {
+            ii[hclust(as.dist(1-cor(em[,ii,drop=F])),method='complete')$order]
+          } else {
+            ii
+          }
         })
       } else {
         clco <- tapply(1:ncol(em),cols,I)
@@ -1037,7 +1059,11 @@ Pagoda2 <- setRefClass(
       if(inner.clustering) {
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
-          ii[hclust(as.dist(1-cor(em[,ii])),method='single')$order]
+          if(length(ii)>3) {
+            ii[hclust(as.dist(1-cor(em[,ii,drop=F])),method='single')$order]
+          } else {
+            ii
+          }
           # TODO: implement smoothing span support
         })
       } else {
@@ -1057,7 +1083,7 @@ Pagoda2 <- setRefClass(
       if(drawGroupNames) {
         clpos <- (c(0,bp[-length(bp)])+bp)/2;
         labpos <- rev(seq(0,length(bp)+1)/(length(bp)+1)*nrow(em)); labpos <- labpos[-1]; labpos <- labpos[-length(labpos)]
-        text(x=clpos,y=labpos,labels = levels(col),cex=1)
+        text(x=clpos,y=labpos,labels = levels(cols),cex=1)
         # par(xpd=TRUE)
         # clpos <- (c(0,bp[-length(bp)])+bp)/2;
         # labpos <- seq(0,length(bp)+1)/(length(bp)+1)*max(bp); labpos <- labpos[-1]; labpos <- labpos[-length(labpos)]
@@ -1073,9 +1099,6 @@ Pagoda2 <- setRefClass(
                            min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2,
                            shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F,
                            unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
-      old.par <- par();
-      on.exit(suppressWarnings(par(old.par)));
-
 
       if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
       if(is.null(embeddingType)) {
@@ -1157,7 +1180,7 @@ Pagoda2 <- setRefClass(
 
       if(ncol(emb)==2) { # 2D
         if(do.par) {
-          old.par <- par(mar = c(0.5,0.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
+          par(mar = c(0.5,0.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
         plot(emb,col=adjustcolor(cols,alpha=alpha),cex=cex,pch=19,axes=F, panel.first=grid(), ...); box();
         if(mark.clusters) {
@@ -1172,9 +1195,6 @@ Pagoda2 <- setRefClass(
           if(factor.mapping) {
             legend(x=legend.x,pch=rep(19,length(levels(groups))),bty='n',col=factor.colors$palette,legend=names(factor.colors$palette))
           }
-        }
-        if (do.par) {
-          suppressWarnings(par(old.par)); 
         }
         
       } else if(ncol(emb)==3) { #3D
@@ -1423,7 +1443,6 @@ Pagoda2 <- setRefClass(
       vdf$ub.stringent <- RMTstat::qWishartMax(score.alpha/nrow(vdf)/2, n.cells, vdf$n, var = basevar, lower.tail = FALSE)
 
       if(plot) {
-        old.par < par();
         par(mfrow = c(1, 1), mar = c(3.5, 3.5, 1.0, 1.0), mgp = c(2, 0.65, 0))
         un <- sort(unique(vdf$n))
         on <- order(vdf$n, decreasing = FALSE)
@@ -1431,7 +1450,6 @@ Pagoda2 <- setRefClass(
         plot(vdf$n, vdf$var/vdf$n, xlab = "gene set size", ylab = "PC1 var/n", ylim = c(0, max(vdf$var/vdf$n)), col = adjustcolor(pccol[vdf$npc],alpha=0.1),pch=19)
         lines(vdf$n[on], (vdf$exp/vdf$n)[on], col = 2, lty = 1)
         lines(vdf$n[on], (vdf$ub.stringent/vdf$n)[on], col = 2, lty = 2)
-        suppressWarnings(par(old.par));
       }
 
       rs <- (vshift-ev)*vdf$n
@@ -1548,17 +1566,16 @@ Pagoda2 <- setRefClass(
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
         require(Rtsne);
-        cat("calculating distance ... ")
-        if(distance=='L2') {
-          cat("euclidean ... ")
-          d <- dist(x)
+        if (distance=='L2') {
+          cat("running tSNE using",n.cores,"cores:\n")
+          emb <- Rtsne(x, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         } else {
-          cat("pearson ... ")
+          cat('calculating distance ... ');
+          cat('pearson ...')
           d <- 1-cor(t(x))
+          cat("running tSNE using",n.cores,"cores:\n")
+          emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         }
-        cat("done\n")
-        cat("running tSNE using",n.cores,"cores:\n")
-        emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {

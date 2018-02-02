@@ -27,6 +27,18 @@ function p2FileReader(opt_Type, opt_Url, opt_File) {
     } else {
 	    throw new Error('Unknown p2FileReader type: ', opt_Type);
     }
+};
+
+/** 
+ * Reports if the internal reader supports requests spanning multiple regions
+ * of the file
+ */
+p2FileReader.prototype.supportsMultiRequest = function() {
+  return(this.internalReader.supportsMultiRequest());
+};
+
+p2FileReader.prototype.readMultiRange = function(rangeList, callback, progressCallback) {
+  this.internalReader.readMultiRange(rangeList, callback, progressCallback);
 }
 
 /**

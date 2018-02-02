@@ -17,6 +17,14 @@ function LocalFileReader(opt_file) {
 }
 
 /**
+ * Reports if multi regions requests are supported by this file reader
+ * Always returns false
+ */
+LocalFileReader.prototype.supportsMultiRequest = function() {
+  return false;
+}
+
+/**
   * Read the specified block number
 * @param File object to read from
 * @param blockSize size of each block

@@ -1045,18 +1045,18 @@ heatmapViewer.prototype.doDrawHeatmapSparseMatrix = function() {
 
             } else {
                 // Calculate row normalisation values
-                var rowMin = 0; // data.x.slice(rsi, rei).reduce(function(a,b){ return Math.min(a,b) } );
-                var maxFn = function(a, b) {
-                    return Math.max(a, b)
-                };
-                var rowMax = data.x.slice(rsi, rei).reduce(maxFn);
-
-                var sumFn = function(a, b) {
-                    return a + b
-                };
-                var rowSum = data.x.slice(rsi, rei).reduce(sumFn);
+                var dataslice = data.x.slice(rsi, rei);
+                var datasliceLength = dataslice.length;
+                var rowMin = 0;
+                var rowMax = 0;
+                var rowSum = 0;
+                for (var i = 0; i < datasliceLength; i++) {
+                  rowMax = Math.max(rowMax,dataslice[i]);
+                  rowSum += dataslice[i];
+                }
+                rowMax = Math.max(rowMax, 1e-2);
+   
                 var rowMean = rowSum / ncells;
-
                 var maxAbsValue = Math.max(Math.abs(rowMin - rowMean), Math.abs(rowMax - rowMean));
 
                 // color mapper is a function

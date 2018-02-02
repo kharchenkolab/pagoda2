@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * Perform compulations on the data
+ * Perform computations on the data
  * @constructor
  */
 function calculationController(localAvailable, remoteAvailable) {
@@ -11,45 +11,44 @@ function calculationController(localAvailable, remoteAvailable) {
 
     this.methods = [
       {
+        name: 'localWilcoxon',
+        displayName: 'Local Mann-Whitney U test',
+        help: 'Tie Corrected Mann-Whitney U test run on the browser locally',
+        repos: 'wilcoxon',
+      },
+      {
         name: 'remoteDefault',
         displayName: 'Remote Default',
         help: 'Remote Default Method',
         repos: 'remote'
-      },
-      {
-        name: 'localWilcoxon',
-        displayName: 'Local Mann-Whitney U test',
-        help: 'Tie Corrected Mann-Whitney U test run of the browser locally',
-        repos: 'wilcoxon',
       }
     ];
+    this.defaultMethod = 'localWilcoxon';
 
     calculationController.instance = this;
     return this;
 }
 
 /**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
+ * Return the methods that are available for performing DE
  */
-calculationController.prototype.calculateDEfor1selectionbyLocal = function(selectionA,callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, method);
-};
+calculationController.prototype.getAvailableDEmethods = function() {
+  return this.methods;
+}
 
 /**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param selectionB the name of the second cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
+ * Get the current method name
  */
-calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
-};
+calculationController.prototype.getDefaultMethodName = function(){
+  return this.defaultMethod;
+}
+
+/**
+ * Abort the current processing
+ */ 
+calculationController.prototype.abort = function() {
+  this.localWorker.postMessage({ type: "abort" });
+}
 
 /**
  * Calculate differential expression between two cell sets
@@ -72,11 +71,24 @@ calculationController.prototype.calculateDEfor2selections = function(selectionA,
 calculationController.prototype.calculateDEfor1selection = function(selectionA, method, callback) {
   if (method === 'remoteDefault') {
     return this.calculateDEfor1selectionbyRemote(selectionA, callback);
-  } else if(method=== 'localDefault'){
-    return this.calculateDEfor1selectionbyLocal(selectionA, callback, "wilcoxon");
+  } else if(method=== 'localWilcoxon'){
+    var cellSelCntr = new cellSelectionController();
+    return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, "wilcoxon");
   } else {
     callback('Not implemented');
   }
+};
+
+/**
+ * Calculate differential expression for 1 selection against the packground
+ * @param selectionA the name of the first cell selection as registered in the cell selection controller
+ * @param selectionB the name of the second cell selection as registered in the cell selection controller
+ * @param callback
+ * @param method the identifier for the local being used to calculate
+ */
+calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
+  var cellSelCntr = new cellSelectionController();
+  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 };
 
 /**
@@ -96,77 +108,52 @@ calculationController.prototype.calculateDELocal = function(selections, callback
 
   // Generates the new worker
   if(typeof(this.localWorker) === "undefined") {
-    this.localWorker = new Worker("js/statisticsWorker.js");
-    dataCtrl.getAllGeneNames(function(geneNames) {
-      calcCtrl.geneNames = geneNames;
-        dataCtrl.getCellOrder(function(cellData){
-          var callParams = {};
-          callParams.geneNames = geneNames;
+      this.localWorker = new Worker('js/lightDeWorker.js');
+      
+        var executeDE =  function() {
+            var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
+            
+            //builds non-modal progress bar window
+            (new actionPanelUIcontroller()).showDisplayBar();
+            (new actionPanelUIcontroller()).setProgressLabel("Downloading...");
+            
+            // Run de
+            dataCtrl.getExpressionValuesSparseByCellName(
+              cellsRetrieve, 
+              function(data){
+                (new actionPanelUIcontroller()).setProgressLabel("Calculating...");  
+                calculationController.instance.localWorker.postMessage({
+                  type: "rundiffexpr",
+                  data: data, // The sparse array
+                  selections: calcCtrl.selections // The selections to know what is compared with what
+                });
+              },
+              function(percent) {
+                (new actionPanelUIcontroller()).updateProgressPercent(percent*0.5);
+              }
+            ); // getExpressionValuesSparseByCellName
+              
 
-
-          thisController.localWorker.postMessage({
-
-              type: "initiate",
-              method: method,
-              data: cellData,
-              selections: calcCtrl.selections,
-            params: callParams
+        }; // executeDE
+      
+        var selections =  calcCtrl.selections;
+        if(selections.length === 1){
+          dataCtrl.getCellOrder(function(cellnames){
+            selections[1] = [];
+            for(var i = 0 ; i < cellnames.length; i++) {
+              if(selections[0].indexOf(cellnames[i]) === -1) {
+                selections[1].push(cellnames[i]);
+              }
+            }
+            executeDE();
           })
-
-        }); // getCellOrder
-
-
-      //builds non-modal progress bar window
-      thisController.showDisplayBar();
-    }); //getAllGeneNames
-  }
+        } else {
+           executeDE();
+        }
+    } // localWorker undefined
 
   // Handle the incoming message
   this.localWorker.onmessage = thisController.handleWorkerMessage;
-
-  return {
-    //abort function for stop button functionality
-    abort: function(){
-      var calcCtrl = new calculationController()
-      calcCtrl.terminateWorker();
-    } // function abort
-  }; // return
-}
-
-calculationController.prototype.terminateWorker = function() {
-  if(Ext.getCmp("localProgressBarWindow")){
-    Ext.getCmp("localProgressBarWindow").close()
-  }
-
-  var calcCtrl = new calculationController();
-  calcCtrl.localWorker.terminate();
-  calcCtrl.localWorker = undefined;
-}
-
-/**
- * Show the display bar window
- */
-calculationController.prototype.showDisplayBar = function() {
-  Ext.create("Ext.window.Window", {
-      title: "Processing Data Locally",
-      internalPadding: '10 10 10 10',
-      width: "300px",
-      id: "localProgressBarWindow",
-      resizeable: false,
-      items: [
-        {
-          html:'<div style="width:100%;background-color:#DDDDDD;height:30px"> <div id="localProgressBar" style="width:0%;background-color:#B0E2FF;height:30px; text-align: center;vertical-align: middle;line-height: 30px;"><div id="localProgressLabel" style="float: left; width: 100%; height: 100%; position: absolute; vertical-align: middle;">0%</div></div></div>'
-        }
-      ],
-      listeners:{
-        close: function(win){
-          var actionUI = new actionPanelUIcontroller();
-          if(actionUI.currentDErequest){
-            actionUI.stopAnalysisClickHandler() // FIXME
-          }
-        },
-      }
-    }).show(0);
 }
 
 /**
@@ -179,56 +166,44 @@ calculationController.prototype.handleWorkerMessage = function(e) {
     var dataCtrl = new dataController();
     var calcCtrl = new calculationController();
 
-    if(callParams.type === "expr vals"){
-      //debugger;
-      //in the event of a expr vals request sends expression values back for a given chunk of gene names
+    if(callParams.type === "complete"){
+
+      // This shouldn't be here
       if(document.getElementById("localProgressBar")){
-
-        // Update the progress bar
-        //HERE
-        calcCtrl.updateProgressPercent(callParams.params.index/calcCtrl.geneNames.length);
-
-        // Send the next chunk of data
-        dataCtrl.getExpressionValuesSparseByCellIndex(callParams.data, 0,
-          callParams.params.numCells, function(data){
-          w.postMessage({
-              type: "process",
-              data: data,
-            params: callParams.params
-          })
-        })
-
-      } // if(document.getElementById("localProgressBar")
-    } else if(callParams.type === "complete"){
-
-      // FIXME
-      if(document.getElementById("localProgressBar")){
-        w.terminate();
-
         var calcCtrl = new calculationController();
         calcCtrl.localWorker = undefined;
-
-        calcCtrl.setProgressLabel("Finishing...");
-
+        (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
         setTimeout(function(){
           calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
-        },1);
-      }
+        },0.100);
+        
+      } 
+    } else if (callParams.type === "progressupdate") {
+      
+      var thisController = new calculationController();
+      var totalProgress = 0.5 + (callParams.current / callParams.outoff) * 0.5;
+      (new actionPanelUIcontroller()).updateProgressPercent(totalProgress);
+      
+    } else if (callParams.type === "aborted") {
+        w.terminate();
+        calcCtrl.localWorker = undefined;
+        (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
+                setTimeout(function(){
+          calcCtrl.callback(e.data.results);
+          Ext.getCmp("localProgressBarWindow").close();
+        },0.100);
+        
     }
-} // handleWorkerMessage
+}; // handleWorkerMessage
 
-calculationController.prototype.setProgressLabel = function(text) {
-  document.getElementById("localProgressLabel").innerHTML = text;
-}
+/**
+ * Show the display bar window
+ */
 
-calculationController.prototype.updateProgressPercent = function(val) {
-  var execution = val * 100;
-  document.getElementById("localProgressBar").style.width = execution + "%"
-  document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
-}
 
-// Remote AJAX Stuff
+/// Server backed calculations below
+
 /**
  * Calculate differential expression between two groups of cells via connection to a remote server
  * @param selectionA the name of the first cell selection as registered in the cell selection controller
@@ -281,9 +256,4 @@ calculationController.prototype.calculateDEfor2selectionsbyRemote = function(sel
 	return ajaxObj;
 }
 
-/**
- * Return the methods that are available for performing DE
- */
-calculationController.prototype.getAvailableDEmethods = function() {
-  return this.methods;
-}
+

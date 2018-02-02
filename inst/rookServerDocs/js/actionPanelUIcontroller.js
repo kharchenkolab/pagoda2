@@ -13,7 +13,7 @@
  */
 function actionPanelUIcontroller() {
     if (typeof actionPanelUIcontroller.instance === 'object') {
-	return actionPanelUIcontroller.instance;
+	    return actionPanelUIcontroller.instance;
     }
 
     this.generateCellSelectionStore();
@@ -26,10 +26,7 @@ function actionPanelUIcontroller() {
 	    actPaneUICntr.syncCellSelectionStore();
     });
 
-
-    this.currentDErequest = null;
     actionPanelUIcontroller.instance = this;
-
 };
 
 
@@ -74,34 +71,46 @@ actionPanelUIcontroller.prototype.generateUI = function() {
 		height: '100%',
 		width: '100%',
 	    }
-	    /*,
-	    {
-		layout: 'fit',
-		title: 'Enrichment',
-		glyph: 0xf200, // pie chart
-		tooltip: 'Perform enrichment analysis',
-		height: '100%',
-		width: '100%'
-	    } */
 	]
     });
 
     // Data store for the available diff expr methods
     var deMethodsStore = Ext.create('Ext.data.Store', {
-	id: 'availableDEmethodStore',
-	fields: [{name: 'name', type: 'string'},
-	       {name:'displayname', type: 'string'}]
+	      id: 'availableDEmethodStore',
+	      fields: [{name: 'name', type: 'string'}, {name:'displayname', type: 'string'}]
     });
 
     // Populate the store
     var calcCntr = new calculationController();
     var availableMethods = calcCntr.getAvailableDEmethods();
 
-
     for (var i in availableMethods) {
-	    deMethodsStore.add({name: availableMethods[i].name, displayname: availableMethods[i].displayName});
+	    deMethodsStore.add({
+	      name: availableMethods[i].name, 
+	      displayname: availableMethods[i].displayName
+	    });
     }
     this.generateMetaDataStore();
+    
+    var deOptionsChangeListener = function() {
+      var form = Ext.getCmp("formPanelDE").getForm();
+      var analysisType = form.findField("analysisType").getValue();
+      var selectionA = form.findField("selectionA").getDisplayValue();
+      var selectionB = form.findField("selectionB").getDisplayValue();
+
+      var name = '';
+      if(analysisType.analysisTypeSelection === 'vsSelection') {
+        if (selectionA !== '' && selectionB !== '') {
+          name = selectionA + ' VS ' + selectionB;
+        }
+      } else {
+        if (selectionA !== '') {
+          name = selectionA + ' VS Background';
+        }
+      }
+      form.findField("resultName").setValue(name);
+      
+    };
 
     var deTab = Ext.getCmp('differentialExpressionTab');
     var espTab = Ext.getCmp('expressionScatterPlotTab');
@@ -133,7 +142,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
           listeners: {
             change: function(obj, newValue, oldValue, eOpts) {
               var selectionBcontrol = Ext.getCmp('selectionB');
-              //debugger;
               if (newValue.analysisTypeSelection == 'vsSelection') {
                 selectionBcontrol.enable();
               } else if (newValue.analysisTypeSelection == 'vsBackground') {
@@ -141,6 +149,7 @@ actionPanelUIcontroller.prototype.generateUI = function() {
               } else {
                 //Something is wrong
               }
+              deOptionsChangeListener();
             }
           }
         },
@@ -152,7 +161,11 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
     	    displayField: 'displayname',
-    	    valueField: 'selectionname'
+    	    valueField: 'selectionname',
+    	    listeners: {
+            change: function() {deOptionsChangeListener()
+            }
+    	    }
     	},
     	{
     	    id: 'selectionB',
@@ -162,7 +175,11 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('cellSelectionStoreForDE'),
     	    displayField: 'displayname',
-    	    valueField: 'selectionname'
+    	    valueField: 'selectionname',
+    	    listeners: {
+            change: function() {deOptionsChangeListener()
+            }
+    	    }
     	},{
     	    id: 'selectionMethod',
     	    xtype: 'combo',
@@ -171,7 +188,8 @@ actionPanelUIcontroller.prototype.generateUI = function() {
     	    editable: false,
     	    store: Ext.data.StoreManager.lookup('availableDEmethodStore'),
     	    displayField: 'displayname',
-    	    valueField: 'name'
+    	    valueField: 'name',
+    	    value: (new calculationController).getDefaultMethodName()
     	},{
     	  id: 'resultName',
     	  xtype: 'textfield',
@@ -231,7 +249,6 @@ actionPanelUIcontroller.prototype.generateUI = function() {
           listeners: {
             change: function(obj, newValue, oldValue, eOpts) {
               var selectionControl = Ext.getCmp('cellSelectionESP');
-              //debugger;
               if (newValue.analysisTypeSelection == 'vsSelection') {
                 selectionControl.enable();
               } else if (newValue.analysisTypeSelection == 'vsBackground') {
@@ -476,7 +493,9 @@ actionPanelUIcontroller.prototype.generateMDBGwindow = function(){
       }
       barGraphData.data.push(nextArray);
     }
-    for(var cellId in data[metaDataReference].data){barGraphData.data[data[metaDataReference].data[cellId]][data[metaDataComparison].data[cellId]]++}
+    for(var cellId in data[metaDataReference].data){
+      barGraphData.data[data[metaDataReference].data[cellId]][data[metaDataComparison].data[cellId]]++
+    }
     barGraphData.compPalette = data[metaDataComparison].palette;
     barGraphData.refPalette = data[metaDataReference].palette;
     barGraphData.title = "Cluster comparison bar graph";
@@ -512,7 +531,7 @@ actionPanelUIcontroller.prototype.showMDBGhelpDialog = function(){
  */
 actionPanelUIcontroller.prototype.stopAnalysisClickHandler = function() {
  var actionUI = new actionPanelUIcontroller();
- actionUI.currentDErequest.abort();
+ (new calculationController).abort();
  actionUI.currentDErequest = null;
  actionUI.enableRunButton();
 }
@@ -523,15 +542,15 @@ actionPanelUIcontroller.prototype.stopAnalysisClickHandler = function() {
  * @private
  */
 actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
-
   var form = Ext.getCmp("formPanelDE").getForm();
-
   var analysisType = form.findField("analysisType").getValue();
   var selectionA = form.findField("selectionA").getValue();
   var selectionB = form.findField("selectionB").getValue();
   var method = form.findField('selectionMethod').getValue();
   var resultName = form.findField("resultName").getValue();
   var start = new Date();
+  var actionUI = new actionPanelUIcontroller();
+  var calcCntr = new calculationController(); 
 
   if (method === null) {
         Ext.MessageBox.alert('Warning', 'Please enter a method for the differential expression',function(){});
@@ -542,78 +561,73 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
       if (selectionA === selectionB) {
           Ext.MessageBox.alert('Warning', 'Please select a different set for A and B');
       } else {
-
-          var actionUI = new actionPanelUIcontroller();
           actionUI.disableRunButton();
-
-          var calcCntr = new calculationController();
-
-          actionUI.currentDErequest = calcCntr.calculateDEfor2selections(selectionA, selectionB, method,  function(results) {
-            actionUI.enableRunButton();
-              actionUI.currentDErequest = null;
-
-              // Get the cell names in the selection for storing
-              var cellSelCntr = new cellSelectionController();
-              var selAcells = cellSelCntr.getSelection(selectionA);
-              var selBcells = cellSelCntr.getSelection(selectionB);
-
-              // Make a deResult set for saving the results
-              // and save metadata related to this de result
-
-              var end = new Date();
-              var resultSet = new deResultSet();
-              resultSet.setResults(results);
-              resultSet.setName(resultName);
-              resultSet.setSelectionA(selAcells);
-              resultSet.setSelectionB(selBcells);
-              resultSet.setStartTime(start);
-              resultSet.setEndTime(end);
-              // Save this de result set in the differentialExpresionStore
-              var diffExprStore = new differentialExpressionStore();
-              var setId = diffExprStore.addResultSet(resultSet);
-
-              // Notify the DE results table to updata from the store
-              var diffExpreTblView = new diffExprTableViewer();
-              diffExpreTblView.update();
-
-              diffExpreTblView.showSelectedSet(setId);
-
-              // TODO: Change focus to the table and hightlight new de set
-          } );
-      }  // if .. else
+          try {
+            calcCntr.calculateDEfor2selections(selectionA, selectionB, method,  function(results) {
+                actionUI.enableRunButton();
+                // Get the cell names in the selection for storing
+                var cellSelCntr = new cellSelectionController();
+                var selAcells = cellSelCntr.getSelection(selectionA);
+                var selBcells = cellSelCntr.getSelection(selectionB);
+                // Make a deResult set for saving the results and save metadata related to this de result
+                var resultSet = new deResultSet();
+                resultSet.setResults(results);
+                resultSet.setName(resultName);
+                resultSet.setSelectionA(selAcells);
+                resultSet.setSelectionB(selBcells);
+                resultSet.setStartTime(start);
+                resultSet.setEndTime(new Date());
+                // Save this de result set in the differentialExpresionStore
+                var diffExprStore = new differentialExpressionStore();
+                var setId = diffExprStore.addResultSet(resultSet);
+                // Notify the DE results table to updata from the store
+                var diffExpreTblView = new diffExprTableViewer();
+                diffExpreTblView.update();
+                diffExpreTblView.showSelectedSet(setId);
+            });
+          } catch (e) {
+            if (e.code == STATIC_FILE_FIELD_MISSING) {
+              Ext.MessageBox.alert('Warning', 'This file does not support fast differential expression. You can use an older version of the web application to run slow differential expression on this file.');
+            } else {
+              Ext.MessageBox.alert('Warning', 'An unknown error occured.');
+            }
+          }
+      }  // if sela != selb
     } else if (analysisType.analysisTypeSelection == 'vsBackground') {
-          var actionUI = new actionPanelUIcontroller();
           actionUI.disableRunButton();
-          var calcCntr = new calculationController();
-          actionUI.currentDErequest = calcCntr.calculateDEfor1selection(selectionA, method,  function(results) {
-              actionUI.enableRunButton();
-              actionUI.currentDErequest = null;
-              // Get the cell names in the selection for storing
-              var cellSelCntr = new cellSelectionController();
-              var selAcells = cellSelCntr.getSelection(selectionA);
-
-              // Make a deResult set for saving the results
-              // and save metadata related to this de result
-              var end = new Date();
-              var resultSet = new deResultSet();
-              resultSet.setResults(results);
-              resultSet.setName(resultName);
-              resultSet.setSelectionA(selAcells);
-              resultSet.setStartTime(start);
-              resultSet.setEndTime(end);
-              // Save this de result set in the differentialExpresionStore
-              var diffExprStore = new differentialExpressionStore();
-              var setId = diffExprStore.addResultSet(resultSet);
-
-              // Notify the DE results table to updata from the store
-              var diffExpreTblView = new diffExprTableViewer();
-              diffExpreTblView.update();
-
-              diffExpreTblView.showSelectedSet(setId);
-          } );
+          try {
+            calcCntr.calculateDEfor1selection(selectionA, method,  function(results) {
+                actionUI.enableRunButton();
+                // Get the cell names in the selection for storing
+                var cellSelCntr = new cellSelectionController();
+                var selAcells = cellSelCntr.getSelection(selectionA);
+                // Make a deResult set for saving the results and save metadata related to this de result
+                var end = new Date();
+                var resultSet = new deResultSet();
+                resultSet.setResults(results);
+                resultSet.setName(resultName);
+                resultSet.setSelectionA(selAcells);
+                resultSet.setStartTime(start);
+                resultSet.setEndTime(end);
+                // Save this de result set in the differentialExpresionStore
+                var diffExprStore = new differentialExpressionStore();
+                var setId = diffExprStore.addResultSet(resultSet);
+                // Notify the DE results table to updata from the store
+                var diffExpreTblView = new diffExprTableViewer();
+                diffExpreTblView.update();
+                diffExpreTblView.showSelectedSet(setId);
+            });
+          } catch (e) {
+            if (e.code == STATIC_FILE_FIELD_MISSING) {
+              Ext.MessageBox.alert('Warning', 'This file does not support fast differential expression. You can use an older version of the web application to run slow differential expression on this file.');
+            } else {
+              Ext.MessageBox.alert('Warning', 'An unknown error occured.');
+            }
+          }
     } // else.. if
   }
 } // runAnalysisClickHandler
+
 
 
 /**
@@ -672,5 +686,40 @@ actionPanelUIcontroller.prototype.generateMetaDataStore = function(){
   });
 }
 
+
+
+
+actionPanelUIcontroller.prototype.showDisplayBar = function() {
+  Ext.create("Ext.window.Window", {
+      title: "Processing Data Locally",
+      internalPadding: '10 10 10 10',
+      width: "300px",
+      id: "localProgressBarWindow",
+      resizeable: false,
+      items: [
+        {
+          html:'<div style="width:100%;background-color:#DDDDDD;height:30px"> <div id="localProgressBar" style="width:0%;background-color:#B0E2FF;height:30px; text-align: center;vertical-align: middle;line-height: 30px;"><div id="localProgressLabel" style="float: left; width: 100%; height: 100%; position: absolute; vertical-align: middle;">0%</div></div></div>'
+        }
+      ],
+      listeners:{
+        close: function(win){
+          var actionUI = new actionPanelUIcontroller();
+          if(actionUI.currentDErequest){
+            actionUI.stopAnalysisClickHandler() // FIXME
+          }
+        },
+      }
+    }).show(0);
+}
+
+actionPanelUIcontroller.prototype.setProgressLabel = function(text) {
+  document.getElementById("localProgressLabel").innerHTML = text;
+}
+
+actionPanelUIcontroller.prototype.updateProgressPercent = function(val) {
+  var execution = val * 100;
+  document.getElementById("localProgressBar").style.width = execution + "%"
+  document.getElementById("localProgressLabel").innerHTML = Math.floor(execution*10)/10 + "%";
+}
 
 

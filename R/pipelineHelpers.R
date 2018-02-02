@@ -4,14 +4,18 @@
 #' @description adjust variance, calculate pca reduction
 #' make knn graph, identify clusters with infomap, multilevel and walktrap and make
 #' largeVis and tSNE embeddings
+#' @param cd count matrix, rows are genes, columns are cells
 #' @param n.cores number of cores to use
 #' @param batch optional batch factor
 #' @return a new pagoda2 object
 #' @export basicP2proc
-basicP2proc <- function(cd, n.cores = 20, batch = NULL) {
+basicP2proc <- function(cd, n.cores = 20, batch = NULL, keep.genes = NULL) {
   require(Matrix)
 
-  p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch);
+  
+  rownames(cd) <- make.unique(rownames(cd))
+  
+  p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes);
   p2$adjustVariance(plot=F, gam.k=10);
   p2$calculatePcaReduction(nPcs = 300, n.odgenes = 3.e3, maxit = 1000)
   p2$makeKnnGraph(k = 30, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
@@ -102,7 +106,7 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 #' @export webP2proc
 webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.cores =20,
                       make.go.sets = TRUE, make.de.sets = TRUE, go.env = NULL,
-                      make.gene.graph = TRUE) {
+                      make.gene.graph = TRUE, appmetadata = NULL) {
   # Get the gene names
   gene.names <- colnames(p2$counts);
   # Build go terms for the web apps
@@ -443,3 +447,23 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 
   deSets
 }
+
+#' Converts the output of hierarchical differential expression aspects
+#' into genesets that can be loaded into a p2 web app to retrive the genes
+#' that make the geneset interactively
+#' @param o output of getHierarchicalDiffExpressionAspects
+#' @return a geneset that can be loaded into p2 web genesets
+#' @export hierDiffToGenesets
+hierDiffToGenesets <- function(o) {
+  l <- as.list(o$env)
+  lapply(namedNames(l), function(n) {
+    list(
+      properties = list(locked = T, genesetname=n,shortdescription=n),
+      genes = l[[n]]
+    )
+  })
+}
+
+
+
+

@@ -232,10 +232,10 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
         {text: 'Name', dataIndex: 'name', renderer: function(value) {
 		      return Ext.String.format(p2globalParams.misc.jaxGeneQueryFormatString ,value,value)
 		  },},
-        {text: 'Mean', dataIndex: 'M'},
+        {text: 'Log2(fc)', dataIndex: 'M'},
         {text: 'Z-score', dataIndex: 'Z'},
         {text: 'absolute Z-score', dataIndex: 'absZ'},
-        {text: 'Fold Enrichment', dataIndex: 'fe'},
+        {text: 'Fraction Expressing', dataIndex: 'fe'},
         {text: 'highest', dataIndex: 'highest'}
       ],
 

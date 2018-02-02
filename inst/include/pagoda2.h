@@ -8,6 +8,7 @@
 #include <chrono>
 #include <vector>
 #include <queue>
+#include <list>
 
 #include <boost/progress.hpp>
 

@@ -32,6 +32,8 @@ function p2FormatReader(opt_FileReader) {
 
 }
 
+
+
 p2FormatReader.prototype.dispatchEvent = function(eventName) {
   if (Array.isArray(this.listeners[eventName])) {
       var f = this.listeners[eventName].pop();
@@ -44,7 +46,7 @@ p2FormatReader.prototype.dispatchEvent = function(eventName) {
         f = this.listeners[eventName].pop();
       }
   }
-}
+};
 
 p2FormatReader.prototype.addEventListener = function(eventName, fn) {
   if (!Array.isArray(this.listeners[eventName])) {
@@ -287,16 +289,60 @@ p2FormatReader.prototype.getBytesInEntryAsText = function(entryKey, start, end, 
 
 /**
  * Get the specified byte range from the indicated variable size block
+ * @param entryKey the key of the entry to get the bytes form
+ * @param start start offset in the entry
+ * @param length number of bytes to retrive 
  */
-p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, end, callback, context) {
+p2FormatReader.prototype.getBytesInEntry = function(entryKey, start, length, callback, context) {
     // TODO
     if (typeof context === 'undefined') {context = this;}
 
     var entryIndexInfo = context.index[entryKey];
     var start = context.dataOffset + entryIndexInfo.offset * context.blockSize + start;
-    var end = start + end;
+    var end = start + length;
+
 
     context.filereader.readRange(start,end, function(data) {
 	    callback(data);
     });
 }
+
+/**
+ * Returns true if the underlying connection supports requests
+ * that retrieve multiple regions of the file at once and false otherwise
+ */
+p2FormatReader.prototype.supportsMultiRequest = function() {
+  return this.filereader.supportsMultiRequest();
+};
+
+/** 
+ * Returns multiple ranges from the specified entry using a single request
+ * @param entryKey the key of the entry to get the data from
+ * @param ranges an array describing the ranges requested, an array of two elements
+ * the first is the starting offset the second is the length
+ * @param finishCallback callback function to call when done
+ * @param progressCallback callback function to call to provide updates on download progess
+ */
+p2FormatReader.prototype.getMultiBytesInEntry = function(entryKey, ranges, finishCallback, progressCallback, context) {
+  if (typeof context === 'undefined') {context = this;}
+  
+  if(this.supportsMultiRequest()) {
+    // Calculate the entry offset
+    var entryIndexInfo = context.index[entryKey];
+    var entryOffset = context.dataOffset + entryIndexInfo.offset * context.blockSize;
+    
+    // Calculate the ranges that we need from
+    var rangeList = [];
+    for (var i = 0; i < ranges.length; i++) {
+      var rangeStart = entryOffset + ranges[i][0];
+      var rangeEnd = entryOffset + ranges[i][0] + ranges[i][1];
+      rangeList[i] = [rangeStart, rangeEnd];
+    }
+
+    context.filereader.readMultiRange(rangeList, finishCallback,progressCallback);
+
+  } else {
+    // This is an error in the upstream code, should have never called this on this object
+    throw new RuntimeException(FUNCTIONALITY_NOT_SUPPORTED,"Called getMultiBytesInEntry() on an format reader than does not support multi-range retrieval!")
+  }
+};
