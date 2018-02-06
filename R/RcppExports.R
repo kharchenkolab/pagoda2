@@ -5,6 +5,10 @@ WriteListToBinary <- function(expL, outfile, verbose = FALSE) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile, verbose))
 }
 
+getLargeVisEmbedding <- function(sY, out_dim = 2L, n_threads = 8L, n_samples = -1L, n_propagation = -1L, alpha = -1, n_trees = -1L, n_negative = -1L, n_neighbors = -1L, n_gamma = -1, perplexity = -1) {
+    .Call('_pagoda2_getLargeVisEmbedding', PACKAGE = 'pagoda2', sY, out_dim, n_threads, n_samples, n_propagation, alpha, n_trees, n_negative, n_neighbors, n_gamma, perplexity)
+}
+
 non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L, ncores = 1L) {
     .Call('_pagoda2_non0LogColLmS', PACKAGE = 'pagoda2', sY, X, ldepth, maxCells, ncores)
 }
@@ -43,6 +47,10 @@ arma_mat_cor <- function(m) {
 
 n2Knn <- function(m, k, nThreads = 10L, verbose = TRUE, indexType = "angular", M = 12L, MaxM0 = 24L) {
     .Call('_pagoda2_n2Knn', PACKAGE = 'pagoda2', m, k, nThreads, verbose, indexType, M, MaxM0)
+}
+
+n2CrossKnn <- function(mA, mB, k, nThreads = 10L, verbose = TRUE, indexType = "angular", M = 12L, MaxM0 = 24L) {
+    .Call('_pagoda2_n2CrossKnn', PACKAGE = 'pagoda2', mA, mB, k, nThreads, verbose, indexType, M, MaxM0)
 }
 
 matWCorr <- function(Mat, Matw) {

@@ -1,14 +1,14 @@
 # Set the path to your non metric space library here
-PKG_CXXFLAGS= -I"../inst/include" -I"./n2/include" $(SHLIB_OPENMP_CXXFLAGS) 
-PKG_LIBS=-L/usr/lib/ -L"." -lgsl -lgslcblas -lpthread -lboost_filesystem -lboost_system -lstdc++ -ln2 `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
+PKG_CXXFLAGS= -I"../inst/include" -I"./n2/include" -I"./largeVis/include" $(SHLIB_OPENMP_CXXFLAGS) 
+PKG_LIBS=-L/usr/lib/ -L"." -lpthread -lboost_filesystem -lboost_system -lstdc++ -ln2 -llargeVis -lgsl -lgslcblas -lm `$(R_HOME)/bin/Rscript -e "Rcpp:::LdFlags()"` $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS)
 CXX_STD = CXX11
 MkInclude = $(R_HOME)/etc${R_ARCH}/Makeconf
 
 #.PHONY: all sublibs
 
 #OBJECTS = $(.cpp=.o)
-SUBDIRS = n2
-SUBLIBS = libn2.a
+SUBDIRS = n2 largeVis
+SUBLIBS = libn2.a liblargeVis.a
 
 all: $(SHLIB) 
 $(SHLIB): $(OBJECTS) sublibs

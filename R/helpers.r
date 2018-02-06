@@ -7,7 +7,7 @@ NULL
 
 
 # translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
-multi2dend <- function(cl,counts,deep=F) {
+multi2dend <- function(cl,counts,deep=F,dist='cor') {
   if(deep) {
     clf <- as.integer(cl$memberships[1,]); # take the lowest level
   } else {
@@ -18,7 +18,11 @@ multi2dend <- function(cl,counts,deep=F) {
   rowFac <- rep(NA,nrow(counts));
   rowFac[match(names(clf),rownames(counts))] <- clf;
   lvec <- colSumByFac(counts,rowFac)[-1,,drop=F];
-  lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))));
+  if(dist=='JS') {
+    lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))));
+  } else { # use correlation distance in log10 space
+    lvec.dist <- 1-cor(t(log10(lvec/pmax(1,Matrix::rowSums(lvec))+1)))
+  }
   d <- as.dendrogram(hclust(as.dist(lvec.dist),method='ward.D'))
   # add cell info to the laves
   addinfo <- function(l,env) {

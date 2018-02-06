@@ -104,7 +104,7 @@ Pagoda2 <- setRefClass(
         # winsorize in normalized space first in hopes of getting a more stable depth estimate
         if(trim>0) {
           counts <<- counts/as.numeric(depth);
-          inplaceWinsorizeSparseCols(counts,trim);
+          inplaceWinsorizeSparseCols(counts,trim,n.cores);
           counts <<- counts*as.numeric(depth);
           if(is.null(lib.sizes)) {
             depth <<- round(Matrix::rowSums(counts))
@@ -136,7 +136,7 @@ Pagoda2 <- setRefClass(
         counts@x <<- counts@x*exp.x/(depth[counts@i+1]/depthScale); # normalize by depth as well
         # performa another round of trim
         if(trim>0) {
-          inplaceWinsorizeSparseCols(counts,trim);
+          inplaceWinsorizeSparseCols(counts,trim,n.cores);
         }
 
 
@@ -1301,7 +1301,116 @@ Pagoda2 <- setRefClass(
       return(invisible(pcas))
     },
 
-    localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL , k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,take.top.odgenes=FALSE, recursive=TRUE,euclidean=FALSE,perplexity=k,debug=F,return.pca=F) {
+    # will reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), and
+    # a set of recursively determined odgenes based on a given group (or a cluster info)
+    expandOdGenes=function(type='counts', clusterType=NULL, groups=NULL , min.group.size=30, od.alpha=1e-1, use.odgenes=FALSE, n.odgenes=NULL, odgenes=NULL, n.odgene.multiplier=1, gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=10,max.odgenes=Inf,take.top.odgenes=TRUE, recursive=TRUE) {
+      # determine groups
+      if(is.null(groups)) {
+        # look up the clustering based on a specified type
+        if(is.null(clusterType)) {
+          # take the first one
+          groups <- clusters[[type]][[1]]
+        } else {
+          groups <- clusters[[type]][[clusterType]]
+          if(is.null(cols)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+        }
+      } else {
+        groups <- as.factor(groups[names(groups) %in% rownames(counts)]);
+        groups <- droplevels(groups); 
+      }
+      
+
+      # determine initial set of odgenes
+      if((use.odgenes || !is.null(n.odgenes)) && is.null(odgenes)) {
+        if(is.null(misc[['varinfo']] )) { stop("please run adjustVariance() first")}
+        df <- misc$varinfo
+        odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log(od.alpha)]
+        #odgenes <- misc[['odgenes']];
+        if(!is.null(n.odgenes)) {
+          if(n.odgenes>length(odgenes)) {
+            #warning("number of specified odgenes is higher than the number of the statistically significant sites, will take top ",n.odgenes,' sites')
+            odgenes <- rownames(misc[['varinfo']])[(order(misc[['varinfo']]$lp,decreasing=F)[1:min(ncol(counts),n.odgenes)])]
+          } else {
+            odgenes <- odgenes[1:n.odgenes]
+          }
+        }
+      }
+
+      # filter out small groups
+      if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
+      if(sum(!is.na(groups))<min.group.size) {
+        warning("clustering specifies fewer cells than min.group.size")
+        return(odgenes)
+      }
+
+      
+      if(length(levels(groups))<2) {
+        warning("cannot expand od genes based on a single group")
+        return(odgenes)
+      }
+      
+      # determine groups for which variance normalization will be reran
+      if(recursive) {
+        cat("recursive group enumeration ...")
+        # derive cluster hierarchy
+
+        # use raw counts to derive clustering
+        z <- misc$rawCounts;
+        rowFac <- rep(-1,nrow(z)); names(rowFac) <- rownames(z);
+        rowFac[match(names(groups),rownames(z))] <- as.integer(groups);
+        tc <- colSumByFac(z,as.integer(rowFac))[-1,,drop=F];
+        rownames(tc) <- levels(groups)
+        d <- 1-cor(t(log10(tc/pmax(1,Matrix::rowSums(tc))*1e3+1)))
+        hc <- hclust(as.dist(d),method='average',members=unlist(tapply(groups,groups,length)))
+        
+        dlab <- function(l) {
+          if(is.leaf(l)) {
+            return(list(labels(l)))
+          } else {
+            return(c(list(labels(l)),dlab(l[[1]]),dlab(l[[2]])))
+          }
+        }
+        
+        # for each level in the cluster hierarchy, except for the top
+        rgroups <- dlab(as.dendrogram(hc))[-1]
+        rgroups <- c(list(levels(groups)),rgroups)
+        cat("done.\n");
+      } else {
+        rgroups <- lapply(levels(groups),I)
+      }
+      names(rgroups) <- unlist(lapply(rgroups,paste,collapse="+"))
+      
+      # run local variance normalization
+      cat("running local variance normalization ");
+      # run variance normalization, determine PCs
+      gpcs <- papply(rgroups,function(group) {
+        cells <- names(groups)[groups %in% group]
+        
+        # variance normalization
+        df <- .self$adjustVariance(persist=FALSE,gam.k=gam.k,verbose=FALSE,cells=cells,n.cores=1)
+        #if(!is.null(n.odgenes)) {
+        #  odgenes <- rownames(df)[order(df$lp,decreasing=F)[1:n.odgenes]]
+        #} else {
+        df <- df[!is.na(df$lp),,drop=F]
+        df <- df[order(df$lp,decreasing=F),,drop=F]
+        n.od <- min(max(sum(df$lpa<log(od.alpha)),min.odgenes),max.odgenes);
+        if(n.od>0) {
+          odgenes <- rownames(df)[1:min(n.od*n.odgene.multiplier,nrow(df))]
+        } else {
+          return(NULL)
+        }
+        sf <- df$gsf[match(odgenes,rownames(df))];
+        return(list(sf=sf,cells=cells,odgenes=odgenes))
+      },n.cores=n.cores)
+      cat(" done\n");
+      odg <- unique(unlist(lapply(gpcs,function(z) z$odgenes)))
+      # TODO: consider gsf?
+      odgenes <- unique(c(odgenes,odg));
+      misc[['odgenes']] <<- odgenes;
+      return(odgenes);
+    },
+                           
+    localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL , k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,take.top.odgenes=FALSE, recursive=TRUE,euclidean=FALSE,perplexity=k,debug=F,return.pca=F,skip.pca=F) {
       if(type=='counts') {
         x <- counts;
       } else {
@@ -1330,15 +1439,25 @@ Pagoda2 <- setRefClass(
       
       if(recursive) {
         cat("recursive group enumeration ...")
-        # derive cluster hierarchy
-        rowFac <- rep(-1,nrow(x)); names(rowFac) <- rownames(x);
-        rowFac[names(groups)] <- as.integer(groups);
-        tc <- colSumByFac(x,as.integer(rowFac))[-1,]
+        ## # derive cluster hierarchy
+        ## rowFac <- rep(-1,nrow(x)); names(rowFac) <- rownames(x);
+        ## rowFac[names(groups)] <- as.integer(groups);
+        ## tc <- colSumByFac(x,as.integer(rowFac))[-1,]
+        ## rownames(tc) <- levels(groups)
+        ## #tc <- rbind("total"=Matrix::colSums(tc),tc)
+        ## #d <- jsDist(t(((tc/pmax(1,Matrix::rowSums(tc)))))); rownames(d) <- colnames(d) <- rownames(tc)
+        ## d <- 1-cor(t(tc))
+        ## hc <- hclust(as.dist(d),method='ward.D')
+
+        # use raw counts to derive clustering
+        z <- misc$rawCounts;
+        rowFac <- rep(-1,nrow(z)); names(rowFac) <- rownames(z);
+        rowFac[match(names(groups),rownames(z))] <- as.integer(groups);
+        tc <- colSumByFac(z,as.integer(rowFac))[-1,,drop=F];
         rownames(tc) <- levels(groups)
-        #tc <- rbind("total"=Matrix::colSums(tc),tc)
-        #d <- jsDist(t(((tc/pmax(1,Matrix::rowSums(tc)))))); rownames(d) <- colnames(d) <- rownames(tc)
-        d <- 1-cor(t(tc))
-        hc <- hclust(as.dist(d),method='ward.D')
+        d <- 1-cor(t(log10(tc/pmax(1,Matrix::rowSums(tc))*1e3+1)))
+        hc <- hclust(as.dist(d),method='average',members=unlist(tapply(groups,groups,length)))
+
         
         dlab <- function(l) {
           if(is.leaf(l)) {
@@ -1364,7 +1483,7 @@ Pagoda2 <- setRefClass(
         cells <- names(groups)[groups %in% group]
         
         # variance normalization
-        df <- .self$adjustVariance(persist=FALSE,gam.k=gam.k,verbose=FALSE,cells=cells)
+        df <- .self$adjustVariance(persist=FALSE,gam.k=gam.k,verbose=FALSE,cells=cells,n.cores=1)
         if(!is.null(n.odgenes)) {
           odgenes <- rownames(df)[order(df$lp,decreasing=F)[1:n.odgenes]]
         } else {
@@ -1378,6 +1497,12 @@ Pagoda2 <- setRefClass(
           }
         }
         sf <- df$gsf[match(odgenes,rownames(df))];
+        
+        if(return.pca && skip.pca) {
+          return(list(sf=sf,cells=cells,odgenes=odgenes))
+        }
+        
+        
         y <- t(t(x[cells,odgenes])*sf)
         cm <- Matrix::colMeans(y)
         # PCA
@@ -1735,7 +1860,7 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, ... ) {
       if(dims<1) stop("dimensions must be >=1")
       if(type=='counts') {
         x <- counts;
@@ -1777,7 +1902,7 @@ Pagoda2 <- setRefClass(
           #browser()
           wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
         }
-        coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, ...)
+        coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {

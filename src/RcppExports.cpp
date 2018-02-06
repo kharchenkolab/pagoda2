@@ -19,6 +19,27 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// getLargeVisEmbedding
+NumericMatrix getLargeVisEmbedding(SEXP sY, int out_dim, int n_threads, int n_samples, int n_propagation, float alpha, int n_trees, int n_negative, int n_neighbors, float n_gamma, float perplexity);
+RcppExport SEXP _pagoda2_getLargeVisEmbedding(SEXP sYSEXP, SEXP out_dimSEXP, SEXP n_threadsSEXP, SEXP n_samplesSEXP, SEXP n_propagationSEXP, SEXP alphaSEXP, SEXP n_treesSEXP, SEXP n_negativeSEXP, SEXP n_neighborsSEXP, SEXP n_gammaSEXP, SEXP perplexitySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type sY(sYSEXP);
+    Rcpp::traits::input_parameter< int >::type out_dim(out_dimSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_samples(n_samplesSEXP);
+    Rcpp::traits::input_parameter< int >::type n_propagation(n_propagationSEXP);
+    Rcpp::traits::input_parameter< float >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< int >::type n_trees(n_treesSEXP);
+    Rcpp::traits::input_parameter< int >::type n_negative(n_negativeSEXP);
+    Rcpp::traits::input_parameter< int >::type n_neighbors(n_neighborsSEXP);
+    Rcpp::traits::input_parameter< float >::type n_gamma(n_gammaSEXP);
+    Rcpp::traits::input_parameter< float >::type perplexity(perplexitySEXP);
+    rcpp_result_gen = Rcpp::wrap(getLargeVisEmbedding(sY, out_dim, n_threads, n_samples, n_propagation, alpha, n_trees, n_negative, n_neighbors, n_gamma, perplexity));
+    return rcpp_result_gen;
+END_RCPP
+}
 // non0LogColLmS
 int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells, int ncores);
 RcppExport SEXP _pagoda2_non0LogColLmS(SEXP sYSEXP, SEXP XSEXP, SEXP ldepthSEXP, SEXP maxCellsSEXP, SEXP ncoresSEXP) {
@@ -150,6 +171,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// n2CrossKnn
+arma::sp_mat n2CrossKnn(const NumericMatrix& mA, const NumericMatrix& mB, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
+RcppExport SEXP _pagoda2_n2CrossKnn(SEXP mASEXP, SEXP mBSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type mA(mASEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type mB(mBSEXP);
+    Rcpp::traits::input_parameter< int >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< string >::type indexType(indexTypeSEXP);
+    Rcpp::traits::input_parameter< int >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int >::type MaxM0(MaxM0SEXP);
+    rcpp_result_gen = Rcpp::wrap(n2CrossKnn(mA, mB, k, nThreads, verbose, indexType, M, MaxM0));
+    return rcpp_result_gen;
+END_RCPP
+}
 // matWCorr
 SEXP matWCorr(SEXP Mat, SEXP Matw);
 RcppExport SEXP _pagoda2_matWCorr(SEXP MatSEXP, SEXP MatwSEXP) {
@@ -252,6 +291,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 3},
+    {"_pagoda2_getLargeVisEmbedding", (DL_FUNC) &_pagoda2_getLargeVisEmbedding, 11},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 5},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 3},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},
@@ -262,6 +302,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_smatColVecCorr", (DL_FUNC) &_pagoda2_smatColVecCorr, 3},
     {"_pagoda2_arma_mat_cor", (DL_FUNC) &_pagoda2_arma_mat_cor, 1},
     {"_pagoda2_n2Knn", (DL_FUNC) &_pagoda2_n2Knn, 7},
+    {"_pagoda2_n2CrossKnn", (DL_FUNC) &_pagoda2_n2CrossKnn, 8},
     {"_pagoda2_matWCorr", (DL_FUNC) &_pagoda2_matWCorr, 2},
     {"_pagoda2_winsorizeMatrix", (DL_FUNC) &_pagoda2_winsorizeMatrix, 2},
     {"_pagoda2_plSemicompleteCor2", (DL_FUNC) &_pagoda2_plSemicompleteCor2, 1},
