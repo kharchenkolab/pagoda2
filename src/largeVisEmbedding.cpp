@@ -33,16 +33,16 @@ NumericMatrix getLargeVisEmbedding(SEXP sY,int out_dim=2, int n_threads=8, int n
       lp++;
     }
   }
-  cout<<"3 lp="<<lp<<endl;
+  //cout<<"3 lp="<<lp<<endl;
   std::vector<float> ew=arma::conv_to< std::vector<float> >::from(Y);
-  cout<<"initializing model:"<<endl;
+  //cout<<"initializing model:"<<endl;
   LargeVis model;
-  cout<<"loading data:"<<endl;
+  cout<<"largeVis:"<<endl;
   model.load_from_graph_data(ef,et,ew,n_vertices);
-  cout<<"running largeVis:"<<endl;
+  //cout<<"running largeVis:"<<endl;
   model.run(out_dim, n_threads, n_samples, n_propagation, alpha, n_trees, n_negative, n_neighbors, n_gamma, perplexity);
 
-  cout<<"exporting result:"<<endl;
+  //cout<<"exporting result:"<<endl;
   float* vis=model.get_vis();
 
   // convert to NumericMatrix

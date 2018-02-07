@@ -603,7 +603,7 @@ void LargeVis::visualize_thread(int id)
 	while (1)
 	{
 		if (edge_count > n_samples / n_threads + 2) break;
-		if (edge_count - last_edge_count > 10000)
+		if (edge_count - last_edge_count > 100000)
 		{
 			edge_count_actual += edge_count - last_edge_count;
 			last_edge_count = edge_count;
