@@ -19,24 +19,63 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// getLargeVisEmbedding
-NumericMatrix getLargeVisEmbedding(SEXP sY, int out_dim, int n_threads, int n_samples, int n_propagation, float alpha, int n_trees, int n_negative, int n_neighbors, float n_gamma, float perplexity);
-RcppExport SEXP _pagoda2_getLargeVisEmbedding(SEXP sYSEXP, SEXP out_dimSEXP, SEXP n_threadsSEXP, SEXP n_samplesSEXP, SEXP n_propagationSEXP, SEXP alphaSEXP, SEXP n_treesSEXP, SEXP n_negativeSEXP, SEXP n_neighborsSEXP, SEXP n_gammaSEXP, SEXP perplexitySEXP) {
+// checkBits
+bool checkBits();
+RcppExport SEXP _pagoda2_checkBits() {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type sY(sYSEXP);
-    Rcpp::traits::input_parameter< int >::type out_dim(out_dimSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< int >::type n_samples(n_samplesSEXP);
-    Rcpp::traits::input_parameter< int >::type n_propagation(n_propagationSEXP);
-    Rcpp::traits::input_parameter< float >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< int >::type n_trees(n_treesSEXP);
-    Rcpp::traits::input_parameter< int >::type n_negative(n_negativeSEXP);
-    Rcpp::traits::input_parameter< int >::type n_neighbors(n_neighborsSEXP);
-    Rcpp::traits::input_parameter< float >::type n_gamma(n_gammaSEXP);
-    Rcpp::traits::input_parameter< float >::type perplexity(perplexitySEXP);
-    rcpp_result_gen = Rcpp::wrap(getLargeVisEmbedding(sY, out_dim, n_threads, n_samples, n_propagation, alpha, n_trees, n_negative, n_neighbors, n_gamma, perplexity));
+    rcpp_result_gen = Rcpp::wrap(checkBits());
+    return rcpp_result_gen;
+END_RCPP
+}
+// checkOpenMP
+bool checkOpenMP();
+RcppExport SEXP _pagoda2_checkOpenMP() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(checkOpenMP());
+    return rcpp_result_gen;
+END_RCPP
+}
+// referenceWij
+arma::sp_mat referenceWij(const arma::ivec& i, const arma::ivec& j, arma::vec& d, Rcpp::Nullable<Rcpp::NumericVector> threads, double perplexity);
+RcppExport SEXP _pagoda2_referenceWij(SEXP iSEXP, SEXP jSEXP, SEXP dSEXP, SEXP threadsSEXP, SEXP perplexitySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::ivec& >::type i(iSEXP);
+    Rcpp::traits::input_parameter< const arma::ivec& >::type j(jSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type d(dSEXP);
+    Rcpp::traits::input_parameter< Rcpp::Nullable<Rcpp::NumericVector> >::type threads(threadsSEXP);
+    Rcpp::traits::input_parameter< double >::type perplexity(perplexitySEXP);
+    rcpp_result_gen = Rcpp::wrap(referenceWij(i, j, d, threads, perplexity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// sgd
+arma::mat sgd(arma::mat& coords, arma::ivec& targets_i, arma::ivec& sources_j, arma::ivec& ps, arma::vec& weights, const double& gamma, const double& rho, const arma::uword& n_samples, const int& M, const double& alpha, const Rcpp::Nullable<Rcpp::NumericVector> momentum, const bool& useDegree, const Rcpp::Nullable<Rcpp::NumericVector> seed, const Rcpp::Nullable<Rcpp::NumericVector> threads, const bool verbose);
+RcppExport SEXP _pagoda2_sgd(SEXP coordsSEXP, SEXP targets_iSEXP, SEXP sources_jSEXP, SEXP psSEXP, SEXP weightsSEXP, SEXP gammaSEXP, SEXP rhoSEXP, SEXP n_samplesSEXP, SEXP MSEXP, SEXP alphaSEXP, SEXP momentumSEXP, SEXP useDegreeSEXP, SEXP seedSEXP, SEXP threadsSEXP, SEXP verboseSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type coords(coordsSEXP);
+    Rcpp::traits::input_parameter< arma::ivec& >::type targets_i(targets_iSEXP);
+    Rcpp::traits::input_parameter< arma::ivec& >::type sources_j(sources_jSEXP);
+    Rcpp::traits::input_parameter< arma::ivec& >::type ps(psSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type weights(weightsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type gamma(gammaSEXP);
+    Rcpp::traits::input_parameter< const double& >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< const arma::uword& >::type n_samples(n_samplesSEXP);
+    Rcpp::traits::input_parameter< const int& >::type M(MSEXP);
+    Rcpp::traits::input_parameter< const double& >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector> >::type momentum(momentumSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type useDegree(useDegreeSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector> >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::Nullable<Rcpp::NumericVector> >::type threads(threadsSEXP);
+    Rcpp::traits::input_parameter< const bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(sgd(coords, targets_i, sources_j, ps, weights, gamma, rho, n_samples, M, alpha, momentum, useDegree, seed, threads, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -291,7 +330,10 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_WriteListToBinary", (DL_FUNC) &_pagoda2_WriteListToBinary, 3},
-    {"_pagoda2_getLargeVisEmbedding", (DL_FUNC) &_pagoda2_getLargeVisEmbedding, 11},
+    {"_pagoda2_checkBits", (DL_FUNC) &_pagoda2_checkBits, 0},
+    {"_pagoda2_checkOpenMP", (DL_FUNC) &_pagoda2_checkOpenMP, 0},
+    {"_pagoda2_referenceWij", (DL_FUNC) &_pagoda2_referenceWij, 5},
+    {"_pagoda2_sgd", (DL_FUNC) &_pagoda2_sgd, 15},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 5},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 3},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},

@@ -1883,7 +1883,7 @@ Pagoda2 <- setRefClass(
         #     edgeMat <- edgeMat %*% W
         #   }
         # }
-        require(largeVis)
+        #require(largeVis)
         #if(!is.null(seed)) { set.seed(seed) }
         wij <- buildWijMatrix(edgeMat,perplexity=perplexity,threads=n.cores)
 

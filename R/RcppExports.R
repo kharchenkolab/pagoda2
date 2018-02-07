@@ -5,8 +5,20 @@ WriteListToBinary <- function(expL, outfile, verbose = FALSE) {
     invisible(.Call('_pagoda2_WriteListToBinary', PACKAGE = 'pagoda2', expL, outfile, verbose))
 }
 
-getLargeVisEmbedding <- function(sY, out_dim = 2L, n_threads = 8L, n_samples = -1L, n_propagation = -1L, alpha = -1, n_trees = -1L, n_negative = -1L, n_neighbors = -1L, n_gamma = -1, perplexity = -1) {
-    .Call('_pagoda2_getLargeVisEmbedding', PACKAGE = 'pagoda2', sY, out_dim, n_threads, n_samples, n_propagation, alpha, n_trees, n_negative, n_neighbors, n_gamma, perplexity)
+checkBits <- function() {
+    .Call('_pagoda2_checkBits', PACKAGE = 'pagoda2')
+}
+
+checkOpenMP <- function() {
+    .Call('_pagoda2_checkOpenMP', PACKAGE = 'pagoda2')
+}
+
+referenceWij <- function(i, j, d, threads, perplexity) {
+    .Call('_pagoda2_referenceWij', PACKAGE = 'pagoda2', i, j, d, threads, perplexity)
+}
+
+sgd <- function(coords, targets_i, sources_j, ps, weights, gamma, rho, n_samples, M, alpha, momentum, useDegree, seed, threads, verbose) {
+    .Call('_pagoda2_sgd', PACKAGE = 'pagoda2', coords, targets_i, sources_j, ps, weights, gamma, rho, n_samples, M, alpha, momentum, useDegree, seed, threads, verbose)
 }
 
 non0LogColLmS <- function(sY, X, ldepth, maxCells = 0L, ncores = 1L) {
