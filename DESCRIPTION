@@ -3,21 +3,18 @@ Title: Single Cell Analysis and Differential Expression
 Version: 0.0.0.9002
 Authors@R: c( person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = c("aut", "cre")), person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut")) 
 Description: What the package does (one paragraph).
-Depends: R (>= 3.2.1)
-License: What license is it under?
+Depends: R (>= 3.2.1), Matrix
+License: GPL-3 
 Encoding: UTF-8
 LazyData: true
 Imports: rjson,
     utils,
     Rook,
     base64enc,
-    Matrix,
-    Rcpp,
     igraph,
     Rcpp,
     Cairo,
     parallel,
-    Matrix,
     MASS,
     mgcv,
     irlba,
@@ -34,5 +31,5 @@ Imports: rjson,
 Suggests: knitr, rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress
 NeedsCompilation: yes

@@ -7,7 +7,7 @@
 #include "pagoda2.h"
 
 // [[Rcpp::export]]
-int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells=0) {
+int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells=0, int ncores=1) {
 // need to do this as SEXP, modify the slots on the fly
   S4 mat(sY);  
   const arma::uvec i(( unsigned int *)INTEGER(mat.slot("i")),LENGTH(mat.slot("i")),false,true); 
@@ -16,7 +16,7 @@ int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const in
   arma::vec Y(REAL(mat.slot("x")),LENGTH(mat.slot("x")),false,true); 
   
   // for each gene
-#pragma omp parallel for shared(Y) 
+#pragma omp parallel for num_threads(ncores) shared(Y) 
   for(int g=1;g<p.size();g++) {
     int p1=p[g]; int p0=p[g-1]; int ncells=p1-p0;
     if(ncells<2) { continue; }
@@ -38,7 +38,7 @@ int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const in
 
 // calculate column mean and variance, optionally taking a subset of rows to operate on
 // [[Rcpp::export]]
-Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel) {
+Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel, int ncores=1) {
 // need to do this as SEXP, modify the slots on the fly
   S4 mat(sY);  
   const arma::uvec i(( unsigned int *)INTEGER(mat.slot("i")),LENGTH(mat.slot("i")),false,true); 
@@ -57,7 +57,7 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel) {
   }
   arma::vec meanV(ncols,arma::fill::zeros); arma::vec varV(ncols,arma::fill::zeros); arma::vec nobsV(ncols,arma::fill::zeros);
   // for each gene
-#pragma omp parallel for shared(meanV,varV,nobsV) 
+#pragma omp parallel for num_threads(ncores) shared(meanV,varV,nobsV) 
   for(int g=0;g<ncols;g++) {
     int p0=p[g]; int p1=p[g+1]; 
     if(p1-p0 <1) { continue; }
@@ -133,7 +133,7 @@ arma::mat colSumByFac(SEXP sY,  SEXP rowSel) {
 
 // multiply each column by a mult vector, optionally using a subset of rows (rowSel)
 // [[Rcpp::export]]
-int inplaceColMult(SEXP sY,const arma::vec& mult,SEXP rowSel) {
+int inplaceColMult(SEXP sY,const arma::vec& mult,SEXP rowSel, int ncores=1) {
 // need to do this as SEXP, modify the slots on the fly
   S4 mat(sY);  
   const arma::uvec i(( unsigned int *)INTEGER(mat.slot("i")),LENGTH(mat.slot("i")),false,true); 
@@ -147,7 +147,7 @@ int inplaceColMult(SEXP sY,const arma::vec& mult,SEXP rowSel) {
   int ncols=p.size()-1;
   
   // for each gene
-#pragma omp parallel for shared(Y) 
+#pragma omp parallel for num_threads(ncores) shared(Y) 
   for(int g=0;g<ncols;g++) {
     int p1=p[g+1]; int p0=p[g]; int ncells=p1-p0;
     if(ncells<1) { continue; }
@@ -170,7 +170,7 @@ int inplaceColMult(SEXP sY,const arma::vec& mult,SEXP rowSel) {
 
 // Winsorize top N values in each column of a sparse matrix
 // [[Rcpp::export]]
-int inplaceWinsorizeSparseCols(SEXP sY,const int n) {
+int inplaceWinsorizeSparseCols(SEXP sY,const int n, int ncores=1) {
   // need to do this as SEXP, modify the slots on the fly
   S4 mat(sY);  
   const arma::uvec i(( unsigned int *)INTEGER(mat.slot("i")),LENGTH(mat.slot("i")),false,true); 
@@ -181,7 +181,7 @@ int inplaceWinsorizeSparseCols(SEXP sY,const int n) {
   // for each column
   
   arma::vec tv(ncols);
-#pragma omp parallel for shared(Y) 
+#pragma omp parallel for num_threads(ncores) shared(Y) 
   for(int g=0;g<ncols;g++) {
     priority_queue<std::pair<double,int> ,std::vector<std::pair<double,int> >, std::greater<std::pair<double,int> > > q; 
     int p1=p[g+1]; int p0=p[g]; int ncells=p1-p0;
