@@ -1,8 +1,6 @@
 # Demo Web Application
 
-[10X sorted PBMCs](https://tinyurl.com/pagoda2demo)
-
-[10X PBMC Dataset](http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=http://pklab.med.harvard.edu/nikolas/pagoda2/staticDemo/10xPBMC.bin)
+[10X PBMC Dataset](https://tinyurl.com/pagoda2demo)
 
 # Analysis walkthroughs
 [PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
@@ -33,7 +31,7 @@ Run these commands in a terminal:
 
 ```sh
 brew update
-brew install cmake boost eigen gsl curl openssl
+brew install cmake boost eigen gsl curl openssl wget
 ```
 To enable R to use the parallelized functions in the C++ code, you need another version of the clang++-Compiler for mac.   
 This is compatible with Mac OS >= 10.11 
@@ -45,6 +43,15 @@ MD5 Hash: `f49df42ccc84ec529c489e8e3f02248`
 - Install it!
 
 Here is a more in depth explanation what is going on and a script to do what the GUI-Installer does by yourself. For Pagoda2 you only need the clang part, not the gfortran part. [openmp in r on Mac OS](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/#after-3-4-0)
+
+## Install X windows system for mac
+Go to https://www.xquartz.org/ and follow the instructions for installing the package.
+
+## Install gfortran for Mac
+```sh
+curl -O http://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2
+sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
+```
 
 ## Installing NMSLIB (Non-Metric Space Library)
 
