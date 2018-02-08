@@ -11,12 +11,12 @@
 
 # Installation Instructions
 
-Installation of pagoda2 requires installation of the Non-metric space library (nmslib) and a custom built largeVis package. Pagoda 2 has been tested with nmslib v1.5.3 and nmslib v1.6. The current package has configured to be compiled with nmslib v1.6 and this is the recommended version. To install pagoda2 please follow the instructions below.
+To install pagoda2 please follow the instructions below.
 
 ## System dependencies
 
 ### Ubuntu
-Install system dependencies for building nmslib, example here provided for Ubuntu
+Install system dependencies, example here provided for Ubuntu
 ```sh
 sudo apt-get update
 sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
@@ -34,7 +34,7 @@ brew update
 brew install cmake boost eigen gsl curl openssl wget
 ```
 To enable R to use the parallelized functions in the C++ code, you need another version of the clang++-Compiler for mac.   
-This is compatible with Mac OS >= 10.11 
+This is compatible with OS X >= 10.11 
 
 Follow these instructions to install clang4 with openmp support:
 #### GUI-Installer:
@@ -42,7 +42,7 @@ Follow these instructions to install clang4 with openmp support:
 MD5 Hash: `f49df42ccc84ec529c489e8e3f02248`
 - Install it!
 
-Here is a more in depth explanation what is going on and a script to do what the GUI-Installer does by yourself. For Pagoda2 you only need the clang part, not the gfortran part. [openmp in r on Mac OS](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/#after-3-4-0)
+Here is a more in depth explanation what is going on and a script to do what the GUI-Installer does by yourself. For Pagoda2 you only need the clang part, not the gfortran part. [openmp in r on OS X](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/#after-3-4-0)
 
 #### Install X windows system for mac
 Go to https://www.xquartz.org/ and follow the instructions for installing the package.
@@ -52,10 +52,8 @@ Go to https://www.xquartz.org/ and follow the instructions for installing the pa
 curl -O http://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2
 sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
 ```
-
-## Installing NMSLIB (Non-Metric Space Library)
-
-Install pagoda2 inside of R:
+### Install pagoda2 package
+Inside R:
 ```r
 # Install Bioconductor dependencies
 source("http://bioconductor.org/biocLite.R")
