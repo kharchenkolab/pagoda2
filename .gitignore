@@ -1,6 +1,7 @@
 inst/lib
 .Rproj.user
 src/*.o
+src/*.a
 src/*.so
 src/*.dll
 src/symbols.rds
