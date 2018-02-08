@@ -334,3 +334,85 @@ Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
 }
+
+
+# load 10x matrices from a named list of result folders
+##' Quick loading of 10X CellRanger text matrices
+##'
+##' @title Load 10X CellRanger count matrices
+##' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
+##' @param n.cores numebr of cores to utilize in parallel
+##' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
+##' @export
+read.10x.matrices <- function(matrixPaths,n.cores=1,verbose=T) {
+  if(is.character(matrixPaths)) {
+    matrixPaths <- c('one'=matrixPaths);
+    single.dataset <- TRUE;
+  } else {
+    single.dataset <- FALSE;
+  }
+  if(verbose) cat("reading",length(matrixPaths),"dataset(s) ")
+  dl <- pagoda2:::papply(sn(names(matrixPaths)),function(nam) {
+    matrixPath <- matrixPaths[nam];
+    # read all count files (*_unique.counts) under a given path
+    #cat("loading data from ",matrixPath, " ");
+    x <- as(readMM(paste(matrixPath,'matrix.mtx',sep='/')),'dgCMatrix'); # convert to the required sparse matrix representation
+    
+    gs <- read.delim(paste(matrixPath,'genes.tsv',sep='/'),header=F)
+    rownames(x) <- gs[,2]
+
+    gs <- read.delim(paste(matrixPath,'barcodes.tsv',sep='/'),header=F)
+    colnames(x) <- gs[,1]
+
+    if(verbose) cat(".")
+    colnames(x) <- paste(nam,colnames(x),sep='_');
+    x
+  },n.cores=n.cores)
+  if(verbose) cat(" done\n")
+  if(single.dataset) { return(dl[[1]]); } else { return(dl) }
+}
+
+
+
+##' filter cells based on the gene/molecule dependency
+##' @title Filter cells based on gene/molecule dependency
+##' @param countMatrix input count matrix to be filtered
+##' @param min.cell.size min allowed cell size (default 500)
+##' @param max.cell.size max allowed cell size (default 5e4)
+##' @param p.level statistical confidence level for deviation from the main trend, used for cell filtering 
+##' @param alpha shading of the confidence band
+##' @param plot plot the molecule distribution and the gene/molecule dependency fit
+##' @param do.par reset graphical parameters prior to plotting
+##' @return a filtered matrix
+##' @export
+gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell.size=5e4,p.level=min(1e-3,1/ncol(countMatrix)),alpha=0.1,plot=T, do.par=T) {
+  if(plot) { 
+    if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
+    hist(log10(colSums(countMatrix)),col='wheat',xlab='log10[ molecules ]',main='')
+    # some of the cells are very large .. those can skew the analysis of more subtle populations (too much bias ) .. letting them in here though
+
+    abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
+  }
+  # look at the number of genes vs. molecule size depenency
+  df <- data.frame(molecules=colSums(countMatrix),genes=colSums(countMatrix>0));
+  df <- df[df$molecules>=min.cell.size,];
+  df <- log10(df);
+  df <- df[order(df$molecules,decreasing=F),]
+  if(plot) { 
+    plot(df,col=adjustcolor(1,alpha=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
+    abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
+  }
+  #abline(lm(genes ~ molecules, data=df),col=4)
+
+  m <- MASS::rlm(genes~molecules,data=df)
+  suppressWarnings(pb <- data.frame(predict(m,interval='prediction',level = 1-p.level,type="response")))
+  outliers <- rownames(df)[df$genes > pb$upr | df$genes < pb$lwr];
+  if(plot) {
+    polygon(c(df$molecules,rev(df$molecules)),c(pb$lwr,rev(pb$upr)),col=adjustcolor(2,alpha=0.1),border = NA)
+    points(df[outliers,],col=2,cex=0.6)
+  }
+  # set of filtered cells to move forward with
+  valid.cells <- colSums(countMatrix)>min.cell.size & colSums(countMatrix)<max.cell.size & !(colnames(countMatrix) %in% outliers)
+  countMatrix[,valid.cells,drop=F]
+}
+
