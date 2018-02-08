@@ -44,46 +44,16 @@ MD5 Hash: `f49df42ccc84ec529c489e8e3f02248`
 
 Here is a more in depth explanation what is going on and a script to do what the GUI-Installer does by yourself. For Pagoda2 you only need the clang part, not the gfortran part. [openmp in r on Mac OS](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/#after-3-4-0)
 
-## Install X windows system for mac
+#### Install X windows system for mac
 Go to https://www.xquartz.org/ and follow the instructions for installing the package.
 
-## Install gfortran for Mac
+#### Install gfortran for Mac
 ```sh
 curl -O http://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2
 sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
 ```
 
 ## Installing NMSLIB (Non-Metric Space Library)
-
-```sh
-# Download and build nmslib v1.6
-# You will need to keep this directory after the installation
-# so choose a location that will not be altered
-# something like ~/lib/nmslib/ will be suitable
-cd /path/of/choice
-wget https://github.com/searchivarius/nmslib/archive/v1.6.tar.gz
-tar xvzf v1.6.tar.gz
-cd nmslib-1.6
-cd similarity_search
-cmake .
-make
-```
-
-Install custom largeVis package.
-```sh
-# You just need a temporary directory for this. ( e.g. ~/tmp/largeVisCustom/)
-cd /other/path/of/choice
-wget http://pklab.med.harvard.edu/pagoda2dependencies/largeVis.tar.gz
-sha1sum largeVis.tar.gz # (optional) should be: 0eb51b7322d795f3f6cc35aec03e5bdd3189fa1e
-tar xvzf largeVis.tar.gz
-```
-Start R and install largeVis
-```r
-install.packages('devtools')
-library(devtools)
-install('largeVis/')
-q()
-```
 
 Install pagoda2 inside of R:
 ```r
@@ -95,8 +65,6 @@ install_github("igraph/rigraph") # Don't install with install.packages()
 install_github("jkrijthe/Rtsne",ref="openmp")
 install.packages(c("Cairo","urltools"))
 
-# Specify the location where nms lib was installed in a NMSLIB_PATH environment variable
-Sys.setenv("NMSLIB_PATH"="/path/to/nmslib-1.6/")
 # Install pagoda
 install_github("hms-dbmi/pagoda2")
 library('pagoda2')
