@@ -926,6 +926,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesDendrogram = function(p
     var deselectedRGB = p2globalParams.dendrogram.selectionColors.deselectedRGB;
 
     var alpha = embV.getCurrentAlpha();
+    ev.setTitle(''); // not sure what to say here
 
     if (embV.currentConfiguration.dendrogramColorInfo.nodeType == "vertical") {
         var curPrimSel = selCntr.getSelection("currentPrimarySel");
@@ -980,6 +981,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesMetadata = function(plo
     // of the metadata we want to plot
     var metadataColorInfo = config.metaDataColorInfo;
     var metadataName = metadataColorInfo.metadataName;
+    ev.setTitle(metadataName);
 
     dataCntr.getCellMetadata(function(metadata) {
         var colorData = metadata[metadataName].data;
@@ -1055,7 +1057,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesGeneExpression = functi
         var cellIndexStart = 0;
         var cellIndexEnd = data.length;
         var geneSelection = [config.geneexpressionColorInfo.geneid];
-
+	ev.setTitle(geneSelection+" gene");
         // For potential cancelling
         evSC.colorAJAXrequest = dataCntr.getExpressionValuesSparseByCellIndex(
             geneSelection, cellIndexStart, cellIndexEnd,
@@ -1203,7 +1205,7 @@ embeddingViewerScatterCanvas.prototype.generateFillStylesAspect = function(plotd
     var dataCntr = new dataController();
     var alpha = ev.getCurrentAlpha();
     var aspectId = [ev.getAspectColorInfo().aspectid];
-
+    ev.setTitle(aspectId);
     evSC.abortPendingRequest();
     dataCntr.getCellOrder(function(data) {
         var cellIndexStart = 0;

@@ -592,3 +592,10 @@ embeddingViewer.prototype.getCurrentPointSize = function() {
 embeddingViewer.prototype.setCurrentPointSize = function(sz) {
     this.currentConfiguration.pointsize = sz;
 }
+
+/* set title */
+embeddingViewer.prototype.setTitle = function(title) {
+    var embeddingPanel = Ext.getCmp('embeddingExtJSWrapper');
+    embeddingPanel.setTitle(title);
+}
+    
