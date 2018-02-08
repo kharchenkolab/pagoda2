@@ -24,9 +24,9 @@ Pagoda2 <- setRefClass(
 
   methods = list(
     initialize=function(x, ..., modelType='plain', batchNorm='glm',
-                        n.cores=30, verbose=TRUE,
+                        n.cores=parallel::detectCores(logical=F), verbose=TRUE,
                         min.cells.per.gene=30, trim=round(min.cells.per.gene/2),
-                        lib.sizes=NULL, log.scale=FALSE, keep.genes = NULL) {
+                        lib.sizes=NULL, log.scale=TRUE, keep.genes = NULL) {
       # # init all the output lists
       embeddings <<- list();
       graphs <<- list();
