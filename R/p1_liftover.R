@@ -231,7 +231,7 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = N
   # all relevant gene names
   rotn <- unique(unlist(lapply(pcc[gsub("^#PC\\d+# ", "", rownames(xv))], function(d) rownames(d$xp$rotation))))
   # prepare an ordered (in terms of genes) and centered version of each component
-  pl <- papply(rownames(xv), function(nam) {
+  pl <- lapply(rownames(xv), function(nam) {
     pnam <- gsub("^#PC\\d+# ", "", nam)
     pn <- as.integer(gsub("^#PC(\\d+)# .*", "\\1", nam))
     rt <- pcc[[pnam]]$xp$rotation[, pn]
@@ -240,7 +240,7 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = N
     mo <- order(mi, decreasing = FALSE)
     rt <- as.numeric(rt)-mean(rt)
     return(list(i = mi[mo], v = rt[mo]))
-  }, n.cores = n.cores)
+  })
 
   #x <- .Call("plSemicompleteCor2", pl, PACKAGE = "pagoda2")
   x <- plSemicompleteCor2(pl)
