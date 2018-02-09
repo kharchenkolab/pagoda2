@@ -211,12 +211,11 @@ Pagoda2 <- setRefClass(
         m <- lm(v ~ m, data = df[vi,])
       } else {
         if(verbose) cat(" using gam ")
-        require(mgcv)
-        m <- mgcv::gam(v ~ s(m, k = gam.k), data = df[vi,])
+        m <- mgcv::gam(as.formula(paste0('v ~ s(m, k = ',gam.k,')')), data = df[vi,])
       }
       df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
       n.obs <- df$nobs; #diff(counts@p)
-      df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=F,log.p=T))
+      suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=F,log.p=T)))
       df$lpa <- bh.adjust(df$lp,log=TRUE)
       n.cells <- nrow(counts)
       df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=TRUE)/n.cells)
@@ -1228,7 +1227,22 @@ Pagoda2 <- setRefClass(
     },
 
     # run PCA analysis on the overdispersed genes
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=FALSE, n.odgenes=2e3, odgenes=NULL, scale=F,center=T, cells=NULL,fastpath=TRUE,maxit=100) {
+##' Calculate PCA reduction of the data
+##'
+##' @title calculate PCA reduction
+##' @param nPcs number of PCs
+##' @param type dataset view to reduce (counts by default, but can specify a name of an existing reduction)
+##' @param name name for the PCA reduction to be created
+##' @param use.odgenes whether pre-calculated set of overdispersed genes should be used (default=TRUE)
+##' @param n.odgenes whether a certain number of top overdispersed genes should be used
+##' @param odgenes explicitly specify a set of genes to use for the reduction
+##' @param center should data be centerred prior to PCA (default=TRUE)
+##' @param cells optional subset of cells on which PCA should be ran
+##' @param fastpath use C implementation for speedup
+##' @param maxit maximum number of irlba iterations to use
+##' @param verbose 
+##' @return invisible PCA result (the reduction itself is saved in $reductions[[name]])
+    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL,fastpath=TRUE,maxit=100,verbose=TRUE) {
 
       if(type=='counts') {
         x <- counts;
@@ -1248,14 +1262,18 @@ Pagoda2 <- setRefClass(
           }
         }
       }
-      if(!is.null(odgenes)) { x <- x[,odgenes] }
-
+      if(!is.null(odgenes)) {
+        x <- x[,odgenes] 
+        if(verbose) cat('running PCA using',length(odgenes),'OD genes .')
+      } else { #all genes?
+        if(verbose) cat('running PCA all',ncol(x),'genes .')
+      }
       # apply scaling if using raw counts
       if(type=='counts') {
         #x <- t(t(x)*misc[['varinfo']][colnames(x),'gsf'])
         x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
       }
-
+      if(verbose) cat('.')
       require(irlba)
       if(!is.null(cells)) {
         # cell subset is just for PC determination
@@ -1271,7 +1289,7 @@ Pagoda2 <- setRefClass(
       }
       rownames(pcs$v) <- colnames(x);
 
-
+      if(verbose) cat('.')
 
       # adjust for centering!
       if(center) {
@@ -1281,6 +1299,7 @@ Pagoda2 <- setRefClass(
         pcas <- as.matrix(x %*% pcs$v);
       }
       misc$PCA <<- pcs;
+      if(verbose) cat('.')
       #pcas <- scde::winsorize.matrix(pcas,0.05)
       # # control for sequencing depth
       # if(is.null(batch)) {
@@ -1295,7 +1314,7 @@ Pagoda2 <- setRefClass(
       colnames(pcas) <- paste('PC',seq(ncol(pcas)),sep='')
       #pcas <- pcas[,-1]
       #pcas <- scde::winsorize.matrix(pcas,0.1)
-
+      if(verbose) cat(' done\n')
       reductions[[name]] <<- pcas;
       ## nIcs <- nPcs;
       ## a <- ica.R.def(t(pcas),nIcs,tol=1e-3,fun='logcosh',maxit=200,verbose=T,alpha=1,w.init=matrix(rnorm(nIcs*nPcs),nIcs,nPcs))
@@ -1405,13 +1424,13 @@ Pagoda2 <- setRefClass(
         }
         sf <- df$gsf[match(odgenes,rownames(df))];
         return(list(sf=sf,cells=cells,odgenes=odgenes))
-      },n.cores=n.cores)
+      },n.cores=n.cores,mc.preschedule=T)
       cat(" done\n");
       odg <- unique(unlist(lapply(gpcs,function(z) z$odgenes)))
       # TODO: consider gsf?
       odgenes <- unique(c(odgenes,odg));
       misc[['odgenes']] <<- odgenes;
-      return(odgenes);
+      return(invisible(odgenes));
     },
                            
     localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL , k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,take.top.odgenes=FALSE, recursive=TRUE,euclidean=FALSE,perplexity=k,debug=F,return.pca=F,skip.pca=F) {
@@ -1912,16 +1931,15 @@ Pagoda2 <- setRefClass(
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
-        require(Rtsne);
         if (distance=='L2') {
           cat("running tSNE using",n.cores,"cores:\n")
-          emb <- Rtsne(x, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
+          emb <- Rtsne::Rtsne(x, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         } else {
           cat('calculating distance ... ');
           cat('pearson ...')
           d <- 1-cor(t(x))
           cat("running tSNE using",n.cores,"cores:\n")
-          emb <- Rtsne(d,is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
+          emb <- Rtsne::Rtsne(d,is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         }
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
