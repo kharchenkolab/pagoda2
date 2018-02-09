@@ -1316,7 +1316,7 @@ Pagoda2 <- setRefClass(
           groups <- clusters[[type]][[1]]
         } else {
           groups <- clusters[[type]][[clusterType]]
-          if(is.null(cols)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
         groups <- as.factor(groups[names(groups) %in% rownames(counts)]);
@@ -1430,7 +1430,7 @@ Pagoda2 <- setRefClass(
           groups <- clusters[[type]][[1]]
         } else {
           groups <- clusters[[type]][[clusterType]]
-          if(is.null(cols)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
         groups <- as.factor(groups[names(groups) %in% rownames(x)]);
