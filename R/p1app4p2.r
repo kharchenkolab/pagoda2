@@ -2,7 +2,7 @@
 #' @import rjson
 
 #' @export p2.make.pagoda1.app
-p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
+p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,veloinfo=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
   # rcm - xv
   if(type=='counts') {
     x <- p2$counts;
@@ -42,7 +42,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
     tc <- colSumByFac(x,as.integer(rowFac))[-1,]
     rownames(tc) <- levels(groups)
   } else { # assume dense matrix
-    tc <- do.call(rbind,tapply(1:nrow(x),groups,function(ii) colMeans(x[ii,,drop=F])))
+    tc <- do.call(rbind,tapply(1:nrow(x),groups,function(ii) colMeans(x[ii,,drop=F],na.rm=TRUE)))
   }
   d <- 1-cor(t(tc))
   hc <- hclust(as.dist(d),method='ward.D')
@@ -54,7 +54,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
       stop("inner.clustering with type='counts' is not yet supported")
     } else {
       require(fastcluster)
-      clo <- mclapply(levels(groups),function(lev) {
+      clo <- papply(levels(groups),function(lev) {
         ii <- which(groups==lev);
         if(length(ii)>3) {
           dd <- as.dist(1-abs(cor(t(as.matrix(x[ii,,drop=F])))))
@@ -64,7 +64,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
         } else {
           return(ii)
         }
-      },mc.cores=n.cores)
+      },n.cores=n.cores)
     }
   } else {
     # use random cell order within the clusters
@@ -113,6 +113,18 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
     }
     # flip embedding y axis since this is what p1 does
     embedding[,2] <- -1*embedding[,2]
+
+    if(!is.null(veloinfo)) {
+      # flip vertical coordinates on the arrows
+      veloinfo$proj$garrows[,c(2,4)] <- -1*veloinfo$proj$garrows[,c(2,4)];
+      # put in order of the embedding cells
+      x <- veloinfo$proj$arrows; x <- x[rownames(x) %in% rownames(embedding),]; 
+      x[,c(2,4)] <- -1*x[,c(2,4)];
+      y <- cbind(embedding,embedding);
+      mi <- match(rownames(y),rownames(x));
+      y[!is.na(mi),] <- x[mi[!is.na(mi)],]
+      veloinfo$proj$arrows <- y;
+    }
   }
 
   # cleanup colcols
@@ -143,7 +155,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
   # prepend groups, depth and batch
   clean.groups <- groups;
   if(min.group.size>1) { clean.groups[clean.groups %in% levels(clean.groups)[unlist(tapply(clean.groups,clean.groups,length))<min.group.size]] <- NA; clean.groups <- as.factor(clean.groups); }
-  factor.colors <- fac2col(clean.groups,s=0.8,v=0.8,shuffle=F,min.group.size=min.group.size,return.details=T)
+  factor.colors <- fac2col(clean.groups,s=0.8,v=0.8,shuffle=FALSE,min.group.size=min.group.size,return.details=T)
   acol <- list('clusters'=list(data=droplevels(clean.groups),
                                colors=as.character(factor.colors$palette),
                                text=paste('cl',as.character(groups))),
@@ -187,7 +199,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
   df <- df[order(df$score, decreasing = TRUE), ]
 
   # merge go.env
-  sa <- p2ViewPagodaApp$new(results=fres, pathways=df, genes=gene.df, goenv=env, batch=NULL, name = title, trim = 0, embedding=embedding,type=type)
+  sa <- p2ViewPagodaApp$new(results=fres, pathways=df, genes=gene.df, goenv=env, batch=NULL, name = title, trim = 0, embedding=embedding,type=type,veloinfo=veloinfo)
 
 }
 
@@ -196,9 +208,9 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
 #' @exportClass p2ViewPagodaApp
 p2ViewPagodaApp <- setRefClass(
     'p2ViewPagodaApp',
-    fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 'name', 'trim', 'batch','embedding','type'),
+    fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 'name', 'trim', 'batch','embedding','type','veloinfo'),
     methods = list(
-      initialize = function(results, ..., pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", trim = 1.1/nrow(p2$counts), embedding=NULL,type) {
+      initialize = function(results, ..., pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", trim = 1.1/nrow(p2$counts), embedding=NULL,type,veloinfo=NULL) {
         if(!missing(results) && class(results)=='p2ViewPagodaApp') { # copy constructor
           callSuper(results);
         } else {
@@ -216,6 +228,7 @@ p2ViewPagodaApp <- setRefClass(
           name <<- name
           trim <<- trim
           embedding <<- embedding
+          veloinfo <<- veloinfo;
           # reverse lookup environment
           xl <- as.list(goenv);
           gel <- tapply(rep(names(xl), unlist(lapply(xl, length))), unlist(xl), I)
@@ -277,13 +290,13 @@ p2ViewPagodaApp <- setRefClass(
                                      <meta http-equiv = "Content-Type" content = "text/html charset = iso-8859-1" >
                                      <link rel = "stylesheet" type = "text/css" href = "http://pklab.med.harvard.edu/sde/extjs/resources/ext-theme-neptune/ext-theme-neptune-all.css" / >
                                      <link rel = "stylesheet" type = "text/css" href = "http://pklab.med.harvard.edu/sde/extjs/examples/shared/example.css" / >
-                                     <link rel = "stylesheet" type = "text/css" href = "http://pklab.med.harvard.edu/sde/pathcl.css" / >
+                                     <link rel = "stylesheet" type = "text/css" href = "http://pklab.med.harvard.edu/sde/pathcl_velo.css" / >
                                      <head profile = "http://www.w3.org/2005/10/profile" >
                                      <link rel = "icon" type = "image/png" href = "http://pklab.med.harvard.edu/sde/pagoda.png" >
                                      <script type = "text/javascript" src = "http://pklab.med.harvard.edu/sde/extjs/ext-all.js" > </script >
                                      <script type = "text/javascript" src = "http://pklab.med.harvard.edu/sde/jquery-1.11.1.min.js" > </script >
                                      <script src = "http://d3js.org/d3.v3.min.js" charset = "utf-8" > </script >
-                                     <script type = "text/javascript" src = "http://pklab.med.harvard.edu/sde/pathcl_canvas_1.3.js" > </script >
+                                     <script type = "text/javascript" src = "http://pklab.med.harvard.edu/sde/pathcl_velo_1.4.js" > </script >
                                      </head >
                                      <body > </body >
                                      </html >
@@ -366,7 +379,7 @@ p2ViewPagodaApp <- setRefClass(
                      if(!is.null(embedding)) {
                        # report embedding, along with the position of each cell in the pathway matrix
                        edf <- data.frame(t(cbind(embedding,match(rownames(embedding),matrix$cols)))); rownames(df) <- NULL;
-                       ol$embedding <- list(data=edf,xrange=range(embedding[,1]),yrange=range(embedding[,2]));
+                       ol$embedding <- list(data=edf,xrange=range(embedding[,1]),yrange=range(embedding[,2]),hasvelo=!is.null(veloinfo));
                      }
 
                      s <- toJSON(ol)
@@ -378,6 +391,121 @@ p2ViewPagodaApp <- setRefClass(
                        res$write(s)
                      }
                    },
+                   '/getvel.json' = { # report cell velocities (grid and cell)
+                     if(is.null(veloinfo)) return(NULL);
+                     x <- veloinfo$proj$garrows;
+                     y <- veloinfo$proj$arrows;
+                     cellorder <- colnames(results$rcm)[results$hvc$order]
+                     y <- y[match(cellorder,rownames(y)),]
+                     
+                     ol <- list(gvel=unname(split(x, 1:nrow(x))),cvel=unname(split(y, 1:nrow(y)))); # some gymnatics to work around rjson limitations
+                     #ol <- list(gvel=data.frame(t(veloinfo$proj$garrow)))
+                     s <- toJSON(ol)
+                     res$header('Content-Type', 'application/javascript')
+                     if(!is.null(req$params()$callback)) {
+                       res$write(paste(req$params()$callback, "(", s, ")", sep = ""))
+                     } else {
+                       res$write(s)
+                     }
+                   },
+                   '/velinfo.json' = {
+                     celli <- gridi <- -1;
+                     if(!is.null(req$params()$celli)) { celli <- as.integer(req$params()$celli)+1 }
+                     if(!is.null(req$params()$gridi)) { gridi <- as.integer(req$params()$gridi)+1 }
+
+                     #cat("celli=",celli," gridi=",gridi)
+                     if(gridi>0) {
+                       vel <- veloinfo$proj$gvel[,gridi]
+                       esh <- veloinfo$proj$geshifts[,gridi]
+                     } else if(celli>0) {
+                       cell <- colnames(results$rcm)[results$hvc$order[celli]]
+                       vel <- veloinfo$proj$vel[,cell]
+                       esh <- veloinfo$proj$eshifts[,cell]
+                     }
+                     df <- data.frame(gene=rownames(veloinfo$proj$gvel),vel=vel,proj=esh)
+                     vel <- vel/sqrt(sum(vel*vel))
+                     esh <- esh/sqrt(sum(esh*esh))
+                     vcos <- esh*vel*length(vel);
+                     vcos <- sign(vcos)*sqrt(abs(vcos))
+
+                     df$cos <- vcos;
+                     df <- df[is.finite(df$cos),]
+                     df <- df[order(abs(df$cos),decreasing=T),]
+                     lgt <- df
+                     
+                     if(!is.null(req$params()$filter)) {
+                       fl <- fromJSON(url_decode(req$params()$filter))
+                       for( fil in fl) {
+                         lgt <- lgt[grep(fil$value, lgt[, fil$property], perl = TRUE, ignore.case = TRUE), ]
+                       }
+                     }
+                     start <- ifelse(is.null(req$params()$start), 1, as.integer(req$params()$start)+1)
+                     limit <- ifelse(is.null(req$params()$limit), 1000, as.integer(req$params()$limit))
+                     dir <- ifelse(is.null(req$params()$dir), "DESC", req$params()$dir)
+                     trows <- nrow(lgt)
+                     if(trows > 0) {
+                       if(!is.null(req$params()$sort)) {
+                         if(req$params()$sort %in% colnames(lgt)) {
+                           lgt <- lgt[order(lgt[, req$params()$sort], decreasing = (dir == "DESC")), ]
+                         }
+                       } else { # default sort
+                         # already done
+                       }
+                     }
+                     lgt <- format(lgt[min(start, nrow(lgt)):min((start+limit), nrow(lgt)), ], nsmall = 2, digits = 2)
+                     ol <- apply(lgt, 1, function(x) as.list(x))
+                     names(ol) <- NULL
+                     s <- toJSON(list(totalCount = trows, genes = ol))
+                     res$header('Content-Type', 'application/javascript')
+                     if(!is.null(req$params()$callback)) {
+                       res$write(paste(req$params()$callback, "(", s, ")", sep = ""))
+                     } else {
+                       res$write(s)
+                     }
+
+                   },
+                   '/gvelfit.json' = {
+                     gene <- fromJSON(url_decode(req$params()$gene))
+                     if(is.null(gene)) { return(NULL) }
+                     # report value vectors using the same order of cells as in the matrix
+                     cellorder <- colnames(results$rcm)[results$hvc$order]
+                     om <- match(cellorder,colnames(veloinfo$fit$conv.emat.norm));
+                     df <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,om],n=veloinfo$fit$conv.nmat.norm[gene,om],r=0)
+                     # quick quantile range
+                     qrng <- function(x,gradient.range.quantile=0.95) {
+                       if(all(sign(x)>=0)) {
+                         zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile)))
+                         if(diff(zlim)==0) {
+                           zlim <- as.numeric(range(na.omit(x)))
+                         }
+                       } else {
+                         zlim <- c(-1,1)*as.numeric(quantile(na.omit(abs(x)),p=gradient.range.quantile))
+                         if(diff(zlim)==0) {
+                           zlim <- c(-1,1)*as.numeric(na.omit(max(abs(x))))
+                         }
+                       }
+                       zlim
+                     }
+                     #df <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,],n=veloinfo$fit$conv.nmat.norm[gene,],r=0,embedding[match(colnames(veloinfo$fit$conv.emat.norm),rownames(embedding)),])
+                     
+                     # estimate residual
+                     df$r=df$n- (df$e*veloinfo$fit$ko[gene,'g'] + veloinfo$fit$ko[gene,'o'])
+
+                     full.rng <- apply(df,2,range);
+                     full.rng <- full.rng+c(-1,1) %o% apply(full.rng,2,diff)*0.1/2
+                     ol <- list(fit=df,rng=data.frame(apply(df,2,qrng)),fullrng=data.frame(full.rng),gamma=veloinfo$fit$ko[gene,'g'],offset=veloinfo$fit$ko[gene,'o'],gene=gene)
+
+                     #ol <- list(fit=data.frame(t(df)),rng=data.frame(t(apply(df,2,range))),gamma=veloinfo$fit$ko[gene,'g'],offset=veloinfo$fit$ko[gene,'o'],gene=gene)
+                     
+                     s <- toJSON(ol)
+                     res$header('Content-Type', 'application/javascript')
+                     if(!is.null(req$params()$callback)) {
+                       res$write(paste(req$params()$callback, "(", s, ")", sep = ""))
+                     } else {
+                       res$write(s)
+                     }
+                   },
+                   
                    '/genecl.json' = { # report heatmap data for a selected set of genes
                      # Under Rstudio server, the URL decoding is not done automatically ..
                      #  .. here we're calling url_decode again for everything (it shouldn't have an effect on a properly formed list)
