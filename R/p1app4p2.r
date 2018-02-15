@@ -470,16 +470,24 @@ p2ViewPagodaApp <- setRefClass(
                      # report value vectors using the same order of cells as in the matrix
                      cellorder <- colnames(results$rcm)[results$hvc$order]
                      om <- match(cellorder,colnames(veloinfo$fit$conv.emat.norm));
-                     df <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,om],n=veloinfo$fit$conv.nmat.norm[gene,om],r=0)
+                     #df <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,om],n=veloinfo$fit$conv.nmat.norm[gene,om],r=0)
+                     # working around lack of NA index support in Matrix
+                     ev <- rep(NA,length(cellorder));
+                     df <- data.frame(e=ev,n=ev,r=ev);
+                     vi <- !is.na(om);
+                     df[vi,] <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,om[vi]],n=veloinfo$fit$conv.nmat.norm[gene,om[vi]],r=0)
+                     
+                     rownames(df) <- cellorder
+                     
                      # quick quantile range
                      qrng <- function(x,gradient.range.quantile=0.95) {
-                       if(all(sign(x)>=0)) {
-                         zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile)))
+                       if(all(sign(na.omit(x))>=0)) {
+                         zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile),na.rm=TRUE))
                          if(diff(zlim)==0) {
                            zlim <- as.numeric(range(na.omit(x)))
                          }
                        } else {
-                         zlim <- c(-1,1)*as.numeric(quantile(na.omit(abs(x)),p=gradient.range.quantile))
+                         zlim <- c(-1,1)*as.numeric(quantile(na.omit(abs(x)),p=gradient.range.quantile,na.rm=TRUE))
                          if(diff(zlim)==0) {
                            zlim <- c(-1,1)*as.numeric(na.omit(max(abs(x))))
                          }
@@ -491,8 +499,11 @@ p2ViewPagodaApp <- setRefClass(
                      # estimate residual
                      df$r=df$n- (df$e*veloinfo$fit$ko[gene,'g'] + veloinfo$fit$ko[gene,'o'])
 
-                     full.rng <- apply(df,2,range);
+                     full.rng <- apply(df,2,range,na.rm=TRUE);
                      full.rng <- full.rng+c(-1,1) %o% apply(full.rng,2,diff)*0.1/2
+
+                     df[is.na(df)] <- 0;
+                     
                      ol <- list(fit=df,rng=data.frame(apply(df,2,qrng)),fullrng=data.frame(full.rng),gamma=veloinfo$fit$ko[gene,'g'],offset=veloinfo$fit$ko[gene,'o'],gene=gene)
 
                      #ol <- list(fit=data.frame(t(df)),rng=data.frame(t(apply(df,2,range))),gamma=veloinfo$fit$ko[gene,'g'],offset=veloinfo$fit$ko[gene,'o'],gene=gene)
