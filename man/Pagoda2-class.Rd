@@ -19,12 +19,38 @@
 \item{upregulated.only}{whether to report only genes that are expressed significantly higher in each group}
 
 \item{verbose}{verbose flag}
+
+\item{nPcs}{number of PCs}
+
+\item{type}{dataset view to reduce (counts by default, but can specify a name of an existing reduction)}
+
+\item{name}{name for the PCA reduction to be created}
+
+\item{use.odgenes}{whether pre-calculated set of overdispersed genes should be used (default=TRUE)}
+
+\item{n.odgenes}{whether a certain number of top overdispersed genes should be used}
+
+\item{odgenes}{explicitly specify a set of genes to use for the reduction}
+
+\item{center}{should data be centerred prior to PCA (default=TRUE)}
+
+\item{cells}{optional subset of cells on which PCA should be ran}
+
+\item{fastpath}{use C implementation for speedup}
+
+\item{maxit}{maximum number of irlba iterations to use}
+
+\item{verbose}{}
 }
 \value{
 a list, with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels); Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest; M - log2 fold change; highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group; fe - fraction of cells in a given group having non-zero expression level of a given gene;
+
+invisible PCA result (the reduction itself is saved in $reductions[[name]])
 }
 
 \examples{
 result <- r$getDifferentialGenes(groups=r$clusters$PCA$multilevel);
 str(r$diffgenes)
+Calculate PCA reduction of the data
+
 }
