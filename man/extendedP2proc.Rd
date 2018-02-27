@@ -11,7 +11,7 @@ extendedP2proc(p2, n.cores = 20, organism = "hs")
 
 \item{n.cores}{number of cores to use}
 
-\item{organism}{organisms hs or mm}
+\item{organism}{organisms hs, mm or dr}
 }
 \value{
 a list of a p2 object and a go.env

@@ -113,7 +113,6 @@ pagoda2WebApp <- setRefClass(
       hcGroups <- hclust(as.dist(ld), method = 'ward.D');
       
       if(orderDend){
-        require(dendsort)
         hcGroups <- dendsort::dendsort(hcGroups)
       }
       # We now need to derive a cell order compatible with the order
@@ -162,13 +161,11 @@ pagoda2WebApp <- setRefClass(
               }
               
             } else if(innerOrder == "knn") {
-              require(largeVis)
-              
               celsel <- names(cl0)[cl0 == x]
               k <- round(pmax(length(celsel)*0.20,5)) # Coarse estimate for k
               nv <- ceiling(pmax(length(celsel)*0.10,5)) # Coarse estimate for appropriate number of PCs
               
-              xx <- r$counts[celsel,] %*% irlba(r$counts[celsel,],nv = nv,nu=0)$v
+              xx <- r$counts[celsel,] %*% irlba::irlba(r$counts[celsel,],nv = nv,nu=0)$v
               colnames(xx) <- paste('PC',seq(ncol(xx)),sep='')
               
               xn <- n2Knn(as.matrix(xx),k,nThreads=r$n.cores,verbose=0,indexType='L2r')
@@ -182,8 +179,8 @@ pagoda2WebApp <- setRefClass(
               xn <- cbind(xn,rd=df$weight)
               edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(xx),nrow(xx)))
               edgeMat <- edgeMat + t(edgeMat);
-              wij <- largeVis::buildWijMatrix(edgeMat,perplexity=100,threads=r$n.cores)
-              coords <- largeVis::projectKNNs(wij = wij, dim=1, M = 5, verbose = FALSE,sgd_batches = 2e6,gamma=1, seed=1)
+              wij <- buildWijMatrix(edgeMat,perplexity=100,threads=r$n.cores)
+              coords <- projectKNNs(wij = wij, dim=1, M = 5, verbose = FALSE,sgd_batches = 2e6,gamma=1, seed=1)
               
               rownames(xx)[order(coords)]
               
@@ -972,8 +969,6 @@ pagoda2WebApp <- setRefClass(
     
     ## Generate a JSON list representation of the gene KNN network
     generateGeneKnnJSON = function() {
-      require(rjson)
-      
       cs <- cumsum(table(originalP2object$genegraphs$graph$from)[unique(originalP2object$genegraphs$graph$from)])
       y <- lapply(1:length(cs),function(n){
         if(n == 1){

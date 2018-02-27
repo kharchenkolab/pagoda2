@@ -22,6 +22,8 @@ Imports:
     RcppArmadillo,
     RcppProgress,
     Rtsne,
+    BiocGenerics,
+    AnnotationDbi,
     GO.db,
     RMTstat,
     dendsort,
