@@ -78,8 +78,6 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 ##' @export
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   xvm <- do.call(rbind, tapply(seq_len(nrow(d)), factor(ct, levels = sort(unique(ct))), function(ii) {
-    require(pcaMethods);
-
     if(length(ii) == 1) return(d[ii, ])
     if(pick.top) {
       return(d[ii[which.max(apply(d[ii, ], 1, var))], ])

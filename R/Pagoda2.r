@@ -1,6 +1,4 @@
 #' @useDynLib pagoda2
-#' @import GO.db
-#' @import org.Hs.eg.db
 #' @import MASS
 #' @import Matrix
 #' @importFrom Rcpp evalCpp
@@ -8,10 +6,9 @@
 #' @import igraph
 #' @importFrom irlba irlba
 #' @import pcaMethods
-#' @importFrom mgcv gam
 #' @importFrom parallel mclapply
-#' @importFrom RMTstat WishartMaxPar
 #' @importFrom Rcpp sourceCpp
+#' @importFrom magrittr %>%
 NULL
 
 #' A Reference Class, which holds and process single cell RNA-seq data.

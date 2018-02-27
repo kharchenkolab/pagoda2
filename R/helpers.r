@@ -50,16 +50,18 @@ areColors <- function(x) {
 
 papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
   if(n.cores>1) {
-    # bplapply implementation
-    if(is.element("parallel", installed.packages()[,1])) {
-      mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule)
-    } else {
-      # last resort
-      bplapply(... , BPPARAM = MulticoreParam(workers = n.cores))
+    if(requireNamespace("parallel", quietly = TRUE)) {
+      return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule))
+    } 
+    
+    if(requireNamespace("BiocParallel", quietly = TRUE)) { 
+      # It should never happen because parallel is specified in Imports
+      return(BiocParallel::bplapply(... , BPPARAM = BiocParallel::MulticoreParam(workers = n.cores)))
     }
-  } else { # fall back on lapply
-    lapply(...);
   }
+
+  # fall back on lapply
+  lapply(...)
 }
 
 jw.disR <- function(x,y) {
@@ -200,13 +202,12 @@ show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
     return(invisible(server))
 }
 
-                                        # get SCDE server from saved session
+# get SCDE server from saved session
 get.scde.server <- function(port,ip) {
     if(exists("___scde.server", envir = globalenv())) {
         server <- get("___scde.server", envir = globalenv())
     } else {
-        require(Rook)
-        server <- Rhttpd$new()
+        server <- Rook::Rhttpd$new()
         assign("___scde.server", server, envir = globalenv())
         if(!missing(ip)) {
             if(missing(port)) {
