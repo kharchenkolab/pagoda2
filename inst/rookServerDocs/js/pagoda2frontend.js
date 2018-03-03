@@ -43,7 +43,6 @@ function getDataLoadingParams(callback) {
     callback(params);
   } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-from-url") {
 
-      
       var qs = (function(a) {
 	  if (a == "") return {};
 	  var b = {};
@@ -57,10 +56,8 @@ function getDataLoadingParams(callback) {
 	  }
 	  return b;
       })(window.location.search.substr(1).split('&'));
-      console.log(qs)
       var fileURL=qs['fileURL']
-
-
+      
     var params = {
       connectionType: 'remoteFile',
       remoteFileUrl: fileURL
