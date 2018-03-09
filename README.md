@@ -70,4 +70,7 @@ library('pagoda2')
 ```
 
 ## Alternative Install padoga2 as a docker container
+
+Please note that the docker container is as of March 2018 not up to date with the main project branch and all the latest features are missing. It is strongly recommended that you install the main release.
+
 [Instructions for installing docker container with pagoda2](vignettes/Docker.md)
