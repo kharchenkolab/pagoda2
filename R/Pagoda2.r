@@ -654,7 +654,7 @@ Pagoda2 <- setRefClass(
 
     # Calculates gene Knn network for gene similarity
     # Author: Simon Steiger
-    makeGeneKnnGraph = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =100, k = 30, n.cores = .self$n.cores, verbose =T) {
+    makeGeneKnnGraph = function(nPcs = 100, scale =T , center=T, fastpath =T, maxit =1000, k = 30, n.cores = .self$n.cores, verbose =T) {
        # Transpose first
        x <- t(counts);
 
