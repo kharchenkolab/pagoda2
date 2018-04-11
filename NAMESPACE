@@ -3,6 +3,7 @@
 export(Pagoda2)
 export(armaCor)
 export(basicP2proc)
+export(basicP2web)
 export(buildWijMatrix)
 export(calcMulticlassified)
 export(cellsPerSelectionGroup)
