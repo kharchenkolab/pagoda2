@@ -467,3 +467,16 @@ hierDiffToGenesets <- function(o) {
 
 
 
+
+basicP2web <- function(p2,app.title = 'Pagoda2', extraWebMetadata = NULL, n.cores = 4) {
+    cat('Calculating hdea...\n')
+    hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3, n.cores = n.cores)
+    metadata.forweb <- list();
+    metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel,displayname='Multilevel')
+    metadata.forweb <- c(metadata.forweb, extraWebMetadata)
+    genesets <- hierDiffToGenesets(hdea)
+    appmetadata = list(apptitle=app.title)
+    cat('Making KNN graph...\n')
+    p2$makeGeneKnnGraph(n.cores=n.cores)
+    make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets, dendrogramCellGroups = p2$clusters$PCA$multilevel, show.clusters=F, appmetadata = appmetadata)
+}
