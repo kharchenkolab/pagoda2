@@ -170,7 +170,6 @@ var p2globalParams = {
    * Update the params from the url arguments
    */  
   updateFromURL: function() {
-    debugger;
     var urlParams = getWindowURLparams();
     if(typeof(urlParams.dataconfiguration) != 'undefined') {
        this.dataLoadingParams.configuration = urlParams.dataconfiguration;
