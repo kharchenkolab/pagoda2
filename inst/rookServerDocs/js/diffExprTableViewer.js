@@ -300,9 +300,11 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 		      tooltip: 'Download results as CSV file',
 		      glyph:  0xf0ed,
 		      handler: function() {
+		        
+		        
             // Generate CSV
             var grid = Ext.getCmp('deResultsGenes');
-            var csvFile = pagHelpers.extJSgridToCSV(grid);
+            var csvFile = pagHelpers.DEproxydataToCSV(grid.store.proxy.data);
 
             // Download CSV
             var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
