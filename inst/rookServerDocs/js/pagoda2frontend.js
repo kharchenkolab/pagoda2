@@ -22,6 +22,25 @@ Ext.onReady(function() {
 });
 
 /**
+ * Get the parameters on the URL
+ */
+function getWindowURLparams() {
+        var qs = (function(a) {
+            if (a == "") return {};
+            var b = {};
+            for (var i = 0; i < a.length; ++i) {
+                var p = a[i].split('=', 2);
+                if (p.length == 1)
+                    b[p[0]] = "";
+                else
+                    b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+            }
+            return b;
+        })(window.location.search.substr(1).split('&'));  
+        return qs;
+}
+
+/**
  * Reads the p2globalParams options for the app configuration required
  */
 function getDataLoadingParams(callback) {
@@ -40,20 +59,8 @@ function getDataLoadingParams(callback) {
         callback(params);
     } else if (p2globalParams.dataLoadingParams.configuration == "fileremote-from-url") {
         // Get URL of file to load from access URL
-        var qs = (function(a) {
-            if (a == "") return {};
-            var b = {};
-            for (var i = 0; i < a.length; ++i) {
-                var p = a[i].split('=', 2);
-                if (p.length == 1)
-                    b[p[0]] = "";
-                else
-                    b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-            }
-            return b;
-        })(window.location.search.substr(1).split('&'));
+        var qs = getWindowURLparams();
         var fileURL = qs['fileURL']
-
         var params = {
             connectionType: 'remoteFile',
             remoteFileUrl: fileURL
@@ -103,6 +110,9 @@ function getDataLoadingParams(callback) {
  * Check browser version and initialise app if OK
  */
 function initialise() {
+    p2globalParams.updateFromURL();
+  
+  
     if (!pagHelpers.checkBrowser()) {
         pagHelpers.showNotSupportedBrowserWarning();
     } else {
