@@ -10,7 +10,8 @@ var p2globalParams = {
     Specifies the data loading parameters for the application deployment
     This section controlls the behaviour of the global getDataLoadingParams
     function.
-
+    
+    THE VALUE HERE CAN BE OVERRIDEN BY URL ARGUMENT "dataconfiguration"
     configuration values:
       server: the application is running from a rook server and will connect getData.php and
         doComputation.php in the same directory to load the data and do computations respectively
@@ -162,6 +163,17 @@ var p2globalParams = {
 
     // A vertical scale factor for the dendrogram plot
     scaleFactor: 0.95
-    }
+    },
   /* --- PARAMS END --- */
+  
+  /**
+   * Update the params from the url arguments
+   */  
+  updateFromURL: function() {
+    var urlParams = getWindowURLparams();
+    if(typeof(urlParams.dataconfiguration) != 'undefined') {
+       this.dataLoadingParams.configuration = urlParams.dataconfiguration;
+    }
+  }
+  
 };

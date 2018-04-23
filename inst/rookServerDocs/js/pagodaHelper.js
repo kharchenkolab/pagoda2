@@ -697,5 +697,21 @@ var pagHelpers = {
         }
 
         return r;
+    },
+    
+    DEproxydataToCSV: function(proxydata) {
+      if(proxydata.length == 0) {
+        return "";
+      }
+      
+      var sep = ',';
+      // generate header
+      var csvFile = "name,M,Z,absZ\r\n"
+      for (var i = 0; i < proxydata.length; i++) {
+        csvFile += proxydata[i].name + sep + proxydata[i].M +sep + 
+            proxydata[i].Z + sep + proxydata[i].absZ + '\r\n';
+      }
+      
+      return csvFile;
     }
 }
