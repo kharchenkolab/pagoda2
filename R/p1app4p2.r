@@ -52,20 +52,19 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
     # determine refined cell order
     if(type=='counts') {
       stop("inner.clustering with type='counts' is not yet supported")
-    } else {
-      require(fastcluster)
-      clo <- papply(levels(groups),function(lev) {
-        ii <- which(groups==lev);
-        if(length(ii)>3) {
-          dd <- as.dist(1-abs(cor(t(as.matrix(x[ii,,drop=F])))))
-          dd[is.na(dd)] <- 1
-          hcc <- fastcluster::hclust(dd, method = "ward.D")
-          return(ii[hcc$order])
-        } else {
-          return(ii)
-        }
-      },n.cores=n.cores)
-    }
+    } 
+
+    clo <- papply(levels(groups),function(lev) {
+      ii <- which(groups==lev);
+      if(length(ii)>3) {
+        dd <- as.dist(1-abs(cor(t(as.matrix(x[ii,,drop=F])))))
+        dd[is.na(dd)] <- 1
+        hcc <- fastcluster::hclust(dd, method = "ward.D")
+        return(ii[hcc$order])
+      }
+
+      return(ii)
+    },n.cores=n.cores)
   } else {
     # use random cell order within the clusters
     clo <- tapply(1:length(groups),groups,I)

@@ -204,8 +204,6 @@ validateSelectionsObject <- function(selections) {
 #' @return a data.frame with two colums, one for cluster and one for selections, each cluster appears only once
 #' @export getClusterLabelsFromSelection
 getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff = 0.3, ambiguous.ratio = 0.5) {
-  require(plyr)
-
   if (!is.factor(clustering)) {
     stop('clustering is not a factor');
   }
@@ -218,7 +216,9 @@ getClusterLabelsFromSelection <- function(clustering, selections, multiClassCuto
 
   # Stop if the any of the selections exceed the specified multiclass cutoff
   if(!all(multiClass < multiClassCutoff)) {
-    msg <- paste0('The following selections have a very high number of multiclassified cells: ',paste(names(multiClass)[!multiClass < multiClassCutoff], collapse = ', '), '. Please reduce the overlaps and try again. You can use calcMulticlassified() to see more details.')
+    msg <- paste0('The following selections have a very high number of multiclassified cells: ',
+                  paste(names(multiClass)[!multiClass < multiClassCutoff], collapse = ', '), 
+                  '. Please reduce the overlaps and try again. You can use calcMulticlassified() to see more details.')
     stop(msg)
   }
 
@@ -231,7 +231,7 @@ getClusterLabelsFromSelection <- function(clustering, selections, multiClassCuto
   confusion.table <- table(data.frame(sel.clean.vector[shared.names],clustering[shared.names]))
 
 
-  tmp1 <- adply(.data = confusion.table, .margins = 2, .fun =  function(x) {
+  tmp1 <- plyr::adply(.data = confusion.table, .margins = 2, .fun =  function(x) {
     rv <- NA
     x.sort <- sort(x, decreasing=T)
     if((x.sort[1] * ambiguous.ratio) >= x.sort[2]) {
@@ -296,8 +296,10 @@ getCellsInSelections <- function(p2selections, selectionNames) {
 #' @return a list that contains a ggplot2 object and a datatable with the overlaps data
 #' @export plotSelectionOverlaps
 plotSelectionOverlaps <- function(sel) {
-  require(ggplot2)
-
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  
   n1s = c()
   n2s = c();
   overlaps = c();
@@ -316,8 +318,10 @@ plotSelectionOverlaps <- function(sel) {
   res <- data.frame(cbind(n1s, n2s, overlaps),stringsAsFactors=F)
   res$overlaps <- as.numeric(res$overlaps)
 
-  p <- ggplot(res, aes(n1s, n2s)) + geom_tile(aes(fill=log10(overlaps))) +  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    geom_text(aes(label=(overlaps))) + scale_fill_gradient(low = "yellow", high = "red")
+  p <- ggplot2::ggplot(res, ggplot2::aes(n1s, n2s)) + ggplot2::geom_tile(ggplot2::aes(fill=log10(overlaps))) +  
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+    ggplot2::geom_text(ggplot2::aes(label=(overlaps))) + 
+    ggplot2::scale_fill_gradient(low = "yellow", high = "red")
 
   invisible(list(results=res, plot=p))
 }
@@ -328,16 +332,18 @@ plotSelectionOverlaps <- function(sel) {
 #' @return ggplot2 object
 #' @export plotMulticlassified
 plotMulticlassified <- function(sel) {
-  require(ggplot2)
-
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  
   multiclassified <- calcMulticlassified(sel)
   tmp1 <- as.data.frame(multiclassified)
   tmp1$lab <- rownames(tmp1)
 
-  p <- ggplot(tmp1, aes(x=lab, y= multiclassified)) + geom_bar(stat='identity') +
-    theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-    scale_y_continuous(name='% multiclassified') +
-    scale_x_discrete(name='Selection Label')
+  p <- ggplot2::ggplot(tmp1, ggplot2::aes(x=lab, y= multiclassified)) + ggplot2::geom_bar(stat='identity') +
+    ggplot2::theme_bw() + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
+    ggplot2::scale_y_continuous(name='% multiclassified') +
+    ggplot2::scale_x_discrete(name='Selection Label')
 
   p
 }
@@ -349,7 +355,9 @@ plotMulticlassified <- function(sel) {
 #' @return invisible summary table that gets plotted
 #' @export compareClusterings
 compareClusterings <- function(cl1, cl2, filename = NA) {
-  require(pheatmap)
+  if (!requireNamespace("pheatmap", quietly = TRUE)) {
+    stop("Package \"pheatmap\" needed for this function to work. Please install it.", call. = FALSE)
+  }
 
   n1 <- names(cl1);
   n2 <- names(cl2);
@@ -364,7 +372,7 @@ compareClusterings <- function(cl1, cl2, filename = NA) {
   tbl  <- table(data.frame(cl1[ns],cl2[ns]))
   tblNorm <- sweep(tbl, 2, colSums(tbl), FUN=`/`)
 
-  pheatmap(tblNorm, file=filename)
+  pheatmap::pheatmap(tblNorm, file=filename)
 
   invisible(tblNorm)
 }
@@ -416,9 +424,11 @@ getIntExtNamesP2Selection <- function(x) unlist(lapply(x,function(y) {y$name}))
 #' @return a ggplot2 object
 #' @export plotEmbeddingColorByP2Selection
 plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = T, alpha = 0.7, show.axis =T )  {
-  require(ggplot2)
-
   # Return the plot variable p
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
+  }
+  
   p <- NULL
 
   colsorig <- pagoda2:::getColorsFromP2Selection(sel)
@@ -435,12 +445,12 @@ plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, sh
 
   guidesVar <- NULL
   if (!show.guides) {
-    guidesVar <- theme(legend.position = "none")
+    guidesVar <- ggplot2::theme(legend.position = "none")
   }
 
-  themeVar <- theme_bw()
+  themeVar <- ggplot2::theme_bw()
   if (!show.axis) {
-    themeVar <- theme_void()
+    themeVar <- ggplot2::theme_void()
   }
 
   if (show.labels) {
@@ -449,12 +459,14 @@ plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, sh
     # Display external names
     clcnt$sel <- as.character(getIntExtNamesP2Selection(sel)[clcnt$sel])
 
-    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point( size = point.size, alpha = alpha) +
-      scale_color_manual(values =  colsorig, name='Type') + themeVar +
-      geom_text(aes(x = X1, y=X2, label=sel), data=clcnt, inherit.aes=FALSE, size=label.size, fontface = "bold") + guidesVar;
+    p <- ggplot2::ggplot(dftmp, ggplot2::aes(x = X1, y = X2, color=selname)) + 
+      ggplot2::geom_point( size = point.size, alpha = alpha) +
+      ggplot2::scale_color_manual(values =  colsorig, name='Type') + themeVar +
+      ggplot2::geom_text(ggplot2::aes(x = X1, y=X2, label=sel), data=clcnt, inherit.aes=FALSE, size=label.size, fontface = "bold") + guidesVar;
   } else {
-    p <- ggplot(dftmp, aes(x = X1, y = X2, color=selname)) + geom_point( size = point.size, alpha = alpha ) +
-      scale_color_manual(values =  colsorig, name='Type') + themeVar + guidesVar;
+    p <- ggplot2::ggplot(dftmp, ggplot2::aes(x = X1, y = X2, color=selname)) + 
+      ggplot2::geom_point( size = point.size, alpha = alpha ) +
+      ggplot2::scale_color_manual(values =  colsorig, name='Type') + themeVar + guidesVar;
   }
 
   invisible(p)

@@ -4,20 +4,24 @@
 \name{Pagoda2-class}
 \alias{Pagoda2-class}
 \alias{Pagoda2}
-\title{determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test}
-\arguments{
-\item{type}{data type (currently only default 'counts' is supported)}
+\title{A Reference Class, which holds and process single cell RNA-seq data.}
+\description{
+A Reference Class, which holds and process single cell RNA-seq data.
+}
+\section{Fields}{
 
-\item{clusterType}{optional cluster type to use as a group-defining factor}
+\describe{
+\item{\code{counts}}{gene count matrix, normalized on total counts}
 
-\item{groups}{explicit cell group specification - a named cell factor (use NA in the factor to exclude cells from the comparison)}
+\item{\code{clusters}}{results of clustering}
 
-\item{name}{name slot to store the results in}
+\item{\code{graphs}}{???}
 
-\item{z.threshold}{minimal absolute Z score (adjusted) to report}
+\item{\code{reductions}}{results of reductions, i.e. PCA}
 
-\item{upregulated.only}{whether to report only genes that are expressed significantly higher in each group}
+\item{\code{embeddings}}{results of visualization algorithms, i.e. t-SNE or largeVis}
 
+<<<<<<< HEAD
 \item{verbose}{verbose flag}
 
 \item{nPcs}{number of PCs}
@@ -54,3 +58,87 @@ str(r$diffgenes)
 Calculate PCA reduction of the data
 
 }
+=======
+\item{\code{diffgenes}}{lists of differentially expressed genes}
+
+\item{\code{pathways}}{???}
+
+\item{\code{n.cores}}{number of cores, used for the analyses}
+
+\item{\code{misc}}{???}
+
+\item{\code{batch}}{???}
+
+\item{\code{modelType}}{???}
+
+\item{\code{verbose}}{???}
+
+\item{\code{depth}}{???}
+
+\item{\code{batchNorm}}{???}
+
+\item{\code{mat}}{???}
+
+\item{\code{genegraphs}}{???}
+}}
+
+\section{Methods}{
+
+\describe{
+\item{\code{calculatePcaReduction(nPcs = 20, type = "counts", name = "PCA",
+  use.odgenes = TRUE, n.odgenes = NULL, odgenes = NULL, center = TRUE,
+  cells = NULL, fastpath = TRUE, maxit = 100, verbose = TRUE)}}{Calculate PCA reduction of the data
+
+       - nPcs number of PCs
+
+       - type dataset view to reduce (counts by default, but can specify a name of an existing reduction)
+
+       - name name for the PCA reduction to be created
+
+       - use.odgenes whether pre-calculated set of overdispersed genes should be used (default=TRUE)
+
+       - n.odgenes whether a certain number of top overdispersed genes should be used
+
+       - odgenes explicitly specify a set of genes to use for the reduction
+
+       - center should data be centerred prior to PCA (default=TRUE)
+
+       - cells optional subset of cells on which PCA should be ran
+
+       - fastpath use C implementation for speedup
+
+       - maxit maximum number of irlba iterations to use
+
+       - verbose verbose
+
+       return invisible PCA result (the reduction itself is saved in $reductions[[name]])}
+
+\item{\code{getDifferentialGenes(type = "counts", clusterType = NULL, groups = NULL,
+  name = "customClustering", z.threshold = 3, upregulated.only = FALSE,
+  verbose = FALSE)}}{Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
+
+       - type data type (currently only default 'counts' is supported)
+
+       - clusterType optional cluster type to use as a group-defining factor
+
+       - groups explicit cell group specification - a named cell factor (use NA in the factor to exclude cells from the comparison)
+
+       - name name slot to store the results in
+
+       - z.threshold minimal absolute Z score (adjusted) to report
+
+       - upregulated.only whether to report only genes that are expressed significantly higher in each group
+
+       - verbose verbose flag
+
+       return a list, with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels); Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest; M - log2 fold change; highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group; fe - fraction of cells in a given group having non-zero expression level of a given gene;
+
+       Examples:
+
+
+         result <- r$getDifferentialGenes(groups=r$clusters$PCA$multilevel);
+
+         str(r$diffgenes)}
+}}
+
+>>>>>>> devel

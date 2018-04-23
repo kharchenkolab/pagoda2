@@ -10,6 +10,6 @@ p2.generate.go.web.fromGOEnv(go.env)
 \item{go.env}{GO enviroment generated with p2.generate.go}
 }
 \description{
-Generates GO annotation for the web object from the go environment used for 
+Generates GO annotation for the web object from the go environment used for
 enrichment analysis
 }

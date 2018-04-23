@@ -1,7 +1,7 @@
-#' @import org.Hs.eg.db
 #' @import GO.db
 #' @import Rook
 #' @importFrom parallel mclapply
+#' @importFrom irlba irlba
 #'
 NULL
 
@@ -50,17 +50,20 @@ areColors <- function(x) {
 
 papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
   if(n.cores>1) {
-    # bplapply implementation
-    if(is.element("parallel", installed.packages()[,1])) {
-      mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule)
-    } else {
-      # last resort
-      bplapply(... , BPPARAM = MulticoreParam(workers = n.cores))
+    if(requireNamespace("parallel", quietly = TRUE)) {
+      return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule))
+    } 
+    
+    if(requireNamespace("BiocParallel", quietly = TRUE)) { 
+      # It should never happen because parallel is specified in Imports
+      return(BiocParallel::bplapply(... , BPPARAM = BiocParallel::MulticoreParam(workers = n.cores)))
     }
-  } else { # fall back on lapply
-    lapply(...);
   }
+
+  # fall back on lapply
+  lapply(...)
 }
+
 jw.disR <- function(x,y) {
   x <- x+1/length(x)/1e3;
   y <- y+1/length(y)/1e3;
@@ -71,7 +74,6 @@ jw.disR <- function(x,y) {
 
 # note transpose is meant to speed up calculations when neither scaling nor centering is required
 fast.pca <- function(m,nPcs=2,tol=1e-10,scale=F,center=F,transpose=F) {
-  require(irlba)
   if(transpose) {
     if(center) { m <- m-Matrix::rowMeans(m)}; if(scale) { m <- m/sqrt(Matrix::rowSums(m*m)); }
     a <- irlba(tcrossprod(m)/(ncol(m)-1), nu=0, nv=nPcs,tol=tol);
@@ -200,13 +202,12 @@ show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
     return(invisible(server))
 }
 
-                                        # get SCDE server from saved session
+# get SCDE server from saved session
 get.scde.server <- function(port,ip) {
     if(exists("___scde.server", envir = globalenv())) {
         server <- get("___scde.server", envir = globalenv())
     } else {
-        require(Rook)
-        server <- Rhttpd$new()
+        server <- Rook::Rhttpd$new()
         assign("___scde.server", server, envir = globalenv())
         if(!missing(ip)) {
             if(missing(port)) {
@@ -357,7 +358,7 @@ read.10x.matrices <- function(matrixPaths,n.cores=1,verbose=T) {
     # read all count files (*_unique.counts) under a given path
     #cat("loading data from ",matrixPath, " ");
     x <- as(readMM(paste(matrixPath,'matrix.mtx',sep='/')),'dgCMatrix'); # convert to the required sparse matrix representation
-    
+
     gs <- read.delim(paste(matrixPath,'genes.tsv',sep='/'),header=F)
     rownames(x) <- gs[,2]
 
@@ -379,14 +380,14 @@ read.10x.matrices <- function(matrixPaths,n.cores=1,verbose=T) {
 ##' @param countMatrix input count matrix to be filtered
 ##' @param min.cell.size min allowed cell size (default 500)
 ##' @param max.cell.size max allowed cell size (default 5e4)
-##' @param p.level statistical confidence level for deviation from the main trend, used for cell filtering 
+##' @param p.level statistical confidence level for deviation from the main trend, used for cell filtering
 ##' @param alpha shading of the confidence band
 ##' @param plot plot the molecule distribution and the gene/molecule dependency fit
 ##' @param do.par reset graphical parameters prior to plotting
 ##' @return a filtered matrix
 ##' @export
 gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell.size=5e4,p.level=min(1e-3,1/ncol(countMatrix)),alpha=0.1,plot=T, do.par=T) {
-  if(plot) { 
+  if(plot) {
     if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
     hist(log10(colSums(countMatrix)),col='wheat',xlab='log10[ molecules ]',main='')
     # some of the cells are very large .. those can skew the analysis of more subtle populations (too much bias ) .. letting them in here though
@@ -398,7 +399,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell
   df <- df[df$molecules>=min.cell.size,];
   df <- log10(df);
   df <- df[order(df$molecules,decreasing=F),]
-  if(plot) { 
+  if(plot) {
     plot(df,col=adjustcolor(1,alpha=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
     abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
   }
