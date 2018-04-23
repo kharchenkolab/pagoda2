@@ -459,6 +459,26 @@ hierDiffToGenesets <- function(o) {
   })
 }
 
+#' Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression
+#' @param p2 p2 object
+#' @param title name of the pagoda object
+#' @export p2.toweb.hdea
+p2.toweb.hdea <- function(p2, title="") {
+  hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3)
+  metadata.forweb <- list();
+  metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel, displayname='joint')
+  deSets <- get.de.geneset(p2, groups=p2$clusters$PCA[[1]], prefix='de_')
+  genesets <- c(deSets, hierDiffToGenesets(hdea))
+  appmetadata <- list(apptitle=title)
+  p2$makeGeneKnnGraph();
+  wp <- make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets,
+                    dendrogramCellGroups = p2$clusters$PCA[[1]], show.clusters=F,
+                    appmetadata = appmetadata)
+  wp
+}
+
+
+
 
 
 
