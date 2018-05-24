@@ -531,7 +531,11 @@ actionPanelUIcontroller.prototype.showMDBGhelpDialog = function(){
  */
 actionPanelUIcontroller.prototype.stopAnalysisClickHandler = function() {
  var actionUI = new actionPanelUIcontroller();
- (new calculationController).abort();
+ console.log('abort button press');
+ 
+ (new calculationController()).abort();
+ 
+ 
  actionUI.currentDErequest = null;
  actionUI.enableRunButton();
 }

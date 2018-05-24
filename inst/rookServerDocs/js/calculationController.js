@@ -47,7 +47,14 @@ calculationController.prototype.getDefaultMethodName = function(){
  * Abort the current processing
  */ 
 calculationController.prototype.abort = function() {
-  this.localWorker.postMessage({ type: "abort" });
+  // Terminate the worker
+  calculationController.instance.localWorker.terminate();
+  calculationController.instance.localWorker = undefined;
+  // Close the dialog
+  (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
+  setTimeout(function(){
+          Ext.getCmp("localProgressBarWindow").close();
+  },0.100);
 }
 
 /**
@@ -150,6 +157,9 @@ calculationController.prototype.calculateDELocal = function(selections, callback
         } else {
            executeDE();
         }
+    } else {
+      console.error("Can't start new DE, this.localWorker is not undefined")
+      
     } // localWorker undefined
 
   // Handle the incoming message
@@ -171,29 +181,19 @@ calculationController.prototype.handleWorkerMessage = function(e) {
       // This shouldn't be here
       if(document.getElementById("localProgressBar")){
         var calcCtrl = new calculationController();
+        calcCtrl.localWorker.terminate();
         calcCtrl.localWorker = undefined;
         (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
         setTimeout(function(){
           calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
         },0.100);
-        
       } 
-    } else if (callParams.type === "progressupdate") {
       
+    } else if (callParams.type === "progressupdate") {
       var thisController = new calculationController();
       var totalProgress = 0.5 + (callParams.current / callParams.outoff) * 0.5;
       (new actionPanelUIcontroller()).updateProgressPercent(totalProgress);
-      
-    } else if (callParams.type === "aborted") {
-        w.terminate();
-        calcCtrl.localWorker = undefined;
-        (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
-                setTimeout(function(){
-          calcCtrl.callback(e.data.results);
-          Ext.getCmp("localProgressBarWindow").close();
-        },0.100);
-        
     }
 }; // handleWorkerMessage
 
