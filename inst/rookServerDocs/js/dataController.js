@@ -135,6 +135,7 @@ dataController.prototype.getReducedDendrogram = function(callback) {
  * Get the cell identifiers in the default order
  */
 dataController.prototype.getCellOrder = function(callback) {
+  
   return this.internalController.getCellOrder(callback);
 }
 
@@ -343,3 +344,4 @@ dataController.prototype.getAppMetadata = function(callback) {
  var dc = this;
  this.internalController.getAppMetadata(callback);
 }
+

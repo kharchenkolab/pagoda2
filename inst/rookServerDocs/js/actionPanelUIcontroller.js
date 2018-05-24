@@ -593,6 +593,9 @@ actionPanelUIcontroller.prototype.runAnalysisClickHandler = function() {
     } catch (e) {
         if (e.code == STATIC_FILE_FIELD_MISSING) {
             Ext.MessageBox.alert('Warning', 'This file does not support differential expression. Generate a new file using the latest pagoda2 version.');
+              (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
+              setTimeout(function(){Ext.getCmp("localProgressBarWindow").close();},0.100);
+            actionUI.enableRunButton();
         } else {
             Ext.MessageBox.alert('Warning', 'An unknown error occured.');
         }

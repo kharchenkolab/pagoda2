@@ -58,44 +58,33 @@ calculationController.prototype.abort = function() {
 }
 
 /**
- * Calculate differential expression between two cell sets
- * given a specific (local or remote method)
+ * Calculate DE for one or two selections
+ * if selectionB is null compare to background
+ * @param selectionA name of a selection registered in the selection controller
+ * @param selectionB name of a selection registered in the selection controller, or null if de against background
+ * @method mehtod to run 'remoteDefault' or 'wilcoxon'
  */
-calculationController.prototype.calculateDEfor2selections = function(selectionA, selectionB, method, callback) {
+calculationController.prototype.calculateDE = function(selectionA, selectionB, method, callback) {
   if (method === 'remoteDefault') {
-    return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
+    if(selectionB == null) {
+      return this.calculateDEfor1selectionbyRemote(selectionA, callback);
+    } else {
+      return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
+    } 
   } else if(method === 'localWilcoxon'){
-    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"wilcoxon");
+    if(selectionB === null){
+      var cellSelCntr = new cellSelectionController();
+      var selA = cellSelCntr.getSelection(selectionA);
+      return this.calculateDELocal([selA], callback, "wilcoxon");
+    } else {
+      var cellSelCntr = new cellSelectionController();
+      var selA = cellSelCntr.getSelection(selectionA);
+      var selB = cellSelCntr.getSelection(selectionB);
+      return this.calculateDELocal([selA,selB], callback, "wilcoxon");
+    }
   }  else {
-    callback('Not implemented');
+    callback('Unknown differential expression method');
   }
-};
-
-/**
- * Calculate differential expression between one cell set and everything else
- * given a specific (local or remote method)
- */
-calculationController.prototype.calculateDEfor1selection = function(selectionA, method, callback) {
-  if (method === 'remoteDefault') {
-    return this.calculateDEfor1selectionbyRemote(selectionA, callback);
-  } else if(method=== 'localWilcoxon'){
-    var cellSelCntr = new cellSelectionController();
-    return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, "wilcoxon");
-  } else {
-    callback('Not implemented');
-  }
-};
-
-/**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param selectionB the name of the second cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
- */
-calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 };
 
 /**
@@ -114,11 +103,20 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   calcCtrl.callback = callback;
 
   // Generates the new worker
-  if(typeof(this.localWorker) === "undefined") {
+  if(typeof(this.localWorker) !== "undefined") {
+    this.localWorker.terminate();
+    this.localWorker =  undefined;
+    
+  }
+  
       this.localWorker = new Worker('js/lightDeWorker.js');
       
         var executeDE =  function() {
-            var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
+            if (calcCtrl.selections.length == 2) {
+              var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
+            } else {
+               var cellsRetrieve = calcCtrl.selections[0];
+            }
             
             //builds non-modal progress bar window
             (new actionPanelUIcontroller()).showDisplayBar();
@@ -145,6 +143,7 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       
         var selections =  calcCtrl.selections;
         if(selections.length === 1){
+          // Make a second selection and put all the other cells there
           dataCtrl.getCellOrder(function(cellnames){
             selections[1] = [];
             for(var i = 0 ; i < cellnames.length; i++) {
@@ -157,10 +156,7 @@ calculationController.prototype.calculateDELocal = function(selections, callback
         } else {
            executeDE();
         }
-    } else {
-      console.error("Can't start new DE, this.localWorker is not undefined")
-      
-    } // localWorker undefined
+
 
   // Handle the incoming message
   this.localWorker.onmessage = thisController.handleWorkerMessage;
@@ -196,11 +192,6 @@ calculationController.prototype.handleWorkerMessage = function(e) {
       (new actionPanelUIcontroller()).updateProgressPercent(totalProgress);
     }
 }; // handleWorkerMessage
-
-/**
- * Show the display bar window
- */
-
 
 /// Server backed calculations below
 
