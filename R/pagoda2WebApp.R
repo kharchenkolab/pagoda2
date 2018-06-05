@@ -972,9 +972,9 @@ pagoda2WebApp <- setRefClass(
       cs <- cumsum(table(originalP2object$genegraphs$graph$from)[unique(originalP2object$genegraphs$graph$from)])
       y <- lapply(1:length(cs),function(n){
         if(n == 1){
-          originalP2object$genegraphs$graph$to[1:cs[n]]
+          unique(originalP2object$genegraphs$graph$to[1:cs[n]])
         } else {
-          originalP2object$genegraphs$graph$to[(cs[n-1]+1):cs[n]]
+          unique(originalP2object$genegraphs$graph$to[(cs[n-1]+1):cs[n]])
         }
       })
       names(y) <- unique(originalP2object$genegraphs$graph$from)
