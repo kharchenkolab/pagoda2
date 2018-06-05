@@ -969,16 +969,12 @@ pagoda2WebApp <- setRefClass(
     
     ## Generate a JSON list representation of the gene KNN network
     generateGeneKnnJSON = function() {
-      cs <- cumsum(table(originalP2object$genegraphs$graph$from)[unique(originalP2object$genegraphs$graph$from)])
-      y <- lapply(1:length(cs),function(n){
-        if(n == 1){
-          unique(originalP2object$genegraphs$graph$to[1:cs[n]])
-        } else {
-          unique(originalP2object$genegraphs$graph$to[(cs[n-1]+1):cs[n]])
-        }
-      })
-      names(y) <- unique(originalP2object$genegraphs$graph$from)
-      toJSON(y)
+        froms <- unique(originalP2object$genegraphs$graph$from)
+        names(froms) <- froms
+        y <- lapply(froms, function(n) {
+            subset(originalP2object$genegraphs$graph, from == n)$to
+        })
+        toJSON(y)
     },
     
     ## Generate information about the embeddings we are exporting
