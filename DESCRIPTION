@@ -31,10 +31,10 @@ Imports:
     Rtsne,
     urltools,
     stats,
-    utils
+    utils,
+    fastcluster
 Suggests:
     dbscan,
-    fastcluster,
     ggplot2,
     pcaMethods,
     pheatmap,
