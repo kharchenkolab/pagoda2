@@ -23,6 +23,7 @@ basicP2proc <- function(cd, n.cores = 20, batch = NULL, keep.genes = NULL) {
   M <- 30
   p2$getEmbedding(type = 'PCA', embeddingType = 'largeVis', M = M, perplexity = 30, gamma = 1/ M, alpha =1)
   p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = 50, distance='L2');
+  p2$makeGeneKnnGraph();
 
   invisible(p2)
 }
