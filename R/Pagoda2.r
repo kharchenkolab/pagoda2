@@ -1311,7 +1311,7 @@ Pagoda2 <- setRefClass(
       # adjust for centering!
       if(center) {
         pcs$center <- cm;
-        pcas <- as.matrix(t(t(x %*% pcs$v) - t(cm %*% pcs$v)))
+        pcas <- as.matrix(t(as(t(x %*% pcs$v), "dgeMatrix") - t(cm %*% pcs$v)))
       } else {
         pcas <- as.matrix(x %*% pcs$v);
       }
