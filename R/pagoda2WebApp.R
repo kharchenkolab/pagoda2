@@ -799,13 +799,13 @@ pagoda2WebApp <- setRefClass(
       matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,]
       
       # Main Sparse count matrix TRANSPOSED for de
-      matsparseTransposedToSave <- t(originalP2object$counts)
+      matsparseTransposedToSave <- Matrix::t(originalP2object$counts)
       
       # Serialise aspect matrix
       cellIndices <- mainDendrogram$cellorder;
       aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
       
-      aspectMatrixToSave <- t(aspectMatrixToSave);
+      aspectMatrixToSave <- Matrix::t(aspectMatrixToSave);
       aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
       
       # Serialise the aspect information
