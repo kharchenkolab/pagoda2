@@ -6,23 +6,31 @@
 #' largeVis and tSNE embeddings
 #' @param cd count matrix, rows are genes, columns are cells
 #' @param n.cores number of cores to use
-#' @param batch optional batch factor
+#' @param batch optional batch factor (default=NULL)
+#' @param n.odgenes number of top overdispersed genes to use (dfault=3e3)
+#' @param nPcs number of PCs to use
+#' @param k default number of neighbors to use in kNN graph
+#' @param perplexity perplexity to use in generating tSNE and largeVis embeddings (default=50)
+#' @param log.scale whether to use log scale normalization (default=T)
+#' @param trim number of cells to trim in winsorization (default=10)
+#' @param keep.genes optional set of genes to keep from being filtered out (even at low counts, default=NULL)
+#' @param min.cells.per.gene minimal number of cells required for gene to be kept (unless listed in keep.genes)
 #' @return a new pagoda2 object
 #' @export basicP2proc
-basicP2proc <- function(cd, n.cores = 20, batch = NULL, keep.genes = NULL) {
+basicP2proc <- function(cd, n.cores = 30, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=30) {
   rownames(cd) <- make.unique(rownames(cd))
   
-  p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes);
+  p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene);
   p2$adjustVariance(plot=F, gam.k=10);
-  p2$calculatePcaReduction(nPcs = 300, n.odgenes = 3.e3, maxit = 1000)
-  p2$makeKnnGraph(k = 30, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
+  p2$calculatePcaReduction(nPcs = nPcs, n.odgenes = n.odgenes, maxit = 1000)
+  p2$makeKnnGraph(k = k, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
   p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
   p2$getKnnClusters(method = igraph::multilevel.community, type = 'PCA', name = 'multilevel');
-  p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap');
+  #p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap');
 
   M <- 30
-  p2$getEmbedding(type = 'PCA', embeddingType = 'largeVis', M = M, perplexity = 30, gamma = 1/ M, alpha =1)
-  p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = 50, distance='L2');
+  p2$getEmbedding(type = 'PCA', embeddingType = 'largeVis', M = M, perplexity = perplexity, gamma = 1/ M, alpha =1)
+  p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = perplexity, distance='L2');
   p2$makeGeneKnnGraph();
 
   invisible(p2)
