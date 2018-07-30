@@ -34,7 +34,7 @@ basicP2proc <- function(cd, n.cores = 30, batch = NULL,  n.odgenes=3e3, nPcs=100
       M <- 30
       p2$getEmbedding(type = 'PCA', embeddingType = 'largeVis', M = M, perplexity = perplexity, gamma = 1/ M, alpha =1)
   }
-  if (get.tnse) {
+  if (get.tsne) {
       p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = perplexity, distance='L2');
   }
   ## Required for web app generation
