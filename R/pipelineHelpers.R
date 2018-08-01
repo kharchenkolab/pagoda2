@@ -17,28 +17,36 @@
 #' @param min.cells.per.gene minimal number of cells required for gene to be kept (unless listed in keep.genes)
 #' @return a new pagoda2 object
 #' @export basicP2proc
-basicP2proc <- function(cd, n.cores = 30, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=30) {
+basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=30, get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
   rownames(cd) <- make.unique(rownames(cd))
-  
+  ## Basic Processing
   p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene);
   p2$adjustVariance(plot=F, gam.k=10);
   p2$calculatePcaReduction(nPcs = nPcs, n.odgenes = n.odgenes, maxit = 1000)
+  ## Make KNN graph and generate clustering
   p2$makeKnnGraph(k = k, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
   p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
   p2$getKnnClusters(method = igraph::multilevel.community, type = 'PCA', name = 'multilevel');
   #p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap');
 
-  M <- 30
-  p2$getEmbedding(type = 'PCA', embeddingType = 'largeVis', M = M, perplexity = perplexity, gamma = 1/ M, alpha =1)
-
-  if(perplexity > nrow(p2$counts)/5) {
-    perplexity <- floor((nrow(p2$counts)-1)/3)
-    cat("perplexity is too large, reducing to",perplexity,"\n");
+  ## Generate embeddings
+  if (get.largevis) {
+      M <- 30
+      p2$getEmbedding(type = 'PCA', embeddingType = 'largeVis', M = M, perplexity = perplexity, gamma = 1/ M, alpha =1)
   }
-  
-  p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = perplexity, distance='L2');
-  p2$makeGeneKnnGraph();
+  if (get.tsne) {
+    if(perplexity > nrow(p2$counts)/5) {
+      perplexity <- floor((nrow(p2$counts)-1)/3)
+      cat("perplexity is too large, reducing to",perplexity,"\n");
+    }
 
+      p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = perplexity, distance='L2');
+  }
+  ## Required for web app generation
+  if (make.geneknn) {
+      p2$makeGeneKnnGraph();
+  }
+  ## return
   invisible(p2)
 }
 
