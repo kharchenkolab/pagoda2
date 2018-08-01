@@ -86,6 +86,14 @@ Pagoda2 <- setRefClass(
         stop("duplicate cell names are not allowed - please reduce")
       }
 
+      if(any(is.na(rownames(countMatrix)))) {
+        stop("NA gene names are not allowed - please fix")
+      }
+      if(any(is.na(colnames(countMatrix)))) {
+        stop("NA cell names are not allowed - please fix")
+      }
+
+      
       if(!is.null(batch)) {
         if(!all(colnames(countMatrix) %in% names(batch))) { stop("the supplied batch vector doesn't contain all the cells in its names attribute")}
         colBatch <- as.factor(batch[colnames(countMatrix)])
