@@ -92,7 +92,8 @@ Pagoda2 <- setRefClass(
       if(any(is.na(colnames(countMatrix)))) {
         stop("NA cell names are not allowed - please fix")
       }
-
+      
+      misc$depthScale <- depthScale;
       
       if(!is.null(batch)) {
         if(!all(colnames(countMatrix) %in% names(batch))) { stop("the supplied batch vector doesn't contain all the cells in its names attribute")}
