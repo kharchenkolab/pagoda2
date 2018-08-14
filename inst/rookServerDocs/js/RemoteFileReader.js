@@ -238,9 +238,17 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback, progre
           }
         }
       }
+
+      if(window.chrome) {
+	  // Chrome has a problem with caching, disable it by adding random numbers here
+	  var urlRequest = rfr.url.concat('?',Math.floor(Math.random()*1e6));
+      } else {
+	  var urlRequest = rfr.url;
+      }
+
       
       // Dispatch request
-      xhr.open('GET', rfr.url, true); // TODO: Try POST for longer ranger requests
+      xhr.open('GET', urlRequest, true); // TODO: Try POST for longer ranger requests
       xhr.setRequestHeader('Range', bytesArg);
       xhr.responseType = "arraybuffer";
       xhr.send(null);      
@@ -267,7 +275,15 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback, progre
       }
     }
 
-    xhr.open('GET', this.url, true);
+
+      if(window.chrome) {
+	  // Chrome has a problem with caching, disable it by adding random numbers here
+	  var urlRequest = this.url.concat('?',Math.floor(Math.random()*1e6));
+      } else {
+	  var urlRequest = this.url;
+      }
+      
+    xhr.open('GET', urlRequest, true);
     var bytesArg = "bytes=".concat(start,'-',end-1);
     xhr.setRequestHeader('Range', bytesArg);
     xhr.responseType = "arraybuffer";
@@ -282,7 +298,14 @@ RemoteFileReader.prototype.readMultiRange = function(rangeList, callback, progre
       }
     }
 
-    xhr.open('GET', this.url, true);
+      if(window.chrome) {
+	  // Chrome has a problem with caching, disable it by adding random numbers here
+	  var urlRequest = this.url.concat('?',Math.floor(Math.random()*1e6));
+      } else {
+	  var urlRequest = this.url;
+      }
+      
+    xhr.open('GET', urlRequest, true);
     var bytesArg = "bytes=".concat(start,'-',end-1);
     xhr.setRequestHeader('Range', bytesArg);
     xhr.responseType = "text";
