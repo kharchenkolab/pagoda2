@@ -1,0 +1,143 @@
+---
+title: "Pagoda2 processing with GO aspects"
+author: "Nikolas Barkas"
+date: "August 14, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load libraries
+```{r}
+# Load libs
+library(pagoda2)
+library(Matrix)
+library(nbHelpers)
+````
+
+Load 10X matrix
+```{r cars}
+path <- "path/to/tenXmatrices"
+x <- read10xMatrix(path=path)
+```
+
+Perform filtering of matrices
+```{r}
+# filter cells based on the gene/molecule dependency
+t.filter.for.valid.cells <- function(countMatrix,min.cell.size=500, max.cell.size=5e4,p.level=min(1e-3,1/ncol(countMatrix)),alpha=0.1,do.par=T) {
+          if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
+                  hist(log10(colSums(countMatrix)),col='wheat',xlab='log10[ molecules ]',main='')
+                  # some of the cells are very large .. those can skew the analysis of more subtle populations (too much bias ) .. letting them in here though
+
+        abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
+        # look at the number of genes vs. molecule size depenency
+        df <- data.frame(molecules=colSums(countMatrix),genes=colSums(countMatrix>0));
+        df <- df[df$molecules>=min.cell.size,];
+        df <- log10(df);
+        df <- df[order(df$molecules,decreasing=F),]
+        plot(df,col=adjustcolor(1,alpha=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
+        abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
+        #abline(lm(genes ~ molecules, data=df),col=4)
+        require(MASS)
+        m <- rlm(genes~molecules,data=df)
+        suppressWarnings(pb <- data.frame(predict(m,interval='prediction',level = 1-p.level,type="response")))
+        polygon(c(df$molecules,rev(df$molecules)),c(pb$lwr,rev(pb$upr)),col=adjustcolor(2,alpha=0.1),border = NA)
+        outliers <- rownames(df)[df$genes > pb$upr | df$genes < pb$lwr];
+        points(df[outliers,],col=2,cex=0.6)
+        # set of filtered cells to move forward with
+        valid.cells <- colSums(countMatrix)>min.cell.size & colSums(countMatrix)<max.cell.size & !(colnames(countMatrix) %in% outliers)
+        countMatrix[,valid.cells,drop=F]
+}
+
+
+cd <- t.filter.for.valid.cells(x);
+```
+
+Prepare matrix
+```{r}
+cellPrefix <- '10xPBMC'
+cds <- Matrix(cd, sparse=T)
+rownames(cds) <- make.unique(rownames(cds))
+colnames(cds) <- paste0(cellPrefix, '_', colnames(cds))
+```
+
+Perform basic pagoda2 processing
+```{r}
+# P2 processing
+p2 <- Pagoda2$new(cds, n.cores = 20)
+p2$adjustVariance(plot=T, gam.k=10)
+p2$calculatePcaReduction(nPcs = 100, n.odgenes= 2.e3, maxit= 200)
+p2$makeKnnGraph(k = 30, type = 'PCA', center = T, weight.type = 'none', n.cores = 30, distance = 'cosine')
+p2$getKnnClusters(method = infomap.community, type = 'PCA', name='infomap')
+p2$getKnnClusters(method = multilevel.community, type = 'PCA', name='multilevel')
+p2$getKnnClusters(method = walktrap.community, type = 'PCA', name='walktrap')
+
+# Largevis embedding
+M <- 30
+p2$getEmbedding(type = 'PCA', embeddingType = 'largeVis', M = M, perplexity = 30, gamma = 1 / M, alpha = 1 )
+
+# tSNE embedding
+p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = 50)
+```
+
+Generate a GO environment for the organism of interest. Functions are available for human, mouse and zebrafish (p2.generate.human.go, p2.generate.mouse.go and p2.generate.dr.go respectively)
+```{r}
+require(org.Hs.eg.db)
+require(GO.db)
+# Generate the GO annotation ( in the case for human )
+go.env <- p2.generate.human.go(p2)
+```
+
+Test path way overdispersion for the GO annotation generated above. This process can take a long time for large datasets
+```{r}
+p2$testPathwayOverdispersion(
+      setenv = go.env,
+      verbose = T,
+      correlation.distance.threshold = 0.8, # @ 0.9 0.1 correlated get folded together
+      recalculate.pca = F,
+      min.pathway.size = 50,
+      max.pathway.size = 1000)
+```
+
+Generate a go environment for the web app
+```{r}
+geneSets <- p2.generate.human.go.web(colnames(p2$counts),n.cores=4)
+```
+
+# Generate the web app
+
+Setup the metadata
+```{r}
+# Make metadata
+additionalMetadata <- list()
+additionalMetadata$infomap <- p2.metadata.from.factor(p2$clusters$PCA$infomap, displayname = 'Infomap', s = 0.9)
+additionalMetadata$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel, displayname = 'Multilevel', s = 0.8)
+additionalMetadata$walktrap <- p2.metadata.from.factor(p2$clusters$PCA$walktrap, displayname = 'Walktrap', s = 0.5)
+```
+
+Generate gene knn graph for searching genes on the web app
+```{r}
+p2$makeGeneKnnGraph()
+```
+
+Generate web app
+```{r}
+# Generate the web application
+# dendrogramCellGroups specifies the clustering that will be
+# used to generate the main dendrogram
+myPagoda2WebObject <- make.p2.app(p2, dendrogramCellGroups = p2$clusters$PCA$infomap, additionalMetadata = additionalMetadata, geneSets = geneSets);
+```
+
+# Optional showing of app
+```{r}
+show.app(myPagoda2WebObject, name='newPagoda')
+```
+
+# Save serialised web object, RDS app and session image
+```{r}
+myPagoda2WebObject$serialiseToStatic(text.file.directory = './tmp', binary.filename = '10xPBMC.bin')
+saveRDS(myPagoda2WebObject, paste0(appName, '.rds'));
+save.image.fast('standardAnalysisFinal.RDataF');
+```
