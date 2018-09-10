@@ -61,7 +61,7 @@ Pagoda2 <- setRefClass(
         callSuper(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose);
         if(!missing(x) && is.null(counts)) { # interpret x as a countMatrix
           if (class(x) == 'matrix') {
-            x <- Matrix(x, sparse=T)
+            x <- as(Matrix(x, sparse=T), "dgCMatrix")
           }
           if(!(class(x) == 'dgCMatrix')) {
             stop("x is not of class dgCMatrix or matrix");
@@ -86,31 +86,35 @@ Pagoda2 <- setRefClass(
         stop("duplicate cell names are not allowed - please reduce")
       }
 
+      counts <<- t(countMatrix)
+
+      # Keep genes of sufficient coverage or genes that are in the keep.genes list
+      counts <<- counts[,diff(counts@p)>min.cells.per.gene | colnames(counts) %in% keep.genes]
+
+      # Save the filtered count matrix in misc$rawCounts
+      misc[['rawCounts']] <<- counts;
+
+      if (modelType == 'raw') {
+        return()
+      }
+
       if(!is.null(batch)) {
-        if(!all(colnames(countMatrix) %in% names(batch))) { stop("the supplied batch vector doesn't contain all the cells in its names attribute")}
+        if(!all(colnames(countMatrix) %in% names(batch))) { 
+          stop("the supplied batch vector doesn't contain all the cells in its names attribute")
+        }
         colBatch <- as.factor(batch[colnames(countMatrix)])
         batch <<- colBatch;
       }
 
       if(!is.null(lib.sizes)) {
-        if(!all(colnames(countMatrix) %in% names(lib.sizes))) { stop("the supplied lib.sizes vector doesn't contain all the cells in its names attribute")}
+        if(!all(colnames(countMatrix) %in% names(lib.sizes))) { 
+          stop("the supplied lib.sizes vector doesn't contain all the cells in its names attribute")
+        }
         lib.sizes <- lib.sizes[colnames(countMatrix)]
-      }
-
-      # determine deviance matrix
-      if(!is.null(lib.sizes)) {
         depth <<- lib.sizes/mean(lib.sizes)*mean(Matrix::colSums(countMatrix))
       } else {
         depth <<- Matrix::colSums(countMatrix);
       }
-
-      counts <<- t(countMatrix)
-
-      # Keep genes of sufficient coverage or genes that are int he keep.genes list
-      counts <<- counts[,diff(counts@p)>min.cells.per.gene | colnames(counts) %in% keep.genes]
-
-      # Save the filtered count matrix in misc$rawCounts
-      misc[['rawCounts']] <<- counts;
 
       cat(nrow(counts),"cells,",ncol(counts),"genes; normalizing ... ")
       # get normalized matrix
@@ -125,7 +129,6 @@ Pagoda2 <- setRefClass(
             depth <<- round(Matrix::rowSums(counts))
           }
         }
-
 
         ldepth <- log(depth);
 
@@ -187,7 +190,6 @@ Pagoda2 <- setRefClass(
         }
 
         counts <<- counts/(depth/depthScale);
-        #counts@x <<- log10(counts@x+1)
       } else {
         stop('modelType ',modelType,' is not implemented');
       }
