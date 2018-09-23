@@ -1301,11 +1301,14 @@ Pagoda2 <- setRefClass(
         x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
       }
       if(verbose) cat('.')
+      
       if(!is.null(cells)) {
         # cell subset is just for PC determination
+        nPcs <- min(min(length(cells),ncol(x))-1,nPcs)
         cm <- Matrix::colMeans(x[cells,])
         pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
       } else {
+        nPcs <- min(min(nrow(x),ncol(x))-1,nPcs)
         if(center) {
           cm <- Matrix::colMeans(x)
           pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
