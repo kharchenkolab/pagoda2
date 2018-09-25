@@ -958,7 +958,6 @@ DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) 
  */
 DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback, progressCallback){
     var dcf = this;
-    debugger;
     if (typeof(dcf.formatReader.index.sparseMatrixTransp) !== 'undefined') {
       if(this.sparseArrayTranspPreloadInfo === null) {
         // Need to preload
