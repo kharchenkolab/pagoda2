@@ -151,6 +151,11 @@ calculationController.prototype.calculateDELocal = function(selections, callback
                 selections[1].push(cellnames[i]);
               }
             }
+            // If the bg is over 5k cells, trim to 5000
+            if(selections[1].length > 5000) {
+              var bgSampleSize = 5000;
+              selections[1] = calculationController.prototype.getRandomSubarray(selections[1], bgSampleSize);
+            }
             executeDE();
           })
         } else {
@@ -160,6 +165,23 @@ calculationController.prototype.calculateDELocal = function(selections, callback
 
   // Handle the incoming message
   this.localWorker.onmessage = thisController.handleWorkerMessage;
+}
+
+/**
+ * A helper function to get a random subarray 
+ * From https://stackoverflow.com/questions/11935175/sampling-a-random-subset-from-an-array
+ * @param arr the array to get a subset of
+ * @param size the size of the subset, must be larger than the array
+ */
+calculationController.prototype.getRandomSubarray = function(arr, size) {
+  var shuffled = arr.slice(0), i = arr.length, temp, index;
+  while(i--) {
+    index = Math.floor((i+1) * Math.random());
+    temp = shuffled[index];
+    shuffled[index] = shuffled[i];
+    shuffled[i] = temp;
+  }
+  return shuffled.slice(0, size);
 }
 
 /**
