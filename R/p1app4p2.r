@@ -378,7 +378,7 @@ p2ViewPagodaApp <- setRefClass(
                      if(!is.null(embedding)) {
                        # report embedding, along with the position of each cell in the pathway matrix
                        edf <- data.frame(t(cbind(embedding,match(rownames(embedding),matrix$cols)))); rownames(df) <- NULL;
-                       ol$embedding <- list(data=edf,xrange=range(embedding[,1]),yrange=range(embedding[,2]),hasvelo=!is.null(veloinfo));
+                       ol$embedding <- list(data=edf,xrange=range(embedding[,1]),yrange=range(embedding[,2]),hasvelo=(!is.null(veloinfo) && !(class(veloinfo) == 'uninitializedField') && is.list(veloinfo)));
                      }
 
                      s <- toJSON(ol)

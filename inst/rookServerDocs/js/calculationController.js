@@ -47,48 +47,44 @@ calculationController.prototype.getDefaultMethodName = function(){
  * Abort the current processing
  */ 
 calculationController.prototype.abort = function() {
-  this.localWorker.postMessage({ type: "abort" });
+  // Terminate the worker
+  calculationController.instance.localWorker.terminate();
+  calculationController.instance.localWorker = undefined;
+  // Close the dialog
+  (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
+  setTimeout(function(){
+          Ext.getCmp("localProgressBarWindow").close();
+  },0.100);
 }
 
 /**
- * Calculate differential expression between two cell sets
- * given a specific (local or remote method)
+ * Calculate DE for one or two selections
+ * if selectionB is null compare to background
+ * @param selectionA name of a selection registered in the selection controller
+ * @param selectionB name of a selection registered in the selection controller, or null if de against background
+ * @method mehtod to run 'remoteDefault' or 'wilcoxon'
  */
-calculationController.prototype.calculateDEfor2selections = function(selectionA, selectionB, method, callback) {
+calculationController.prototype.calculateDE = function(selectionA, selectionB, method, callback) {
   if (method === 'remoteDefault') {
-    return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
+    if(selectionB == null) {
+      return this.calculateDEfor1selectionbyRemote(selectionA, callback);
+    } else {
+      return this.calculateDEfor2selectionsbyRemote(selectionA, selectionB, callback);
+    } 
   } else if(method === 'localWilcoxon'){
-    return this.calculateDEfor2selectionsbyLocal(selectionA, selectionB, callback,"wilcoxon");
+    if(selectionB === null){
+      var cellSelCntr = new cellSelectionController();
+      var selA = cellSelCntr.getSelection(selectionA);
+      return this.calculateDELocal([selA], callback, "wilcoxon");
+    } else {
+      var cellSelCntr = new cellSelectionController();
+      var selA = cellSelCntr.getSelection(selectionA);
+      var selB = cellSelCntr.getSelection(selectionB);
+      return this.calculateDELocal([selA,selB], callback, "wilcoxon");
+    }
   }  else {
-    callback('Not implemented');
+    callback('Unknown differential expression method');
   }
-};
-
-/**
- * Calculate differential expression between one cell set and everything else
- * given a specific (local or remote method)
- */
-calculationController.prototype.calculateDEfor1selection = function(selectionA, method, callback) {
-  if (method === 'remoteDefault') {
-    return this.calculateDEfor1selectionbyRemote(selectionA, callback);
-  } else if(method=== 'localWilcoxon'){
-    var cellSelCntr = new cellSelectionController();
-    return this.calculateDELocal([cellSelCntr.getSelection(selectionA)], callback, "wilcoxon");
-  } else {
-    callback('Not implemented');
-  }
-};
-
-/**
- * Calculate differential expression for 1 selection against the packground
- * @param selectionA the name of the first cell selection as registered in the cell selection controller
- * @param selectionB the name of the second cell selection as registered in the cell selection controller
- * @param callback
- * @param method the identifier for the local being used to calculate
- */
-calculationController.prototype.calculateDEfor2selectionsbyLocal = function(selectionA, selectionB, callback, method){
-  var cellSelCntr = new cellSelectionController();
-  return this.calculateDELocal([cellSelCntr.getSelection(selectionA), cellSelCntr.getSelection(selectionB)], callback, method);
 };
 
 /**
@@ -107,11 +103,20 @@ calculationController.prototype.calculateDELocal = function(selections, callback
   calcCtrl.callback = callback;
 
   // Generates the new worker
-  if(typeof(this.localWorker) === "undefined") {
+  if(typeof(this.localWorker) !== "undefined") {
+    this.localWorker.terminate();
+    this.localWorker =  undefined;
+    
+  }
+  
       this.localWorker = new Worker('js/lightDeWorker.js');
       
         var executeDE =  function() {
-            var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
+            if (calcCtrl.selections.length == 2) {
+              var cellsRetrieve = calcCtrl.selections[0].concat(calcCtrl.selections[1]);
+            } else {
+               var cellsRetrieve = calcCtrl.selections[0];
+            }
             
             //builds non-modal progress bar window
             (new actionPanelUIcontroller()).showDisplayBar();
@@ -138,6 +143,7 @@ calculationController.prototype.calculateDELocal = function(selections, callback
       
         var selections =  calcCtrl.selections;
         if(selections.length === 1){
+          // Make a second selection and put all the other cells there
           dataCtrl.getCellOrder(function(cellnames){
             selections[1] = [];
             for(var i = 0 ; i < cellnames.length; i++) {
@@ -145,15 +151,37 @@ calculationController.prototype.calculateDELocal = function(selections, callback
                 selections[1].push(cellnames[i]);
               }
             }
+            // If the bg is over 5k cells, trim to 5000
+            if(selections[1].length > 5000) {
+              var bgSampleSize = 5000;
+              selections[1] = calculationController.prototype.getRandomSubarray(selections[1], bgSampleSize);
+            }
             executeDE();
           })
         } else {
            executeDE();
         }
-    } // localWorker undefined
+
 
   // Handle the incoming message
   this.localWorker.onmessage = thisController.handleWorkerMessage;
+}
+
+/**
+ * A helper function to get a random subarray 
+ * From https://stackoverflow.com/questions/11935175/sampling-a-random-subset-from-an-array
+ * @param arr the array to get a subset of
+ * @param size the size of the subset, must be larger than the array
+ */
+calculationController.prototype.getRandomSubarray = function(arr, size) {
+  var shuffled = arr.slice(0), i = arr.length, temp, index;
+  while(i--) {
+    index = Math.floor((i+1) * Math.random());
+    temp = shuffled[index];
+    shuffled[index] = shuffled[i];
+    shuffled[i] = temp;
+  }
+  return shuffled.slice(0, size);
 }
 
 /**
@@ -171,36 +199,21 @@ calculationController.prototype.handleWorkerMessage = function(e) {
       // This shouldn't be here
       if(document.getElementById("localProgressBar")){
         var calcCtrl = new calculationController();
+        calcCtrl.localWorker.terminate();
         calcCtrl.localWorker = undefined;
         (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
         setTimeout(function(){
           calcCtrl.callback(e.data.results);
           Ext.getCmp("localProgressBarWindow").close();
         },0.100);
-        
       } 
-    } else if (callParams.type === "progressupdate") {
       
+    } else if (callParams.type === "progressupdate") {
       var thisController = new calculationController();
       var totalProgress = 0.5 + (callParams.current / callParams.outoff) * 0.5;
       (new actionPanelUIcontroller()).updateProgressPercent(totalProgress);
-      
-    } else if (callParams.type === "aborted") {
-        w.terminate();
-        calcCtrl.localWorker = undefined;
-        (new actionPanelUIcontroller()).setProgressLabel("Finishing...");
-                setTimeout(function(){
-          calcCtrl.callback(e.data.results);
-          Ext.getCmp("localProgressBarWindow").close();
-        },0.100);
-        
     }
 }; // handleWorkerMessage
-
-/**
- * Show the display bar window
- */
-
 
 /// Server backed calculations below
 

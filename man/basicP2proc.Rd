@@ -4,14 +4,32 @@
 \alias{basicP2proc}
 \title{Perform basic pagoda2 processing}
 \usage{
-basicP2proc(cd, n.cores = 20, batch = NULL, keep.genes = NULL)
+basicP2proc(cd, n.cores = 30, batch = NULL, n.odgenes = 3000,
+  nPcs = 100, k = 30, perplexity = 50, log.scale = TRUE, trim = 10,
+  keep.genes = NULL, min.cells.per.gene = 30)
 }
 \arguments{
 \item{cd}{count matrix, rows are genes, columns are cells}
 
 \item{n.cores}{number of cores to use}
 
-\item{batch}{optional batch factor}
+\item{batch}{optional batch factor (default=NULL)}
+
+\item{n.odgenes}{number of top overdispersed genes to use (dfault=3e3)}
+
+\item{nPcs}{number of PCs to use}
+
+\item{k}{default number of neighbors to use in kNN graph}
+
+\item{perplexity}{perplexity to use in generating tSNE and largeVis embeddings (default=50)}
+
+\item{log.scale}{whether to use log scale normalization (default=T)}
+
+\item{trim}{number of cells to trim in winsorization (default=10)}
+
+\item{keep.genes}{optional set of genes to keep from being filtered out (even at low counts, default=NULL)}
+
+\item{min.cells.per.gene}{minimal number of cells required for gene to be kept (unless listed in keep.genes)}
 }
 \value{
 a new pagoda2 object

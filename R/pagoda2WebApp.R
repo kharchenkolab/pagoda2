@@ -799,13 +799,13 @@ pagoda2WebApp <- setRefClass(
       matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,]
       
       # Main Sparse count matrix TRANSPOSED for de
-      matsparseTransposedToSave <- t(originalP2object$counts)
+      matsparseTransposedToSave <- Matrix::t(originalP2object$counts)
       
       # Serialise aspect matrix
       cellIndices <- mainDendrogram$cellorder;
       aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
       
-      aspectMatrixToSave <- t(aspectMatrixToSave);
+      aspectMatrixToSave <- Matrix::t(aspectMatrixToSave);
       aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
       
       # Serialise the aspect information
@@ -969,16 +969,12 @@ pagoda2WebApp <- setRefClass(
     
     ## Generate a JSON list representation of the gene KNN network
     generateGeneKnnJSON = function() {
-      cs <- cumsum(table(originalP2object$genegraphs$graph$from)[unique(originalP2object$genegraphs$graph$from)])
-      y <- lapply(1:length(cs),function(n){
-        if(n == 1){
-          originalP2object$genegraphs$graph$to[1:cs[n]]
-        } else {
-          originalP2object$genegraphs$graph$to[(cs[n-1]+1):cs[n]]
-        }
-      })
-      names(y) <- unique(originalP2object$genegraphs$graph$from)
-      toJSON(y)
+        froms <- unique(originalP2object$genegraphs$graph$from)
+        names(froms) <- froms
+        y <- lapply(froms, function(n) {
+            subset(originalP2object$genegraphs$graph, from == n)$to
+        })
+        toJSON(y)
     },
     
     ## Generate information about the embeddings we are exporting

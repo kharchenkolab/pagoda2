@@ -35,6 +35,7 @@ function DataControllerFile(loadParams) {
   this.aspectArrayPreloadInfo = null;
   this.aspectInformation = null;
   this.geneInformationMapCache = null;
+  this.cellOrderCache = null;
   
   // For the transposed expression array (for de)
   this.sparseArrayTranspPreloadInfo = null;
@@ -71,23 +72,28 @@ DataControllerFile.prototype.getReducedDendrogram = function(callback) {
  * Get the cell order
  */
 DataControllerFile.prototype.getCellOrder = function(callback) {
-  // FIXME: Assume format reader is ready here
-  var fr = this.formatReader;
-
-  var fn = function() {
-        fr.getEntryAsText('cellorder', function(text) {
-          var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
-      		var textTrimmed = text.slice(0, dataLength);
-      		callback(JSON.parse(textTrimmed));
-
-  	 }, fr);
-  }
-
-  // Call immediately or defer to when the object is ready
-  if (fr.state == fr.READY) {
-    fn();
+  if (this.cellOrderCache === null) {
+    // FIXME: Assume format reader is ready here
+    var fr = this.formatReader;
+  
+    var fn = function() {
+          fr.getEntryAsText('cellorder', function(text) {
+            var dataLength = DataControllerFile.prototype.getNullTerminatedStringLength(text);
+        		var textTrimmed = text.slice(0, dataLength);
+        		var json = JSON.parse(textTrimmed);
+        		DataControllerFile.prototype.cellOrderCache = json;
+        		callback(json);
+    	 }, fr);
+    }
+  
+    // Call immediately or defer to when the object is ready
+    if (fr.state == fr.READY) {
+      fn();
+    } else {
+      fr.addEventListener('onready',fn);
+    }
   } else {
-    fr.addEventListener('onready',fn);
+    callback(this.cellOrderCache);
   }
 }
 
@@ -952,7 +958,6 @@ DataControllerFile.prototype.getGeneNeighbours = function(queryGenes, callback) 
  */
 DataControllerFile.prototype.getExpressionValuesSparseByCellName = function(cellNames, callback, progressCallback){
     var dcf = this;
-    
     if (typeof(dcf.formatReader.index.sparseMatrixTransp) !== 'undefined') {
       if(this.sparseArrayTranspPreloadInfo === null) {
         // Need to preload

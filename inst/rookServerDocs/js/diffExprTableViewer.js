@@ -89,15 +89,13 @@ diffExprTableViewer.prototype.generateTables = function() {
         scrollable: true,
         bodyPadding: 10,
         html: '<h2>Differential Expression</h2>' +
-        '<p>The tables in this panel display the results of differential expression analyses run in the Actions Tab. ' +
-        'Every result set is identified by the name provided at the time of the analysis and by an internal unique identifier.' +
-        'Click on one of the result entries on the top table to view the results in the bottom panel. Some differential expression ' +
-        'analysis may do a all-vs-all comparison and result in the same gene reported multiple time. This is not an error.' + '</p>',
+        '<p>The tables in this panel display the results of differential expression analyses run in the Actions Tab. Every result set is identified by the name provided at the time of the analysis and by an internal unique identifier. Click on one of the result entries on the top table to view the results in the bottom panel.</p>',
         constrain: true,
         closable: true,
         resizable: false
     }).show();
   }});
+  /*
   resultSelectionTbar.add(
     {
       type: "button",
@@ -200,7 +198,7 @@ diffExprTableViewer.prototype.generateTables = function() {
 			}
 			}
     });
-
+*/
   // Table for the result sets
   var resultSetSelectionGrid = Ext.create('Ext.grid.Panel',{
     title: 'Differential Expression Result sets',
@@ -300,9 +298,11 @@ var geneTableSelectionModel =  Ext.create('Ext.selection.CheckboxModel', {});
 		      tooltip: 'Download results as CSV file',
 		      glyph:  0xf0ed,
 		      handler: function() {
+		        
+		        
             // Generate CSV
             var grid = Ext.getCmp('deResultsGenes');
-            var csvFile = pagHelpers.extJSgridToCSV(grid);
+            var csvFile = pagHelpers.DEproxydataToCSV(grid.store.proxy.data);
 
             // Download CSV
             var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
