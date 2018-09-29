@@ -671,6 +671,7 @@ Pagoda2 <- setRefClass(
 
       # TODO: factor out gene PCA calculation
       # Do the PCA
+      nPcs <- min(nrow(x)-1,ncol(x)-1,nPcs);
       if (center) {
           cm <- Matrix::colMeans(x);
           pcs <- irlba(x, nv=nPcs, nu =0, center=cm, right_only = F, fastpath = fastpath, maxit= maxit, reorth = T);
