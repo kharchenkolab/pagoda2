@@ -22,6 +22,12 @@ sudo apt-get update
 sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
 ```
 
+### Red-Hat-based distributions
+Was tested on AWS linux
+```sh
+yum install cairo-devel pango-devel libXt-devel openssl-devel gsl-devel boost-devel
+```
+
 ### Mac 
 You need R >=3.4.0 to install this package on a mac. 
 For installation please refer to [cran](https://cran.r-project.org/)  
