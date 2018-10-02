@@ -75,7 +75,21 @@ library('pagoda2')
 # Pagoda2 is now ready to use
 ```
 
-## Alternative Install padoga2 as a docker container
+## Installing Pagoda2 as Docker Container
+
+Pagoda2 and Conos are available as docker containers that can work on any platform with minimal configuration. The docker distribution is current as of October 2018. To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
+
+```
+docker run -p 8787:8787 docker.io/barkasn/pagoda2
+```
+
+You can then point your browser to http://localhost:8787/ to get an Rstudio environment with pagoda2 (and conos) installed. Explore the docker --mount option to allow access of the docker image to your local files.
+
+
+
+
+
+
 
 Please note that the docker container is as of March 2018 not up to date with the main project branch and all the latest features are missing. It is strongly recommended that you install the main release.
 
