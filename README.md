@@ -84,13 +84,3 @@ docker run -p 8787:8787 docker.io/barkasn/pagoda2
 ```
 
 You can then point your browser to http://localhost:8787/ to get an Rstudio environment with pagoda2 (and conos) installed. Explore the docker --mount option to allow access of the docker image to your local files.
-
-
-
-
-
-
-
-Please note that the docker container is as of March 2018 not up to date with the main project branch and all the latest features are missing. It is strongly recommended that you install the main release.
-
-[Instructions for installing docker container with pagoda2](vignettes/Docker.md)
