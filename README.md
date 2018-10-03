@@ -13,7 +13,7 @@
 
 
 ## Installing Pagoda2 as Docker Container
-The fastest and most efficient way to get pagoda on a mac or windows system is through a docker container. The docker distribution is current as of October 2018. To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
+The fastest and most efficient way to get pagoda on a mac or windows system is through a docker container. The docker distribution is current as of October 2018 and also includes the (Conos package)[https://github.com/hms-dbmi/conos]. To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
 
 ```
 docker run -p 8787:8787 docker.io/barkasn/pagoda2
