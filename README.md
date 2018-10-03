@@ -11,24 +11,31 @@
 
 # Installation Instructions
 
-To install pagoda2 please follow the instructions below.
 
-## System dependencies
+## Installing Pagoda2 as Docker Container
+The fastest and most efficient way to get pagoda on a mac or windows system is through a docker container. The docker distribution is current as of October 2018. To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
 
-### Ubuntu
+```
+docker run -p 8787:8787 docker.io/barkasn/pagoda2
+```
+The first time you run the command it will download several images so make sure that you have fast internet access setup. You can then point your browser to http://localhost:8787/ to get an Rstudio environment with pagoda2 (and conos) installed. Explore the docker (--mount option)[https://docs.docker.com/storage/volumes/] to allow access of the docker image to your local files.
+
+## Installing pagoda natively
+
+### Ubuntu Dependencies
 Install system dependencies, example here provided for Ubuntu
 ```sh
 sudo apt-get update
 sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
 ```
 
-### Red-Hat-based distributions
+### Red-Hat-based distributions Dependencies
 Was tested on AWS linux
 ```sh
 yum install cairo-devel pango-devel libXt-devel openssl-devel gsl-devel boost-devel
 ```
 
-### Mac 
+### Mac Dependencies
 You need R >=3.4.0 to install this package on a mac. 
 For installation please refer to [cran](https://cran.r-project.org/)  
 
@@ -74,13 +81,3 @@ install_github("hms-dbmi/pagoda2")
 library('pagoda2')
 # Pagoda2 is now ready to use
 ```
-
-## Installing Pagoda2 as Docker Container
-
-Pagoda2 and Conos are available as docker containers that can work on any platform with minimal configuration. The docker distribution is current as of October 2018. To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
-
-```
-docker run -p 8787:8787 docker.io/barkasn/pagoda2
-```
-
-You can then point your browser to http://localhost:8787/ to get an Rstudio environment with pagoda2 (and conos) installed. Explore the docker --mount option to allow access of the docker image to your local files.
