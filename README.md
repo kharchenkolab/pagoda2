@@ -3,14 +3,12 @@
 [10X PBMC Dataset](https://tinyurl.com/pagoda2demo)
 
 # Analysis walkthroughs
+
+[Basic Walkthough -- October 2018](vignettes/pagoda2.walkthrough.oct2018.Rmd)
+
 [PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 
-[PCA-based basic walkthrough with pagoda2 web application generation](vignettes/pagoda2.Rmd)
-
-[Pagoda2 Quick analysis](vignettes/p2.walkthrough.quick.Rmd)
-
 # Installation Instructions
-
 
 ## Installing Pagoda2 as Docker Container
 The fastest and most efficient way to get pagoda on a mac or windows system is through a docker container. The docker distribution is current as of October 2018 and also includes the [Conos package](https://github.com/hms-dbmi/conos). To start a docker container, first (install docker)[https://docs.docker.com/install/] on your platform and then start the pagoda container with the following command in the shell:
