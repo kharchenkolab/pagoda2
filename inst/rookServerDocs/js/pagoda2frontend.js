@@ -541,5 +541,50 @@ function generateExtJsLayout() {
         },
         items: [leftColumnPanel, centerColumnPanel, rightColumnPanel]
     });
+    
+       var tutorialWindow = new Ext.Window({
+        id:'tutorial-window', 
+        title: 'Video Tutorial',
+        layout:'fit',  
+        activeItem: 0,  
+
+        defaults: {border:false}, 
+        bbar: Ext.create('Ext.toolbar.Toolbar', {
+            padding: 5,
+            items   : [{
+                xtype: 'checkbox',
+                boxLabel: 'do not automatically show this tutorial video on startup',
+                checked: Ext.util.Cookies.get("hidetutorial")!=null,
+                name: 'dontshowtutorial',
+                listeners: {
+                    change: function(field, value) {
+                        if(value) {
+                            var now = new Date();
+                            var expiry = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+                            Ext.util.Cookies.set("hidetutorial",true,expiry)
+                        } else {
+                            console.log("clearing hidetutorial");
+                        }
+                    }
+                }
+            },'->',{
+                xtype: 'button',
+                text: 'Close',
+                handler: function() {
+                    tutorialWindow.hide();
+                }
+            }
+           ]
+        }),
+        items : [{
+                    id: "video",
+                    html: '<iframe width="640" height="360" src="https://www.youtube.com/embed/j6PmRtOBTRM" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>'
+                }]      
+        });
+
+
+    if(Ext.util.Cookies.get("hidetutorial")==null) {
+        tutorialWindow.show(); 
+    }
 
 }
