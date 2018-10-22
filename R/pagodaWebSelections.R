@@ -472,3 +472,16 @@ plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, sh
   invisible(p)
 }
 
+## Myeloid, match to myeloid from patient1
+#' Read a pagoda2 selection file and return it as a factor
+#' @description read a pagoda2 cell selection file and return it as a factor
+#' while removing any mutliclassified cells
+#' @param filepath name of the selection file
+#' @param use.internal.name passed to factorFromP2Selection
+#' @return a name factor with the membership of all the cells that are not multiclassified
+#' @export readPagoda2SelectionAsFactor
+readPagoda2SelectionAsFactor <- function(filepath,use.internal.name=FALSE) {
+    factorFromP2Selection(removeSelectionOverlaps(
+        readPagoda2SelectionFile(filepath)
+    ),use.internal.name=use.internal.name)
+}
