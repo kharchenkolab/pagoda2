@@ -521,6 +521,6 @@ basicP2web <- function(p2,app.title = 'Pagoda2', extraWebMetadata = NULL, n.core
     genesets <- hierDiffToGenesets(hdea)
     appmetadata = list(apptitle=app.title)
     cat('Making KNN graph...\n')
-    p2$makeGeneKnnGraph(n.cores=n.cores)
+    #p2$makeGeneKnnGraph(n.cores=n.cores)
     make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets, dendrogramCellGroups = p2$clusters$PCA$multilevel, show.clusters=F, appmetadata = appmetadata)
 }
