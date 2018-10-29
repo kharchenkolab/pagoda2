@@ -93,7 +93,7 @@ hist(log10(colSums(cm)+1),main='molecules per cell',col='cornsilk',xlab='log10(m
 hist(log10(rowSums(cm)+1),main='molecules per gene',col='cornsilk',xlab='log10(molecules per gene])')
 ```
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-5-1.png)
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the pagoda2 default QC function to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
 
@@ -101,7 +101,7 @@ This dataset has already been filtered for low quality cells, so we don't see an
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 ```
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-6-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-6-1.png)
 
 Next thing we want to do is to find lowly expressed genes and remove them from the dataset. Subsequent pagoda processing will do this automatically for extremely lowly expressed genes anyway.
 
@@ -110,7 +110,7 @@ hist(log10(rowSums(counts)+1),main='Molecules per gene',xlab='molecules (log10)'
 abline(v=1,lty=2,col=2)
 ```
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-7-1.png) Let's filter and check the size of the resulting matrix:
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-7-1.png) Let's filter and check the size of the resulting matrix:
 
 ``` r
 counts <- counts[rowSums(counts)>=10,]
@@ -145,7 +145,7 @@ r$adjustVariance(plot=T,gam.k=10)
 
     ## calculating variance fit ... using gam 173 overdispersed genes ... 173 persisting ...
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-10-1.png)
 
     ## done.
 
@@ -183,7 +183,7 @@ and we plot the data:
 r$plotEmbedding(type='PCA',show.legend=F,mark.clusters=T,min.group.size=50,shuffle.colors=F,mark.cluster.cex=1,alpha=0.1,main='clusters (largeVis)')
 ```
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
 Next we can generate and plot a tSNE embedding. This can take a while to run!
 
@@ -197,7 +197,7 @@ r$getEmbedding(type='PCA',embeddingType='tSNE',perplexity=50,verbose=F)
 r$plotEmbedding(type='PCA',embeddingType='tSNE',show.legend=F,mark.clusters=T,min.group.size=1,shuffle.colors=F,mark.cluster.cex=1,alpha=0.1,main='clusters (tSNE)')
 ```
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-16-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-16-1.png)
 
 We can overlay the expresssion of specific marker genes on this embedding to identify clusters. For example HBB will identify heme cells.
 
@@ -208,7 +208,7 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE',colors=r$counts[,gene],shuffle.c
 
     ## treating colors as a gradient with zlim: 0 1.760083
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-17-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-17-1.png)
 
 ``` r
 gene <-"LYZ"
@@ -217,7 +217,7 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE',colors=r$counts[,gene],shuffle.c
 
     ## treating colors as a gradient with zlim: 0 3.270811
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
 Pagoda2 allows us to generate multiple alternative clusterings. Here will will use multilevel and walktrap
 
@@ -254,7 +254,7 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE',groups=r$clusters$PCA$community,
 r$plotEmbedding(type='PCA',embeddingType='tSNE',clusterType='multilevel',show.legend=F,mark.clusters=T,min.group.size=1,shuffle.colors=F,mark.cluster.cex=1,alpha=0.1,main='multlevel clusters (tSNE)')
 ```
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-21-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-21-1.png)
 
 We can then perform differential expression between these clusters
 
@@ -271,7 +271,7 @@ de <- r$diffgenes$PCA[[1]][['2']];
 r$plotGeneHeatmap(genes=rownames(de)[1:15],groups=r$clusters$PCA[[1]])
 ```
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-23-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-23-1.png)
 
 ``` r
 gene <-"CD74"
@@ -280,7 +280,7 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE',colors=r$counts[,gene],shuffle.c
 
     ## treating colors as a gradient with zlim: 0 2.448963
 
-![](/tmp/Rtmpd9MvCi/preview-649a5db5bac8.dir/pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-24-1.png)
+![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-24-1.png)
 
 At this point we can perform pathway overdispersion analysis (in the same wy we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it take too long!). Overdispersion analysis usually takes too long with the latest datasets composed of 1000's of cells, for this reason we prefer hierarchical differential expression.
 
