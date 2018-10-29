@@ -4,7 +4,7 @@
 
 # Analysis walkthroughs
 
-[Basic Walkthough -- October 2018](vignettes/pagoda2.walkthrough.oct2018.Rmd)
+[Basic Walkthough -- October 2018](vignettes/pagoda2.walkthrough.oct2018.html)
 
 [PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 

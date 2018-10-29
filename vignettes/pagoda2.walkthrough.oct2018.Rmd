@@ -22,7 +22,7 @@ library(igraph)
 
 For the purposes of this exercise we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks it's size:
 ```{r}
-cm <- readRDS('~/Desktop/data/sample_BM1.rds')
+cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
 dim(cm)
 ```
 
@@ -92,7 +92,6 @@ r$makeKnnGraph(k=40,type='PCA',center=T,distance='cosine');
 
 Next on the basis of this KNN we will call clusters
 ```{r}
-
 r$getKnnClusters(method=infomap.community,type='PCA')
 ```
 
@@ -180,7 +179,7 @@ go.env <- list2env(eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(ri
 ```{r}
 ## DON'T RUN
 ## test over dispersion
-r$testPathwayOverdispersion(go.env,verbose=T,correlation.distance.threshold=0.95,recalculate.pca=F,top.aspects=15)
+# r$testPathwayOverdispersion(go.env,verbose=T,correlation.distance.threshold=0.95,recalculate.pca=F,top.aspects=15)
 ```
 
 
@@ -354,7 +353,16 @@ plotMulticlassified().
 
 You can also convert a factor to a pagoda2 selection using the factorToP2selection() function.
 
-Other functions for working with selection in R include: getColorsFromP2Selection(), cellsPerSelectionGroup(), 
-validateSelectionsObject(), getClusterLabelsFromSelection(), generateClassificationAnnotation(), getCellsInSelections(),
-diffExprOnP2FromWebSelection(), diffExprOnP2FromWebSelectionOneGroup(), getIntExtNamesP2Selection() and plotEmbeddingColorByP2Selection()
+Other functions for working with selection in R include: 
+
+* getColorsFromP2Selection()
+* cellsPerSelectionGroup()
+* validateSelectionsObject() 
+* getClusterLabelsFromSelection() 
+* generateClassificationAnnotation()
+* getCellsInSelections(),
+* diffExprOnP2FromWebSelection()
+* diffExprOnP2FromWebSelectionOneGroup()
+* getIntExtNamesP2Selection()
+* plotEmbeddingColorByP2Selection()
 
