@@ -17,7 +17,7 @@
 #' @param min.cells.per.gene minimal number of cells required for gene to be kept (unless listed in keep.genes)
 #' @return a new pagoda2 object
 #' @export basicP2proc
-basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=30, get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
+basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=0, get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
   p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene);
