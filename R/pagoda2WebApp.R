@@ -981,7 +981,7 @@ pagoda2WebApp <- setRefClass(
     generateEmbeddingStructure = function() {
       resp <- list();
       i <- 0;
-      for( r in names(originalP2object$reductions)) {
+      for( r in names(originalP2object$embeddings)) {
         resp[[r]] <- list();
         for ( n in names(originalP2object$embeddings[[r]])) {
           id <- paste('emb',r,n,sep='_')
