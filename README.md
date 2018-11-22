@@ -75,6 +75,8 @@ sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
 #### Install pagoda2 package
 Inside R:
 ```r
+# Install devtools
+install.packages("devtools")
 # Install Bioconductor dependencies
 source("http://bioconductor.org/biocLite.R")
 biocLite(c("GO.db", "org.Hs.eg.db","org.Mm.eg.db", "pcaMethods"), suppressUpdates=TRUE)
