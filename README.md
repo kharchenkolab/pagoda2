@@ -37,9 +37,9 @@ sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev 
 ```
 
 #### Red-Hat-based distributions Dependencies
-Was tested on AWS linux
+Was tested on AWS linux and Centos 7
 ```sh
-yum install cairo-devel pango-devel libXt-devel openssl-devel gsl-devel boost-devel
+yum install cairo-devel pango-devel libXt-devel openssl-devel gsl-devel boost-devel libcurl-devel
 ```
 
 #### Mac Dependencies
