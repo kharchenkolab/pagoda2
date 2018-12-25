@@ -357,6 +357,7 @@ embeddingViewer.prototype.populateMenu = function() {
     var datCntr = new dataController();
     datCntr.getEmbeddingStructure(function(d) {
         var embeddingOptionstore = Ext.data.StoreManager.lookup('embeddingOptionsStore');
+        var firstEmbedding=true;
         for (var reduction in d) {
             for (var embedding in d[reduction]) {
                 var embeddingIdentifier = reduction + ':' + embedding;
@@ -369,10 +370,10 @@ embeddingViewer.prototype.populateMenu = function() {
                     "value": embeddingIdentifier
                 });
 
-                if (reduction === p2globalParams.embedding.defaultEmbedding.reduction &&
-                    embedding === p2globalParams.embedding.defaultEmbedding.embedding) {
+                if (firstEmbedding || (reduction === p2globalParams.embedding.defaultEmbedding.reduction && embedding === p2globalParams.embedding.defaultEmbedding.embedding)) {
                     Ext.getCmp('embeddingSelectCombo').setValue(embeddingIdentifier);
                 }
+                firstEmbedding=false;
             }
         }
     });
