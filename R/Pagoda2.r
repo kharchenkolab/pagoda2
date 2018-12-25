@@ -96,7 +96,7 @@ Pagoda2 <- setRefClass(
       counts <<- t(countMatrix)
 
       # Keep genes of sufficient coverage or genes that are in the keep.genes list
-      counts <<- counts[,diff(counts@p)>min.cells.per.gene | colnames(counts) %in% keep.genes]
+      counts <<- counts[,diff(counts@p)>=min.cells.per.gene | colnames(counts) %in% keep.genes]
 
       # Save the filtered count matrix in misc$rawCounts
       misc[['rawCounts']] <<- counts;
