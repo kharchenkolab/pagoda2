@@ -1941,7 +1941,11 @@ Pagoda2 <- setRefClass(
         # }
         #require(largeVis)
         #if(!is.null(seed)) { set.seed(seed) }
-        wij <- buildWijMatrix(edgeMat,perplexity=perplexity,threads=n.cores)
+        if(!is.na(perplexity)) {
+          wij <- buildWijMatrix(edgeMat,perplexity=perplexity,threads=n.cores)
+        } else {
+          wij <- edgeMat;
+        }
 
         if(diffusion.steps>0) {
           Dinv <- Diagonal(nrow(wij),1/colSums(wij))
@@ -1956,12 +1960,18 @@ Pagoda2 <- setRefClass(
             wij <- wij %*% W
           }
           #browser()
-          wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
+          if(!is.na(perplexity)) {
+            wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
+          }
+          
         }
         coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
+        
+        if(nrow(x)>4e4) { warning('too many cells to pre-calcualte correlation distances, switching to L2'); distance <- 'L2'; }
+        
         if (distance=='L2') {
           if(verbose) cat("running tSNE using",n.cores,"cores:\n")
           emb <- Rtsne::Rtsne(x, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
