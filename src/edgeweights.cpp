@@ -1,7 +1,8 @@
 // [[Rcpp::plugins(openmp)]]
 // [[Rcpp::plugins(cpp11)]]
-// [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(RcppProgress)]]
+// [[Rcpp::depends(RcppEigen)]]
+// [[Rcpp::depends(RcppArmadillo)]]
 #include "largeVis.h"
 #include <vector>
 
@@ -12,6 +13,8 @@
 using namespace Rcpp;
 using namespace std;
 using namespace arma;
+
+
 
 class ReferenceEdges {
 protected:
@@ -131,26 +134,24 @@ public:
     }
   }
 
-  arma::sp_mat getWIJ() {
-    umat locations = umat(2, edge_from.size());
-    vec values = vec(edge_weight.size());
+  typedef Eigen::Triplet<double> T;
+
+  Eigen::SparseMatrix<double> getWIJ() {
+    std::vector<T> tripletList;
+    tripletList.reserve(edge_weight.size());
+  
     for (edgeidxtype i = 0; i < edge_from.size(); i++) {
-      locations(0, i) = edge_from[i];
-      locations(1, i) = edge_to[i];
-      values[i] = edge_weight[i];
+      tripletList.push_back(T(edge_from[i],edge_to[i],edge_weight[i]));
     }
-    sp_mat wij = sp_mat(
-      true, // add_values
-      locations,
-      values,
-      n_vertices, n_vertices // n_col and n_row
-    );
+
+    Eigen::SparseMatrix<double> wij(n_vertices,n_vertices);
+    wij.setFromTriplets(tripletList.begin(),tripletList.end());
     return wij;
   }
 };
 
 // [[Rcpp::export]]
-arma::sp_mat referenceWij(const arma::ivec& i,
+Eigen::SparseMatrix<double> referenceWij(const arma::ivec& i,
 			  const arma::ivec& j,
 			  arma::vec& d,
 			  Rcpp::Nullable<Rcpp::NumericVector> threads,
@@ -173,6 +174,5 @@ arma::sp_mat referenceWij(const arma::ivec& i,
 #ifdef DEBUG
   Rcout << "Ran, getting WIJ\n";
 #endif
-  sp_mat wij = ref.getWIJ();
-  return wij;
+  return(ref.getWIJ());
 }

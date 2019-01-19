@@ -3,6 +3,7 @@
 
 #include "../inst/include/pagoda2.h"
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 #include <Rcpp.h>
 
 using namespace Rcpp;
@@ -40,7 +41,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // referenceWij
-arma::sp_mat referenceWij(const arma::ivec& i, const arma::ivec& j, arma::vec& d, Rcpp::Nullable<Rcpp::NumericVector> threads, double perplexity);
+Eigen::SparseMatrix<double> referenceWij(const arma::ivec& i, const arma::ivec& j, arma::vec& d, Rcpp::Nullable<Rcpp::NumericVector> threads, double perplexity);
 RcppExport SEXP _pagoda2_referenceWij(SEXP iSEXP, SEXP jSEXP, SEXP dSEXP, SEXP threadsSEXP, SEXP perplexitySEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -194,7 +195,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // n2Knn
-arma::sp_mat n2Knn(const NumericMatrix& m, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
+Eigen::SparseMatrix<double> n2Knn(const NumericMatrix& m, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
 RcppExport SEXP _pagoda2_n2Knn(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -211,7 +212,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // n2CrossKnn
-arma::sp_mat n2CrossKnn(const NumericMatrix& mA, const NumericMatrix& mB, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
+Eigen::SparseMatrix<double> n2CrossKnn(const NumericMatrix& mA, const NumericMatrix& mB, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
 RcppExport SEXP _pagoda2_n2CrossKnn(SEXP mASEXP, SEXP mBSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

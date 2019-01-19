@@ -96,7 +96,7 @@ Pagoda2 <- setRefClass(
       counts <<- t(countMatrix)
 
       # Keep genes of sufficient coverage or genes that are in the keep.genes list
-      counts <<- counts[,diff(counts@p)>min.cells.per.gene | colnames(counts) %in% keep.genes]
+      counts <<- counts[,diff(counts@p)>=min.cells.per.gene | colnames(counts) %in% keep.genes]
 
       # Save the filtered count matrix in misc$rawCounts
       misc[['rawCounts']] <<- counts;
@@ -1916,7 +1916,8 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, ... ) {
+      
       if(dims<1) stop("dimensions must be >=1")
       if(type=='counts') {
         x <- counts;
@@ -1928,6 +1929,7 @@ Pagoda2 <- setRefClass(
       if(embeddingType=='largeVis') {
         edgeMat <- misc[['edgeMat']][[type]];
         if(is.null(edgeMat)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
+        if(is.null(sgd_batches)) { sgd_batches <- nrow(edgeMat)*1e3 }
         #edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(x),nrow(x)))
         edgeMat <- (edgeMat + t(edgeMat))/2; # symmetrize
         #edgeMat <- sparseMatrix(i=c(xn$s,xn$e)+1,j=c(xn$e,xn$s)+1,x=c(xn$rd,xn$rd),dims=c(nrow(x),nrow(x)))
@@ -1941,7 +1943,11 @@ Pagoda2 <- setRefClass(
         # }
         #require(largeVis)
         #if(!is.null(seed)) { set.seed(seed) }
-        wij <- buildWijMatrix(edgeMat,perplexity=perplexity,threads=n.cores)
+        if(!is.na(perplexity)) {
+          wij <- buildWijMatrix(edgeMat,perplexity=perplexity,threads=n.cores)
+        } else {
+          wij <- edgeMat;
+        }
 
         if(diffusion.steps>0) {
           Dinv <- Diagonal(nrow(wij),1/colSums(wij))
@@ -1956,12 +1962,18 @@ Pagoda2 <- setRefClass(
             wij <- wij %*% W
           }
           #browser()
-          wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
+          if(!is.na(perplexity)) {
+            wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
+          }
+          
         }
         coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
+        
+        if(nrow(x)>4e4) { warning('too many cells to pre-calcualte correlation distances, switching to L2'); distance <- 'L2'; }
+        
         if (distance=='L2') {
           if(verbose) cat("running tSNE using",n.cores,"cores:\n")
           emb <- Rtsne::Rtsne(x, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;

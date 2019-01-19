@@ -90,6 +90,7 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel, int ncores=1) {
 // calculates factor-stratified sums for each column
 // rowSel is an integer factor; 
 // note that the 0-th column will return sums for any NA values; 0 or negative values will be omitted
+// note2: trailing levels that are not mentioned in the vector will be omitted, resulting in a smaller matrix
 // [[Rcpp::export]]
 arma::mat colSumByFac(SEXP sY,  SEXP rowSel) {
 // need to do this as SEXP, modify the slots on the fly
