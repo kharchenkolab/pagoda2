@@ -4,6 +4,7 @@
 //#define ARMA_32BIT_WORD
 //#endif
 #include <RcppArmadillo.h>
+#include <RcppEigen.h>
 // copied from https://github.com/elbamos/largeVis
 #ifdef _OPENMP
 #include <omp.h>

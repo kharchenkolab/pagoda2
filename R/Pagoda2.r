@@ -1916,7 +1916,8 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=5, gamma=1, perplexity=100, sgd_batches=2e6, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, ... ) {
+      
       if(dims<1) stop("dimensions must be >=1")
       if(type=='counts') {
         x <- counts;
@@ -1928,6 +1929,7 @@ Pagoda2 <- setRefClass(
       if(embeddingType=='largeVis') {
         edgeMat <- misc[['edgeMat']][[type]];
         if(is.null(edgeMat)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
+        if(is.null(sgd_batches)) { sgd_batches <- nrow(edgeMat)*1e3 }
         #edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(x),nrow(x)))
         edgeMat <- (edgeMat + t(edgeMat))/2; # symmetrize
         #edgeMat <- sparseMatrix(i=c(xn$s,xn$e)+1,j=c(xn$e,xn$s)+1,x=c(xn$rd,xn$rd),dims=c(nrow(x),nrow(x)))
