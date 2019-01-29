@@ -86,6 +86,7 @@ struct entry {
 
 struct binaryExportParams {
   bool verbose;
+  bool verboseTimings;
 };
 
 ///////////////////////////////
