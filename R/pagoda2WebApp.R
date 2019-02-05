@@ -1043,7 +1043,7 @@ pagoda2WebApp <- setRefClass(
     
     ## Generate a JSON list representation of the gene KNN network
     generateGeneKnnJSON = function(graph) {
-        toJSON(split(p2$genegraphs$graph$to, p2$genegraphs$graph$from))
+        toJSON(split(originalP2object$genegraphs$graph$to, originalP2object$genegraphs$graph$from))
     },
     
     ## Generate information about the embeddings we are exporting
