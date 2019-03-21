@@ -15,7 +15,7 @@
 #' @param trim number of cells to trim in winsorization (default=10)
 #' @param keep.genes optional set of genes to keep from being filtered out (even at low counts, default=NULL)
 #' @param min.cells.per.gene minimal number of cells required for gene to be kept (unless listed in keep.genes)
-#' @param min.counts.per.cell minimumal number of molecules/reads for a cell to be admitted
+#' @param min.transcripts.per.cell minimumal number of molecules/reads for a cell to be admitted
 #' @param get.largevis whether to caluclate largeVis embedding
 #' @param get.tsne whether to calculate tSNE embedding
 #' @param make.geneknn whether pre-calculate gene kNN (for gene search)

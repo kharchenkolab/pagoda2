@@ -95,7 +95,6 @@ Pagoda2 <- setRefClass(
         stop("NA cell names are not allowed - please fix")
       }
       
-      countMatrix <- countMatrix[,colSums(countMatrix)>=min.counts.per.cell,drop=F]
       if(ncol(countMatrix)<3) { stop("too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
       
       counts <<- t(countMatrix)
