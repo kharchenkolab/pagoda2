@@ -40,7 +40,7 @@ Pagoda2 <- setRefClass(
   methods = list(
     initialize=function(x, ..., modelType='plain', batchNorm='glm',
                         n.cores=parallel::detectCores(logical=F), verbose=TRUE,
-                        min.cells.per.gene=0, trim=round(min.cells.per.gene/2),
+                        min.cells.per.gene=0, min.counts.per.cell=10, trim=round(min.cells.per.gene/2),
                         lib.sizes=NULL, log.scale=TRUE, keep.genes = NULL) {
       # # init all the output lists
       embeddings <<- list();
@@ -69,7 +69,7 @@ Pagoda2 <- setRefClass(
           if(any(x@x < 0)) {
             stop("x contains negative values");
           }
-          setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale,keep.genes=keep.genes)
+          setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale,keep.genes=keep.genes,min.counts.per.cell=min.counts.per.cell)
         }
       }
     },
@@ -77,7 +77,7 @@ Pagoda2 <- setRefClass(
     # provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
     setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=30,
                             trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE,
-                            keep.genes = NULL) {
+                            keep.genes = NULL, min.counts.per.cell=10) {
       # check names
       if(any(duplicated(rownames(countMatrix)))) {
         stop("duplicate gene names are not allowed - please reduce")
@@ -92,7 +92,10 @@ Pagoda2 <- setRefClass(
       if(any(is.na(colnames(countMatrix)))) {
         stop("NA cell names are not allowed - please fix")
       }
-
+      
+      countMatrix <- countMatrix[,colSums(countMatrix)>=min.counts.per.cell,drop=F]
+      if(ncol(countMatrix)<3) { stop("too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
+      
       counts <<- t(countMatrix)
 
       # Keep genes of sufficient coverage or genes that are in the keep.genes list

@@ -15,9 +15,13 @@
 #' @param trim number of cells to trim in winsorization (default=10)
 #' @param keep.genes optional set of genes to keep from being filtered out (even at low counts, default=NULL)
 #' @param min.cells.per.gene minimal number of cells required for gene to be kept (unless listed in keep.genes)
+#' @param min.counts.per.cell minimumal number of molecules/reads for a cell to be admitted
+#' @param get.largevis whether to caluclate largeVis embedding
+#' @param get.tsne whether to calculate tSNE embedding
+#' @param make.geneknn whether pre-calculate gene kNN (for gene search)
 #' @return a new pagoda2 object
 #' @export basicP2proc
-basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=0, get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
+basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=0, min.counts.per.cell=100, get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
   p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene);
@@ -25,7 +29,7 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100,
   p2$calculatePcaReduction(nPcs = nPcs, n.odgenes = n.odgenes, maxit = 1000)
   ## Make KNN graph and generate clustering
   p2$makeKnnGraph(k = k, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
-  p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
+  #p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
   p2$getKnnClusters(method = igraph::multilevel.community, type = 'PCA', name = 'multilevel');
   #p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap');
 
