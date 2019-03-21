@@ -6,31 +6,57 @@
 
 #include "pagoda2.h"
 #include "binaryExport.h"
+#include <chrono>
+
+using namespace std;
+using namespace std::chrono;
 
 void addSparseMatrixToEntries(List spML,
                               list<entry> &entries,
                               char const *mattype,
                               binaryExportParams *params)
 {
+
+
+  auto t1 = high_resolution_clock::now();
   IntegerVector viData = spML["matsparse_i"];
   list<uint32_t> *iData;
   iData = IVtoL<uint32_t>(viData);
+  auto t2 = high_resolution_clock::now();
+  auto duration = duration_cast<microseconds>(t2 - t1).count();
+  if (params->verboseTimings)
+	       cout << "iData IVtoL took: " << duration << "us" << endl << flush;
 
   // Dim from R-export list and convert to list of pointers
+  t1 = high_resolution_clock::now();
   IntegerVector vDim = spML["matsparse_dim"];
   list<uint32_t> *Dim;
   Dim = IVtoL<uint32_t>(vDim);
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>(t2 - t1).count();
+  if (params->verboseTimings)
+               cout << "spML IVtoL took: " << duration	<< "us" << endl << flush;
 
   // pData from R-export list and convert to list of pointers
+  t1 = high_resolution_clock::now();
   IntegerVector vpData = spML["matsparse_p"];
   list<uint32_t> *pData;
   pData = IVtoL<uint32_t>(vpData);
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>(t2 - t1).count();
+  if (params->verboseTimings)
+               cout << "vpData IVtoL took: " << duration  << "us" << endl << flush;
 
   // xData from R-export list and convert to list of pointers
+  t1 = high_resolution_clock::now();
   NumericVector vxData = spML["matsparse_x"];
   list<float> *xData;
   xData = NVtoL<float>(vxData);
-
+  t2 = high_resolution_clock::now();
+  duration = duration_cast<microseconds>(t2 - t1).count();
+  if (params->verboseTimings)
+               cout << "xData IVtoL took: " << duration  << "us" << endl << flush;
+  
   if (params->verbose)
   {
     cout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << "]" << endl;
@@ -81,10 +107,12 @@ void addSparseMatrixToEntries(List spML,
   smhData.write((const char *)&smh, sizeof(smh));
 
   // Write the p object
+
   for (list<uint32_t>::const_iterator iter = pData->begin(); iter != pData->end(); ++iter)
   {
     smhData.write((const char *)&*iter, sizeof(uint32_t));
   }
+  
 
   // Write the i object
   for (list<uint32_t>::const_iterator iter = iData->begin(); iter != iData->end(); ++iter)
@@ -129,24 +157,35 @@ void addSparseMatrixToEntries(List spML,
 // [[Rcpp::export]]
 void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
 {
-    // Define a parameter set
+  // Define a parameter set
     struct binaryExportParams params;
 
     params.verbose = verbose; // pass as a reference (&) to called  functions
+    params.verboseTimings = false;
 
+    if(params.verboseTimings) 
+      cout << "Entering C++ code section" << endl << flush;
+    
     CharacterVector elements = expL.names();
 
     // Structure list<entry> as defined in pagoda2.h - List for all entries
     list<entry> entries;
 
     // Optional Gene KNN inclusion if present
+    if(params.verboseTimings) cout << "Start Gene KNN optional inclusion" << endl << flush;
+    auto t1 = high_resolution_clock::now();
     if(std::find(elements.begin(),elements.end(),"geneknn") != elements.end()) {
       // JSON formatted gene knn and make entries in payload:
       string geneKnn = expL["geneknn"];
       struct entry *geneKnnEntry = make_entry_from_string("geneknn", geneKnn);
       entries.push_back(*geneKnnEntry);
     }
-
+    auto t2 = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(t2 - t1).count();
+    if(params.verboseTimings) 
+      cout << "Finding and including geneknn object: " << duration << " ms" <<endl << flush;
+  
+    
     // Read in JSON formatted strings from R List given by List expL
     string cellmetadataData = expL["cellmetadata"];
     string cellorderData = expL["cellorder"];
@@ -158,10 +197,8 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     string genesetsgenesData = expL["genesetGenes"];
     string appmetadata = expL["appmetadata"];
 
-
     // Reading in the names of exported Embeddings:
     vector<string> embedList = expL["embedList"];
-
 
     //Make entries for JSON items
 
@@ -212,7 +249,8 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
 //exportList[["sparsematnames"]] <- c("matsparse", "mataspect");
     vector<string> sparseMatrixNames = expL["sparsematnames"];
     for (auto it = sparseMatrixNames.begin(); it != sparseMatrixNames.end(); ++it) {
-      cout << "Writing... " << *it << endl << flush;
+      if (params.verbose)
+	cout << "Writing... " << *it << endl << flush;
 
       // Small hack to match internal and frontend names
       // TODO: fix front end and update with backwards compatibility

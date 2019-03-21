@@ -773,8 +773,9 @@ pagoda2WebApp <- setRefClass(
       .self$app$app$file_server$root <- rookRoot;
     },
     
-    serializeToStaticFast = function(binary.filename=NULL, verbose = FALSE){
+    serializeToStaticFast = function(binary.filename=NULL, verbose = FALSE, verbose.timings = FALSE){
       if (is.null(binary.filename)) { stop('Please specify a directory'); }
+
       
       exportList <- new("list");
       
@@ -782,7 +783,8 @@ pagoda2WebApp <- setRefClass(
       # Create embedding strucutre for export
       embStructure <- generateEmbeddingStructure();
       
-      # Export to list For all contained embeddings
+      ## Export to list For all contained embeddings
+      t0 <- Sys.time()
       for (reduc in names(embStructure)) {
         for (embed in names(embStructure[[reduc]])) {
           id <- embStructure[[reduc]][[embed]][[1]];
@@ -791,25 +793,39 @@ pagoda2WebApp <- setRefClass(
           exportList[filename] <- e;
         }
       }
+      t1 <- Sys.time()
+      if(verbose.timings) 
+          cat(paste0('Export list of embeddings: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       # Export list with all included embeddings for easier iteration in Rcpp-function.
       exportList[["embedList"]] <- grep("emb_",names(exportList),value=T);
       
-      # Main Sparse count matrix to save
+      ## Main Sparse count matrix to save
+      t0 <- Sys.time()
       matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,]
-      
-      # Main Sparse count matrix TRANSPOSED for de
+      t1 <- Sys.time()
+      if(verbose.timings) 
+          cat(paste0('Reordered Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
+            
+      ## Main Sparse count matrix TRANSPOSED for de
+      t0 <- Sys.time()
       matsparseTransposedToSave <- Matrix::t(originalP2object$counts)
-      
-      # Serialise aspect matrix
+      t1 <- Sys.time()
+      if(verbose.timings) 
+          cat(paste0('Generated transposed Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
+            
+      ## Serialise aspect matrix
+      t0  <- Sys.time()
       cellIndices <- mainDendrogram$cellorder;
       aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
-      
       aspectMatrixToSave <- Matrix::t(aspectMatrixToSave);
       aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
+      t1 <- Sys.time()
+      if(verbose.timings) 
+          cat(paste0('Serializing aspect matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       # Serialise the aspect information
-      
+      t0 <- Sys.time()
       aspectInformation <- list();
       for (curAspect in rownames(originalP2object$misc$pathwayOD$xv)) {
         # Genesets in this aspect
@@ -827,47 +843,105 @@ pagoda2WebApp <- setRefClass(
           list(name = x[[1]], n = x[[2]], cz = x[[3]], shortdescription = desc);
         }));
       }
-      
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('Serializing aspect infomration in:', as.double(t1-t0,units="secs")," seconds \n"))
+
+      t0 <- Sys.time()
       ## Serialising geneset Information
       genesetInformation <- unname(lapply(geneSets, function(x) {x$properties}))
-      
-      
+            
       ## Serialise geneset Genes:
       geneListName <- names(geneSets);
       
       ## Export gene names in the gos
       geneListGenes <- lapply( geneSets, function(gos) make.unique(gos$genes))
-      
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('Serializing aspect infomration in:', as.double(t1-t0,units="secs")," seconds \n"))
+            
       ## Creation of the export List for Rcpp
       
       ## JSON & Annotation part
+      t0 <- Sys.time()
       exportList[["reduceddendrogram"]] <- reducedDendrogramJSON();
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('ReduceDendrogramJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+
+      t0 <- Sys.time()
       exportList[["cellorder"]] <- cellOrderJSON();
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('cellOrderJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+
+      t0 <- Sys.time()
       exportList[["cellmetadata"]] <- cellmetadataJSON();
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('CellmetadataJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+
+      t0 <- Sys.time()
       exportList[["geneinformation"]] <- geneInformationJSON();
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('geneInformationJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
       
+      t0 <- Sys.time()
       exportList[["embeddingstructure"]] <- toJSON(embStructure);
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('embStructure to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+
+      t0 <- Sys.time()
       exportList[["aspectInformation"]] <- toJSON(aspectInformation);
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('ascpectInformation to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+
+      t0 <- Sys.time()
       exportList[["genesets"]] <- toJSON(genesetInformation);
-      exportList[["genesetGenes"]] <- toJSON(geneListGenes);
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('genesetInformation to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
       
+      t0 <- Sys.time()
+      exportList[["genesetGenes"]] <- toJSON(geneListGenes);
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('geneListGenes to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+
+      t0 <- Sys.time()
       exportList[["appmetadata"]] <- toJSON(appmetadata);
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('appmetadata to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
       
       ## The gene Knn is optional
+      t0 <- Sys.time()
       if(!is.null(originalP2object$genegraphs$graph)){
-        exportList[["geneknn"]] <- generateGeneKnnJSON();
+        exportList[["geneknn"]] <- generateGeneKnnJSON(originalP2object$genegraphs$graph);
       } else if(verbose) {
         warning("No genegraph provided. It allows you to search for similar genes in the webinterface. \n This is optional, but you can create it with the function makeGeneKnnGraph() \n")
       }
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('geneKnn to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+
       
       ## Exports sparse Matrix as List with Dimnames converted to JSON
       ## Sparse Count Matrix & Sparse Aspect Matrix
+      t0 <- Sys.time()
       exportList[["matsparse"]] <- sparseMatList(matsparseToSave); ## This count values
       exportList[["mataspect"]] <- sparseMatList(aspectMatrixToSave); ## This is the aspect values
       exportList[["sparseMatrixTransp"]] <- sparseMatList(matsparseTransposedToSave); ## To save transposed expr for de
+      t1 <- Sys.time()
+      if (verbose.timings)
+          cat(paste0('Matrix exporting took:', as.double(t1-t0,units="secs")," seconds \n"))
       
       ## Tell Cpp what is a sparse matrix
       exportList[["sparsematnames"]] <- c("matsparse", "mataspect","sparseMatrixTransp");
+
       
       ## Call Rcpp function to write to static file
       WriteListToBinary(expL=exportList,outfile = binary.filename,verbose=verbose);
@@ -968,13 +1042,8 @@ pagoda2WebApp <- setRefClass(
     },
     
     ## Generate a JSON list representation of the gene KNN network
-    generateGeneKnnJSON = function() {
-        froms <- unique(originalP2object$genegraphs$graph$from)
-        names(froms) <- froms
-        y <- lapply(froms, function(n) {
-            subset(originalP2object$genegraphs$graph, from == n)$to
-        })
-        toJSON(y)
+    generateGeneKnnJSON = function(graph) {
+        toJSON(split(originalP2object$genegraphs$graph$to, originalP2object$genegraphs$graph$from))
     },
     
     ## Generate information about the embeddings we are exporting

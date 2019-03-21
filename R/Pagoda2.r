@@ -40,7 +40,7 @@ Pagoda2 <- setRefClass(
   methods = list(
     initialize=function(x, ..., modelType='plain', batchNorm='glm',
                         n.cores=parallel::detectCores(logical=F), verbose=TRUE,
-                        min.cells.per.gene=0, min.counts.per.cell=10, trim=round(min.cells.per.gene/2),
+                        min.cells.per.gene=0, trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10,
                         lib.sizes=NULL, log.scale=TRUE, keep.genes = NULL) {
       # # init all the output lists
       embeddings <<- list();
@@ -69,15 +69,17 @@ Pagoda2 <- setRefClass(
           if(any(x@x < 0)) {
             stop("x contains negative values");
           }
-          setCountMatrix(x,min.cells.per.gene=min.cells.per.gene,trim=trim,lib.sizes=lib.sizes,log.scale=log.scale,keep.genes=keep.genes,min.counts.per.cell=min.counts.per.cell)
+          setCountMatrix(x, min.cells.per.gene=min.cells.per.gene, trim=trim, 
+                         min.transcripts.per.cell=min.transcripts.per.cell, lib.sizes=lib.sizes,
+                         log.scale=log.scale, keep.genes=keep.genes)
         }
       }
     },
 
     # provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
     setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=30,
-                            trim=round(min.cells.per.gene/2), lib.sizes=NULL, log.scale=FALSE,
-                            keep.genes = NULL, min.counts.per.cell=10) {
+                            trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10, 
+                            lib.sizes=NULL, log.scale=FALSE, keep.genes = NULL) {
       # check names
       if(any(duplicated(rownames(countMatrix)))) {
         stop("duplicate gene names are not allowed - please reduce")
@@ -97,9 +99,9 @@ Pagoda2 <- setRefClass(
       if(ncol(countMatrix)<3) { stop("too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
       
       counts <<- t(countMatrix)
-
+      
       # Keep genes of sufficient coverage or genes that are in the keep.genes list
-      counts <<- counts[,diff(counts@p)>=min.cells.per.gene | colnames(counts) %in% keep.genes]
+      counts <<- counts[,diff(counts@p) >= min.cells.per.gene | colnames(counts) %in% keep.genes]
 
       # Save the filtered count matrix in misc$rawCounts
       misc[['rawCounts']] <<- counts;
@@ -126,6 +128,14 @@ Pagoda2 <- setRefClass(
       } else {
         depth <<- Matrix::colSums(countMatrix);
       }
+      
+      cell.filt.mask <- (depth >= min.transcripts.per.cell)
+      counts <<- counts[cell.filt.mask,]
+      depth <<- depth[cell.filt.mask]
+      
+      if (any(depth == 0)) {
+        stop("Cells with zero expression over all genes are not allowed")
+      }
 
       if(verbose) cat(nrow(counts),"cells,",ncol(counts),"genes; normalizing ... ")
 
@@ -134,7 +144,7 @@ Pagoda2 <- setRefClass(
 
         # winsorize in normalized space first in hopes of getting a more stable depth estimate
         if(trim>0) {
-          counts <<- counts/as.numeric(depth);
+          counts <<- counts / as.numeric(depth);
           inplaceWinsorizeSparseCols(counts,trim,n.cores);
           counts <<- counts*as.numeric(depth);
           if(is.null(lib.sizes)) {
@@ -188,14 +198,17 @@ Pagoda2 <- setRefClass(
 
           # adjust every non-0 entry
           count.gene <- rep(1:counts@Dim[2],diff(counts@p))
+          
           counts@x <<- counts@x/bc[cbind(count.gene,as.integer(batch)[counts@i+1])]
         }
 
         if(trim>0) {
           if(verbose) cat("winsorizing ... ")
           counts <<- counts/as.numeric(depth);
+          
           inplaceWinsorizeSparseCols(counts,trim,n.cores);
           counts <<- counts*as.numeric(depth);
+          
           if(is.null(lib.sizes)) {
             depth <<- round(Matrix::rowSums(counts))
           }
