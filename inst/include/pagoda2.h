@@ -11,8 +11,6 @@
 #include <list>
 #include <omp.h>
 
-#include <boost/progress.hpp>
-
 /*#include "space.h"
 #include "space/space_scalar.h"
 #include "space/space_js.h"
