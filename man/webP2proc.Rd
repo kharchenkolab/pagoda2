@@ -4,9 +4,9 @@
 \alias{webP2proc}
 \title{Generate a pagoda2 web object}
 \usage{
-webP2proc(p2, additionalMetadata = NULL, title = "Pagoda 2", n.cores = 20,
-  make.go.sets = TRUE, make.de.sets = TRUE, go.env = NULL,
-  make.gene.graph = TRUE, appmetadata = NULL)
+webP2proc(p2, additionalMetadata = NULL, title = "Pagoda 2",
+  n.cores = 20, make.go.sets = TRUE, make.de.sets = TRUE,
+  go.env = NULL, make.gene.graph = TRUE, appmetadata = NULL)
 }
 \arguments{
 \item{p2}{a pagoda2 object}

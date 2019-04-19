@@ -4,9 +4,11 @@
 \alias{basicP2proc}
 \title{Perform basic pagoda2 processing}
 \usage{
-basicP2proc(cd, n.cores = 30, batch = NULL, n.odgenes = 3000,
-  nPcs = 100, k = 30, perplexity = 50, log.scale = TRUE, trim = 10,
-  keep.genes = NULL, min.cells.per.gene = 30)
+basicP2proc(cd, n.cores = 1, batch = NULL, n.odgenes = 3000,
+  nPcs = 100, k = 30, perplexity = 50, log.scale = TRUE,
+  trim = 10, keep.genes = NULL, min.cells.per.gene = 0,
+  min.transcripts.per.cell = 100, get.largevis = TRUE,
+  get.tsne = TRUE, make.geneknn = TRUE)
 }
 \arguments{
 \item{cd}{count matrix, rows are genes, columns are cells}
@@ -30,6 +32,14 @@ basicP2proc(cd, n.cores = 30, batch = NULL, n.odgenes = 3000,
 \item{keep.genes}{optional set of genes to keep from being filtered out (even at low counts, default=NULL)}
 
 \item{min.cells.per.gene}{minimal number of cells required for gene to be kept (unless listed in keep.genes)}
+
+\item{min.transcripts.per.cell}{minimumal number of molecules/reads for a cell to be admitted}
+
+\item{get.largevis}{whether to caluclate largeVis embedding}
+
+\item{get.tsne}{whether to calculate tSNE embedding}
+
+\item{make.geneknn}{whether pre-calculate gene kNN (for gene search)}
 }
 \value{
 a new pagoda2 object

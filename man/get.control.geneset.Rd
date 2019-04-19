@@ -5,7 +5,8 @@
 \title{Get a control geneset for cell scoring using the method described in
 Puram, Bernstein (Cell, 2018)}
 \usage{
-get.control.geneset(data, signature, n.bins = 25, n.genes.per.bin = 100)
+get.control.geneset(data, signature, n.bins = 25,
+  n.genes.per.bin = 100)
 }
 \arguments{
 \item{data}{matrix of expression, rows are cell, columns are genes}

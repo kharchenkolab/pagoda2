@@ -5,7 +5,8 @@
 \title{Puram, Bernstein (Cell, 2018)
 Score cells as described in Puram, Bernstein (Cell, 2018)}
 \usage{
-score.cells.puram(data, signature, correct = TRUE, show.plot = FALSE, ...)
+score.cells.puram(data, signature, correct = TRUE, show.plot = FALSE,
+  ...)
 }
 \arguments{
 \item{data}{matrix of expression, rows are cell, columns are genes}

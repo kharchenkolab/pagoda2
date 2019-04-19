@@ -13,17 +13,11 @@
 
 #include "pagoda2.h"
 
-// Boost defines
-#define BOOST_FILESYSTEM_VERSION 3
-#define BOOST_FILESYSTEM_NO_DEPRECATED
-#include <boost/filesystem.hpp>
-
 // Exception codes
 #define EX_MEM_ALLOC_FAIL 0x0001
 
 
 using namespace std;
-namespace fs = ::boost::filesystem;
 
 // File format constants
 // The block size in bytes

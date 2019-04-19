@@ -10,7 +10,6 @@ RUN apt-get update --yes && apt-get install --no-install-recommends --yes \
   gsl-bin \
   libgsl0-dev \
   libeigen3-dev \
-  libboost-all-dev \ 
   libssl-dev \
   libcurl4-openssl-dev \
   libssl-dev \

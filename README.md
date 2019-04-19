@@ -33,13 +33,13 @@ Currently, there is no way to install Pagoda 2 on Windows.
 Install system dependencies, example here provided for Ubuntu
 ```sh
 sudo apt-get update
-sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libboost-all-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
+sudo apt-get -y install build-essential cmake gsl-bin libgsl0-dev libeigen3-dev libssl-dev libcurl4-openssl-dev libssl-dev libcairo2-dev libxt-dev libgtk2.0-dev libcairo2-dev xvfb xauth xfonts-base
 ```
 
 #### Red-Hat-based distributions Dependencies
 Was tested on AWS linux and Centos 7
 ```sh
-yum install cairo-devel pango-devel libXt-devel openssl-devel gsl-devel boost-devel libcurl-devel
+yum install cairo-devel pango-devel libXt-devel openssl-devel gsl-devel libcurl-devel
 ```
 
 #### Mac Dependencies
@@ -51,7 +51,7 @@ Run these commands in a terminal:
 
 ```sh
 brew update
-brew install cmake boost eigen gsl curl openssl wget
+brew install cmake eigen gsl curl openssl wget
 ```
 To enable R to use the parallelized functions in the C++ code, you need another version of the clang++-Compiler for mac.   
 This is compatible with OS X >= 10.11 
