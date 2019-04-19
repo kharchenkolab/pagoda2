@@ -5,7 +5,6 @@
 #include <iostream>
 #include <chrono>
 #include <vector>
-#include <boost/progress.hpp>
 
 #include "n2/hnsw.h"
 
