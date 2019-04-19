@@ -3,6 +3,10 @@
 
 #' @export p2.make.pagoda1.app
 p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,veloinfo=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
+  if (!requireNamespace("GO.db", quietly = TRUE)) {
+    stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
+  }
+
   # rcm - xv
   if(type=='counts') {
     x <- p2$counts;

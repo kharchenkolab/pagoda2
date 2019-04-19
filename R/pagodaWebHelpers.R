@@ -45,6 +45,10 @@ p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
 #' @param gene.names a character vector of genes to include
 #' @export p2.generate.go.web
 p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL, n.cores = 1) {
+  if (!requireNamespace("GO.db", quietly = TRUE)) {
+    stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
+  }
+
   if (is.null(egALIAS2EG)) {
     stop("egALIAS2EG cannot be null, it has to be an object like org.Hs.egALIAS2EG")
   }
@@ -92,7 +96,7 @@ p2.generate.go.web.fromGOEnv  <- function (go.env) {
       properties = list(
         locked = T,
         genesetname = x,
-        shortdescription = GOTERM[[x]]@Term
+        shortdescription = GO.db::GOTERM[[x]]@Term
       ),
       genes = c(go.env[[x]])
     )

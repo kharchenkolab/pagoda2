@@ -12,7 +12,6 @@ Imports:
     BiocGenerics,
     base64enc,
     dendsort,
-    GO.db,
     igraph,
     irlba,
     MASS,
@@ -35,6 +34,7 @@ Imports:
 Suggests:
     dbscan,
     ggplot2,
+    GO.db,
     pcaMethods,
     pheatmap,
     rgl,
@@ -44,6 +44,13 @@ Suggests:
     org.Mm.eg.db,
     knitr, 
     rmarkdown
+Remotes:
+  bioc::3.3/AnnotationDbi,
+  bioc::3.3/BiocGenerics,
+  bioc::3.3/org.Dr.eg.db,
+  bioc::3.3/org.Hs.eg.db,
+  bioc::3.3/org.Mm.eg.db,
+  bioc::3.3/pcaMethods
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen

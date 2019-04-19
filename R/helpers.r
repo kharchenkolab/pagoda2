@@ -1,4 +1,3 @@
-#' @import GO.db
 #' @import Rook
 #' @importFrom parallel mclapply
 #' @importFrom irlba irlba
