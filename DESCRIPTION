@@ -11,7 +11,6 @@ Imports:
     AnnotationDbi,
     BiocGenerics,
     base64enc,
-    Cairo,
     dendsort,
     GO.db,
     igraph,
@@ -46,6 +45,6 @@ Suggests:
     knitr, 
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
 NeedsCompilation: yes

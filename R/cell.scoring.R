@@ -83,35 +83,6 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
     invisible(NULL)
 }
 
-#' Plot multiple pagoda2 objects with values, optionally saving to file
-#' @param p2.objs list of pagoda2 objects to plot
-#' @param values the values to plot
-#' @param filename name of file to save the plot in, if NULL plot to current device
-#' @param panel.size the size of the panel for saving to file
-#' @param mark.cluster.cex size of cluster labels
-#' @param verbose logical verbosity
-#' @return NULL
-#' @export plotAllWithValues
-plotAllWithValues <- function (p2.objs, values, filename = NULL, panel.size = 600, 
-    mark.cluster.cex = 0.8, verbose = F) 
-{
-    require(Cairo)
-    mfrow = getParMfrow(length(p2.objs))
-    if (!is.null(filename)) {
-        CairoPNG(file = filename, height = mfrow[[1]] * panel.size, 
-            width = mfrow[[2]] * panel.size)
-    }
-    par(mfrow = mfrow, mar = c(0.5, 0.5, 0.5, 0.5), mgp = c(2, 0.65, 0), cex = 0.85)
-    ## Plot all individually
-    lapply(names(p2.objs), function(dn) {
-        plotOneWithSignature(p2.objs[[dn]], genes = genes, title = dn)
-    })
-    if (!is.null(filename)) {
-        dev.off()
-    }
-    invisible(NULL)
-}
-
 #' Subset a gene singature to the genes in the given matrix
 #' optionally warning if genes are missing
 #' @param data the matrix
