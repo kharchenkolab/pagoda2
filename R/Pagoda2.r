@@ -5,7 +5,6 @@
 #' @import Rook
 #' @import igraph
 #' @importFrom irlba irlba
-#' @import pcaMethods
 #' @importFrom parallel mclapply
 #' @importFrom Rcpp sourceCpp
 #' @importFrom magrittr %>%

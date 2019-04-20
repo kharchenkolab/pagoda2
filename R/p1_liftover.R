@@ -1,9 +1,5 @@
 # Functions from pagoda1
 
-#' @importFrom pcaMethods pca
-#' @importFrom pcaMethods scores
-NULL
-
 ##' Collapse aspects driven by the same combinations of genes
 ##'
 ##' Examines PC loading vectors underlying the identified aspects and clusters aspects based
@@ -77,6 +73,10 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 
 ##' @export
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
+  if (!requireNamespace("pcaMethods", quietly = TRUE)) {
+    stop("Package \"pcaMethods\" needed for this function to work. Please install it with `BiocManager::install('pcaMethods')`.", call. = FALSE)
+  }
+
   xvm <- do.call(rbind, tapply(seq_len(nrow(d)), factor(ct, levels = sort(unique(ct))), function(ii) {
     if(length(ii) == 1) return(d[ii, ])
     if(pick.top) {
