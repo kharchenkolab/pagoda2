@@ -1757,7 +1757,7 @@ Pagoda2 <- setRefClass(
 
         cm <- Matrix::colMeans(x)
 
-if(nc.cores==1){
+if(n.cores==1){
 pwpca <- pblapply(gsl, function(sn) {
           lab <- proper.gene.names %in% get(sn, envir = setenv)
           if(sum(lab)<1) { return(NULL) }
