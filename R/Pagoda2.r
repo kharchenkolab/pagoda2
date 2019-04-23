@@ -1746,7 +1746,7 @@ Pagoda2 <- setRefClass(
 
         # determine valid pathways
         gsl <- ls(envir = setenv)
-        gsl.ng <- unlist(mclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T))
+        gsl.ng <- unlist(pbmclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T))
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
         names(gsl) <- gsl
 
@@ -1756,7 +1756,8 @@ Pagoda2 <- setRefClass(
 
         cm <- Matrix::colMeans(x)
 
-        pwpca <- papply(gsl, function(sn) {
+if(nc.cores==1){
+pwpca <- pblapply(gsl, function(sn) {
           lab <- proper.gene.names %in% get(sn, envir = setenv)
           if(sum(lab)<1) { return(NULL) }
           pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab])
@@ -1784,8 +1785,38 @@ Pagoda2 <- setRefClass(
             rownames(pcs$rotation) <- colnames(x)[lab];
           } # don't bother otherwise - it's not significant
           return(list(xp=pcs,z=z,n=ngenes))
-        }, n.cores = n.cores,mc.preschedule=T)
-        if(save.pca) {
+        }) } else {        
+pwpca <- pbmclapply(gsl, function(sn) {
+          lab <- proper.gene.names %in% get(sn, envir = setenv)
+          if(sum(lab)<1) { return(NULL) }
+          pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab])
+          pcs$d <- pcs$d/sqrt(nrow(x))
+          pcs$rotation <- pcs$v;
+          pcs$v <- NULL;
+
+          # get standard deviations for the random samples
+          ngenes <- sum(lab)
+          z <- do.call(rbind,lapply(seq_len(n.randomizations), function(i) {
+            si <- sample(ncol(x), ngenes)
+            pcs <- irlba(x[,si], nv=nPcs, nu=0, center=cm[si])$d
+          }))
+          z <- z/sqrt(nrow(x));
+
+          # local normalization of each component relative to sampled PC1 sd
+          avar <- pmax(0, (pcs$d^2-mean(z[, 1]^2))/sd(z[, 1]^2))
+
+          if(avar>0.5) {
+            # flip orientations to roughly correspond with the means
+            pcs$scores <- as.matrix(t(x[,lab] %*% pcs$rotation) - as.numeric((cm[lab] %*% pcs$rotation)))
+            cs <- unlist(lapply(seq_len(nrow(pcs$scores)), function(i) sign(cor(pcs$scores[i,], colMeans(t(x[, lab, drop = FALSE])*abs(pcs$rotation[, i]))))))
+            pcs$scores <- pcs$scores*cs
+            pcs$rotation <- pcs$rotation*cs
+            rownames(pcs$rotation) <- colnames(x)[lab];
+          } # don't bother otherwise - it's not significant
+          return(list(xp=pcs,z=z,n=ngenes))
+        }, mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
+        
+if(save.pca) {
           misc[['pwpca']] <<- pwpca;
         }
       } else {
