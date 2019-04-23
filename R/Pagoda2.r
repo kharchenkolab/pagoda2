@@ -1776,7 +1776,7 @@ pwpca <- pblapply(gsl, function(sn) {
           z <- z/sqrt(nrow(x));
 
           # local normalization of each component relative to sampled PC1 sd
-          avar <- pmax(0, (pcs$d^2-mean(z[, 1]^2))/sd(z[, 1]^2))
+          avar <- pmax(0, (pcs$d^2-mean(z[, 1]^2))/sd(z[, 1]^2)) 
 
           if(avar>0.5) {
             # flip orientations to roughly correspond with the means
