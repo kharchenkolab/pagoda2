@@ -227,14 +227,16 @@ p2.generate.human.go <- function(r) {
   }
 
   # translate gene names to ids
-  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts),org.Hs.eg.db::org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+  message("Get gene names")
+  ids <- unlist(pblapply(BiocGenerics::mget(colnames(r$counts),org.Hs.eg.db::org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
 
   # reverse map
   rids <- names(ids); names(rids) <- ids;
 
   # list all the ids per GO category
+  message("Get GO IDs")
   go.env <- AnnotationDbi::eapply(org.Hs.eg.db::org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-  go.env <- go.env[unlist(lapply(go.env,length))>5];
+  go.env <- go.env[unlist(pblapply(go.env,length))>5];
   go.env <- list2env(go.env);
 
   go.env
