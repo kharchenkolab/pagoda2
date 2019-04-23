@@ -1815,7 +1815,7 @@ pwpca <- pbmclapply(gsl, function(sn) {
           } # don't bother otherwise - it's not significant
           return(list(xp=pcs,z=z,n=ngenes))
         }, mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
-        
+        }
 if(save.pca) {
           misc[['pwpca']] <<- pwpca;
         }
