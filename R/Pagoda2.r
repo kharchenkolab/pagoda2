@@ -1,6 +1,7 @@
 #' @useDynLib pagoda2
 #' @import MASS
 #' @import Matrix
+#' @import pbmcapply
 #' @importFrom Rcpp evalCpp
 #' @import Rook
 #' @import igraph
