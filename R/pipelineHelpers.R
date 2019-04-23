@@ -233,7 +233,7 @@ p2.generate.human.go <- function(r) {
   # reverse map
   rids <- names(ids); names(rids) <- ids;
 
-  # list all the ids per GO category
+  # list all the ids per GO category 
   message("Get GO IDs")
   go.env <- AnnotationDbi::eapply(org.Hs.eg.db::org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
   go.env <- go.env[unlist(pblapply(go.env,length))>5];
