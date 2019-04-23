@@ -2,6 +2,7 @@
 #' @import MASS
 #' @import Matrix
 #' @import pbmcapply
+#' @import pbapply
 #' @importFrom Rcpp evalCpp
 #' @import Rook
 #' @import igraph
