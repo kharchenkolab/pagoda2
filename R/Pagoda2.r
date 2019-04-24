@@ -1825,7 +1825,7 @@ if(save.pca) {
       }
       n.cells <- pagoda.effective.cells(pwpca)
 
-      vdf <- data.frame(do.call(rbind, pblapply(seq_along(pwpca), function(i) {
+      vdf <- data.frame(do.call(rbind, lapply(seq_along(pwpca), function(i) {
         vars <- as.numeric((pwpca[[i]]$xp$d))
         cbind(i = i, var = vars, n = pwpca[[i]]$n, npc = seq(1:ncol(pwpca[[i]]$xp$rotation)))
       })))
