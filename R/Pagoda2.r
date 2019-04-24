@@ -1723,7 +1723,7 @@ Pagoda2 <- setRefClass(
     # this is a compressed version of the PAGODA1 approach
     # env - pathway to gene environment
     testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL,adjusted.pvalues=TRUE,z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE,name='pathwayPCA',correlation.distance.threshold=0.2,loading.distance.threshold=0.01,top.aspects=Inf,recalculate.pca=FALSE,save.pca=TRUE) {
-      require("pbmclapply")
+      require("pbmcapply")
       require("pbapply")
       nPcs <- 1;
 
@@ -1743,14 +1743,22 @@ Pagoda2 <- setRefClass(
 
       if(is.null(misc[['pwpca']]) || recalculate.pca) {
         if(verbose) {
-          message("Determining valid pathways")
+          message("Determining valid pathways",appendFL=F)
         }
 
         # determine valid pathways
         gsl <- ls(envir = setenv)
-        gsl.ng <- unlist(pbmclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T,mc.set.seed=F))
+        cat(".")
+        n.gsl <- sn(gsl)
+        cat(".")
+        fgo <- function(go){ sum(unique(get(go, envir = setenv)) %in% proper.gene.names) }
+        cat(".")
+        gsl.ng <- unlist(pbmclapply(n.gsl, fgo(), mc.cores=n.cores, mc.preschedule=T))
+        cat(".")
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
+        cat(".")
         names(gsl) <- gsl
+        cat("done\n")
 
         if(verbose) {
           message("Processing ", length(gsl), " valid pathways")
@@ -1758,37 +1766,7 @@ Pagoda2 <- setRefClass(
 
         cm <- Matrix::colMeans(x)
 
-if(n.cores==1){
-pwpca <- pblapply(gsl, function(sn) {
-          lab <- proper.gene.names %in% get(sn, envir = setenv)
-          if(sum(lab)<1) { return(NULL) }
-          pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab])
-          pcs$d <- pcs$d/sqrt(nrow(x))
-          pcs$rotation <- pcs$v;
-          pcs$v <- NULL;
-
-          # get standard deviations for the random samples
-          ngenes <- sum(lab)
-          z <- do.call(rbind,lapply(seq_len(n.randomizations), function(i) {
-            si <- sample(ncol(x), ngenes)
-            pcs <- irlba(x[,si], nv=nPcs, nu=0, center=cm[si])$d
-          }))
-          z <- z/sqrt(nrow(x));
-
-          # local normalization of each component relative to sampled PC1 sd
-          avar <- pmax(0, (pcs$d^2-mean(z[, 1]^2))/sd(z[, 1]^2)) 
-
-          if(avar>0.5) {
-            # flip orientations to roughly correspond with the means
-            pcs$scores <- as.matrix(t(x[,lab] %*% pcs$rotation) - as.numeric((cm[lab] %*% pcs$rotation)))
-            cs <- unlist(lapply(seq_len(nrow(pcs$scores)), function(i) sign(cor(pcs$scores[i,], colMeans(t(x[, lab, drop = FALSE])*abs(pcs$rotation[, i]))))))
-            pcs$scores <- pcs$scores*cs
-            pcs$rotation <- pcs$rotation*cs
-            rownames(pcs$rotation) <- colnames(x)[lab];
-          } # don't bother otherwise - it's not significant
-          return(list(xp=pcs,z=z,n=ngenes))
-        }) } else {        
-pwpca <- pbmclapply(gsl, function(sn) {
+fsn <- function(sn) {
           lab <- proper.gene.names %in% get(sn, envir = setenv)
           if(sum(lab)<1) { return(NULL) }
           pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab])
@@ -1816,20 +1794,27 @@ pwpca <- pbmclapply(gsl, function(sn) {
             rownames(pcs$rotation) <- colnames(x)[lab];
           } # don't bother otherwise - it's not significant
           return(list(xp=pcs,z=z,n=ngenes))
-        }, mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
+        }                                    
+                                    
+if(n.cores==1){
+pwpca <- pblapply(gsl, fsn()) } else {        
+pwpca <- pbmclapply(gsl, fsn(), mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
+  message("Saving RDS")
+  saveRDS("pwpca.rds")
         }
+                                
 if(save.pca) {
           misc[['pwpca']] <<- pwpca;
         }
       } else {
         if(verbose) {
-          message("reusing previous overdispersion calculations")
+          message("Reusing previous OD calculations")
           pwpca <- misc[['pwpca']];
         }
       }
 
       if(verbose) {
-        message("scoring pathway od signifcance")
+        message("Scoring pathway OD signifcance")
       }
 
       # score overdispersion
@@ -1850,7 +1835,7 @@ if(save.pca) {
       }
       n.cells <- pagoda.effective.cells(pwpca)
 
-      vdf <- data.frame(do.call(rbind, lapply(seq_along(pwpca), function(i) {
+      vdf <- data.frame(do.call(rbind, pblapply(seq_along(pwpca), function(i) {
         vars <- as.numeric((pwpca[[i]]$xp$d))
         cbind(i = i, var = vars, n = pwpca[[i]]$n, npc = seq(1:ncol(pwpca[[i]]$xp$rotation)))
       })))
