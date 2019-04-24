@@ -1764,7 +1764,7 @@ Pagoda2 <- setRefClass(
 
         cm <- Matrix::colMeans(x)
 
-fsn <- function(sn) {
+pwpca <- pbmclapply(gsl, function(sn) {
           lab <- proper.gene.names %in% get(sn, envir = setenv)
           if(sum(lab)<1) { return(NULL) }
           pcs <- irlba(x[,lab], nv=nPcs, nu=0, center=cm[lab])
@@ -1792,9 +1792,7 @@ fsn <- function(sn) {
             rownames(pcs$rotation) <- colnames(x)[lab];
           } # don't bother otherwise - it's not significant
           return(list(xp=pcs,z=z,n=ngenes))
-        }                                    
-                                    
-pwpca <- pbmclapply(gsl, fsn, mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
+        }, mc.cores = n.cores,mc.preschedule=T)
                                 
 if(save.pca) {
           misc[['pwpca']] <<- pwpca;
