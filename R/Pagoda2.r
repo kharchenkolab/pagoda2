@@ -1753,7 +1753,7 @@ Pagoda2 <- setRefClass(
         cat(".")
         fgo <- function(go){ sum(unique(get(go, envir = setenv)) %in% proper.gene.names) }
         cat(".")
-        gsl.ng <- unlist(pbmclapply(n.gsl, fgo(), mc.cores=n.cores, mc.preschedule=T))
+        gsl.ng <- unlist(pbmclapply(n.gsl, fgo, mc.cores=n.cores, mc.preschedule=T))
         cat(".")
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
         cat(".")
@@ -1797,10 +1797,8 @@ fsn <- function(sn) {
         }                                    
                                     
 if(n.cores==1){
-pwpca <- pblapply(gsl, fsn()) } else {        
-pwpca <- pbmclapply(gsl, fsn(), mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
-  message("Saving RDS")
-  saveRDS("pwpca.rds")
+pwpca <- pblapply(gsl, fsn) } else {        
+pwpca <- pbmclapply(gsl, fsn, mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
         }
                                 
 if(save.pca) {
