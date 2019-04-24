@@ -1,8 +1,6 @@
 #' @useDynLib pagoda2
 #' @import MASS
 #' @import Matrix
-#' @import pbmcapply
-#' @import pbapply
 #' @importFrom Rcpp evalCpp
 #' @import Rook
 #' @import igraph
@@ -1725,6 +1723,8 @@ Pagoda2 <- setRefClass(
     # this is a compressed version of the PAGODA1 approach
     # env - pathway to gene environment
     testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL,adjusted.pvalues=TRUE,z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE,name='pathwayPCA',correlation.distance.threshold=0.2,loading.distance.threshold=0.01,top.aspects=Inf,recalculate.pca=FALSE,save.pca=TRUE) {
+      require("pbmclapply")
+      require("pbapply")
       nPcs <- 1;
 
       if(type=='counts') {
@@ -1743,17 +1743,17 @@ Pagoda2 <- setRefClass(
 
       if(is.null(misc[['pwpca']]) || recalculate.pca) {
         if(verbose) {
-          message("determining valid pathways")
+          message("Determining valid pathways")
         }
 
         # determine valid pathways
         gsl <- ls(envir = setenv)
-        gsl.ng <- unlist(pbmclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T))
+        gsl.ng <- unlist(pbmclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T,mc.set.seed=F))
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
         names(gsl) <- gsl
 
         if(verbose) {
-          message("processing ", length(gsl), " valid pathways")
+          message("Processing ", length(gsl), " valid pathways")
         }
 
         cm <- Matrix::colMeans(x)
