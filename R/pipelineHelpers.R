@@ -228,7 +228,7 @@ p2.generate.human.go <- function(r) {
   }
 
   # translate gene names to ids
-  message("Preparing GO db")
+  message("Preparing GO db", appendLF=F)
   ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts),org.Hs.eg.db::org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
 cat(".")
   # reverse map
