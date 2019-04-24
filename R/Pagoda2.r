@@ -1743,22 +1743,20 @@ Pagoda2 <- setRefClass(
 
       if(is.null(misc[['pwpca']]) || recalculate.pca) {
         if(verbose) {
-          message("Determining valid pathways",appendFL=F)
+          message("Determining valid pathways ",appendLF=F)
         }
 
         # determine valid pathways
-        gsl <- ls(envir = setenv)
-        cat(".")
-        n.gsl <- sn(gsl)
-        cat(".")
         fgo <- function(go){ sum(unique(get(go, envir = setenv)) %in% proper.gene.names) }
-        cat(".")
-        gsl.ng <- unlist(pbmclapply(n.gsl, fgo, mc.cores=n.cores, mc.preschedule=T))
-        cat(".")
+        gsl <- ls(envir = setenv)
+        n.gsl <- sn(gsl)
+        if(verbose) cat(".")
+        gsl.ng <- unlist(mclapply(n.gsl, fgo, mc.cores=n.cores, mc.preschedule=T))
+        if(verbose) cat(".")
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
-        cat(".")
+        if(verbose) cat(".")
         names(gsl) <- gsl
-        cat("done\n")
+        if(verbose) cat(" done\n")
 
         if(verbose) {
           message("Processing ", length(gsl), " valid pathways")
@@ -1796,10 +1794,7 @@ fsn <- function(sn) {
           return(list(xp=pcs,z=z,n=ngenes))
         }                                    
                                     
-if(n.cores==1){
-pwpca <- pblapply(gsl, fsn) } else {        
 pwpca <- pbmclapply(gsl, fsn, mc.cores = n.cores,mc.preschedule=T, mc.set.seed=F)
-        }
                                 
 if(save.pca) {
           misc[['pwpca']] <<- pwpca;
@@ -1866,6 +1861,7 @@ if(save.pca) {
       vdf$ub.stringent <- RMTstat::qWishartMax(score.alpha/nrow(vdf)/2, n.cells, vdf$n, var = basevar, lower.tail = FALSE)
 
       if(plot) {
+        if(verbose) message("Plotting...")
         par(mfrow = c(1, 1), mar = c(3.5, 3.5, 1.0, 1.0), mgp = c(2, 0.65, 0))
         un <- sort(unique(vdf$n))
         on <- order(vdf$n, decreasing = FALSE)
