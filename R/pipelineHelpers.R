@@ -202,16 +202,20 @@ p2.generate.dr.go <- function(r) {
   }
   
   # translate gene names to ids
+  message("Preparing GO environment ", appendLF=F)
   ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts), org.Dr.eg.db::org.Dr.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-  
+  cat(".")
+                       
   # reverse map
   rids <- names(ids); names(rids) <- ids;
   
   # list all the ids per GO category
   go.env <- AnnotationDbi::eapply(org.Dr.eg.db::org.Dr.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
+  cat(".")
   go.env <- go.env[unlist(lapply(go.env,length))>5];
+  cat(".")
   go.env <- list2env(go.env);
-  
+  cat(" done\n")
   go.env
 }
 
@@ -227,19 +231,20 @@ p2.generate.human.go <- function(r) {
   }
 
   # translate gene names to ids
-  message("Preparing GO db", appendLF=F)
+  message("Preparing GO environment ", appendLF=F)
   ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts),org.Hs.eg.db::org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-cat(".")
+  cat(".")
   # reverse map
   rids <- names(ids); names(rids) <- ids;
 
   # list all the ids per GO category 
 
   go.env <- AnnotationDbi::eapply(org.Hs.eg.db::org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-cat(".")                                  
+  cat(".")                                  
   go.env <- go.env[unlist(lapply(go.env,length))>5];
+  cat(".") 
   go.env <- list2env(go.env);
-cat("done\n")
+  cat(" done\n")
   go.env
 }
 
@@ -254,16 +259,19 @@ p2.generate.mouse.go <- function(r) {
   }
 
   # translate gene names to ids
+  message("Preparing GO environment ", appendLF=F)
   ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts), org.Mm.eg.db::org.Mm.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-
+  cat(".")
   # reverse map
   rids <- names(ids); names(rids) <- ids;
 
   # list all the ids per GO category
   go.env <- AnnotationDbi::eapply(org.Mm.eg.db::org.Mm.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
+  cat(".")
   go.env <- go.env[unlist(lapply(go.env,length))>5];
+  cat(".")
   go.env <- list2env(go.env);
-
+  cat(" done\n")
   go.env
 }
 
