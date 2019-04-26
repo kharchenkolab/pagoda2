@@ -1720,7 +1720,7 @@ Pagoda2 <- setRefClass(
 
 #test consistency
 tPO=function(setenv, type='counts', verbose=T, n.cores=1) {
-      silent(require("pbmcapply"))
+      invisible(require("pbmcapply"))
       nPcs <- 1;
 
       if(type=='counts') {
