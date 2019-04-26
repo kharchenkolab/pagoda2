@@ -1719,26 +1719,22 @@ Pagoda2 <- setRefClass(
     },
 
 #test consistency
-tPO=function(setenv, type='counts', verbose=T, n.cores=1) {
+tPO=function(setenv=go.env, , verbose=T, n.cores=1) {
       invisible(require("pbmcapply"))
       nPcs <- 1;
 
-      if(type=='counts') {
-        x <- counts;
+      
+        x <- p2$counts;
         # apply scaling if using raw counts
-        x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
-      } else {
-        if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
-        x <- reductions[[type]]
-      }
+        x@x <- x@x*rep(p2$misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+      
       if(!is.null(cells)) {
         x <- x[cells,]
       }
 
       proper.gene.names <- colnames(x);
 
-      if(is.null(misc[['pwpca']]) || recalculate.pca) {
-        if(verbose) {
+      if(verbose) {
           message("Determining valid pathways ",appendLF=F)
         }
 
@@ -1753,7 +1749,6 @@ tPO=function(setenv, type='counts', verbose=T, n.cores=1) {
         if(verbose) cat(" done\n")
         
           return(invisible(length(gsl)))         
-        }
   },
 
     # test pathway overdispersion
