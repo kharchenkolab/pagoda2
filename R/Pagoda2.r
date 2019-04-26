@@ -1719,7 +1719,7 @@ Pagoda2 <- setRefClass(
     },
 
 #test consistency
-tPO=function(setenv=go.env, , verbose=T, n.cores=1) {
+tPO=function(setenv=go.env, verbose=T, n.cores=1) {
       invisible(require("pbmcapply"))
       nPcs <- 1;
 
