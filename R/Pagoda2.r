@@ -1744,9 +1744,8 @@ tPO=function(setenv, type='counts', verbose=T, n.cores=1) {
 
         # determine valid pathways
         gsl <- ls(envir = setenv)
-        n.gsl <- sn(gsl)
         if(verbose) cat(".")
-        gsl.ng <- unlist(mclapply(n.gsl, function(go){ sum(unique(get(go, envir = setenv)) %in% proper.gene.names) }, mc.cores=n.cores, mc.preschedule=T))
+        gsl.ng <- unlist(mclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T))
         if(verbose) cat(".")
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
         if(verbose) cat(".")
