@@ -1754,7 +1754,8 @@ tPO=function(setenv, type='counts', verbose=T, n.cores=1) {
         if(verbose) cat(" done\n")
         
           return(invisible(length(gsl)))         
-        }           
+        }
+  }
 
     # test pathway overdispersion
     # this is a compressed version of the PAGODA1 approach
