@@ -1718,6 +1718,43 @@ Pagoda2 <- setRefClass(
       return(invisible(list(d=d,m=m,gpcs=gpcs)))
     },
 
+#test consistency
+tPO=function(setenv, type='counts', verbose=T, n.cores=1) {
+      silent(require("pbmcapply"))
+      nPcs <- 1;
+
+      if(type=='counts') {
+        x <- counts;
+        # apply scaling if using raw counts
+        x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+      } else {
+        if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
+        x <- reductions[[type]]
+      }
+      if(!is.null(cells)) {
+        x <- x[cells,]
+      }
+
+      proper.gene.names <- colnames(x);
+
+      if(is.null(misc[['pwpca']]) || recalculate.pca) {
+        if(verbose) {
+          message("Determining valid pathways ",appendLF=F)
+        }
+
+        # determine valid pathways
+        gsl <- ls(envir = setenv)
+        n.gsl <- sn(gsl)
+        if(verbose) cat(".")
+        gsl.ng <- unlist(mclapply(n.gsl, function(go){ sum(unique(get(go, envir = setenv)) %in% proper.gene.names) }, mc.cores=n.cores, mc.preschedule=T))
+        if(verbose) cat(".")
+        gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
+        if(verbose) cat(".")
+        names(gsl) <- gsl
+        if(verbose) cat(" done\n")
+        
+          return(invisible(length(gsl)))         
+        }           
 
     # test pathway overdispersion
     # this is a compressed version of the PAGODA1 approach
@@ -1746,11 +1783,9 @@ Pagoda2 <- setRefClass(
         }
 
         # determine valid pathways
-        fgo <- function(go){ sum(unique(get(go, envir = setenv)) %in% proper.gene.names) }
         gsl <- ls(envir = setenv)
-        n.gsl <- sn(gsl)
         if(verbose) cat(".")
-        gsl.ng <- unlist(mclapply(n.gsl, fgo, mc.cores=n.cores, mc.preschedule=T))
+        gsl.ng <- unlist(mclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T))
         if(verbose) cat(".")
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
         if(verbose) cat(".")
