@@ -1746,7 +1746,7 @@ Pagoda2 <- setRefClass(
         # determine valid pathways
         gsl <- ls(envir = setenv)
         if(verbose) cat(".")
-        gsl.ng <- unlist(pbapply::pblapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),cl=n.cores,mc.preschedule=T))
+        gsl.ng <- unlist(mclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T))
         if(verbose) cat(".")
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
         if(verbose) cat(".")
