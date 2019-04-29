@@ -1787,8 +1787,7 @@ pwpca <- pbapply::pblapply(gsl, function(sn) {
             rownames(pcs$rotation) <- colnames(x)[lab];
           } # don't bother otherwise - it's not significant
           return(list(xp=pcs,z=z,n=ngenes))
-        }, cl = n.cores, mc.preschedule=T)
-                                
+        }, cl = n.cores, mc.preschedule=T)                        
 if(save.pca) {
           misc[['pwpca']] <<- pwpca;
         }
