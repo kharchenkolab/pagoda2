@@ -32,7 +32,8 @@ Imports:
     urltools,
     stats,
     utils,
-    fastcluster
+    fastcluster,
+    pbapply
 Suggests:
     dbscan,
     ggplot2,
