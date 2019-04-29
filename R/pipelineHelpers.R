@@ -174,7 +174,7 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
 #' @param r a pagoda2 object
 #' @param organism the organism, current hs, mm and dr are supported for the human and mouse
 #' @export p2.generate.go
-p2.generate.go <- function(r, organism = NULL) {
+p2.generate.go <- function(r, organism = NULL, verbose=T) {
   if (is.null(organism)) {
     stop('organism must be specified');
   }
