@@ -1787,7 +1787,7 @@ pwpca.fun <- function(sn) {
             rownames(pcs$rotation) <- colnames(x)[lab];
           } # don't bother otherwise - it's not significant
           return(list(xp=pcs,z=z,n=ngenes))
-        },
+        }
                                   
         if(verbose) {
 pwpca <- pbapply::pblapply(gsl, pwpca.fun, cl = n.cores, mc.preschedule=T)  
