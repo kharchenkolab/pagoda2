@@ -1718,39 +1718,6 @@ Pagoda2 <- setRefClass(
       return(invisible(list(d=d,m=m,gpcs=gpcs)))
     },
 
-#test consistency
-tPO=function(setenv=go.env, verbose=T, n.cores=1) {
-      invisible(require("pbmcapply"))
-      nPcs <- 1;
-
-      
-        x <- p2$counts;
-        # apply scaling if using raw counts
-        x@x <- x@x*rep(p2$misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
-      
-      if(!is.null(cells)) {
-        x <- x[cells,]
-      }
-
-      proper.gene.names <- colnames(x);
-
-      if(verbose) {
-          message("Determining valid pathways ",appendLF=F)
-        }
-
-        # determine valid pathways
-        gsl <- ls(envir = setenv)
-        if(verbose) cat(".")
-        gsl.ng <- unlist(mclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names),mc.cores=n.cores,mc.preschedule=T))
-        if(verbose) cat(".")
-        gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng<= max.pathway.size]
-        if(verbose) cat(".")
-        names(gsl) <- gsl
-        if(verbose) cat(" done\n")
-        
-          return(invisible(length(gsl)))         
-  },
-
     # test pathway overdispersion
     # this is a compressed version of the PAGODA1 approach
     # env - pathway to gene environment
