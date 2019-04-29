@@ -174,7 +174,7 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
 #' @param r a pagoda2 object
 #' @param organism the organism, current hs, mm and dr are supported for the human and mouse
 #' @export p2.generate.go
-p2.generate.go <- function(r, organism = NULL, verbose=T) {
+p2.generate.go <- function(r, organism = NULL) {
   if (is.null(organism)) {
     stop('organism must be specified');
   }
@@ -195,7 +195,7 @@ p2.generate.go <- function(r, organism = NULL, verbose=T) {
 #' @param r a pagoda2 object
 #' @return a go environment object
 #' @export p2.generate.dr.go
-p2.generate.dr.go <- function(r) {
+p2.generate.dr.go <- function(r, verbose=T) {
   # Generate GO environment
   if (!requireNamespace("org.Dr.eg.db", quietly = TRUE)) {
     stop("Package \"org.Dr.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
@@ -224,7 +224,7 @@ p2.generate.dr.go <- function(r) {
 #' @param r a pagoda2 object
 #' @return a go environment object
 #' @export p2.generate.human.go
-p2.generate.human.go <- function(r) {
+p2.generate.human.go <- function(r, verbose=T) {
   # Generate GO environment
   if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
     stop("Package \"org.Hs.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
@@ -252,7 +252,7 @@ p2.generate.human.go <- function(r) {
 #' @param r a pagoda2 object
 #' @return a go environment object
 #' @export p2.generate.mouse.go
-p2.generate.mouse.go <- function(r) {
+p2.generate.mouse.go <- function(r, verbose=T) {
   # Generate GO environment
   if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
     stop("Package \"org.Mm.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
