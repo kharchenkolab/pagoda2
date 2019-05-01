@@ -1790,7 +1790,7 @@ pwpca.fun <- function(sn) {
         }
                                   
         if(verbose) {
-          cl <- parallel::makeForkCluster(n.cores)
+          cl <- parallel::makeCluster(n.cores)
 pwpca <- pbapply::pblapply(gsl, pwpca.fun, cl = cl, mc.preschedule=T) 
           parallel::stopCluster(cl)
           } else {
