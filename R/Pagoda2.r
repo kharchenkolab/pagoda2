@@ -1791,7 +1791,7 @@ pwpca.fun <- function(sn) {
                                   
         if(verbose) {
           #cl <- parallel::makeCluster(n.cores)
-#pwpca <- pbapply::pblapply(gsl, pwpca.fun, cl = cl, mc.preschedule=T) 
+pwpca <- pbapply::pblapply(gsl, pwpca.fun, cl = n.cores, mc.preschedule=T) 
           #parallel::stopCluster(cl)
           pwpca <- pbmcapply::pbmclapply(gsl, pwpca.fun, mc.cores=n.cores, mc.preschedule=T) 
           } else {
