@@ -1793,7 +1793,7 @@ pwpca.fun <- function(sn) {
           #cl <- parallel::makeCluster(n.cores)
 pwpca <- pbapply::pblapply(gsl, pwpca.fun, cl = n.cores, mc.preschedule=T) 
           #parallel::stopCluster(cl)
-          pwpca <- pbmcapply::pbmclapply(gsl, pwpca.fun, mc.cores=n.cores, mc.preschedule=T) 
+          #pwpca <- pbmcapply::pbmclapply(gsl, pwpca.fun, mc.cores=n.cores, mc.preschedule=T) 
           } else {
 pwpca <- papply(gsl, pwpca.fun, n.cores=n.cores, mc.preschedule=T)
           }
