@@ -14,20 +14,18 @@ NULL
 #'
 #' @field counts gene count matrix, normalized on total counts
 #' @field clusters results of clustering
-#' @field graphs ???
+#' @field graphs graph representations of the dataset
 #' @field reductions results of reductions, i.e. PCA
 #' @field embeddings results of visualization algorithms, i.e. t-SNE or largeVis
 #' @field diffgenes lists of differentially expressed genes
-#' @field pathways ???
+#' @field pathways pathway information
 #' @field n.cores number of cores, used for the analyses
-#' @field misc ???
-#' @field batch ???
-#' @field modelType ???
-#' @field verbose ???
-#' @field depth ???
-#' @field batchNorm ???
-#' @field mat ???
-#' @field genegraphs ???
+#' @field misc a list of miscelaneous structures
+#' @field batch batch factor for the dataset
+#' @field modelType plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)
+#' @field verbose verbosity level
+#' @field depth cell size factor
+#' @field genegraphs a slot to store graphical representations in gene space (i.e. gene kNN graphs)
 #' @export Pagoda2
 #' @exportClass Pagoda2
 Pagoda2 <- setRefClass(
@@ -65,9 +63,9 @@ Pagoda2 <- setRefClass(
           if(!(class(x) == 'dgCMatrix')) {
             stop("x is not of class dgCMatrix or matrix");
           }
-          if(any(x@x < 0)) {
-            stop("x contains negative values");
-          }
+          #if(any(x@x < 0)) {
+          #  stop("x contains negative values");
+          #}
           setCountMatrix(x, min.cells.per.gene=min.cells.per.gene, trim=trim, 
                          min.transcripts.per.cell=min.transcripts.per.cell, lib.sizes=lib.sizes,
                          log.scale=log.scale, keep.genes=keep.genes)
@@ -225,7 +223,7 @@ Pagoda2 <- setRefClass(
     },
 
     # adjust variance of the residual matrix, determine overdispersed sites
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
+    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=.self$modelType=='raw' ,use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
       #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if(!is.null(cells)) { # translate cells into a rowSel boolean vector
         if(!(is.logical(cells) && length(cells)==nrow(counts))) {
@@ -242,37 +240,48 @@ Pagoda2 <- setRefClass(
       if(verbose) cat("calculating variance fit ...")
       df <- colMeanVarS(counts,rowSel,n.cores);
 
-      df$m <- log(df$m); df$v <- log(df$v);
-      rownames(df) <- colnames(counts);
-      vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
-      if(length(vi)<gam.k*1.5) { gam.k=1 };# too few genes
-      if(gam.k<2) {
-        if(verbose) cat(" using lm ")
-        m <- lm(v ~ m, data = df[vi,])
+      if(use.raw.variance) { # use raw variance estimates without relative adjustments
+        rownames(df) <- colnames(counts);
+        vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
+        df$lp <- df$lpa <- log(df$v);
+        df$gsf <- 1; # no rescaling of variance
+        ods <- order(df$v,decreasing=T); if(length(ods)>1e3) { ods <- ods[1:1e3] }
+        if(persist) misc[['odgenes']] <<- rownames(df)[ods];
       } else {
-        if(verbose) cat(" using gam ")
-        m <- mgcv::gam(as.formula(paste0('v ~ s(m, k = ',gam.k,')')), data = df[vi,])
-      }
-      df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
-      n.obs <- df$nobs; #diff(counts@p)
-      suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=F,log.p=T)))
-      df$lpa <- bh.adjust(df$lp,log=TRUE)
-      n.cells <- nrow(counts)
-      df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=TRUE)/n.cells)
+        # gene-relative normalizaton 
+        df$m <- log(df$m); df$v <- log(df$v);
+        rownames(df) <- colnames(counts);
+        vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
+        if(length(vi)<gam.k*1.5) { gam.k=1 };# too few genes
+        if(gam.k<2) {
+          if(verbose) cat(" using lm ")
+          m <- lm(v ~ m, data = df[vi,])
+        } else {
+          if(verbose) cat(" using gam ")
+          m <- mgcv::gam(as.formula(paste0('v ~ s(m, k = ',gam.k,')')), data = df[vi,])
+        }
+        df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
+        n.obs <- df$nobs; #diff(counts@p)
+        suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=F,log.p=T)))
+        df$lpa <- bh.adjust(df$lp,log=TRUE)
+        n.cells <- nrow(counts)
+        df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=TRUE)/n.cells)
 
-      if(use.unadjusted.pvals) {
-        ods <- which(df$lp<log(alpha))
-      } else {
-        ods <- which(df$lpa<log(alpha))
-      }
-      if(verbose) cat(length(ods),'overdispersed genes ... ' )
-      if(persist) misc[['odgenes']] <<- rownames(df)[ods];
+        if(use.unadjusted.pvals) {
+          ods <- which(df$lp<log(alpha))
+        } else {
+          ods <- which(df$lpa<log(alpha))
+        }
+        
+        if(persist) misc[['odgenes']] <<- rownames(df)[ods];
+        if(verbose) cat(length(ods),'overdispersed genes ...',length(ods) )
 
-      df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
-      df$gsf[!is.finite(df$gsf)] <- 0;
+        df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
+        df$gsf[!is.finite(df$gsf)] <- 0;
+      }
 
       if(persist) {
-        if(verbose) cat(length(ods),'persisting ... ' )
+        if(verbose) cat('persisting ... ')
         misc[['varinfo']] <<- df;
       }
 
