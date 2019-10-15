@@ -1,3 +1,14 @@
+## [Unreleased]
+
+### Added
+
+- Function `p2.generate.go` now supports arbitrary annotations
+- added use.raw.variance
+
+### Changed
+
+- removed negative value check to allow for custom starting values
+
 ## [0.1.0] - 2019-04-20
 
 ### Added
