@@ -1949,7 +1949,10 @@ Pagoda2 <- setRefClass(
         if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
         x <- reductions[[type]]
       }
-      if(is.null(name)) { name <- embeddingType }
+      if(is.null(name)) { 
+        name <- embeddingType 
+      }
+
       if(embeddingType=='largeVis') {
         edgeMat <- misc[['edgeMat']][[type]];
         if(is.null(edgeMat)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
@@ -1995,8 +1998,16 @@ Pagoda2 <- setRefClass(
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
+        if(nrow(x)>4e4) {
+          warning('Too many cells to pre-calcualte correlation distances, switching to L2. Please, consider using UMAP.');
+          distance <- 'L2';
+        }
         
-        if(nrow(x)>4e4) { warning('too many cells to pre-calcualte correlation distances, switching to L2'); distance <- 'L2'; }
+        dup.ids <- which(duplicated(x))
+        if (length(dup.ids) > 0) {
+          max.vals <- abs(x[dup.ids,] * 0.01)
+          x[dup.ids,] <- runif(length(x[dup.ids,]), -max.vals, max.vals)
+        }
         
         if (distance=='L2') {
           if(verbose) cat("running tSNE using",n.cores,"cores:\n")
@@ -2014,7 +2025,16 @@ Pagoda2 <- setRefClass(
         g <- graphs[[type]];
         if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
         emb <- layout.fruchterman.reingold(g, weights=E(g)$weight)
-        rownames(emb) <- colnames(mat); colnames(emb) <- c("D1","D2")
+        rownames(emb) <- rownames(x); colnames(emb) <- c("D1","D2")
+        embeddings[[type]][[name]] <<- emb;
+      } else if (embeddingType == "UMAP") {
+        if (!requireNamespace("uwot", quietly=T))
+          stop("You need to install package 'uwot' to be able to use UMAP embedding.")
+        
+        distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
+
+        emb <- uwot::umap(x, metric=distance, verbose=verbose, ...)
+        rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else {
         stop('unknown embeddingType ',embeddingType,' specified');

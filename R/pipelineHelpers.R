@@ -174,95 +174,70 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
 #' @param r a pagoda2 object
 #' @param organism the organism, current hs, mm and dr are supported for the human and mouse
 #' @export p2.generate.go
-p2.generate.go <- function(r, organism = NULL) {
-  if (is.null(organism)) {
-    stop('organism must be specified');
+p2.generate.go <- function(r, organism = NULL, go2all.egs = NULL, eg.alias2eg = NULL, min.env.length=5) {
+  if (is.null(organism) && (is.null(go2all.egs) || is.null(eg.alias2eg))) {
+    stop('Either organism or go2all.egs and eg.alias2eg must be specified');
   }
-  ret <- NULL;
-  if (organism == 'hs') {
-    ret <- p2.generate.human.go(r);
-  } else if (organism == 'mm') {
-    ret <- p2.generate.mouse.go(r);
-  } else if (organism == 'dr') {
-    ret <- p2.generate.dr.go(r);
-  } else {
-    stop('Unknown organism specified')
+  
+  if (is.null(go2all.egs) || is.null(eg.alias2eg)) {
+    if (organism == 'hs') {
+      if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
+        stop("Package \"org.Hs.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
+      }
+      
+      eg.alias2eg <- org.Hs.eg.db::org.Hs.egALIAS2EG
+      go2all.egs <- org.Hs.eg.db::org.Hs.egGO2ALLEGS
+    } else if (organism == 'mm') {
+      if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
+        stop("Package \"org.Mm.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
+      }
+      
+      eg.alias2eg <- org.Mm.eg.db::org.Mm.egALIAS2EG
+      go2all.egs <- org.Mm.eg.db::org.Mm.egGO2ALLEGS
+    } else if (organism == 'dr') {
+      if (!requireNamespace("org.Dr.eg.db", quietly = TRUE)) {
+        stop("Package \"org.Dr.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
+      }
+      
+      eg.alias2eg <- org.Dr.eg.db::org.Dr.egALIAS2EG
+      go2all.egs <- org.Dr.eg.db::org.Dr.egGO2ALLEGS
+    } else {
+      stop('Unknown organism specified')
+    }
   }
-  ret;
+
+  # translate gene names to ids
+  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts), eg.alias2eg,ifnotfound=NA),function(x) x[1]))
+  
+  # reverse map
+  rids <- names(ids); names(rids) <- ids;
+  
+  # list all the ids per GO category
+  go.env <- AnnotationDbi::eapply(go2all.egs,function(x) as.character(na.omit(rids[x])))
+  
+  return(list2env(go.env[sapply(go.env, length) > min.env.length]))
 }
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' @param r a pagoda2 object
 #' @return a go environment object
 #' @export p2.generate.dr.go
-p2.generate.dr.go <- function(r) {
-  # Generate GO environment
-  if (!requireNamespace("org.Dr.eg.db", quietly = TRUE)) {
-    stop("Package \"org.Dr.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
-  }
-  
-  # translate gene names to ids
-  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts), org.Dr.eg.db::org.Dr.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-  
-  # reverse map
-  rids <- names(ids); names(rids) <- ids;
-  
-  # list all the ids per GO category
-  go.env <- AnnotationDbi::eapply(org.Dr.eg.db::org.Dr.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-  go.env <- go.env[unlist(lapply(go.env,length))>5];
-  go.env <- list2env(go.env);
-  
-  go.env
-}
+p2.generate.dr.go <- function(r) p2.generate.go(r, "dr")
 
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' @param r a pagoda2 object
 #' @return a go environment object
 #' @export p2.generate.human.go
-p2.generate.human.go <- function(r) {
-  # Generate GO environment
-  if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
-    stop("Package \"org.Hs.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
-  }
+p2.generate.human.go <- function(r) p2.generate.go(r, "hs")
 
-  # translate gene names to ids
-  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts),org.Hs.eg.db::org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-
-  # reverse map
-  rids <- names(ids); names(rids) <- ids;
-
-  # list all the ids per GO category
-  go.env <- AnnotationDbi::eapply(org.Hs.eg.db::org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-  go.env <- go.env[unlist(lapply(go.env,length))>5];
-  go.env <- list2env(go.env);
-
-  go.env
-}
 
 #' Generate a GO environment for mouse for overdispersion analysis for the the back end
 #' @param r a pagoda2 object
 #' @return a go environment object
 #' @export p2.generate.mouse.go
-p2.generate.mouse.go <- function(r) {
-  # Generate GO environment
-  if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
-    stop("Package \"org.Mm.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
-  }
+p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
 
-  # translate gene names to ids
-  ids <- unlist(lapply(BiocGenerics::mget(colnames(r$counts), org.Mm.eg.db::org.Mm.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-
-  # reverse map
-  rids <- names(ids); names(rids) <- ids;
-
-  # list all the ids per GO category
-  go.env <- AnnotationDbi::eapply(org.Mm.eg.db::org.Mm.egGO2ALLEGS,function(x) as.character(na.omit(rids[x])))
-  go.env <- go.env[unlist(lapply(go.env,length))>5];
-  go.env <- list2env(go.env);
-
-  go.env
-}
 
 #' @title Generate a metadata structure for a p2 web object from a named factor
 #' @description This function will generate a metadata structure that can be passed to
