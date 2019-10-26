@@ -244,6 +244,7 @@ Pagoda2 <- setRefClass(
         rownames(df) <- colnames(counts);
         vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
         df$lp <- df$lpa <- log(df$v);
+	df$qv <- df$v
         df$gsf <- 1; # no rescaling of variance
         ods <- order(df$v,decreasing=T); if(length(ods)>1e3) { ods <- ods[1:1e3] }
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
