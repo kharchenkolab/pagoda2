@@ -80,11 +80,12 @@ calcMulticlassified <- function(sel) {
 #' @description returns a factor of cell membership from a p2 selection object
 #' the factor only includes cells present in the selection. If the selection
 #' contains multiclassified cells an error is raised
+#' @flatten ignores multiclassified cells, overwriting randomly
 #' @export factorFromP2Selection
-factorFromP2Selection <- function (sel, use.internal.name=F)
+factorFromP2Selection <- function (sel, use.internal.name=F,flatten=F)
 {
-  if (!all(calcMulticlassified(sel) == 0)) {
-    stop("The selections provided are not mutually exclusive")
+  if (!flatten && !all(calcMulticlassified(sel) == 0)) {
+    stop("The selections provided are not mutually exclusive. Use flatten=T to overwrite")
   }
   x <- mapply(function(x,n) {
     if (length(x$cells) > 0) {
@@ -92,6 +93,7 @@ factorFromP2Selection <- function (sel, use.internal.name=F)
     }
   }, sel, names(sel), SIMPLIFY = FALSE)
   d <- do.call(rbind, x)
+  if(flatten) d <- d[!duplicated(d$cell),]
   if (use.internal.name) {
     f <- as.factor(d$internal.name)
   } else {
