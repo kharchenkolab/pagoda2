@@ -41,8 +41,8 @@ inplaceWinsorizeSparseCols <- function(sY, n, ncores = 1L) {
     .Call('_pagoda2_inplaceWinsorizeSparseCols', PACKAGE = 'pagoda2', sY, n, ncores)
 }
 
-jsDist <- function(m) {
-    .Call('_pagoda2_jsDist', PACKAGE = 'pagoda2', m)
+jsDist <- function(m, ncores = 1L) {
+    .Call('_pagoda2_jsDist', PACKAGE = 'pagoda2', m, ncores)
 }
 
 orderColumnRows <- function(p, i) {
