@@ -223,7 +223,7 @@ Pagoda2 <- setRefClass(
     },
 
     # adjust variance of the residual matrix, determine overdispersed sites
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=.self$modelType=='raw' ,use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
+    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=(.self$modelType=='raw') ,use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
       #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if(!is.null(cells)) { # translate cells into a rowSel boolean vector
         if(!(is.logical(cells) && length(cells)==nrow(counts))) {
@@ -1282,7 +1282,7 @@ Pagoda2 <- setRefClass(
       }
     },
 
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL,fastpath=TRUE,maxit=100,verbose=TRUE) {
+    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts")) {
       "Calculate PCA reduction of the data\n
        - nPcs number of PCs\n
        - type dataset view to reduce (counts by default, but can specify a name of an existing reduction)\n
@@ -1322,7 +1322,7 @@ Pagoda2 <- setRefClass(
         if(verbose) cat('running PCA all',ncol(x),'genes .')
       }
       # apply scaling if using raw counts
-      if(type=='counts') {
+      if(var.scale) {
         #x <- t(t(x)*misc[['varinfo']][colnames(x),'gsf'])
         x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
       }
@@ -1939,7 +1939,8 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, 
+                          distance='pearson', n.cores = .self$n.cores, n.sgd.cores=n.cores, ... ) {
       
       if(dims<1) stop("dimensions must be >=1")
       if(type=='counts') {
@@ -2032,7 +2033,7 @@ Pagoda2 <- setRefClass(
         
         distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
 
-        emb <- uwot::umap(x, metric=distance, verbose=verbose, ...)
+        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_sgd_threads=n.sgd.cores, ...)
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else {

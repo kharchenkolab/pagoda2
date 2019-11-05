@@ -10,6 +10,7 @@
 
 - removed negative value check to allow for custom starting values
 - Fixed problem with duplicated observations during t-SNE estimation
+- Added option `var.scale` to `calculatePcaReduction`, which allow to disable variance scaling on counts
 
 ## [0.1.0] - 2019-04-20
 
