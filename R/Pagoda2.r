@@ -313,19 +313,22 @@ Pagoda2 <- setRefClass(
     },
     # make a Knn graph
     # note: for reproducibility, set.seed() and set n.cores=1
-    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL) {
+    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL, var.scale=(type == "counts")) {
       if(is.null(x)) {
         x.was.given <- FALSE;
         if(type=='counts') {
           x <- counts;
           # Scale Raw counts
-          x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         } else {
           if(type %in% names(reductions)) {
             x <- reductions[[type]];
           } else {
             stop('Specified reduction does not exist');
           }
+        }
+        
+        if (var.scale) {
+          x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         }
 
         if(!is.null(odgenes)) {
