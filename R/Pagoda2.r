@@ -169,7 +169,7 @@ Pagoda2 <- setRefClass(
         # predict log(p) for each non-0 entry
         count.gene <- rep(1:counts@Dim[2],diff(counts@p))
         exp.x <- exp(log(gene.av)[count.gene] - cm$coef[1,count.gene] - ldepth[counts@i+1]*cm$coef[2,count.gene])
-        counts@x <<- counts@x*exp.x/(depth[counts@i+1]/depthScale); # normalize by depth as well
+        counts@x <<- as.numeric(counts@x*exp.x/(depth[counts@i+1]/depthScale)); # normalize by depth as well
         # performa another round of trim
         if(trim>0) {
           inplaceWinsorizeSparseCols(counts,trim,n.cores);
@@ -195,7 +195,7 @@ Pagoda2 <- setRefClass(
           # adjust every non-0 entry
           count.gene <- rep(1:counts@Dim[2],diff(counts@p))
           
-          counts@x <<- counts@x/bc[cbind(count.gene,as.integer(batch)[counts@i+1])]
+          counts@x <<- as.numeric(counts@x/bc[cbind(count.gene,as.integer(batch)[counts@i+1])])
         }
 
         if(trim>0) {
@@ -210,13 +210,13 @@ Pagoda2 <- setRefClass(
           }
         }
 
-        counts <<- counts/(depth/depthScale);
+        counts <<- counts/as.numeric(depth/depthScale);
       } else {
         stop('modelType ',modelType,' is not implemented');
       }
       if(log.scale) {
         if(verbose) cat("log scale ... ")
-        counts@x <<- log(counts@x+1)
+        counts@x <<- as.numeric(log(counts@x+1))
       }
       misc[['rescaled.mat']] <<- NULL;
       if(verbose) cat("done.\n")
@@ -244,6 +244,7 @@ Pagoda2 <- setRefClass(
         rownames(df) <- colnames(counts);
         vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
         df$lp <- df$lpa <- log(df$v);
+	df$qv <- df$v
         df$gsf <- 1; # no rescaling of variance
         ods <- order(df$v,decreasing=T); if(length(ods)>1e3) { ods <- ods[1:1e3] }
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
