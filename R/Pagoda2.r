@@ -244,7 +244,7 @@ Pagoda2 <- setRefClass(
         rownames(df) <- colnames(counts);
         vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
         df$lp <- df$lpa <- log(df$v);
-	df$qv <- df$v
+        df$qv <- df$v
         df$gsf <- 1; # no rescaling of variance
         ods <- order(df$v,decreasing=T); if(length(ods)>1e3) { ods <- ods[1:1e3] }
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
@@ -2036,9 +2036,14 @@ Pagoda2 <- setRefClass(
           stop("You need to install package 'uwot' to be able to use UMAP embedding.")
         
         distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
-
-        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_sgd_threads=n.sgd.cores, ...)
+        
+        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
         rownames(emb) <- rownames(x)
+        embeddings[[type]][[name]] <<- emb;
+      } else if (embeddingType == "UMAP_graph") {
+        g <- graphs[[type]];
+        if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
+        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
         embeddings[[type]][[name]] <<- emb;
       } else {
         stop('unknown embeddingType ',embeddingType,' specified');

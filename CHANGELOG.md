@@ -4,7 +4,7 @@
 
 - Function `p2.generate.go` now supports arbitrary annotations
 - added use.raw.variance
-- UMAP embedding support
+- UMAP and UMAP_graph embedding support
 
 ### Changed
 
