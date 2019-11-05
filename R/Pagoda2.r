@@ -342,9 +342,9 @@ Pagoda2 <- setRefClass(
         if(center) {
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
-        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='angular')
+        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else if(distance %in% c('L2','euclidean')) {
-        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='L2')
+        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else {
         stop("unknown distance measure specified. Currently supported: angular, L2")
       }
