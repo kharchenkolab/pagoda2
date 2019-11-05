@@ -4,6 +4,10 @@
 #'
 NULL
 
+## Correct unloading of the library
+.onUnload <- function (libpath) {
+  library.dynam.unload("pagoda2", libpath)
+}
 
 # translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
 multi2dend <- function(cl,counts,deep=F,dist='cor') {
