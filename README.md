@@ -61,7 +61,7 @@ Here is a more in depth explanation what is going on and a script to do what the
 #### Install gfortran for Mac
 
 ```sh
-curl -O http://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2
+curl -O https://mac.r-project.org/libs/gfortran-4.8.2-darwin13.tar.bz2
 sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
 ```
 
