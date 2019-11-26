@@ -45,7 +45,8 @@ Suggests:
     org.Hs.eg.db,
     org.Mm.eg.db,
     knitr, 
-    rmarkdown
+    rmarkdown,
+    uwot
 Remotes:
   bioc::3.3/AnnotationDbi,
   bioc::3.3/BiocGenerics,

@@ -214,10 +214,10 @@ int inplaceWinsorizeSparseCols(SEXP sY,const int n, int ncores=1) {
 // JS distance metric (sqrt(JS div)) between the columns of a dense matrix m
 // returns vectorized version of the lower triangle (as R dist oject)
 // [[Rcpp::export]]
-arma::mat jsDist(const arma::mat& m) {
+arma::mat jsDist(const arma::mat& m, int ncores=1) {
   //arma::vec d(m.n_cols*(m.n_cols-1)/2);
   arma::mat d(m.n_cols,m.n_cols,arma::fill::zeros);
-//#pragma omp parallel for shared(d) 
+//#pragma omp parallel for num_threads(ncores) shared(d)
   for(int i=0;i<(m.n_cols-1);i++) {
     arma::vec li=log(m.col(i));
     for(int j=i+1;j<m.n_cols;j++) {

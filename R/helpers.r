@@ -4,6 +4,10 @@
 #'
 NULL
 
+## Correct unloading of the library
+.onUnload <- function (libpath) {
+  library.dynam.unload("pagoda2", libpath)
+}
 
 # translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
 multi2dend <- function(cl,counts,deep=F,dist='cor') {
@@ -428,3 +432,43 @@ namedNames <- function(g) {
   n
 }
 
+embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
+  if (!requireNamespace("uwot", quietly=T))
+    stop("You need to install package 'uwot' to be able to use UMAP embedding.")
+
+  adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("dgTMatrix")
+  vals.per.col <- split(setNames(adj.mat@x, adj.mat@i + 1), adj.mat@j + 1)
+  k.min <- sapply(vals.per.col, length) %>% min()
+  k <- if (is.null(k)) k.min else min(k, k.min)
+  
+  knns <- lapply(vals.per.col, function(x) sort(x, decreasing=T)[1:k])
+  knn.ids <- sapply(knns, function(x) as.integer(names(x))) %>% t()
+  knn.sims <- do.call(rbind, knns)
+  knn.dists <- 1 - knn.sims / max(knn.sims)
+  
+  umap <- uwot::umap(data.frame(x=rep(0, nrow(knn.ids))), nn_method=list(idx=knn.ids, dist=knn.dists), ...)
+  rownames(umap) <- colnames(adj.mat)
+  return(umap)
+}
+
+appendSpecificityMetricsToDE <- function(de.df, clusters, cluster.id, p2.counts, low.expression.threshold=0, append.auc=FALSE) {
+  cluster.mask <- setNames(clusters == cluster.id, names(clusters))
+  
+  counts.bin <- (p2.counts[names(cluster.mask), de.df$Gene, drop=F] > low.expression.threshold)
+  counts.bin.sums <- Matrix::colSums(counts.bin)
+  counts.bin.clust.sums <- Matrix::colSums(counts.bin & cluster.mask)
+  
+  if (append.auc) {
+    if (requireNamespace("pROC", quietly = TRUE)) {
+      de.df$AUC <- apply(counts.bin, 2, function(col) pROC::auc(as.integer(cluster.mask), as.integer(col)))
+    } else {
+      warning("You have to install pROC package to use append.auc")
+    }
+  }
+  
+  de.df$Specificity <- (length(cluster.mask) - counts.bin.sums) / (length(cluster.mask) - counts.bin.clust.sums)
+  de.df$Precision <- counts.bin.clust.sums / counts.bin.sums
+  de.df$ExpressionFraction <- Matrix::colMeans(counts.bin[cluster.mask,, drop=F])
+  
+  return(de.df)
+}

@@ -14,20 +14,18 @@ NULL
 #'
 #' @field counts gene count matrix, normalized on total counts
 #' @field clusters results of clustering
-#' @field graphs ???
+#' @field graphs graph representations of the dataset
 #' @field reductions results of reductions, i.e. PCA
 #' @field embeddings results of visualization algorithms, i.e. t-SNE or largeVis
 #' @field diffgenes lists of differentially expressed genes
-#' @field pathways ???
+#' @field pathways pathway information
 #' @field n.cores number of cores, used for the analyses
-#' @field misc ???
-#' @field batch ???
-#' @field modelType ???
-#' @field verbose ???
-#' @field depth ???
-#' @field batchNorm ???
-#' @field mat ???
-#' @field genegraphs ???
+#' @field misc a list of miscelaneous structures
+#' @field batch batch factor for the dataset
+#' @field modelType plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)
+#' @field verbose verbosity level
+#' @field depth cell size factor
+#' @field genegraphs a slot to store graphical representations in gene space (i.e. gene kNN graphs)
 #' @export Pagoda2
 #' @exportClass Pagoda2
 Pagoda2 <- setRefClass(
@@ -65,9 +63,9 @@ Pagoda2 <- setRefClass(
           if(!(class(x) == 'dgCMatrix')) {
             stop("x is not of class dgCMatrix or matrix");
           }
-          if(any(x@x < 0)) {
-            stop("x contains negative values");
-          }
+          #if(any(x@x < 0)) {
+          #  stop("x contains negative values");
+          #}
           setCountMatrix(x, min.cells.per.gene=min.cells.per.gene, trim=trim, 
                          min.transcripts.per.cell=min.transcripts.per.cell, lib.sizes=lib.sizes,
                          log.scale=log.scale, keep.genes=keep.genes)
@@ -171,7 +169,7 @@ Pagoda2 <- setRefClass(
         # predict log(p) for each non-0 entry
         count.gene <- rep(1:counts@Dim[2],diff(counts@p))
         exp.x <- exp(log(gene.av)[count.gene] - cm$coef[1,count.gene] - ldepth[counts@i+1]*cm$coef[2,count.gene])
-        counts@x <<- counts@x*exp.x/(depth[counts@i+1]/depthScale); # normalize by depth as well
+        counts@x <<- as.numeric(counts@x*exp.x/(depth[counts@i+1]/depthScale)); # normalize by depth as well
         # performa another round of trim
         if(trim>0) {
           inplaceWinsorizeSparseCols(counts,trim,n.cores);
@@ -197,7 +195,7 @@ Pagoda2 <- setRefClass(
           # adjust every non-0 entry
           count.gene <- rep(1:counts@Dim[2],diff(counts@p))
           
-          counts@x <<- counts@x/bc[cbind(count.gene,as.integer(batch)[counts@i+1])]
+          counts@x <<- as.numeric(counts@x/bc[cbind(count.gene,as.integer(batch)[counts@i+1])])
         }
 
         if(trim>0) {
@@ -212,20 +210,20 @@ Pagoda2 <- setRefClass(
           }
         }
 
-        counts <<- counts/(depth/depthScale);
+        counts <<- counts/as.numeric(depth/depthScale);
       } else {
         stop('modelType ',modelType,' is not implemented');
       }
       if(log.scale) {
         if(verbose) cat("log scale ... ")
-        counts@x <<- log(counts@x+1)
+        counts@x <<- as.numeric(log(counts@x+1))
       }
       misc[['rescaled.mat']] <<- NULL;
       if(verbose) cat("done.\n")
     },
 
     # adjust variance of the residual matrix, determine overdispersed sites
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
+    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=(.self$modelType=='raw') ,use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
       #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if(!is.null(cells)) { # translate cells into a rowSel boolean vector
         if(!(is.logical(cells) && length(cells)==nrow(counts))) {
@@ -242,37 +240,49 @@ Pagoda2 <- setRefClass(
       if(verbose) cat("calculating variance fit ...")
       df <- colMeanVarS(counts,rowSel,n.cores);
 
-      df$m <- log(df$m); df$v <- log(df$v);
-      rownames(df) <- colnames(counts);
-      vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
-      if(length(vi)<gam.k*1.5) { gam.k=1 };# too few genes
-      if(gam.k<2) {
-        if(verbose) cat(" using lm ")
-        m <- lm(v ~ m, data = df[vi,])
+      if(use.raw.variance) { # use raw variance estimates without relative adjustments
+        rownames(df) <- colnames(counts);
+        vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
+        df$lp <- df$lpa <- log(df$v);
+        df$qv <- df$v
+        df$gsf <- 1; # no rescaling of variance
+        ods <- order(df$v,decreasing=T); if(length(ods)>1e3) { ods <- ods[1:1e3] }
+        if(persist) misc[['odgenes']] <<- rownames(df)[ods];
       } else {
-        if(verbose) cat(" using gam ")
-        m <- mgcv::gam(as.formula(paste0('v ~ s(m, k = ',gam.k,')')), data = df[vi,])
-      }
-      df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
-      n.obs <- df$nobs; #diff(counts@p)
-      suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=F,log.p=T)))
-      df$lpa <- bh.adjust(df$lp,log=TRUE)
-      n.cells <- nrow(counts)
-      df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=TRUE)/n.cells)
+        # gene-relative normalizaton 
+        df$m <- log(df$m); df$v <- log(df$v);
+        rownames(df) <- colnames(counts);
+        vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
+        if(length(vi)<gam.k*1.5) { gam.k=1 };# too few genes
+        if(gam.k<2) {
+          if(verbose) cat(" using lm ")
+          m <- lm(v ~ m, data = df[vi,])
+        } else {
+          if(verbose) cat(" using gam ")
+          m <- mgcv::gam(as.formula(paste0('v ~ s(m, k = ',gam.k,')')), data = df[vi,])
+        }
+        df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
+        n.obs <- df$nobs; #diff(counts@p)
+        suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=F,log.p=T)))
+        df$lpa <- bh.adjust(df$lp,log=TRUE)
+        n.cells <- nrow(counts)
+        df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=TRUE)/n.cells)
 
-      if(use.unadjusted.pvals) {
-        ods <- which(df$lp<log(alpha))
-      } else {
-        ods <- which(df$lpa<log(alpha))
-      }
-      if(verbose) cat(length(ods),'overdispersed genes ... ' )
-      if(persist) misc[['odgenes']] <<- rownames(df)[ods];
+        if(use.unadjusted.pvals) {
+          ods <- which(df$lp<log(alpha))
+        } else {
+          ods <- which(df$lpa<log(alpha))
+        }
+        
+        if(persist) misc[['odgenes']] <<- rownames(df)[ods];
+        if(verbose) cat(length(ods),'overdispersed genes ...',length(ods) )
 
-      df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
-      df$gsf[!is.finite(df$gsf)] <- 0;
+        df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
+        df$gsf[!is.finite(df$gsf)] <- 0;
+      }
 
       if(persist) {
-        if(verbose) cat(length(ods),'persisting ... ' )
+        if(verbose) cat('persisting ... ')
         misc[['varinfo']] <<- df;
       }
 
@@ -304,19 +314,22 @@ Pagoda2 <- setRefClass(
     },
     # make a Knn graph
     # note: for reproducibility, set.seed() and set n.cores=1
-    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL) {
+    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL, var.scale=(type == "counts")) {
       if(is.null(x)) {
         x.was.given <- FALSE;
         if(type=='counts') {
           x <- counts;
           # Scale Raw counts
-          x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         } else {
           if(type %in% names(reductions)) {
             x <- reductions[[type]];
           } else {
             stop('Specified reduction does not exist');
           }
+        }
+        
+        if (var.scale) {
+          x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         }
 
         if(!is.null(odgenes)) {
@@ -333,9 +346,9 @@ Pagoda2 <- setRefClass(
         if(center) {
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
-        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='angular')
+        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else if(distance %in% c('L2','euclidean')) {
-        xn <- n2Knn(x,k,nThreads=n.cores,verbose=verbose,indexType='L2')
+        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else {
         stop("unknown distance measure specified. Currently supported: angular, L2")
       }
@@ -750,7 +763,7 @@ Pagoda2 <- setRefClass(
     },
     # determine subpopulation-specific genes
 
-    getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE) {
+    getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE, append.specificity.metrics=T, append.auc=F) {
       "Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test\n
        - type data type (currently only default 'counts' is supported)\n
        - clusterType optional cluster type to use as a group-defining factor\n
@@ -830,7 +843,6 @@ Pagoda2 <- setRefClass(
         cat("done.\n")
       }
 
-
       # add fold change information
       log.gene.av <- log2(Matrix::colMeans(cm));
       group.gene.av <- colSumByFac(cm,as.integer(cols))[-1,,drop=F] / (group.size+1);
@@ -839,27 +851,20 @@ Pagoda2 <- setRefClass(
       f.expressing <- t(gnzz / group.size);
       max.group <- max.col(log2.fold.change)
 
-      if(upregulated.only) {
-        ds <- lapply(1:ncol(x),function(i) {
-          z <- x[,i];
-          vi <- which(z>=z.threshold);
-          r <- data.frame(Z=z[vi],M=log2.fold.change[vi,i],highest=max.group[vi]==i,fe=f.expressing[vi,i])
-          rownames(r) <- rownames(x)[vi];
-          r <- r[order(r$Z,decreasing=T),]
-          r
-        })
-        #ds <- apply(x,2,function(z) {vi <- which(z>=z.threshold); r <- z[vi]; names(r) <- rownames(x)[vi]; sort(r,decreasing=T)})
-      } else {
-        ds <- lapply(1:ncol(x),function(i) {
-          z <- x[,i];
-          vi <- which(abs(z)>=z.threshold);
-          r <- data.frame(Z=z[vi],M=log2.fold.change[vi,i],highest=max.group[vi]==i,fe=f.expressing[vi,i])
-          rownames(r) <- rownames(x)[vi];
-          r <- r[order(r$Z,decreasing=T),]
-          r
-        })
+      ds <- lapply(1:ncol(x),function(i) {
+        z <- x[,i];
+        vi <- which((if (upregulated.only) z else abs(z)) >= z.threshold);
+        r <- data.frame(Z=z[vi],M=log2.fold.change[vi,i],highest=max.group[vi]==i,fe=f.expressing[vi,i], Gene=rownames(x)[vi])
+        rownames(r) <- r$Gene;
+        r <- r[order(r$Z,decreasing=T),]
+        r
+      })
+      names(ds) <- colnames(x);
+
+      if (append.specificity.metrics) {
+        ds <- names(ds) %>% setNames(., .) %>%
+          papply(function(n) appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts=cm, append.auc=append.auc), n.cores=n.cores)
       }
-      names(ds)<-colnames(x);
 
       if(is.null(groups)) {
         if(is.null(clusterType)) {
@@ -870,6 +875,7 @@ Pagoda2 <- setRefClass(
       } else {
         diffgenes[[type]][[name]] <<- ds;
       }
+
       return(invisible(ds))
     },
 
@@ -1273,7 +1279,7 @@ Pagoda2 <- setRefClass(
       }
     },
 
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL,fastpath=TRUE,maxit=100,verbose=TRUE) {
+    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts")) {
       "Calculate PCA reduction of the data\n
        - nPcs number of PCs\n
        - type dataset view to reduce (counts by default, but can specify a name of an existing reduction)\n
@@ -1313,7 +1319,7 @@ Pagoda2 <- setRefClass(
         if(verbose) cat('running PCA all',ncol(x),'genes .')
       }
       # apply scaling if using raw counts
-      if(type=='counts') {
+      if(var.scale) {
         #x <- t(t(x)*misc[['varinfo']][colnames(x),'gsf'])
         x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
       }
@@ -1930,7 +1936,8 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, ... ) {
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, 
+                          distance='pearson', n.cores = .self$n.cores, n.sgd.cores=n.cores, ... ) {
       
       if(dims<1) stop("dimensions must be >=1")
       if(type=='counts') {
@@ -1939,7 +1946,10 @@ Pagoda2 <- setRefClass(
         if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
         x <- reductions[[type]]
       }
-      if(is.null(name)) { name <- embeddingType }
+      if(is.null(name)) { 
+        name <- embeddingType 
+      }
+
       if(embeddingType=='largeVis') {
         edgeMat <- misc[['edgeMat']][[type]];
         if(is.null(edgeMat)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
@@ -1985,8 +1995,16 @@ Pagoda2 <- setRefClass(
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
+        if(nrow(x)>4e4) {
+          warning('Too many cells to pre-calcualte correlation distances, switching to L2. Please, consider using UMAP.');
+          distance <- 'L2';
+        }
         
-        if(nrow(x)>4e4) { warning('too many cells to pre-calcualte correlation distances, switching to L2'); distance <- 'L2'; }
+        dup.ids <- which(duplicated(x))
+        if (length(dup.ids) > 0) {
+          max.vals <- abs(x[dup.ids,] * 0.01)
+          x[dup.ids,] <- runif(length(x[dup.ids,]), -max.vals, max.vals)
+        }
         
         if (distance=='L2') {
           if(verbose) cat("running tSNE using",n.cores,"cores:\n")
@@ -2004,7 +2022,21 @@ Pagoda2 <- setRefClass(
         g <- graphs[[type]];
         if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
         emb <- layout.fruchterman.reingold(g, weights=E(g)$weight)
-        rownames(emb) <- colnames(mat); colnames(emb) <- c("D1","D2")
+        rownames(emb) <- rownames(x); colnames(emb) <- c("D1","D2")
+        embeddings[[type]][[name]] <<- emb;
+      } else if (embeddingType == "UMAP") {
+        if (!requireNamespace("uwot", quietly=T))
+          stop("You need to install package 'uwot' to be able to use UMAP embedding.")
+        
+        distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
+        
+        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
+        rownames(emb) <- rownames(x)
+        embeddings[[type]][[name]] <<- emb;
+      } else if (embeddingType == "UMAP_graph") {
+        g <- graphs[[type]];
+        if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
+        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
         embeddings[[type]][[name]] <<- emb;
       } else {
         stop('unknown embeddingType ',embeddingType,' specified');
