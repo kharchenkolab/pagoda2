@@ -763,7 +763,7 @@ Pagoda2 <- setRefClass(
     },
     # determine subpopulation-specific genes
 
-    getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE) {
+    getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE, append.specificity.metrics=T, append.auc=F) {
       "Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test\n
        - type data type (currently only default 'counts' is supported)\n
        - clusterType optional cluster type to use as a group-defining factor\n
@@ -843,7 +843,6 @@ Pagoda2 <- setRefClass(
         cat("done.\n")
       }
 
-
       # add fold change information
       log.gene.av <- log2(Matrix::colMeans(cm));
       group.gene.av <- colSumByFac(cm,as.integer(cols))[-1,,drop=F] / (group.size+1);
@@ -852,27 +851,20 @@ Pagoda2 <- setRefClass(
       f.expressing <- t(gnzz / group.size);
       max.group <- max.col(log2.fold.change)
 
-      if(upregulated.only) {
-        ds <- lapply(1:ncol(x),function(i) {
-          z <- x[,i];
-          vi <- which(z>=z.threshold);
-          r <- data.frame(Z=z[vi],M=log2.fold.change[vi,i],highest=max.group[vi]==i,fe=f.expressing[vi,i])
-          rownames(r) <- rownames(x)[vi];
-          r <- r[order(r$Z,decreasing=T),]
-          r
-        })
-        #ds <- apply(x,2,function(z) {vi <- which(z>=z.threshold); r <- z[vi]; names(r) <- rownames(x)[vi]; sort(r,decreasing=T)})
-      } else {
-        ds <- lapply(1:ncol(x),function(i) {
-          z <- x[,i];
-          vi <- which(abs(z)>=z.threshold);
-          r <- data.frame(Z=z[vi],M=log2.fold.change[vi,i],highest=max.group[vi]==i,fe=f.expressing[vi,i])
-          rownames(r) <- rownames(x)[vi];
-          r <- r[order(r$Z,decreasing=T),]
-          r
-        })
+      ds <- lapply(1:ncol(x),function(i) {
+        z <- x[,i];
+        vi <- which((if (upregulated.only) z else abs(z)) >= z.threshold);
+        r <- data.frame(Z=z[vi],M=log2.fold.change[vi,i],highest=max.group[vi]==i,fe=f.expressing[vi,i], Gene=rownames(x)[vi])
+        rownames(r) <- r$Gene;
+        r <- r[order(r$Z,decreasing=T),]
+        r
+      })
+      names(ds) <- colnames(x);
+
+      if (append.specificity.metrics) {
+        ds <- names(ds) %>% setNames(., .) %>%
+          papply(function(n) appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts=cm, append.auc=append.auc), n.cores=n.cores)
       }
-      names(ds)<-colnames(x);
 
       if(is.null(groups)) {
         if(is.null(clusterType)) {
@@ -883,6 +875,7 @@ Pagoda2 <- setRefClass(
       } else {
         diffgenes[[type]][[name]] <<- ds;
       }
+
       return(invisible(ds))
     },
 

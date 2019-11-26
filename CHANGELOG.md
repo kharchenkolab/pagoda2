@@ -5,6 +5,7 @@
 - Function `p2.generate.go` now supports arbitrary annotations
 - added use.raw.variance
 - UMAP and UMAP_graph embedding support
+- Specificity metrics to `getDifferentialGenes`
 
 ### Changed
 
