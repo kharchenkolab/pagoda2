@@ -4,6 +4,7 @@
 #' @importFrom Rcpp evalCpp
 #' @import Rook
 #' @import igraph
+#' @import sccore
 #' @importFrom irlba irlba
 #' @importFrom parallel mclapply
 #' @importFrom Rcpp sourceCpp
@@ -1141,9 +1142,6 @@ Pagoda2 <- setRefClass(
                            min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2,
                            shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F,
                            unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
-      ##old.par <- par();
-      ##on.exit(suppressWarnings(par(old.par)));
-
       if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
       if(is.null(embeddingType)) {
         # take the first one

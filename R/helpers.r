@@ -90,34 +90,6 @@ fast.pca <- function(m,nPcs=2,tol=1e-10,scale=F,center=F,transpose=F) {
   a
 }
 
-
-# a utility function to translate factor into colors
-fac2col <- function(x,s=1,v=1,shuffle=FALSE,min.group.size=1,return.details=F,unclassified.cell.color='gray50',level.colors=NULL) {
-  nx <- names(x);
-  x <- as.factor(x);
-  if(min.group.size>1) {
-    x <- factor(x,exclude=levels(x)[unlist(tapply(rep(1,length(x)),x,length))<min.group.size])
-    x <- droplevels(x)
-  }
-  if(is.null(level.colors)) {
-    col <- rainbow(length(levels(x)),s=s,v=v);
-  } else {
-    col <- level.colors[1:length(levels(x))];
-  }
-  names(col) <- levels(x);
-
-  if(shuffle) col <- sample(col);
-
-  y <- col[as.integer(x)]; names(y) <- names(x);
-  y[is.na(y)] <- unclassified.cell.color;
-  names(y) <- nx;
-  if(return.details) {
-    return(list(colors=y,palette=col))
-  } else {
-    return(y);
-  }
-}
-
 val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.95) {
   nx <- names(x);
   if(all(sign(x)>=0)) {
@@ -449,26 +421,4 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
   umap <- uwot::umap(data.frame(x=rep(0, nrow(knn.ids))), nn_method=list(idx=knn.ids, dist=knn.dists), ...)
   rownames(umap) <- colnames(adj.mat)
   return(umap)
-}
-
-appendSpecificityMetricsToDE <- function(de.df, clusters, cluster.id, p2.counts, low.expression.threshold=0, append.auc=FALSE) {
-  cluster.mask <- setNames(clusters == cluster.id, names(clusters))
-  
-  counts.bin <- (p2.counts[names(cluster.mask), de.df$Gene, drop=F] > low.expression.threshold)
-  counts.bin.sums <- Matrix::colSums(counts.bin)
-  counts.bin.clust.sums <- Matrix::colSums(counts.bin & cluster.mask)
-  
-  if (append.auc) {
-    if (requireNamespace("pROC", quietly = TRUE)) {
-      de.df$AUC <- apply(counts.bin, 2, function(col) pROC::auc(as.integer(cluster.mask), as.integer(col)))
-    } else {
-      warning("You have to install pROC package to use append.auc")
-    }
-  }
-  
-  de.df$Specificity <- (length(cluster.mask) - counts.bin.sums) / (length(cluster.mask) - counts.bin.clust.sums)
-  de.df$Precision <- counts.bin.clust.sums / counts.bin.sums
-  de.df$ExpressionFraction <- Matrix::colMeans(counts.bin[cluster.mask,, drop=F])
-  
-  return(de.df)
 }

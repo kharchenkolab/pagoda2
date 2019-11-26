@@ -32,7 +32,8 @@ Imports:
     urltools,
     stats,
     utils,
-    fastcluster
+    fastcluster,
+    sccore (>= 0.1)
 Suggests:
     dbscan,
     ggplot2,
@@ -47,13 +48,14 @@ Suggests:
     knitr, 
     rmarkdown,
     uwot
-Remotes:
-  bioc::3.3/AnnotationDbi,
-  bioc::3.3/BiocGenerics,
-  bioc::3.3/org.Dr.eg.db,
-  bioc::3.3/org.Hs.eg.db,
-  bioc::3.3/org.Mm.eg.db,
-  bioc::3.3/pcaMethods
+Remotes: 
+    bioc::3.3/AnnotationDbi,
+    bioc::3.3/BiocGenerics,
+    bioc::3.3/org.Dr.eg.db,
+    bioc::3.3/org.Hs.eg.db,
+    bioc::3.3/org.Mm.eg.db,
+    bioc::3.3/pcaMethods,
+    hms-dbmi/sccore
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
