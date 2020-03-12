@@ -49,12 +49,12 @@ Suggests:
     rmarkdown,
     uwot
 Remotes: 
-    bioc::3.3/AnnotationDbi,
-    bioc::3.3/BiocGenerics,
-    bioc::3.3/org.Dr.eg.db,
-    bioc::3.3/org.Hs.eg.db,
-    bioc::3.3/org.Mm.eg.db,
-    bioc::3.3/pcaMethods,
+    bioc::release/AnnotationDbi,
+    bioc::release/BiocGenerics,
+    bioc::release/org.Dr.eg.db,
+    bioc::release/org.Hs.eg.db,
+    bioc::release/org.Mm.eg.db,
+    bioc::release/pcaMethods,
     hms-dbmi/sccore
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
