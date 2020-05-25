@@ -321,23 +321,35 @@ Mode <- function(x) {
 ##' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
 ##' @export
 read.10x.matrices <- function(matrixPaths,n.cores=1,verbose=T) {
-  if(is.character(matrixPaths)) {
+  if(length(matrixPaths)==1) {
     matrixPaths <- c('one'=matrixPaths);
     single.dataset <- TRUE;
   } else {
     single.dataset <- FALSE;
   }
   if(verbose) cat("reading",length(matrixPaths),"dataset(s) ")
+  if(is.null(names(matrixPaths))) stop("matrixPaths must be a named vector")
   dl <- pagoda2:::papply(sn(names(matrixPaths)),function(nam) {
+
     matrixPath <- matrixPaths[nam];
     # read all count files (*_unique.counts) under a given path
     #cat("loading data from ",matrixPath, " ");
-    x <- as(readMM(paste(matrixPath,'matrix.mtx',sep='/')),'dgCMatrix'); # convert to the required sparse matrix representation
+    fn <- paste(matrixPath,'matrix.mtx',sep='/');
+    if(file.exists(fn)) {
+      x <- as(readMM(fn),'dgCMatrix'); # convert to the required sparse matrix representation
+    } else if(file.exists(paste(fn,'gz',sep='.'))) {
+      x <- as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))),'dgCMatrix'); # convert to the required sparse matrix representation
+    } else {
+      stop(paste('cant open',fn));
+    }
+    fn <- paste(matrixPath,'genes.tsv',sep='/');
+    if(file.exists(paste(fn,'gz',sep='.'))) { fn <- paste(fn,'gz',sep='.') }
+    gs <- read.delim(fn,header=F)
+    rownames(x) <- gs[,2]    
 
-    gs <- read.delim(paste(matrixPath,'genes.tsv',sep='/'),header=F)
-    rownames(x) <- gs[,2]
-
-    gs <- read.delim(paste(matrixPath,'barcodes.tsv',sep='/'),header=F)
+    fn <- paste(matrixPath,'barcodes.tsv',sep='/');
+    if(file.exists(paste(fn,'gz',sep='.'))) { fn <- paste(fn,'gz',sep='.') }
+    gs <- read.delim(fn,header=F)
     colnames(x) <- gs[,1]
 
     if(verbose) cat(".")
