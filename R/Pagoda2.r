@@ -349,7 +349,7 @@ Pagoda2 <- setRefClass(
         }
         xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else if(distance %in% c('L2','euclidean')) {
-        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
+        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='L2')
       } else {
         stop("unknown distance measure specified. Currently supported: angular, L2")
       }
