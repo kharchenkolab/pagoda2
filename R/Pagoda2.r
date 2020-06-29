@@ -404,7 +404,7 @@ Pagoda2 <- setRefClass(
       return(invisible(g))
     },
     # calculate clusters based on the kNN graph
-    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=2, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
+    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
       #old.par <- par();
       #on.exit(suppressWarnings(par(old.par)));
 
@@ -434,14 +434,17 @@ Pagoda2 <- setRefClass(
       cls <- method(g,...)
       cls.groups <- as.factor(membership(cls));
 
-
-      if(test.stability) {
-        # cleanup the clusters to remove very small ones
+      # cleanup the clusters to remove very small ones
+      if(min.cluster.size>1) {
         cn <- names(cls.groups);
         vg <- which(unlist(tapply(cls.groups,cls.groups,length))>=min.cluster.size);
         cls.groups <- as.integer(cls.groups); cls.groups[!cls.groups %in% vg] <- NA;
         cls.groups <- as.factor(cls.groups);
         names(cls.groups) <- cn;
+      }
+       
+      if(test.stability) {
+  
         # is there more than one cluster?
         if(length(levels(cls.groups))>1) {
           # run subsamplings
