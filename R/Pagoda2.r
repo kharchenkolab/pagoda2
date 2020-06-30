@@ -53,15 +53,15 @@ Pagoda2 <- setRefClass(
       counts <<- NULL;
 
 
-      if(!missing(x) && class(x)=='Pagoda2') { # copy constructor
+      if(!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
         callSuper(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores);
       } else {
         callSuper(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose);
         if(!missing(x) && is.null(counts)) { # interpret x as a countMatrix
-          if (class(x) == 'matrix') {
+          if ('matrix' %in% class(x)) {
             x <- as(Matrix(x, sparse=T), "dgCMatrix")
           }
-          if(!(class(x) == 'dgCMatrix')) {
+          if(!('dgCMatrix' %in% class(x))) {
             stop("x is not of class dgCMatrix or matrix");
           }
           #if(any(x@x < 0)) {
@@ -1137,19 +1137,33 @@ Pagoda2 <- setRefClass(
     },
 
     # show embedding
-    plotEmbedding=function(type='counts', embeddingType=NULL, clusterType=NULL, groups=NULL, colors=NULL,
-                           do.par=T, cex=0.6, alpha=0.4, gradientPalette=NULL, zlim=NULL, s=1, v=0.8,
-                           min.group.size=1, show.legend=FALSE, mark.clusters=FALSE, mark.cluster.cex=2,
-                           shuffle.colors=F, legend.x='topright', gradient.range.quantile=0.95, quiet=F,
-                           unclassified.cell.color='gray70', group.level.colors=NULL, ...) {
-      if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
-      if(is.null(embeddingType)) {
-        # take the first one
-        emb <- embeddings[[type]][[1]]
-      } else {
-        emb <- embeddings[[type]][[embeddingType]]
+    plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL, groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
+      if (is.null(type)) {
+        if ('counts' %in% names(embeddings)) {
+          type <- 'counts'
+        } else if (length(embeddings) > 0) {
+          type <- names(embeddings)[1]
+        } else {
+          stop("first, generate an embedding")
+        }
       }
-      factor.mapping=FALSE;
+
+      if(is.null(embeddings[[type]]))
+        stop("first, generate embeddings for type ",type)
+
+      if(is.null(embeddingType)) {
+        embeddingType <- 1 # take the first one
+      }
+      
+      emb <- embeddings[[type]][[embeddingType]]
+      
+      if (!is.null(gene)) {
+        if (!(gene %in% colnames(counts)))
+          stop("Gene '", gene, "' isn't presented in the count matrix")
+        
+        colors <- p2$counts[,gene]
+      }
+
       if(is.null(colors) && is.null(groups)) {
         # look up the clustering based on a specified type
         if(is.null(clusterType)) {
@@ -1159,109 +1173,9 @@ Pagoda2 <- setRefClass(
           groups <- clusters[[type]][[clusterType]]
           if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
         }
-
-        groups <- as.factor(groups[rownames(emb)]);
-        if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
-        factor.colors <- fac2col(groups,s=s,v=v,shuffle=shuffle.colors,min.group.size=1,level.colors=group.level.colors,return.details=T)
-        cols <- factor.colors$colors[rownames(emb)]
-        factor.mapping=TRUE;
-      } else {
-        if(!is.null(colors)) {
-          # use clusters information
-          if(!all(rownames(emb) %in% names(colors))) { warning("provided cluster vector doesn't list colors for all of the cells; unmatched cells will be shown in gray. ")}
-          if(all(areColors(colors))) {
-            if(!quiet) cat("using supplied colors as is\n")
-            cols <- colors[match(rownames(emb),names(colors))]; cols[is.na(cols)] <- unclassified.cell.color;
-          } else {
-            if(is.numeric(colors)) { # treat as a gradient
-              if(!quiet) cat("treating colors as a gradient")
-              if(is.null(gradientPalette)) { # set up default gradients
-                if(all(sign(colors)>=0)) {
-                  gradientPalette <- colorRampPalette(c('gray80','red'), space = "Lab")(1024)
-                } else {
-                  gradientPalette <- colorRampPalette(c("blue", "grey70", "red"), space = "Lab")(1024)
-                }
-              }
-              if(is.null(zlim)) { # set up value limits
-                if(all(sign(colors)>=0)) {
-                  zlim <- as.numeric(quantile(colors,p=c(1-gradient.range.quantile,gradient.range.quantile)))
-                  if(diff(zlim)==0) {
-                    zlim <- as.numeric(range(colors))
-                  }
-                } else {
-                  zlim <- c(-1,1)*as.numeric(quantile(abs(colors),p=gradient.range.quantile))
-                  if(diff(zlim)==0) {
-                    zlim <- c(-1,1)*as.numeric(max(abs(colors)))
-                  }
-                }
-              }
-              # restrict the values
-              colors[colors<zlim[1]] <- zlim[1]; colors[colors>zlim[2]] <- zlim[2];
-
-              if(!quiet) cat(' with zlim:',zlim,'\n')
-              colors <- (colors-zlim[1])/(zlim[2]-zlim[1])
-              cols <- gradientPalette[colors[match(rownames(emb),names(colors))]*(length(gradientPalette)-1)+1]
-            } else {
-              stop("colors argument must be a cell-named vector of either character colors or numeric values to be mapped to a gradient")
-            }
-          }
-        } else {
-          if(!is.null(groups)) {
-            if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
-            groups <- as.factor(groups)[rownames(emb)]
-            if(!quiet) cat("using provided groups as a factor\n")
-            factor.mapping=TRUE;
-            # set up a rainbow color on the factor
-            if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
-            factor.colors <- fac2col(groups,s=s,v=v,shuffle=shuffle.colors,min.group.size=1,unclassified.cell.color=unclassified.cell.color,level.colors=group.level.colors,return.details=T)
-            cols <- factor.colors$colors;
-          }
-        }
-        names(cols) <- rownames(emb)
       }
 
-      if(ncol(emb)==2) { # 2D
-        if(do.par) {
-          par(mar = c(0.5,0.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
-        }
-        plot(emb,col=adjustcolor(cols,alpha.f=alpha),cex=cex,pch=19,axes=F, panel.first=grid(), ...); box();
-        if(mark.clusters) {
-          if(!is.null(groups)) {
-            cent.pos <- do.call(rbind,tapply(1:nrow(emb),groups,function(ii) apply(emb[ii,,drop=F],2,median)))
-            #rownames(cent.pos) <- levels(groups);
-            cent.pos <- na.omit(cent.pos);
-            text(cent.pos[,1],cent.pos[,2],labels=rownames(cent.pos),cex=mark.cluster.cex)
-          }
-        }
-        if(show.legend) {
-          if(factor.mapping) {
-            legend(x=legend.x,pch=rep(19,length(levels(groups))),bty='n',col=factor.colors$palette,legend=names(factor.colors$palette))
-          }
-        }
-
-      } else if(ncol(emb)==3) { #3D
-        if (!requireNamespace("rgl", quietly = TRUE)) {
-          stop("Package \"rgl\" needed for 3d plots. Please install it.", call. = FALSE)
-        }
-
-        rgl::plot3d(emb[,1],emb[,2],emb[,3],col=cols,size=cex,type='s',alpha=alpha)
-        if(mark.clusters) {
-          if(!is.null(groups)) {
-            cent.pos <- do.call(rbind,tapply(1:nrow(emb),groups,function(ii) apply(emb[ii,,drop=F],2,median)))
-            #rownames(cent.pos) <- levels(groups);
-            cent.pos <- na.omit(cent.pos);
-            rgl::text3d(cent.pos[,1],cent.pos[,2],cent.pos[,3],text=rownames(cent.pos),cex=mark.cluster.cex)
-          }
-        }
-        if(show.legend) {
-          if(factor.mapping) {
-            rgl::legend3d(x=legend.x,pch=rep(19,length(levels(groups))),col=factor.colors$palette,legend=names(factor.colors$palette))
-          }
-        }
-      } else {
-        stop("only 2D and 3D embeddings are supported")
-      }
-
+      sccore::embeddingPlot(emb, groups=groups, colors=colors, plot.theme=plot.theme, ...)
     },
     # get overdispersed genes
     getOdGenes=function(n.odgenes=NULL,alpha=5e-2,use.unadjusted.pvals=FALSE) {
