@@ -1,3 +1,13 @@
+## Upcoming
+
+### Added
+
+- Parameter `gene` in `plotEmbedding` for coloring by normalized counts
+
+### Changed
+
+- Using `sccore` plotting system for embedding plot. 3d plots aren't supported anymore.
+
 ## [0.1.1] - 2019-11-26
 
 ### Added
