@@ -6,7 +6,7 @@ Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard
              person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="ctb"))
 Description: Single-cell RNA-seq Analysis
 Depends: R (>= 3.2.1), Matrix, igraph
-License: GPL-3 
+License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
@@ -60,3 +60,5 @@ VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
 NeedsCompilation: yes
+Author: Peter Kharchenko [cre, aut], Nikolas Barkas [aut], Viktor Petukhov [aut]
+Maintainer: Peter Kharchenko <peter_kharchenko@hms.harvard.edu>
