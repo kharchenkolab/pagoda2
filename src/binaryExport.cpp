@@ -25,7 +25,7 @@ void addSparseMatrixToEntries(List spML,
   auto t2 = high_resolution_clock::now();
   auto duration = duration_cast<microseconds>(t2 - t1).count();
   if (params->verboseTimings)
-	       cout << "iData IVtoL took: " << duration << "us" << endl << flush;
+	       Rcpp::Rcout << "iData IVtoL took: " << duration << "us" << endl << flush;
 
   // Dim from R-export list and convert to list of pointers
   t1 = high_resolution_clock::now();
@@ -35,7 +35,7 @@ void addSparseMatrixToEntries(List spML,
   t2 = high_resolution_clock::now();
   duration = duration_cast<microseconds>(t2 - t1).count();
   if (params->verboseTimings)
-               cout << "spML IVtoL took: " << duration	<< "us" << endl << flush;
+               Rcpp::Rcout << "spML IVtoL took: " << duration	<< "us" << endl << flush;
 
   // pData from R-export list and convert to list of pointers
   t1 = high_resolution_clock::now();
@@ -45,7 +45,7 @@ void addSparseMatrixToEntries(List spML,
   t2 = high_resolution_clock::now();
   duration = duration_cast<microseconds>(t2 - t1).count();
   if (params->verboseTimings)
-               cout << "vpData IVtoL took: " << duration  << "us" << endl << flush;
+               Rcpp::Rcout << "vpData IVtoL took: " << duration  << "us" << endl << flush;
 
   // xData from R-export list and convert to list of pointers
   t1 = high_resolution_clock::now();
@@ -55,13 +55,13 @@ void addSparseMatrixToEntries(List spML,
   t2 = high_resolution_clock::now();
   duration = duration_cast<microseconds>(t2 - t1).count();
   if (params->verboseTimings)
-               cout << "xData IVtoL took: " << duration  << "us" << endl << flush;
+               Rcpp::Rcout << "xData IVtoL took: " << duration  << "us" << endl << flush;
   
   if (params->verbose)
   {
-    cout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << "]" << endl;
-    cout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
-    cout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
+    Rcpp::Rcout << "\t\tp array size: " << pData->size() << " [First entry value: " << pData->front() << "]" << endl;
+    Rcpp::Rcout << "\t\ti array size: " << iData->size() << " [First entry value: " << iData->front() << "]" << endl;
+    Rcpp::Rcout << "\t\tx array size: " << xData->size() << " [First entry value: " << xData->front() << "]" << endl;
   }
 
   // Read the dimnames of the sparse matrices.
@@ -89,15 +89,15 @@ void addSparseMatrixToEntries(List spML,
 
   if (params->verbose)
   {
-    cout << "\tSparse matrix header information" << endl;
-    cout << "\t\tdim1=" << smh.dim1 << endl;
-    cout << "\t\tdim2=" << smh.dim2 << endl;
-    cout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
-    cout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
-    cout << "\t\txStartOffset=" << smh.xStartOffset << endl;
-    cout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
-    cout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
-    cout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
+    Rcpp::Rcout << "\tSparse matrix header information" << endl;
+    Rcpp::Rcout << "\t\tdim1=" << smh.dim1 << endl;
+    Rcpp::Rcout << "\t\tdim2=" << smh.dim2 << endl;
+    Rcpp::Rcout << "\t\tpStartOffset=" << smh.pStartOffset << endl;
+    Rcpp::Rcout << "\t\tiStartOffset=" << smh.iStartOffset << endl;
+    Rcpp::Rcout << "\t\txStartOffset=" << smh.xStartOffset << endl;
+    Rcpp::Rcout << "\t\tdimnames1StartOffset=" << smh.dimname1StartOffset << endl;
+    Rcpp::Rcout << "\t\tdimnames2StartOffset=" << smh.dimname2StartOffset << endl;
+    Rcpp::Rcout << "\t\tdimnames2EndOffset=" << smh.dimname2EndOffset << endl;
   }
 
   // Make an in-memorty string stream to hold the data
@@ -164,7 +164,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     params.verboseTimings = false;
 
     if(params.verboseTimings) 
-      cout << "Entering C++ code section" << endl << flush;
+      Rcpp::Rcout << "Entering C++ code section" << endl << flush;
     
     CharacterVector elements = expL.names();
 
@@ -172,7 +172,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     list<entry> entries;
 
     // Optional Gene KNN inclusion if present
-    if(params.verboseTimings) cout << "Start Gene KNN optional inclusion" << endl << flush;
+    if(params.verboseTimings) Rcpp::Rcout << "Start Gene KNN optional inclusion" << endl << flush;
     auto t1 = high_resolution_clock::now();
     if(std::find(elements.begin(),elements.end(),"geneknn") != elements.end()) {
       // JSON formatted gene knn and make entries in payload:
@@ -183,7 +183,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     auto t2 = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(t2 - t1).count();
     if(params.verboseTimings) 
-      cout << "Finding and including geneknn object: " << duration << " ms" <<endl << flush;
+      Rcpp::Rcout << "Finding and including geneknn object: " << duration << " ms" <<endl << flush;
   
     
     // Read in JSON formatted strings from R List given by List expL
@@ -250,7 +250,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
     vector<string> sparseMatrixNames = expL["sparsematnames"];
     for (auto it = sparseMatrixNames.begin(); it != sparseMatrixNames.end(); ++it) {
       if (params.verbose)
-	cout << "Writing... " << *it << endl << flush;
+        Rcpp::Rcout << "Writing... " << *it << endl << flush;
 
       // Small hack to match internal and frontend names
       // TODO: fix front end and update with backwards compatibility
@@ -277,11 +277,11 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
       // Writing file
       if (params.verbose)
       {
-        cout << "Making File from payload..." << endl;
+        Rcpp::Rcout << "Making File from payload..." << endl;
 
-        cout << "\tFile format information" << endl;
-        cout << "\t\tIndex entry size is " << sizeof(indexEntry) << " bytes" << endl;
-        cout << "\t\tFile header size is " << sizeof(fileHeader) << " bytes" << endl;
+        Rcpp::Rcout << "\tFile format information" << endl;
+        Rcpp::Rcout << "\t\tIndex entry size is " << sizeof(indexEntry) << " bytes" << endl;
+        Rcpp::Rcout << "\t\tFile header size is " << sizeof(fileHeader) << " bytes" << endl;
       }
       // Export entries to file
       ofstream fs;
@@ -289,7 +289,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
 
       if (params.verbose)
       {
-        cout << "\tPreparing header..." << endl;
+        Rcpp::Rcout << "\tPreparing header..." << endl;
       }
       struct fileHeader header;
 
@@ -308,10 +308,10 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
       if (params.verbose)
       {
         // TODO if verbose
-        cout << "\tTotal index size is: " << header.indexSize << " bytes" << endl;
+        Rcpp::Rcout << "\tTotal index size is: " << header.indexSize << " bytes" << endl;
 
         // Construct the index in memory
-        cout << "\tConstructing index..." << endl;
+        Rcpp::Rcout << "\tConstructing index..." << endl;
       }
 
       list<indexEntry> indexEntries;
@@ -361,8 +361,8 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
         size_t s = iterator->blockSize * FILE_BLOCK_SIZE;
 
         if (params.verbose) {
-          cout << "\t\tWriting entry " << i++;
-          cout << " of size " << iterator->blockSize << " blocks (or " << s << " bytes)" << endl;
+          Rcpp::Rcout << "\t\tWriting entry " << i++;
+          Rcpp::Rcout << " of size " << iterator->blockSize << " blocks (or " << s << " bytes)" << endl;
         }
 
         void *entry = malloc(s);
@@ -384,7 +384,7 @@ void WriteListToBinary(List expL, std::string outfile,bool verbose=false)
 
     // Free up the payloads of the entries
     if (params.verbose) {
-      cout << "Free up entry payloads" << endl;
+      Rcpp::Rcout << "Free up entry payloads" << endl;
     }
     for (list<entry>::iterator iterator = entries.begin(); iterator != entries.end(); ++iterator)
     {
