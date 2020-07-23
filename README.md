@@ -26,7 +26,7 @@ following code in R console:
 ```r
 install.packages(c("devtools", "BiocManager"))
 BiocManager::install(c("AnnotationDbi", "BiocGenerics", "GO.db", "pcaMethods"))
-devtools::install_github("hms-dbmi/pagoda2")
+devtools::install_github("kharchenkolab/pagoda2")
 library('pagoda2')
 ```
 
@@ -35,35 +35,15 @@ If you have Mac, or it doesn't work on your Linux, please see instructions below
 
 ### Installing Mac Dependencies
 
-You need R >=3.4.0 to install this package on a mac. 
-For installation please refer to [cran](https://cran.r-project.org/)  
-
-You need the [homebrew package manager](https://brew.sh/)  
-Run these commands in a terminal:
+We recommend the [Homebrew package manager](https://brew.sh/) to install require dependencies on Mac OS. Please run the following commands in the terminal:
 
 ```sh
 brew update
 brew install curl openssl wget
 ```
-To enable R to use the parallelized functions in the C++ code, you need another version of the clang++-Compiler for mac.   
-This is compatible with OS X >= 10.11 
 
-Follow these instructions to install clang4 with openmp support:
+For more details regarding how to successfully install Pagoda2 on Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
 
-#### GUI-Installer:
-
-- Download the clang4-r.pkg (263.6 mb) from https://uofi.box.com/v/r-macos-clang-pkg  
-MD5 Hash: `f49df42ccc84ec529c489e8e3f02248`
-- Install it!
-
-Here is a more in depth explanation what is going on and a script to do what the GUI-Installer does by yourself. For Pagoda2 you only need the clang part, not the gfortran part. [openmp in r on OS X](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/#after-3-4-0)
-
-#### Install gfortran for Mac
-
-```sh
-curl -O https://mac.r-project.org/libs/gfortran-4.8.2-darwin13.tar.bz2
-sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
-```
 
 ### Installing Linux dependencies
 
