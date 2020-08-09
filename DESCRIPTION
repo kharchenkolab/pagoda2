@@ -35,6 +35,7 @@ Imports:
     fastcluster,
     sccore (>= 0.1)
 Suggests:
+    colorRamps,
     dbscan,
     ggplot2,
     GO.db,
