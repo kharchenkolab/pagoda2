@@ -9,6 +9,7 @@ Depends: R (>= 3.2.1), Matrix, igraph
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
+biocViews:
 Imports:
     AnnotationDbi,
     BiocGenerics,
@@ -49,12 +50,6 @@ Suggests:
     rmarkdown,
     uwot
 Remotes: 
-    bioc::release/AnnotationDbi,
-    bioc::release/BiocGenerics,
-    bioc::release/org.Dr.eg.db,
-    bioc::release/org.Hs.eg.db,
-    bioc::release/org.Mm.eg.db,
-    bioc::release/pcaMethods,
     hms-dbmi/sccore
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
