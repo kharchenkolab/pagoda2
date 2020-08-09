@@ -111,9 +111,7 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
       x[rownames(p2$counts)]
     });
   }
-  metadata <- mapply(function(x,n) {
-    p2.metadata.from.factor(x, displayname = n);
-  }, factor.list, names(factor.list), SIMPLIFY = FALSE)
+  metadata <- p2.metadata.from.factor(metadata=factor.list, displayname = names(factor.list))
   invisible(metadata)
 }
 
