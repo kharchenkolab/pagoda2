@@ -161,7 +161,7 @@ Pagoda2 <- setRefClass(
 
         # pooled counts, df for all genes
         tc <- colSumByFac(counts,as.integer(depth.fac))[-1,,drop=F]
-        tc <- log10(tc+1)- log(as.numeric(tapply(depth,depth.fac,sum))+1)
+        tc <- log10(tc+1)- log10(as.numeric(tapply(depth,depth.fac,sum))+1)
         md <- log10(as.numeric(tapply(depth,depth.fac,mean)))
         # combined lm
         cm <- lm(tc ~ md)
