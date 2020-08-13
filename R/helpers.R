@@ -70,7 +70,7 @@ papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
 jw.disR <- function(x,y) {
   x <- x+1/length(x)/1e3;
   y <- y+1/length(y)/1e3;
-  a <- x*log(x)  + y*log(y) - (x+y)*log((x+y)/2);
+  a <- x*log10(x)  + y*log10(y) - (x+y)*log10((x+y)/2);
   sqrt(sum(a)/2)
 }
 
@@ -208,13 +208,13 @@ bh.adjust <- function(x, log = FALSE) {
     x<-x[nai]
     id <- order(x, decreasing = FALSE)
     if(log) {
-        q <- x[id] + log(length(x)/seq_along(x))
+        q <- x[id] + log10(length(x)/seq_along(x))
     } else {
         q <- x[id]*length(x)/seq_along(x)
     }
     a <- rev(cummin(rev(q)))[order(id)]
     ox[nai]<-a
-    ox
+    return(ox)
 }
 
 # returns enriched categories for a given gene list as compared with a given universe
@@ -260,19 +260,19 @@ calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mi
     mg <- length(which(cv$u > mingenes))
     if(over.only) {
         if(pvalue.cutoff<1) {
-            ovi <- which(lpra<= log(pvalue.cutoff))
+            ovi <- which(lpra<= log10(pvalue.cutoff))
             uvi <- c()
         } else {
-            ovi <- which((lpr+mg)<= log(pvalue.cutoff))
+            ovi <- which((lpr+mg)<= log10(pvalue.cutoff))
             uvi <- c()
         }
     } else {
         if(pvalue.cutoff<1) {
-            ovi <- which(pv<0.5 & lpra<= log(pvalue.cutoff))
-            uvi <- which(pv > 0.5 & lpra<= log(pvalue.cutoff))
+            ovi <- which(pv<0.5 & lpra<= log10(pvalue.cutoff))
+            uvi <- which(pv > 0.5 & lpra<= log10(pvalue.cutoff))
         } else {
-            ovi <- which(pv<0.5 & (lpr+mg)<= log(pvalue.cutoff))
-            uvi <- which(pv > 0.5 & (lpr+mg)<= log(pvalue.cutoff))
+            ovi <- which(pv<0.5 & (lpr+mg)<= log10(pvalue.cutoff))
+            uvi <- which(pv > 0.5 & (lpr+mg)<= log10(pvalue.cutoff))
         }
     }
     ovi <- ovi[order(lpr[ovi])]

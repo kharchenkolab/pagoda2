@@ -149,7 +149,7 @@ Pagoda2 <- setRefClass(
           }
         }
 
-        ldepth <- log(depth);
+        ldepth <- log10(depth);
 
         # rank cells, cut into n pieces
         n.depth.slices <- 20;
@@ -161,23 +161,23 @@ Pagoda2 <- setRefClass(
 
         # pooled counts, df for all genes
         tc <- colSumByFac(counts,as.integer(depth.fac))[-1,,drop=F]
-        tc <- log(tc+1)- log(as.numeric(tapply(depth,depth.fac,sum))+1)
-        md <- log(as.numeric(tapply(depth,depth.fac,mean)))
+        tc <- log10(tc+1)- log(as.numeric(tapply(depth,depth.fac,sum))+1)
+        md <- log10(as.numeric(tapply(depth,depth.fac,mean)))
         # combined lm
         cm <- lm(tc ~ md)
         colnames(cm$coef) <- colnames(counts)
         # adjust counts
-        # predict log(p) for each non-0 entry
+        # predict log10(p) for each non-0 entry
         count.gene <- rep(1:counts@Dim[2],diff(counts@p))
-        exp.x <- exp(log(gene.av)[count.gene] - cm$coef[1,count.gene] - ldepth[counts@i+1]*cm$coef[2,count.gene])
+        exp.x <- exp(log10(gene.av)[count.gene] - cm$coef[1,count.gene] - ldepth[counts@i+1]*cm$coef[2,count.gene])
         counts@x <<- as.numeric(counts@x*exp.x/(depth[counts@i+1]/depthScale)); # normalize by depth as well
-        # performa another round of trim
+        # perform another round of trim
         if(trim>0) {
           inplaceWinsorizeSparseCols(counts,trim,n.cores);
         }
 
 
-        # regress out on non-0 observations of ecah gene
+        # regress out on non-0 observations of each gene
         #non0LogColLmS(counts,mx,ldepth)
       } else if(modelType=='plain') {
         if(verbose) cat("using plain model ")
@@ -190,8 +190,8 @@ Pagoda2 <- setRefClass(
 
           # pooled counts, df for all genes
           tc <- colSumByFac(counts,as.integer(batch))[-1,,drop=F]
-          tc <- t(log(tc+1)- log(as.numeric(tapply(depth,batch,sum))+1))
-          bc <- exp(tc-log(gene.av))
+          tc <- t(log10(tc+1)- log10(as.numeric(tapply(depth,batch,sum))+1))
+          bc <- exp(tc-log10(gene.av))
 
           # adjust every non-0 entry
           count.gene <- rep(1:counts@Dim[2],diff(counts@p))
@@ -217,7 +217,7 @@ Pagoda2 <- setRefClass(
       }
       if(log.scale) {
         if(verbose) cat("log scale ... ")
-        counts@x <<- as.numeric(log(counts@x+1))
+        counts@x <<- as.numeric(log10(counts@x+1))
       }
       misc[['rescaled.mat']] <<- NULL;
       if(verbose) cat("done.\n")
@@ -244,14 +244,14 @@ Pagoda2 <- setRefClass(
       if(use.raw.variance) { # use raw variance estimates without relative adjustments
         rownames(df) <- colnames(counts);
         vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
-        df$lp <- df$lpa <- log(df$v);
+        df$lp <- df$lpa <- log10(df$v);
         df$qv <- df$v
         df$gsf <- 1; # no rescaling of variance
         ods <- order(df$v,decreasing=T); if(length(ods)>1e3) { ods <- ods[1:1e3] }
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
       } else {
         # gene-relative normalizaton 
-        df$m <- log(df$m); df$v <- log(df$v);
+        df$m <- log10(df$m); df$v <- log10(df$v);
         rownames(df) <- colnames(counts);
         vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
         if(length(vi)<gam.k*1.5) { gam.k=1 };# too few genes
@@ -270,9 +270,9 @@ Pagoda2 <- setRefClass(
         df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=TRUE)/n.cells)
 
         if(use.unadjusted.pvals) {
-          ods <- which(df$lp<log(alpha))
+          ods <- which(df$lp<log10(alpha))
         } else {
-          ods <- which(df$lpa<log(alpha))
+          ods <- which(df$lpa<log10(alpha))
         }
         
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
@@ -1185,9 +1185,9 @@ Pagoda2 <- setRefClass(
       if(is.null(misc[['varinfo']])) { stop("please run adjustVariance first")}
       if(is.null(n.odgenes)) { #return according to alpha
         if(use.unadjusted.pvals) {
-          rownames(misc[['varinfo']])[misc[['varinfo']]$lp <= log(alpha)]
+          rownames(misc[['varinfo']])[misc[['varinfo']]$lp <= log10(alpha)]
         } else {
-          rownames(misc[['varinfo']])[misc[['varinfo']]$lpa <= log(alpha)]
+          rownames(misc[['varinfo']])[misc[['varinfo']]$lpa <= log10(alpha)]
         }
       } else { # return top n.odgenes sites
         rownames(misc[['varinfo']])[(order(misc[['varinfo']]$lp,decreasing=F)[1:min(ncol(counts),n.odgenes)])]
@@ -1327,7 +1327,7 @@ Pagoda2 <- setRefClass(
       if((use.odgenes || !is.null(n.odgenes)) && is.null(odgenes)) {
         if(is.null(misc[['varinfo']] )) { stop("please run adjustVariance() first")}
         df <- misc$varinfo
-        odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log(od.alpha)]
+        odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log10(od.alpha)]
         #odgenes <- misc[['odgenes']];
         if(!is.null(n.odgenes)) {
           if(n.odgenes>length(odgenes)) {
@@ -1396,7 +1396,7 @@ Pagoda2 <- setRefClass(
         #} else {
         df <- df[!is.na(df$lp),,drop=F]
         df <- df[order(df$lp,decreasing=F),,drop=F]
-        n.od <- min(max(sum(df$lpa<log(od.alpha)),min.odgenes),max.odgenes);
+        n.od <- min(max(sum(df$lpa<log10(od.alpha)),min.odgenes),max.odgenes);
         if(n.od>0) {
           odgenes <- rownames(df)[1:min(n.od*n.odgene.multiplier,nrow(df))]
         } else {
@@ -1490,7 +1490,7 @@ Pagoda2 <- setRefClass(
         if(!is.null(n.odgenes)) {
           odgenes <- rownames(df)[order(df$lp,decreasing=F)[1:n.odgenes]]
         } else {
-          odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log(od.alpha)]
+          odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log10(od.alpha)]
         }
         if(length(odgenes)<min.odgenes) {
           if(take.top.odgenes) {
@@ -1768,7 +1768,7 @@ Pagoda2 <- setRefClass(
         q.tw <- (q - params$centering)/(params$scaling)
         p <- RMTstat::ptw(q.tw, beta, lower.tail, log.p = TRUE)
         p[p == -Inf] <- pgamma((2/3)*q.tw[p == -Inf]^(3/2), 2/3, lower.tail = FALSE, log.p = TRUE) + lgamma(2/3) + log((2/3)^(1/3))
-        p
+        return(p)
       }
 
       vshift <- 0
