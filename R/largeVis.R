@@ -150,4 +150,3 @@ projectKNNs <- function(wij, # symmetric sparse matrix
 sgdBatches <- function(N, E = 150 * N / 2) {
 	ifelse(N < 10000, 2000 * E, ifelse(N < 1000000, 1000000 * (9000 * (N - 10000) / (1000000 - 10000) + 1000), N * 10000))
 }
-
