@@ -19,7 +19,7 @@ readPagoda2SelectionFile <- function(filepath) {
       break
     }
 
-    fields <- unlist(strsplit(line, split=',', fixed=T));
+    fields <- unlist(strsplit(line, split=',', fixed=TRUE));
 
     name <- make.names(fields[2]);
     color <- fields[1];
@@ -82,10 +82,10 @@ calcMulticlassified <- function(sel) {
 #' contains multiclassified cells an error is raised
 #' @flatten ignores multiclassified cells, overwriting randomly
 #' @export factorFromP2Selection
-factorFromP2Selection <- function (sel, use.internal.name=F,flatten=F)
+factorFromP2Selection <- function (sel, use.internal.name=FALSE,flatten=FALSE)
 {
   if (!flatten && !all(calcMulticlassified(sel) == 0)) {
-    stop("The selections provided are not mutually exclusive. Use flatten=T to overwrite")
+    stop("The selections provided are not mutually exclusive. Use flatten=TRUE to overwrite")
   }
   x <- mapply(function(x,n) {
     if (length(x$cells) > 0) {
@@ -235,7 +235,7 @@ getClusterLabelsFromSelection <- function(clustering, selections, multiClassCuto
 
   tmp1 <- plyr::adply(.data = confusion.table, .margins = 2, .fun =  function(x) {
     rv <- NA
-    x.sort <- sort(x, decreasing=T)
+    x.sort <- sort(x, decreasing=TRUE)
     if((x.sort[1] * ambiguous.ratio) >= x.sort[2]) {
       rv <- names(x.sort)[1]
     }
@@ -317,7 +317,7 @@ plotSelectionOverlaps <- function(sel) {
       overlaps = c(overlaps,overlapC)
     }
   }
-  res <- data.frame(cbind(n1s, n2s, overlaps),stringsAsFactors=F)
+  res <- data.frame(cbind(n1s, n2s, overlaps),stringsAsFactors=FALSE)
   res$overlaps <- as.numeric(res$overlaps)
 
   p <- ggplot2::ggplot(res, ggplot2::aes(n1s, n2s)) + ggplot2::geom_tile(ggplot2::aes(fill=log10(overlaps))) +  
@@ -425,7 +425,7 @@ getIntExtNamesP2Selection <- function(x) unlist(lapply(x,function(y) {y$name}))
 #' @param show.labels display the labels at the center of each cluster
 #' @return a ggplot2 object
 #' @export plotEmbeddingColorByP2Selection
-plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = T, alpha = 0.7, show.axis =T )  {
+plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = T, alpha = 0.7, show.axis =TRUE )  {
   # Return the plot variable p
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
@@ -434,7 +434,7 @@ plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, sh
   p <- NULL
 
   colsorig <- pagoda2:::getColorsFromP2Selection(sel)
-  f <- factorFromP2Selection(sel, use.internal.name= T)
+  f <- factorFromP2Selection(sel, use.internal.name= TRUE)
 
 
   dftmp <- data.frame(emb)

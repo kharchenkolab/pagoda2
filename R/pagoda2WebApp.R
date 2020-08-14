@@ -101,7 +101,7 @@ pagoda2WebApp <- setRefClass(
       cl0 <- dendrogramCellGroups
       # Generate an hclust objct of the above groups
       dendrogramCellGroups <- dendrogramCellGroups[match(rownames(r$counts),names(dendrogramCellGroups))]
-      lvec <- colSumByFac(r$misc[['rawCounts']],as.integer(cl0))[-1,,drop=F] + 1
+      lvec <- colSumByFac(r$misc[['rawCounts']],as.integer(cl0))[-1,,drop=FALSE] + 1
       lvec <- t(lvec/pmax(1,rowSums(lvec)))
       colnames(lvec) <- which(table(cl0)>0)
       rownames(lvec) <- colnames(r$misc[['rawCounts']])
@@ -137,7 +137,7 @@ pagoda2WebApp <- setRefClass(
               } else {
                 celsel <- names(cl0)[cl0 == x]
                 vpca <- r$counts[celsel, r$misc$odgenes] %*% irlba::irlba(r$counts[celsel,r$misc$odgenes],nv = 1,nu=0)$v # run a PCA on overdispersed genes just in this selection.
-                celsel[order(vpca,decreasing = T)] # order by this PCA
+                celsel[order(vpca,decreasing = TRUE)] # order by this PCA
               }
               
             } else if (innerOrder == "reductdist") {
@@ -172,7 +172,7 @@ pagoda2WebApp <- setRefClass(
               xn <- xn[!xn$s==xn$e,]
               xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
               
-              df <- data.frame(from=rownames(xx)[xn$s+1],to=rownames(xx)[xn$e+1],weight=xn$d,stringsAsFactors=F)
+              df <- data.frame(from=rownames(xx)[xn$s+1],to=rownames(xx)[xn$e+1],weight=xn$d,stringsAsFactors=FALSE)
               
               df$weight <- pmax(0,df$weight);
               xn <- cbind(xn,rd=df$weight)
@@ -271,14 +271,14 @@ pagoda2WebApp <- setRefClass(
                            cat('Got Request 1');
                            postArgs <- request$POST();
                            cellNames <- url_decode(postArgs[['cellnames']]);
-                           cellNames <- unlist(strsplit(cellNames, split = "|", fixed =T));
+                           cellNames <- unlist(strsplit(cellNames, split = "|", fixed =TRUE));
                            
                            getCellNames <- TRUE;
                            
                            counts.transposed <- t(originalP2object$counts)
                            
                            ## Matrix to send
-                           matrixToSend <- counts.transposed[,cellNames,drop = F]
+                           matrixToSend <- counts.transposed[,cellNames,drop = FALSE]
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -408,13 +408,13 @@ pagoda2WebApp <- setRefClass(
                            aspectIds <- url_decode(postArgs[['aspectids']]);
                            cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                            cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
-                           aspectIds <- unlist(strsplit(aspectIds, split = "|", fixed =T));
+                           aspectIds <- unlist(strsplit(aspectIds, split = "|", fixed =TRUE));
                            
                            cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
-                           matrixToSend <- originalP2object$misc$pathwayOD$xv[aspectIds,cellIndices,drop=F];
+                           matrixToSend <- originalP2object$misc$pathwayOD$xv[aspectIds,cellIndices,drop=FALSE];
 
                            # Transpose and make sparse
-                           matrixToSend <- Matrix(t(matrixToSend), sparse = T);
+                           matrixToSend <- Matrix(t(matrixToSend), sparse = TRUE);
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -447,10 +447,10 @@ pagoda2WebApp <- setRefClass(
                            getCellNames <- url_decode(postArgs[['getcellnames']]);
                            
                            cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
-                           matrixToSend <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
+                           matrixToSend <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=FALSE];
 
                            # Transpose and make sparse
-                           matrixToSend <- Matrix(t(matrixToSend), sparse = T);
+                           matrixToSend <- Matrix(t(matrixToSend), sparse = TRUE);
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -494,7 +494,7 @@ pagoda2WebApp <- setRefClass(
                            }
                            
                            geneIdentifiers <- url_decode(postArgs[['geneids']]);
-                           geneIdentifiers <- unlist(strsplit(geneIdentifiers, split = "|", fixed =T));
+                           geneIdentifiers <- unlist(strsplit(geneIdentifiers, split = "|", fixed =TRUE));
                            
                            cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                            cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
@@ -508,7 +508,7 @@ pagoda2WebApp <- setRefClass(
                            
                            # Ordering of the matrix according to the hclust
                            cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)]
-                           matrixToSend <- originalP2object$counts[cellIndices,geneIdentifiers,drop=F];
+                           matrixToSend <- originalP2object$counts[cellIndices,geneIdentifiers,drop=FALSE];
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -797,7 +797,7 @@ pagoda2WebApp <- setRefClass(
           cat(paste0('Export list of embeddings: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       # Export list with all included embeddings for easier iteration in Rcpp-function.
-      exportList[["embedList"]] <- grep("emb_",names(exportList),value=T);
+      exportList[["embedList"]] <- grep("emb_",names(exportList),value=TRUE);
       
       ## Main Sparse count matrix to save
       t0 <- Sys.time()
@@ -816,9 +816,9 @@ pagoda2WebApp <- setRefClass(
       ## Serialise aspect matrix
       t0  <- Sys.time()
       cellIndices <- mainDendrogram$cellorder;
-      aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
+      aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=FALSE];
       aspectMatrixToSave <- Matrix::t(aspectMatrixToSave);
-      aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
+      aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=TRUE);
       t1 <- Sys.time()
       if(verbose.timings) 
           cat(paste0('Serializing aspect matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))

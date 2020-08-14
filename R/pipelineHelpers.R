@@ -25,7 +25,7 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100,
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
   p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell);
-  p2$adjustVariance(plot=F, gam.k=10);
+  p2$adjustVariance(plot=FALSE, gam.k=10);
   p2$calculatePcaReduction(nPcs = nPcs, n.odgenes = n.odgenes, maxit = 1000)
   ## Make KNN graph and generate clustering
   p2$makeKnnGraph(k = k, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
@@ -75,9 +75,9 @@ extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
 
   p2$testPathwayOverdispersion(
     setenv = go.env,
-    verbose =T,
+    verbose =TRUE,
     correlation.distance.threshold = 0.8,
-    recalculate.pca = F,
+    recalculate.pca = FALSE,
     min.pathway.size = 50,
     max.pathway.size = 1000)
 
@@ -164,7 +164,7 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
                        additionalMetadata = additionalMetadata,
                        geneSets = genesets,
                        appname=title,
-                       show.clusters = F,
+                       show.clusters = FALSE,
                        appmetadata = appmetadata);
   invisible(p2web);
 }
@@ -342,7 +342,7 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 #' @return a pagoda2 web object that presents a Rook compatible interface
 #' @export make.p2.app
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
-                        show.batch = T, show.clusters = T, appname = "Pagoda2 Application",
+                        show.batch = TRUE, show.clusters = TRUE, appname = "Pagoda2 Application",
                         innerOrder=NULL, orderDend=FALSE, appmetadata = NULL) {
   # Build the metadata
   metadata <- list();
@@ -474,7 +474,7 @@ p2.toweb.hdea <- function(p2, title="") {
   appmetadata <- list(apptitle=title)
   p2$makeGeneKnnGraph();
   wp <- make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets,
-                    dendrogramCellGroups = p2$clusters$PCA[[1]], show.clusters=F,
+                    dendrogramCellGroups = p2$clusters$PCA[[1]], show.clusters=FALSE,
                     appmetadata = appmetadata)
   wp
 }
@@ -501,5 +501,5 @@ basicP2web <- function(p2,app.title = 'Pagoda2', extraWebMetadata = NULL, n.core
     appmetadata = list(apptitle=app.title)
     cat('Making KNN graph...\n')
     #p2$makeGeneKnnGraph(n.cores=n.cores)
-    make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets, dendrogramCellGroups = p2$clusters$PCA$multilevel, show.clusters=F, appmetadata = appmetadata)
+    make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets, dendrogramCellGroups = p2$clusters$PCA$multilevel, show.clusters=FALSE, appmetadata = appmetadata)
 }

@@ -69,7 +69,7 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
   geneSets <- lapply(nms, function(x) {
     list(
       properties = list(
-        locked = T,
+        locked = TRUE,
         genesetname = x,
         shortdescription = GO.db::GOTERM[[x]]@Term
       ),
@@ -94,7 +94,7 @@ p2.generate.go.web.fromGOEnv  <- function (go.env) {
   geneSets <- lapply(nms, function(x) {
     list(
       properties = list(
-        locked = T,
+        locked = TRUE,
         genesetname = x,
         shortdescription = GO.db::GOTERM[[x]]@Term
       ),
