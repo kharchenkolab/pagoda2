@@ -48,7 +48,7 @@ Pagoda2 <- setRefClass(
       clusters <<- list();
       pathways <<- list();
       genegraphs <<- list();
-      misc <<-list(lib.sizes=lib.sizes,log.scale=log.scale,model.type=modelType,trim=trim);
+      misc <<-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim);
       batch <<- NULL;
       counts <<- NULL;
 
@@ -224,7 +224,7 @@ Pagoda2 <- setRefClass(
     },
 
     # adjust variance of the residual matrix, determine overdispersed sites
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=(.self$modelType=='raw') ,use.unadjusted.pvals=FALSE,do.par=T,max.adjusted.variance=1e3,min.adjusted.variance=1e-3,cells=NULL,verbose=TRUE,min.gene.cells=0,persist=is.null(cells),n.cores = .self$n.cores) {
+    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=(.self$modelType=='raw'), use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = .self$n.cores) {
       #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if(!is.null(cells)) { # translate cells into a rowSel boolean vector
         if(!(is.logical(cells) && length(cells)==nrow(counts))) {
@@ -247,7 +247,7 @@ Pagoda2 <- setRefClass(
         df$lp <- df$lpa <- log(df$v);
         df$qv <- df$v
         df$gsf <- 1; # no rescaling of variance
-        ods <- order(df$v,decreasing=T); if(length(ods)>1e3) { ods <- ods[1:1e3] }
+        ods <- order(df$v,decreasing=TRUE); if(length(ods)>1e3) { ods <- ods[1:1e3] }
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
       } else {
         # gene-relative normalizaton 
@@ -264,10 +264,10 @@ Pagoda2 <- setRefClass(
         }
         df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
         n.obs <- df$nobs; #diff(counts@p)
-        suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=F,log.p=T)))
+        suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=FALSE,log.p=TRUE)))
         df$lpa <- bh.adjust(df$lp,log=TRUE)
         n.cells <- nrow(counts)
-        df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE,log.p=TRUE)/n.cells)
+        df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE, log.p=TRUE)/n.cells)
 
         if(use.unadjusted.pvals) {
           ods <- which(df$lp<log(alpha))
@@ -299,16 +299,18 @@ Pagoda2 <- setRefClass(
         if(do.par) {
           par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
-        smoothScatter(df$m,df$v,main='',xlab='log10[ magnitude ]',ylab='log10[ variance ]')
-        grid <- seq(min(df$m[vi]),max(df$m[vi]),length.out=1000)
+        ## convert to log10 from natural log() by factor log10(exp(1))
+        smoothScatter(log10(exp(1))*df$m,log10(exp(1))*df$v,main='',xlab='log10[ magnitude ]',ylab='log10[ variance ]')
+        grid <- seq(min(log10(exp(1))*df$m[vi]),max(log10(exp(1))*df$m[vi]),length.out=1000)
         lines(grid,predict(m,newdata=data.frame(m=grid)),col="blue")
+        ## NOTE: overdispersed genes ods calcuated with log()-based corrections...
         if(length(ods)>0) {
-          points(df$m[ods],df$v[ods],pch='.',col=2,cex=1)
+          points(log10(exp(1))*df$m[ods],log10(exp(1))*df$v[ods],pch='.',col=2,cex=1)
         }
-        smoothScatter(df$m[vi],df$qv[vi],xlab='log10[ magnitude ]',ylab='',main='adjusted')
+        smoothScatter(log10(exp(1))*df$m[vi],log10(exp(1))*df$qv[vi],xlab='log10[ magnitude ]',ylab='',main='adjusted')
         abline(h=1,lty=2,col=8)
         if(is.finite(max.adjusted.variance)) { abline(h=max.adjusted.variance,lty=2,col=1) }
-        points(df$m[ods],df$qv[ods],col=2,pch='.')
+        points(log10(exp(1))*df$m[ods],log10(exp(1))*df$qv[ods],col=2,pch='.')
       }
       if(verbose) cat("done.\n")
       return(invisible(df));
