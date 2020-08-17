@@ -299,13 +299,13 @@ Pagoda2 <- setRefClass(
         if(do.par) {
           par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
-        smoothScatter(df$m,df$v,main='',xlab='log10[ magnitude ]',ylab='log10[ variance ]')
+        smoothScatter(df$m,df$v,main='',xlab='log[ magnitude ]',ylab='log[ variance ]')
         grid <- seq(min(df$m[vi]),max(df$m[vi]),length.out=1000)
         lines(grid,predict(m,newdata=data.frame(m=grid)),col="blue")
         if(length(ods)>0) {
           points(df$m[ods],df$v[ods],pch='.',col=2,cex=1)
         }
-        smoothScatter(df$m[vi],df$qv[vi],xlab='log10[ magnitude ]',ylab='',main='adjusted')
+        smoothScatter(df$m[vi],df$qv[vi],xlab='log[ magnitude ]',ylab='',main='adjusted')
         abline(h=1,lty=2,col=8)
         if(is.finite(max.adjusted.variance)) { abline(h=max.adjusted.variance,lty=2,col=1) }
         points(df$m[ods],df$qv[ods],col=2,pch='.')
