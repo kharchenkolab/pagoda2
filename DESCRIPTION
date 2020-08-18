@@ -50,7 +50,7 @@ Suggests:
     rmarkdown,
     uwot
 Remotes: 
-    hms-dbmi/sccore
+    kharchenkolab/sccore
 VignetteBuilder: knitr
 RoxygenNote: 6.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
