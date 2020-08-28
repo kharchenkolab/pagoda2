@@ -941,9 +941,10 @@ pagoda2WebApp <- setRefClass(
       ## Tell Cpp what is a sparse matrix
       exportList[["sparsematnames"]] <- c("matsparse", "mataspect","sparseMatrixTransp");
 
-      
+      ## check that elements exist. If not, throw error
+
       ## Call Rcpp function to write to static file
-      WriteListToBinary(expL=exportList,outfile = binary.filename,verbose=verbose);
+      WriteListToBinary(expL=exportList, outfile=binary.filename, verbose=verbose);
       ##return(invisible(exportList));
       
       ## Return NULL
