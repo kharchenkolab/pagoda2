@@ -1959,13 +1959,13 @@ Pagoda2 <- setRefClass(
         
         distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
         
-        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
+        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if (embeddingType == "UMAP_graph") {
         g <- graphs[[type]];
         if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
-        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
+        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         embeddings[[type]][[name]] <<- emb;
       } else {
         stop('unknown embeddingType ',embeddingType,' specified');
