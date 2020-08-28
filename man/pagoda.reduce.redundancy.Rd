@@ -4,10 +4,18 @@
 \alias{pagoda.reduce.redundancy}
 \title{Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)}
 \usage{
-pagoda.reduce.redundancy(tamr, distance.threshold = 0.2,
-  cluster.method = "complete", distance = NULL,
-  weighted.correlation = TRUE, plot = FALSE, top = Inf, trim = 0,
-  abs = FALSE, ...)
+pagoda.reduce.redundancy(
+  tamr,
+  distance.threshold = 0.2,
+  cluster.method = "complete",
+  distance = NULL,
+  weighted.correlation = TRUE,
+  plot = FALSE,
+  top = Inf,
+  trim = 0,
+  abs = FALSE,
+  ...
+)
 }
 \arguments{
 \item{tamr}{output of pagoda.reduce.loading.redundancy()}

@@ -4,8 +4,15 @@
 \alias{p2.metadata.from.factor}
 \title{Generate a metadata structure for a p2 web object from a named factor}
 \usage{
-p2.metadata.from.factor(metadata, displayname = NULL, s = 1, v = 1,
-  start = 0, end = NULL, pal = NULL)
+p2.metadata.from.factor(
+  metadata,
+  displayname = NULL,
+  s = 1,
+  v = 1,
+  start = 0,
+  end = NULL,
+  pal = NULL
+)
 }
 \arguments{
 \item{metadata}{named factor with metadata for individual cells, names must correspond to cells}

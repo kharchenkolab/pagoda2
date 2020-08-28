@@ -4,9 +4,17 @@
 \alias{plotEmbeddingColorByP2Selection}
 \title{Plot a specified pagoda2 embedding according to the selection object}
 \usage{
-plotEmbeddingColorByP2Selection(emb, sel, show.unlabelled = TRUE,
-  show.labels = TRUE, label.size = 3, point.size = 2,
-  show.guides = T, alpha = 0.7, show.axis = T)
+plotEmbeddingColorByP2Selection(
+  emb,
+  sel,
+  show.unlabelled = TRUE,
+  show.labels = TRUE,
+  label.size = 3,
+  point.size = 2,
+  show.guides = T,
+  alpha = 0.7,
+  show.axis = T
+)
 }
 \arguments{
 \item{emb}{An embedding from a pagoda2 object}
