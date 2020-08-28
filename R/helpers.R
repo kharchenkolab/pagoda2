@@ -74,22 +74,6 @@ jw.disR <- function(x,y) {
   sqrt(sum(a)/2)
 }
 
-
-# note transpose is meant to speed up calculations when neither scaling nor centering is required
-fast.pca <- function(m,nPcs=2,tol=1e-10,scale=FALSE,center=FALSE,transpose=FALSE) {
-  if(transpose) {
-    if(center) { m <- m-Matrix::rowMeans(m)}; if(scale) { m <- m/sqrt(Matrix::rowSums(m*m)); }
-    a <- irlba(tcrossprod(m)/(ncol(m)-1), nu=0, nv=nPcs,tol=tol);
-    a$l <- t(t(a$v) %*% m)
-  } else {
-    if(scale||center) { m <- scale(m,scale=scale,center=center) }
-    #a <- irlba((crossprod(m) - nrow(m) * tcrossprod(Matrix::colMeans(m)))/(nrow(m)-1), nu=0, nv=nPcs,tol=tol);
-    a <- irlba(crossprod(m)/(nrow(m)-1), nu=0, nv=nPcs,tol=tol);
-    a$l <- m %*% a$v
-  }
-  a
-}
-
 val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.95) {
   nx <- names(x);
   if(all(sign(x)>=0)) {
