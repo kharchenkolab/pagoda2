@@ -404,10 +404,7 @@ Pagoda2 <- setRefClass(
       return(invisible(g))
     },
     # calculate clusters based on the kNN graph
-    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', test.stability=FALSE, subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, plot=FALSE, return.details=FALSE, ...) {
-      #old.par <- par();
-      #on.exit(suppressWarnings(par(old.par)));
-
+    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, return.details=FALSE, ...) {
 
       if(is.null(g)) {
         if(is.null(graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
@@ -443,118 +440,6 @@ Pagoda2 <- setRefClass(
         names(cls.groups) <- cn;
       }
        
-      if(test.stability) {
-  
-        # is there more than one cluster?
-        if(length(levels(cls.groups))>1) {
-          # run subsamplings
-          cls.cells <- tapply(1:length(cls.groups),cls.groups,I)
-
-          # if(type=='counts') {
-          #   x <- counts;
-          # } else {
-          #   if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
-          #   x <- reductions[[type]]
-          # }
-          #x <- counts;
-          hcd <- multi2dend(cls,misc[['rawCounts']])
-          m1 <- cldend2array(hcd);
-
-          ai <- do.call(cbind,mclapply(1:n.subsamplings,function(i) {
-            sg <- g;
-            vi <- sample(1:vcount(sg),round(vcount(sg)*(1-subsampling.rate)))
-            sg <- delete.vertices(sg,vi)
-            scls <- method(sg)
-            m2 <- cldend2array(multi2dend(scls,misc[['rawCounts']]))
-            m1s <- m1[,colnames(m2)]
-            ai <- (m1s %*% t(m2));
-            ai <- ai/(outer(Matrix::rowSums(m1s),Matrix::rowSums(m2),"+") - ai)
-            ns <- apply(ai,1,max)
-          },mc.cores=n.cores))
-          stevl <- apply(ai,1,mean); # node stability measure
-
-          hcd <- hcd %>% dendextend::set("nodes_pch",19) %>%
-            dendextend::set("nodes_cex",3) %>%
-            dendextend::set("nodes_col",val2col(stevl,zlim=c(0.9,1)))
-
-          # annotate n cells on the dednrogram
-          t.find.biggest.stable.split <- function(l,env=environment()) {
-            if(is.leaf(l)) { return(FALSE) } # don't report stable leafs ?
-            bss <- mget("biggest.stable.split.size",envir=env,ifnotfound=-1)[[1]]
-            if(attr(l,'nCells') <= bss) { return(FALSE) }
-
-            # test current split for stability
-            if(min(stevl[unlist(lapply(l,attr,'nodeId'))]) >= cluster.stability.threshold) { # stable
-              # record size
-              assign("biggest.stable.split.size",attr(l,'nCells'),envir=env)
-              assign("biggest.stable.split",l,envir=env)
-              return(TRUE);
-            } else {
-              # look within
-              #return(na.omit(unlist(c(t.find.biggest.stable.split,env=env),recursive=F)))
-              return(lapply(l,t.find.biggest.stable.split,env=env))
-            }
-          }
-          # find biggest stable cell split
-          e <- environment()
-          bss.found <- any(unlist(t.find.biggest.stable.split(hcd,e)));
-          if(bss.found) {
-            # a stable split was found
-            bss <- get('biggest.stable.split',envir=e)
-            bss.par <- attr(bss,'nodesPar'); bss.par$col <- 'blue'; attr(bss,'nodesPar') <- bss.par;
-
-            # find all untinterrupted stable subsplits
-            consecutiveStableSubleafs <- function(l) {
-              if(is.leaf(l) || min(stevl[unlist(lapply(l,attr,'nodeId'))]) < cluster.stability.threshold) {
-                # either leaf or not sitting on top of a stable split - return own factor
-                return(paste(unlist(l),collapse='+'));
-              } else {
-                # if both children are stable, return combination of their returns
-                return(lapply(l,consecutiveStableSubleafs))
-              }
-            }
-            stable.clusters <- unlist(consecutiveStableSubleafs(bss))
-
-
-            final.groups <- rep("other", length(cls.groups));
-            cf <- rep("other",length(cls.cells));
-            for(k in stable.clusters) {
-              ci <- as.integer(unlist(strsplit(k,'\\+')));
-              final.groups[unlist(cls.cells[ci])] <- k;
-              cf[ci] <- k;
-            }
-            final.groups <- as.factor(final.groups); names(final.groups) <- names(cls.groups);
-
-            hcd <- hcd %>% dendextend::branches_attr_by_clusters(clusters=as.integer(as.factor(cf[order.dendrogram(hcd)]))) %>%
-              dendextend::set("branches_lwd", 3)
-
-          } else {
-            # TODO: check for any stable node, report that
-
-            final.groups <- rep(1, length(cls.groups)); names(final.groups) <- names(cls.groups);
-          }
-
-          #TODO: clean up cell-cluster assignment based on the pooled cluster data
-
-          if(plot) {
-            #.self$plotEmbedding(type='PCA',groups=cls.groups,show.legend=T)
-            par(mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
-            hcd %>% plot();
-            z <- dendextend::get_nodes_xy(hcd); text(z,labels=round(stevl,2),adj=c(0.4,0.4),cex=0.7)
-          }
-
-          # return details
-
-          rl <- list(groups=final.groups,"original.groups"=cls.groups,'hcd'=hcd,"stevl"=stevl,"cls"=cls)
-          if(persist) {
-            clusters[[type]][[name]] <<- final.groups;
-            misc[['community']][[type]][[name]] <<- rl;
-          }
-          if(return.details) { return(invisible(rl))}
-          return(invisible(final.groups))
-        } # end: more than one group
-        return(invisible(cls.groups))
-      }
       if(persist) {
         clusters[[type]][[name]] <<- cls.groups;
         misc[['community']][[type]][[name]] <<- cls;
@@ -1207,7 +1092,7 @@ Pagoda2 <- setRefClass(
       x
     },
     
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts")) {
+    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
       "Calculate PCA reduction of the data\n
        - nPcs number of PCs\n
        - type dataset view to reduce (counts by default, but can specify a name of an existing reduction)\n
@@ -1220,6 +1105,7 @@ Pagoda2 <- setRefClass(
        - fastpath use C implementation for speedup\n
        - maxit maximum number of irlba iterations to use\n
        - verbose verbose\n
+       - ... additional arguments forwarded to irlba::irlba\n
        return invisible PCA result (the reduction itself is saved in $reductions[[name]])"
 
       if(type=='counts') {
@@ -1257,14 +1143,14 @@ Pagoda2 <- setRefClass(
         # cell subset is just for PC determination
         nPcs <- min(min(length(cells),ncol(x))-1,nPcs)
         cm <- Matrix::colMeans(x[cells,])
-        pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
+        pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T, ...)
       } else {
         nPcs <- min(min(nrow(x),ncol(x))-1,nPcs)
         if(center) {
           cm <- Matrix::colMeans(x)
-          pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
+          pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T, ...)
         } else {
-          pcs <- irlba(x, nv=nPcs, nu=0, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
+          pcs <- irlba(x, nv=nPcs, nu=0, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T, ...)
         }
       }
       rownames(pcs$v) <- colnames(x);
@@ -1958,13 +1844,13 @@ Pagoda2 <- setRefClass(
         
         distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
         
-        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
+        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if (embeddingType == "UMAP_graph") {
         g <- graphs[[type]];
         if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
-        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
+        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         embeddings[[type]][[name]] <<- emb;
       } else {
         stop('unknown embeddingType ',embeddingType,' specified');

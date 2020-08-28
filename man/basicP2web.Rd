@@ -4,8 +4,7 @@
 \alias{basicP2web}
 \title{Generate a p2 web application from a pagoda2 object}
 \usage{
-basicP2web(p2, app.title = "Pagoda2", extraWebMetadata = NULL,
-  n.cores = 4)
+basicP2web(p2, app.title = "Pagoda2", extraWebMetadata = NULL, n.cores = 4)
 }
 \arguments{
 \item{p2}{pagoda2 application object}

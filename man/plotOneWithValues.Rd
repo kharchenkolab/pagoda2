@@ -4,8 +4,13 @@
 \alias{plotOneWithValues}
 \title{Plot the embedding of a pagoda2 object with the given values}
 \usage{
-plotOneWithValues(p2obj, values, title = "", type = "PCA",
-  embeddingType = "tSNE")
+plotOneWithValues(
+  p2obj,
+  values,
+  title = "",
+  type = "PCA",
+  embeddingType = "tSNE"
+)
 }
 \arguments{
 \item{p2obj}{the pagoda2 object}

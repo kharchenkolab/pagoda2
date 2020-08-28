@@ -4,10 +4,18 @@
 \alias{pagoda.reduce.loading.redundancy}
 \title{Collapse aspects driven by the same combinations of genes}
 \usage{
-pagoda.reduce.loading.redundancy(tam, pwpca, clpca = NULL,
-  plot = FALSE, cluster.method = "complete",
-  distance.threshold = 0.01, corr.power = 4, n.cores = 1,
-  abs = TRUE, ...)
+pagoda.reduce.loading.redundancy(
+  tam,
+  pwpca,
+  clpca = NULL,
+  plot = FALSE,
+  cluster.method = "complete",
+  distance.threshold = 0.01,
+  corr.power = 4,
+  n.cores = 1,
+  abs = TRUE,
+  ...
+)
 }
 \arguments{
 \item{tam}{output of pagoda.top.aspects()}
