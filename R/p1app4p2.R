@@ -158,7 +158,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
   # prepend groups, depth and batch
   clean.groups <- groups;
   if(min.group.size>1) { clean.groups[clean.groups %in% levels(clean.groups)[unlist(tapply(clean.groups,clean.groups,length))<min.group.size]] <- NA; clean.groups <- as.factor(clean.groups); }
-  factor.colors <- fac2col(clean.groups,s=0.8,v=0.8,shuffle=FALSE,min.group.size=min.group.size,return.details=T)
+  factor.colors <- fac2col(clean.groups,s=0.8,v=0.8,shuffle=FALSE,min.group.size=min.group.size,return.details=TRUE)
   acol <- list('clusters'=list(data=droplevels(clean.groups),
                                colors=as.character(factor.colors$palette),
                                text=paste('cl',as.character(groups))),
@@ -166,7 +166,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
                             colors=colorRampPalette(c("white","black"),space="Lab")(1024),
                             quantile.range=0.95))
   if(!is.null(p2$batch)) {
-    batch.colors <- fac2col(p2$batch,s=1.0,v=0.5,shuffle=F,level.colors=batch.colors,return.details=T)
+    batch.colors <- fac2col(p2$batch,s=1.0,v=0.5,shuffle=F,level.colors=batch.colors,return.details=TRUE)
     acol <- c(acol,list('batch'=list(data=p2$batch,colors=as.character(batch.colors$palette),text=as.character(p2$batch))))
   }
   col.cols <- rev(c(acol,col.cols))
@@ -433,7 +433,7 @@ p2ViewPagodaApp <- setRefClass(
 
                      df$cos <- vcos;
                      df <- df[is.finite(df$cos),]
-                     df <- df[order(abs(df$cos),decreasing=T),]
+                     df <- df[order(abs(df$cos),decreasing=TRUE),]
                      lgt <- df
                      
                      if(!is.null(req$params()$filter)) {
@@ -591,7 +591,7 @@ p2ViewPagodaApp <- setRefClass(
                      cells <- fromJSON(url_decode(par$cells))
                      ci <- rownames(results$p2$counts) %in% cells;
                      groups <- rep('other',length(ci)); groups[ci] <- 'group'; names(groups) <- rownames(results$p2$counts);
-                     ds <- results$p2$getDifferentialGenes(type='PCA',groups=groups,upregulated.only=T,verbose=F)
+                     ds <- results$p2$getDifferentialGenes(type='PCA',groups=groups,upregulated.only=TRUE,verbose=FALSE)
                      mgenes <- rownames(ds[['group']])[1:ngenes]
                      ol <- getgenecldata(mgenes, ltrim = ltrim); #ol$sigdiff <- names(sigdiff);
                      s <- toJSON(ol)
@@ -819,21 +819,21 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
       # positive
       vi <- which(xp$v[,1]>=0)
       if(length(vi)>0) {
-        selected.genes.pos <- lab[vi[order(xp$v[vi],decreasing=T)[1:min(round(n.genes/2),length(vi))]]]
+        selected.genes.pos <- lab[vi[order(xp$v[vi],decreasing=TRUE)[1:min(round(n.genes/2),length(vi))]]]
       } else {
         selected.genes.pos <- c();
       }
       vi <- which(xp$v[,1]<0)
       if(length(vi)>0) {
-        selected.genes.neg <- lab[vi[order(xp$v[vi],decreasing=F)[1:min(round(n.genes/2),length(vi))]]]
+        selected.genes.neg <- lab[vi[order(xp$v[vi],decreasing=FALSE)[1:min(round(n.genes/2),length(vi))]]]
       } else {
         selected.genes.neg <- c();
       }
       selected.genes <- unique(c(selected.genes.pos, selected.genes.neg))
     } else {
-      selected.genes <- lab[order(abs(xp$v[,1]),decreasing=T)[1:min(round(n.genes),nrow(xp$v))]]
+      selected.genes <- lab[order(abs(xp$v[,1]),decreasing=TRUE)[1:min(round(n.genes),nrow(xp$v))]]
     }
-    d <- as.matrix(p2$counts[,selected.genes,drop=F])
+    d <- as.matrix(p2$counts[,selected.genes,drop=FALSE])
     d <- t(t(d)*p2$misc[['varinfo']][colnames(d),'gsf'])
   } else {
     xp <- list()
@@ -861,11 +861,11 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
         attributes(hc)<-list(members=length(lab),height=1);
         class(hc)<-"dendrogram";
         hc[[1]] <- list();
-        attributes(hc[[1]]) <- list(members=1,height=0,label=lab[1],leaf=T)
+        attributes(hc[[1]]) <- list(members=1,height=0,label=lab[1],leaf=TRUE)
         hc[[2]] <- list();
-        attributes(hc[[2]]) <- list(members=1,height=0,label=lab[2],leaf=T)
+        attributes(hc[[2]]) <- list(members=1,height=0,label=lab[2],leaf=TRUE)
       } else {
-        hc <- list(); attributes(hc) <- list(members=1,height=0,label=lab[1],leaf=T); class(hc) <- "dendrogram";
+        hc <- list(); attributes(hc) <- list(members=1,height=0,label=lab[1],leaf=TRUE); class(hc) <- "dendrogram";
       }
     }
   } else {

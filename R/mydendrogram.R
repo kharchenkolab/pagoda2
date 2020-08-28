@@ -247,7 +247,7 @@ my.heatmap <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
           labRow = NULL, labCol = NULL, main = NULL, xlab = NULL, ylab = NULL,
           keep.dendro = FALSE,
           grid = FALSE, grid.col=1,grid.lwd=1,
-          verbose = getOption("verbose"), imageSize=4, imageVSize=imageSize,imageHSize=imageSize,lasCol=2, lasRow=2, respect=F, box=F, ...)
+          verbose = getOption("verbose"), imageSize=4, imageVSize=imageSize,imageHSize=imageSize,lasCol=2, lasRow=2, respect=FALSE, box=FALSE, ...)
 {
     scale <- if(symm && missing(scale)) "none" else match.arg(scale)
     if(length(di <- dim(x)) != 2 || !is.numeric(x))
@@ -366,7 +366,7 @@ my.heatmap <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     if(!missing(ColSideColors)) {
         par(mar = c(0.5,0, 0,margins[2]))
         if(is.matrix(ColSideColors)) {
-          image(t(matrix(1:length(ColSideColors),byrow=T,nrow=nrow(ColSideColors),ncol=ncol(ColSideColors))), col = as.vector(t(ColSideColors[,colInd])), axes = FALSE)
+          image(t(matrix(1:length(ColSideColors),byrow=TRUE,nrow=nrow(ColSideColors),ncol=ncol(ColSideColors))), col = as.vector(t(ColSideColors[,colInd])), axes = FALSE)
           if(box) { box(); }
         } else {
           image(cbind(1:nc), col = ColSideColors[colInd], axes = FALSE)
@@ -432,7 +432,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
           labRow = NULL, labCol = NULL, main = NULL, xlab = NULL, ylab = NULL,
           keep.dendro = FALSE,
           grid = FALSE, grid.col=1,grid.lwd=1,
-          verbose = getOption("verbose"), Colv.vsize=0.15, Rowv.hsize=0.15, ColSideColors.unit.vsize=0.02, RowSideColors.hsize=0.02,lasCol=2, lasRow=2, respect=F, box=F, zlim=NULL, ...)
+          verbose = getOption("verbose"), Colv.vsize=0.15, Rowv.hsize=0.15, ColSideColors.unit.vsize=0.02, RowSideColors.hsize=0.02,lasCol=2, lasRow=2, respect=FALSE, box=FALSE, zlim=NULL, ...)
 {
     scale <- if(symm && missing(scale)) "none" else match.arg(scale)
     if(length(di <- dim(x)) != 2 || !is.numeric(x))
@@ -492,7 +492,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     else colInd <- 1:nc
 
     ## reorder x
-    x <- x[rowInd, colInd,drop=F]
+    x <- x[rowInd, colInd, drop=FALSE]
 
     labRow <-
         if(is.null(labRow))
@@ -537,7 +537,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
         if(ncol(ColSideColors)!=nc)
           stop("'ColSideColors' matrix must have the same number of columns as length ncol(x)")
         if(is.character(ColSideColors.unit.vsize)) {
-          ww <- paste(as.numeric(gsub("(\\d+\\.?\\d*)(.*)","\\1",ColSideColors.unit.vsize,perl=T))*nrow(ColSideColors),gsub("(\\d+\\.?\\d*)(.*)","\\2",ColSideColors.unit.vsize,perl=T),sep="")
+          ww <- paste(as.numeric(gsub("(\\d+\\.?\\d*)(.*)","\\1",ColSideColors.unit.vsize,perl=TRUE))*nrow(ColSideColors),gsub("(\\d+\\.?\\d*)(.*)","\\2",ColSideColors.unit.vsize,perl=TRUE),sep="")
         } else {
           ww <- lcm(ColSideColors.unit.vsize*ds[2]*nrow(ColSideColors))
         }
@@ -547,7 +547,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
         if(!is.character(ColSideColors) || length(ColSideColors) != nc)
           stop("'ColSideColors' must be a character vector of length ncol(x)")
         if(is.character(ColSideColors.unit.vsize)) {
-          ww <- paste(as.numeric(gsub("(\\d+\\.?\\d*)(.*)","\\1",ColSideColors.unit.vsize,perl=T)),gsub("(\\d+\\.?\\d*)(.*)","\\2",ColSideColors.unit.vsize,perl=T),sep="")
+          ww <- paste(as.numeric(gsub("(\\d+\\.?\\d*)(.*)","\\1",ColSideColors.unit.vsize,perl=TRUE)),gsub("(\\d+\\.?\\d*)(.*)","\\2",ColSideColors.unit.vsize,perl=TRUE),sep="")
         } else {
           ww <- lcm(ColSideColors.unit.vsize*ds[2])
         }
@@ -581,7 +581,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     if(!missing(ColSideColors) && !is.null(ColSideColors)) {
         par(mar = c(internal.margin,0, 0,margins[2]))
         if(is.matrix(ColSideColors)) {
-          image(t(matrix(1:length(ColSideColors),byrow=T,nrow=nrow(ColSideColors),ncol=ncol(ColSideColors))), col = as.vector(t(ColSideColors[,colInd,drop=F])), axes = FALSE)
+          image(t(matrix(1:length(ColSideColors),byrow=TRUE,nrow=nrow(ColSideColors),ncol=ncol(ColSideColors))), col = as.vector(t(ColSideColors[,colInd,drop=FALSE])), axes = FALSE)
           if(box) { box(); }
         } else {
           image(cbind(1:nc), col = ColSideColors[colInd], axes = FALSE)
@@ -595,7 +595,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     if(revC) { # x columns reversed
         iy <- nr:1
         ddr <- rev(ddr)
-        x <- x[,iy,drop=F]
+        x <- x[,iy,drop=FALSE]
     } else iy <- 1:nr
 
     image(1:nc, 1:nr, x, xlim = 0.5+ c(0, nc), ylim = 0.5+ c(0, nr),
