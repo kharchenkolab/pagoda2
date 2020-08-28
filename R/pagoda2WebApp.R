@@ -797,7 +797,7 @@ pagoda2WebApp <- setRefClass(
           cat(paste0('Export list of embeddings: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       # Export list with all included embeddings for easier iteration in Rcpp-function.
-      exportList[["embedList"]] <- grep("emb_",names(exportList),value=T);
+      exportList[["embedList"]] <- grep("emb_",names(exportList),value=TRUE)
       
       ## Main Sparse count matrix to save
       t0 <- Sys.time()
@@ -844,7 +844,7 @@ pagoda2WebApp <- setRefClass(
       }
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('Serializing aspect infomration in:', as.double(t1-t0,units="secs")," seconds \n"))
+          cat(paste0('Serializing aspect information in:', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       ## Serialising geneset Information
@@ -857,7 +857,7 @@ pagoda2WebApp <- setRefClass(
       geneListGenes <- lapply( geneSets, function(gos) make.unique(gos$genes))
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('Serializing aspect infomration in:', as.double(t1-t0,units="secs")," seconds \n"))
+          cat(paste0('Serializing aspect information in:', as.double(t1-t0,units="secs")," seconds \n"))
             
       ## Creation of the export List for Rcpp
       
@@ -941,9 +941,17 @@ pagoda2WebApp <- setRefClass(
       ## Tell Cpp what is a sparse matrix
       exportList[["sparsematnames"]] <- c("matsparse", "mataspect","sparseMatrixTransp");
 
+      ## check if elements missing in list
+      "%notin%" = Negate("%in%")
+      requiredListElements = c("embedList", "reduceddendrogram", "cellorder","cellmetadata","geneinformation", "embeddingstructure", "aspectInformation", "genesets", "genesetGenes", "appmetadata", "geneknn", "matsparse", "mataspect", "sparseMatrixTransp")
+      if (any(requiredListElements %notin% names(exportList))) {
+        missingElements = requiredListElements %notin% names(exportList) ## boolean list
+        ## requiredListElements[missingElements] will list the missing list names
+        stop("Missing list elements for exportList: ", requiredListElements[missingElements], ". This will cause errors in the function WriteListToBinary(expL=exportList).")
+      }
       
       ## Call Rcpp function to write to static file
-      WriteListToBinary(expL=exportList,outfile = binary.filename,verbose=verbose);
+      WriteListToBinary(expL=exportList, outfile=binary.filename, verbose=verbose);
       ##return(invisible(exportList));
       
       ## Return NULL
