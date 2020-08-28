@@ -1049,7 +1049,7 @@ Pagoda2 <- setRefClass(
         if (!(gene %in% colnames(counts)))
           stop("Gene '", gene, "' isn't presented in the count matrix")
         
-        colors <- p2$counts[,gene]
+        colors <- .self$counts[,gene]
       }
 
       if(is.null(colors) && is.null(groups)) {
@@ -1079,7 +1079,20 @@ Pagoda2 <- setRefClass(
       }
     },
 
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts")) {
+    getNormalizedExpressionMatrix=function(n.odgenes=NULL,genes=NULL) {
+      "Return variance-normalized matrix for specified genes or a number of OD genes\n
+         - genes explicit vector of genes to return
+         - n.odgenes whether a certain number of top overdispersed genes should be used (default NULL - all significant ones); ignored if genes are passed
+        return:  cell x gene matrix\n"
+      if(is.null(genes)) {
+        genes <- .self$getOdGenes(n.odgenes)
+      }
+      x <- .self$counts[,genes];
+      x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+      x
+    },
+    
+    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
       "Calculate PCA reduction of the data\n
        - nPcs number of PCs\n
        - type dataset view to reduce (counts by default, but can specify a name of an existing reduction)\n
@@ -1092,6 +1105,7 @@ Pagoda2 <- setRefClass(
        - fastpath use C implementation for speedup\n
        - maxit maximum number of irlba iterations to use\n
        - verbose verbose\n
+       - ... additional arguments forwarded to irlba::irlba\n
        return invisible PCA result (the reduction itself is saved in $reductions[[name]])"
 
       if(type=='counts') {
@@ -1129,14 +1143,14 @@ Pagoda2 <- setRefClass(
         # cell subset is just for PC determination
         nPcs <- min(min(length(cells),ncol(x))-1,nPcs)
         cm <- Matrix::colMeans(x[cells,])
-        pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
+        pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T, ...)
       } else {
         nPcs <- min(min(nrow(x),ncol(x))-1,nPcs)
         if(center) {
           cm <- Matrix::colMeans(x)
-          pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
+          pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T, ...)
         } else {
-          pcs <- irlba(x, nv=nPcs, nu=0, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T)
+          pcs <- irlba(x, nv=nPcs, nu=0, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=T, ...)
         }
       }
       rownames(pcs$v) <- colnames(x);
@@ -1830,13 +1844,13 @@ Pagoda2 <- setRefClass(
         
         distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
         
-        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
+        emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         rownames(emb) <- rownames(x)
         embeddings[[type]][[name]] <<- emb;
       } else if (embeddingType == "UMAP_graph") {
         g <- graphs[[type]];
         if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
-        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, ...)
+        emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         embeddings[[type]][[name]] <<- emb;
       } else {
         stop('unknown embeddingType ',embeddingType,' specified');
