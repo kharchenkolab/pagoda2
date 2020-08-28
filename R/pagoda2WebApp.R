@@ -951,7 +951,7 @@ pagoda2WebApp <- setRefClass(
       }
       
       ## Call Rcpp function to write to static file
-      WriteListToBinary(expL=exportList, outfile = binary.filename, verbose=verbose);
+      WriteListToBinary(expL=exportList, outfile=binary.filename, verbose=verbose);
       ##return(invisible(exportList));
       
       ## Return NULL

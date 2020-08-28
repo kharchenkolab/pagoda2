@@ -1164,7 +1164,7 @@ Pagoda2 <- setRefClass(
         if (!(gene %in% colnames(counts)))
           stop("Gene '", gene, "' isn't presented in the count matrix")
         
-        colors <- p2$counts[,gene]
+        colors <- .self$counts[,gene]
       }
 
       if(is.null(colors) && is.null(groups)) {
@@ -1194,6 +1194,19 @@ Pagoda2 <- setRefClass(
       }
     },
 
+    getNormalizedExpressionMatrix=function(n.odgenes=NULL,genes=NULL) {
+      "Return variance-normalized matrix for specified genes or a number of OD genes\n
+         - genes explicit vector of genes to return
+         - n.odgenes whether a certain number of top overdispersed genes should be used (default NULL - all significant ones); ignored if genes are passed
+        return:  cell x gene matrix\n"
+      if(is.null(genes)) {
+        genes <- .self$getOdGenes(n.odgenes)
+      }
+      x <- .self$counts[,genes];
+      x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+      x
+    },
+    
     calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts")) {
       "Calculate PCA reduction of the data\n
        - nPcs number of PCs\n
