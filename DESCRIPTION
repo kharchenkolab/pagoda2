@@ -53,7 +53,7 @@ Suggests:
 Remotes: 
     kharchenkolab/sccore
 VignetteBuilder: knitr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
 NeedsCompilation: yes
 Author: Peter Kharchenko [cre, aut], Nikolas Barkas [aut], Viktor Petukhov [aut]
