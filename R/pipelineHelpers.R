@@ -41,7 +41,7 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100,
   if (get.tsne) {
     if(perplexity > nrow(p2$counts)/5) {
       perplexity <- floor((nrow(p2$counts)-1)/3)
-      cat("perplexity is too large, reducing to",perplexity,"\n");
+      message("perplexity is too large, reducing to ",perplexity,"\n");
     }
 
       p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = perplexity, distance='L2');
@@ -492,14 +492,14 @@ p2.toweb.hdea <- function(p2, title="") {
 #' @return a pagoda2 web object
 #' @export basicP2web
 basicP2web <- function(p2,app.title = 'Pagoda2', extraWebMetadata = NULL, n.cores = 4) {
-    cat('Calculating hdea...\n')
+    message('Calculating hdea...\n')
     hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3, n.cores = n.cores)
     metadata.forweb <- list();
     metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel,displayname='Multilevel')
     metadata.forweb <- c(metadata.forweb, extraWebMetadata)
     genesets <- hierDiffToGenesets(hdea)
     appmetadata = list(apptitle=app.title)
-    cat('Making KNN graph...\n')
+    message('Making KNN graph...\n')
     #p2$makeGeneKnnGraph(n.cores=n.cores)
     make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets, dendrogramCellGroups = p2$clusters$PCA$multilevel, show.clusters=FALSE, appmetadata = appmetadata)
 }

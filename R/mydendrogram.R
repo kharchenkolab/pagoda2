@@ -139,7 +139,7 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
       }
     lmat[is.na(lmat)] <- 0
     if(verbose) {
-        cat("layout: widths = ", lwid, ", heights = ", lhei,"; lmat=\n")
+        message("layout: widths = ", lwid, ", heights = ", lhei,"; lmat=\n")
         print(lmat)
     }
 

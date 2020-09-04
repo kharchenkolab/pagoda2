@@ -28,7 +28,7 @@ multi2dend <- function(cl,counts,deep=FALSE,dist='cor') {
   }
   d <- as.dendrogram(hclust(as.dist(lvec.dist),method='ward.D'))
   # add cell info to the laves
-  addinfo <- function(l,env) {
+  addinfo <- function(l, env) {
     v <- as.integer(mget("index",envir=env,ifnotfound=0)[[1]])+1;
     attr(l,'nodeId') <- v
     assign("index",v,envir=env)
@@ -311,7 +311,7 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
   } else {
     single.dataset <- FALSE;
   }
-  if(verbose) cat("reading",length(matrixPaths),"dataset(s) ")
+  if(verbose) message("reading ",length(matrixPaths)," dataset(s) ")
   if(is.null(names(matrixPaths))) stop("matrixPaths must be a named vector")
   dl <- pagoda2:::papply(sn(names(matrixPaths)),function(nam) {
 
@@ -336,11 +336,11 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
     gs <- read.delim(fn,header=FALSE)
     colnames(x) <- gs[,1]
 
-    if(verbose) cat(".")
+    if(verbose) message(".")
     colnames(x) <- paste(nam,colnames(x),sep='_');
     x
   },n.cores=n.cores)
-  if(verbose) cat(" done\n")
+  if(verbose) message(" done\n")
   if(single.dataset) { return(dl[[1]]); } else { return(dl) }
 }
 
@@ -397,7 +397,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell
 namedNames <- function(g) {
   n <- names(g)
   names(n) <- n;
-  n
+  return(n)
 }
 
 embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
