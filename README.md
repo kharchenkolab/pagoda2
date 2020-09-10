@@ -1,4 +1,4 @@
-## Table of Content
+## Table of Contents
 
 - [Demo Web Application](#demo-web-application)
 - [Analysis walkthroughs](#analysis-walkthroughs)
