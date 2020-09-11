@@ -65,7 +65,7 @@ yum install openssl-devel libcurl-devel
 If you are having trouble setting up pagoda2 on your system, an alternative approach to get pagoda on a mac or windows system is through a docker container. The docker distribution is current as of October 2018 and also includes the [Conos package](https://github.com/hms-dbmi/conos). To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
 
 ```
-docker run -p 8787:8787 vpetukhov/pagoda2:latest
+docker run -p 8787:8787 pkharchenkolab/pagoda2:latest
 ```
 
 The first time you run the command it will download several images so make sure that you have fast internet access setup. You can then point your browser to http://localhost:8787/ to get an Rstudio environment with pagoda2 installed (log in using credentials rstudio/pass). Explore the docker [--mount option](https://docs.docker.com/storage/volumes/) to allow access of the docker image to your local files.
