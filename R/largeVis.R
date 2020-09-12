@@ -107,7 +107,7 @@ projectKNNs <- function(wij, # symmetric sparse matrix
   #################################################
   # SGD
   #################################################
-  if (verbose) cat("Estimating embeddings.\n")
+  if (verbose) message("Estimating embeddings.\n")
   coords <- sgd(coords,
                 targets_i = is,
                 sources_j = js,

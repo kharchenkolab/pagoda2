@@ -10,7 +10,7 @@ NULL
 }
 
 # translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
-multi2dend <- function(cl,counts,deep=F,dist='cor') {
+multi2dend <- function(cl,counts,deep=FALSE,dist='cor') {
   if(deep) {
     clf <- as.integer(cl$memberships[1,]); # take the lowest level
   } else {
@@ -20,7 +20,7 @@ multi2dend <- function(cl,counts,deep=F,dist='cor') {
   clf.size <- unlist(tapply(clf,factor(clf,levels=seq(1,max(clf))),length))
   rowFac <- rep(NA,nrow(counts));
   rowFac[match(names(clf),rownames(counts))] <- clf;
-  lvec <- colSumByFac(counts,rowFac)[-1,,drop=F];
+  lvec <- colSumByFac(counts,rowFac)[-1,,drop=FALSE];
   if(dist=='JS') {
     lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))));
   } else { # use correlation distance in log10 space
@@ -28,7 +28,7 @@ multi2dend <- function(cl,counts,deep=F,dist='cor') {
   }
   d <- as.dendrogram(hclust(as.dist(lvec.dist),method='ward.D'))
   # add cell info to the laves
-  addinfo <- function(l,env) {
+  addinfo <- function(l, env) {
     v <- as.integer(mget("index",envir=env,ifnotfound=0)[[1]])+1;
     attr(l,'nodeId') <- v
     assign("index",v,envir=env)
@@ -72,22 +72,6 @@ jw.disR <- function(x,y) {
   y <- y+1/length(y)/1e3;
   a <- x*log(x)  + y*log(y) - (x+y)*log((x+y)/2);
   sqrt(sum(a)/2)
-}
-
-
-# note transpose is meant to speed up calculations when neither scaling nor centering is required
-fast.pca <- function(m,nPcs=2,tol=1e-10,scale=F,center=F,transpose=F) {
-  if(transpose) {
-    if(center) { m <- m-Matrix::rowMeans(m)}; if(scale) { m <- m/sqrt(Matrix::rowSums(m*m)); }
-    a <- irlba(tcrossprod(m)/(ncol(m)-1), nu=0, nv=nPcs,tol=tol);
-    a$l <- t(t(a$v) %*% m)
-  } else {
-    if(scale||center) { m <- scale(m,scale=scale,center=center) }
-    #a <- irlba((crossprod(m) - nrow(m) * tcrossprod(Matrix::colMeans(m)))/(nrow(m)-1), nu=0, nv=nPcs,tol=tol);
-    a <- irlba(crossprod(m)/(nrow(m)-1), nu=0, nv=nPcs,tol=tol);
-    a$l <- m %*% a$v
-  }
-  a
 }
 
 val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.95) {
@@ -320,14 +304,14 @@ Mode <- function(x) {
 ##' @param n.cores numebr of cores to utilize in parallel
 ##' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
 ##' @export
-read.10x.matrices <- function(matrixPaths,n.cores=1,verbose=T) {
+read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
   if(length(matrixPaths)==1) {
     matrixPaths <- c('one'=matrixPaths);
     single.dataset <- TRUE;
   } else {
     single.dataset <- FALSE;
   }
-  if(verbose) cat("reading",length(matrixPaths),"dataset(s) ")
+  if(verbose) message("reading ",length(matrixPaths)," dataset(s) ")
   if(is.null(names(matrixPaths))) stop("matrixPaths must be a named vector")
   dl <- pagoda2:::papply(sn(names(matrixPaths)),function(nam) {
 
@@ -344,19 +328,19 @@ read.10x.matrices <- function(matrixPaths,n.cores=1,verbose=T) {
     }
     fn <- paste(matrixPath,'genes.tsv',sep='/');
     if(file.exists(paste(fn,'gz',sep='.'))) { fn <- paste(fn,'gz',sep='.') }
-    gs <- read.delim(fn,header=F)
+    gs <- read.delim(fn,header=FALSE)
     rownames(x) <- gs[,2]    
 
     fn <- paste(matrixPath,'barcodes.tsv',sep='/');
     if(file.exists(paste(fn,'gz',sep='.'))) { fn <- paste(fn,'gz',sep='.') }
-    gs <- read.delim(fn,header=F)
+    gs <- read.delim(fn,header=FALSE)
     colnames(x) <- gs[,1]
 
-    if(verbose) cat(".")
+    if(verbose) message(".")
     colnames(x) <- paste(nam,colnames(x),sep='_');
     x
   },n.cores=n.cores)
-  if(verbose) cat(" done\n")
+  if(verbose) message(" done\n")
   if(single.dataset) { return(dl[[1]]); } else { return(dl) }
 }
 
@@ -373,7 +357,7 @@ read.10x.matrices <- function(matrixPaths,n.cores=1,verbose=T) {
 ##' @param do.par reset graphical parameters prior to plotting
 ##' @return a filtered matrix
 ##' @export
-gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell.size=5e4,p.level=min(1e-3,1/ncol(countMatrix)),alpha=0.1,plot=T, do.par=T) {
+gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell.size=5e4,p.level=min(1e-3,1/ncol(countMatrix)),alpha=0.1,plot=TRUE, do.par=TRUE) {
   if(plot) {
     if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
     hist(log10(colSums(countMatrix)),col='wheat',xlab='log10[ molecules ]',main='')
@@ -385,7 +369,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell
   df <- data.frame(molecules=colSums(countMatrix),genes=colSums(countMatrix>0));
   df <- df[df$molecules>=min.cell.size,];
   df <- log10(df);
-  df <- df[order(df$molecules,decreasing=F),]
+  df <- df[order(df$molecules,decreasing=FALSE),]
   if(plot) {
     plot(df,col=adjustcolor(1,alpha=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
     abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
@@ -401,7 +385,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell
   }
   # set of filtered cells to move forward with
   valid.cells <- colSums(countMatrix)>min.cell.size & colSums(countMatrix)<max.cell.size & !(colnames(countMatrix) %in% outliers)
-  countMatrix[,valid.cells,drop=F]
+  countMatrix[,valid.cells,drop=FALSE]
 }
 
 #' Get a vector of the names of an object named by the names themselves
@@ -413,11 +397,11 @@ gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell
 namedNames <- function(g) {
   n <- names(g)
   names(n) <- n;
-  n
+  return(n)
 }
 
 embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
-  if (!requireNamespace("uwot", quietly=T))
+  if (!requireNamespace("uwot", quietly=TRUE))
     stop("You need to install package 'uwot' to be able to use UMAP embedding.")
 
   adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("dgTMatrix")
@@ -425,7 +409,7 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
   k.min <- sapply(vals.per.col, length) %>% min()
   k <- if (is.null(k)) k.min else min(k, k.min)
   
-  knns <- lapply(vals.per.col, function(x) sort(x, decreasing=T)[1:k])
+  knns <- lapply(vals.per.col, function(x) sort(x, decreasing=TRUE)[1:k])
   knn.ids <- sapply(knns, function(x) as.integer(names(x))) %>% t()
   knn.sims <- do.call(rbind, knns)
   knn.dists <- 1 - knn.sims / max(knn.sims)

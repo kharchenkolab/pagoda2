@@ -647,7 +647,7 @@ void Hnsw::NormalizeVector(std::vector<float>& vec) {
    float sum = std::inner_product(vec.begin(), vec.end(), vec.begin(), 0.0);
    if (sum != 0.0) {
        sum = 1 / sqrt(sum);
-       std::transform(vec.begin(), vec.end(), vec.begin(), std::bind1st(std::multiplies<float>(), sum));
+       std::transform(vec.begin(), vec.end(), vec.begin(), [sum](float vec){ return vec * sum;});
    }
 }
 
