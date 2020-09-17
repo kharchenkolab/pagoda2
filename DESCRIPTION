@@ -52,8 +52,7 @@ Suggests:
     rmarkdown,
     uwot
 Remotes: 
-    kharchenkolab/sccore,
-    eddelbuettel/RcppSpdlog
+    kharchenkolab/sccore
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
