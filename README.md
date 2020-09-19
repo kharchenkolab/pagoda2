@@ -35,7 +35,7 @@ If you have Mac, or it doesn't work on your Linux, please see instructions below
 
 ### Installing Mac Dependencies
 
-For instructions on installing Pagodaw with Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
+For instructions on installing Pagoda2 with Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
 
 You need R >=3.4.0 to install this package on a mac. 
 For installation please refer to [cran](https://cran.r-project.org/)  
