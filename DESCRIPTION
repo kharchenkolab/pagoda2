@@ -1,7 +1,7 @@
 Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
 Version: 0.1.1
-Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = c("aut", "cre")), 
+Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = c("cre", "aut")), 
              person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"),
              person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="ctb"))
 Description: Single-cell RNA-seq Analysis
@@ -26,6 +26,7 @@ Imports:
     Rcpp,
     RcppArmadillo,
     RcppProgress,
+    RcppSpdlog,
     rjson,
     RMTstat,
     Rook,
@@ -54,7 +55,7 @@ Remotes:
     kharchenkolab/sccore
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
-LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
 NeedsCompilation: yes
 Author: Peter Kharchenko [cre, aut], Nikolas Barkas [aut], Viktor Petukhov [aut]
 Maintainer: Peter Kharchenko <peter_kharchenko@hms.harvard.edu>

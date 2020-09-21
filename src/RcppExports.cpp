@@ -196,37 +196,41 @@ BEGIN_RCPP
 END_RCPP
 }
 // n2Knn
-Eigen::SparseMatrix<double> n2Knn(const NumericMatrix& m, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
-RcppExport SEXP _pagoda2_n2Knn(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP) {
+Eigen::SparseMatrix<double> n2Knn(const Rcpp::NumericMatrix& m, int64_t k, int64_t nThreads, bool verbose, std::string indexType, int64_t M, int64_t MaxM0, float ef_search_multiplier, bool quiet);
+RcppExport SEXP _pagoda2_n2Knn(SEXP mSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP, SEXP ef_search_multiplierSEXP, SEXP quietSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type m(mSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< string >::type indexType(indexTypeSEXP);
-    Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    Rcpp::traits::input_parameter< int >::type MaxM0(MaxM0SEXP);
-    rcpp_result_gen = Rcpp::wrap(n2Knn(m, k, nThreads, verbose, indexType, M, MaxM0));
+    Rcpp::traits::input_parameter< std::string >::type indexType(indexTypeSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type MaxM0(MaxM0SEXP);
+    Rcpp::traits::input_parameter< float >::type ef_search_multiplier(ef_search_multiplierSEXP);
+    Rcpp::traits::input_parameter< bool >::type quiet(quietSEXP);
+    rcpp_result_gen = Rcpp::wrap(n2Knn(m, k, nThreads, verbose, indexType, M, MaxM0, ef_search_multiplier, quiet));
     return rcpp_result_gen;
 END_RCPP
 }
 // n2CrossKnn
-Eigen::SparseMatrix<double> n2CrossKnn(const NumericMatrix& mA, const NumericMatrix& mB, int k, int nThreads, bool verbose, string indexType, int M, int MaxM0);
-RcppExport SEXP _pagoda2_n2CrossKnn(SEXP mASEXP, SEXP mBSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP) {
+Eigen::SparseMatrix<double> n2CrossKnn(const Rcpp::NumericMatrix& mA, const Rcpp::NumericMatrix& mB, int64_t k, int64_t nThreads, bool verbose, std::string indexType, int64_t M, int64_t MaxM0, float ef_search_multiplier, bool quiet);
+RcppExport SEXP _pagoda2_n2CrossKnn(SEXP mASEXP, SEXP mBSEXP, SEXP kSEXP, SEXP nThreadsSEXP, SEXP verboseSEXP, SEXP indexTypeSEXP, SEXP MSEXP, SEXP MaxM0SEXP, SEXP ef_search_multiplierSEXP, SEXP quietSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type mA(mASEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix& >::type mB(mBSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type mA(mASEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericMatrix& >::type mB(mBSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type k(kSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< string >::type indexType(indexTypeSEXP);
-    Rcpp::traits::input_parameter< int >::type M(MSEXP);
-    Rcpp::traits::input_parameter< int >::type MaxM0(MaxM0SEXP);
-    rcpp_result_gen = Rcpp::wrap(n2CrossKnn(mA, mB, k, nThreads, verbose, indexType, M, MaxM0));
+    Rcpp::traits::input_parameter< std::string >::type indexType(indexTypeSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type M(MSEXP);
+    Rcpp::traits::input_parameter< int64_t >::type MaxM0(MaxM0SEXP);
+    Rcpp::traits::input_parameter< float >::type ef_search_multiplier(ef_search_multiplierSEXP);
+    Rcpp::traits::input_parameter< bool >::type quiet(quietSEXP);
+    rcpp_result_gen = Rcpp::wrap(n2CrossKnn(mA, mB, k, nThreads, verbose, indexType, M, MaxM0, ef_search_multiplier, quiet));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -345,8 +349,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_orderColumnRows", (DL_FUNC) &_pagoda2_orderColumnRows, 2},
     {"_pagoda2_smatColVecCorr", (DL_FUNC) &_pagoda2_smatColVecCorr, 3},
     {"_pagoda2_arma_mat_cor", (DL_FUNC) &_pagoda2_arma_mat_cor, 1},
-    {"_pagoda2_n2Knn", (DL_FUNC) &_pagoda2_n2Knn, 7},
-    {"_pagoda2_n2CrossKnn", (DL_FUNC) &_pagoda2_n2CrossKnn, 8},
+    {"_pagoda2_n2Knn", (DL_FUNC) &_pagoda2_n2Knn, 9},
+    {"_pagoda2_n2CrossKnn", (DL_FUNC) &_pagoda2_n2CrossKnn, 10},
     {"_pagoda2_matWCorr", (DL_FUNC) &_pagoda2_matWCorr, 2},
     {"_pagoda2_winsorizeMatrix", (DL_FUNC) &_pagoda2_winsorizeMatrix, 2},
     {"_pagoda2_plSemicompleteCor2", (DL_FUNC) &_pagoda2_plSemicompleteCor2, 1},

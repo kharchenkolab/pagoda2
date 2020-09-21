@@ -31,7 +31,6 @@ library('pagoda2')
 ```
 
 If you have Mac, or it doesn't work on your Linux, please see instructions below. 
-*Currently, there is no way to install Pagoda 2 on Windows.*
 
 ### Installing Mac Dependencies
 
