@@ -29,9 +29,9 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100,
   p2$calculatePcaReduction(nPcs = nPcs, n.odgenes = n.odgenes, maxit = 1000)
   ## Make KNN graph and generate clustering
   p2$makeKnnGraph(k = k, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
-  #p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
+  p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
   p2$getKnnClusters(method = igraph::multilevel.community, type = 'PCA', name = 'multilevel');
-  #p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap');
+  p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap');
 
   ## Generate embeddings
   if (get.largevis) {
