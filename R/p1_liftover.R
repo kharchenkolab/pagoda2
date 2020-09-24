@@ -262,6 +262,6 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = N
   rownames(cr) <- colnames(cr) <- rownames(xv)
   d <- stats::as.dist(1-abs(cr))
   d[d<0] <- 0
-  d
+  return(d)
 
 }

@@ -1,5 +1,21 @@
 # largeVis moveover routine
 # copied from https://github.com/elbamos/largeVis
+
+#' buildWijMatrix
+#'
+#' Rescale the weights in an edge matrix to match a given perplexity.
+#' From largeVis, <https://github.com/elbamos/largeVis>
+#'
+#' @param x An edgematrix, either an `edgematrix` object or a sparse matrix.
+#' @param threads The maximum number of threads to spawn. Determined automatically if \code{NULL} (the default).
+#' @param perplexity Given perplexity.
+#'
+#' @return A \code{list} with the following components: \describe{
+#'    \item{'dist'}{An [N,K] matrix of the distances to the nearest neighbors.}
+#'    \item{'id'}{An [N,K] matrix of the node indexes of the neartest neighbors.  Note that this matrix is 1-indexed,
+#'    unlike most other matrices in this package.}
+#'    \item{'k'}{The number of nearest neighbors.}
+#'  }
 #' @export
 buildWijMatrix <- function(x, threads = NULL, perplexity = 50) {
   is <- rep(0:(ncol(x) - 1), diff(x@p))
@@ -133,8 +149,8 @@ projectKNNs <- function(wij, # symmetric sparse matrix
 #'
 #' The formula used is the one used by the \code{LargeVis} reference implementation.  This is substantially less than the recommendation \eqn{E * 10000} in the original paper.
 #'
-#' @param N Number of vertices.
-#' @param E Number of edges.
+#' @param N Number of vertices
+#' @param E Number of edges (default = 150*N/2)
 #'
 #' @return The recommended number of sgd batches.
 #'

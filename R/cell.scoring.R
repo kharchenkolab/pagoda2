@@ -31,7 +31,7 @@ get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 
     }))
     ## return the background signature
     background.signature <- unique(background.signature)
-    background.signature
+    return(background.signature)
 }
 
 #' Puram, Bernstein (Cell, 2018)
@@ -65,7 +65,7 @@ score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, 
         }
         ret.vals <- cell.score.corrected
     }
-    ret.vals
+    return(ret.vals)
 }
 
 #' Plot the embedding of a pagoda2 object with the given values
@@ -123,7 +123,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
     ## Get mean for each cell
     scores <- apply(data.scaled, 1, mean)
     ## return
-    scores
+    return(scores)
 }
 
 #' Score cells by getting mean expression of genes in signtures
@@ -134,7 +134,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
 score.cells.nb0 <- function(data, signature) {
     signature <- subset.signature.to.data(data,signature)
     scores <- apply(data,1,mean)
-    scores
+    return(scores)
 }
 
 #' Scale the designated values between the range of 0 and 1
