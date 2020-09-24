@@ -3,8 +3,8 @@
 #' Puram, Bernstein (Cell, 2018)
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature a character vector of genes to use in the signature
-#' @param n.bins number of bins to put the genes in
-#' @param n.genes.per.bin number of genes to get from each bin
+#' @param n.bins number of bins to put the genes in (default=25)
+#' @param n.genes.per.bin number of genes to get from each bin (default=100)
 #' @return a character vector that can be used as a background signature
 #' @export get.control.geneset
 get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 100) {
@@ -38,8 +38,8 @@ get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 
 #' Score cells as described in Puram, Bernstein (Cell, 2018)
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature the signature to evaluate
-#' @param correct logical, perform background correction by getting a semi-random geneset
-#' @param show.plot logical, if corrected values are calculated show plot of corrected vs original scores
+#' @param correct logical, perform background correction by getting a semi-random geneset (default=TRUE)
+#' @param show.plot logical, if corrected values are calculated show plot of corrected vs original scores (default=FALSE)
 #' @param ... options for get.control.geneset()
 #' @return a score for each cell
 #' @export score.cells.puram
@@ -71,9 +71,9 @@ score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, 
 #' Plot the embedding of a pagoda2 object with the given values
 #' @param p2obj the pagoda2 object
 #' @param values the values to plot
-#' @param title title for the plot
-#' @param type the type reduction on which the embedding is based on
-#' @param embeddingType the type of embedding to plot
+#' @param title title for the plot (default="")
+#' @param type the type reduction on which the embedding is based on (default="PCA")
+#' @param embeddingType the type of embedding to plot (default="tSNE")
 #' @return NULL
 #' @export plotOneWithValues
 plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddingType = 'tSNE') 
@@ -87,7 +87,7 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' optionally warning if genes are missing
 #' @param data the matrix
 #' @param signature the signature to subset
-#' @param raise.warning logical, warn if genes are missing (default: TRUE)
+#' @param raise.warning logical, warn if genes are missing (default=TRUE)
 #' @export subset.signature.to.data
 subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
     keep.genes <- signature %in% colnames(data)
@@ -104,7 +104,7 @@ subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
 #' Score cells after standardising the expression of each gene removing outliers
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature a character vector of genes to use in the signature
-#' @param quantile.cutoff the quantile extremes to trim before plotting
+#' @param quantile.cutoff the quantile extremes to trim before plotting (default=0.0.1)
 score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
     ## DEVEL
     #data <- vals
@@ -131,7 +131,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
 #' @param signature the genes in the signature
 #' @return cell scores
 #' @export score.cells.nb0
-score.cells.nb0 <- function(data,signature) {
+score.cells.nb0 <- function(data, signature) {
     signature <- subset.signature.to.data(data,signature)
     scores <- apply(data,1,mean)
     scores
