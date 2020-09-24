@@ -4,7 +4,13 @@
 \alias{p2.generate.go}
 \title{Generate a GO environment for the organism specified}
 \usage{
-p2.generate.go(r, organism = NULL)
+p2.generate.go(
+  r,
+  organism = NULL,
+  go2all.egs = NULL,
+  eg.alias2eg = NULL,
+  min.env.length = 5
+)
 }
 \arguments{
 \item{r}{a pagoda2 object}

@@ -39,7 +39,7 @@ pagoda2WebApp <- setRefClass(
 
       ## Check that the object we are getting is what it should be
       if (class(pagoda2obj) != "Pagoda2") {
-        cat("We have an error");
+        message("We have an error");
         stop("ERROR: The provided object is not a pagoda 2 object")
       }
       
@@ -89,9 +89,9 @@ pagoda2WebApp <- setRefClass(
           # everything else end here
           res <- Response$new();
           res$header('Content-Type', 'text/html');
-          cat("Unhandled request for: ");
+          message("Unhandled request for: ");
           cat(env[['PATH_INFO']]);
-          cat("\n");
+          message("\n");
           res$finish();
         })
       ));
@@ -101,7 +101,7 @@ pagoda2WebApp <- setRefClass(
       cl0 <- dendrogramCellGroups
       # Generate an hclust objct of the above groups
       dendrogramCellGroups <- dendrogramCellGroups[match(rownames(r$counts),names(dendrogramCellGroups))]
-      lvec <- colSumByFac(r$misc[['rawCounts']],as.integer(cl0))[-1,,drop=F] + 1
+      lvec <- colSumByFac(r$misc[['rawCounts']],as.integer(cl0))[-1,,drop=FALSE] + 1
       lvec <- t(lvec/pmax(1,rowSums(lvec)))
       colnames(lvec) <- which(table(cl0)>0)
       rownames(lvec) <- colnames(r$misc[['rawCounts']])
@@ -137,7 +137,7 @@ pagoda2WebApp <- setRefClass(
               } else {
                 celsel <- names(cl0)[cl0 == x]
                 vpca <- r$counts[celsel, r$misc$odgenes] %*% irlba::irlba(r$counts[celsel,r$misc$odgenes],nv = 1,nu=0)$v # run a PCA on overdispersed genes just in this selection.
-                celsel[order(vpca,decreasing = T)] # order by this PCA
+                celsel[order(vpca,decreasing = TRUE)] # order by this PCA
               }
               
             } else if (innerOrder == "reductdist") {
@@ -172,7 +172,7 @@ pagoda2WebApp <- setRefClass(
               xn <- xn[!xn$s==xn$e,]
               xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
               
-              df <- data.frame(from=rownames(xx)[xn$s+1],to=rownames(xx)[xn$e+1],weight=xn$d,stringsAsFactors=F)
+              df <- data.frame(from=rownames(xx)[xn$s+1],to=rownames(xx)[xn$e+1],weight=xn$d,stringsAsFactors=FALSE)
               
               df$weight <- pmax(0,df$weight);
               xn <- cbind(xn,rd=df$weight)
@@ -268,17 +268,17 @@ pagoda2WebApp <- setRefClass(
                          },
                          
                          'expressionmatrixsparsebycellname' = {
-                           cat('Got Request 1');
+                           message('Got Request 1');
                            postArgs <- request$POST();
                            cellNames <- url_decode(postArgs[['cellnames']]);
-                           cellNames <- unlist(strsplit(cellNames, split = "|", fixed =T));
+                           cellNames <- unlist(strsplit(cellNames, split = "|", fixed =TRUE));
                            
                            getCellNames <- TRUE;
                            
                            counts.transposed <- t(originalP2object$counts)
                            
                            ## Matrix to send
-                           matrixToSend <- counts.transposed[,cellNames,drop = F]
+                           matrixToSend <- counts.transposed[,cellNames,drop = FALSE]
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -408,13 +408,13 @@ pagoda2WebApp <- setRefClass(
                            aspectIds <- url_decode(postArgs[['aspectids']]);
                            cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                            cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
-                           aspectIds <- unlist(strsplit(aspectIds, split = "|", fixed =T));
+                           aspectIds <- unlist(strsplit(aspectIds, split = "|", fixed =TRUE));
                            
                            cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
-                           matrixToSend <- originalP2object$misc$pathwayOD$xv[aspectIds,cellIndices,drop=F];
+                           matrixToSend <- originalP2object$misc$pathwayOD$xv[aspectIds,cellIndices,drop=FALSE];
 
                            # Transpose and make sparse
-                           matrixToSend <- Matrix(t(matrixToSend), sparse = T);
+                           matrixToSend <- Matrix(t(matrixToSend), sparse = TRUE);
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -447,10 +447,10 @@ pagoda2WebApp <- setRefClass(
                            getCellNames <- url_decode(postArgs[['getcellnames']]);
                            
                            cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)];
-                           matrixToSend <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
+                           matrixToSend <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=FALSE];
 
                            # Transpose and make sparse
-                           matrixToSend <- Matrix(t(matrixToSend), sparse = T);
+                           matrixToSend <- Matrix(t(matrixToSend), sparse = TRUE);
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -494,7 +494,7 @@ pagoda2WebApp <- setRefClass(
                            }
                            
                            geneIdentifiers <- url_decode(postArgs[['geneids']]);
-                           geneIdentifiers <- unlist(strsplit(geneIdentifiers, split = "|", fixed =T));
+                           geneIdentifiers <- unlist(strsplit(geneIdentifiers, split = "|", fixed =TRUE));
                            
                            cellIndexStart <- url_decode(postArgs[['cellindexstart']]);
                            cellIndexEnd <- url_decode(postArgs[['cellindexend']]);
@@ -508,7 +508,7 @@ pagoda2WebApp <- setRefClass(
                            
                            # Ordering of the matrix according to the hclust
                            cellIndices <- mainDendrogram$cellorder[c(cellIndexStart:cellIndexEnd)]
-                           matrixToSend <- originalP2object$counts[cellIndices,geneIdentifiers,drop=F];
+                           matrixToSend <- originalP2object$counts[cellIndices,geneIdentifiers,drop=FALSE];
                            
                            # Bit pack and compress arrays
                            xSend <- .self$packCompressFloat64Array(matrixToSend@x);
@@ -650,7 +650,7 @@ pagoda2WebApp <- setRefClass(
                 if (!is.null(compIdentifier)) {
                   switch(compIdentifier,
                          'doDifferentialExpression1selection' = {
-                           cat('doDifferentialExpression1selection\n');
+                           message('doDifferentialExpression1selection\n');
                            
                            postArguments <- request$POST();
                            selectionA <- fromJSON(url_decode(postArguments[['selectionA']]));
@@ -794,34 +794,34 @@ pagoda2WebApp <- setRefClass(
       }
       t1 <- Sys.time()
       if(verbose.timings) 
-          cat(paste0('Export list of embeddings: ', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('Export list of embeddings: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       # Export list with all included embeddings for easier iteration in Rcpp-function.
-      exportList[["embedList"]] <- grep("emb_",names(exportList),value=T);
+      exportList[["embedList"]] <- grep("emb_",names(exportList),value=TRUE)
       
       ## Main Sparse count matrix to save
       t0 <- Sys.time()
       matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,]
       t1 <- Sys.time()
       if(verbose.timings) 
-          cat(paste0('Reordered Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('Reordered Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
             
       ## Main Sparse count matrix TRANSPOSED for de
       t0 <- Sys.time()
       matsparseTransposedToSave <- Matrix::t(originalP2object$counts)
       t1 <- Sys.time()
       if(verbose.timings) 
-          cat(paste0('Generated transposed Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('Generated transposed Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
             
       ## Serialise aspect matrix
       t0  <- Sys.time()
       cellIndices <- mainDendrogram$cellorder;
-      aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=F];
+      aspectMatrixToSave <- originalP2object$misc$pathwayOD$xv[,cellIndices,drop=FALSE];
       aspectMatrixToSave <- Matrix::t(aspectMatrixToSave);
-      aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=T);
+      aspectMatrixToSave <- Matrix(aspectMatrixToSave, sparse=TRUE);
       t1 <- Sys.time()
       if(verbose.timings) 
-          cat(paste0('Serializing aspect matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('Serializing aspect matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       # Serialise the aspect information
       t0 <- Sys.time()
@@ -844,7 +844,7 @@ pagoda2WebApp <- setRefClass(
       }
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('Serializing aspect infomration in:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('Serializing aspect information in: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       ## Serialising geneset Information
@@ -857,7 +857,7 @@ pagoda2WebApp <- setRefClass(
       geneListGenes <- lapply( geneSets, function(gos) make.unique(gos$genes))
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('Serializing aspect infomration in:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('Serializing aspect information in: ', as.double(t1-t0,units="secs")," seconds \n"))
             
       ## Creation of the export List for Rcpp
       
@@ -866,55 +866,55 @@ pagoda2WebApp <- setRefClass(
       exportList[["reduceddendrogram"]] <- reducedDendrogramJSON();
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('ReduceDendrogramJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('ReduceDendrogramJSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       exportList[["cellorder"]] <- cellOrderJSON();
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('cellOrderJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('cellOrderJSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       exportList[["cellmetadata"]] <- cellmetadataJSON();
       t1 <- Sys.time()
-      if (verbose.timings)
-          cat(paste0('CellmetadataJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+      if (verbose.timings) 
+          message(paste0('CellmetadataJSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       exportList[["geneinformation"]] <- geneInformationJSON();
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('geneInformationJSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('geneInformationJSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       t0 <- Sys.time()
       exportList[["embeddingstructure"]] <- toJSON(embStructure);
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('embStructure to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('embStructure to JSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       exportList[["aspectInformation"]] <- toJSON(aspectInformation);
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('ascpectInformation to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('ascpectInformation to JSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       exportList[["genesets"]] <- toJSON(genesetInformation);
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('genesetInformation to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('genesetInformation to JSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       t0 <- Sys.time()
       exportList[["genesetGenes"]] <- toJSON(geneListGenes);
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('geneListGenes to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('geneListGenes to JSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       t0 <- Sys.time()
       exportList[["appmetadata"]] <- toJSON(appmetadata);
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('appmetadata to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('appmetadata to JSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       ## The gene Knn is optional
       t0 <- Sys.time()
@@ -925,7 +925,7 @@ pagoda2WebApp <- setRefClass(
       }
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('geneKnn to JSON took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('geneKnn to JSON took: ', as.double(t1-t0,units="secs")," seconds \n"))
 
       
       ## Exports sparse Matrix as List with Dimnames converted to JSON
@@ -936,14 +936,22 @@ pagoda2WebApp <- setRefClass(
       exportList[["sparseMatrixTransp"]] <- sparseMatList(matsparseTransposedToSave); ## To save transposed expr for de
       t1 <- Sys.time()
       if (verbose.timings)
-          cat(paste0('Matrix exporting took:', as.double(t1-t0,units="secs")," seconds \n"))
+          message(paste0('Matrix exporting took: ', as.double(t1-t0,units="secs")," seconds \n"))
       
       ## Tell Cpp what is a sparse matrix
       exportList[["sparsematnames"]] <- c("matsparse", "mataspect","sparseMatrixTransp");
 
+      ## check if elements missing in list
+      "%notin%" = Negate("%in%")
+      requiredListElements = c("embedList", "reduceddendrogram", "cellorder","cellmetadata","geneinformation", "embeddingstructure", "aspectInformation", "genesets", "genesetGenes", "appmetadata", "geneknn", "matsparse", "mataspect", "sparseMatrixTransp")
+      if (any(requiredListElements %notin% names(exportList))) {
+        missingElements = requiredListElements %notin% names(exportList) ## boolean list
+        ## requiredListElements[missingElements] will list the missing list names
+        stop("Missing list elements for exportList: ", requiredListElements[missingElements], ". This will cause errors in the function WriteListToBinary(expL=exportList).")
+      }
       
       ## Call Rcpp function to write to static file
-      WriteListToBinary(expL=exportList,outfile = binary.filename,verbose=verbose);
+      WriteListToBinary(expL=exportList, outfile=binary.filename, verbose=verbose);
       ##return(invisible(exportList));
       
       ## Return NULL

@@ -2,8 +2,15 @@
 title: "Pagoda2 processing with GO aspects"
 author: "Nikolas Barkas"
 date: "August 14, 2018"
-output: html_document
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{"Pagoda2 processing with GO aspects"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)

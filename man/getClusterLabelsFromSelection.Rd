@@ -4,8 +4,12 @@
 \alias{getClusterLabelsFromSelection}
 \title{Given a clustering vector and a set of selections assign names to the clusters}
 \usage{
-getClusterLabelsFromSelection(clustering, selections,
-  multiClassCutoff = 0.3, ambiguous.ratio = 0.5)
+getClusterLabelsFromSelection(
+  clustering,
+  selections,
+  multiClassCutoff = 0.3,
+  ambiguous.ratio = 0.5
+)
 }
 \arguments{
 \item{clustering}{a named factor of clusters, where every entry is a cell}

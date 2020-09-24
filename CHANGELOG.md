@@ -1,3 +1,15 @@
+## Upcoming
+
+### Added
+
+- Parameter `gene` in `plotEmbedding` for coloring by normalized counts
+
+### Changed
+
+- Using `sccore` plotting system for embedding plot. 3d plots aren't supported anymore.
+- Added LICENSE (July 2020)
+- Changed `std::cout` to `Rcpp::Rcout` (July 2020)
+
 ## [0.1.1] - 2019-11-26
 
 ### Added

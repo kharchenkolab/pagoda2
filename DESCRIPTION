@@ -1,14 +1,13 @@
 Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
-Version: 0.1.1
-Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = c("aut", "cre")), 
-             person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"),
-             person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="ctb"))
-Description: Single-cell RNA-seq Analysis
+Version: 0.1.2
+Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = c("cre", "aut")), person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role="aut"))
+Description: Analyzing and interactively exploring large single-cell RNA-seq datasets. Pagoda2 primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. The package also serves as the primary method for pre-processing data for Conos, <https://github.com/kharchenkolab/conos>
 Depends: R (>= 3.2.1), Matrix, igraph
-License: GPL-3 
+License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
+biocViews:
 Imports:
     AnnotationDbi,
     BiocGenerics,
@@ -25,6 +24,7 @@ Imports:
     Rcpp,
     RcppArmadillo,
     RcppProgress,
+    RcppSpdlog,
     rjson,
     RMTstat,
     Rook,
@@ -32,8 +32,10 @@ Imports:
     urltools,
     stats,
     utils,
-    fastcluster
+    fastcluster,
+    sccore (>= 0.1)
 Suggests:
+    colorRamps,
     dbscan,
     ggplot2,
     GO.db,
@@ -47,14 +49,11 @@ Suggests:
     knitr, 
     rmarkdown,
     uwot
-Remotes:
-  bioc::3.3/AnnotationDbi,
-  bioc::3.3/BiocGenerics,
-  bioc::3.3/org.Dr.eg.db,
-  bioc::3.3/org.Hs.eg.db,
-  bioc::3.3/org.Mm.eg.db,
-  bioc::3.3/pcaMethods
+Remotes: 
+    kharchenkolab/sccore
 VignetteBuilder: knitr
-RoxygenNote: 6.1.1
-LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
+RoxygenNote: 7.1.1
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
 NeedsCompilation: yes
+Author: Peter Kharchenko [cre, aut], Nikolas Barkas [aut], Viktor Petukhov [aut], Evan Biederstedt [aut]
+Maintainer: Peter Kharchenko <peter_kharchenko@hms.harvard.edu>

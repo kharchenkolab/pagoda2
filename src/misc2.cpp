@@ -121,7 +121,7 @@ arma::mat colSumByFac(SEXP sY,  SEXP rowSel) {
       int row=i[j];
       int f=rs[row];
       if(f==NA_INTEGER) {
-	sumM(0,g)+=Y[j];
+	      sumM(0,g)+=Y[j];
       } else if(f>0) {
       	sumM(f,g)+=Y[j];
       }

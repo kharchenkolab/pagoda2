@@ -4,10 +4,19 @@
 \alias{make.p2.app}
 \title{Generate a Rook Server app from a pagoda2 object}
 \usage{
-make.p2.app(r, dendrogramCellGroups, additionalMetadata = list(),
-  geneSets, show.depth = T, show.batch = T, show.clusters = T,
-  appname = "Pagoda2 Application", innerOrder = NULL,
-  orderDend = FALSE, appmetadata = NULL)
+make.p2.app(
+  r,
+  dendrogramCellGroups,
+  additionalMetadata = list(),
+  geneSets,
+  show.depth = T,
+  show.batch = TRUE,
+  show.clusters = TRUE,
+  appname = "Pagoda2 Application",
+  innerOrder = NULL,
+  orderDend = FALSE,
+  appmetadata = NULL
+)
 }
 \arguments{
 \item{r}{pagoda2 object}

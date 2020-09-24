@@ -1,71 +1,37 @@
-## Table of Content
+## Table of Contents
 
-- [Demo Web Application](#demo-web-application)
-- [Analysis walkthroughs](#analysis-walkthroughs)
-- [Installation Instructions](#installation-instructions)
-  * [Installing Mac Dependencies](#installing-mac-dependencies)
-  * [Installing Linux dependencies](#installing-linux-dependencies)
-  * [Installing Pagoda2 as Docker Container](#installing-pagoda2-as-docker-container)
+- [Analysis Walkthroughs](#analysis-walkthroughs)
+- [Web Demo of Application](#web-demo-of-application)
+- [Installation](#installation)
+  * [Installing Linux Dependencies](#installing-linux-dependencies)
+  * [Installing with Mac OS](#installing-with-mac-os)
+  * [Pagoda2 via Docker](#pagoda2-via-docker)
 
 
-## Demo Web Application
+## Analysis Walkthroughs
+
+[Basic Walkthrough](https://htmlpreview.github.io/?https://raw.githubusercontent.com/kharchenkolab/pagoda2/master/doc/pagoda2.walkthrough.html)
+
+[PCA-based Basic Walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
+
+
+## Web Demo of Application
 
 [10X PBMC Dataset](https://tinyurl.com/pagoda2demo)
 
-## Analysis walkthroughs
 
-[Basic Walkthough -- October 2018](vignettes/pagoda2.walkthrough.oct2018.md)
+## Installation 
 
-[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
-
-## Installation Instructions
-
-On most linux-based installations, Pagoda should be available simply by running the 
-following code in R console:
+To install the latest version of `pagoda2`, use:
 
 ```r
-install.packages(c("devtools", "BiocManager"))
-BiocManager::install(c("AnnotationDbi", "BiocGenerics", "GO.db", "pcaMethods"))
-devtools::install_github("kharchenkolab/pagoda2")
-library('pagoda2')
+install.packages('devtools')
+devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
 ```
 
-If you have Mac, or it doesn't work on your Linux, please see instructions below. 
-*Currently, there is no way to install Pagoda 2 on Windows.*
+If you are using Mac OS, please see instructions below. 
 
-### Installing Mac Dependencies
 
-For instructions on installing Pagoda2 with Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
-
-You need R >=3.4.0 to install this package on a mac. 
-For installation please refer to [cran](https://cran.r-project.org/)  
-
-You need the [homebrew package manager](https://brew.sh/)  
-Run these commands in a terminal:
-
-```sh
-brew update
-brew install curl openssl wget
-```
-To enable R to use the parallelized functions in the C++ code, you need another version of the clang++-Compiler for mac.   
-This is compatible with OS X >= 10.11 
-
-Follow these instructions to install clang4 with openmp support:
-
-#### GUI-Installer:
-
-- Download the clang4-r.pkg (263.6 mb) from https://uofi.box.com/v/r-macos-clang-pkg  
-MD5 Hash: `f49df42ccc84ec529c489e8e3f02248`
-- Install it!
-
-Here is a more in depth explanation what is going on and a script to do what the GUI-Installer does by yourself. For Pagoda2 you only need the clang part, not the gfortran part. [openmp in r on OS X](http://thecoatlessprofessor.com/programming/openmp-in-r-on-os-x/#after-3-4-0)
-
-#### Install gfortran for Mac
-
-```sh
-curl -O https://mac.r-project.org/libs/gfortran-4.8.2-darwin13.tar.bz2
-sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
-```
 
 ### Installing Linux dependencies
 
@@ -82,9 +48,24 @@ Installation for Red-Hat-based distributions (e.g. CentOS or Fedora)
 yum install openssl-devel libcurl-devel
 ```
 
-### Installing Pagoda2 as Docker Container
 
-If you are having trouble setting up pagoda2 on your system, an alternative approach to get pagoda on a mac or windows system is through a docker container. The docker distribution is current as of October 2018 and also includes the [Conos package](https://github.com/hms-dbmi/conos). To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
+
+### Installing with Mac OS
+
+We recommend the [Homebrew package manager](https://brew.sh/) to install require dependencies on Mac OS. Please run the following commands in the terminal:
+
+```sh
+brew update
+brew install curl openssl wget
+```
+
+For more details regarding how to successfully install Pagoda2 on Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
+
+
+
+### Pagoda2 via Docker 
+
+If you are having trouble setting up pagoda2 on your system, an alternative approach to get pagoda2 via a docker container, which also include the [Conos package](https://github.com/hms-dbmi/conos). To create a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then pull the pagoda2 image with the following command in the shell:
 
 ```
 docker run -p 8787:8787 pkharchenkolab/pagoda2:latest

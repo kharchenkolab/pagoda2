@@ -21,7 +21,9 @@
 #include <random>
 #include <vector>
 
-#include "spdlog/spdlog.h"
+#include <RcppSpdlog>
+
+// #include "spdlog/spdlog.h"
 
 #include "base.h"
 #include "mmap.h"

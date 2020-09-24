@@ -4,7 +4,7 @@
 \alias{factorFromP2Selection}
 \title{returns a factor of cell membership from a p2 selection}
 \usage{
-factorFromP2Selection(sel, use.internal.name = F)
+factorFromP2Selection(sel, use.internal.name = FALSE, flatten = FALSE)
 }
 \description{
 returns a factor of cell membership from a p2 selection object
