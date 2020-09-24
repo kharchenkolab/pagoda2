@@ -3,8 +3,8 @@
 - [Demo Web Application](#demo-web-application)
 - [Analysis walkthroughs](#analysis-walkthroughs)
 - [Installation Instructions](#installation-instructions)
-  * [Installing Mac Dependencies](#installing-mac-dependencies)
   * [Installing Linux dependencies](#installing-linux-dependencies)
+  * [Installing with Mac OS](#installing-with-mac-os)
   * [Pagoda2 via Docker](#pagoda2-via-docker)
 
 
@@ -12,11 +12,11 @@
 
 [10X PBMC Dataset](https://tinyurl.com/pagoda2demo)
 
-## Analysis walkthroughs
+## Analysis Walkthroughs
 
 [Basic Walkthrough](https://htmlpreview.github.io/?https://raw.githubusercontent.com/kharchenkolab/pagoda2/master/doc/pagoda2.walkthrough.html)
 
-[PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
+[PCA-based Basic Walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 
 ## Installation Instructions
 
@@ -28,18 +28,6 @@ devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
 ```
 
 If you are using Mac OS, please see instructions below. 
-
-### Installing Mac Dependencies
-
-We recommend the [Homebrew package manager](https://brew.sh/) to install require dependencies on Mac OS. Please run the following commands in the terminal:
-
-```sh
-brew update
-brew install curl openssl wget
-```
-
-For more details regarding how to successfully install Pagoda2 on Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
-
 
 ### Installing Linux dependencies
 
@@ -55,6 +43,19 @@ Installation for Red-Hat-based distributions (e.g. CentOS or Fedora)
 ```sh
 yum install openssl-devel libcurl-devel
 ```
+
+### Installing with Mac OS
+
+We recommend the [Homebrew package manager](https://brew.sh/) to install require dependencies on Mac OS. Please run the following commands in the terminal:
+
+```sh
+brew update
+brew install curl openssl wget
+```
+
+For more details regarding how to successfully install Pagoda2 on Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
+
+
 
 ### Pagoda2 via Docker 
 
