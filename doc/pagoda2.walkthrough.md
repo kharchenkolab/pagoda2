@@ -1,4 +1,4 @@
-Pagoda2 Walkthrough -- October 2018
+Pagoda2 Walkthrough
 ================
 
 Introduction
@@ -89,11 +89,11 @@ Next let's look at the distribution of molecules per cell and molecules per gene
 
 ``` r
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
-hist(log10(colSums(cm)+1),main='molecules per cell',col='cornsilk',xlab='log10(molecules per cell)')
-hist(log10(rowSums(cm)+1),main='molecules per gene',col='cornsilk',xlab='log10(molecules per gene])')
+hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='log10(molecules per cell)')
+hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='log10(molecules per gene])')
 ```
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-5-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-5-1.png)
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the pagoda2 default QC function to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
 
@@ -101,16 +101,16 @@ This dataset has already been filtered for low quality cells, so we don't see an
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 ```
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-6-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-6-1.png)
 
 Next thing we want to do is to find lowly expressed genes and remove them from the dataset. Subsequent pagoda processing will do this automatically for extremely lowly expressed genes anyway.
 
 ``` r
-hist(log10(rowSums(counts)+1),main='Molecules per gene',xlab='molecules (log10)',col='cornsilk')
-abline(v=1,lty=2,col=2)
+hist(log10(rowSums(counts)+1), main='Molecules per gene', xlab='molecules (log10)', col='cornsilk')
+abline(v=1, lty=2, col=2)
 ```
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-7-1.png) Let's filter and check the size of the resulting matrix:
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-7-1.png) Let's filter and check the size of the resulting matrix:
 
 ``` r
 counts <- counts[rowSums(counts)>=10,]
@@ -140,19 +140,19 @@ Also note the n.cores parameter. Change this value to match the number of CPU co
 Next, we’ll adjust the variance, to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis:
 
 ``` r
-r$adjustVariance(plot=T,gam.k=10)
+r$adjustVariance(plot=TRUE, gam.k=10)
 ```
 
     ## calculating variance fit ... using gam 173 overdispersed genes ... 173 persisting ...
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-10-1.png)
 
     ## done.
 
 There are many alternative ways of proceeding with the downstream analysis. Below we’ll use the simplest, default scenario, where we first reduce the dataset dimensions by running PCA, and then move into k-nearest neighbor graph space for clustering and visualization calculations. First, the PCA reduction. Depending on the complexity of the dataset you are analysing you may want to adjust he nPcs parameter.
 
 ``` r
-r$calculatePcaReduction(nPcs=50,n.odgenes=3e3)
+r$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
 ```
 
     ## running PCA using 3000 OD genes .... done
@@ -160,19 +160,19 @@ r$calculatePcaReduction(nPcs=50,n.odgenes=3e3)
 Next we will generate a KNN graph of cells that will allow us to identify clusters of cells.
 
 ``` r
-r$makeKnnGraph(k=40,type='PCA',center=T,distance='cosine');
+r$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine');
 ```
 
 Next on the basis of this KNN we will call clusters
 
 ``` r
-r$getKnnClusters(method=infomap.community,type='PCA')
+r$getKnnClusters(method=infomap.community, type='PCA')
 ```
 
 Next we generate a 2 dimensional embedding of the data for visualization purposes with largeVis. LargeVis is much faster that the tSNE often used in single-cell analysis.
 
 ``` r
-M <- 30; r$getEmbedding(type='PCA',embeddingType = 'largeVis', M=M,perplexity=30,gamma=1/M,alpha=1)
+M <- 30; r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M, alpha=1)
 ```
 
     ## Estimating embeddings.
@@ -180,35 +180,35 @@ M <- 30; r$getEmbedding(type='PCA',embeddingType = 'largeVis', M=M,perplexity=30
 and we plot the data:
 
 ``` r
-r$plotEmbedding(type='PCA',show.legend=F,mark.clusters=T,min.group.size=50,shuffle.colors=F,mark.cluster.cex=1,alpha=0.1,main='clusters (largeVis)')
+r$plotEmbedding(type='PCA', show.legend=FALSE, mark.clusters=TRUE, min.group.size=50, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (largeVis)')
 ```
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-15-1.png)
 
 Next we can generate and plot a tSNE embedding. This can take a while to run!
 
 ``` r
-r$getEmbedding(type='PCA',embeddingType='tSNE',perplexity=50,verbose=F)
+r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50, verbose=FALSE)
 ```
 
     ## calculating distance ... pearson ...running tSNE using 2 cores:
 
 ``` r
-r$plotEmbedding(type='PCA',embeddingType='tSNE',show.legend=F,mark.clusters=T,min.group.size=1,shuffle.colors=F,mark.cluster.cex=1,alpha=0.1,main='clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (tSNE)')
 ```
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-16-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-16-1.png)
 
 We can overlay the expresssion of specific marker genes on this embedding to identify clusters. For example HBB will identify heme cells.
 
 ``` r
 gene <-"HBB"
-r$plotEmbedding(type='PCA',embeddingType='tSNE',colors=r$counts[,gene],shuffle.colors=F,mark.cluster.cex=1,alpha=0.1,main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
 ```
 
     ## treating colors as a gradient with zlim: 0 1.760083
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-17-1.png)
+![](pagoda2.walkthroughfigure-markdown_github/unnamed-chunk-17-1.png)
 
 ``` r
 gene <-"LYZ"
@@ -217,7 +217,7 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE',colors=r$counts[,gene],shuffle.c
 
     ## treating colors as a gradient with zlim: 0 3.270811
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-18-1.png)
 
 Pagoda2 allows us to generate multiple alternative clusterings. Here will will use multilevel and walktrap
 
@@ -254,7 +254,7 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE',groups=r$clusters$PCA$community,
 r$plotEmbedding(type='PCA',embeddingType='tSNE',clusterType='multilevel',show.legend=F,mark.clusters=T,min.group.size=1,shuffle.colors=F,mark.cluster.cex=1,alpha=0.1,main='multlevel clusters (tSNE)')
 ```
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-21-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-21-1.png)
 
 We can then perform differential expression between these clusters
 
@@ -271,7 +271,7 @@ de <- r$diffgenes$PCA[[1]][['2']];
 r$plotGeneHeatmap(genes=rownames(de)[1:15],groups=r$clusters$PCA[[1]])
 ```
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-23-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-23-1.png)
 
 ``` r
 gene <-"CD74"
@@ -280,7 +280,7 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE',colors=r$counts[,gene],shuffle.c
 
     ## treating colors as a gradient with zlim: 0 2.448963
 
-![](pagoda2.walkthrough.oct2018_files/figure-markdown_github/unnamed-chunk-24-1.png)
+![](pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-24-1.png)
 
 At this point we can perform pathway overdispersion analysis (in the same wy we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it take too long!). Overdispersion analysis usually takes too long with the latest datasets composed of 1000's of cells, for this reason we prefer hierarchical differential expression.
 

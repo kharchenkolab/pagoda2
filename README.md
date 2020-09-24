@@ -5,7 +5,7 @@
 - [Installation Instructions](#installation-instructions)
   * [Installing Mac Dependencies](#installing-mac-dependencies)
   * [Installing Linux dependencies](#installing-linux-dependencies)
-  * [Installing Pagoda2 as Docker Container](#installing-pagoda2-as-docker-container)
+  * [Pagoda2 via Docker](#pagoda2-via-docker)
 
 
 ## Demo Web Application
@@ -14,23 +14,20 @@
 
 ## Analysis walkthroughs
 
-[Basic Walkthough -- October 2018](vignettes/pagoda2.walkthrough.oct2018.md)
+[Basic Walkthrough](https://htmlpreview.github.io/?https://raw.githubusercontent.com/kharchenkolab/pagoda2/master/doc/pagoda2.walkthrough.html)
 
 [PCA-based basic walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 
 ## Installation Instructions
 
-On most linux-based installations, Pagoda should be available simply by running the 
-following code in R console:
+To install the latest version of `pagoda2`, use:
 
 ```r
-install.packages(c("devtools", "BiocManager"))
-BiocManager::install(c("AnnotationDbi", "BiocGenerics", "GO.db", "pcaMethods"))
-devtools::install_github("kharchenkolab/pagoda2")
-library('pagoda2')
+install.packages('devtools')
+devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
 ```
 
-If you have Mac, or it doesn't work on your Linux, please see instructions below. 
+If you are using Mac OS, please see instructions below. 
 
 ### Installing Mac Dependencies
 
@@ -59,9 +56,9 @@ Installation for Red-Hat-based distributions (e.g. CentOS or Fedora)
 yum install openssl-devel libcurl-devel
 ```
 
-### Installing Pagoda2 as Docker Container
+### Pagoda2 via Docker 
 
-If you are having trouble setting up pagoda2 on your system, an alternative approach to get pagoda on a mac or windows system is through a docker container. The docker distribution is current as of October 2018 and also includes the [Conos package](https://github.com/hms-dbmi/conos). To start a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then start the pagoda container with the following command in the shell:
+If you are having trouble setting up pagoda2 on your system, an alternative approach to get pagoda2 via a docker container, which also include the [Conos package](https://github.com/hms-dbmi/conos). To create a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then pull the pagoda2 image with the following command in the shell:
 
 ```
 docker run -p 8787:8787 pkharchenkolab/pagoda2:latest

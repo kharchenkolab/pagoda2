@@ -13,7 +13,7 @@ plotEmbeddingColorByP2Selection(
   point.size = 2,
   show.guides = T,
   alpha = 0.7,
-  show.axis = T
+  show.axis = TRUE
 )
 }
 \arguments{

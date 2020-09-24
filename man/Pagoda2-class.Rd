@@ -55,7 +55,8 @@ A Reference Class, which holds and process single cell RNA-seq data.
   fastpath = TRUE,
   maxit = 100,
   verbose = TRUE,
-  var.scale = (type == "counts")
+  var.scale = (type == "counts"),
+  ...
 )}}{Calculate PCA reduction of the data
 
        - nPcs number of PCs
@@ -80,6 +81,8 @@ A Reference Class, which holds and process single cell RNA-seq data.
 
        - verbose verbose
 
+       - ... additional arguments forwarded to irlba::irlba
+
        return invisible PCA result (the reduction itself is saved in $reductions[[name]])}
 
 \item{\code{getDifferentialGenes(
@@ -90,8 +93,8 @@ A Reference Class, which holds and process single cell RNA-seq data.
   z.threshold = 3,
   upregulated.only = FALSE,
   verbose = FALSE,
-  append.specificity.metrics = T,
-  append.auc = F
+  append.specificity.metrics = TRUE,
+  append.auc = FALSE
 )}}{Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
 
        - type data type (currently only default 'counts' is supported)
@@ -116,5 +119,11 @@ A Reference Class, which holds and process single cell RNA-seq data.
          result <- r$getDifferentialGenes(groups=r$clusters$PCA$multilevel);
 
          str(r$diffgenes)}
+
+\item{\code{getNormalizedExpressionMatrix(n.odgenes = NULL, genes = NULL)}}{Return variance-normalized matrix for specified genes or a number of OD genes
+
+         - genes explicit vector of genes to return
+         - n.odgenes whether a certain number of top overdispersed genes should be used (default NULL - all significant ones); ignored if genes are passed
+        return:  cell x gene matrix}
 }}
 

@@ -4,7 +4,7 @@
 \alias{read.10x.matrices}
 \title{Load 10X CellRanger count matrices}
 \usage{
-read.10x.matrices(matrixPaths, n.cores = 1, verbose = T)
+read.10x.matrices(matrixPaths, n.cores = 1, verbose = TRUE)
 }
 \arguments{
 \item{matrixPaths}{a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths}

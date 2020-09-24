@@ -10,8 +10,8 @@ gene.vs.molecule.cell.filter(
   max.cell.size = 50000,
   p.level = min(0.001, 1/ncol(countMatrix)),
   alpha = 0.1,
-  plot = T,
-  do.par = T
+  plot = TRUE,
+  do.par = TRUE
 )
 }
 \arguments{
