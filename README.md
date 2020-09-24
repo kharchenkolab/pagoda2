@@ -1,16 +1,12 @@
 ## Table of Contents
 
-- [Demo Web Application](#demo-web-application)
-- [Analysis walkthroughs](#analysis-walkthroughs)
-- [Installation Instructions](#installation-instructions)
-  * [Installing Linux dependencies](#installing-linux-dependencies)
+- [Analysis Walkthroughs](#analysis-walkthroughs)
+- [Web Demo of Application](#web-demo-of-application)
+- [Installation](#installation)
+  * [Installing Linux Dependencies](#installing-linux-dependencies)
   * [Installing with Mac OS](#installing-with-mac-os)
   * [Pagoda2 via Docker](#pagoda2-via-docker)
 
-
-## Demo Web Application
-
-[10X PBMC Dataset](https://tinyurl.com/pagoda2demo)
 
 ## Analysis Walkthroughs
 
@@ -18,7 +14,13 @@
 
 [PCA-based Basic Walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 
-## Installation Instructions
+
+## Web Demo of Application
+
+[10X PBMC Dataset](https://tinyurl.com/pagoda2demo)
+
+
+## Installation 
 
 To install the latest version of `pagoda2`, use:
 
@@ -28,6 +30,8 @@ devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
 ```
 
 If you are using Mac OS, please see instructions below. 
+
+
 
 ### Installing Linux dependencies
 
@@ -43,6 +47,8 @@ Installation for Red-Hat-based distributions (e.g. CentOS or Fedora)
 ```sh
 yum install openssl-devel libcurl-devel
 ```
+
+
 
 ### Installing with Mac OS
 
