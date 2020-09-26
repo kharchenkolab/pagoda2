@@ -1,0 +1,12 @@
+language: r
+
+## minimal travis config
+## https://docs.travis-ci.com/user/languages/r/
+## https://towardsdatascience.com/travis-ci-for-r-advanced-guide-719cb2d9e0e5
+
+## no tests, coverage
+## check as CRAN
+
+script:
+  - R CMD build . --compact-vignettes=gs+qpdf
+  - R CMD check *tar.gz ## without CRAN check, --as-cran
