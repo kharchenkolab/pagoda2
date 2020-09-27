@@ -12,9 +12,9 @@ get.control.geneset(data, signature, n.bins = 25, n.genes.per.bin = 100)
 
 \item{signature}{a character vector of genes to use in the signature}
 
-\item{n.bins}{number of bins to put the genes in}
+\item{n.bins}{number of bins to put the genes in (default=25)}
 
-\item{n.genes.per.bin}{number of genes to get from each bin}
+\item{n.genes.per.bin}{number of genes to get from each bin (default=100)}
 }
 \value{
 a character vector that can be used as a background signature

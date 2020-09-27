@@ -7,7 +7,9 @@
 factorToP2selection(cl, col = NULL)
 }
 \arguments{
-\item{col}{names vector of colors}
+\item{cl}{factor}
+
+\item{col}{names vector of colors (default=NULL)}
 }
 \value{
 a p2 selection object (list)

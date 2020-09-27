@@ -11,7 +11,7 @@ score.cells.nb1(data, signature, quantile.cutoff = 0.01)
 
 \item{signature}{a character vector of genes to use in the signature}
 
-\item{quantile.cutoff}{the quantile extremes to trim before plotting}
+\item{quantile.cutoff}{the quantile extremes to trim before plotting (default=0.0.1)}
 }
 \description{
 Score cells after standardising the expression of each gene removing outliers

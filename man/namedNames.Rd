@@ -9,6 +9,9 @@ namedNames(g)
 \arguments{
 \item{g}{an objects on which we can call names()}
 }
+\value{
+vector with names of object
+}
 \description{
 Get a named vector of the names of an object. This is useful
 with lapply when passing names of objects as it ensures that the output list
