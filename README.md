@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.com/kharchenkolab/pagoda2.svg?branch=master)](https://travis-ci.com/github/kharchenkolab/pagoda2)
+
+# pagoda2
+
 ## Table of Contents
 
 - [Analysis Walkthroughs](#analysis-walkthroughs)
