@@ -1,5 +1,9 @@
 language: r
 
+
+before_install:
+  - sudo apt-get -y install libglu1-mesa-dev
+
 ## minimal travis config
 ## https://docs.travis-ci.com/user/languages/r/
 ## https://towardsdatascience.com/travis-ci-for-r-advanced-guide-719cb2d9e0e5
