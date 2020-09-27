@@ -12,5 +12,6 @@ before_install:
 ## check as CRAN
 
 script:
-  - R CMD build . --compact-vignettes=gs+qpdf
-  - R CMD check *tar.gz ## without CRAN check, --as-cran
+  - R CMD build . ##--compact-vignettes=gs+qpdf
+  - R CMD INSTALL *.gz
+ ##  - R CMD check *tar.gz ## without CRAN check, --as-cran
