@@ -1,5 +1,3 @@
-// [[Rcpp::plugins(openmp)]]
-// [[Rcpp::plugins(cpp11)]]
 // [[Rcpp::depends(RcppProgress)]]
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -14,6 +12,9 @@ using namespace Rcpp;
 using namespace std;
 using namespace arma;
 
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
 
 
 class ReferenceEdges {
