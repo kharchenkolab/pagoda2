@@ -1,5 +1,16 @@
 ## Upcoming
 
+## [0.1.3] - 2020-10-02
+
+### Added
+- Makefile.win, Makevars.win
+- Made OpenMP headers conditional
+
+### Changed
+- Now should (natively) install on Mac OS for all users
+
+## [0.1.2] - 2020-09-24
+
 ### Added
 
 - Parameter `gene` in `plotEmbedding` for coloring by normalized counts

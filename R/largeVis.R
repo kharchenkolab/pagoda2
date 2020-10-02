@@ -156,6 +156,7 @@ projectKNNs <- function(wij, # symmetric sparse matrix
 #'
 #' @examples
 #' # Observe that increasing K has no effect on processing time
+#' \donttest{
 #' N <- 70000 # MNIST
 #' K <- 10:250
 #' plot(K, sgdBatches(rep(N, length(K)), N * K / 2))
@@ -163,6 +164,7 @@ projectKNNs <- function(wij, # symmetric sparse matrix
 #' # Observe that processing time scales linarly with N
 #' N <- c(seq(from = 1, to = 10000, by = 100), seq(from = 10000, to = 10000000, by = 1000))
 #' plot(N, sgdBatches(N))
+#' }
 sgdBatches <- function(N, E = 150 * N / 2) {
 	ifelse(N < 10000, 2000 * E, ifelse(N < 1000000, 1000000 * (9000 * (N - 10000) / (1000000 - 10000) + 1000), N * 10000))
 }
