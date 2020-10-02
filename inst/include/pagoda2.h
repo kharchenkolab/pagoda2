@@ -9,7 +9,11 @@
 #include <vector>
 #include <queue>
 #include <list>
-#include <omp.h>
+
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+
 
 /*#include "space.h"
 #include "space/space_scalar.h"
