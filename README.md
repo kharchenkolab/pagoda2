@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.com/kharchenkolab/pagoda2.svg?branch=master)](https://travis-ci.com/github/kharchenkolab/pagoda2)
+
+# pagoda2
+
 ## Table of Contents
 
 - [Analysis Walkthroughs](#analysis-walkthroughs)
@@ -65,11 +69,11 @@ As of version 0.1.3, Pagoda2 should sucessfully install on Mac OS. However, if t
 
 ### Pagoda2 via Docker 
 
-If you are having trouble setting up pagoda2 on your system, an alternative approach to get pagoda2 via a docker container, which also include the [Conos package](https://github.com/hms-dbmi/conos). To create a docker container, first [install docker](https://docs.docker.com/install/) on your platform and then pull the pagoda2 image with the following command in the shell:
+If you are having trouble setting up Pagoda2 on your system, an alternative approach to work with Pagoda2 is via a docker container. To use the docker container, first [install docker](https://docs.docker.com/install/) on your platform and then run the Pagoda2 image with the following command in the shell:
 
 ```
 docker run -p 8787:8787 pkharchenkolab/pagoda2:latest
 ```
 
-The first time you run the command it will download several images so make sure that you have fast internet access setup. You can then point your browser to http://localhost:8787/ to get an Rstudio environment with pagoda2 installed (log in using credentials rstudio/pass). Explore the docker [--mount option](https://docs.docker.com/storage/volumes/) to allow access of the docker image to your local files.
+The first time you run this command, it will pull/download several images---please make sure that you have reliable internet access. You can then point your browser to http://localhost:8787/ to access an Rstudio environment with Pagoda2 installed (log in using credentials rstudio/pass). Explore the docker [--mount option](https://docs.docker.com/storage/volumes/) to allow the docker image to access your local files.
 
