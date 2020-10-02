@@ -19,7 +19,9 @@ int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const in
   arma::vec Y(REAL(mat.slot("x")),LENGTH(mat.slot("x")),false,true); 
   
   // for each gene
+#ifdef _OPENMP
 #pragma omp parallel for num_threads(ncores) shared(Y) 
+#endif
   for(int g=1;g<p.size();g++) {
     int p1=p[g]; int p0=p[g-1]; int ncells=p1-p0;
     if(ncells<2) { continue; }
@@ -60,7 +62,9 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel, int ncores=1) {
   }
   arma::vec meanV(ncols,arma::fill::zeros); arma::vec varV(ncols,arma::fill::zeros); arma::vec nobsV(ncols,arma::fill::zeros);
   // for each gene
+#ifdef _OPENMP
 #pragma omp parallel for num_threads(ncores) shared(meanV,varV,nobsV) 
+#endif
   for(int g=0;g<ncols;g++) {
     int p0=p[g]; int p1=p[g+1]; 
     if(p1-p0 <1) { continue; }
@@ -151,7 +155,9 @@ int inplaceColMult(SEXP sY,const arma::vec& mult,SEXP rowSel, int ncores=1) {
   int ncols=p.size()-1;
   
   // for each gene
+#ifdef _OPENMP
 #pragma omp parallel for num_threads(ncores) shared(Y) 
+#endif
   for(int g=0;g<ncols;g++) {
     int p1=p[g+1]; int p0=p[g]; int ncells=p1-p0;
     if(ncells<1) { continue; }
@@ -185,7 +191,9 @@ int inplaceWinsorizeSparseCols(SEXP sY,const int n, int ncores=1) {
   // for each column
   
   arma::vec tv(ncols);
+#ifdef _OPENMP
 #pragma omp parallel for num_threads(ncores) shared(Y) 
+#endif
   for(int g=0;g<ncols;g++) {
     priority_queue<std::pair<double,int> ,std::vector<std::pair<double,int> >, std::greater<std::pair<double,int> > > q; 
     int p1=p[g+1]; int p0=p[g]; int ncells=p1-p0;
@@ -273,7 +281,9 @@ arma::vec smatColVecCorr(SEXP sY,  SEXP sv, bool parallel=true) {
   double vsum=sum(v);
 
   // for each column
+#ifdef _OPENMP
 #pragma omp parallel for shared(r) if(parallel)
+#endif
   for(int g=0;g<ncols;g++) {
     int p0=p[g]; int p1=p[g+1]; 
     if(p1-p0 <1) { continue; }
