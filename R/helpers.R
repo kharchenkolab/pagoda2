@@ -41,7 +41,7 @@ multi2dend <- function(cl,counts,deep=FALSE,dist='cor') {
   }
   d <- dendrapply(d,addinfo,env=environment())
   attr(d,'root') <- TRUE;
-  d
+  return(d)
 }
 
 
@@ -106,7 +106,7 @@ val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.9
 
   col <- gradientPalette[x*(length(gradientPalette)-1)+1]
   names(col) <- nx;
-  col
+  return(col)
 }
 
 
@@ -130,7 +130,7 @@ cldend2array <- function(d,cells=NULL) {
   }
   a <- getcellbin(d)
   rownames(a) <- cells;
-  return(t(a));
+  return(t(a))
 }
 
 
@@ -198,7 +198,7 @@ bh.adjust <- function(x, log = FALSE) {
     }
     a <- rev(cummin(rev(q)))[order(id)]
     ox[nai]<-a
-    ox
+    return(ox)
 }
 
 # returns enriched categories for a given gene list as compared with a given universe
@@ -275,11 +275,12 @@ calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mi
     }
 }
 
-# fater matrix correlations wtih armadillo
+# faster matrix correlations with armadillo
 #' @title armaCor - matrix column correlations
 #' @description similar to cor() call, will calculate correlation between matrix columns
-#' @param mat matrix, whose columns will be
-#' @export armaCor
+#' @param mat matrix
+#' @return matrix with columns as correlations
+#' @export 
 armaCor <- function(mat) {
   cd <- arma_mat_cor(mat);
   rownames(cd) <- colnames(cd) <- colnames(mat);
@@ -301,7 +302,8 @@ Mode <- function(x) {
 ##'
 ##' @title Load 10X CellRanger count matrices
 ##' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
-##' @param n.cores numebr of cores to utilize in parallel
+##' @param n.cores numebr of cores to utilize in parallel (default=1)
+##' @param verbose boolean Whether to output verbose output (default=TRUE)
 ##' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
 ##' @export
 read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
@@ -340,7 +342,7 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
     colnames(x) <- paste(nam,colnames(x),sep='_');
     x
   },n.cores=n.cores)
-  if(verbose) message(" done\n")
+  if(verbose) message(" done")
   if(single.dataset) { return(dl[[1]]); } else { return(dl) }
 }
 
@@ -357,7 +359,7 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
 ##' @param do.par reset graphical parameters prior to plotting
 ##' @return a filtered matrix
 ##' @export
-gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell.size=5e4,p.level=min(1e-3,1/ncol(countMatrix)),alpha=0.1,plot=TRUE, do.par=TRUE) {
+gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {
   if(plot) {
     if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
     hist(log10(colSums(countMatrix)),col='wheat',xlab='log10[ molecules ]',main='')
@@ -393,7 +395,8 @@ gene.vs.molecule.cell.filter <- function(countMatrix,min.cell.size=500, max.cell
 #' with lapply when passing names of objects as it ensures that the output list
 #' is also named
 #' @param g an objects on which we can call names()
-#' @export namedNames
+#' @return vector with names of object
+#' @export 
 namedNames <- function(g) {
   n <- names(g)
   names(n) <- n;

@@ -63,7 +63,7 @@ brew update
 brew install curl openssl wget
 ```
 
-For more details regarding how to successfully install Pagoda2 on Mac OS, please refer to the following wiki page: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
+As of version 0.1.3, Pagoda2 should sucessfully install on Mac OS. However, if there are issues, please refer to the following wiki page for further instructions on installing Pagoda2 with Mac OS: [Installing Pagoda2 for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
 
 
 

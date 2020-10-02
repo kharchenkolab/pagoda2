@@ -7,7 +7,7 @@
 #include <RcppEigen.h>
 // copied from https://github.com/elbamos/largeVis
 #ifdef _OPENMP
-#include <omp.h>
+  #include <omp.h>
 #endif
 
 using namespace arma;

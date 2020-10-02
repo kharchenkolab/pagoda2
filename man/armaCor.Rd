@@ -7,7 +7,10 @@
 armaCor(mat)
 }
 \arguments{
-\item{mat}{matrix, whose columns will be}
+\item{mat}{matrix}
+}
+\value{
+matrix with columns as correlations
 }
 \description{
 similar to cor() call, will calculate correlation between matrix columns

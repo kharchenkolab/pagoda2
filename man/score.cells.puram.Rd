@@ -12,9 +12,9 @@ score.cells.puram(data, signature, correct = TRUE, show.plot = FALSE, ...)
 
 \item{signature}{the signature to evaluate}
 
-\item{correct}{logical, perform background correction by getting a semi-random geneset}
+\item{correct}{logical, perform background correction by getting a semi-random geneset (default=TRUE)}
 
-\item{show.plot}{logical, if corrected values are calculated show plot of corrected vs original scores}
+\item{show.plot}{logical, if corrected values are calculated show plot of corrected vs original scores (default=FALSE)}
 
 \item{...}{options for get.control.geneset()}
 }

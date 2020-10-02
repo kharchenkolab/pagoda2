@@ -1,6 +1,11 @@
-// [[Rcpp::plugins(openmp)]]
+
 #include "largeVis.h"
 #include <Rcpp.h>
+
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+
 // copied from https://github.com/elbamos/largeVis
 using namespace Rcpp;
 

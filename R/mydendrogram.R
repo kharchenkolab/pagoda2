@@ -11,14 +11,17 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
           verbose = getOption("verbose"), Colv.vsize=0.15, Rowv.hsize=0.15, ColSideColors.unit.vsize=0.02, RowSideColors.hsize=0.02,lasCol=2, lasRow=2, respect=FALSE, box=FALSE, zlim=NULL, ...)
 {
     scale <- if(symm && missing(scale)) "none" else match.arg(scale)
-    if(length(di <- dim(x)) != 2 || !is.numeric(x))
+    if(length(di <- dim(x)) != 2 || !is.numeric(x)){
         stop("'x' must be a numeric matrix")
+    }
     nr <- di[1]
     nc <- di[2]
-    if(nr < 1 || nc <= 1)
+    if(nr < 1 || nc <= 1){
         stop("'x' must have at least one row and 2 columns")
-    if(!is.numeric(margins) || length(margins) != 2)
+    }
+    if(!is.numeric(margins) || length(margins) != 2){
         stop("'margins' must be a numeric vector of length 2")
+    }
 
     if(is.null(zlim)) {
       zlim <- range(x[is.finite(x)])

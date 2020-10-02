@@ -1,6 +1,8 @@
 #include "pagoda2.h"
 
-
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
 
 // thanks to nrussel of stackoverflow!
 class Comparator {

@@ -3,6 +3,7 @@
 
 // -- explicitly used std:: and Rcpp:: 
 // -- must place the '#include <RcppEigen.h>'' header before the '#include <RcppSpdlog>'' header
+// -- conditional openmp headers for mac OS
 
 #define R_NO_MAP    // R redefines things like Erorr; afterwards it becomes Rf_Error
 #define STRICT_R_HEADERS  // hides Calloc() as R_Calloc() etc.
@@ -12,6 +13,10 @@
 #include <iostream>
 #include <chrono>
 #include <vector>
+
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
 
 
 using std::chrono::duration;

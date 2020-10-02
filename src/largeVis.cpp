@@ -1,4 +1,3 @@
-// [[Rcpp::plugins(openmp)]]
 // [[Rcpp::plugins(cpp11)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(RcppProgress)]]
@@ -7,6 +6,10 @@
 #include <RcppArmadillo.h>
 #include "alias.h"
 #include "gradients.h"
+
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
 
 // copied from https://github.com/elbamos/largeVis
 

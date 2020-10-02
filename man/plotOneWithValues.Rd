@@ -17,11 +17,11 @@ plotOneWithValues(
 
 \item{values}{the values to plot}
 
-\item{title}{title for the plot}
+\item{title}{title for the plot (default="")}
 
-\item{type}{the type reduction on which the embedding is based on}
+\item{type}{the type reduction on which the embedding is based on (default="PCA")}
 
-\item{embeddingType}{the type of embedding to plot}
+\item{embeddingType}{the type of embedding to plot (default="tSNE")}
 }
 \description{
 Plot the embedding of a pagoda2 object with the given values

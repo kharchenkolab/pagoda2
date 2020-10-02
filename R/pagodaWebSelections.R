@@ -106,19 +106,21 @@ factorFromP2Selection <- function (sel, use.internal.name=FALSE,flatten=FALSE)
 #' @title get the colors for each selection from a p2 selection object
 #' @description retrieves the colors of each selection from a p2 selection object as
 #' a names vector of strings
+#' @param sel pagoda2 selection object
 #' @return a named vector of hex colours
 #' @export getColorsFromP2Selection
 getColorsFromP2Selection <- function(sel) {
-  unlist(lapply(sel, function(x) { paste0('#',x$color); } ))
+  unlist(lapply(sel, function(x) { paste0('#', x$color); } ))
 }
 
 #' @title converts a factor to a p2 selection object
 #' @description converts a names factor to a p2 selection object
 #' if colors are provided it assigns those, otherwise uses a rainbow palette
-#' @param col names vector of colors
+#' @param cl factor
+#' @param col names vector of colors (default=NULL)
 #' @return a p2 selection object (list)
 #' @export factorToP2selection
-factorToP2selection <- function(cl,col=NULL) {
+factorToP2selection <- function(cl, col=NULL) {
   if(!is.factor(cl)) {
     stop('cl is not a factor');
   }

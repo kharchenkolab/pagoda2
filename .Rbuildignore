@@ -1,4 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^doc$
-^Meta$
+.travis.yml
+CHANGELOG.md
+^LICENSE\.md$
+pagoda2*.tar.gz
+data-raw

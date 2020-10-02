@@ -1,10 +1,13 @@
 // [[Rcpp::depends(RcppArmadillo)]]
-// [[Rcpp::plugins(openmp)]]
 // [[Rcpp::plugins(cpp11)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(RcppProgress)]]
 
 #include "pagoda2.h"
+
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
 
 // [[Rcpp::export]]
 int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const int maxCells=0, int ncores=1) {

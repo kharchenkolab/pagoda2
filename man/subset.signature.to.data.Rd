@@ -12,7 +12,7 @@ optionally warning if genes are missing}
 
 \item{signature}{the signature to subset}
 
-\item{raise.warning}{logical, warn if genes are missing (default: TRUE)}
+\item{raise.warning}{logical, warn if genes are missing (default=TRUE)}
 }
 \description{
 Subset a gene singature to the genes in the given matrix

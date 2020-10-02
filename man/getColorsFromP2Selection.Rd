@@ -6,6 +6,9 @@
 \usage{
 getColorsFromP2Selection(sel)
 }
+\arguments{
+\item{sel}{pagoda2 selection object}
+}
 \value{
 a named vector of hex colours
 }

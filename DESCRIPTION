@@ -1,10 +1,11 @@
 Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
-Version: 0.1.2
-Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = c("cre", "aut")), person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role="aut"))
+Version: 0.1.3
+Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
 Description: Analyzing and interactively exploring large single-cell RNA-seq datasets. Pagoda2 primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. The package also serves as the primary method for pre-processing data for Conos, <https://github.com/kharchenkolab/conos>
 Depends: R (>= 3.2.1), Matrix, igraph
 License: GPL-3 + file LICENSE
+Copyright: See the file COPYRIGHTS for various N2R copyright details
 Encoding: UTF-8
 LazyData: true
 biocViews:
@@ -55,5 +56,5 @@ VignetteBuilder: knitr
 RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
 NeedsCompilation: yes
-Author: Peter Kharchenko [cre, aut], Nikolas Barkas [aut], Viktor Petukhov [aut], Evan Biederstedt [aut]
-Maintainer: Peter Kharchenko <peter_kharchenko@hms.harvard.edu>
+Author: Peter Kharchenko [aut], Nikolas Barkas [aut], Viktor Petukhov [aut], Evan Biederstedt [cre, aut]
+Maintainer: Evan Biederstedt <evan.biederstedt@gmail.com>
