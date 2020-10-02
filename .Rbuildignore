@@ -3,7 +3,5 @@
 .travis.yml
 CHANGELOG.md
 ^LICENSE\.md$
-^doc$
-^Meta$
 pagoda2*.tar.gz
 data-raw
