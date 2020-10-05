@@ -6,6 +6,9 @@
 \usage{
 factorFromP2Selection(sel, use.internal.name = FALSE, flatten = FALSE)
 }
+\arguments{
+\item{flatten}{ignores multiclassified cells, overwriting randomly}
+}
 \description{
 returns a factor of cell membership from a p2 selection object
 the factor only includes cells present in the selection. If the selection
