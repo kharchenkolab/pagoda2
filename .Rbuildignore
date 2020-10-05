@@ -5,3 +5,5 @@ CHANGELOG.md
 ^LICENSE\.md$
 pagoda2*.tar.gz
 data-raw
+^doc$
+^Meta$

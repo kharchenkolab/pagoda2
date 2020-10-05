@@ -954,18 +954,18 @@ col2hex <- function(col) {
 #' @param cdl list Optional list of raw matrices (so that gene merging doesn't have to be redone) (default=NULL)
 #' @param metadata list Optional list of (named) metadata factors (default=NULL)
 #' @param filename string Name of the *.bin file to seralize for the pagoda2 application if save=TRUE (default='conos_app.bin')
-#' @param go.env GO environment for the organism of interest (default=NULL)
-#' @param organism string Organism of interest, either 'hs' (Homo sapiens) or 'mm' (Mus musculus, i.e. mouse) (default='hs')
 #' @param save boolean Save serialized *bin file specified in filename (default=TRUE)
 #' @param n.cores integer Number of cores (default=2)
+#' @param go.env GO environment for the organism of interest (default=NULL)
 #' @param cell.subset string Cells to subset with the conos embedding conos$embedding. If NULL, uses all cells via rownames(conos$embedding) (default-NULL)
 #' @param max.cells numeric Limit to the cells that are included in the conos. If Inf, there is no limit (default=Inf)
 #' @param additional.embeddings list Additional embeddings to add to conos for the pagoda2 app (default=NULL)
-#' @param test.pathway.overdispersion boolean Find all IDs using GO category against either org.Hs.eg.db or org.Mm.eg.db (default=TRUE)
+#' @param test.pathway.overdispersion boolean Find all IDs using GO category against either org.Hs.eg.db ('hs') or org.Mm.eg.db ('mm') (default=FALSE
+#' @param organism string Organism of interest, either 'hs' (Homo sapiens) or 'mm' (Mus musculus, i.e. mouse) (default=NULL). Only used if test.pathway.overdispersion is TRUE.
 #' @param return.details boolean If TRUE, return list of p2 application, pagoda2 object, list of raw matrices, and cell names. If FALSE, simply return pagoda2 app object. (default=FALSE)
 #' @return pagoda2 app object
 #' @export 
-p2app4conos <- function(conos, cdl=NULL, metadata=NULL, filename='conos_app.bin', go.env=NULL, organism='hs', save=TRUE, n.cores=2, cell.subset=NULL, max.cells=Inf, additional.embeddings=NULL, test.pathway.overdispersion=TRUE, return.details=FALSE) {
+p2app4conos <- function(conos, cdl=NULL, metadata=NULL, filename='conos_app.bin', save=TRUE, n.cores=2, go.env=NULL, cell.subset=NULL, max.cells=Inf, additional.embeddings=NULL, test.pathway.overdispersion=FALSE, organism=NULL, return.details=FALSE) {
   
   if(is.null(cdl)) {
     #cdl <- lapply(conos$samples,function(p) t(p$misc$rawCounts))
@@ -996,8 +996,8 @@ p2app4conos <- function(conos, cdl=NULL, metadata=NULL, filename='conos_app.bin'
    
   cp2 <- basicP2proc(cm,min.cells.per.gene=1,  nPcs=50, get.tsne=T, get.largevis=F, make.geneknn=T, n.cores=n.cores)
   
-  if(test.pathway.overdispersion) {
-    if(organism=='mm') { 
+  if (test.pathway.overdispersion) {
+    if (organism =='mm') { 
       suppressMessages(library(org.Mm.eg.db))
       # translate gene names to ids
       ids <- unlist(lapply(mget(colnames(cp2$counts),org.Mm.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
@@ -1005,14 +1005,14 @@ p2app4conos <- function(conos, cdl=NULL, metadata=NULL, filename='conos_app.bin'
       rids <- names(ids); names(rids) <- ids;
       # list all the ids per GO category
       go.env <- list2env(eapply(org.Mm.egGO2ALLEGS,function(x) as.character(na.omit(rids[x]))))
-    } else if(organism=='hs') {
+    } else if (organism =='hs') {
       suppressMessages(library(org.Hs.eg.db))
       ids <- unlist(lapply(mget(colnames(cp2$counts),org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
       rids <- names(ids); names(rids) <- ids;
       # list all the ids per GO category
       go.env <- list2env(eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x]))))
     } else { 
-      stop("unknown organism")
+      stop("Unknown organism")
     }
   }
     

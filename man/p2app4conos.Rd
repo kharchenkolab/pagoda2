@@ -9,14 +9,14 @@ p2app4conos(
   cdl = NULL,
   metadata = NULL,
   filename = "conos_app.bin",
-  go.env = NULL,
-  organism = "hs",
   save = TRUE,
   n.cores = 2,
+  go.env = NULL,
   cell.subset = NULL,
   max.cells = Inf,
   additional.embeddings = NULL,
-  test.pathway.overdispersion = TRUE,
+  test.pathway.overdispersion = FALSE,
+  organism = NULL,
   return.details = FALSE
 )
 }
@@ -29,13 +29,11 @@ p2app4conos(
 
 \item{filename}{string Name of the *.bin file to seralize for the pagoda2 application if save=TRUE (default='conos_app.bin')}
 
-\item{go.env}{GO environment for the organism of interest (default=NULL)}
-
-\item{organism}{string Organism of interest, either 'hs' (Homo sapiens) or 'mm' (Mus musculus, i.e. mouse) (default='hs')}
-
 \item{save}{boolean Save serialized *bin file specified in filename (default=TRUE)}
 
 \item{n.cores}{integer Number of cores (default=2)}
+
+\item{go.env}{GO environment for the organism of interest (default=NULL)}
 
 \item{cell.subset}{string Cells to subset with the conos embedding conos$embedding. If NULL, uses all cells via rownames(conos$embedding) (default-NULL)}
 
@@ -43,7 +41,9 @@ p2app4conos(
 
 \item{additional.embeddings}{list Additional embeddings to add to conos for the pagoda2 app (default=NULL)}
 
-\item{test.pathway.overdispersion}{boolean Find all IDs using GO category against either org.Hs.eg.db or org.Mm.eg.db (default=TRUE)}
+\item{test.pathway.overdispersion}{boolean Find all IDs using GO category against either org.Hs.eg.db ('hs') or org.Mm.eg.db ('mm') (default=FALSE}
+
+\item{organism}{string Organism of interest, either 'hs' (Homo sapiens) or 'mm' (Mus musculus, i.e. mouse) (default=NULL). Only used if test.pathway.overdispersion is TRUE.}
 
 \item{return.details}{boolean If TRUE, return list of p2 application, pagoda2 object, list of raw matrices, and cell names. If FALSE, simply return pagoda2 app object. (default=FALSE)}
 }
