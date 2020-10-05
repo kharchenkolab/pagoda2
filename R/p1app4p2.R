@@ -945,3 +945,134 @@ col2hex <- function(col) {
         sprintf("#%02X%02X%02X", c[1], c[2], c[3])
     }))
 }
+
+
+
+#' Utility function to generate a pagoda2 app from a conos object
+#' 
+#' @param conos Conos object
+#' @param cdl list Optional list of raw matrices (so that gene merging doesn't have to be redone) (default=NULL)
+#' @param metadata list Optional list of (named) metadata factors (default=NULL)
+#' @param filename string Name of the *.bin file to seralize for the pagoda2 application if save=TRUE (default='conos_app.bin')
+#' @param save boolean Save serialized *bin file specified in filename (default=TRUE)
+#' @param n.cores integer Number of cores (default=2)
+#' @param go.env GO environment for the organism of interest (default=NULL)
+#' @param cell.subset string Cells to subset with the conos embedding conos$embedding. If NULL, uses all cells via rownames(conos$embedding) (default-NULL)
+#' @param max.cells numeric Limit to the cells that are included in the conos. If Inf, there is no limit (default=Inf)
+#' @param additional.embeddings list Additional embeddings to add to conos for the pagoda2 app (default=NULL)
+#' @param test.pathway.overdispersion boolean Find all IDs using GO category against either org.Hs.eg.db ('hs') or org.Mm.eg.db ('mm') (default=FALSE
+#' @param organism string Organism of interest, either 'hs' (Homo sapiens) or 'mm' (Mus musculus, i.e. mouse) (default=NULL). Only used if test.pathway.overdispersion is TRUE.
+#' @param return.details boolean If TRUE, return list of p2 application, pagoda2 object, list of raw matrices, and cell names. If FALSE, simply return pagoda2 app object. (default=FALSE)
+#' @return pagoda2 app object
+#' @export 
+p2app4conos <- function(conos, cdl=NULL, metadata=NULL, filename='conos_app.bin', save=TRUE, n.cores=2, go.env=NULL, cell.subset=NULL, max.cells=Inf, additional.embeddings=NULL, test.pathway.overdispersion=FALSE, organism=NULL, return.details=FALSE) {
+  
+  if(is.null(cdl)) {
+    #cdl <- lapply(conos$samples,function(p) t(p$misc$rawCounts))
+    cdl <- lapply(conos:::rawMatricesWithCommonGenes(conos),t)
+  }
+  samf <- lapply(conos$samples,function(x) rownames(x$counts))
+  samf <- as.factor(setNames(rep(names(samf),unlist(lapply(samf,length))),unlist(samf)))
+
+  if(!is.null(cell.subset)) {
+    cell.subset <- intersect(cell.subset,rownames(conos$embedding))
+  } else {
+    cell.subset <- rownames(conos$embedding)  
+  }
+  
+  samf <- droplevels(samf[names(samf) %in% cell.subset])
+  cdl <- lapply(cdl,function(x) x[,colnames(x) %in% cell.subset,drop=F])
+  
+  # limit to the cells that are included in the conos
+  vc <- unlist(lapply(cdl,colnames));
+  if(length(vc)>max.cells) { # subsample
+    cat("subsampling",length(vc),"cells down to",max.cells,'...');
+    vc <- sample(vc,max.cells)
+    cat('done\n');
+  } 
+  cdl <- lapply(cdl,function(d) d[,colnames(d) %in% intersect(vc,names(samf))])
+  cm <- do.call(cbind,cdl);
+  
+   
+  cp2 <- basicP2proc(cm,min.cells.per.gene=1,  nPcs=50, get.tsne=T, get.largevis=F, make.geneknn=T, n.cores=n.cores)
+  
+  if (test.pathway.overdispersion) {
+    if (organism =='mm') { 
+      suppressMessages(library(org.Mm.eg.db))
+      # translate gene names to ids
+      ids <- unlist(lapply(mget(colnames(cp2$counts),org.Mm.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+      # reverse map
+      rids <- names(ids); names(rids) <- ids;
+      # list all the ids per GO category
+      go.env <- list2env(eapply(org.Mm.egGO2ALLEGS,function(x) as.character(na.omit(rids[x]))))
+    } else if (organism =='hs') {
+      suppressMessages(library(org.Hs.eg.db))
+      ids <- unlist(lapply(mget(colnames(cp2$counts),org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
+      rids <- names(ids); names(rids) <- ids;
+      # list all the ids per GO category
+      go.env <- list2env(eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x]))))
+    } else { 
+      stop("Unknown organism")
+    }
+  }
+    
+  if(!is.null(go.env)) {
+    #cp2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='community',z.threshold=3)
+    # here we test for pathway overdispersion, but recursive diff expression, as shown above will work just as well
+    cp2$testPathwayOverdispersion(go.env,verbose=T,correlation.distance.threshold=0.95,recalculate.pca=F,top.aspects=15)
+    
+    library(GO.db)
+    termDescriptions <- Term(GOTERM[names(go.env)]); # saves a good minute or so compared to individual lookups
+    sn <- function(x) { names(x) <- x; x}
+    geneSets <- lapply(sn(names(go.env)),function(x) {
+      list(properties=list(locked=T,genesetname=x,shortdescription=as.character(termDescriptions[x])),genes=c(go.env[[x]]))
+    })
+  } else {
+    hdea <- cp2$getHierarchicalDiffExpressionAspects(type='PCA',z.threshold=3)
+    geneSets <- hierDiffToGenesets(hdea);
+  }
+  
+
+  # add all kinds of embeddings
+  # various joint embeddding versions
+  #cp2$embeddings$Conos <- list("All"=t(conO$embedding),"cochlea"=t(conC$embedding),"DRG"=t(conD$embedding),"Merged"=t(conO$embedding),"Refined"=t(con2$embedding))
+  cn <- rownames(cp2$counts); # cell names
+  cp2$embeddings$Conos <- list("All"=conos$embedding[cn,])
+  # hack: add placeholder spaces, so that old p2 version picks up the new embeddings
+  cp2$reductions$Conos <- list(); 
+
+  cp2$embeddings$sample <- lapply(conos$samples,function(x) { em <- x$embeddings$PCA[[1]]; em[rownames(em) %in% cn,] }) # embeddings of the individual samples
+  cp2$embeddings$sample <- cp2$embeddings$sample[!unlist(lapply(cp2$embeddings$sample,is.null))]
+  if(length(cp2$embeddings$sample)>1) {
+    cp2$reductions$sample <- list();
+  } else {
+    cp2$embeddings$sample <- NULL;
+    
+  }
+  
+  if(!is.null(additional.embeddings)) {
+    cp2$embeddings$Other <- lapply(additional.embeddings, function(em) { em[rownames(em) %in% cn,] })
+    cp2$reductions$Other <- list();
+  }
+  
+  
+  # additional metadata with different factors .. you probably want to include something like sample or tissue (or patient type)
+  metadata <- c(metadata,list(sample=samf));
+  metadata <- lapply(metadata, function(d) d[cn])
+  meta <- lapply(conos:::sn(names(metadata)),function(n) p2.metadata.from.factor(droplevels(as.factor(metadata[[n]])),displayname=n))
+  
+  p2app <- make.p2.app(cp2, dendrogramCellGroups = as.factor(conos$clusters[[1]]$groups[cn]), additionalMetadata = meta, geneSets = geneSets,innerOrder='odPCA');
+  
+  # Optional showing of app
+  #show.app(p2app, name='newPagoda',browse=F)
+  # Save serialised web object, RDS app and session image
+  if(save){
+    p2app$serializeToStaticFast(binary.filename = filename,verbose=TRUE)
+  } 
+  if(return.details) {
+    return(list(app=p2app,p2=cp2,cdl=cdl,cn=cn))
+  } else {
+    invisible(p2app)
+  }
+}
+

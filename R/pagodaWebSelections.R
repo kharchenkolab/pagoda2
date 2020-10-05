@@ -80,7 +80,7 @@ calcMulticlassified <- function(sel) {
 #' @description returns a factor of cell membership from a p2 selection object
 #' the factor only includes cells present in the selection. If the selection
 #' contains multiclassified cells an error is raised
-#' @flatten ignores multiclassified cells, overwriting randomly
+#' @param flatten ignores multiclassified cells, overwriting randomly
 #' @export factorFromP2Selection
 factorFromP2Selection <- function (sel, use.internal.name=FALSE,flatten=FALSE)
 {
