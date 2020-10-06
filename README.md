@@ -14,7 +14,7 @@
 
 ## Analysis Walkthroughs
 
-Basic Walkthrough
+**Basic Walkthrough**
 * [HTML version](https://htmlpreview.github.io/?https://raw.githubusercontent.com/kharchenkolab/pagoda2/master/doc/pagoda2.walkthrough.html) 
 * [Markdown version](https://github.com/kharchenkolab/pagoda2/blob/master/vignettes/pagoda2.walkthrough.md)
 
