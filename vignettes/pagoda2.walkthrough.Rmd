@@ -342,6 +342,22 @@ p2.webobject$serializeToStaticFast('serialisedApp.bin');
 You can now navigate to <http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/> and open the 'serialisedApp.bin' file when prompted to view your data.
 
 
+# View Conos in Pagoda2 Application
+
+Users may also interactively explore [Conos](https://github.com/kharchenkolab/conos) objects with the Pagoda2 application.
+
+After constructing the `con` object as shown in the Conos [walkthrough](https://github.com/kharchenkolab/conos/blob/master/vignettes/walkthrough.md), users can save to a serialized `*.bin` file and upload into the pagoda application with the `p2app4conos()` function, using `p2app4conos(conos=con)`. 
+
+```{r}
+## 
+## 'con' is the Conos object created in the Conos walkthrough
+##
+## p2app = p2app4conos(conos=con, file="conosApp1.bin", save=TRUE)
+## show.app(app=p2app, name='conos_app')
+## 
+```
+
+
 # Working with Cell Selections
 
 

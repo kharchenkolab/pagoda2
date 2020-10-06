@@ -210,3 +210,11 @@ saveRDS(r, 'pagoda2object.rds')
 #  # show.app(p2.webobject, browse = TRUE)
 #  
 
+## -----------------------------------------------------------------------------
+## 
+## 'con' is the Conos object created in the Conos walkthrough
+##
+## p2app = p2app4conos(conos=con, file="conosApp1.bin", save=TRUE)
+## show.app(app=p2app, name='conos_app')
+## 
+
