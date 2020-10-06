@@ -3,9 +3,9 @@
 ## [0.1.4] - 2020-10-05
 
 ### Added
--- added `p2app4conos()` for rendering Conos to pagoda2 application
--- README edits
--- vignettes edits
+- added `p2app4conos()` for rendering Conos to pagoda2 application
+- README edits
+- vignettes edits
 
 ## [0.1.3] - 2020-10-02
 
