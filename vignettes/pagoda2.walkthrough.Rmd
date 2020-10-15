@@ -24,7 +24,7 @@ library(igraph)
 
 ## Part 1: Loading the QC'ing the dataset
 
-For the purposes of this exercise we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks it's size:
+For the purposes of this exercise we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 ```{r}
 cm <- readRDS(file.path(find.package('pagoda2'), 'extdata', 'sample_BM1.rds'))
 dim(cm)
@@ -235,7 +235,7 @@ r$makeGeneKnnGraph(n.cores = 2)
 
 Finally before we make our web app we want to generate metadata for the cells. The exact data that we will want to incorporate will depend on the dataset we are processing. For example if we are co-processing multiple samples we will usually want to label cells by the sample of origin. We might also want to add our clusterings as metadata. 
 
-Several functions give very detailed control over how metadata will be presented and generated. For example we can generate different palettes or set colors manually. The factorListToMetadata() function will do everything for us, check it's documentation for more details. Here we will generate metadata for the different clusterings we previously generated manually
+Several functions give very detailed control over how metadata will be presented and generated. For example we can generate different palettes or set colors manually. The factorListToMetadata() function will do everything for us, check its documentation for more details. Here we will generate metadata for the different clusterings we previously generated manually
 
 ```{r}
 # Make a list for our metadata

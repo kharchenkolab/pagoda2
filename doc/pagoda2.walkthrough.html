@@ -235,7 +235,7 @@ library(pagoda2)
 
 <h2>Part 1: Loading the QC&#39;ing the dataset</h2>
 
-<p>For the purposes of this exercise we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks it&#39;s size:</p>
+<p>For the purposes of this exercise we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:</p>
 
 <pre><code class="r">cm &lt;- readRDS(file.path(find.package(&#39;pagoda2&#39;), &#39;extdata&#39;, &#39;sample_BM1.rds&#39;))
 dim(cm)
@@ -613,7 +613,7 @@ genesets &lt;- c(genesets, deSets)
 
 <p>Finally before we make our web app we want to generate metadata for the cells. The exact data that we will want to incorporate will depend on the dataset we are processing. For example if we are co-processing multiple samples we will usually want to label cells by the sample of origin. We might also want to add our clusterings as metadata. </p>
 
-<p>Several functions give very detailed control over how metadata will be presented and generated. For example we can generate different palettes or set colors manually. The factorListToMetadata() function will do everything for us, check it&#39;s documentation for more details. Here we will generate metadata for the different clusterings we previously generated manually</p>
+<p>Several functions give very detailed control over how metadata will be presented and generated. For example we can generate different palettes or set colors manually. The factorListToMetadata() function will do everything for us, check its documentation for more details. Here we will generate metadata for the different clusterings we previously generated manually</p>
 
 <pre><code class="r"># Make a list for our metadata
 additionalMetadata &lt;- list()
