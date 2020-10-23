@@ -329,7 +329,7 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 #' @title Generate a Rook Server app from a pagoda2 object
 #' @description Generates a pagoda 2 web object from pagoda2 object by automating steps that most
 #' users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
-#' may wish to use use the constructor directly
+#' may wish to use the constructor directly
 #' @param r pagoda2 object
 #' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added

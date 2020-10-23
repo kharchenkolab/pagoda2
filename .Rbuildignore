@@ -7,3 +7,4 @@ pagoda2*.tar.gz
 data-raw
 ^doc$
 ^Meta$
+^\.graphics$
