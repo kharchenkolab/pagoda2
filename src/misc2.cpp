@@ -113,7 +113,7 @@ arma::mat colSumByFac(SEXP sY,  SEXP rowSel) {
   arma::mat sumM(nlevels+1,ncols,arma::fill::zeros);
 
   // for each gene
-//#pragma omp parallel for shared(sumM) 
+//pragma omp parallel for shared(sumM) 
   for(int g=0;g<ncols;g++) {
     int p0=p[g]; int p1=p[g+1]; 
     if(p1-p0 <1) { continue; }
@@ -217,7 +217,7 @@ int inplaceWinsorizeSparseCols(SEXP sY,const int n, int ncores=1) {
 arma::mat jsDist(const arma::mat& m, int ncores=1) {
   //arma::vec d(m.n_cols*(m.n_cols-1)/2);
   arma::mat d(m.n_cols,m.n_cols,arma::fill::zeros);
-//#pragma omp parallel for num_threads(ncores) shared(d)
+//pragma omp parallel for num_threads(ncores) shared(d)
   for(int i=0;i<(m.n_cols-1);i++) {
     arma::vec li=log(m.col(i));
     for(int j=i+1;j<m.n_cols;j++) {
@@ -238,7 +238,7 @@ arma::mat jsDist(const arma::mat& m, int ncores=1) {
 // helper function to get 10x sparse matrix rows into an increasing order
 // [[Rcpp::export]]
 arma::ivec orderColumnRows(const arma::ivec& p,arma::ivec& i) {
-  //  #pragma omp parallel
+  //  pragma omp parallel
   for(int j=0;j<(p.n_elem-1);j++) {
     i.subvec(p[j],p[j+1]-1)=sort(i.subvec(p[j],p[j+1]-1));
   }

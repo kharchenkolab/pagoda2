@@ -422,8 +422,10 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
 
   adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("dgTMatrix")
   vals.per.col <- split(setNames(adj.mat@x, adj.mat@i + 1), adj.mat@j + 1)
-  k.min <- sapply(vals.per.col, length) %>% min()
-  k <- if (is.null(k)) k.min else min(k, k.min)
+  nn <- sapply(vals.per.col, length);
+  if(is.null(k)) k <- min(nn)
+
+  if(k<3) stop("graph contains cells with fewer than 5 neighbors; please build a denser graph (increase k)")
   
   knns <- lapply(vals.per.col, function(x) sort(x, decreasing=T)[1:k])
   knn.ids <- sapply(knns, function(x) as.integer(names(x))) %>% t()

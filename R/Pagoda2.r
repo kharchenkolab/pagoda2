@@ -315,7 +315,7 @@ Pagoda2 <- setRefClass(
     },
     # make a Knn graph
     # note: for reproducibility, set.seed() and set n.cores=1
-    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL, var.scale=(type == "counts")) {
+    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL, var.scale=(type == "counts"),snn=FALSE, snn.quantile=0.9,min.snn.weight=1e-3) {
       if(is.null(x)) {
         x.was.given <- FALSE;
         if(type=='counts') {
@@ -341,6 +341,14 @@ Pagoda2 <- setRefClass(
 
       } else { # is.null(x)
         x.was.given <- TRUE;
+      }
+
+      if(length(snn.quantile)==1)  {
+        snn.quantile <- c(1-snn.quantile,snn.quantile)
+      } 
+      snn.quantile <- sort(snn.quantile,decreasing=F)
+      if(snn.quantile[1]<0 | snn.quantile[2]>1) {
+        stop("snn.quantile must be one or two numbers in the [0,1] range")
       }
 
       if(distance %in% c('cosine','angular')) {
@@ -394,11 +402,27 @@ Pagoda2 <- setRefClass(
       if(weight.type=='1m') { xn@x <- pmax(0,1-xn@x) }
       #if(weight.type=='rank') { xn@x <- sqrt(df$rank) };
       # make a weighted edge matrix for the largeVis as well
+
+      if(snn) { # optionally, perform shared neighbor weighting, a la SeuratV3, scran
+        square.snn <- function(m) {
+          x <- m; x@x <- rep(1,length(x@x))
+          x <- ((x %*% x) * x) / pmax(outer(rowSums(x),colSums(x),FUN=pmin),1);
+          # scale by Jaccard coefficient, trimming quantiles
+          xq <- quantile(x@x,p=c(snn.quantile[1],snn.quantile[2]))
+          x@x <- pmax(min.snn.weight,pmin(1,(x@x-xq[1])/diff(xq)))
+          
+          x <- drop0(x)
+          as(drop0(m*min.snn.weight + m*x),'dgCMatrix')
+        }
+        xn <- square.snn(t(xn));
+      }
+      
       sxn <- (xn+t(xn))/2;
+      
       g <- igraph::graph_from_adjacency_matrix(sxn,mode='undirected',weighted=TRUE)
       if(!x.was.given) {
-        if(is.null(misc[['edgeMat']])) { misc[['edgeMat']] <<- list() }
-        misc[['edgeMat']][[type]] <<- xn;
+        #if(is.null(misc[['edgeMat']])) { misc[['edgeMat']] <<- list() }
+        #misc[['edgeMat']][[type]] <<- xn;
         graphs[[type]] <<- g;
       }
       return(invisible(g))
@@ -1879,27 +1903,11 @@ Pagoda2 <- setRefClass(
       }
 
       if(embeddingType=='largeVis') {
-        edgeMat <- misc[['edgeMat']][[type]];
-        if(is.null(edgeMat)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
-        if(is.null(sgd_batches)) { sgd_batches <- nrow(edgeMat)*1e3 }
-        #edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(x),nrow(x)))
-        edgeMat <- (edgeMat + t(edgeMat))/2; # symmetrize
-        #edgeMat <- sparseMatrix(i=c(xn$s,xn$e)+1,j=c(xn$e,xn$s)+1,x=c(xn$rd,xn$rd),dims=c(nrow(x),nrow(x)))
-        # if(diffusion.steps>0) {
-        #   Dinv <- Diagonal(nrow(edgeMat),1/colSums(edgeMat))
-        #   Im <- Diagonal(nrow(edgeMat))
-        #   W <- (Diagonal(nrow(edgeMat)) + edgeMat %*% Dinv)/2
-        #   for(i in 1:diffusion.steps) {
-        #     edgeMat <- edgeMat %*% W
-        #   }
-        # }
-        #require(largeVis)
-        #if(!is.null(seed)) { set.seed(seed) }
-        if(!is.na(perplexity)) {
-          wij <- buildWijMatrix(edgeMat,perplexity=perplexity,threads=n.cores)
-        } else {
-          wij <- edgeMat;
-        }
+        g <- graphs[[type]];
+        if(is.null(g)){ stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
+        
+        wij <- as_adj(g,attr='weight');
+        
 
         if(diffusion.steps>0) {
           Dinv <- Diagonal(nrow(wij),1/colSums(wij))
@@ -1918,7 +1926,12 @@ Pagoda2 <- setRefClass(
             wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
           }
           
+        } else if(!is.na(perplexity)) {
+          wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
         }
+        
+        if(is.null(sgd_batches)) { sgd_batches <- nrow(wij)*1e3 }
+
         coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x);
         emb <- embeddings[[type]][[name]] <<- t(coords);
