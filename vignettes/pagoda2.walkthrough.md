@@ -115,7 +115,8 @@ abline(v=1, lty=2, col=2)
 ```
 
 ![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
- Let's filter and check the size of the resulting matrix:
+
+Let's filter and check the size of the resulting matrix:
 
 ```r
 counts <- counts[rowSums(counts)>=10, ]
@@ -625,7 +626,7 @@ p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
 
 You can view the offline app by pointing your browser to http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/index.html
 
-The file can also be shared by uploading it to a web server and be viewed remotely by navigating to the following URL: http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL=[URL TO FILE]
+The file can also be shared by uploading it to a web server and be viewed remotely by navigating to the following URL: http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL= [URL TO FILE]
 
 Finally don't forget to save your pagoda2 object (serializing is not a substitute for saving)
 
