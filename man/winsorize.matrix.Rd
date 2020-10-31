@@ -2,7 +2,7 @@
 % Please edit documentation in R/p1_liftover.R
 \name{winsorize.matrix}
 \alias{winsorize.matrix}
-\title{Winsorize matrix}
+\title{Sets the ncol(mat)*trim top outliers in each row to the next lowest value same for the lowest outliers}
 \usage{
 winsorize.matrix(mat, trim)
 }

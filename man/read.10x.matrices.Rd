@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{read.10x.matrices}
 \alias{read.10x.matrices}
-\title{Load 10X CellRanger count matrices}
+\title{Quick loading of 10X CellRanger count matrices}
 \usage{
 read.10x.matrices(matrixPaths, n.cores = 1, verbose = TRUE)
 }
@@ -17,5 +17,5 @@ read.10x.matrices(matrixPaths, n.cores = 1, verbose = TRUE)
 a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
 }
 \description{
-Quick loading of 10X CellRanger text matrices
+Quick loading of 10X CellRanger count matrices
 }

@@ -33,5 +33,5 @@ gene.vs.molecule.cell.filter(
 a filtered matrix
 }
 \description{
-filter cells based on the gene/molecule dependency
+Filter cells based on gene/molecule dependency
 }

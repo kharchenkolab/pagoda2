@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{armaCor}
 \alias{armaCor}
-\title{armaCor - matrix column correlations}
+\title{armaCor - matrix column correlations. Allows faster matrix correlations with armadillo. Similar to cor() call, will calculate correlation between matrix columns}
 \usage{
 armaCor(mat)
 }
@@ -13,5 +13,5 @@ armaCor(mat)
 matrix with columns as correlations
 }
 \description{
-similar to cor() call, will calculate correlation between matrix columns
+armaCor - matrix column correlations. Allows faster matrix correlations with armadillo. Similar to cor() call, will calculate correlation between matrix columns
 }

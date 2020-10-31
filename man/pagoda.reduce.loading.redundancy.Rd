@@ -2,7 +2,10 @@
 % Please edit documentation in R/p1_liftover.R
 \name{pagoda.reduce.loading.redundancy}
 \alias{pagoda.reduce.loading.redundancy}
-\title{Collapse aspects driven by the same combinations of genes}
+\title{Collapse aspects driven by the same combinations of genes.
+Examines PC loading vectors underlying the identified aspects and clusters aspects based
+on a product of loading and score correlation (raised to corr.power). Clusters of aspects
+driven by the same genes are determined based on the distance.threshold and collapsed.}
 \usage{
 pagoda.reduce.loading.redundancy(
   tam,
@@ -42,6 +45,7 @@ pagoda.reduce.loading.redundancy(
 a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 }
 \description{
+Collapse aspects driven by the same combinations of genes.
 Examines PC loading vectors underlying the identified aspects and clusters aspects based
 on a product of loading and score correlation (raised to corr.power). Clusters of aspects
 driven by the same genes are determined based on the distance.threshold and collapsed.
