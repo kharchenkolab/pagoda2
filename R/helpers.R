@@ -10,7 +10,7 @@ NULL
 }
 
 # translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
-multi2dend <- function(cl,counts,deep=FALSE,dist='cor') {
+multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   if(deep) {
     clf <- as.integer(cl$memberships[1,]); # take the lowest level
   } else {
@@ -161,29 +161,6 @@ show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
     return(invisible(server))
 }
 
-# get SCDE server from saved session
-get.scde.server <- function(port,ip) {
-    if(exists("___scde.server", envir = globalenv())) {
-        server <- get("___scde.server", envir = globalenv())
-    } else {
-        server <- Rook::Rhttpd$new()
-        assign("___scde.server", server, envir = globalenv())
-        if(!missing(ip)) {
-            if(missing(port)) {
-                server$start(listen = ip)
-            } else {
-                server$start(listen = ip, port = port)
-            }
-        } else {
-            if(missing(port)) {
-                server$start()
-            } else {
-                server$start(port=port)
-            }
-        }
-    }
-    return(server)
-}
 
 # BH P-value adjustment with a log option
 bh.adjust <- function(x, log = FALSE) {
@@ -275,9 +252,8 @@ calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mi
     }
 }
 
-# faster matrix correlations with armadillo
-#' @title armaCor - matrix column correlations
-#' @description similar to cor() call, will calculate correlation between matrix columns
+#' armaCor - matrix column correlations. Allows faster matrix correlations with armadillo. Similar to cor() call, will calculate correlation between matrix columns
+#'
 #' @param mat matrix
 #' @return matrix with columns as correlations
 #' @export 
@@ -288,6 +264,7 @@ armaCor <- function(mat) {
 }
 
 #' Find the mode of a vector
+#'
 #' @description return the mode of a vector
 #' @param x the vector to return the mode of
 #' @return the mode elements
@@ -297,15 +274,14 @@ Mode <- function(x) {
 }
 
 
-# load 10x matrices from a named list of result folders
-##' Quick loading of 10X CellRanger text matrices
-##'
-##' @title Load 10X CellRanger count matrices
-##' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
-##' @param n.cores numebr of cores to utilize in parallel (default=1)
-##' @param verbose boolean Whether to output verbose output (default=TRUE)
-##' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
-##' @export
+
+#' Quick loading of 10X CellRanger count matrices
+#'
+#' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
+#' @param n.cores numebr of cores to utilize in parallel (default=1)
+#' @param verbose boolean Whether to output verbose output (default=TRUE)
+#' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
+#' @export
 read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
   if(length(matrixPaths)==1) {
     matrixPaths <- c('one'=matrixPaths);
@@ -348,17 +324,17 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
 
 
 
-##' filter cells based on the gene/molecule dependency
-##' @title Filter cells based on gene/molecule dependency
-##' @param countMatrix input count matrix to be filtered
-##' @param min.cell.size min allowed cell size (default 500)
-##' @param max.cell.size max allowed cell size (default 5e4)
-##' @param p.level statistical confidence level for deviation from the main trend, used for cell filtering
-##' @param alpha shading of the confidence band
-##' @param plot plot the molecule distribution and the gene/molecule dependency fit
-##' @param do.par reset graphical parameters prior to plotting
-##' @return a filtered matrix
-##' @export
+#' Filter cells based on gene/molecule dependency
+#'
+#' @param countMatrix input count matrix to be filtered
+#' @param min.cell.size min allowed cell size (default 500)
+#' @param max.cell.size max allowed cell size (default 5e4)
+#' @param p.level statistical confidence level for deviation from the main trend, used for cell filtering
+#' @param alpha shading of the confidence band
+#' @param plot plot the molecule distribution and the gene/molecule dependency fit
+#' @param do.par reset graphical parameters prior to plotting
+#' @return a filtered matrix
+#' @export
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {
   if(plot) {
     if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
@@ -390,10 +366,10 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
   countMatrix[,valid.cells,drop=FALSE]
 }
 
-#' Get a vector of the names of an object named by the names themselves
-#' @description Get a named vector of the names of an object. This is useful
-#' with lapply when passing names of objects as it ensures that the output list
-#' is also named
+#' Get a vector of the names of an object named by the names themselves. 
+#' This is useful with lapply when passing names of objects as it ensures 
+#' that the output list is also named.
+#' 
 #' @param g an objects on which we can call names()
 #' @return vector with names of object
 #' @export 
@@ -404,8 +380,9 @@ namedNames <- function(g) {
 }
 
 embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
-  if (!requireNamespace("uwot", quietly=TRUE))
+  if (!requireNamespace("uwot", quietly=TRUE)){
     stop("You need to install package 'uwot' to be able to use UMAP embedding.")
+  }
 
   adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("dgTMatrix")
   vals.per.col <- split(setNames(adj.mat@x, adj.mat@i + 1), adj.mat@j + 1)

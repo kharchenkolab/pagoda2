@@ -1,6 +1,7 @@
 
 #' Get a control geneset for cell scoring using the method described in
 #' Puram, Bernstein (Cell, 2018)
+#' 
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature a character vector of genes to use in the signature
 #' @param n.bins number of bins to put the genes in (default=25)
@@ -36,6 +37,7 @@ get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 
 
 #' Puram, Bernstein (Cell, 2018)
 #' Score cells as described in Puram, Bernstein (Cell, 2018)
+#' 
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature the signature to evaluate
 #' @param correct logical, perform background correction by getting a semi-random geneset (default=TRUE)
@@ -69,6 +71,7 @@ score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, 
 }
 
 #' Plot the embedding of a pagoda2 object with the given values
+#' 
 #' @param p2obj the pagoda2 object
 #' @param values the values to plot
 #' @param title title for the plot (default="")
@@ -85,6 +88,7 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 
 #' Subset a gene singature to the genes in the given matrix
 #' optionally warning if genes are missing
+#' 
 #' @param data the matrix
 #' @param signature the signature to subset
 #' @param raise.warning logical, warn if genes are missing (default=TRUE)
@@ -102,6 +106,7 @@ subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
 }
 
 #' Score cells after standardising the expression of each gene removing outliers
+#' 
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature a character vector of genes to use in the signature
 #' @param quantile.cutoff the quantile extremes to trim before plotting (default=0.0.1)
@@ -127,6 +132,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
 }
 
 #' Score cells by getting mean expression of genes in signtures
+#' 
 #' @param data the matrix
 #' @param signature the genes in the signature
 #' @return cell scores
@@ -138,8 +144,11 @@ score.cells.nb0 <- function(data, signature) {
 }
 
 #' Scale the designated values between the range of 0 and 1
+#' 
 #' @param x values to scale
 #' @return the scaled values
 #' @export min.max.scale
-min.max.scale <- function(x) { (x - min(x)) / (max(x) - min(x)) }
+min.max.scale <- function(x) { 
+    (x - min(x)) / (max(x) - min(x)) 
+}
 

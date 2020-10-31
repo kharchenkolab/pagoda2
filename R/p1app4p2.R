@@ -207,6 +207,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
 }
 
 # modified PAGODA1 app for browsing p2 results
+# 
 #' @export p2ViewPagodaApp
 #' @exportClass p2ViewPagodaApp
 p2ViewPagodaApp <- setRefClass(
