@@ -2,7 +2,8 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{factorToP2selection}
 \alias{factorToP2selection}
-\title{converts a factor to a p2 selection object}
+\title{Converts a names factor to a p2 selection object
+if colors are provided it assigns those, otherwise uses a rainbow palette}
 \usage{
 factorToP2selection(cl, col = NULL)
 }
@@ -15,6 +16,6 @@ factorToP2selection(cl, col = NULL)
 a p2 selection object (list)
 }
 \description{
-converts a names factor to a p2 selection object
+Converts a names factor to a p2 selection object
 if colors are provided it assigns those, otherwise uses a rainbow palette
 }

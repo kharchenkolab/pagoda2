@@ -32,10 +32,11 @@ readPagoda2SelectionFile <- function(filepath) {
 }
 
 #' Writes a pagoda2 selection object as a p2 selection file that be be
-#' loaded to the web interfact
+#' loaded to the web interface
 #'
 #' @param sel pagoda2 selection object
 #' @param filepath name of file to write to
+#' @returns NULL, writes to filepath the pagoda2 selection object as a p2 selection file that be be loaded to the web interface
 #' @export
 writePagoda2SelectionFile <- function(sel, filepath) {
   fileConn <- file(filepath);
@@ -50,11 +51,12 @@ writePagoda2SelectionFile <- function(sel, filepath) {
   close(fileConn);
 }
 
-#' @title writes a list of genes as a gene selection that can be loaded in the web interface
-#' @description writes a list of genes as a gene selection that can be loaded in the web interfact
+#' Writes a list of genes as a gene selection that can be loaded in the web interface
+#' 
 #' @param name the name of the selection
 #' @param genes a string vector of the gene names
 #' @param filename the filename to save to
+#' @returns NULL, writes to filepath the list of genes as a gene selection that can be loaded in the web interface
 #' @export 
 writeGenesAsPagoda2Selection <- function(name, genes, filename) {
   con <- file(filename, 'w')
@@ -65,10 +67,12 @@ writeGenesAsPagoda2Selection <- function(name, genes, filename) {
   close(con)
 }
 
-#' @title returns a list vector with the number of multiclassified cells
-#' @description returns a list vector with the number of cells that are
+#' Returns a list vector with the number of cells that are
 #' present in more than one selections in the provided p2 selection object
+#' 
 #' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
+#' @returns list vector with the number of cells that are
+#' present in more than one selections in the provided p2 selection object
 #' @export 
 calcMulticlassified <- function(sel) {
   selectionCellsFlat <- unname(unlist(sapply(sel, function(x) x$cells)))
@@ -76,14 +80,17 @@ calcMulticlassified <- function(sel) {
   sort(sapply(sel, function(x) { sum(x$cells %in% multiClassified) / length(x$cells) }))
 }
 
-#' @title returns a factor of cell membership from a p2 selection
-#' @description returns a factor of cell membership from a p2 selection object
+#' Returns a factor of cell membership from a p2 selection object
 #' the factor only includes cells present in the selection. If the selection
 #' contains multiclassified cells an error is raised
-#' @flatten ignores multiclassified cells, overwriting randomly
+#'
+#' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
+#' @param use.internal.name boolean Use field 'internal.name' as factor names
+#' @param flatten boolean Ignores multiclassified cells, overwriting randomly (default=FALSE)
+#' @returns factor of cell membership from a p2 selection object
+#' the factor only includes cells present in the selection
 #' @export 
-factorFromP2Selection <- function (sel, use.internal.name=FALSE,flatten=FALSE)
-{
+factorFromP2Selection <- function (sel, use.internal.name=FALSE, flatten=FALSE){
   if (!flatten && !all(calcMulticlassified(sel) == 0)) {
     stop("The selections provided are not mutually exclusive. Use flatten=TRUE to overwrite")
   }
@@ -103,9 +110,10 @@ factorFromP2Selection <- function (sel, use.internal.name=FALSE,flatten=FALSE)
   f
 }
 
-#' @title get the colors for each selection from a p2 selection object
-#' @description retrieves the colors of each selection from a p2 selection object as
+
+#' Retrieves the colors of each selection from a p2 selection object as
 #' a names vector of strings
+#'
 #' @param sel pagoda2 selection object
 #' @return a named vector of hex colours
 #' @export 
@@ -113,9 +121,9 @@ getColorsFromP2Selection <- function(sel) {
   unlist(lapply(sel, function(x) { paste0('#', x$color); } ))
 }
 
-#' @title converts a factor to a p2 selection object
-#' @description converts a names factor to a p2 selection object
+#' Converts a names factor to a p2 selection object
 #' if colors are provided it assigns those, otherwise uses a rainbow palette
+#' 
 #' @param cl factor
 #' @param col names vector of colors (default=NULL)
 #' @return a p2 selection object (list)
@@ -140,12 +148,12 @@ factorToP2selection <- function(cl, col=NULL) {
   invisible(ns)
 }
 
-#' @title remove cells that are present in more than one selection from all selections
-#' @description remove cells that are present in more than one selection from all the
+#' Remove cells that are present in more than one selection from all the
 #' selections they are in
+#' 
 #' @param selection a pagoda2 selections list
 #' @return a new list with the duplicated cells removed
-#' @export removeSelectionOverlaps
+#' @export
 removeSelectionOverlaps <- function(selections) {
   selectionsCellsFlat <- unname(unlist(sapply(selections, function(x) x$cells)))
   multiClassified <- selectionsCellsFlat[duplicated(selectionsCellsFlat)]
@@ -159,20 +167,20 @@ removeSelectionOverlaps <- function(selections) {
   });
 }
 
-#' @title get the number of cells per selection group
-#' @description get the number of cells in each selection group
+#' Get the number of cells in each selection group
+#' 
 #' @param selection a pagoda2 selection list
-#' @return a named vector of cell numbers in each grous
-#' @export cellsPerSelectionGroup
+#' @return a named vector of cell numbers in each groups
+#' @export 
 cellsPerSelectionGroup <- function(selection) {
   unlist(lapply(selection, function(x) length(x$cells)))
 }
 
 #' Validates a pagoda2 selection object
-#' @description validates a pagoda2 selection object
+#'
 #' @param selections the pagoda2 selection object to be validated
 #' @return a logical value indicating if the object is valid
-#' @export validateSelectionsObject
+#' @export
 validateSelectionsObject <- function(selections) {
   t <- lapply(selections, function(x) {
     isvalidentry <- TRUE;
@@ -191,8 +199,8 @@ validateSelectionsObject <- function(selections) {
   all(unlist(t))
 }
 
-#' Given a clustering vector and a set of selections assign names to the clusters
-#' @description This function will use a set of pagoda2 cell seletcion to identify
+#' Given a clustering vector and a set of selections assign names to the clusters.
+#' This function will use a set of pagoda2 cell seletcion to identify
 #' the clusters in a a named factor. It is meant to be used to import user defined annotations
 #' that are defined as selections into a more formal categorization of cells that are defined by cluster.
 #' To help with this the function allows a percent of cells to have been classified in the selections into
@@ -204,10 +212,10 @@ validateSelectionsObject <- function(selections) {
 #'
 #' @param clustering a named factor of clusters, where every entry is a cell
 #' @param selections a pagoda2 selection object
-#' @param multiClasscutoff percent of cells in any one cluster that can be multiassigned
-#' @param ambiguour.ratio the ratio of first and second cell numbers for any cluster to produce a valid clustering
-#' @return a data.frame with two colums, one for cluster and one for selections, each cluster appears only once
-#' @export getClusterLabelsFromSelection
+#' @param multiClasscutoff numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)
+#' @param ambiguour.ratio numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.3)
+#' @return a data.frame with two columns, one for cluster and one for selections, each cluster appears only once
+#' @export 
 getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff = 0.3, ambiguous.ratio = 0.5) {
   if (!is.factor(clustering)) {
     stop('clustering is not a factor');
@@ -360,7 +368,7 @@ plotMulticlassified <- function(sel) {
 #' 
 #' @param cl1 clustering 1, a named factor
 #' @param cl2 clustering 2, a named factor
-#' @param filename an optional filename to save the plot instead of displaying it, will be passed to pheatmap
+#' @param filename an optional filename to save the plot instead of displaying it, will be passed to pheatmap (default=NA)
 #' @return invisible summary table that gets plotted
 #' @export
 compareClusterings <- function(cl1, cl2, filename = NA) {
@@ -424,8 +432,9 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
 #' Get a mapping form internal to external names for the specified selection object
 #' 
 #' @param x p2 selection object
+#' @return list of names from the specified selection object
 #' @export 
-getIntExtNamesP2Selection <- function(x) unlist(lapply(x,function(y) {y$name}))
+getIntExtNamesP2Selection <- function(x) unlist(lapply(x, function(y) {y$name}))
 
 #' Plots the specified pagoda2 embedding according to the specified selection object
 #' 
@@ -490,7 +499,7 @@ plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, sh
 #' while removing any mutliclassified cells
 #'
 #' @param filepath name of the selection file
-#' @param use.internal.name passed to factorFromP2Selection (default=FALSE)
+#' @param use.internal.name boolean Use field 'internal.name' as factor names (default=FALSE). Passed to factorFromP2Selection 
 #' @return a name factor with the membership of all the cells that are not multiclassified
 #' @export 
 readPagoda2SelectionAsFactor <- function(filepath, use.internal.name=FALSE) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{cellsPerSelectionGroup}
 \alias{cellsPerSelectionGroup}
-\title{get the number of cells per selection group}
+\title{Get the number of cells in each selection group}
 \usage{
 cellsPerSelectionGroup(selection)
 }
@@ -10,8 +10,8 @@ cellsPerSelectionGroup(selection)
 \item{selection}{a pagoda2 selection list}
 }
 \value{
-a named vector of cell numbers in each grous
+a named vector of cell numbers in each groups
 }
 \description{
-get the number of cells in each selection group
+Get the number of cells in each selection group
 }

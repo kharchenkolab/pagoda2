@@ -10,7 +10,7 @@ readPagoda2SelectionAsFactor(filepath, use.internal.name = FALSE)
 \arguments{
 \item{filepath}{name of the selection file}
 
-\item{use.internal.name}{passed to factorFromP2Selection (default=FALSE)}
+\item{use.internal.name}{boolean Use field 'internal.name' as factor names (default=FALSE). Passed to factorFromP2Selection}
 }
 \value{
 a name factor with the membership of all the cells that are not multiclassified

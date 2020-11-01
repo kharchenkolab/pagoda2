@@ -2,7 +2,8 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{removeSelectionOverlaps}
 \alias{removeSelectionOverlaps}
-\title{remove cells that are present in more than one selection from all selections}
+\title{Remove cells that are present in more than one selection from all the
+selections they are in}
 \usage{
 removeSelectionOverlaps(selections)
 }
@@ -13,6 +14,6 @@ removeSelectionOverlaps(selections)
 a new list with the duplicated cells removed
 }
 \description{
-remove cells that are present in more than one selection from all the
+Remove cells that are present in more than one selection from all the
 selections they are in
 }

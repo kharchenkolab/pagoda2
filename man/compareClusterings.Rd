@@ -11,7 +11,7 @@ compareClusterings(cl1, cl2, filename = NA)
 
 \item{cl2}{clustering 2, a named factor}
 
-\item{filename}{an optional filename to save the plot instead of displaying it, will be passed to pheatmap}
+\item{filename}{an optional filename to save the plot instead of displaying it, will be passed to pheatmap (default=NA)}
 }
 \value{
 invisible summary table that gets plotted
