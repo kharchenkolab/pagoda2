@@ -28,7 +28,7 @@ NULL
 #' @field depth cell size factor
 #' @field genegraphs a slot to store graphical representations in gene space (i.e. gene kNN graphs)
 #' @exportClass Pagoda2
-#' @export 
+#' @export Pagoda2
 Pagoda2 <- setRefClass(
   "Pagoda2",
 

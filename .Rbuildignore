@@ -6,3 +6,5 @@ CHANGELOG.md
 pagoda2*.tar.gz
 data-raw
 ^\.graphics$
+^doc$
+^Meta$

@@ -2,6 +2,7 @@
 
 S3method(min,max.scale)
 S3method(subset,signature.to.data)
+export(Pagoda2)
 export(armaCor)
 export(basicP2proc)
 export(basicP2web)

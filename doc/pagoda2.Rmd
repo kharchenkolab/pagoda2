@@ -1,11 +1,11 @@
 ---
-title: "Example pagoda2 usage"
+title: "Example pagoda2 Usage"
 author: "Peter Kharchenko, Nikolas Barkas"
 output: 
   rmarkdown::html_vignette:
     toc: true
 vignette: >
-  %\VignetteIndexEntry{"Example pagoda2 usage"}
+  %\VignetteIndexEntry{"Example pagoda2 Usage"}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
