@@ -17,17 +17,17 @@ gene.vs.molecule.cell.filter(
 \arguments{
 \item{countMatrix}{input count matrix to be filtered}
 
-\item{min.cell.size}{min allowed cell size (default 500)}
+\item{min.cell.size}{numeric Min allowed cell size (default=500)}
 
-\item{max.cell.size}{max allowed cell size (default 5e4)}
+\item{max.cell.size}{numeric Max allowed cell size (default=5e4)}
 
-\item{p.level}{statistical confidence level for deviation from the main trend, used for cell filtering}
+\item{p.level}{numeric Statistical confidence level for deviation from the main trend, used for cell filtering (default=min(1e-3,1/ncol(countMatrix)))}
 
-\item{alpha}{shading of the confidence band}
+\item{alpha}{numeric Shading of the confidence band (default=0.1)}
 
-\item{plot}{plot the molecule distribution and the gene/molecule dependency fit}
+\item{plot}{boolean Plot the molecule distribution and the gene/molecule dependency fit (default=TRUE)}
 
-\item{do.par}{reset graphical parameters prior to plotting}
+\item{do.par}{boolean Reset graphical parameters prior to plotting (default=TRUE)}
 }
 \value{
 a filtered matrix

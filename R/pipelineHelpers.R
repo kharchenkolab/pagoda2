@@ -139,9 +139,9 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
   # Build go terms for the web apps
   if (make.go.sets) {
     if (is.null(go.env)) {
-      warning("make.go.sets is TRUE and go.env is null");
+      warning("make.go.sets is TRUE and go.env is null")
     } else {
-      goSets <- p2.generate.go.web.fromGOEnv(go.env);
+      goSets <- p2.generate.go.web.fromGOEnv(go.env)
     }
   } else {
     goSets <- NULL
@@ -151,16 +151,16 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
   if (make.de.sets) {
     deSets <- get.de.geneset(p2, groups = p2$clusters$PCA[[1]], prefix = 'de_')
   } else {
-    deSets <- NULL;
+    deSets <- NULL
   }
   # Make genesets with go terms and de genes
-  genesets <- c(goSets, deSets);
+  genesets <- c(goSets, deSets)
   # Make gene graph for nearest genes
   if(make.gene.graph)  {
-    p2$makeGeneKnnGraph();
+    p2$makeGeneKnnGraph()
   }
   # Put the application metadat in a list
-  appmetadata <- list(apptitle = title);
+  appmetadata <- list(apptitle = title)
   # make the pagoda2 app
   p2web <- make.p2.app(p2,
                        dendrogramCellGroups = p2$clusters$PCA[[1]],
@@ -168,8 +168,8 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
                        geneSets = genesets,
                        appname=title,
                        show.clusters = FALSE,
-                       appmetadata = appmetadata);
-  invisible(p2web);
+                       appmetadata = appmetadata)
+  invisible(p2web)
 }
 
 #' Generate a GO environment for the organism specified

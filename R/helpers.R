@@ -44,7 +44,6 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   return(d)
 }
 
-
 # quick utility to check if given character vector is colors
 # thanks, Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 areColors <- function(x) {
@@ -137,14 +136,21 @@ cldend2array <- function(d,cells=NULL) {
 sn <- function(x) { names(x) <- x; return(x); }
 
 
-
+#' Directly open the pagoda2 web application and view the 'p2web' application object from our R session
+#' 
+#' @param app pagoda2 application object
+#' @param name character Name of the application to view
+#' @param port numeric Port number
+#' @param ip numeric IP address
+#' @param browse boolean Whether to load the app into an HTML browser (default=TRUE)
+#' @param server server If NULL, will grab server with get.scde.server(port=port, ip=ip) (derfault=NULL)
 #' @export 
-show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
-                                        # replace special characters
+show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
+    # replace special characters
     name <- gsub("[^[:alnum:.]]", "_", name)
 
     if(is.null(server)) {
-        server <- get.scde.server(port=port,ip=ip)
+        server <- get.scde.server(port=port, ip=ip)
     }
     server$add(app = app, name = name)
     if(is.function(server$listenPort)) {
@@ -301,16 +307,16 @@ Mode <- function(x) {
 #' Quick loading of 10X CellRanger count matrices
 #'
 #' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
-#' @param n.cores numebr of cores to utilize in parallel (default=1)
+#' @param n.cores numeric Cores to utilize in parallel (default=1)
 #' @param verbose boolean Whether to output verbose output (default=TRUE)
 #' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
 #' @export
 read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
   if(length(matrixPaths)==1) {
     matrixPaths <- c('one'=matrixPaths);
-    single.dataset <- TRUE;
+    single.dataset <- TRUE
   } else {
-    single.dataset <- FALSE;
+    single.dataset <- FALSE
   }
   if(verbose) message("reading ",length(matrixPaths)," dataset(s) ")
   if(is.null(names(matrixPaths))) stop("matrixPaths must be a named vector")
@@ -350,12 +356,12 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
 #' Filter cells based on gene/molecule dependency
 #'
 #' @param countMatrix input count matrix to be filtered
-#' @param min.cell.size min allowed cell size (default 500)
-#' @param max.cell.size max allowed cell size (default 5e4)
-#' @param p.level statistical confidence level for deviation from the main trend, used for cell filtering
-#' @param alpha shading of the confidence band
-#' @param plot plot the molecule distribution and the gene/molecule dependency fit
-#' @param do.par reset graphical parameters prior to plotting
+#' @param min.cell.size numeric Min allowed cell size (default=500)
+#' @param max.cell.size numeric Max allowed cell size (default=5e4)
+#' @param p.level numeric Statistical confidence level for deviation from the main trend, used for cell filtering (default=min(1e-3,1/ncol(countMatrix)))
+#' @param alpha numeric Shading of the confidence band (default=0.1)
+#' @param plot boolean Plot the molecule distribution and the gene/molecule dependency fit (default=TRUE)
+#' @param do.par boolean Reset graphical parameters prior to plotting (default=TRUE)
 #' @return a filtered matrix
 #' @export
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {

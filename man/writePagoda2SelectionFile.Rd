@@ -10,7 +10,7 @@ writePagoda2SelectionFile(sel, filepath)
 \arguments{
 \item{sel}{pagoda2 selection object}
 
-\item{filepath}{name of file to write to}
+\item{filepath}{name of file to which to write}
 }
 \value{
 NULL, writes to filepath the pagoda2 selection object as a p2 selection file that be be loaded to the web interface

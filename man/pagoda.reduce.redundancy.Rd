@@ -2,7 +2,8 @@
 % Please edit documentation in R/p1_liftover.R
 \name{pagoda.reduce.redundancy}
 \alias{pagoda.reduce.redundancy}
-\title{Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)}
+\title{Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)
+Examines PC loading vectors underlying the identified aspects and clusters aspects based on score correlation. Clusters of aspects driven by the same patterns are determined based on the distance.threshold.}
 \usage{
 pagoda.reduce.redundancy(
   tamr,
@@ -20,21 +21,21 @@ pagoda.reduce.redundancy(
 \arguments{
 \item{tamr}{output of pagoda.reduce.loading.redundancy()}
 
-\item{distance.threshold}{similarity threshold for grouping interdependent aspects}
+\item{distance.threshold}{numeric Similarity threshold for grouping interdependent aspects (default=0.2)}
 
-\item{cluster.method}{one of the standard clustering methods to be used (fastcluster::hclust is used if available or stats::hclust)}
+\item{cluster.method}{character One of the standard clustering methods to be used (default="complete") (Note: fastcluster::hclust is used if available or stats::hclust)}
 
-\item{distance}{distance matrix}
+\item{distance}{distance matrix (default=NULL)}
 
-\item{weighted.correlation}{Boolean of whether to use a weighted correlation in determining the similarity of patterns}
+\item{weighted.correlation}{boolean Whether to use a weighted correlation in determining the similarity of patterns (default=TRUE)}
 
-\item{plot}{Boolean of whether to show plot}
+\item{plot}{boolean Whether to show plot (default=FALSE)}
 
-\item{top}{Restrict output to the top n aspects of heterogeneity}
+\item{top}{bololean Restrict output to the top N aspects of heterogeneity (default=Inf, i.e. no restriction)}
 
-\item{trim}{Winsorization trim to use prior to determining the top aspects}
+\item{trim}{numeric Winsorization trim to use prior to determining the top aspects (default=0)}
 
-\item{abs}{Boolean of whether to use absolute correlation}
+\item{abs}{boolean Whether to use absolute correlation (default=FALSE)}
 
 \item{...}{additional arguments are passed to the pagoda.view.aspects() method during plotting}
 }
@@ -42,6 +43,7 @@ pagoda.reduce.redundancy(
 a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 }
 \description{
+Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)
 Examines PC loading vectors underlying the identified aspects and clusters aspects based on score correlation. Clusters of aspects driven by the same patterns are determined based on the distance.threshold.
 }
 \examples{

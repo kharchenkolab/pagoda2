@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebHelpers.R
 \name{p2.generate.dr.go.web}
 \alias{p2.generate.dr.go.web}
-\title{Generates mouse go annotation for the web object}
+\title{Generates danio rerio go annotation for the web object}
 \usage{
 p2.generate.dr.go.web(gene.names, n.cores = 1)
 }

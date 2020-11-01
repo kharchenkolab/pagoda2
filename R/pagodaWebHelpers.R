@@ -2,6 +2,7 @@
 NULL
 
 #' Generates human go annotation for the web object
+#' 
 #' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
@@ -16,6 +17,7 @@ p2.generate.human.go.web <- function(gene.names, n.cores = 1) {
 }
 
 #' Generates mouse go annotation for the web object
+#' 
 #' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
@@ -29,7 +31,8 @@ p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
                      egGO2ALLEGS = org.Mm.eg.db::org.Mm.egGO2ALLEGS, n.cores = n.cores)
 }
 
-#' Generates mouse go annotation for the web object
+#' Generates danio rerio go annotation for the web object
+#' 
 #' @description generates a danio rerio go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
@@ -43,7 +46,8 @@ p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
 }
 
 
-#' Generates human go annotation for the web object for any species
+#' Generates go annotation for the web object for any species
+#' 
 #' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
@@ -85,6 +89,7 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
 }
 
 #' Generates GO annotation for the web object
+#' 
 #' @description Generates GO annotation for the web object from the go environment used for
 #' enrichment analysis
 #' @param go.env GO enviroment generated with p2.generate.go

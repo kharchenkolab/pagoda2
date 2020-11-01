@@ -25,9 +25,9 @@ getClusterLabelsFromSelection(
 
 \item{selections}{a pagoda2 selection object}
 
-\item{multiClasscutoff}{numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)}
+\item{ambiguous.ratio}{numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.3)}
 
-\item{ambiguour.ratio}{numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.3)}
+\item{multiClasscutoff}{numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)}
 }
 \value{
 a data.frame with two columns, one for cluster and one for selections, each cluster appears only once

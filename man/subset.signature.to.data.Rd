@@ -3,7 +3,7 @@
 \name{subset.signature.to.data}
 \alias{subset.signature.to.data}
 \title{Subset a gene singature to the genes in the given matrix
-optionally warning if genes are missing}
+with optional warning if genes are missing}
 \usage{
 \method{subset}{signature.to.data}(data, signature, raise.warning = TRUE)
 }
@@ -12,9 +12,9 @@ optionally warning if genes are missing}
 
 \item{signature}{the signature to subset}
 
-\item{raise.warning}{logical, warn if genes are missing (default=TRUE)}
+\item{raise.warning}{boolean Warn if genes are missing (default=TRUE)}
 }
 \description{
 Subset a gene singature to the genes in the given matrix
-optionally warning if genes are missing
+with optional warning if genes are missing
 }

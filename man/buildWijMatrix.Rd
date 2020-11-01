@@ -10,7 +10,7 @@ buildWijMatrix(x, threads = NULL, perplexity = 50)
 \arguments{
 \item{x}{An edgematrix, either an `edgematrix` object or a sparse matrix.}
 
-\item{threads}{numeric The maximum number of threads to spawn. Determined automatically if NULL (default=NULL)}
+\item{threads}{numeric The maximum number of threads to spawn (default=NULL). Determined automatically if NULL (default=NULL)}
 
 \item{perplexity}{numeric Given perplexity (default=50)}
 }

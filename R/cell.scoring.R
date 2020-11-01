@@ -8,7 +8,7 @@
 #' @param n.genes.per.bin number of genes to get from each bin (default=100)
 #' @return a character vector that can be used as a background signature
 #' @export 
-get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 100) {
+get.control.geneset <- function(data, signature, n.bins=25, n.genes.per.bin=100) {
     ## DEVEL
     ## data <- vals
     ## signature <- zheng.treg.common.sign
@@ -40,12 +40,12 @@ get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 
 #' 
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature the signature to evaluate
-#' @param correct logical, perform background correction by getting a semi-random geneset (default=TRUE)
-#' @param show.plot logical, if corrected values are calculated show plot of corrected vs original scores (default=FALSE)
+#' @param correct boolean Perform background correction by getting a semi-random geneset (default=TRUE)
+#' @param show.plot boolean If corrected values are calculated show plot of corrected vs original scores (default=FALSE)
 #' @param ... options for get.control.geneset()
 #' @return a score for each cell
 #' @export 
-score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, ...) {
+score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ...) {
     ## DEVEL
     ## data <- vals
     ## signature <- zheng.treg.common.sign
@@ -63,7 +63,7 @@ score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, 
         cell.score.corrected <- cell.score - bg.score;
         ## Plot corrected vs original cell scores
         if (show.plot) {
-            plot(cell.score,cell.score.corrected, main='Original Vs Corrected Cell Score')
+            plot(cell.score,cell.score.corrected, main='Original vs. Corrected Cell Score')
         }
         ret.vals <- cell.score.corrected
     }
@@ -74,9 +74,9 @@ score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, 
 #' 
 #' @param p2obj the pagoda2 object
 #' @param values the values to plot
-#' @param title title for the plot (default="")
-#' @param type the type reduction on which the embedding is based on (default="PCA")
-#' @param embeddingType the type of embedding to plot (default="tSNE")
+#' @param title character Title for the plot (default="")
+#' @param type character Type reduction on which the embedding is based on (default="PCA")
+#' @param embeddingType characer Type of embedding to plot (default="tSNE")
 #' @return NULL, simply updates p2obj$plotEmbedding()
 #' @export 
 plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddingType = 'tSNE') 
@@ -87,11 +87,11 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 }
 
 #' Subset a gene singature to the genes in the given matrix
-#' optionally warning if genes are missing
+#' with optional warning if genes are missing
 #' 
 #' @param data the matrix
 #' @param signature the signature to subset
-#' @param raise.warning logical, warn if genes are missing (default=TRUE)
+#' @param raise.warning boolean Warn if genes are missing (default=TRUE)
 #' @export 
 subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
     keep.genes <- signature %in% colnames(data)
@@ -109,7 +109,7 @@ subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
 #' 
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature a character vector of genes to use in the signature
-#' @param quantile.cutoff the quantile extremes to trim before plotting (default=0.0.1)
+#' @param quantile.cutoff numeric The quantile extremes to trim before plotting (default=0.0.1)
 score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
     ## DEVEL
     #data <- vals

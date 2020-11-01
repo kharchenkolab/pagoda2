@@ -17,11 +17,11 @@ plotOneWithValues(
 
 \item{values}{the values to plot}
 
-\item{title}{title for the plot (default="")}
+\item{title}{character Title for the plot (default="")}
 
-\item{type}{the type reduction on which the embedding is based on (default="PCA")}
+\item{type}{character Type reduction on which the embedding is based on (default="PCA")}
 
-\item{embeddingType}{the type of embedding to plot (default="tSNE")}
+\item{embeddingType}{characer Type of embedding to plot (default="tSNE")}
 }
 \value{
 NULL, simply updates p2obj$plotEmbedding()

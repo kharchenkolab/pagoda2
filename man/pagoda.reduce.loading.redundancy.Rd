@@ -15,8 +15,8 @@ pagoda.reduce.loading.redundancy(
   cluster.method = "complete",
   distance.threshold = 0.01,
   corr.power = 4,
-  n.cores = 1,
   abs = TRUE,
+  n.cores = 1,
   ...
 )
 }
@@ -25,19 +25,19 @@ pagoda.reduce.loading.redundancy(
 
 \item{pwpca}{output of pagoda.pathway.wPCA()}
 
-\item{clpca}{output of pagoda.gene.clusters() (optional)}
+\item{clpca}{output of pagoda.gene.clusters() (optional) (default=NULL)}
 
-\item{plot}{whether to plot the resulting clustering}
+\item{plot}{boolean Whether to plot the resulting clustering (default=FALSE)}
 
-\item{cluster.method}{one of the standard clustering methods to be used (fastcluster::hclust is used if available or stats::hclust)}
+\item{cluster.method}{string One of the standard clustering methods to be used (default="complete") Note: fastcluster::hclust is used if available or stats::hclust)}
 
-\item{distance.threshold}{similarity threshold for grouping interdependent aspects}
+\item{distance.threshold}{numeric Similarity threshold for grouping interdependent aspects (default=0.01)}
 
-\item{corr.power}{power to which the product of loading and score correlation is raised}
+\item{corr.power}{numeric Power to which the product of loading and score correlation is raised (default=4)}
 
-\item{n.cores}{number of cores to use during processing}
+\item{abs}{boolean Whether to use absolute correlation (default=TRUE)}
 
-\item{abs}{Boolean of whether to use absolute correlation}
+\item{n.cores}{numeric Number of cores to use during processing (default=1)}
 
 \item{...}{additional arguments are passed to the pagoda.view.aspects() method during plotting}
 }

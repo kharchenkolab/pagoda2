@@ -35,7 +35,7 @@ readPagoda2SelectionFile <- function(filepath) {
 #' loaded to the web interface
 #'
 #' @param sel pagoda2 selection object
-#' @param filepath name of file to write to
+#' @param filepath name of file to which to write
 #' @returns NULL, writes to filepath the pagoda2 selection object as a p2 selection file that be be loaded to the web interface
 #' @export
 writePagoda2SelectionFile <- function(sel, filepath) {
@@ -107,7 +107,7 @@ factorFromP2Selection <- function (sel, use.internal.name=FALSE, flatten=FALSE){
     f <- as.factor(d$label)
   }
   names(f) <- d$cellid
-  f
+  invisible(f)
 }
 
 
@@ -213,7 +213,7 @@ validateSelectionsObject <- function(selections) {
 #' @param clustering a named factor of clusters, where every entry is a cell
 #' @param selections a pagoda2 selection object
 #' @param multiClasscutoff numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)
-#' @param ambiguour.ratio numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.3)
+#' @param ambiguous.ratio numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.3)
 #' @return a data.frame with two columns, one for cluster and one for selections, each cluster appears only once
 #' @export 
 getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff = 0.3, ambiguous.ratio = 0.5) {
@@ -257,7 +257,7 @@ getClusterLabelsFromSelection <- function(clustering, selections, multiClassCuto
   names(labels) <- tmp1[,1]
 
   colnames(tmp1) <- c('cluster', 'selection')
-  tmp1
+  invisible(tmp1)
 
 }
 
@@ -265,17 +265,17 @@ getClusterLabelsFromSelection <- function(clustering, selections, multiClassCuto
 #' generate a cleaned up annotation of cluster groups that can be used for classification
 #'
 #' @param clustering a factor that provides the clustering
-#' @param selection a p2 selection object that provided by the web interfact user
+#' @param selections a p2 selection object that provided by the web interfact user
 #' @return a named factor that can be used for classification
 #' @export 
 generateClassificationAnnotation <- function(clustering, selections) {
-  clAnnotation <- getClusterLabelsFromSelection(clustering, selections);
+  clAnnotation <- getClusterLabelsFromSelection(clustering, selections)
   rownames(clAnnotation) <- clAnnotation$cluster
 
   r <- as.factor(clAnnotation[as.character(clustering),]$selection)
   names(r) <- names(clustering)
 
-  r
+  invisible(r)
 }
 
 #' Returns all the cells that are in the designated selections.
@@ -301,7 +301,7 @@ getCellsInSelections <- function(p2selections, selectionNames) {
 
   cells <- unique(unname(unlist(lapply(p2selections[selectionNames], function(x) x$cells))))
 
-  cells
+  invisible(cells)
 }
 
 #' Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object
@@ -361,7 +361,7 @@ plotMulticlassified <- function(sel) {
     ggplot2::scale_y_continuous(name='% multiclassified') +
     ggplot2::scale_x_discrete(name='Selection Label')
 
-  p
+  invisible(p)
 }
 
 #' Compare two different clusterings provided as factors by plotting a normalised heatmap

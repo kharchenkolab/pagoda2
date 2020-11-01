@@ -1,6 +1,5 @@
 
 PKG_CXXFLAGS= -I"../inst/include" -I"./n2/include" $(SHLIB_OPENMP_CXXFLAGS) 
-
 PKG_LIBS=-L/usr/lib/ -L"." -lpthread -lstdc++ -ln2 -lm $(shell "${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" -e "Rcpp:::LdFlags()") $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) $(SHLIB_OPENMP_CXXFLAGS) 
 CXX_STD = CXX11
 MkInclude = $(R_HOME)/etc${R_ARCH}/Makeconf

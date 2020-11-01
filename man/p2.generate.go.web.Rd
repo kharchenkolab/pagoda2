@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebHelpers.R
 \name{p2.generate.go.web}
 \alias{p2.generate.go.web}
-\title{Generates human go annotation for the web object for any species}
+\title{Generates go annotation for the web object for any species}
 \usage{
 p2.generate.go.web(
   gene.names,
