@@ -138,7 +138,6 @@ sn <- function(x) { names(x) <- x; return(x); }
 
 
 
-
 #' @export 
 show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
                                         # replace special characters
@@ -161,6 +160,30 @@ show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
     return(invisible(server))
 }
 
+
+# get SCDE server from saved session
+get.scde.server <- function(port,ip) {
+    if(exists("___scde.server", envir = globalenv())) {
+        server <- get("___scde.server", envir = globalenv())
+    } else {
+        server <- Rook::Rhttpd$new()
+        assign("___scde.server", server, envir = globalenv())
+        if(!missing(ip)) {
+            if(missing(port)) {
+                server$start(listen = ip)
+            } else {
+                server$start(listen = ip, port = port)
+            }
+        } else {
+            if(missing(port)) {
+                server$start()
+            } else {
+                server$start(port=port)
+            }
+        }
+    }
+    return(server)
+}
 
 # BH P-value adjustment with a log option
 bh.adjust <- function(x, log = FALSE) {
