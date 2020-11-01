@@ -7,7 +7,7 @@
 #' @param n.bins number of bins to put the genes in (default=25)
 #' @param n.genes.per.bin number of genes to get from each bin (default=100)
 #' @return a character vector that can be used as a background signature
-#' @export get.control.geneset
+#' @export 
 get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 100) {
     ## DEVEL
     ## data <- vals
@@ -44,7 +44,7 @@ get.control.geneset <- function(data, signature, n.bins = 25, n.genes.per.bin = 
 #' @param show.plot logical, if corrected values are calculated show plot of corrected vs original scores (default=FALSE)
 #' @param ... options for get.control.geneset()
 #' @return a score for each cell
-#' @export score.cells.puram
+#' @export 
 score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, ...) {
     ## DEVEL
     ## data <- vals
@@ -77,8 +77,8 @@ score.cells.puram <- function(data, signature, correct = TRUE, show.plot=FALSE, 
 #' @param title title for the plot (default="")
 #' @param type the type reduction on which the embedding is based on (default="PCA")
 #' @param embeddingType the type of embedding to plot (default="tSNE")
-#' @return NULL
-#' @export plotOneWithValues
+#' @return NULL, simply updates p2obj$plotEmbedding()
+#' @export 
 plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddingType = 'tSNE') 
 {
     p2obj$plotEmbedding(type = type, embeddingType = embeddingType, colors = values, alpha = 0.2, do.par = FALSE)
@@ -92,7 +92,7 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' @param data the matrix
 #' @param signature the signature to subset
 #' @param raise.warning logical, warn if genes are missing (default=TRUE)
-#' @export subset.signature.to.data
+#' @export 
 subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
     keep.genes <- signature %in% colnames(data)
     ## Check if all genes found
@@ -136,7 +136,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
 #' @param data the matrix
 #' @param signature the genes in the signature
 #' @return cell scores
-#' @export score.cells.nb0
+#' @export 
 score.cells.nb0 <- function(data, signature) {
     signature <- subset.signature.to.data(data,signature)
     scores <- apply(data,1,mean)
@@ -147,7 +147,7 @@ score.cells.nb0 <- function(data, signature) {
 #' 
 #' @param x values to scale
 #' @return the scaled values
-#' @export min.max.scale
+#' @export 
 min.max.scale <- function(x) { 
     (x - min(x)) / (max(x) - min(x)) 
 }

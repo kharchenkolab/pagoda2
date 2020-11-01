@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{plotEmbeddingColorByP2Selection}
 \alias{plotEmbeddingColorByP2Selection}
-\title{Plot a specified pagoda2 embedding according to the selection object}
+\title{Plots the specified pagoda2 embedding according to the specified selection object}
 \usage{
 plotEmbeddingColorByP2Selection(
   emb,
@@ -11,7 +11,7 @@ plotEmbeddingColorByP2Selection(
   show.labels = TRUE,
   label.size = 3,
   point.size = 2,
-  show.guides = T,
+  show.guides = TRUE,
   alpha = 0.7,
   show.axis = TRUE
 )

@@ -2,7 +2,8 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{writePagoda2SelectionFile}
 \alias{writePagoda2SelectionFile}
-\title{writes a pagoda2 selection object as a p2 pagoda2 selection files}
+\title{Writes a pagoda2 selection object as a p2 selection file that be be
+loaded to the web interfact}
 \usage{
 writePagoda2SelectionFile(sel, filepath)
 }
@@ -12,6 +13,6 @@ writePagoda2SelectionFile(sel, filepath)
 \item{filepath}{name of file to write to}
 }
 \description{
-writes a pagoda2 selection object as a p2 selection file that be be
+Writes a pagoda2 selection object as a p2 selection file that be be
 loaded to the web interfact
 }

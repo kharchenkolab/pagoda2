@@ -13,6 +13,8 @@ p2.generate.go.web(
 }
 \arguments{
 \item{gene.names}{a character vector of genes to include}
+
+\item{n.cores}{numeric Number of cores to use (default=1)}
 }
 \description{
 generates a humna go annotation for the pagoda2 web object

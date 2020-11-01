@@ -27,8 +27,8 @@ NULL
 #' @field verbose verbosity level
 #' @field depth cell size factor
 #' @field genegraphs a slot to store graphical representations in gene space (i.e. gene kNN graphs)
-#' @export Pagoda2
 #' @exportClass Pagoda2
+#' @export 
 Pagoda2 <- setRefClass(
   "Pagoda2",
 

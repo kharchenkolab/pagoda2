@@ -1,27 +1,29 @@
 ### A Collection of functions for quick analysis of single cell data with pagoda2
 
-#' Perform basic pagoda2 processing
-#' @description adjust variance, calculate pca reduction
+#' Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
 #' make knn graph, identify clusters with infomap, multilevel and walktrap and make
 #' largeVis and tSNE embeddings
+#' 
 #' @param cd count matrix, rows are genes, columns are cells
-#' @param n.cores number of cores to use
+#' @param n.cores numeric Number of cores to use (default=1)
 #' @param batch optional batch factor (default=NULL)
-#' @param n.odgenes number of top overdispersed genes to use (dfault=3e3)
-#' @param nPcs number of PCs to use
-#' @param k default number of neighbors to use in kNN graph
-#' @param perplexity perplexity to use in generating tSNE and largeVis embeddings (default=50)
-#' @param log.scale whether to use log scale normalization (default=T)
-#' @param trim number of cells to trim in winsorization (default=10)
-#' @param keep.genes optional set of genes to keep from being filtered out (even at low counts, default=NULL)
-#' @param min.cells.per.gene minimal number of cells required for gene to be kept (unless listed in keep.genes)
-#' @param min.transcripts.per.cell minimumal number of molecules/reads for a cell to be admitted
-#' @param get.largevis whether to caluclate largeVis embedding
-#' @param get.tsne whether to calculate tSNE embedding
-#' @param make.geneknn whether pre-calculate gene kNN (for gene search)
+#' @param n.odgenes numeric Number of top overdispersed genes to use (dfault=3e3)
+#' @param nPcs numeric Number of PCs to use (default=100)
+#' @param k numeric Default number of neighbors to use in kNN graph (default=30)
+#' @param perplexity numeric Perplexity to use in generating tSNE and largeVis embeddings (default=50)
+#' @param log.scale boolean Whether to use log scale normalization (default=TRUE)
+#' @param trim numeric Number of cells to trim in winsorization (default=10)
+#' @param keep.genes optional set of genes to keep from being filtered out (even at low counts) (default=NULL)
+#' @param min.cells.per.gene numeric Minimal number of cells required for gene to be kept (unless listed in keep.genes) (default=0)
+#' @param min.transcripts.per.cell numeric Minimumal number of molecules/reads for a cell to be admitted (default=100)
+#' @param get.largevis boolean Whether to caluclate largeVis embedding (default=TRUE)
+#' @param get.tsne boolean Whether to calculate tSNE embedding (default=TRUE) 
+#' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search)(default=TRUE) 
 #' @return a new pagoda2 object
-#' @export basicP2proc
-basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100, k=30, perplexity=50, log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
+#' @export 
+basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
+  log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
+  get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
   p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell);
@@ -54,14 +56,14 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL,  n.odgenes=3e3, nPcs=100,
   invisible(p2)
 }
 
-#' Perform extended pagoda2 processing
-#' @description generate organism specific GO environment and
-#' calculate pathway overdispersion
+#' Perform extended pagoda2 processing. 
+#' Generate organism specific GO environment and calculate pathway overdispersion
+#' 
 #' @param p2 the pagoda 2 object 
-#' @param n.cores number of cores to use
-#' @param organism organisms hs, mm or dr
+#' @param n.cores numeric Number of cores to use (default=20)
+#' @param organism character Organisms hs, mm or dr (default='hs')
 #' @return a list of a p2 object and a go.env
-#' @export extendedP2proc
+#' @export 
 extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
@@ -84,13 +86,13 @@ extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
   invisible(list(p2 = p2, go.env = go.env))
 }
 
-#' Convert a list of factors to pagoda2 web metadata
-#' @description  Converts a list of factors into pagoda2 metadata optionally
+#' Converts a list of factors into pagoda2 metadata optionally
 #' filtering down to the cells present in the provided pagoda2 app
+#' 
 #' @param factor.list a list of factors named by the cell identifier
-#' @param p2 optional, a pagoda2 app to filter the factors by
+#' @param p2 optional, a pagoda2 app to filter the factors by (default=NULL)
 #' @return a pagoda2 web metadata object
-#' @export factorListToMetadata
+#' @export 
 factorListToMetadata <- function(factor.list, p2 = NULL) {
   if(! class(p2) %in% c('Pagoda2', 'NULL')) stop('p2 must be NULL or a pagoda2 app');
   ## A pagoda 2 object has been provided, filter the factors by the
@@ -118,6 +120,7 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 }
 
 #' Generate a pagoda2 web object
+#' 
 #' @param p2 a pagoda2 object
 #' @param additionalMetadata a pagoda2 web metadata object
 #' @param title title for the web app
@@ -127,7 +130,7 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 #' @param go.env the go environment used for the overdispersion analysis
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @return a pagoda2 web application
-#' @export webP2proc
+#' @export 
 webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.cores =20,
                       make.go.sets = TRUE, make.de.sets = TRUE, go.env = NULL,
                       make.gene.graph = TRUE, appmetadata = NULL) {
@@ -170,10 +173,11 @@ webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.core
 }
 
 #' Generate a GO environment for the organism specified
+#' 
 #' @description This is a wrapper function for generating a go envirnoment
 #' @param r a pagoda2 object
 #' @param organism the organism, current hs, mm and dr are supported for the human and mouse
-#' @export p2.generate.go
+#' @export 
 p2.generate.go <- function(r, organism = NULL, go2all.egs = NULL, eg.alias2eg = NULL, min.env.length=5) {
   if (is.null(organism) && (is.null(go2all.egs) || is.null(eg.alias2eg))) {
     stop('Either organism or go2all.egs and eg.alias2eg must be specified');
@@ -219,29 +223,32 @@ p2.generate.go <- function(r, organism = NULL, go2all.egs = NULL, eg.alias2eg = 
 }
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
+#' 
 #' @param r a pagoda2 object
 #' @return a go environment object
-#' @export p2.generate.dr.go
+#' @export 
 p2.generate.dr.go <- function(r) p2.generate.go(r, "dr")
 
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
+#' 
 #' @param r a pagoda2 object
 #' @return a go environment object
-#' @export p2.generate.human.go
+#' @export
 p2.generate.human.go <- function(r) p2.generate.go(r, "hs")
 
 
 #' Generate a GO environment for mouse for overdispersion analysis for the the back end
+#' 
 #' @param r a pagoda2 object
 #' @return a go environment object
-#' @export p2.generate.mouse.go
+#' @export 
 p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
 
 
-#' @title Generate a metadata structure for a p2 web object from a named factor
-#' @description This function will generate a metadata structure that can be passed to
+#' @title Generate a list metadata structure that can be passed to
 #' p2 web object constructor as additional metadata given a named factor
+#' 
 #' @param metadata named factor with metadata for individual cells, names must correspond to cells
 #' @param displayname name to display for the metadata
 #' @param s s value for rainbow palette
@@ -249,8 +256,9 @@ p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
 #' @param start starting value
 #' @param end ending value
 #' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters
-#' @export p2.metadata.from.factor
+#' @return list of data, levels, palette to be passed to pagoda2 web object constructor
 #' @examples
+#' 
 #' ##additionalMetadata <- list()
 #'
 #' # Generate metadata the easy way
@@ -265,6 +273,8 @@ p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
 #' ##p1 <- colorRamps::primary.colors(n = nlevels(a))
 #' ##names(p1) <- levels(a) # This is optional
 #' ##additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = p1)
+#'
+#' @export 
 p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = NULL, pal = NULL) {
   # Check input
   if ( !is.factor(metadata) ) {
@@ -326,22 +336,25 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
   invisible(ret);
 }
 
-#' @title Generate a Rook Server app from a pagoda2 object
-#' @description Generates a pagoda 2 web object from pagoda2 object by automating steps that most
+#' Generate a Rook Server app from a pagoda2 object. 
+#' This generates a pagoda 2 web object from pagoda2 object by automating steps that most
 #' users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
 #' may wish to use the constructor directly
+#'
 #' @param r pagoda2 object
 #' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
-#' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added
+#' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added (default=list())
 #' @param geneSets a list of genesets to show
-#' @param show.depth logical, include depth as a metadata row
-#' @param show.batch logical, include batch as a metadata row
-#' @param show.clusters logical, include clusters as a metadata row
-#' @param appname application name
-#' @param innerOrder Ordering of cells inside the clusters provided in dendrogramCellGroups. This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL
+#' @param show.depth boolean Include depth as a metadata row (default=TRUE)
+#' @param show.batch boolean Include batch as a metadata row (default=TRUE)
+#' @param show.clusters boolean Include clusters as a metadata row (default=TRUE)
+#' @param appname character Application name (default="Pagoda2 Application")
+#' @param innerOrder Ordering of cells inside the clusters provided in dendrogramCellGroups (default=NULL). This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL
+#' @param orderDend (default=NULL)
+#' @param appmetadata (default=NULL)
 #' @return a pagoda2 web object that presents a Rook compatible interface
-#' @export make.p2.app
-make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = T,
+#' @export 
+make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = TRUE,
                         show.batch = TRUE, show.clusters = TRUE, appname = "Pagoda2 Application",
                         innerOrder=NULL, orderDend=FALSE, appmetadata = NULL) {
   # Build the metadata
@@ -416,13 +429,13 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
   invisible(p2w);
 }
 
-#' @title Generate differential expression genesets for the web app given a cell grouping
-#' @description Generate differential expression genesets for the web app given a cell grouping by
+#' Generate differential expression genesets for the web app given a cell grouping by
 #' Calculating de sets between every cell set and everything else individually
+#' 
 #' @param pagObj pagoda object
 #' @param groups a named factor to do the de by
 #' @param prefix a character  prefix to assign to genesets generated
-#' @export get.de.geneset
+#' @export 
 get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 
   deResults <- pagObj$getDifferentialGenes(
@@ -448,20 +461,22 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 #' Converts the output of hierarchical differential expression aspects
 #' into genesets that can be loaded into a p2 web app to retrive the genes
 #' that make the geneset interactively
-#' @param o output of getHierarchicalDiffExpressionAspects
+#' 
+#' @param output output of getHierarchicalDiffExpressionAspects
 #' @return a geneset that can be loaded into p2 web genesets
-#' @export hierDiffToGenesets
-hierDiffToGenesets <- function(o) {
-  l <- as.list(o$env)
+#' @export
+hierDiffToGenesets <- function(output) {
+  l <- as.list(output$env)
   lapply(namedNames(l), function(n) {
     list(
-      properties = list(locked = T, genesetname=n,shortdescription=n),
+      properties = list(locked = TRUE, genesetname=n,shortdescription=n),
       genes = l[[n]]
     )
   })
 }
 
 #' Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression
+#' 
 #' @param p2 p2 object
 #' @param title name of the pagoda object
 #' @export p2.toweb.hdea
@@ -480,18 +495,15 @@ p2.toweb.hdea <- function(p2, title="") {
 }
 
 
-
-
-
-
 #' Generate a p2 web application from a pagoda2 object
+#'
 #' @param p2 pagoda2 application object
-#' @param app.title name of application as displayed in the browser title
-#' @param extraWebMetadata additional metadata generated by p2.metadata.from.fractor
-#' @param n.cores number of cores to use for differential expression calculation
+#' @param app.title name of application as displayed in the browser title (default='Pagoda2')
+#' @param extraWebMetadata additional metadata generated by p2.metadata.from.fractor (default=NULL)
+#' @param n.cores numeric Number of cores to use for differential expression calculation (default=4)
 #' @return a pagoda2 web object
-#' @export basicP2web
-basicP2web <- function(p2,app.title = 'Pagoda2', extraWebMetadata = NULL, n.cores = 4) {
+#' @export 
+basicP2web <- function(p2, app.title = 'Pagoda2', extraWebMetadata = NULL, n.cores = 4) {
     message('Calculating hdea...\n')
     hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3, n.cores = n.cores)
     metadata.forweb <- list();

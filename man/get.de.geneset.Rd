@@ -2,7 +2,8 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{get.de.geneset}
 \alias{get.de.geneset}
-\title{Generate differential expression genesets for the web app given a cell grouping}
+\title{Generate differential expression genesets for the web app given a cell grouping by
+Calculating de sets between every cell set and everything else individually}
 \usage{
 get.de.geneset(pagObj, groups, prefix = "de_")
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{plotSelectionOverlaps}
 \alias{plotSelectionOverlaps}
-\title{Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object}
+\title{Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object
+ignore self overlaps}
 \usage{
 plotSelectionOverlaps(sel)
 }

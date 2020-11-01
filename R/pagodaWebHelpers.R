@@ -4,33 +4,36 @@ NULL
 #' Generates human go annotation for the web object
 #' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.human.go.web
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @export 
 p2.generate.human.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
     stop("Package \"org.Hs.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
   }
 
   p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Hs.eg.db::org.Hs.egALIAS2EG, 
-                     egGO2ALLEGS = org.Hs.eg.db::org.Hs.egGO2ALLEGS, n.cores = n.cores);
+                     egGO2ALLEGS = org.Hs.eg.db::org.Hs.egGO2ALLEGS, n.cores = n.cores)
 }
 
 #' Generates mouse go annotation for the web object
 #' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.mouse.go.web
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @export 
 p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
     stop("Package \"org.Mm.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
   }
 
   p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Mm.eg.db::org.Mm.egALIAS2EG, 
-                     egGO2ALLEGS = org.Mm.eg.db::org.Mm.egGO2ALLEGS, n.cores = n.cores);
+                     egGO2ALLEGS = org.Mm.eg.db::org.Mm.egGO2ALLEGS, n.cores = n.cores)
 }
 
 #' Generates mouse go annotation for the web object
 #' @description generates a danio rerio go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.dr.go.web
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @export 
 p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Dr.eg.db", quietly = TRUE)) {
     stop("Package \"org.Dr.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
@@ -43,7 +46,8 @@ p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
 #' Generates human go annotation for the web object for any species
 #' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.go.web
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @export 
 p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL, n.cores = 1) {
   if (!requireNamespace("GO.db", quietly = TRUE)) {
     stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
@@ -84,7 +88,7 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
 #' @description Generates GO annotation for the web object from the go environment used for
 #' enrichment analysis
 #' @param go.env GO enviroment generated with p2.generate.go
-#' @export p2.generate.go.web.fromGOEnv
+#' @export 
 p2.generate.go.web.fromGOEnv  <- function (go.env) {
   go.env <- as.list(go.env)
 

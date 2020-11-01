@@ -3,12 +3,12 @@
 # Date: August 2017
 # Description: A collection of functions for working with p2 selections
 
-#' @title reads a pagoda2 web app exported cell selection file
-#' @description reads a cell selection file exported by pagoda2 web interface as a list
+#' Reads a pagoda2 web app exported cell selection file exported as a list
 #' of list objects that contain the name of the selection, the color (as a hex string) and the
 #' identifiers of the individual cells
+#'
 #' @param filepath the path of the file load
-#' @export readPagoda2SelectionFile
+#' @export 
 readPagoda2SelectionFile <- function(filepath) {
   returnList <- list();
 
@@ -31,12 +31,12 @@ readPagoda2SelectionFile <- function(filepath) {
   invisible(returnList)
 }
 
-#' @title writes a pagoda2 selection object as a p2 pagoda2 selection files
-#' @description writes a pagoda2 selection object as a p2 selection file that be be
+#' Writes a pagoda2 selection object as a p2 selection file that be be
 #' loaded to the web interfact
+#'
 #' @param sel pagoda2 selection object
 #' @param filepath name of file to write to
-#' @export writePagoda2SelectionFile
+#' @export
 writePagoda2SelectionFile <- function(sel, filepath) {
   fileConn <- file(filepath);
   lines <- c();
@@ -55,7 +55,7 @@ writePagoda2SelectionFile <- function(sel, filepath) {
 #' @param name the name of the selection
 #' @param genes a string vector of the gene names
 #' @param filename the filename to save to
-#' @export writeGenesAsPagoda2Selection
+#' @export 
 writeGenesAsPagoda2Selection <- function(name, genes, filename) {
   con <- file(filename, 'w')
   cat(name, file=con)
@@ -69,7 +69,7 @@ writeGenesAsPagoda2Selection <- function(name, genes, filename) {
 #' @description returns a list vector with the number of cells that are
 #' present in more than one selections in the provided p2 selection object
 #' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
-#' @export calcMulticlassified
+#' @export 
 calcMulticlassified <- function(sel) {
   selectionCellsFlat <- unname(unlist(sapply(sel, function(x) x$cells)))
   multiClassified <- selectionCellsFlat[duplicated(selectionCellsFlat)]
@@ -81,7 +81,7 @@ calcMulticlassified <- function(sel) {
 #' the factor only includes cells present in the selection. If the selection
 #' contains multiclassified cells an error is raised
 #' @flatten ignores multiclassified cells, overwriting randomly
-#' @export factorFromP2Selection
+#' @export 
 factorFromP2Selection <- function (sel, use.internal.name=FALSE,flatten=FALSE)
 {
   if (!flatten && !all(calcMulticlassified(sel) == 0)) {
@@ -108,7 +108,7 @@ factorFromP2Selection <- function (sel, use.internal.name=FALSE,flatten=FALSE)
 #' a names vector of strings
 #' @param sel pagoda2 selection object
 #' @return a named vector of hex colours
-#' @export getColorsFromP2Selection
+#' @export 
 getColorsFromP2Selection <- function(sel) {
   unlist(lapply(sel, function(x) { paste0('#', x$color); } ))
 }
@@ -119,7 +119,7 @@ getColorsFromP2Selection <- function(sel) {
 #' @param cl factor
 #' @param col names vector of colors (default=NULL)
 #' @return a p2 selection object (list)
-#' @export factorToP2selection
+#' @export 
 factorToP2selection <- function(cl, col=NULL) {
   if(!is.factor(cl)) {
     stop('cl is not a factor');
@@ -201,6 +201,7 @@ validateSelectionsObject <- function(selections) {
 #' the method will assign each cluster to a selection only if the most popular cluster to the next most popular
 #' exceed the ambiguous.ratio in terms of cell numbers. If a cluster does not satisfy this condtiion it is not
 #' assigned.
+#'
 #' @param clustering a named factor of clusters, where every entry is a cell
 #' @param selections a pagoda2 selection object
 #' @param multiClasscutoff percent of cells in any one cluster that can be multiassigned
@@ -254,10 +255,11 @@ getClusterLabelsFromSelection <- function(clustering, selections, multiClassCuto
 
 #' Given a cell clustering (partitioning) and a set of user provided selections
 #' generate a cleaned up annotation of cluster groups that can be used for classification
+#'
 #' @param clustering a factor that provides the clustering
 #' @param selection a p2 selection object that provided by the web interfact user
 #' @return a named factor that can be used for classification
-#' @export generateClassificationAnnotation
+#' @export 
 generateClassificationAnnotation <- function(clustering, selections) {
   clAnnotation <- getClusterLabelsFromSelection(clustering, selections);
   rownames(clAnnotation) <- clAnnotation$cluster
@@ -268,13 +270,14 @@ generateClassificationAnnotation <- function(clustering, selections) {
   r
 }
 
-#' Returns all the cells that are in the designated selections
-#' @description Given a pagoda2 selections object and the names of some selections
+#' Returns all the cells that are in the designated selections.
+#' Given a pagoda2 selections object and the names of some selections
 #' in it returns the names of the cells that are in these selections removed any duplicates
+#' 
 #' @param p2selections a p2 selections object
 #' @param selectionNames the names of some selections in th p2 object
 #' @return a character vector of cell names
-#' @export getCellsInSelections
+#' @export 
 getCellsInSelections <- function(p2selections, selectionNames) {
   if(!is.character(selectionNames)) {
     stop('selectionNames needs to be a character vector of cell names');
@@ -294,11 +297,11 @@ getCellsInSelections <- function(p2selections, selectionNames) {
 }
 
 #' Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object
-#' @description Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object
 #' ignore self overlaps
+#' 
 #' @param sel a pagoda2 selection object
 #' @return a list that contains a ggplot2 object and a datatable with the overlaps data
-#' @export plotSelectionOverlaps
+#' @export 
 plotSelectionOverlaps <- function(sel) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
@@ -331,10 +334,11 @@ plotSelectionOverlaps <- function(sel) {
 }
 
 #' Plot multiclassified cells per selection as a percent barplot
+#' 
 #' @description Plot multiclassified cells per selection as a percent barplot
 #' @param sel pagoda2 selection object
 #' @return ggplot2 object
-#' @export plotMulticlassified
+#' @export
 plotMulticlassified <- function(sel) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
@@ -353,11 +357,12 @@ plotMulticlassified <- function(sel) {
 }
 
 #' Compare two different clusterings provided as factors by plotting a normalised heatmap
+#' 
 #' @param cl1 clustering 1, a named factor
 #' @param cl2 clustering 2, a named factor
 #' @param filename an optional filename to save the plot instead of displaying it, will be passed to pheatmap
 #' @return invisible summary table that gets plotted
-#' @export compareClusterings
+#' @export
 compareClusterings <- function(cl1, cl2, filename = NA) {
   if (!requireNamespace("pheatmap", quietly = TRUE)) {
     stop("Package \"pheatmap\" needed for this function to work. Please install it.", call. = FALSE)
@@ -383,6 +388,7 @@ compareClusterings <- function(cl1, cl2, filename = NA) {
 
 #' Perform differential expression on a p2 object given a
 #' set of web selections and two groups to compare
+#'
 #' @param p2 a pagoda2 object
 #' @param sel a web selection read with readPagoda2SelectionFile()
 #' @param group1name the name of the first selection
@@ -403,6 +409,7 @@ diffExprOnP2FromWebSelection <- function(p2, sel, group1name, group2name) {
 
 #' Perform differential expression on a p2 object given a
 #' set of web selections and one group to compare against everything else
+#' 
 #' @param p2 a pagoda2 object
 #' @param sel a web selection read with readPagoda2SelectionFile()
 #' @param groupname name of group to compare to everything else
@@ -415,19 +422,20 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
 }
 
 #' Get a mapping form internal to external names for the specified selection object
+#' 
 #' @param x p2 selection object
-#' @export getIntExtNamesP2Selection
+#' @export 
 getIntExtNamesP2Selection <- function(x) unlist(lapply(x,function(y) {y$name}))
 
-#' Plot a specified pagoda2 embedding according to the selection object
-#' @description Plots the specified pagoda2 embedding according to the specified selection object
+#' Plots the specified pagoda2 embedding according to the specified selection object
+#' 
 #' @param emb An embedding from a pagoda2 object
 #' @param sel a pagoda2 web selection object
 #' @param show.unlabelled display the plots without any associated selection as grey
 #' @param show.labels display the labels at the center of each cluster
 #' @return a ggplot2 object
-#' @export plotEmbeddingColorByP2Selection
-plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = T, alpha = 0.7, show.axis =TRUE )  {
+#' @export
+plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = TRUE, alpha = 0.7, show.axis =TRUE){
   # Return the plot variable p
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
@@ -477,14 +485,15 @@ plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, sh
 }
 
 ## Myeloid, match to myeloid from patient1
-#' Read a pagoda2 selection file and return it as a factor
-#' @description read a pagoda2 cell selection file and return it as a factor
+
+#' Read a pagoda2 cell selection file and return it as a factor
 #' while removing any mutliclassified cells
+#'
 #' @param filepath name of the selection file
-#' @param use.internal.name passed to factorFromP2Selection
+#' @param use.internal.name passed to factorFromP2Selection (default=FALSE)
 #' @return a name factor with the membership of all the cells that are not multiclassified
-#' @export readPagoda2SelectionAsFactor
-readPagoda2SelectionAsFactor <- function(filepath,use.internal.name=FALSE) {
+#' @export 
+readPagoda2SelectionAsFactor <- function(filepath, use.internal.name=FALSE) {
     factorFromP2Selection(removeSelectionOverlaps(
         readPagoda2SelectionFile(filepath)
     ),use.internal.name=use.internal.name)

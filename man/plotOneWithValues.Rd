@@ -23,6 +23,9 @@ plotOneWithValues(
 
 \item{embeddingType}{the type of embedding to plot (default="tSNE")}
 }
+\value{
+NULL, simply updates p2obj$plotEmbedding()
+}
 \description{
 Plot the embedding of a pagoda2 object with the given values
 }

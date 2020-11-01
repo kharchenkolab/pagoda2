@@ -6,10 +6,10 @@
 into genesets that can be loaded into a p2 web app to retrive the genes
 that make the geneset interactively}
 \usage{
-hierDiffToGenesets(o)
+hierDiffToGenesets(output)
 }
 \arguments{
-\item{o}{output of getHierarchicalDiffExpressionAspects}
+\item{output}{output of getHierarchicalDiffExpressionAspects}
 }
 \value{
 a geneset that can be loaded into p2 web genesets

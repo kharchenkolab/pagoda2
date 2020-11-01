@@ -2,7 +2,8 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{p2.metadata.from.factor}
 \alias{p2.metadata.from.factor}
-\title{Generate a metadata structure for a p2 web object from a named factor}
+\title{Generate a list metadata structure that can be passed to
+p2 web object constructor as additional metadata given a named factor}
 \usage{
 p2.metadata.from.factor(
   metadata,
@@ -29,11 +30,15 @@ p2.metadata.from.factor(
 
 \item{pal}{optional vector of colours to use, if provided overrides s,v,start and end parameters}
 }
+\value{
+list of data, levels, palette to be passed to pagoda2 web object constructor
+}
 \description{
-This function will generate a metadata structure that can be passed to
+Generate a list metadata structure that can be passed to
 p2 web object constructor as additional metadata given a named factor
 }
 \examples{
+
 ##additionalMetadata <- list()
 
 # Generate metadata the easy way
@@ -48,4 +53,5 @@ p2 web object constructor as additional metadata given a named factor
 ##p1 <- colorRamps::primary.colors(n = nlevels(a))
 ##names(p1) <- levels(a) # This is optional
 ##additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = p1)
+
 }

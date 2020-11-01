@@ -139,7 +139,7 @@ sn <- function(x) { names(x) <- x; return(x); }
 
 
 
-#' @export show.app
+#' @export 
 show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
                                         # replace special characters
     name <- gsub("[^[:alnum:.]]", "_", name)
@@ -267,7 +267,7 @@ armaCor <- function(mat) {
 #'
 #' @description return the mode of a vector
 #' @param x the vector to return the mode of
-#' @return the mode elements
+#' @return 
 Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]

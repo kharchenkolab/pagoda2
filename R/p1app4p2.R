@@ -1,7 +1,7 @@
 #' @import Rook
 #' @import rjson
 
-#' @export p2.make.pagoda1.app
+#' @export 
 p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,veloinfo=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
   if (!requireNamespace("GO.db", quietly = TRUE)) {
     stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
@@ -207,9 +207,8 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
 }
 
 # modified PAGODA1 app for browsing p2 results
-# 
-#' @export p2ViewPagodaApp
 #' @exportClass p2ViewPagodaApp
+#' @export 
 p2ViewPagodaApp <- setRefClass(
     'p2ViewPagodaApp',
     fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 'name', 'trim', 'batch','embedding','type','veloinfo'),
@@ -763,7 +762,7 @@ p2ViewPagodaApp <- setRefClass(
     )
 )
 
-#' @export t.p2c.view.pathways
+#' @export 
 t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
   # are these genes or pathways being passed?
   if(!is.null(goenv)) {

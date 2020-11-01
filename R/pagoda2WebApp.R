@@ -9,8 +9,8 @@
 #' @importFrom rjson fromJSON toJSON
 #' @import base64enc
 
-#' @export pagoda2WebApp
 #' @exportClass pagoda2WebApp
+#' @export 
 pagoda2WebApp <- setRefClass(
   'pagoda2WebApp',
   'contains' = 'Middleware', # Inherit from Middleware to handle static and dynamic files seperately
