@@ -1,9 +1,8 @@
-
 #' Get a control geneset for cell scoring using the method described in
 #' Puram, Bernstein (Cell, 2018)
 #' 
 #' @param data matrix of expression, rows are cell, columns are genes
-#' @param signature a character vector of genes to use in the signature
+#' @param signature character vector The signature to evaluate, a character vector of genes 
 #' @param n.bins number of bins to put the genes in (default=25)
 #' @param n.genes.per.bin number of genes to get from each bin (default=100)
 #' @return a character vector that can be used as a background signature
@@ -39,7 +38,7 @@ get.control.geneset <- function(data, signature, n.bins=25, n.genes.per.bin=100)
 #' Score cells as described in Puram, Bernstein (Cell, 2018)
 #' 
 #' @param data matrix of expression, rows are cell, columns are genes
-#' @param signature the signature to evaluate
+#' @param signature character vector The signature to evaluate, a character vector of genes 
 #' @param correct boolean Perform background correction by getting a semi-random geneset (default=TRUE)
 #' @param show.plot boolean If corrected values are calculated show plot of corrected vs original scores (default=FALSE)
 #' @param ... options for get.control.geneset()
@@ -58,9 +57,9 @@ score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ..
     ## Perform correction against pseudo randomized
     ## background
     if (correct) {
-        control.gene.set <- get.control.geneset(data, signature);
+        control.gene.set <- get.control.geneset(data, signature)
         bg.score <- apply(data[,control.gene.set], 1, mean)
-        cell.score.corrected <- cell.score - bg.score;
+        cell.score.corrected <- cell.score - bg.score
         ## Plot corrected vs original cell scores
         if (show.plot) {
             plot(cell.score,cell.score.corrected, main='Original vs. Corrected Cell Score')
@@ -73,10 +72,10 @@ score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ..
 #' Plot the embedding of a pagoda2 object with the given values
 #' 
 #' @param p2obj the pagoda2 object
-#' @param values the values to plot
+#' @param values the values to plot, fed into p2obj$plotEmbedding(colors=values)
 #' @param title character Title for the plot (default="")
 #' @param type character Type reduction on which the embedding is based on (default="PCA")
-#' @param embeddingType characer Type of embedding to plot (default="tSNE")
+#' @param embeddingType character Type of embedding to plot (default="tSNE")
 #' @return NULL, simply updates p2obj$plotEmbedding()
 #' @export 
 plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddingType = 'tSNE') 
@@ -86,11 +85,11 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
     invisible(NULL)
 }
 
-#' Subset a gene singature to the genes in the given matrix
+#' Subset a gene signature to the genes in the given matrix
 #' with optional warning if genes are missing
 #' 
 #' @param data the matrix
-#' @param signature the signature to subset
+#' @param signature  character vector The signature to subset a character vector of genes 
 #' @param raise.warning boolean Warn if genes are missing (default=TRUE)
 #' @export 
 subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
@@ -131,7 +130,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
     return(scores)
 }
 
-#' Score cells by getting mean expression of genes in signtures
+#' Score cells by getting mean expression of genes in signatures
 #' 
 #' @param data the matrix
 #' @param signature the genes in the signature
