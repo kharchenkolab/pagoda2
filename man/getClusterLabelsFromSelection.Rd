@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{getClusterLabelsFromSelection}
 \alias{getClusterLabelsFromSelection}
-\title{Given a clustering vector and a set of selections assign names to the clusters.
+\title{Assign names to the clusters, given a clustering vector and a set of selections.
 This function will use a set of pagoda2 cell seletcion to identify
 the clusters in a a named factor. It is meant to be used to import user defined annotations
 that are defined as selections into a more formal categorization of cells that are defined by cluster.
@@ -33,7 +33,7 @@ getClusterLabelsFromSelection(
 a data.frame with two columns, one for cluster and one for selections, each cluster appears only once
 }
 \description{
-Given a clustering vector and a set of selections assign names to the clusters.
+Assign names to the clusters, given a clustering vector and a set of selections.
 This function will use a set of pagoda2 cell seletcion to identify
 the clusters in a a named factor. It is meant to be used to import user defined annotations
 that are defined as selections into a more formal categorization of cells that are defined by cluster.

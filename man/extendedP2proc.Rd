@@ -12,7 +12,7 @@ extendedP2proc(p2, n.cores = 20, organism = "hs")
 
 \item{n.cores}{numeric Number of cores to use (default=20)}
 
-\item{organism}{character Organisms hs, mm or dr (default='hs')}
+\item{organism}{character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')}
 }
 \value{
 a list of a p2 object and a go.env

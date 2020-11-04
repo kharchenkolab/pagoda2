@@ -18,7 +18,7 @@
 #' @param min.transcripts.per.cell numeric Minimumal number of molecules/reads for a cell to be admitted (default=100)
 #' @param get.largevis boolean Whether to caluclate largeVis embedding (default=TRUE)
 #' @param get.tsne boolean Whether to calculate tSNE embedding (default=TRUE) 
-#' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search)(default=TRUE) 
+#' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE) 
 #' @return a new pagoda2 object
 #' @export 
 basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
@@ -61,7 +61,7 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, 
 #' 
 #' @param p2 the pagoda 2 object 
 #' @param n.cores numeric Number of cores to use (default=20)
-#' @param organism character Organisms hs, mm or dr (default='hs')
+#' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
 #' @return a list of a p2 object and a go.env
 #' @export 
 extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
@@ -89,9 +89,9 @@ extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
 #' Converts a list of factors into pagoda2 metadata optionally
 #' filtering down to the cells present in the provided pagoda2 app
 #' 
-#' @param factor.list a list of factors named by the cell identifier
-#' @param p2 optional, a pagoda2 app to filter the factors by (default=NULL)
-#' @return a pagoda2 web metadata object
+#' @param factor.list list of factors named by the cell identifier
+#' @param p2 pagoda2 app to filter the factors by, optional (default=NULL)
+#' @return pagoda2 web metadata object
 #' @export 
 factorListToMetadata <- function(factor.list, p2 = NULL) {
   if(! class(p2) %in% c('Pagoda2', 'NULL')) stop('p2 must be NULL or a pagoda2 app');
@@ -121,19 +121,19 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 
 #' Generate a pagoda2 web object
 #' 
-#' @param p2 a pagoda2 object
-#' @param additionalMetadata a pagoda2 web metadata object
-#' @param title title for the web app
-#' @param n.cores number of cores to use
-#' @param make.go.sets logical specifying if go sets hould be made
-#' @param make.de.sets logical specifying if differential expression sets should be made
-#' @param go.env the go environment used for the overdispersion analysis
+#' @param p2 pagoda2 object
+#' @param additionalMetadata pagoda2 web metadata object (default=NULL)
+#' @param title character string Title for the web app (default='Pagoda 2')
+#' @param n.cores numeric Number of cores to use (default=20)
+#' @param make.go.sets boolean Whether GO sets should be made (default=TRUE)
+#' @param make.de.sets boolean Whether differential expression sets should be made (default=TRUE)
+#' @param go.env the GO environment used for the overdispersion analysis (default=NULL)
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @return a pagoda2 web application
 #' @export 
-webP2proc <- function(p2, additionalMetadata =  NULL, title = 'Pagoda 2', n.cores =20,
-                      make.go.sets = TRUE, make.de.sets = TRUE, go.env = NULL,
-                      make.gene.graph = TRUE, appmetadata = NULL) {
+webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda 2', n.cores=20,
+                      make.go.sets=TRUE, make.de.sets=TRUE, go.env=NULL,
+                      make.gene.graph=TRUE, appmetadata=NULL) {
   # Get the gene names
   gene.names <- colnames(p2$counts);
   # Build go terms for the web apps
@@ -233,7 +233,7 @@ p2.generate.dr.go <- function(r) p2.generate.go(r, "dr")
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' 
 #' @param r a pagoda2 object
-#' @return a go environment object
+#' @return a GO environment object
 #' @export
 p2.generate.human.go <- function(r) p2.generate.go(r, "hs")
 
@@ -241,7 +241,7 @@ p2.generate.human.go <- function(r) p2.generate.go(r, "hs")
 #' Generate a GO environment for mouse for overdispersion analysis for the the back end
 #' 
 #' @param r a pagoda2 object
-#' @return a go environment object
+#' @return a GO environment object
 #' @export 
 p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
 

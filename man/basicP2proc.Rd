@@ -53,7 +53,7 @@ basicP2proc(
 
 \item{get.tsne}{boolean Whether to calculate tSNE embedding (default=TRUE)}
 
-\item{make.geneknn}{boolean Whether pre-calculate gene kNN (for gene search)(default=TRUE)}
+\item{make.geneknn}{boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE)}
 }
 \value{
 a new pagoda2 object

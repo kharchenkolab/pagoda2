@@ -8,7 +8,7 @@ selections they are in}
 removeSelectionOverlaps(selections)
 }
 \arguments{
-\item{selection}{a pagoda2 selections list}
+\item{selections}{a pagoda2 selections list}
 }
 \value{
 a new list with the duplicated cells removed

@@ -8,12 +8,12 @@ filtering down to the cells present in the provided pagoda2 app}
 factorListToMetadata(factor.list, p2 = NULL)
 }
 \arguments{
-\item{factor.list}{a list of factors named by the cell identifier}
+\item{factor.list}{list of factors named by the cell identifier}
 
-\item{p2}{optional, a pagoda2 app to filter the factors by (default=NULL)}
+\item{p2}{pagoda2 app to filter the factors by, optional (default=NULL)}
 }
 \value{
-a pagoda2 web metadata object
+pagoda2 web metadata object
 }
 \description{
 Converts a list of factors into pagoda2 metadata optionally

@@ -4,8 +4,8 @@
 # Description: A collection of functions for working with p2 selections
 
 #' Reads a pagoda2 web app exported cell selection file exported as a list
-#' of list objects that contain the name of the selection, the color (as a hex string) and the
-#' identifiers of the individual cells
+#' of list objects that contain the name of the selection, 
+#' the color (as a hex string) and the identifiers of the individual cells
 #'
 #' @param filepath the path of the file load
 #' @export 
@@ -85,10 +85,9 @@ calcMulticlassified <- function(sel) {
 #' contains multiclassified cells an error is raised
 #'
 #' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
-#' @param use.internal.name boolean Use field 'internal.name' as factor names
+#' @param use.internal.name boolean Use field 'internal.name' as factor names (default=FALSE)
 #' @param flatten boolean Ignores multiclassified cells, overwriting randomly (default=FALSE)
-#' @returns factor of cell membership from a p2 selection object
-#' the factor only includes cells present in the selection
+#' @returns factor of cell membership from a p2 selection object. The factor only includes cells present in the selection.
 #' @export 
 factorFromP2Selection <- function (sel, use.internal.name=FALSE, flatten=FALSE){
   if (!flatten && !all(calcMulticlassified(sel) == 0)) {
@@ -111,8 +110,7 @@ factorFromP2Selection <- function (sel, use.internal.name=FALSE, flatten=FALSE){
 }
 
 
-#' Retrieves the colors of each selection from a p2 selection object as
-#' a names vector of strings
+#' Retrieves the colors of each selection from a p2 selection object as a names vector of strings
 #'
 #' @param sel pagoda2 selection object
 #' @return a named vector of hex colours
@@ -151,7 +149,7 @@ factorToP2selection <- function(cl, col=NULL) {
 #' Remove cells that are present in more than one selection from all the
 #' selections they are in
 #' 
-#' @param selection a pagoda2 selections list
+#' @param selections a pagoda2 selections list
 #' @return a new list with the duplicated cells removed
 #' @export
 removeSelectionOverlaps <- function(selections) {
@@ -199,7 +197,7 @@ validateSelectionsObject <- function(selections) {
   all(unlist(t))
 }
 
-#' Given a clustering vector and a set of selections assign names to the clusters.
+#' Assign names to the clusters, given a clustering vector and a set of selections.
 #' This function will use a set of pagoda2 cell seletcion to identify
 #' the clusters in a a named factor. It is meant to be used to import user defined annotations
 #' that are defined as selections into a more formal categorization of cells that are defined by cluster.
@@ -440,8 +438,13 @@ getIntExtNamesP2Selection <- function(x) unlist(lapply(x, function(y) {y$name}))
 #' 
 #' @param emb An embedding from a pagoda2 object
 #' @param sel a pagoda2 web selection object
-#' @param show.unlabelled display the plots without any associated selection as grey
-#' @param show.labels display the labels at the center of each cluster
+#' @param show.unlabelled boolean Whether to display the plots without any associated selection as grey (default=TRUE)
+#' @param show.labels boolean Whether to display the labels at the center of each cluster (default=TRUE)
+#' @param label.size numeric (default=3)
+#' @param point.size numeric (default=2)
+#' @param show.guides boolean (default=TRUE)
+#' @param alpha numeric (default=0.7)
+#' @param show.axis boolean (default=TRUE)
 #' @return a ggplot2 object
 #' @export
 plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = TRUE, alpha = 0.7, show.axis =TRUE){

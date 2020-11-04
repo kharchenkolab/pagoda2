@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebHelpers.R
 \name{p2.generate.mouse.go.web}
 \alias{p2.generate.mouse.go.web}
-\title{Generates mouse go annotation for the web object}
+\title{Generates mouse (Mus musculus) GO annotation for the web object}
 \usage{
 p2.generate.mouse.go.web(gene.names, n.cores = 1)
 }
@@ -12,5 +12,5 @@ p2.generate.mouse.go.web(gene.names, n.cores = 1)
 \item{n.cores}{numeric Number of cores to use (default=1)}
 }
 \description{
-generates a humna go annotation for the pagoda2 web object
+Generates mouse (Mus musculus) GO annotation for the web object
 }

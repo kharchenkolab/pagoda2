@@ -10,7 +10,7 @@ p2.generate.mouse.go(r)
 \item{r}{a pagoda2 object}
 }
 \value{
-a go environment object
+a GO environment object
 }
 \description{
 Generate a GO environment for mouse for overdispersion analysis for the the back end

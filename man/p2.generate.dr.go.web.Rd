@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebHelpers.R
 \name{p2.generate.dr.go.web}
 \alias{p2.generate.dr.go.web}
-\title{Generates danio rerio go annotation for the web object}
+\title{Generates zebrafish (Danio rerio) GO annotation for the web object}
 \usage{
 p2.generate.dr.go.web(gene.names, n.cores = 1)
 }
@@ -12,5 +12,5 @@ p2.generate.dr.go.web(gene.names, n.cores = 1)
 \item{n.cores}{numeric Number of cores to use (default=1)}
 }
 \description{
-generates a danio rerio go annotation for the pagoda2 web object
+Generates zebrafish (Danio rerio) GO annotation for the web object
 }

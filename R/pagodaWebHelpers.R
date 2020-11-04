@@ -1,9 +1,8 @@
 #' @importFrom parallel mclapply
 NULL
 
-#' Generates human go annotation for the web object
+#' Generates human GO annotation for the web object
 #' 
-#' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @export 
@@ -16,9 +15,8 @@ p2.generate.human.go.web <- function(gene.names, n.cores = 1) {
                      egGO2ALLEGS = org.Hs.eg.db::org.Hs.egGO2ALLEGS, n.cores = n.cores)
 }
 
-#' Generates mouse go annotation for the web object
+#' Generates mouse (Mus musculus) GO annotation for the web object
 #' 
-#' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @export 
@@ -31,9 +29,8 @@ p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
                      egGO2ALLEGS = org.Mm.eg.db::org.Mm.egGO2ALLEGS, n.cores = n.cores)
 }
 
-#' Generates danio rerio go annotation for the web object
+#' Generates zebrafish (Danio rerio) GO annotation for the web object
 #' 
-#' @description generates a danio rerio go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @export 
@@ -46,10 +43,11 @@ p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
 }
 
 
-#' Generates go annotation for the web object for any species
+#' Generates GO annotation for the web object for any species
 #' 
-#' @description generates a humna go annotation for the pagoda2 web object
 #' @param gene.names a character vector of genes to include
+#' @param egALIAS2EG (default=NULL)
+#' @param egGO2ALLEGS (default=NULL)
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @export 
 p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL, n.cores = 1) {
@@ -88,13 +86,11 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
   invisible(geneSets)
 }
 
-#' Generates GO annotation for the web object
-#' 
-#' @description Generates GO annotation for the web object from the go environment used for
-#' enrichment analysis
+#' Generates GO annotation for the web object from the GO environment used for enrichment analysis
+#'
 #' @param go.env GO enviroment generated with p2.generate.go
 #' @export 
-p2.generate.go.web.fromGOEnv  <- function (go.env) {
+p2.generate.go.web.fromGOEnv <- function(go.env){
   go.env <- as.list(go.env)
 
   ## Put the GO Term annotation generated in a format suitable for the web interface

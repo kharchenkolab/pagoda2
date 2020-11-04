@@ -21,9 +21,19 @@ plotEmbeddingColorByP2Selection(
 
 \item{sel}{a pagoda2 web selection object}
 
-\item{show.unlabelled}{display the plots without any associated selection as grey}
+\item{show.unlabelled}{boolean Whether to display the plots without any associated selection as grey (default=TRUE)}
 
-\item{show.labels}{display the labels at the center of each cluster}
+\item{show.labels}{boolean Whether to display the labels at the center of each cluster (default=TRUE)}
+
+\item{label.size}{numeric (default=3)}
+
+\item{point.size}{numeric (default=2)}
+
+\item{show.guides}{boolean (default=TRUE)}
+
+\item{alpha}{numeric (default=0.7)}
+
+\item{show.axis}{boolean (default=TRUE)}
 }
 \value{
 a ggplot2 object

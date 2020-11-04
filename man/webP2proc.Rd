@@ -17,19 +17,19 @@ webP2proc(
 )
 }
 \arguments{
-\item{p2}{a pagoda2 object}
+\item{p2}{pagoda2 object}
 
-\item{additionalMetadata}{a pagoda2 web metadata object}
+\item{additionalMetadata}{pagoda2 web metadata object (default=NULL)}
 
-\item{title}{title for the web app}
+\item{title}{character string Title for the web app (default='Pagoda 2')}
 
-\item{n.cores}{number of cores to use}
+\item{n.cores}{numeric Number of cores to use (default=20)}
 
-\item{make.go.sets}{logical specifying if go sets hould be made}
+\item{make.go.sets}{boolean Whether GO sets should be made (default=TRUE)}
 
-\item{make.de.sets}{logical specifying if differential expression sets should be made}
+\item{make.de.sets}{boolean Whether differential expression sets should be made (default=TRUE)}
 
-\item{go.env}{the go environment used for the overdispersion analysis}
+\item{go.env}{the GO environment used for the overdispersion analysis (default=NULL)}
 
 \item{make.gene.graph}{logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app}
 }
