@@ -15,7 +15,6 @@
 #' @param abs boolean Whether to use absolute correlation (default=TRUE)
 #' @param n.cores numeric Number of cores to use during processing (default=1)
 #' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
-#'
 #' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 #'
 #' @examples
@@ -69,7 +68,11 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 }
 
 
-
+#' @param d
+#' @param dw
+#' @param ct
+#' @param scale (default=TRUE)
+#' @param pick.top (default=FALSE)
 #' @export
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   if (!requireNamespace("pcaMethods", quietly = TRUE)) {
@@ -218,7 +221,10 @@ winsorize.matrix <- function(mat, trim) {
   return(wm)
 }
 
-
+#' @param pcc 
+#' @param xv 
+#' @param n.cores (default=1)
+#' @param target.ndf (default=NULL)
 #' @export
 pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = NULL) {
   # all relevant gene names

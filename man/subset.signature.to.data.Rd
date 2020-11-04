@@ -2,7 +2,7 @@
 % Please edit documentation in R/cell.scoring.R
 \name{subset.signature.to.data}
 \alias{subset.signature.to.data}
-\title{Subset a gene singature to the genes in the given matrix
+\title{Subset a gene signature to the genes in the given matrix
 with optional warning if genes are missing}
 \usage{
 \method{subset}{signature.to.data}(data, signature, raise.warning = TRUE)
@@ -10,11 +10,11 @@ with optional warning if genes are missing}
 \arguments{
 \item{data}{the matrix}
 
-\item{signature}{the signature to subset}
+\item{signature}{character vector The signature to subset a character vector of genes}
 
 \item{raise.warning}{boolean Warn if genes are missing (default=TRUE)}
 }
 \description{
-Subset a gene singature to the genes in the given matrix
+Subset a gene signature to the genes in the given matrix
 with optional warning if genes are missing
 }

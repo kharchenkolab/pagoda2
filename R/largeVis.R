@@ -10,7 +10,6 @@ NULL
 #' @param x An edgematrix, either an `edgematrix` object or a sparse matrix.
 #' @param threads numeric The maximum number of threads to spawn (default=NULL). Determined automatically if NULL (default=NULL)
 #' @param perplexity numeric Given perplexity (default=50)
-#'
 #' @return A \code{list} with the following components: \describe{
 #'    \item{'dist'}{An [N,K] matrix of the distances to the nearest neighbors.}
 #'    \item{'id'}{An [N,K] matrix of the node indexes of the neartest neighbors.  Note that this matrix is 1-indexed,

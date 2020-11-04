@@ -9,7 +9,7 @@ NULL
   library.dynam.unload("pagoda2", libpath)
 }
 
-# translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
+# Translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
 multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   if(deep) {
     clf <- as.integer(cl$memberships[1,]); # take the lowest level
@@ -44,8 +44,8 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   return(d)
 }
 
-# quick utility to check if given character vector is colors
-# thanks, Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+# Quick utility to check if given character vector is colors
+# thanks to Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 areColors <- function(x) {
   is.character(x) & sapply(x, function(X) {tryCatch(is.matrix(col2rgb(X)), error = function(e) FALSE)})
 }
@@ -110,7 +110,7 @@ val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.9
 
 
 
-# translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
+# Translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
 cldend2array <- function(d,cells=NULL) {
   if(is.null(cells)) { # figure out the total order of cells
     cells <- unlist(dendrapply(d,attr,'cells'))
@@ -207,7 +207,7 @@ bh.adjust <- function(x, log = FALSE) {
     return(ox)
 }
 
-# returns enriched categories for a given gene list as compared with a given universe
+# Returns enriched categories for a given gene list as compared with a given universe
 # returns a list with over and under fields containing list of over and underrepresented terms
 calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mingenes = 3, env = go.env, subset = NULL, list.genes = FALSE, over.only = FALSE) {
     genelist <- unique(genelist)

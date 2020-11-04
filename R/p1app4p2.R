@@ -1,6 +1,22 @@
 #' @import Rook
 #' @import rjson
 
+
+#' @param p2
+#' @param col.cols (default=NULL)
+#' @param row.clustering (default=NULL)
+#' @param title (default="pathway clustering")
+#' @param zlim (default=NULL)
+#' @param embedding (default=NULL)
+#' @param inner.clustering (default=TRUE)
+#' @param groups (default=NULL)
+#' @param clusterType (default=NULL)
+#' @param embeddingType (default=NULL)
+#' @param veloinfo (default=NULL)
+#' @param type (default='PCA')
+#' @param min.group.size (default=1)
+#' @param batch.colors (default=NULL)
+#' @param n.cores (default=10)
 #' @export 
 p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,veloinfo=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
   if (!requireNamespace("GO.db", quietly = TRUE)) {
@@ -762,6 +778,27 @@ p2ViewPagodaApp <- setRefClass(
     )
 )
 
+
+#' @param pathways
+#' @param p2
+#' @param goenv (default=NULL)
+#' @param batch (default=NULL)
+#' @param n.genes (default=20)
+#' @param two.sided (default=TRUE)
+#' @param n.pc (default=rep(1, length(pathways)))
+#' @param colcols (default=NULL)
+#' @param zlim (default=NULL)
+#' @param labRow (default=NA)
+#' @param vhc (default=NULL)
+#' @param cexCol (default=1)
+#' @param cexRow (default=1)
+#' @param nstarts (default=50)
+#' @param row.order (default=NULL)
+#' @param show.Colv (default=TRUE)
+#' @param plot (default=TRUE)
+#' @param trim (default=1.1/nrow(p2$counts))
+#' @param showPC (default=TRUE)
+#' @param ...
 #' @export 
 t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
   # are these genes or pathways being passed?

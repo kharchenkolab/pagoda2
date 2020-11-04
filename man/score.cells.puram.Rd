@@ -10,7 +10,7 @@ score.cells.puram(data, signature, correct = TRUE, show.plot = FALSE, ...)
 \arguments{
 \item{data}{matrix of expression, rows are cell, columns are genes}
 
-\item{signature}{the signature to evaluate}
+\item{signature}{character vector The signature to evaluate, a character vector of genes}
 
 \item{correct}{boolean Perform background correction by getting a semi-random geneset (default=TRUE)}
 

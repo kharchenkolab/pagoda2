@@ -15,13 +15,13 @@ plotOneWithValues(
 \arguments{
 \item{p2obj}{the pagoda2 object}
 
-\item{values}{the values to plot}
+\item{values}{the values to plot, fed into p2obj$plotEmbedding(colors=values)}
 
 \item{title}{character Title for the plot (default="")}
 
 \item{type}{character Type reduction on which the embedding is based on (default="PCA")}
 
-\item{embeddingType}{characer Type of embedding to plot (default="tSNE")}
+\item{embeddingType}{character Type of embedding to plot (default="tSNE")}
 }
 \value{
 NULL, simply updates p2obj$plotEmbedding()
