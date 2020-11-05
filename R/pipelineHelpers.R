@@ -257,43 +257,46 @@ p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
 #' @return list of data, levels, palette to be passed to pagoda2 web object constructor
 #' @examples
 #' 
-#' ##additionalMetadata <- list()
+#' ## additionalMetadata <- list()
 #'
 #' # Generate metadata the easy way
-#' ##additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[1]], displayname = 'Infomap')
+#' ## additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[1]], 
+#' ##    displayname = 'Infomap')
 #'
 #' # Generate metadata by specifying parameters to be passes to the rainbow function
-#' ##additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[2]], displayname = 'Multilevel', s = 0.7, v = 0.8,start = 0, end = 0.5)
+#' ## additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[2]], 
+#' ##    displayname = 'Multilevel', s = 0.7, v = 0.8,start = 0, end = 0.5)
 #'
 #' # Generate metadata by specifying a palette
-#' ##a <- myPagoda2Object$clusters$PCA[[3]]
-#' ##library(colorRamps)
-#' ##p1 <- colorRamps::primary.colors(n = nlevels(a))
-#' ##names(p1) <- levels(a) # This is optional
-#' ##additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], displayname = 'Walktrap', pal = p1)
+#' ## a <- myPagoda2Object$clusters$PCA[[3]]
+#' ## library(colorRamps)
+#' ## p1 <- colorRamps::primary.colors(n = nlevels(a))
+#' ## names(p1) <- levels(a) # This is optional
+#' ## additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], 
+#' ##    displayname = 'Walktrap', pal = p1)
 #'
 #' @export 
 p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = NULL, pal = NULL) {
   # Check input
-  if ( !is.factor(metadata) ) {
-    stop('metadata is not a factor');
+  if (!is.factor(metadata)) {
+    stop('Metadata is not a factor')
   }
 
-  if (  is.null(names(metadata))) {
-    stop('metadata needs to be named with cell identifiers');
+  if (is.null(names(metadata))) {
+    stop('Metadata needs to be named with cell identifiers');
   }
 
-  if ( is.null(end) ) {
+  if (is.null(end)) {
     n <- nlevels(metadata)
     end <-  max(1, n - 1)/n
   }
 
   # Convert input factor to named number vector
-  data <- as.numeric(metadata) - 1; # because it's 0-indexed on js
+  data <- as.numeric(metadata) - 1  # because it's 0-indexed on js
   names(data) <- names(metadata);
 
   # Get the labels
-  labs <- levels(metadata);
+  labs <- levels(metadata)
 
   # Genereate palette
   if (!is.null(pal)){
@@ -328,10 +331,10 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
   );
 
   if (!is.null(displayname)) {
-    ret$displayname <- displayname;
+    ret$displayname <- displayname
   }
 
-  invisible(ret);
+  invisible(ret)
 }
 
 #' Generate a Rook Server app from a pagoda2 object. 
@@ -359,8 +362,8 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
   metadata <- list();
 
   if (show.depth) {
-    if ( "depth" %in% names(r@.xData) ) {
-      if ( !is.null(r@.xData$depth ) ) {
+    if ("depth" %in% names(r@.xData)) {
+      if (!is.null(r@.xData$depth)) {
         levels  <- 20
 
         dpt <- log10(r@.xData$depth+0.00001)

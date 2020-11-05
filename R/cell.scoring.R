@@ -92,7 +92,7 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' @param signature  character vector The signature to subset a character vector of genes 
 #' @param raise.warning boolean Warn if genes are missing (default=TRUE)
 #' @export 
-subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
+subset.signature.to.data <- function(data, signature, raise.warning=TRUE) {
     keep.genes <- signature %in% colnames(data)
     ## Check if all genes found
     if (sum(keep.genes) != length(keep.genes) & raise.warning) {
@@ -109,7 +109,7 @@ subset.signature.to.data <- function(data, signature, raise.warning = TRUE) {
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature a character vector of genes to use in the signature
 #' @param quantile.cutoff numeric The quantile extremes to trim before plotting (default=0.0.1)
-score.cells.nb1 <- function(data,signature, quantile.cutoff = 0.01) {
+score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
     ## DEVEL
     #data <- vals
     #signature <- zheng.treg.common.sign
