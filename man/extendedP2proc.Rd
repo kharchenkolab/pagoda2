@@ -3,21 +3,19 @@
 \name{extendedP2proc}
 \alias{extendedP2proc}
 \title{Perform extended pagoda2 processing. 
-Generate organism specific GO environment and calculate pathway overdispersion}
+Generate organism specific GO environment and calculate pathway overdispersion.}
 \usage{
-extendedP2proc(p2, n.cores = 20, organism = "hs")
+extendedP2proc(p2, organism = "hs")
 }
 \arguments{
 \item{p2}{the pagoda 2 object}
 
-\item{n.cores}{numeric Number of cores to use (default=20)}
-
 \item{organism}{character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')}
 }
 \value{
-a list of a p2 object and a go.env
+list of a pagoda2 object and go.env
 }
 \description{
 Perform extended pagoda2 processing. 
-Generate organism specific GO environment and calculate pathway overdispersion
+Generate organism specific GO environment and calculate pathway overdispersion.
 }

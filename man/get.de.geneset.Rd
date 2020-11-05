@@ -3,7 +3,7 @@
 \name{get.de.geneset}
 \alias{get.de.geneset}
 \title{Generate differential expression genesets for the web app given a cell grouping by
-Calculating de sets between every cell set and everything else individually}
+calculating DE sets between each cell set and everything else}
 \usage{
 get.de.geneset(pagObj, groups, prefix = "de_")
 }
@@ -14,7 +14,10 @@ get.de.geneset(pagObj, groups, prefix = "de_")
 
 \item{prefix}{a character  prefix to assign to genesets generated}
 }
+\value{
+a pagoda2 web object
+}
 \description{
 Generate differential expression genesets for the web app given a cell grouping by
-Calculating de sets between every cell set and everything else individually
+calculating DE sets between each cell set and everything else
 }

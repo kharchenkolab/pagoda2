@@ -11,6 +11,9 @@ p2.toweb.hdea(p2, title = "")
 
 \item{title}{name of the pagoda object}
 }
+\value{
+a pagoda2 web object
+}
 \description{
 Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression
 }

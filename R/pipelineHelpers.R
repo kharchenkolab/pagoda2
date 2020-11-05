@@ -2,7 +2,7 @@
 
 #' Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
 #' make knn graph, identify clusters with infomap, multilevel and walktrap and make
-#' largeVis and tSNE embeddings
+#' largeVis and tSNE embeddings.
 #' 
 #' @param cd count matrix, rows are genes, columns are cells
 #' @param n.cores numeric Number of cores to use (default=1)
@@ -57,14 +57,13 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, 
 }
 
 #' Perform extended pagoda2 processing. 
-#' Generate organism specific GO environment and calculate pathway overdispersion
+#' Generate organism specific GO environment and calculate pathway overdispersion.
 #' 
 #' @param p2 the pagoda 2 object 
-#' @param n.cores numeric Number of cores to use (default=20)
 #' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
-#' @return a list of a p2 object and a go.env
+#' @return list of a pagoda2 object and go.env
 #' @export 
-extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
+extendedP2proc <- function(p2, organism = 'hs') {
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
   } else if (organism == 'mm') {
@@ -87,7 +86,7 @@ extendedP2proc <- function(p2, n.cores = 20, organism = 'hs') {
 }
 
 #' Converts a list of factors into pagoda2 metadata optionally
-#' filtering down to the cells present in the provided pagoda2 app
+#' filtering down to the cells present in the provided pagoda2 app.
 #' 
 #' @param factor.list list of factors named by the cell identifier
 #' @param p2 pagoda2 app to filter the factors by, optional (default=NULL)
@@ -124,14 +123,13 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 #' @param p2 pagoda2 object
 #' @param additionalMetadata pagoda2 web metadata object (default=NULL)
 #' @param title character string Title for the web app (default='Pagoda 2')
-#' @param n.cores numeric Number of cores to use (default=20)
 #' @param make.go.sets boolean Whether GO sets should be made (default=TRUE)
 #' @param make.de.sets boolean Whether differential expression sets should be made (default=TRUE)
 #' @param go.env the GO environment used for the overdispersion analysis (default=NULL)
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @return a pagoda2 web application
 #' @export 
-webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda 2', n.cores=20,
+webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda 2',
                       make.go.sets=TRUE, make.de.sets=TRUE, go.env=NULL,
                       make.gene.graph=TRUE, appmetadata=NULL) {
   # Get the gene names
@@ -246,8 +244,8 @@ p2.generate.human.go <- function(r) p2.generate.go(r, "hs")
 p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
 
 
-#' @title Generate a list metadata structure that can be passed to
-#' p2 web object constructor as additional metadata given a named factor
+#' Generate a list metadata structure that can be passed to a
+#' pagoda2 web object constructor as additional metadata given a named factor
 #' 
 #' @param metadata named factor with metadata for individual cells, names must correspond to cells
 #' @param displayname name to display for the metadata
@@ -337,9 +335,9 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 }
 
 #' Generate a Rook Server app from a pagoda2 object. 
-#' This generates a pagoda 2 web object from pagoda2 object by automating steps that most
-#' users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
-#' may wish to use the constructor directly
+#' This generates a pagoda2 web object from a pagoda2 object by automating steps that most
+#' users will want to run. This function is a wrapper about the pagoda2 web constructor. 
+#' (Advanced users may wish to use that constructor directly.)
 #'
 #' @param r pagoda2 object
 #' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
@@ -426,23 +424,24 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     appmetadata = appmetadata
   );
 
-  invisible(p2w);
+  invisible(p2w)
 }
 
 #' Generate differential expression genesets for the web app given a cell grouping by
-#' Calculating de sets between every cell set and everything else individually
+#' calculating DE sets between each cell set and everything else 
 #' 
 #' @param pagObj pagoda object
 #' @param groups a named factor to do the de by
 #' @param prefix a character  prefix to assign to genesets generated
+#' @return a pagoda2 web object
 #' @export 
 get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 
   deResults <- pagObj$getDifferentialGenes(
-    type='counts', groups = groups, upregulated.only = T)
+    type='counts', groups = groups, upregulated.only = TRUE)
 
   deSets <- lapply(names(deResults), function(x) {
-    resT <- deResults[[x]];
+    resT <- deResults[[x]]
     list(
       properties = list(
         locked =T,
@@ -450,16 +449,16 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
         shortdescription = paste0('Cluster ', x, ' differentially expressed genes')
       ),
       genes = c(rownames(resT))
-    );
-  });
+    )
+  })
 
   names(deSets) <- unlist(lapply(deSets, function(x){x$properties$genesetname}));
 
-  deSets
+  invisible(deSets)
 }
 
 #' Converts the output of hierarchical differential expression aspects
-#' into genesets that can be loaded into a p2 web app to retrive the genes
+#' into genesets that can be loaded into a pagoda2 web app to retrive the genes
 #' that make the geneset interactively
 #' 
 #' @param output output of getHierarchicalDiffExpressionAspects
@@ -479,23 +478,24 @@ hierDiffToGenesets <- function(output) {
 #' 
 #' @param p2 p2 object
 #' @param title name of the pagoda object
+#' @return a pagoda2 web object
 #' @export p2.toweb.hdea
 p2.toweb.hdea <- function(p2, title="") {
   hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3)
-  metadata.forweb <- list();
+  metadata.forweb <- list()
   metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel, displayname='joint')
   deSets <- get.de.geneset(p2, groups=p2$clusters$PCA[[1]], prefix='de_')
   genesets <- c(deSets, hierDiffToGenesets(hdea))
   appmetadata <- list(apptitle=title)
-  p2$makeGeneKnnGraph();
+  p2$makeGeneKnnGraph()
   wp <- make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets,
                     dendrogramCellGroups = p2$clusters$PCA[[1]], show.clusters=FALSE,
                     appmetadata = appmetadata)
-  wp
+  invisible(wp)
 }
 
 
-#' Generate a p2 web application from a pagoda2 object
+#' Generate a pagoda2 web application from a pagoda2 object
 #'
 #' @param p2 pagoda2 application object
 #' @param app.title name of application as displayed in the browser title (default='Pagoda2')
@@ -503,15 +503,14 @@ p2.toweb.hdea <- function(p2, title="") {
 #' @param n.cores numeric Number of cores to use for differential expression calculation (default=4)
 #' @return a pagoda2 web object
 #' @export 
-basicP2web <- function(p2, app.title = 'Pagoda2', extraWebMetadata = NULL, n.cores = 4) {
-    message('Calculating hdea...\n')
-    hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3, n.cores = n.cores)
-    metadata.forweb <- list();
-    metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel,displayname='Multilevel')
-    metadata.forweb <- c(metadata.forweb, extraWebMetadata)
-    genesets <- hierDiffToGenesets(hdea)
-    appmetadata = list(apptitle=app.title)
-    message('Making KNN graph...\n')
-    #p2$makeGeneKnnGraph(n.cores=n.cores)
-    make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets, dendrogramCellGroups = p2$clusters$PCA$multilevel, show.clusters=FALSE, appmetadata = appmetadata)
+basicP2web <- function(p2, app.title='Pagoda2', extraWebMetadata=NULL, n.cores=4) {
+  message('Calculating hdea...\n')
+  hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3, n.cores = n.cores)
+  metadata.forweb <- list();
+  metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel,displayname='Multilevel')
+  metadata.forweb <- c(metadata.forweb, extraWebMetadata)
+  genesets <- hierDiffToGenesets(hdea)
+  appmetadata = list(apptitle=app.title)
+  message('Making KNN graph...\n')
+  make.p2.app(p2, additionalMetadata = metadata.forweb, geneSets = genesets, dendrogramCellGroups = p2$clusters$PCA$multilevel, show.clusters=FALSE, appmetadata = appmetadata)
 }

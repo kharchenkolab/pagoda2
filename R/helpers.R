@@ -292,9 +292,8 @@ armaCor <- function(mat) {
   return(cd)
 }
 
-#' Find the mode of a vector
-#'
-#' @description return the mode of a vector
+#' Return the mode of a vector
+#' 
 #' @param x the vector to return the mode of
 #' @return 
 Mode <- function(x) {

@@ -2,8 +2,8 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{p2.metadata.from.factor}
 \alias{p2.metadata.from.factor}
-\title{Generate a list metadata structure that can be passed to
-p2 web object constructor as additional metadata given a named factor}
+\title{Generate a list metadata structure that can be passed to a
+pagoda2 web object constructor as additional metadata given a named factor}
 \usage{
 p2.metadata.from.factor(
   metadata,
@@ -34,8 +34,8 @@ p2.metadata.from.factor(
 list of data, levels, palette to be passed to pagoda2 web object constructor
 }
 \description{
-Generate a list metadata structure that can be passed to
-p2 web object constructor as additional metadata given a named factor
+Generate a list metadata structure that can be passed to a
+pagoda2 web object constructor as additional metadata given a named factor
 }
 \examples{
 

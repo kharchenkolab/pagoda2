@@ -12,7 +12,7 @@ calcMulticlassified(sel)
 }
 \value{
 list vector with the number of cells that are
-present in more than one selections in the provided p2 selection object
+    present in more than one selections in the provided p2 selection object
 }
 \description{
 Returns a list vector with the number of cells that are

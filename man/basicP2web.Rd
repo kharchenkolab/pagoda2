@@ -2,7 +2,7 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{basicP2web}
 \alias{basicP2web}
-\title{Generate a p2 web application from a pagoda2 object}
+\title{Generate a pagoda2 web application from a pagoda2 object}
 \usage{
 basicP2web(p2, app.title = "Pagoda2", extraWebMetadata = NULL, n.cores = 4)
 }
@@ -19,5 +19,5 @@ basicP2web(p2, app.title = "Pagoda2", extraWebMetadata = NULL, n.cores = 4)
 a pagoda2 web object
 }
 \description{
-Generate a p2 web application from a pagoda2 object
+Generate a pagoda2 web application from a pagoda2 object
 }

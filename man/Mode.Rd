@@ -2,7 +2,7 @@
 % Please edit documentation in R/helpers.R
 \name{Mode}
 \alias{Mode}
-\title{Find the mode of a vector}
+\title{Return the mode of a vector}
 \usage{
 Mode(x)
 }
@@ -13,5 +13,5 @@ Mode(x)
 
 }
 \description{
-return the mode of a vector
+Return the mode of a vector
 }

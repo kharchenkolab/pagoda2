@@ -4,7 +4,7 @@
 \alias{basicP2proc}
 \title{Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
 make knn graph, identify clusters with infomap, multilevel and walktrap and make
-largeVis and tSNE embeddings}
+largeVis and tSNE embeddings.}
 \usage{
 basicP2proc(
   cd,
@@ -61,5 +61,5 @@ a new pagoda2 object
 \description{
 Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
 make knn graph, identify clusters with infomap, multilevel and walktrap and make
-largeVis and tSNE embeddings
+largeVis and tSNE embeddings.
 }

@@ -72,7 +72,7 @@ writeGenesAsPagoda2Selection <- function(name, genes, filename) {
 #' 
 #' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
 #' @returns list vector with the number of cells that are
-#' present in more than one selections in the provided p2 selection object
+#'     present in more than one selections in the provided p2 selection object
 #' @export 
 calcMulticlassified <- function(sel) {
   selectionCellsFlat <- unname(unlist(sapply(sel, function(x) x$cells)))

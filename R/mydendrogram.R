@@ -1,4 +1,4 @@
-my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
+my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
           distfun = dist, hclustfun = hclust,
           reorderfun = function(d,w) reorder(d,w),
           add.expr, symm = FALSE, revC = identical(Colv, "Rowv"),
@@ -8,7 +8,9 @@ my.heatmap2 <- function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
           labRow = NULL, labCol = NULL, main = NULL, xlab = NULL, ylab = NULL,
           keep.dendro = FALSE,
           grid = FALSE, grid.col=1,grid.lwd=1,
-          verbose = getOption("verbose"), Colv.vsize=0.15, Rowv.hsize=0.15, ColSideColors.unit.vsize=0.02, RowSideColors.hsize=0.02,lasCol=2, lasRow=2, respect=FALSE, box=FALSE, zlim=NULL, ...)
+          verbose = getOption("verbose"), Colv.vsize=0.15, Rowv.hsize=0.15, 
+          ColSideColors.unit.vsize=0.02, RowSideColors.hsize=0.02, lasCol=2, 
+          lasRow=2, respect=FALSE, box=FALSE, zlim=NULL, ...)
 {
     scale <- if(symm && missing(scale)) "none" else match.arg(scale)
     if(length(di <- dim(x)) != 2 || !is.numeric(x)){

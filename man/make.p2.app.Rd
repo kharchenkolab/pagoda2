@@ -3,9 +3,9 @@
 \name{make.p2.app}
 \alias{make.p2.app}
 \title{Generate a Rook Server app from a pagoda2 object. 
-This generates a pagoda 2 web object from pagoda2 object by automating steps that most
-users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
-may wish to use the constructor directly}
+This generates a pagoda2 web object from a pagoda2 object by automating steps that most
+users will want to run. This function is a wrapper about the pagoda2 web constructor. 
+(Advanced users may wish to use that constructor directly.)}
 \usage{
 make.p2.app(
   r,
@@ -49,7 +49,7 @@ a pagoda2 web object that presents a Rook compatible interface
 }
 \description{
 Generate a Rook Server app from a pagoda2 object. 
-This generates a pagoda 2 web object from pagoda2 object by automating steps that most
-users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
-may wish to use the constructor directly
+This generates a pagoda2 web object from a pagoda2 object by automating steps that most
+users will want to run. This function is a wrapper about the pagoda2 web constructor. 
+(Advanced users may wish to use that constructor directly.)
 }

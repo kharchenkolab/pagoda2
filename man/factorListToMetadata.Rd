@@ -3,7 +3,7 @@
 \name{factorListToMetadata}
 \alias{factorListToMetadata}
 \title{Converts a list of factors into pagoda2 metadata optionally
-filtering down to the cells present in the provided pagoda2 app}
+filtering down to the cells present in the provided pagoda2 app.}
 \usage{
 factorListToMetadata(factor.list, p2 = NULL)
 }
@@ -17,5 +17,5 @@ pagoda2 web metadata object
 }
 \description{
 Converts a list of factors into pagoda2 metadata optionally
-filtering down to the cells present in the provided pagoda2 app
+filtering down to the cells present in the provided pagoda2 app.
 }
