@@ -9,7 +9,7 @@ pagoda.reduce.redundancy(
   tamr,
   distance.threshold = 0.2,
   cluster.method = "complete",
-  distance = NULL,
+  istance = NULL,
   weighted.correlation = TRUE,
   plot = FALSE,
   top = Inf,
@@ -25,8 +25,6 @@ pagoda.reduce.redundancy(
 
 \item{cluster.method}{character One of the standard clustering methods to be used (default="complete") (Note: fastcluster::hclust is used if available or stats::hclust)}
 
-\item{distance}{distance matrix (default=NULL)}
-
 \item{weighted.correlation}{boolean Whether to use a weighted correlation in determining the similarity of patterns (default=TRUE)}
 
 \item{plot}{boolean Whether to show plot (default=FALSE)}
@@ -38,6 +36,8 @@ pagoda.reduce.redundancy(
 \item{abs}{boolean Whether to use absolute correlation (default=FALSE)}
 
 \item{...}{additional arguments are passed to the pagoda.view.aspects() method during plotting}
+
+\item{distance}{distance matrix (default=NULL)}
 }
 \value{
 a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw

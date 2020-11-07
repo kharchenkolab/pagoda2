@@ -1,3 +1,4 @@
+#' @keywords internal
 my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
           distfun = dist, hclustfun = hclust,
           reorderfun = function(d,w) reorder(d,w),

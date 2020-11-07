@@ -2,7 +2,7 @@
 #' @import rjson
 
 
-#' @param p2
+#' @param p2 pagoda2 object
 #' @param col.cols (default=NULL)
 #' @param row.clustering (default=NULL)
 #' @param title (default="pathway clustering")

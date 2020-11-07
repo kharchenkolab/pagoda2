@@ -89,8 +89,9 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' with optional warning if genes are missing
 #' 
 #' @param data the matrix
-#' @param signature  character vector The signature to subset a character vector of genes 
+#' @param signature  character vector The gene signature from which to subset a character vector of genes 
 #' @param raise.warning boolean Warn if genes are missing (default=TRUE)
+#' @return The filtered subset of gene signatures
 #' @export 
 subset.signature.to.data <- function(data, signature, raise.warning=TRUE) {
     keep.genes <- signature %in% colnames(data)
@@ -109,12 +110,13 @@ subset.signature.to.data <- function(data, signature, raise.warning=TRUE) {
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature a character vector of genes to use in the signature
 #' @param quantile.cutoff numeric The quantile extremes to trim before plotting (default=0.0.1)
+#' @return The filtered subset of gene signatures
 score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
     ## DEVEL
     #data <- vals
     #signature <- zheng.treg.common.sign
     ##
-    signature <- subset.signature.to.data(data,signature)
+    signature <- subset.signature.to.data(data, signature)
     ## Clip extreme values
     data.clip <- apply(data[,signature],2,function(x) {
         qs <- quantile(x, c(quantile.cutoff, 1- quantile.cutoff))
@@ -123,7 +125,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
         x
     })
     ## Scale
-    data.scaled <- scale(data.clip,center=TRUE,scale=TRUE)
+    data.scaled <- scale(data.clip, center=TRUE, scale=TRUE)
     ## Get mean for each cell
     scores <- apply(data.scaled, 1, mean)
     ## return

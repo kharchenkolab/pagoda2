@@ -10,9 +10,12 @@ with optional warning if genes are missing}
 \arguments{
 \item{data}{the matrix}
 
-\item{signature}{character vector The signature to subset a character vector of genes}
+\item{signature}{character vector The gene signature from which to subset a character vector of genes}
 
 \item{raise.warning}{boolean Warn if genes are missing (default=TRUE)}
+}
+\value{
+The filtered subset of gene signatures
 }
 \description{
 Subset a gene signature to the genes in the given matrix

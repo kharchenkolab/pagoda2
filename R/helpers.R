@@ -4,21 +4,30 @@
 #'
 NULL
 
-## Correct unloading of the library
-.onUnload <- function (libpath) {
+#' Correct unloading of the library
+#'
+#' @param libpath library path
+#' @keywords internal
+.onUnload <- function(libpath) {
   library.dynam.unload("pagoda2", libpath)
 }
 
-# Translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
+#' Translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
+#'
+#' @param cl 
+#' @param counts 
+#' @param deep boolean (default=FALSE)
+#' @param dist character vector Distance metric (default='cor')
+#' @keywords internal
 multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
-  if(deep) {
-    clf <- as.integer(cl$memberships[1,]); # take the lowest level
+  if (deep) {
+    clf <- as.integer(cl$memberships[1,]) # take the lowest level
   } else {
-    clf <- as.integer(membership(cl));
+    clf <- as.integer(membership(cl))
   }
   names(clf) <- names(membership(cl))
   clf.size <- unlist(tapply(clf,factor(clf,levels=seq(1,max(clf))),length))
-  rowFac <- rep(NA,nrow(counts));
+  rowFac <- rep(NA, nrow(counts));
   rowFac[match(names(clf),rownames(counts))] <- clf;
   lvec <- colSumByFac(counts,rowFac)[-1,,drop=FALSE];
   if(dist=='JS') {
@@ -44,12 +53,26 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   return(d)
 }
 
-# Quick utility to check if given character vector is colors
-# thanks to Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#' Quick utility to check if given character vector is colors
+#' Thanks to Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#'
+#' @param x character vector to check
+#' @keywords internal
 areColors <- function(x) {
   is.character(x) & sapply(x, function(X) {tryCatch(is.matrix(col2rgb(X)), error = function(e) FALSE)})
 }
 
+#' Parallel, optionally verbose lapply. See ?parallel::mclapply for more info.
+#'
+#' @param ... Additional arguments passed to mclapply(), lapply(), or pbapply::pblapply()
+#' @param n.cores Number of cores to use (default=parallel::detectCores())
+#' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
+#' @return list, as returned by lapply
+#' @examples
+#' square = function(x){ x**2 }
+#' plapply(1:10, square, n.cores=1, progress=TRUE)
+#'
+#' @keywords internal
 papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
   if(n.cores>1) {
     if(requireNamespace("parallel", quietly = TRUE)) {
@@ -66,16 +89,27 @@ papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
   lapply(...)
 }
 
-jw.disR <- function(x,y) {
+#' @param x
+#' @param y
+#' 
+#' @keywords internal
+jw.disR <- function(x, y) {
   x <- x+1/length(x)/1e3;
   y <- y+1/length(y)/1e3;
   a <- x*log(x)  + y*log(y) - (x+y)*log((x+y)/2);
   sqrt(sum(a)/2)
 }
 
-val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.95) {
+
+#' @param x
+#' @param gradientPalette (default=NULL)
+#' @param zlim (default=NULL)
+#' @param gradient.range.quantile (default=0.95)
+#' 
+#' @keywords internal
+val2col <- function(x, gradientPalette=NULL, zlim=NULL, gradient.range.quantile=0.95) {
   nx <- names(x);
-  if(all(sign(x)>=0)) {
+  if (all(sign(x)>=0)) {
     if(is.null(gradientPalette)) {
       gradientPalette <- colorRampPalette(c('gray90','red'), space = "Lab")(1024)
     }
@@ -109,15 +143,18 @@ val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.9
 }
 
 
-
-# Translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
-cldend2array <- function(d,cells=NULL) {
-  if(is.null(cells)) { # figure out the total order of cells
-    cells <- unlist(dendrapply(d,attr,'cells'))
+#' Translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
+#' 
+#' @param d cell cluster dendrogram
+#' @param cells character vector of cells (default=NULL). If NULL, determine the total order of cells with unlist(dendrapply(d, attr, 'cells'))
+#' @keywords internal
+cldend2array <- function(d, cells=NULL) {
+  if (is.null(cells)) { # figure out the total order of cells
+    cells <- unlist(dendrapply(d, attr, 'cells'))
   }
   getcellbin <- function(l) {
     if(is.leaf(l)) {
-      vi <- match(attr(l,'cells'),cells)
+      vi <- match(attr(l,'cells'), cells)
       ra <- sparseMatrix(i=vi,p=c(0,length(vi)),x=rep(1,length(vi)),dims=c(length(cells),1),dimnames=list(NULL,attr(l,'nodeId')))
       return(ra);
     } else { # return rbind of the children arrays, plus your own
@@ -132,7 +169,15 @@ cldend2array <- function(d,cells=NULL) {
   return(t(a))
 }
 
-
+#' Set names equal to values, a stats::setNames wrapper function
+#'
+#' @param x an object for which names attribute will be meaningful 
+#' @return An object with names assigned equal to values
+#' @examples
+#' vec = c(1, 2, 3, 4)
+#' sn(vec)
+#'
+#' @keywords internal
 sn <- function(x) { names(x) <- x; return(x); }
 
 
