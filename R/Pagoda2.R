@@ -134,7 +134,7 @@ Pagoda2 <- setRefClass(
         stop("Cells with zero expression over all genes are not allowed")
       }
 
-      if(verbose) message(nrow(counts),"cells,",ncol(counts),"genes; normalizing ... ")
+      if(verbose) message(nrow(counts)," cells, ",ncol(counts)," genes; normalizing ... ")
 
       # get normalized matrix
       if(modelType=='linearObs') { # this shoudln't work well, since the depth dependency is not completely normalized out
@@ -276,7 +276,7 @@ Pagoda2 <- setRefClass(
         }
         
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
-        if(verbose) message(length(ods),'overdispersed genes ...',length(ods) )
+        if(verbose) message(length(ods),' overdispersed genes ... ',length(ods) )
 
         df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
         df$gsf[!is.finite(df$gsf)] <- 0;
@@ -472,7 +472,7 @@ Pagoda2 <- setRefClass(
         } else {
           cl <- clusters[[type]][[clusterName]]
           if(is.null(cl)) stop(paste("unable to find clustering",clusterName,'for',type))
-          if(verbose) message("using",clusterName," clustering for",type,"space\n")
+          if(verbose) message("using ",clusterName," clustering for ",type," space\n")
         }
       } else {
         if(!all(rownames(x) %in% names(groups))) { warning("provided cluster vector doesn't list groups for all of the cells")}
@@ -637,7 +637,7 @@ Pagoda2 <- setRefClass(
       if(is.null(embeddingType)) {
         # take the first one
         embeddingType <- names(embeddings[[type]])[1]
-        if(verbose) message("using",embeddingType,"embedding\n")
+        if(verbose) message("using ",embeddingType," embedding\n")
         emb <- embeddings[[type]][[embeddingType]]
 
       } else {

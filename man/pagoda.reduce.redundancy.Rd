@@ -48,6 +48,7 @@ Examines PC loading vectors underlying the identified aspects and clusters aspec
 }
 \examples{
 \donttest{
+## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 ## data(pollen)
 ## cd <- clean.counts(pollen)
 ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
