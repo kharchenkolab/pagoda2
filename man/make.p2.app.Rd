@@ -43,5 +43,5 @@ a pagoda2 web object that presents a Rook compatible interface
 \description{
 Generates a pagoda 2 web object from pagoda2 object by automating steps that most
 users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
-may wish to use use the constructor directly
+may wish to use the constructor directly
 }

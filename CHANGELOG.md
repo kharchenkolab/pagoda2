@@ -1,5 +1,10 @@
 ## Upcoming
 
+### Added
+
+### Changed
+- revise `message()` spacing for `verbose` statements
+
 ## [0.1.4] - 2020-10-05
 
 ### Added
