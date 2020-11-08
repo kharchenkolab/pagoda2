@@ -1,4 +1,5 @@
-# Functions from pagoda1
+## Functions from pagoda1, scde 
+## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 
 #' Collapse aspects driven by the same combinations of genes.
 #' Examines PC loading vectors underlying the identified aspects and clusters aspects based
@@ -19,7 +20,8 @@
 #'
 #' @examples
 #' \donttest{
-#' ## data(pollen)
+#' ## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+#' ## data(pollen)  
 #' ## cd <- clean.counts(pollen)
 #' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, 
 #' ##     min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
@@ -72,11 +74,13 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 }
 
 
+## xvl <- collapse.aspect.clusters(tamr$xv, tamr$xvw, ct, pick.top = FALSE, scale = TRUE)
+
 #' @param d
 #' @param dw
 #' @param ct
-#' @param scale (default=TRUE)
-#' @param pick.top (default=FALSE)
+#' @param scale boolean Whether to scale... (default=TRUE)
+#' @param pick.top boolean Whether to pick max... (default=FALSE)
 #' @export
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   if (!requireNamespace("pcaMethods", quietly = TRUE)) {
@@ -135,6 +139,7 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #'
 #' @examples
 #' \donttest{
+#' ## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 #' ## data(pollen)
 #' ## cd <- clean.counts(pollen)
 #' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
@@ -226,12 +231,16 @@ winsorize.matrix <- function(mat, trim) {
   return(wm)
 }
 
-#' @param pcc 
-#' @param xv 
-#' @param n.cores (default=1)
-#' @param target.ndf (default=NULL)
+#' Calculate correlation distance between PC magnitudes given a number of target dimensions
+#'
+#' @param pcc weighted PC magnitudes 
+#' e.g. scde::pagoda.pathway.wPCA() gives the weighted PC magnitudes for each gene provided
+#' e.g. scde::pagoda.gene.clusters() gives the weighted PC magnitudes for de novo gene sets identified by clustering on expression
+#' @param xv a matrix of normalized aspect patterns (rows- significant aspects, columns- cells
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @param target.ndf numeric Target dimensions (default=NULL)
 #' @export
-pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = NULL) {
+pathway.pc.correlation.distance <- function(pcc, xv, n.cores=1, target.ndf=NULL) {
   # all relevant gene names
   rotn <- unique(unlist(lapply(pcc[gsub("^#PC\\d+# ", "", rownames(xv))], function(d) rownames(d$xp$rotation))))
   # prepare an ordered (in terms of genes) and centered version of each component
@@ -249,7 +258,7 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = N
   #x <- .Call("plSemicompleteCor2", pl, PACKAGE = "pagoda2")
   x <- plSemicompleteCor2(pl)
 
-  if(!is.null(target.ndf)) {
+  if (!is.null(target.ndf)) {
     r <- x$r[upper.tri(x$r)]
     n <- x$n[upper.tri(x$n)]
     suppressWarnings(tv <- r*sqrt((n-2)/(1-r^2)))
