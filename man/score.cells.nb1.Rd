@@ -19,3 +19,4 @@ The filtered subset of gene signatures
 \description{
 Score cells after standardising the expression of each gene removing outliers
 }
+\keyword{internal}

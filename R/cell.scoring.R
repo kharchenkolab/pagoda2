@@ -3,8 +3,8 @@
 #' 
 #' @param data matrix of expression, rows are cell, columns are genes
 #' @param signature character vector The signature to evaluate, a character vector of genes 
-#' @param n.bins number of bins to put the genes in (default=25)
-#' @param n.genes.per.bin number of genes to get from each bin (default=100)
+#' @param n.bins numeric Number of bins to put the genes in (default=25)
+#' @param n.genes.per.bin numeric Number of genes to get from each bin (default=100)
 #' @return a character vector that can be used as a background signature
 #' @export 
 get.control.geneset <- function(data, signature, n.bins=25, n.genes.per.bin=100) {
@@ -89,7 +89,7 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' with optional warning if genes are missing
 #' 
 #' @param data the matrix
-#' @param signature  character vector The gene signature from which to subset a character vector of genes 
+#' @param signature character vector The gene signature from which to subset a character vector of genes 
 #' @param raise.warning boolean Warn if genes are missing (default=TRUE)
 #' @return The filtered subset of gene signatures
 #' @export 
@@ -111,6 +111,7 @@ subset.signature.to.data <- function(data, signature, raise.warning=TRUE) {
 #' @param signature a character vector of genes to use in the signature
 #' @param quantile.cutoff numeric The quantile extremes to trim before plotting (default=0.0.1)
 #' @return The filtered subset of gene signatures
+#' @keywords internal
 score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
     ## DEVEL
     #data <- vals

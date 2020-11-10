@@ -15,3 +15,4 @@ Mode(x)
 \description{
 Return the mode of a vector
 }
+\keyword{internal}

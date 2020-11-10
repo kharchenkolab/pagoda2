@@ -213,6 +213,7 @@ show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
 
 
 # get SCDE server from saved session
+#' @keywords internal
 get.scde.server <- function(port,ip) {
     if(exists("___scde.server", envir = globalenv())) {
         server <- get("___scde.server", envir = globalenv())
@@ -237,6 +238,7 @@ get.scde.server <- function(port,ip) {
 }
 
 # BH P-value adjustment with a log option
+#' @keywords internal
 bh.adjust <- function(x, log = FALSE) {
     nai <- which(!is.na(x))
     ox <- x
@@ -254,6 +256,7 @@ bh.adjust <- function(x, log = FALSE) {
 
 # Returns enriched categories for a given gene list as compared with a given universe
 # returns a list with over and under fields containing list of over and underrepresented terms
+#' @keywords internal
 calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mingenes = 3, env = go.env, subset = NULL, list.genes = FALSE, over.only = FALSE) {
     genelist <- unique(genelist)
     all.genes <- unique(ls(env))
@@ -341,6 +344,7 @@ armaCor <- function(mat) {
 #' 
 #' @param x the vector to return the mode of
 #' @return 
+#' @keywords internal
 Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
@@ -452,6 +456,7 @@ namedNames <- function(g) {
   return(n)
 }
 
+#' @keywords internal
 embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
   if (!requireNamespace("uwot", quietly=TRUE)){
     stop("You need to install package 'uwot' to be able to use UMAP embedding.")

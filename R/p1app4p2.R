@@ -976,6 +976,7 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
 }
 
 # convert R color to a web hex representation
+#' @keywords internal
 col2hex <- function(col) {
     unlist(lapply(col, function(c) {
         c <- col2rgb(c)

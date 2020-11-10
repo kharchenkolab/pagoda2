@@ -107,7 +107,9 @@ projectKNNs <- function(wij, # symmetric sparse matrix
   ##############################################
   # Initialize coordinate matrix
   ##############################################
-  if (is.null(coords)) coords <- matrix((runif(N * dim) - 0.5) / dim * 0.0001, nrow = dim)
+  if (is.null(coords)){
+    coords <- matrix((runif(N * dim) - 0.5) / dim * 0.0001, nrow = dim)
+  }
 
   if (is.null(sgd_batches)) {
     sgd_batches <- sgdBatches(N, length(wij@x / 2))
