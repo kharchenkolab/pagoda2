@@ -76,9 +76,11 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 
 ## xvl <- collapse.aspect.clusters(tamr$xv, tamr$xvw, ct, pick.top = FALSE, scale = TRUE)
 
-#' @param d
-#' @param dw
-#' @param ct
+#' Collapse aspect clusters
+#'
+#' @param d something
+#' @param dw something
+#' @param ct something
 #' @param scale boolean Whether to scale... (default=TRUE)
 #' @param pick.top boolean Whether to pick max... (default=FALSE)
 #' @export

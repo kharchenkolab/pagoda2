@@ -38,9 +38,9 @@ make.p2.app(
 
 \item{innerOrder}{Ordering of cells inside the clusters provided in dendrogramCellGroups (default=NULL). This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL}
 
-\item{orderDend}{(default=NULL)}
+\item{orderDend}{boolean Whether to order dendrogram (default=FALSE)}
 
-\item{appmetadata}{(default=NULL)}
+\item{appmetadata}{pagoda2 web application metadata (default=NULL)}
 
 \item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
 }

@@ -92,8 +92,10 @@ extendedP2proc <- function(p2, organism = 'hs') {
 #' @param p2 pagoda2 app to filter the factors by, optional (default=NULL)
 #' @return pagoda2 web metadata object
 #' @export 
-factorListToMetadata <- function(factor.list, p2 = NULL) {
-  if(! class(p2) %in% c('Pagoda2', 'NULL')) stop('p2 must be NULL or a pagoda2 app');
+factorListToMetadata <- function(factor.list, p2=NULL) {
+  if(! class(p2) %in% c('Pagoda2', 'NULL')) {
+    stop('p2 must be NULL or a pagoda2 app')
+  }
   ## A pagoda 2 object has been provided, filter the factors by the
   ## cells in the app
   if (!is.null(p2)) {
@@ -122,14 +124,14 @@ factorListToMetadata <- function(factor.list, p2 = NULL) {
 #' 
 #' @param p2 pagoda2 object
 #' @param additionalMetadata pagoda2 web metadata object (default=NULL)
-#' @param title character string Title for the web app (default='Pagoda 2')
+#' @param title character string Title for the web app (default='Pagoda2')
 #' @param make.go.sets boolean Whether GO sets should be made (default=TRUE)
 #' @param make.de.sets boolean Whether differential expression sets should be made (default=TRUE)
 #' @param go.env the GO environment used for the overdispersion analysis (default=NULL)
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @return a pagoda2 web application
 #' @export 
-webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda 2',
+webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
                       make.go.sets=TRUE, make.de.sets=TRUE, go.env=NULL,
                       make.gene.graph=TRUE, appmetadata=NULL) {
   # Get the gene names
@@ -170,13 +172,17 @@ webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda 2',
   invisible(p2web)
 }
 
+
 #' Generate a GO environment for the organism specified
 #' 
-#' @description This is a wrapper function for generating a go envirnoment
-#' @param r a pagoda2 object
-#' @param organism the organism, current hs, mm and dr are supported for the human and mouse
+#' @param r pagoda2 object
+#' @param organism the organism (default=NULL). Currently 'hs' (human), 'mm' (mouse) and 'dr' (zebrafish) are supported.
+#' @param go2all.egs mappings between a given GO identifier and all of the Entrez Gene identifiers 
+#'     annotated at that GO term or to one of its child nodes in the GO ontology (default=NULL)
+#' @param eg.alias2eg mappings between common gene symbol identifiers and entrez gene identifiers (default=NULL)
+#' @param min.env.length numeric Minimum environment length (default=5)
 #' @export 
-p2.generate.go <- function(r, organism = NULL, go2all.egs = NULL, eg.alias2eg = NULL, min.env.length=5) {
+p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, min.env.length=5) {
   if (is.null(organism) && (is.null(go2all.egs) || is.null(eg.alias2eg))) {
     stop('Either organism or go2all.egs and eg.alias2eg must be specified');
   }
@@ -215,6 +221,9 @@ p2.generate.go <- function(r, organism = NULL, go2all.egs = NULL, eg.alias2eg = 
   rids <- names(ids); names(rids) <- ids;
   
   # list all the ids per GO category
+  if (!requireNamespace("AnnotationDbi", quietly = TRUE)) {
+    stop("Package \"AnnotationDbi\" needed for this function to work. Please install it with `BiocManager::install('AnnotationDbi')`.", call. = FALSE)
+  }
   go.env <- AnnotationDbi::eapply(go2all.egs,function(x) as.character(na.omit(rids[x])))
   
   return(list2env(go.env[sapply(go.env, length) > min.env.length]))
@@ -225,7 +234,9 @@ p2.generate.go <- function(r, organism = NULL, go2all.egs = NULL, eg.alias2eg = 
 #' @param r a pagoda2 object
 #' @return a go environment object
 #' @export 
-p2.generate.dr.go <- function(r) p2.generate.go(r, "dr")
+p2.generate.dr.go <- function(r) {
+  p2.generate.go(r, "dr")
+}
 
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
@@ -233,50 +244,33 @@ p2.generate.dr.go <- function(r) p2.generate.go(r, "dr")
 #' @param r a pagoda2 object
 #' @return a GO environment object
 #' @export
-p2.generate.human.go <- function(r) p2.generate.go(r, "hs")
-
+p2.generate.human.go <- function(r) {
+  p2.generate.go(r, "hs")
+}
 
 #' Generate a GO environment for mouse for overdispersion analysis for the the back end
 #' 
 #' @param r a pagoda2 object
 #' @return a GO environment object
 #' @export 
-p2.generate.mouse.go <- function(r) p2.generate.go(r, "mm")
+p2.generate.mouse.go <- function(r) {
+  p2.generate.go(r, "mm")
+}
 
 
 #' Generate a list metadata structure that can be passed to a
 #' pagoda2 web object constructor as additional metadata given a named factor
 #' 
 #' @param metadata named factor with metadata for individual cells, names must correspond to cells
-#' @param displayname name to display for the metadata
-#' @param s s value for rainbow palette
-#' @param v v value for rainbow palette
-#' @param start starting value
-#' @param end ending value
-#' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters
+#' @param displayname character Name to display for the metadata (default=NULL)
+#' @param s numeric Value for rainbow palette (default=1)
+#' @param v numeric Value for rainbow palette (default=1)
+#' @param start numeric Starting value (default=0)
+#' @param end numeric Ending value (default=NULL)
+#' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters (default=NULL)
 #' @return list of data, levels, palette to be passed to pagoda2 web object constructor
-#' @examples
-#' 
-#' ## additionalMetadata <- list()
-#'
-#' # Generate metadata the easy way
-#' ## additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[1]], 
-#' ##    displayname = 'Infomap')
-#'
-#' # Generate metadata by specifying parameters to be passes to the rainbow function
-#' ## additionalMetadata$altCluster <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[2]], 
-#' ##    displayname = 'Multilevel', s = 0.7, v = 0.8,start = 0, end = 0.5)
-#'
-#' # Generate metadata by specifying a palette
-#' ## a <- myPagoda2Object$clusters$PCA[[3]]
-#' ## library(colorRamps)
-#' ## p1 <- colorRamps::primary.colors(n = nlevels(a))
-#' ## names(p1) <- levels(a) # This is optional
-#' ## additionalMetadata$altCluster2 <- p2.metadata.from.factor(myPagoda2Object$clusters$PCA[[3]], 
-#' ##    displayname = 'Walktrap', pal = p1)
-#'
 #' @export 
-p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, start = 0, end = NULL, pal = NULL) {
+p2.metadata.from.factor <- function(metadata, displayname=NULL, s=1, v=1, start=0, end=NULL, pal=NULL) {
   # Check input
   if (!is.factor(metadata)) {
     stop('Metadata is not a factor')
@@ -351,8 +345,8 @@ p2.metadata.from.factor <- function(metadata, displayname = NULL, s = 1, v = 1, 
 #' @param show.clusters boolean Include clusters as a metadata row (default=TRUE)
 #' @param appname character Application name (default="Pagoda2 Application")
 #' @param innerOrder Ordering of cells inside the clusters provided in dendrogramCellGroups (default=NULL). This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL
-#' @param orderDend (default=NULL)
-#' @param appmetadata (default=NULL)
+#' @param orderDend boolean Whether to order dendrogram (default=FALSE)
+#' @param appmetadata pagoda2 web application metadata (default=NULL)
 #' @return a pagoda2 web object that presents a Rook compatible interface
 #' @export 
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = TRUE,
@@ -434,8 +428,8 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
 #' calculating DE sets between each cell set and everything else 
 #' 
 #' @param pagObj pagoda object
-#' @param groups a named factor to do the de by
-#' @param prefix a character  prefix to assign to genesets generated
+#' @param groups named factor to do the de by
+#' @param prefix chararcter Prefix to assign to genesets generated (default="de_")
 #' @return a pagoda2 web object
 #' @export 
 get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
@@ -480,7 +474,7 @@ hierDiffToGenesets <- function(output) {
 #' Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression
 #' 
 #' @param p2 p2 object
-#' @param title name of the pagoda object
+#' @param title character Name of the pagoda object (default="")
 #' @return a pagoda2 web object
 #' @export p2.toweb.hdea
 p2.toweb.hdea <- function(p2, title="") {

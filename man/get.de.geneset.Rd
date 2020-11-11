@@ -10,9 +10,9 @@ get.de.geneset(pagObj, groups, prefix = "de_")
 \arguments{
 \item{pagObj}{pagoda object}
 
-\item{groups}{a named factor to do the de by}
+\item{groups}{named factor to do the de by}
 
-\item{prefix}{a character  prefix to assign to genesets generated}
+\item{prefix}{chararcter Prefix to assign to genesets generated (default="de_")}
 }
 \value{
 a pagoda2 web object

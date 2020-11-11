@@ -7,7 +7,7 @@
 webP2proc(
   p2,
   additionalMetadata = NULL,
-  title = "Pagoda 2",
+  title = "Pagoda2",
   make.go.sets = TRUE,
   make.de.sets = TRUE,
   go.env = NULL,
@@ -20,7 +20,7 @@ webP2proc(
 
 \item{additionalMetadata}{pagoda2 web metadata object (default=NULL)}
 
-\item{title}{character string Title for the web app (default='Pagoda 2')}
+\item{title}{character string Title for the web app (default='Pagoda2')}
 
 \item{make.go.sets}{boolean Whether GO sets should be made (default=TRUE)}
 

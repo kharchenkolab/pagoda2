@@ -10,9 +10,7 @@ Encoding: UTF-8
 LazyData: true
 biocViews:
 Imports:
-    AnnotationDbi, 
     base64enc, 
-    BiocGenerics, 
     dendsort, 
     fastcluster, 
     igraph, 
@@ -23,10 +21,6 @@ Imports:
     mgcv, 
     parallel, 
     plyr, 
-    Rcpp, 
-    RcppArmadillo, 
-    RcppProgress, 
-    RcppSpdlog, 
     rjson, 
     RMTstat, 
     Rook, 
@@ -36,6 +30,8 @@ Imports:
     urltools,
     utils
 Suggests:
+    AnnotationDbi, 
+    BiocGenerics, 
     colorRamps, 
     dbscan, 
     ggplot2, 

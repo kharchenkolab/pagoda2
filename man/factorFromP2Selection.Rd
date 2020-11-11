@@ -11,9 +11,9 @@ factorFromP2Selection(sel, use.internal.name = FALSE, flatten = FALSE)
 \arguments{
 \item{sel}{a pagoda2 selection as genereated by readPagoda2SelectionFile}
 
-\item{use.internal.name}{boolean Use field 'internal.name' as factor names (default=FALSE)}
+\item{use.internal.name}{boolean Whether to use field 'internal.name' as factor names (default=FALSE)}
 
-\item{flatten}{boolean Ignores multiclassified cells, overwriting randomly (default=FALSE)}
+\item{flatten}{boolean Whether to ignore multiclassified cells, overwriting randomly (default=FALSE)}
 }
 \value{
 factor of cell membership from a p2 selection object. The factor only includes cells present in the selection.

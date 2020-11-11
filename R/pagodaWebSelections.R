@@ -85,8 +85,8 @@ calcMulticlassified <- function(sel) {
 #' contains multiclassified cells an error is raised
 #'
 #' @param sel a pagoda2 selection as genereated by readPagoda2SelectionFile
-#' @param use.internal.name boolean Use field 'internal.name' as factor names (default=FALSE)
-#' @param flatten boolean Ignores multiclassified cells, overwriting randomly (default=FALSE)
+#' @param use.internal.name boolean Whether to use field 'internal.name' as factor names (default=FALSE)
+#' @param flatten boolean Whether to ignore multiclassified cells, overwriting randomly (default=FALSE)
 #' @returns factor of cell membership from a p2 selection object. The factor only includes cells present in the selection.
 #' @export 
 factorFromP2Selection <- function (sel, use.internal.name=FALSE, flatten=FALSE){
@@ -399,6 +399,7 @@ compareClusterings <- function(cl1, cl2, filename = NA) {
 #' @param sel a web selection read with readPagoda2SelectionFile()
 #' @param group1name the name of the first selection
 #' @param group2name the names of the second selection
+#' @keywords internal
 diffExprOnP2FromWebSelection <- function(p2, sel, group1name, group2name) {
   # Get cell names
   grp1cells <- sel[[group1name]]$cells
@@ -419,6 +420,7 @@ diffExprOnP2FromWebSelection <- function(p2, sel, group1name, group2name) {
 #' @param p2 a pagoda2 object
 #' @param sel a web selection read with readPagoda2SelectionFile()
 #' @param groupname name of group to compare to everything else
+#' @keywords internal
 diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
   grp1cells <- sel[[groupname]]$cells
   t1 <- rep('other', length(rownames(p2$counts)))

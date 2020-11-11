@@ -7,7 +7,7 @@
 papply(..., n.cores = detectCores(), mc.preschedule = FALSE)
 }
 \arguments{
-\item{...}{Additional arguments passed to mclapply(), lapply(), or pbapply::pblapply()}
+\item{...}{Additional arguments passed to mclapply(), lapply(), or BiocParallel::bplapply()}
 
 \item{n.cores}{Number of cores to use (default=parallel::detectCores())}
 

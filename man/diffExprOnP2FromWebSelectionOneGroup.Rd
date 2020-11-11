@@ -18,3 +18,4 @@ diffExprOnP2FromWebSelectionOneGroup(p2, sel, groupname)
 Perform differential expression on a p2 object given a
 set of web selections and one group to compare against everything else
 }
+\keyword{internal}

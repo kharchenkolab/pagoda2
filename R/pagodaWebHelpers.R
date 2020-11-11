@@ -63,6 +63,10 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
     stop("gene.names needs to be a character vector of gene names")
   }
 
+  if (!requireNamespace("AnnotationDbi", quietly = TRUE)) {
+    stop("Package \"AnnotationDbi\" needed for this function to work. Please install it with `BiocManager::install('AnnotationDbi')`.", call. = FALSE)
+  }
+
   ids <- unlist(mclapply(AnnotationDbi::mget(gene.names, egALIAS2EG, ifnotfound = NA), function(x) x[1], mc.cores = n.cores))
   rids <- names(ids)
   names(rids) <- ids

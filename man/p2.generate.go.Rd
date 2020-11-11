@@ -13,10 +13,17 @@ p2.generate.go(
 )
 }
 \arguments{
-\item{r}{a pagoda2 object}
+\item{r}{pagoda2 object}
 
-\item{organism}{the organism, current hs, mm and dr are supported for the human and mouse}
+\item{organism}{the organism (default=NULL). Currently 'hs' (human), 'mm' (mouse) and 'dr' (zebrafish) are supported.}
+
+\item{go2all.egs}{mappings between a given GO identifier and all of the Entrez Gene identifiers 
+annotated at that GO term or to one of its child nodes in the GO ontology (default=NULL)}
+
+\item{eg.alias2eg}{mappings between common gene symbol identifiers and entrez gene identifiers (default=NULL)}
+
+\item{min.env.length}{numeric Minimum environment length (default=5)}
 }
 \description{
-This is a wrapper function for generating a go envirnoment
+Generate a GO environment for the organism specified
 }

@@ -3,7 +3,6 @@
 ## Date: Jan - Mar 2017
 ## Description: The rook server for pagoda 2
 
-
 #' @import Rook
 #' @importFrom urltools url_decode
 #' @importFrom rjson fromJSON toJSON
@@ -30,7 +29,7 @@ pagoda2WebApp <- setRefClass(
     ## pagoda2obj: a pagoda2 object
     ## appName: the display name for this app
     ## verbose: verbosity level, def: 0, higher values will printmore
-    ## debug: T|F load debug version?, def: F
+    ## debug: TRUE|FFALSE load debug version?, def: FALSE
     ## dendGroups: a factor defining the groups of cells to use for the dendrogram
     ## keepOriginal: maintain a copy to the original RF object -- this allows for some extra capabilities
     initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,

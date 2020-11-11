@@ -1,30 +1,38 @@
 #' @import Rook
 #' @import rjson
+NULL
 
-
+#' Create pagoda1 web application from pagoda2 object
+#' Pagoda1 found here: <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+#'
 #' @param p2 pagoda2 object
-#' @param col.cols (default=NULL)
-#' @param row.clustering (default=NULL)
-#' @param title (default="pathway clustering")
-#' @param zlim (default=NULL)
-#' @param embedding (default=NULL)
-#' @param inner.clustering (default=TRUE)
-#' @param groups (default=NULL)
-#' @param clusterType (default=NULL)
-#' @param embeddingType (default=NULL)
-#' @param veloinfo (default=NULL)
-#' @param type (default='PCA')
-#' @param min.group.size (default=1)
-#' @param batch.colors (default=NULL)
-#' @param n.cores (default=10)
+#' @param col.cols Matrix of column colors (default=NULL). Useful for visualizing cell annotations such as batch labels. 
+#' @param row.clustering Row dendrogram (default=NULL)
+#' @param title character Title to use (default="pathway clustering")
+#' @param zlim Range of the normalized gene expression levels (default=NULL). Input as a list: c(lower_bound, upper_bound). Values outside this range will be Winsorized. Useful for increasing the contrast of the heatmap visualizations. If NULL, set to the 5th and 95th percentiles. 
+#' @param embedding A 2-D embedding of the cells (PCA, tSNE, etc.), passed as a data frame with two columns (two dimensions) and rows corresponding to cells (row names have to match cell names) (default=NULL).
+#' @param inner.clustering boolean Whether to get overall cell clustering (default=TRUE).
+#' @param groups factor describing grouping of different cells. If provided, the cross-fits and the expected expression magnitudes will be determined separately within each group. The factor should have the same length as ncol(counts) (default=NULL).
+#' @param clusterType cluster type (default=NULL). If NULL, takes the latest cluster in the pagoda2 object using 'p2$clusters[[type]][[1]]'
+#' @param embeddingType embedding type (default=NULL). If NULL, takes the latest embedding in the pagoda2 object using p2$embeddings[[type]][[1]] 
+#' @param veloinfo cell velocity information, cell velocities (grid and cell) (default=NULL)
+#' @param type character Either 'counts' or a name of a 'reduction' in the pagoda2 object (default='PCA')
+#' @param min.group.size integer Minimum group size (default=1)
+#' @param batch.colors colors of the batches, i.e. the factor (corresponding to rows of the model matrix) specifying batch assignment of each cell(default=NULL)
+#' @param n.cores numeric Number of cores (default=10)
+#' @return pagoda1 web application
 #' @export 
-p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,veloinfo=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
+p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = "pathway clustering", 
+  zlim = NULL, embedding=NULL, inner.clustering=TRUE, groups=NULL, clusterType=NULL,
+  embeddingType=NULL, veloinfo=NULL, type='PCA', min.group.size=1, batch.colors=NULL, n.cores=10) {
   if (!requireNamespace("GO.db", quietly = TRUE)) {
     stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
   }
-
+  if (!requireNamespace("BiocGenerics", quietly = TRUE)) {
+    stop("Package \"BiocGenerics\" needed for this function to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+  }
   # rcm - xv
-  if(type=='counts') {
+  if (type=='counts') {
     x <- p2$counts;
     x <- t(t(x)*p2$misc[['varinfo']][colnames(x),'gsf'])
   } else {
@@ -39,14 +47,14 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
       groups <- p2$clusters[[type]][[1]]
     } else {
       groups <- p2$clusters[[type]][[clusterType]]
-      if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+      if(is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
     }
   }
   groups <- as.factor(groups[rownames(x)]);
   groups <- droplevels(groups);
 
   if(is.null(embedding)) {
-    if(is.null(p2$embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
+    if(is.null(p2$embeddings[[type]])) { stop("First, generate embeddings for type ",type)}
     if(is.null(embeddingType)) {
       # take the first one
       embedding <- p2$embeddings[[type]][[1]]
@@ -230,6 +238,9 @@ p2ViewPagodaApp <- setRefClass(
     fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 'name', 'trim', 'batch','embedding','type','veloinfo'),
     methods = list(
       initialize = function(results, ..., pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", trim = 1.1/nrow(p2$counts), embedding=NULL,type,veloinfo=NULL) {
+        if (!requireNamespace("BiocGenerics", quietly = TRUE)) {
+          stop("Package \"BiocGenerics\" needed for this function to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+        }
         if(!missing(results) && class(results)=='p2ViewPagodaApp') { # copy constructor
           callSuper(results);
         } else {
@@ -778,29 +789,35 @@ p2ViewPagodaApp <- setRefClass(
     )
 )
 
-
-#' @param pathways
-#' @param p2
-#' @param goenv (default=NULL)
-#' @param batch (default=NULL)
-#' @param n.genes (default=20)
-#' @param two.sided (default=TRUE)
-#' @param n.pc (default=rep(1, length(pathways)))
-#' @param colcols (default=NULL)
-#' @param zlim (default=NULL)
-#' @param labRow (default=NA)
-#' @param vhc (default=NULL)
-#' @param cexCol (default=1)
-#' @param cexRow (default=1)
-#' @param nstarts (default=50)
-#' @param row.order (default=NULL)
-#' @param show.Colv (default=TRUE)
-#' @param plot (default=TRUE)
-#' @param trim (default=1.1/nrow(p2$counts))
-#' @param showPC (default=TRUE)
-#' @param ...
+#' View pathway or gene-weighted PCA
+#' Pagoda2 version of the function pagoda.show.pathways()
+#' Takes in a list of pathways (or a list of genes), runs weighted PCA, optionally showing the result.
+#'
+#' @param pathways character vector of pathway or gene names
+#' @param p2 pagoda2 object
+#' @param goenv environment mapping pathways to genes (default=NULL)
+#' @param batch factor (corresponding to rows of the model matrix) specifying batch assignment of each cell, to perform batch correction (default=NULL).
+#' @param n.genes integer Number of genes to show (default=20)
+#' @param two.sided boolean If TRUE, the set of shown genes should be split among highest and lowest loading (default=TRUE). If FALSE, genes with highest absolute loading should be shown.
+#' @param n.pc integer vector Number of principal component to show for each listed pathway(default=rep(1, length(pathways)))
+#' @param colcols column color matrix (default=NULL)
+#' @param zlim numeric z color limit (default=NULL)
+#' @param labRow row labels (default=NA)
+#' @param vhc cell clustering (default=NULL)
+#' @param cexCol positive numbers, used as cex.axis in for the row or column axis labeling(default=1)
+#' @param cexRow positive numbers, used as cex.axis in for the row or column axis labeling(default=1)
+#' @param nstarts integer Number of random starts to use (default=50)
+#' @param row.order row order (default=NULL). If NULL, uses order from hclust.
+#' @param show.Colv boolean Whether to show cell dendrogram (default=TRUE)
+#' @param plot boolean Whether to plot (default=TRUE)
+#' @param trim numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts))
+#' @param showPC boolean (default=TRUE)
+#' @param ... parameters to pass to my.heatmap2. Only if plot is TRUE.
+#' @return cell scores along the first principal component of shown genes (returned as invisible)
 #' @export 
-t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
+t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), 
+  colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, 
+  plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
   # are these genes or pathways being passed?
   if(!is.null(goenv)) {
     x <- pathways %in% ls(goenv)
@@ -951,13 +968,12 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
     }
   }
 
-  if(plot) {
+  if (plot){
     if(show.Colv) {
       my.heatmap2(vmap[row.order, , drop = FALSE], Rowv = NA, Colv = as.dendrogram(vhc), zlim = zlim, col = col, scale = "none", RowSideColors = ld, ColSideColors = z, labRow = labRow, cexCol = cexCol, cexRow = cexRow, ...)
     } else {
       my.heatmap2(vmap[row.order, vhc$order, drop = FALSE], Rowv = NA, Colv = NA, zlim = zlim, col = col, scale = "none", RowSideColors = ld, ColSideColors = z[,vhc$order], labRow = labRow, cexCol = cexCol, cexRow = cexRow, ...)
-        }
-
+    }
   }
   xp$vhc <- vhc
   xp$lab <- lab

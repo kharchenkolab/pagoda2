@@ -14,8 +14,8 @@ NULL
 
 #' Translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
 #'
-#' @param cl 
-#' @param counts 
+#' @param cl clusters
+#' @param counts matrix of counts
 #' @param deep boolean (default=FALSE)
 #' @param dist character vector Distance metric (default='cor')
 #' @keywords internal
@@ -64,7 +64,7 @@ areColors <- function(x) {
 
 #' Parallel, optionally verbose lapply. See ?parallel::mclapply for more info.
 #'
-#' @param ... Additional arguments passed to mclapply(), lapply(), or pbapply::pblapply()
+#' @param ... Additional arguments passed to mclapply(), lapply(), or BiocParallel::bplapply()
 #' @param n.cores Number of cores to use (default=parallel::detectCores())
 #' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
 #' @return list, as returned by lapply
@@ -89,8 +89,10 @@ papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
   lapply(...)
 }
 
-#' @param x
-#' @param y
+#' Jaro-Winkler distance
+#'
+#' @param x numeric vector first input
+#' @param y numeric vector second input
 #' 
 #' @keywords internal
 jw.disR <- function(x, y) {
@@ -100,10 +102,11 @@ jw.disR <- function(x, y) {
   sqrt(sum(a)/2)
 }
 
-
-#' @param x
-#' @param gradientPalette (default=NULL)
-#' @param zlim (default=NULL)
+#' Utility function to translate values into colors
+#'
+#' @param x input values
+#' @param gradientPalette gradient palette (default=NULL). If NULL, use colorRampPalette(c('gray90','red'), space = "Lab")(1024)
+#' @param zlim quantiles (default=NULL)
 #' @param gradient.range.quantile (default=0.95)
 #' 
 #' @keywords internal
@@ -113,7 +116,7 @@ val2col <- function(x, gradientPalette=NULL, zlim=NULL, gradient.range.quantile=
     if(is.null(gradientPalette)) {
       gradientPalette <- colorRampPalette(c('gray90','red'), space = "Lab")(1024)
     }
-    if(is.null(zlim)) {
+    if (is.null(zlim)) {
       zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile)))
       if(diff(zlim)==0) {
         zlim <- as.numeric(range(na.omit(x)))

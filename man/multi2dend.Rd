@@ -7,9 +7,9 @@
 multi2dend(cl, counts, deep = FALSE, dist = "cor")
 }
 \arguments{
-\item{cl}{}
+\item{cl}{clusters}
 
-\item{counts}{}
+\item{counts}{matrix of counts}
 
 \item{deep}{boolean (default=FALSE)}
 
