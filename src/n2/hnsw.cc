@@ -31,6 +31,9 @@
 #include "n2/distance.h"
 #include "n2/min_heap.h"
 
+
+
+
 #define MERGE_BUFFER_ALGO_SWITCH_THRESHOLD 100
 
 namespace n2 {
@@ -56,8 +59,9 @@ using std::vector;
 
 thread_local VisitedList* visited_list_ = nullptr;
 
-Hnsw::Hnsw() {
-    logger_ = spdlog::get("n2");
+
+Hnsw::Hnsw() {    	
+    logger_= spdlog::get("n2");
     if (logger_ == nullptr) {
         logger_ = spdlog::r_sink_mt("n2");
     }
@@ -66,7 +70,7 @@ Hnsw::Hnsw() {
 }
 
 Hnsw::Hnsw(int dim, string metric) : data_dim_(dim) {
-    logger_ = spdlog::get("n2");
+    logger_= spdlog::get("n2");
     if (logger_ == nullptr) {
         logger_ = spdlog::r_sink_mt("n2");
     }
@@ -119,7 +123,7 @@ Hnsw::Hnsw(Hnsw&& other) noexcept {
     logger_= spdlog::get("n2");
     if (logger_ == nullptr) {
         logger_ = spdlog::r_sink_mt("n2");
-    }
+    } 
     model_byte_size_ = other.model_byte_size_;
     model_ = other.model_;
     other.model_ = nullptr;
