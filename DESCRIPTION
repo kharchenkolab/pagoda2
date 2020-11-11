@@ -34,7 +34,7 @@ Imports:
     stats,
     utils,
     fastcluster,
-    sccore (>= 0.1)
+    sccore (>= 0.1.1)
 Suggests:
     colorRamps,
     dbscan,
@@ -50,8 +50,6 @@ Suggests:
     knitr, 
     rmarkdown,
     uwot
-Remotes: 
-    kharchenkolab/sccore
 VignetteBuilder: knitr
 RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
