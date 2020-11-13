@@ -21,11 +21,12 @@ Imports:
     mgcv, 
     parallel, 
     plyr, 
+    Rcpp,
     rjson, 
     RMTstat, 
     Rook, 
     Rtsne, 
-    sccore,
+    sccore (>= 0.1.1),
     stats, 
     urltools,
     utils

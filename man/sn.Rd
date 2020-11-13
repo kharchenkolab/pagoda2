@@ -15,9 +15,4 @@ An object with names assigned equal to values
 \description{
 Set names equal to values, a stats::setNames wrapper function
 }
-\examples{
-vec = c(1, 2, 3, 4)
-sn(vec)
-
-}
 \keyword{internal}

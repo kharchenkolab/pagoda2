@@ -68,10 +68,6 @@ areColors <- function(x) {
 #' @param n.cores Number of cores to use (default=parallel::detectCores())
 #' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
 #' @return list, as returned by lapply
-#' @examples
-#' square = function(x){ x**2 }
-#' papply(1:10, square, n.cores=1, progress=TRUE)
-#'
 #' @keywords internal
 papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
   if(n.cores>1) {
@@ -84,7 +80,6 @@ papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
       return(BiocParallel::bplapply(... , BPPARAM = BiocParallel::MulticoreParam(workers = n.cores)))
     }
   }
-
   # fall back on lapply
   lapply(...)
 }
@@ -176,10 +171,6 @@ cldend2array <- function(d, cells=NULL) {
 #'
 #' @param x an object for which names attribute will be meaningful 
 #' @return An object with names assigned equal to values
-#' @examples
-#' vec = c(1, 2, 3, 4)
-#' sn(vec)
-#'
 #' @keywords internal
 sn <- function(x) { names(x) <- x; return(x); }
 

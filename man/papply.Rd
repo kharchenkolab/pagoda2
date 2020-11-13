@@ -19,9 +19,4 @@ list, as returned by lapply
 \description{
 Parallel, optionally verbose lapply. See ?parallel::mclapply for more info.
 }
-\examples{
-square = function(x){ x**2 }
-papply(1:10, square, n.cores=1, progress=TRUE)
-
-}
 \keyword{internal}
