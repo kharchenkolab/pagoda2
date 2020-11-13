@@ -349,9 +349,9 @@ Pagoda2 <- setRefClass(
         if(center) {
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
-        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
+        xn <- N2R::n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else if(distance %in% c('L2','euclidean')) {
-        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='L2')
+        xn <- N2R::n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='L2')
       } else {
         stop("unknown distance measure specified. Currently supported: angular, L2")
       }
@@ -618,7 +618,7 @@ Pagoda2 <- setRefClass(
       if(center) {
         pcas <- pcas - Matrix::rowMeans(pcas)
       }
-      xn <- n2Knn(pcas, k, nThreads= n.cores, verbose=verbose)
+      xn <- N2R::n2Knn(pcas, k, nThreads= n.cores, verbose=verbose)
       diag(xn) <- 0; # Remove self edges
       xn <- as(xn,'dgTMatrix'); # will drop 0s
       # Turn into a dataframe, convert from correlation distance into weight

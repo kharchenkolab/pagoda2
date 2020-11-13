@@ -8,3 +8,4 @@ data-raw
 ^\.graphics$
 ^doc$
 ^Meta$
+docker
