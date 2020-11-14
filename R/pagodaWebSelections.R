@@ -3,6 +3,9 @@
 # Date: August 2017
 # Description: A collection of functions for working with p2 selections
 
+#' @importFrom rlang .data 
+NULL 
+
 #' Reads a pagoda2 web app exported cell selection file exported as a list
 #' of list objects that contain the name of the selection, 
 #' the color (as a hex string) and the identifiers of the individual cells
@@ -10,21 +13,21 @@
 #' @param filepath the path of the file load
 #' @export 
 readPagoda2SelectionFile <- function(filepath) {
-  returnList <- list();
+  returnList <- list()
 
-  con <- file(filepath, "r");
+  con <- file(filepath, "r")
   while (TRUE) {
     suppressWarnings(line <- readLines(con, n = 1))
     if ( length(line) == 0 ) {
       break
     }
 
-    fields <- unlist(strsplit(line, split=',', fixed=TRUE));
+    fields <- unlist(strsplit(line, split=',', fixed=TRUE))
 
     name <- make.names(fields[2]);
     color <- fields[1];
     cells <- fields[-c(1:2)];
-    returnList[[name]] <- list(name=fields[2], color = color, cells = cells);
+    returnList[[name]] <- list(name=fields[2], color = color, cells = cells)
   }
   close(con)
 
@@ -39,16 +42,16 @@ readPagoda2SelectionFile <- function(filepath) {
 #' @returns NULL, writes to filepath the pagoda2 selection object as a p2 selection file that be be loaded to the web interface
 #' @export
 writePagoda2SelectionFile <- function(sel, filepath) {
-  fileConn <- file(filepath);
-  lines <- c();
+  fileConn <- file(filepath)
+  lines <- c()
   for (l in names(sel)) {
     cells <- sel[[l]]$cells
-    cellsString <- paste0(cells,collapse=',');
-    ln <- paste(sel[[l]]$color,as.character(l),cellsString,sep=',');
+    cellsString <- paste0(cells,collapse=',')
+    ln <- paste(sel[[l]]$color,as.character(l),cellsString,sep=',')
     lines <- c(lines,ln)
   }
-  writeLines(lines, con=fileConn);
-  close(fileConn);
+  writeLines(lines, con=fileConn)
+  close(fileConn)
 }
 
 #' Writes a list of genes as a gene selection that can be loaded in the web interface
@@ -62,7 +65,7 @@ writeGenesAsPagoda2Selection <- function(name, genes, filename) {
   con <- file(filename, 'w')
   cat(name, file=con)
   cat(',',file=con)
-  cat(paste(genes, collapse=','),file=con)
+  cat(paste(genes, collapse=','), file=con)
   cat('\n', file=con)
   close(con)
 }
@@ -132,10 +135,10 @@ factorToP2selection <- function(cl, col=NULL) {
   }
   # If no colors are provided generate some random ones
   if(is.null(col)) {
-    col=substr(rainbow(nlevels(cl)),2,7); # Rainbow w/o alpha and hash
-    names(col) <- levels(cl);
+    col=substr(rainbow(nlevels(cl)),2,7) # Rainbow w/o alpha and hash
+    names(col) <- levels(cl)
   }
-  ns <- list();
+  ns <- list()
   for (l in levels(cl)) {
     ns[[l]] <- list(
       name = l,
@@ -157,12 +160,12 @@ removeSelectionOverlaps <- function(selections) {
   multiClassified <- selectionsCellsFlat[duplicated(selectionsCellsFlat)]
 
   lapply(selections, function(x) {
-    r <- list();
-    r$name = x$name;
-    r$color = x$color;
-    r$cells = x$cells[!x$cells %in% multiClassified];
-    r;
-  });
+    r <- list()
+    r$name = x$name
+    r$color = x$color
+    r$cells = x$cells[!x$cells %in% multiClassified]
+    r
+  })
 }
 
 #' Get the number of cells in each selection group
@@ -181,17 +184,17 @@ cellsPerSelectionGroup <- function(selection) {
 #' @export
 validateSelectionsObject <- function(selections) {
   t <- lapply(selections, function(x) {
-    isvalidentry <- TRUE;
+    isvalidentry <- TRUE
     if (!is.character(x$name)) {
-      isvalidentry <- FALSE;
+      isvalidentry <- FALSE
     }
     if (!is.character(x$color)) {
-      isvalidentry <- FALSE;
+      isvalidentry <- FALSE
     }
     if (!is.character(x$cells)) {
-      isvalidentry <- FALSE;
+      isvalidentry <- FALSE
     }
-    isvalidentry;
+    isvalidentry
   })
 
   all(unlist(t))
@@ -216,11 +219,11 @@ validateSelectionsObject <- function(selections) {
 #' @export 
 getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff = 0.3, ambiguous.ratio = 0.5) {
   if (!is.factor(clustering)) {
-    stop('clustering is not a factor');
+    stop('clustering is not a factor')
   }
 
   if (!validateSelectionsObject(selections)) {
-    stop('selections is not a valid selection object');
+    stop('selections is not a valid selection object')
   }
 
   multiClass <- calcMulticlassified(selections)
@@ -286,15 +289,15 @@ generateClassificationAnnotation <- function(clustering, selections) {
 #' @export 
 getCellsInSelections <- function(p2selections, selectionNames) {
   if(!is.character(selectionNames)) {
-    stop('selectionNames needs to be a character vector of cell names');
+    stop('selectionNames needs to be a character vector of cell names')
   }
 
   if(!validateSelectionsObject(p2selections)) {
-    stop('p2selections is not a valid p2 selection object');
+    stop('p2selections is not a valid p2 selection object')
   }
 
   if(any(!selectionNames %in% names(p2selections))) {
-    stop('Some selection names were not found in the pagoda2 selections object');
+    stop('Some selection names were not found in the pagoda2 selections object')
   }
 
   cells <- unique(unname(unlist(lapply(p2selections[selectionNames], function(x) x$cells))))
@@ -314,17 +317,17 @@ plotSelectionOverlaps <- function(sel) {
   }
   
   n1s = c()
-  n2s = c();
-  overlaps = c();
+  n2s = c()
+  overlaps = c()
   for (n1 in names(sel)) {
     for (n2 in names(sel)) {
       if (n1 != n2) {
         overlapC = length(which(sel[[n1]]$cells %in% sel[[n2]]$cells))
       } else {
-        overlapC = 0;
+        overlapC = 0
       }
-      n1s <- c(n1s, n1);
-      n2s <- c(n2s, n2);
+      n1s <- c(n1s, n1)
+      n2s <- c(n2s, n2)
       overlaps = c(overlaps,overlapC)
     }
   }
@@ -378,7 +381,7 @@ compareClusterings <- function(cl1, cl2, filename = NA) {
   n2 <- names(cl2);
 
   if(!all(n1 %in% n2) || !all(n2 %in% n1)) {
-    warning('Clusterings do not completely overlap!');
+    warning('Clusterings do not completely overlap!')
     ns <- intersect(n1,n2)
   } else {
     ns <- n1
