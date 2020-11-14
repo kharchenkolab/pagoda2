@@ -42,7 +42,7 @@ make.p2.app(
 
 \item{appmetadata}{pagoda2 web application metadata (default=NULL)}
 
-\item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
+\item{dendrogramCellGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
 }
 \value{
 a pagoda2 web object that presents a Rook compatible interface

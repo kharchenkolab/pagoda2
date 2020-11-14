@@ -2,12 +2,12 @@ Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
 Version: 0.1.5
 Authors@R: c(person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
-Description: Analyzing and interactively exploring large single-cell RNA-seq datasets. Pagoda2 primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. The package also serves as the primary method for pre-processing data for Conos, <https://github.com/kharchenkolab/conos>
-Depends: R (>= 3.2.1), Matrix, igraph
+Description: Analyzing and interactively exploring large single-cell RNA-seq datasets. Pagoda2 primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. It performs basic tasks such as cell size normalization, gene variance normalization, and can be used to idetnify subpopulations and run differential expression within idividual samples. The package also serves as the primary method for preprocessing data for Conos, <https://github.com/kharchenkolab/conos>
 License: GPL-3 
 Copyright: See the file COPYRIGHTS for various pagoda2 copyright details
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 3.2.1), Matrix, igraph
 biocViews:
 Imports:
     base64enc, 
@@ -32,6 +32,7 @@ Imports:
     stats, 
     urltools,
     utils
+RoxygenNote: 7.1.1
 Suggests:
     AnnotationDbi, 
     BiocGenerics, 
@@ -53,7 +54,6 @@ Suggests:
     testthat,
     uwot
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
 NeedsCompilation: yes
 Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Evan Biederstedt [cre, aut]

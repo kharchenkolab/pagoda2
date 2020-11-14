@@ -337,7 +337,7 @@ p2.metadata.from.factor <- function(metadata, displayname=NULL, s=1, v=1, start=
 #' (Advanced users may wish to use that constructor directly.)
 #'
 #' @param r pagoda2 object
-#' @param dendrogramCelllGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
+#' @param dendrogramCellGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added (default=list())
 #' @param geneSets a list of genesets to show
 #' @param show.depth boolean Include depth as a metadata row (default=TRUE)

@@ -210,7 +210,7 @@ validateSelectionsObject <- function(selections) {
 #'
 #' @param clustering a named factor of clusters, where every entry is a cell
 #' @param selections a pagoda2 selection object
-#' @param multiClasscutoff numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)
+#' @param multiClassCutoff numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)
 #' @param ambiguous.ratio numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.3)
 #' @return a data.frame with two columns, one for cluster and one for selections, each cluster appears only once
 #' @export 

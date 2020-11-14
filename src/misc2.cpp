@@ -69,6 +69,7 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel, int ncores=1) {
     int p0=p[g]; int p1=p[g+1]; 
     if(p1-p0 <1) { continue; }
     arma::colvec ly;
+    arma::colvec *copyly = &ly; // need to avoid 'explicitly assigning value of variable of type 'arma::colvec' (aka 'Col<double>') to itself [-Wself-assign-overloaded]'
     if(rowSelSpecified) {
       // select valid rows
       int nvalid=0;
@@ -87,7 +88,10 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel, int ncores=1) {
     
     double m=sum(ly)/nrows;
     meanV[g]=m;
-    ly-=m; ly%=ly; 
+    ly-=m; 
+    // ly%=ly; 
+    *copyly%=ly; // we need to avoid warning which checks whether assignment operation survives self-assignment.
+    ly = *copyly;
     varV[g]=(sum(ly)+(m*m*(nrows-ly.size())))/nrows;
   }
   return Rcpp::DataFrame::create(Named("m")=meanV,Named("v")=varV,Named("nobs",nobsV));
