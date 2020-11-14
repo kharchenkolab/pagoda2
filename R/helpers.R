@@ -197,7 +197,7 @@ show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
             server <- get("___scde.server", envir = globalenv())
         } else {
             server <- Rook::Rhttpd$new()
-            assign("___scde.server", server, envir = globalenv())
+            '___scde.server' = server
             if(!missing(ip)) {
                 if(missing(port)) {
                     server$start(listen = ip)
