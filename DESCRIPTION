@@ -54,7 +54,6 @@ Suggests:
     robustbase, 
     testthat,
     uwot
-VignetteBuilder: knitr
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
 NeedsCompilation: yes
 Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Evan Biederstedt [cre, aut]
