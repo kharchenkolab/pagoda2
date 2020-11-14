@@ -83,7 +83,7 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 #' @param ct something
 #' @param scale boolean Whether to scale... (default=TRUE)
 #' @param pick.top boolean Whether to pick max... (default=FALSE)
-#' @export
+#' @export 
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   if (!requireNamespace("pcaMethods", quietly = TRUE)) {
     stop("Package \"pcaMethods\" needed for this function to work. Please install it with `BiocManager::install('pcaMethods')`.", call. = FALSE)
@@ -157,7 +157,7 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #' ##             labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
 #' }
 #'
-#' @export
+#' @export 
 pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.method="complete", 
   istance=NULL, weighted.correlation=TRUE, plot=FALSE, top=Inf, trim=0, abs=FALSE, ...) {
   if(is.null(distance)) {

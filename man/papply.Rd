@@ -4,7 +4,7 @@
 \alias{papply}
 \title{Parallel, optionally verbose lapply. See ?parallel::mclapply for more info.}
 \usage{
-papply(..., n.cores = detectCores(), mc.preschedule = FALSE)
+papply(..., n.cores = parallel::detectCores(), mc.preschedule = FALSE)
 }
 \arguments{
 \item{...}{Additional arguments passed to mclapply(), lapply(), or BiocParallel::bplapply()}

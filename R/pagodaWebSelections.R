@@ -354,7 +354,7 @@ plotMulticlassified <- function(sel) {
   tmp1 <- as.data.frame(multiclassified)
   tmp1$lab <- rownames(tmp1)
 
-  p <- ggplot2::ggplot(tmp1, ggplot2::aes(x=lab, y= multiclassified)) + ggplot2::geom_bar(stat='identity') +
+  p <- ggplot2::ggplot(tmp1, ggplot2::aes(x=.data$lab, y= multiclassified)) + ggplot2::geom_bar(stat='identity') +
     ggplot2::theme_bw() + ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1)) +
     ggplot2::scale_y_continuous(name='% multiclassified') +
     ggplot2::scale_x_discrete(name='Selection Label')
@@ -436,67 +436,7 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
 #' @export 
 getIntExtNamesP2Selection <- function(x) unlist(lapply(x, function(y) {y$name}))
 
-#' Plots the specified pagoda2 embedding according to the specified selection object
-#' 
-#' @param emb An embedding from a pagoda2 object
-#' @param sel a pagoda2 web selection object
-#' @param show.unlabelled boolean Whether to display the plots without any associated selection as grey (default=TRUE)
-#' @param show.labels boolean Whether to display the labels at the center of each cluster (default=TRUE)
-#' @param label.size numeric (default=3)
-#' @param point.size numeric (default=2)
-#' @param show.guides boolean (default=TRUE)
-#' @param alpha numeric (default=0.7)
-#' @param show.axis boolean (default=TRUE)
-#' @return a ggplot2 object
-#' @export
-plotEmbeddingColorByP2Selection <- function(emb, sel, show.unlabelled = TRUE, show.labels = TRUE, label.size = 3, point.size=2, show.guides = TRUE, alpha = 0.7, show.axis =TRUE){
-  # Return the plot variable p
-  if (!requireNamespace("ggplot2", quietly = TRUE)) {
-    stop("Package \"ggplot2\" needed for this function to work. Please install it.", call. = FALSE)
-  }
-  
-  p <- NULL
 
-  colsorig <- pagoda2:::getColorsFromP2Selection(sel)
-  f <- factorFromP2Selection(sel, use.internal.name= TRUE)
-
-
-  dftmp <- data.frame(emb)
-  dftmp$selname <- as.character(f[rownames(dftmp)])
-
-  if (show.unlabelled) {
-    dftmp$selname[is.na(dftmp$selname)] <- 'no label'
-    colsorig <- c(colsorig, 'no label' = 'grey50')
-  }
-
-  guidesVar <- NULL
-  if (!show.guides) {
-    guidesVar <- ggplot2::theme(legend.position = "none")
-  }
-
-  themeVar <- ggplot2::theme_bw()
-  if (!show.axis) {
-    themeVar <- ggplot2::theme_void()
-  }
-
-  if (show.labels) {
-    clcnt <- aggregate(dftmp[,c(1:2)], by= list(sel=dftmp$selname), FUN=mean)
-    clcnt <- clcnt[clcnt$sel != 'no label',]
-    # Display external names
-    clcnt$sel <- as.character(getIntExtNamesP2Selection(sel)[clcnt$sel])
-
-    p <- ggplot2::ggplot(dftmp, ggplot2::aes(x = X1, y = X2, color=selname)) + 
-      ggplot2::geom_point( size = point.size, alpha = alpha) +
-      ggplot2::scale_color_manual(values =  colsorig, name='Type') + themeVar +
-      ggplot2::geom_text(ggplot2::aes(x = X1, y=X2, label=sel), data=clcnt, inherit.aes=FALSE, size=label.size, fontface = "bold") + guidesVar;
-  } else {
-    p <- ggplot2::ggplot(dftmp, ggplot2::aes(x = X1, y = X2, color=selname)) + 
-      ggplot2::geom_point( size = point.size, alpha = alpha ) +
-      ggplot2::scale_color_manual(values =  colsorig, name='Type') + themeVar + guidesVar;
-  }
-
-  invisible(p)
-}
 
 ## Myeloid, match to myeloid from patient1
 

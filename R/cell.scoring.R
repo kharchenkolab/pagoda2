@@ -6,7 +6,7 @@
 #' @param n.bins numeric Number of bins to put the genes in (default=25)
 #' @param n.genes.per.bin numeric Number of genes to get from each bin (default=100)
 #' @return a character vector that can be used as a background signature
-#' @export 
+#' @export get.control.geneset
 get.control.geneset <- function(data, signature, n.bins=25, n.genes.per.bin=100) {
     ## DEVEL
     ## data <- vals
@@ -43,7 +43,7 @@ get.control.geneset <- function(data, signature, n.bins=25, n.genes.per.bin=100)
 #' @param show.plot boolean If corrected values are calculated show plot of corrected vs original scores (default=FALSE)
 #' @param ... options for get.control.geneset()
 #' @return a score for each cell
-#' @export 
+#' @export score.cells.puram
 score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ...) {
     ## DEVEL
     ## data <- vals
@@ -92,7 +92,7 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' @param signature character vector The gene signature from which to subset a character vector of genes 
 #' @param raise.warning boolean Warn if genes are missing (default=TRUE)
 #' @return The filtered subset of gene signatures
-#' @export 
+#' @export subset.signature.to.data
 subset.signature.to.data <- function(data, signature, raise.warning=TRUE) {
     keep.genes <- signature %in% colnames(data)
     ## Check if all genes found
@@ -138,7 +138,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
 #' @param data the matrix
 #' @param signature the genes in the signature
 #' @return cell scores
-#' @export 
+#' @export score.cells.nb0
 score.cells.nb0 <- function(data, signature) {
     signature <- subset.signature.to.data(data,signature)
     scores <- apply(data,1,mean)
@@ -149,7 +149,7 @@ score.cells.nb0 <- function(data, signature) {
 #' 
 #' @param x values to scale
 #' @return the scaled values
-#' @export 
+#' @export min.max.scale
 min.max.scale <- function(x) { 
     (x - min(x)) / (max(x) - min(x)) 
 }

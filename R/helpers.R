@@ -73,7 +73,7 @@ areColors <- function(x) {
 #' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
 #' @return list, as returned by lapply
 #' @keywords internal
-papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
+papply <- function(...,n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
   if(n.cores>1) {
     if(requireNamespace("parallel", quietly = TRUE)) {
       return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule))
@@ -187,7 +187,7 @@ sn <- function(x) { names(x) <- x; return(x); }
 #' @param ip numeric IP address
 #' @param browse boolean Whether to load the app into an HTML browser (default=TRUE)
 #' @param server server If NULL, will grab server with get.scde.server(port=port, ip=ip) (derfault=NULL)
-#' @export 
+#' @export show.app
 show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
     # replace special characters
     name <- gsub("[^[:alnum:.]]", "_", name)
@@ -366,7 +366,7 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
   }
   if(verbose) message("reading ",length(matrixPaths)," dataset(s) ")
   if(is.null(names(matrixPaths))) stop("matrixPaths must be a named vector")
-  dl <- pagoda2:::papply(sn(names(matrixPaths)),function(nam) {
+  dl <- papply(sn(names(matrixPaths)), function(nam) {
 
     matrixPath <- matrixPaths[nam];
     # read all count files (*_unique.counts) under a given path
@@ -409,7 +409,7 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
 #' @param plot boolean Plot the molecule distribution and the gene/molecule dependency fit (default=TRUE)
 #' @param do.par boolean Reset graphical parameters prior to plotting (default=TRUE)
 #' @return a filtered matrix
-#' @export
+#' @export gene.vs.molecule.cell.filter
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {
   if(plot) {
     if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
