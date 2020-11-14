@@ -1,0 +1,368 @@
+* using log directory ‘/Users/evanbiederstedt/pagoda2/pagoda2.Rcheck’
+* using R version 4.0.2 (2020-06-22)
+* using platform: x86_64-apple-darwin17.0 (64-bit)
+* using session charset: UTF-8
+* using option ‘--as-cran’
+* checking for file ‘pagoda2/DESCRIPTION’ ... OK
+* this is package ‘pagoda2’ version ‘0.1.5’
+* package encoding: UTF-8
+* checking CRAN incoming feasibility ... NOTE
+Maintainer: ‘Evan Biederstedt <evan.biederstedt@gmail.com>’
+
+New submission
+
+Package has a VignetteBuilder field but no prebuilt vignette index.
+
+Size of tarball: 7258896 bytes
+* checking package namespace information ... OK
+* checking package dependencies ... OK
+* checking if this is a source package ... OK
+* checking if there is a namespace ... OK
+* checking for executable files ... OK
+* checking for hidden files and directories ... OK
+* checking for portable file names ... OK
+* checking for sufficient/correct file permissions ... OK
+* checking serialization versions ... OK
+* checking whether package ‘pagoda2’ can be installed ... WARNING
+Found the following significant warnings:
+  misc2.cpp:90:14: warning: explicitly assigning value of variable of type 'arma::colvec' (aka 'Col<double>') to itself [-Wself-assign-overloaded]
+  pagoda1_liftover.cpp:29:9: warning: explicitly assigning value of variable of type 'arma::colvec' (aka 'Col<double>') to itself [-Wself-assign-overloaded]
+  pagoda1_liftover.cpp:29:17: warning: explicitly assigning value of variable of type 'arma::colvec' (aka 'Col<double>') to itself [-Wself-assign-overloaded]
+See ‘/Users/evanbiederstedt/pagoda2/pagoda2.Rcheck/00install.out’ for details.
+* checking installed package size ... NOTE
+  installed size is  7.8Mb
+  sub-directories of 1Mb or more:
+    extdata   6.0Mb
+* checking package directory ... OK
+* checking for future file timestamps ... OK
+* checking DESCRIPTION meta-information ... NOTE
+Malformed Description field: should contain one or more complete sentences.
+Packages listed in more than one of Depends, Imports, Suggests, Enhances:
+  ‘igraph’ ‘Matrix’
+A package should be listed in only one of these fields.
+* checking top-level files ... OK
+* checking for left-over files ... OK
+* checking index information ... OK
+* checking package subdirectories ... OK
+* checking R files for non-ASCII characters ... OK
+* checking R files for syntax errors ... OK
+* checking whether the package can be loaded ... OK
+* checking whether the package can be loaded with stated dependencies ... OK
+* checking whether the package can be unloaded cleanly ... OK
+* checking whether the namespace can be loaded with stated dependencies ... OK
+* checking whether the namespace can be unloaded cleanly ... OK
+* checking use of S3 registration ... OK
+* checking dependencies in R code ... WARNING
+'::' or ':::' import not declared from: ‘BiocParallel’
+'loadNamespace' or 'requireNamespace' call not declared from: ‘BiocParallel’
+There are ::: calls to the package's namespace in its code. A package
+  almost never needs to use ::: for its own objects:
+  ‘getColorsFromP2Selection’ ‘papply’
+package 'methods' is used but not declared
+* checking S3 generic/method consistency ... WARNING
+min:
+  function(..., na.rm)
+min.max.scale:
+  function(x)
+
+subset:
+  function(x, ...)
+subset.signature.to.data:
+  function(data, signature, raise.warning)
+
+t:
+  function(x)
+t.p2c.view.pathways:
+  function(pathways, p2, goenv, batch, n.genes, two.sided, n.pc,
+           colcols, zlim, labRow, vhc, cexCol, cexRow, nstarts,
+           row.order, show.Colv, plot, trim, showPC, ...)
+
+See section ‘Generic functions and methods’ in the ‘Writing R
+Extensions’ manual.
+
+Found the following apparent S3 methods exported but not registered:
+  t.p2c.view.pathways
+See section ‘Registering S3 methods’ in the ‘Writing R Extensions’
+manual.
+* checking replacement functions ... OK
+* checking foreign function calls ... OK
+* checking R code for possible problems ... NOTE
+Pagoda2: no visible global function definition for ‘new’
+areColors : <anonymous>: no visible global function definition for
+  ‘col2rgb’
+calculate.go.enrichment: no visible binding for global variable
+  ‘go.env’
+calculate.go.enrichment: no visible global function definition for
+  ‘na.omit’
+calculate.go.enrichment: no visible global function definition for
+  ‘phyper’
+calculate.go.enrichment: no visible global function definition for
+  ‘qnorm’
+calculate.go.enrichment : <anonymous>: no visible global function
+  definition for ‘na.omit’
+cldend2array: no visible global function definition for ‘dendrapply’
+cldend2array : getcellbin: no visible global function definition for
+  ‘is.leaf’
+col2hex : <anonymous>: no visible global function definition for
+  ‘col2rgb’
+collapse.aspect.clusters : <anonymous>: no visible binding for global
+  variable ‘var’
+collapse.aspect.clusters : <anonymous>: no visible global function
+  definition for ‘cor’
+collapse.aspect.clusters : <anonymous>: no visible global function
+  definition for ‘var’
+collapse.aspect.clusters : <anonymous>: no visible global function
+  definition for ‘rnorm’
+collapse.aspect.clusters : <anonymous>: no visible binding for global
+  variable ‘sd’
+embedKnnGraphUmap: no visible global function definition for ‘as’
+embedKnnGraphUmap: no visible global function definition for ‘setNames’
+factorToP2selection: no visible global function definition for
+  ‘rainbow’
+gene.vs.molecule.cell.filter: no visible global function definition for
+  ‘par’
+gene.vs.molecule.cell.filter: no visible global function definition for
+  ‘hist’
+gene.vs.molecule.cell.filter: no visible global function definition for
+  ‘abline’
+gene.vs.molecule.cell.filter: no visible global function definition for
+  ‘adjustcolor’
+gene.vs.molecule.cell.filter: no visible global function definition for
+  ‘predict’
+gene.vs.molecule.cell.filter: no visible global function definition for
+  ‘polygon’
+gene.vs.molecule.cell.filter: no visible global function definition for
+  ‘points’
+get.control.geneset: no visible binding for global variable ‘vals’
+make.p2.app: no visible global function definition for
+  ‘colorRampPalette’
+make.p2.app: no visible global function definition for ‘rainbow’
+multi2dend: no visible global function definition for ‘cor’
+multi2dend: no visible global function definition for ‘as.dendrogram’
+multi2dend: no visible global function definition for ‘hclust’
+multi2dend: no visible global function definition for ‘as.dist’
+multi2dend : addinfo: no visible global function definition for
+  ‘is.leaf’
+multi2dend: no visible global function definition for ‘dendrapply’
+my.heatmap2: no visible binding for global variable ‘dist’
+my.heatmap2: no visible binding for global variable ‘hclust’
+my.heatmap2 : <anonymous>: no visible global function definition for
+  ‘reorder’
+my.heatmap2: no visible global function definition for ‘as.dendrogram’
+my.heatmap2: no visible global function definition for
+  ‘order.dendrogram’
+my.heatmap2: no visible binding for global variable ‘sd’
+my.heatmap2: no visible global function definition for ‘dev.size’
+my.heatmap2: no visible global function definition for ‘lcm’
+my.heatmap2: no visible global function definition for ‘par’
+my.heatmap2: no visible global function definition for ‘layout’
+my.heatmap2: no visible global function definition for ‘axis’
+my.heatmap2: no visible global function definition for ‘mtext’
+my.heatmap2: no visible global function definition for ‘abline’
+p2.generate.go : <anonymous>: no visible global function definition for
+  ‘na.omit’
+p2.generate.go.web : <anonymous>: no visible global function definition
+  for ‘na.omit’
+p2.make.pagoda1.app: no visible global function definition for ‘cor’
+p2.make.pagoda1.app: no visible global function definition for ‘hclust’
+p2.make.pagoda1.app: no visible global function definition for
+  ‘as.dist’
+p2.make.pagoda1.app : <anonymous>: no visible global function
+  definition for ‘as.dist’
+p2.make.pagoda1.app : <anonymous>: no visible global function
+  definition for ‘cor’
+p2.make.pagoda1.app: no visible global function definition for
+  ‘quantile’
+p2.make.pagoda1.app: no visible global function definition for ‘dist’
+p2.make.pagoda1.app: no visible global function definition for
+  ‘colorRampPalette’
+p2.make.pagoda1.app: no visible global function definition for
+  ‘installed.packages’
+p2.metadata.from.factor: no visible global function definition for
+  ‘rainbow’
+p2ViewPagodaApp: no visible global function definition for ‘new’
+pagoda.reduce.loading.redundancy: no visible global function definition
+  for ‘cor’
+pagoda.reduce.loading.redundancy: no visible global function definition
+  for ‘as.dist’
+pagoda.reduce.loading.redundancy: no visible global function definition
+  for ‘installed.packages’
+pagoda.reduce.loading.redundancy: no visible global function definition
+  for ‘cutree’
+pagoda.reduce.loading.redundancy: no visible global function definition
+  for ‘colors’
+pagoda.reduce.loading.redundancy: no visible global function definition
+  for ‘view.aspects’
+pagoda.reduce.redundancy: no visible global function definition for
+  ‘cor’
+pagoda.reduce.redundancy: no visible global function definition for
+  ‘installed.packages’
+pagoda.reduce.redundancy: no visible global function definition for
+  ‘cutree’
+pagoda.reduce.redundancy: no visible global function definition for
+  ‘colors’
+pagoda.reduce.redundancy: no visible global function definition for
+  ‘view.aspects’
+pagoda.reduce.redundancy: no visible binding for global variable ‘var’
+pagoda2WebApp: no visible global function definition for ‘new’
+papply: no visible global function definition for ‘detectCores’
+pathway.pc.correlation.distance: no visible global function definition
+  for ‘pt’
+pathway.pc.correlation.distance: no visible global function definition
+  for ‘qt’
+plotEmbeddingColorByP2Selection: no visible global function definition
+  for ‘aggregate’
+plotEmbeddingColorByP2Selection: no visible binding for global variable
+  ‘X1’
+plotEmbeddingColorByP2Selection: no visible binding for global variable
+  ‘X2’
+plotEmbeddingColorByP2Selection: no visible binding for global variable
+  ‘selname’
+plotMulticlassified: no visible binding for global variable ‘lab’
+plotOneWithValues: no visible global function definition for ‘legend’
+read.10x.matrices : <anonymous>: no visible global function definition
+  for ‘as’
+read.10x.matrices : <anonymous>: no visible global function definition
+  for ‘read.delim’
+score.cells.nb1 : <anonymous>: no visible global function definition
+  for ‘quantile’
+show.app: no visible global function definition for ‘browseURL’
+t.p2c.view.pathways : <anonymous>: no visible global function
+  definition for ‘cor’
+t.p2c.view.pathways: no visible global function definition for
+  ‘as.dist’
+t.p2c.view.pathways: no visible global function definition for ‘cor’
+t.p2c.view.pathways: no visible global function definition for
+  ‘installed.packages’
+t.p2c.view.pathways: no visible global function definition for
+  ‘quantile’
+t.p2c.view.pathways: no visible global function definition for
+  ‘colorRampPalette’
+t.p2c.view.pathways: no visible global function definition for
+  ‘as.dendrogram’
+val2col: no visible global function definition for ‘colorRampPalette’
+val2col: no visible global function definition for ‘quantile’
+val2col: no visible global function definition for ‘na.omit’
+Undefined global functions or variables:
+  X1 X2 abline adjustcolor aggregate as as.dendrogram as.dist axis
+  browseURL col2rgb colorRampPalette colors cor cutree dendrapply
+  detectCores dev.size dist go.env hclust hist installed.packages
+  is.leaf lab layout lcm legend mtext na.omit new order.dendrogram par
+  phyper points polygon predict pt qnorm qt quantile rainbow read.delim
+  reorder rnorm sd selname setNames vals var view.aspects
+Consider adding
+  importFrom("grDevices", "adjustcolor", "col2rgb", "colorRampPalette",
+             "colors", "dev.size", "rainbow")
+  importFrom("graphics", "abline", "axis", "hist", "layout", "lcm",
+             "legend", "mtext", "par", "points", "polygon")
+  importFrom("methods", "as", "new")
+  importFrom("stats", "aggregate", "as.dendrogram", "as.dist", "cor",
+             "cutree", "dendrapply", "dist", "hclust", "is.leaf",
+             "na.omit", "order.dendrogram", "phyper", "predict", "pt",
+             "qnorm", "qt", "quantile", "reorder", "rnorm", "sd",
+             "setNames", "var")
+  importFrom("utils", "browseURL", "installed.packages", "read.delim")
+to your NAMESPACE file (and ensure that your DESCRIPTION Imports field
+contains 'methods').
+
+Found the following assignments to the global environment:
+File ‘pagoda2/R/helpers.R’:
+  assign("___scde.server", server, envir = globalenv())
+* checking Rd files ... NOTE
+prepare_Rd: Mode.Rd:12-14: Dropping empty section \value
+* checking Rd metadata ... OK
+* checking Rd line widths ... NOTE
+Rd file 'pagoda.reduce.redundancy.Rd':
+  \examples lines wider than 100 characters:
+     ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
+     ## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), max.adj.var = 5, n.cores = 1, plot = FALSE)
+     ## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, plot=FALSE, z.score=1.96)  # top aspects based on GO only
+     ## tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5 ... [TRUNCATED]
+
+These lines will be truncated in the PDF manual.
+* checking Rd cross-references ... OK
+* checking for missing documentation entries ... WARNING
+Undocumented S4 classes:
+  ‘p2ViewPagodaApp’ ‘pagoda2WebApp’
+All user-level objects in a package (including S4 classes and methods)
+should have documentation entries.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
+* checking for code/documentation mismatches ... OK
+* checking Rd \usage sections ... WARNING
+Undocumented arguments in documentation object 'getClusterLabelsFromSelection'
+  ‘multiClassCutoff’
+Documented arguments not in \usage in documentation object 'getClusterLabelsFromSelection':
+  ‘multiClasscutoff’
+
+Undocumented arguments in documentation object 'make.p2.app'
+  ‘dendrogramCellGroups’
+Documented arguments not in \usage in documentation object 'make.p2.app':
+  ‘dendrogramCelllGoups’
+
+Undocumented arguments in documentation object 'pagoda.reduce.redundancy'
+  ‘istance’
+
+Undocumented arguments in documentation object 'webP2proc'
+  ‘appmetadata’
+
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
+S3 methods shown with full name in documentation object 't.p2c.view.pathways':
+  ‘t.p2c.view.pathways’
+
+The \usage entries for S3 methods should use the \method markup and not
+their full name.
+See chapter ‘Writing R documentation files’ in the ‘Writing R
+Extensions’ manual.
+* checking Rd contents ... OK
+* checking for unstated dependencies in examples ... OK
+* checking line endings in C/C++/Fortran sources/headers ... OK
+* checking line endings in Makefiles ... OK
+* checking compilation flags in Makevars ... OK
+* checking for GNU extensions in Makefiles ... OK
+* checking for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS) ... OK
+* checking use of PKG_*FLAGS in Makefiles ... OK
+* checking use of SHLIB_OPENMP_*FLAGS in Makefiles ... OK
+* checking pragmas in C/C++ headers and code ... OK
+* checking compilation flags used ... OK
+* checking compiled code ... WARNING
+File ‘pagoda2/libs/pagoda2.so’:
+  Found ‘___assert_rtn’, possibly from ‘assert’ (C)
+    Objects: ‘RcppExports.o’, ‘edgeweights.o’
+
+Compiled code should not call entry points which might terminate R nor
+write to stdout/stderr instead of to the console, nor use Fortran I/O
+nor system RNGs.
+
+See ‘Writing portable packages’ in the ‘Writing R Extensions’ manual.
+* checking files in ‘vignettes’ ... WARNING
+Files in the 'vignettes' directory but no files in 'inst/doc':
+  ‘pagoda2.walkthrough.Rmd’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-10-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-15-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-16-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-17-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-18-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-21-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-23-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-24-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-5-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-6-1.png’,
+    ‘pagoda2.walkthrough/figure-markdown_github/unnamed-chunk-7-1.png’
+* checking examples ... OK
+* checking examples with --run-donttest ... OK
+* checking for unstated dependencies in ‘tests’ ... WARNING
+'::' or ':::' import not declared from: ‘testthat’
+* checking tests ... OK
+  Running ‘testthat.R’
+* checking for unstated dependencies in vignettes ... OK
+* checking package vignettes in ‘inst/doc’ ... WARNING
+dir.exists(dir) is not TRUE
+Package vignette without corresponding single PDF/HTML:
+   ‘pagoda2.walkthrough.Rmd’
+
+* checking re-building of vignette outputs ...

@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>R: Single Cell Analysis and Differential Expression</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body>
+<h1> Single Cell Analysis and Differential Expression
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]" />
+</h1>
+<hr/>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]" /></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]" /></a>
+</div><h2>Documentation for package &lsquo;pagoda2&rsquo; version 0.1.5</h2>
+
+<ul><li><a href="../DESCRIPTION">DESCRIPTION file</a>.</li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<table width="100%">
+<tr><td style="width: 25%;"><a href="armaCor.html">armaCor</a></td>
+<td>armaCor - matrix column correlations. Allows faster matrix correlations with armadillo. Similar to cor() call, will calculate correlation between matrix columns</td></tr>
+<tr><td style="width: 25%;"><a href="basicP2proc.html">basicP2proc</a></td>
+<td>Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction, make knn graph, identify clusters with infomap, multilevel and walktrap and make largeVis and tSNE embeddings.</td></tr>
+<tr><td style="width: 25%;"><a href="basicP2web.html">basicP2web</a></td>
+<td>Generate a pagoda2 web application from a pagoda2 object</td></tr>
+<tr><td style="width: 25%;"><a href="buildWijMatrix.html">buildWijMatrix</a></td>
+<td>Rescale the weights in an edge matrix to match a given perplexity. From largeVis, &lt;https://github.com/elbamos/largeVis&gt;</td></tr>
+<tr><td style="width: 25%;"><a href="calcMulticlassified.html">calcMulticlassified</a></td>
+<td>Returns a list vector with the number of cells that are present in more than one selections in the provided p2 selection object</td></tr>
+<tr><td style="width: 25%;"><a href="cellsPerSelectionGroup.html">cellsPerSelectionGroup</a></td>
+<td>Get the number of cells in each selection group</td></tr>
+<tr><td style="width: 25%;"><a href="collapse.aspect.clusters.html">collapse.aspect.clusters</a></td>
+<td>Collapse aspect clusters</td></tr>
+<tr><td style="width: 25%;"><a href="compareClusterings.html">compareClusterings</a></td>
+<td>Compare two different clusterings provided as factors by plotting a normalised heatmap</td></tr>
+<tr><td style="width: 25%;"><a href="extendedP2proc.html">extendedP2proc</a></td>
+<td>Perform extended pagoda2 processing.  Generate organism specific GO environment and calculate pathway overdispersion.</td></tr>
+<tr><td style="width: 25%;"><a href="factorFromP2Selection.html">factorFromP2Selection</a></td>
+<td>Returns a factor of cell membership from a p2 selection object the factor only includes cells present in the selection. If the selection contains multiclassified cells an error is raised</td></tr>
+<tr><td style="width: 25%;"><a href="factorListToMetadata.html">factorListToMetadata</a></td>
+<td>Converts a list of factors into pagoda2 metadata optionally filtering down to the cells present in the provided pagoda2 app.</td></tr>
+<tr><td style="width: 25%;"><a href="factorToP2selection.html">factorToP2selection</a></td>
+<td>Converts a names factor to a p2 selection object if colors are provided it assigns those, otherwise uses a rainbow palette</td></tr>
+<tr><td style="width: 25%;"><a href="gene.vs.molecule.cell.filter.html">gene.vs.molecule.cell.filter</a></td>
+<td>Filter cells based on gene/molecule dependency</td></tr>
+<tr><td style="width: 25%;"><a href="generateClassificationAnnotation.html">generateClassificationAnnotation</a></td>
+<td>Given a cell clustering (partitioning) and a set of user provided selections generate a cleaned up annotation of cluster groups that can be used for classification</td></tr>
+<tr><td style="width: 25%;"><a href="get.control.geneset.html">get.control.geneset</a></td>
+<td>Get a control geneset for cell scoring using the method described in Puram, Bernstein (Cell, 2018)</td></tr>
+<tr><td style="width: 25%;"><a href="get.de.geneset.html">get.de.geneset</a></td>
+<td>Generate differential expression genesets for the web app given a cell grouping by calculating DE sets between each cell set and everything else</td></tr>
+<tr><td style="width: 25%;"><a href="getCellsInSelections.html">getCellsInSelections</a></td>
+<td>Returns all the cells that are in the designated selections. Given a pagoda2 selections object and the names of some selections in it returns the names of the cells that are in these selections removed any duplicates</td></tr>
+<tr><td style="width: 25%;"><a href="getClusterLabelsFromSelection.html">getClusterLabelsFromSelection</a></td>
+<td>Assign names to the clusters, given a clustering vector and a set of selections. This function will use a set of pagoda2 cell seletcion to identify the clusters in a a named factor. It is meant to be used to import user defined annotations that are defined as selections into a more formal categorization of cells that are defined by cluster. To help with this the function allows a percent of cells to have been classified in the selections into multiple groups, something which may be the result of the users making wrong selections. The percent of cells allows to be multiselected in any given group is defined by multiClassCutoff. Furthermore the method will assign each cluster to a selection only if the most popular cluster to the next most popular exceed the ambiguous.ratio in terms of cell numbers. If a cluster does not satisfy this condtiion it is not assigned.</td></tr>
+<tr><td style="width: 25%;"><a href="getColorsFromP2Selection.html">getColorsFromP2Selection</a></td>
+<td>Retrieves the colors of each selection from a p2 selection object as a names vector of strings</td></tr>
+<tr><td style="width: 25%;"><a href="getIntExtNamesP2Selection.html">getIntExtNamesP2Selection</a></td>
+<td>Get a mapping form internal to external names for the specified selection object</td></tr>
+<tr><td style="width: 25%;"><a href="hierDiffToGenesets.html">hierDiffToGenesets</a></td>
+<td>Converts the output of hierarchical differential expression aspects into genesets that can be loaded into a pagoda2 web app to retrive the genes that make the geneset interactively</td></tr>
+<tr><td style="width: 25%;"><a href="make.p2.app.html">make.p2.app</a></td>
+<td>Generate a Rook Server app from a pagoda2 object.  This generates a pagoda2 web object from a pagoda2 object by automating steps that most users will want to run. This function is a wrapper about the pagoda2 web constructor.  (Advanced users may wish to use that constructor directly.)</td></tr>
+<tr><td style="width: 25%;"><a href="min.max.scale.html">min.max.scale</a></td>
+<td>Scale the designated values between the range of 0 and 1</td></tr>
+<tr><td style="width: 25%;"><a href="namedNames.html">namedNames</a></td>
+<td>Get a vector of the names of an object named by the names themselves. This is useful with lapply when passing names of objects as it ensures that the output list is also named.</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.dr.go.html">p2.generate.dr.go</a></td>
+<td>Generate a GO environment for human for overdispersion analysis for the the back end</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.dr.go.web.html">p2.generate.dr.go.web</a></td>
+<td>Generates zebrafish (Danio rerio) GO annotation for the web object</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.go.html">p2.generate.go</a></td>
+<td>Generate a GO environment for the organism specified</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.go.web.html">p2.generate.go.web</a></td>
+<td>Generates GO annotation for the web object for any species</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.go.web.fromGOEnv.html">p2.generate.go.web.fromGOEnv</a></td>
+<td>Generates GO annotation for the web object from the GO environment used for enrichment analysis</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.human.go.html">p2.generate.human.go</a></td>
+<td>Generate a GO environment for human for overdispersion analysis for the the back end</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.human.go.web.html">p2.generate.human.go.web</a></td>
+<td>Generates human GO annotation for the web object</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.mouse.go.html">p2.generate.mouse.go</a></td>
+<td>Generate a GO environment for mouse for overdispersion analysis for the the back end</td></tr>
+<tr><td style="width: 25%;"><a href="p2.generate.mouse.go.web.html">p2.generate.mouse.go.web</a></td>
+<td>Generates mouse (Mus musculus) GO annotation for the web object</td></tr>
+<tr><td style="width: 25%;"><a href="p2.make.pagoda1.app.html">p2.make.pagoda1.app</a></td>
+<td>Create pagoda1 web application from pagoda2 object Pagoda1 found here: &lt;https://www.bioconductor.org/packages/release/bioc/html/scde.html&gt;</td></tr>
+<tr><td style="width: 25%;"><a href="p2.metadata.from.factor.html">p2.metadata.from.factor</a></td>
+<td>Generate a list metadata structure that can be passed to a pagoda2 web object constructor as additional metadata given a named factor</td></tr>
+<tr><td style="width: 25%;"><a href="p2.toweb.hdea.html">p2.toweb.hdea</a></td>
+<td>Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression</td></tr>
+<tr><td style="width: 25%;"><a href="pagoda.reduce.loading.redundancy.html">pagoda.reduce.loading.redundancy</a></td>
+<td>Collapse aspects driven by the same combinations of genes. Examines PC loading vectors underlying the identified aspects and clusters aspects based on a product of loading and score correlation (raised to corr.power). Clusters of aspects driven by the same genes are determined based on the distance.threshold and collapsed.</td></tr>
+<tr><td style="width: 25%;"><a href="pagoda.reduce.redundancy.html">pagoda.reduce.redundancy</a></td>
+<td>Collapse aspects driven by similar patterns (i.e. separate the same sets of cells) Examines PC loading vectors underlying the identified aspects and clusters aspects based on score correlation. Clusters of aspects driven by the same patterns are determined based on the distance.threshold.</td></tr>
+<tr><td style="width: 25%;"><a href="Pagoda2-class.html">Pagoda2</a></td>
+<td>A Reference Class, which holds and process single cell RNA-seq data.</td></tr>
+<tr><td style="width: 25%;"><a href="Pagoda2-class.html">Pagoda2-class</a></td>
+<td>A Reference Class, which holds and process single cell RNA-seq data.</td></tr>
+<tr><td style="width: 25%;"><a href="pathway.pc.correlation.distance.html">pathway.pc.correlation.distance</a></td>
+<td>Calculate correlation distance between PC magnitudes given a number of target dimensions</td></tr>
+<tr><td style="width: 25%;"><a href="plotEmbeddingColorByP2Selection.html">plotEmbeddingColorByP2Selection</a></td>
+<td>Plots the specified pagoda2 embedding according to the specified selection object</td></tr>
+<tr><td style="width: 25%;"><a href="plotMulticlassified.html">plotMulticlassified</a></td>
+<td>Plot multiclassified cells per selection as a percent barplot</td></tr>
+<tr><td style="width: 25%;"><a href="plotOneWithValues.html">plotOneWithValues</a></td>
+<td>Plot the embedding of a pagoda2 object with the given values</td></tr>
+<tr><td style="width: 25%;"><a href="plotSelectionOverlaps.html">plotSelectionOverlaps</a></td>
+<td>Get a dataframe and plot summarising overlaps between selection of a pagoda2 selection object ignore self overlaps</td></tr>
+<tr><td style="width: 25%;"><a href="projectKNNs.html">projectKNNs</a></td>
+<td>Project a distance matrix into a lower-dimensional space. (from elbamos/largeVis)</td></tr>
+<tr><td style="width: 25%;"><a href="read.10x.matrices.html">read.10x.matrices</a></td>
+<td>Quick loading of 10X CellRanger count matrices</td></tr>
+<tr><td style="width: 25%;"><a href="readPagoda2SelectionAsFactor.html">readPagoda2SelectionAsFactor</a></td>
+<td>Read a pagoda2 cell selection file and return it as a factor while removing any mutliclassified cells</td></tr>
+<tr><td style="width: 25%;"><a href="readPagoda2SelectionFile.html">readPagoda2SelectionFile</a></td>
+<td>Reads a pagoda2 web app exported cell selection file exported as a list of list objects that contain the name of the selection, the color (as a hex string) and the identifiers of the individual cells</td></tr>
+<tr><td style="width: 25%;"><a href="removeSelectionOverlaps.html">removeSelectionOverlaps</a></td>
+<td>Remove cells that are present in more than one selection from all the selections they are in</td></tr>
+<tr><td style="width: 25%;"><a href="score.cells.nb0.html">score.cells.nb0</a></td>
+<td>Score cells by getting mean expression of genes in signatures</td></tr>
+<tr><td style="width: 25%;"><a href="score.cells.puram.html">score.cells.puram</a></td>
+<td>Puram, Bernstein (Cell, 2018) Score cells as described in Puram, Bernstein (Cell, 2018)</td></tr>
+<tr><td style="width: 25%;"><a href="sgdBatches.html">sgdBatches</a></td>
+<td>Calculate the default number of batches for a given number of vertices and edges. The formula used is the one used by the 'LargeVis' reference implementation.  This is substantially less than the recommendation E * 10000 in the original paper.</td></tr>
+<tr><td style="width: 25%;"><a href="show.app.html">show.app</a></td>
+<td>Directly open the pagoda2 web application and view the 'p2web' application object from our R session</td></tr>
+<tr><td style="width: 25%;"><a href="subset.signature.to.data.html">subset.signature.to.data</a></td>
+<td>Subset a gene signature to the genes in the given matrix with optional warning if genes are missing</td></tr>
+<tr><td style="width: 25%;"><a href="t.p2c.view.pathways.html">t.p2c.view.pathways</a></td>
+<td>View pathway or gene-weighted PCA Pagoda2 version of the function pagoda.show.pathways() Takes in a list of pathways (or a list of genes), runs weighted PCA, optionally showing the result.</td></tr>
+<tr><td style="width: 25%;"><a href="validateSelectionsObject.html">validateSelectionsObject</a></td>
+<td>Validates a pagoda2 selection object</td></tr>
+<tr><td style="width: 25%;"><a href="webP2proc.html">webP2proc</a></td>
+<td>Generate a pagoda2 web object</td></tr>
+<tr><td style="width: 25%;"><a href="winsorize.matrix.html">winsorize.matrix</a></td>
+<td>Sets the ncol(mat)*trim top outliers in each row to the next lowest value same for the lowest outliers</td></tr>
+<tr><td style="width: 25%;"><a href="writeGenesAsPagoda2Selection.html">writeGenesAsPagoda2Selection</a></td>
+<td>Writes a list of genes as a gene selection that can be loaded in the web interface</td></tr>
+<tr><td style="width: 25%;"><a href="writePagoda2SelectionFile.html">writePagoda2SelectionFile</a></td>
+<td>Writes a pagoda2 selection object as a p2 selection file that be be loaded to the web interface</td></tr>
+</table>
+</body></html>

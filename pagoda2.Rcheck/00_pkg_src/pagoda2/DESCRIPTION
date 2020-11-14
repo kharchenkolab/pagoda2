@@ -1,0 +1,26 @@
+Package: pagoda2
+Title: Single Cell Analysis and Differential Expression
+Version: 0.1.5
+Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
+Description: Analyzing and interactively exploring large single-cell RNA-seq datasets. Pagoda2 primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. The package also serves as the primary method for pre-processing data for Conos, <https://github.com/kharchenkolab/conos>
+Depends: R (>= 3.2.1), Matrix, igraph
+License: GPL-3
+Copyright: See the file COPYRIGHTS for various pagoda2 copyright
+        details
+Encoding: UTF-8
+LazyData: true
+biocViews:
+Imports: base64enc, dendsort, fastcluster, igraph, irlba, magrittr,
+        MASS, Matrix, mgcv, N2R, parallel, plyr, Rcpp, rjson, RMTstat,
+        Rook, Rtsne, sccore (>= 0.1.1), stats, urltools, utils
+Suggests: AnnotationDbi, BiocGenerics, colorRamps, dbscan, ggplot2,
+        GO.db, KernSmooth, knitr, org.Dr.eg.db, org.Hs.eg.db,
+        org.Mm.eg.db, pcaMethods, pheatmap, rgl, rmarkdown, robustbase,
+        uwot
+VignetteBuilder: knitr
+RoxygenNote: 7.1.1
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
+NeedsCompilation: yes
+Author: Peter Kharchenko [aut], Nikolas Barkas [aut], Viktor Petukhov [aut], Evan Biederstedt [cre, aut]
+Maintainer: Evan Biederstedt <evan.biederstedt@gmail.com>
+Packaged: 2020-11-13 23:16:24 UTC; evanbiederstedt

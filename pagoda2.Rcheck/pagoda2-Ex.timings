@@ -1,0 +1,6 @@
+name	user	system	elapsed
+pagoda.reduce.loading.redundancy	0.000	0.000	0.001	
+pagoda.reduce.redundancy	0	0	0	
+projectKNNs	0	0	0	
+sgdBatches	0.051	0.006	0.059	
+winsorize.matrix	0.001	0.001	0.001	

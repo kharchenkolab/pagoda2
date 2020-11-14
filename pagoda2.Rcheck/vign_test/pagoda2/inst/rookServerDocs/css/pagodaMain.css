@@ -1,0 +1,30 @@
+/*
+ * Filename: pagodaMain.css
+ * Authors: Nikolas Barkas
+ * Description: Pagoda application stylesheet
+ */
+
+
+/* Embedding Tool Rules */
+
+#embedding-draw {
+    display: block;
+    width: auto;
+    height: auto;
+    background: white;
+    /*border: 2px dotted red; // DEBUG*/
+    overflow: hidden;
+}
+
+#embedding-tools {
+    display: block;
+    width: 100%;
+    height: 50px;
+    background: SlateGrey;
+    padding: 10px;
+}
+
+#embedding-outer {
+    overflow: hidden;
+}
+
