@@ -2,7 +2,7 @@
 #' @import rjson
 NULL
 
-#' Internal function to visualize aspects of transcriptional heterogeneity as a heatmap. Used by \code{\link{pagoda.view.aspects}}.
+#' Internal function to visualize aspects of transcriptional heterogeneity as a heatmap.
 #'
 #' @param mat Numeric matrix
 #' @param row.clustering Row dendrogram (default=NA)
@@ -305,7 +305,7 @@ p2ViewPagodaApp <- setRefClass(
 
       getgenecldata = function(genes = NULL, gcl = NULL, ltrim = 0) { # helper function to get the heatmap data for a given set of genes
         if(is.null(gcl)) {
-          gcl <- t.p2c.view.pathways(genes,results$p2,goenv=goenv,vhc=results$hvc,plot=FALSE,trim=ltrim,n.genes=Inf)
+          gcl <- tp2c.view.pathways(genes,results$p2,goenv=goenv,vhc=results$hvc,plot=FALSE,trim=ltrim,n.genes=Inf)
           #gcl <- t.view.pathways(genes, mat = mat, matw = matw, env = goenv, vhc = results$hvc, plot = FALSE, trim = ltrim)
         }
 
@@ -602,7 +602,7 @@ p2ViewPagodaApp <- setRefClass(
 
                      n.pcs <- as.integer(gsub("^#PC(\\d+)# .*", "\\1", pws))
                      n.pcs[is.na(n.pcs)]<-1
-                     x <- t.p2c.view.pathways(gsub("^#PC\\d+# ", "", pws), results$p2, goenv = goenv, n.pc = n.pcs, n.genes = ngenes, two.sided = twosided, vhc = results$hvc, plot = FALSE, trim = ltrim, batch = batch)
+                     x <- tp2c.view.pathways(gsub("^#PC\\d+# ", "", pws), results$p2, goenv = goenv, n.pc = n.pcs, n.genes = ngenes, two.sided = twosided, vhc = results$hvc, plot = FALSE, trim = ltrim, batch = batch)
                      ol <- getgenecldata(genes = NULL, gcl = x, ltrim = ltrim)
                      s <- toJSON(ol)
 
@@ -847,8 +847,8 @@ p2ViewPagodaApp <- setRefClass(
 #' @param showPC boolean (default=TRUE)
 #' @param ... parameters to pass to my.heatmap2. Only if plot is TRUE.
 #' @return cell scores along the first principal component of shown genes (returned as invisible)
-#' @export 
-t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), 
+#' @export tp2c.view.pathways
+tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), 
   colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, 
   plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
   # are these genes or pathways being passed?

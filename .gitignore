@@ -1,12 +1,2 @@
-inst/lib
-.Rproj.user
-src/*.o
-src/*.a
-src/*.so
-src/*.dll
-src/symbols.rds
-.Rhistory
-.RData
-.DS_Store
 doc
 Meta

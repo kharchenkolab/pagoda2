@@ -32,10 +32,10 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   names(clf) <- names(membership(cl))
   clf.size <- unlist(tapply(clf,factor(clf,levels=seq(1,max(clf))),length))
   rowFac <- rep(NA, nrow(counts));
-  rowFac[match(names(clf),rownames(counts))] <- clf;
-  lvec <- colSumByFac(counts,rowFac)[-1,,drop=FALSE];
+  rowFac[match(names(clf),rownames(counts))] <- clf
+  lvec <- colSumByFac(counts,rowFac)[-1,,drop=FALSE]
   if(dist=='JS') {
-    lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))));
+    lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))))
   } else { # use correlation distance in log10 space
     lvec.dist <- 1-cor(t(log10(lvec/pmax(1,Matrix::rowSums(lvec))+1)))
   }
@@ -45,15 +45,15 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
     v <- as.integer(mget("index",envir=env,ifnotfound=0)[[1]])+1;
     attr(l,'nodeId') <- v
     assign("index",v,envir=env)
-    attr(l,'nCells') <- sum(clf.size[as.integer(unlist(l))]);
+    attr(l,'nCells') <- sum(clf.size[as.integer(unlist(l))])
     if(is.leaf(l)) {
-      attr(l,'cells') <- names(clf)[clf==attr(l,'label')];
+      attr(l,'cells') <- names(clf)[clf==attr(l,'label')]
     }
-    attr(l,'root') <- FALSE;
+    attr(l,'root') <- FALSE
     return(l);
   }
   d <- dendrapply(d,addinfo,env=environment())
-  attr(d,'root') <- TRUE;
+  attr(d,'root') <- TRUE
   return(d)
 }
 
@@ -140,7 +140,7 @@ val2col <- function(x, gradientPalette=NULL, zlim=NULL, gradient.range.quantile=
   }
 
   col <- gradientPalette[x*(length(gradientPalette)-1)+1]
-  names(col) <- nx;
+  names(col) <- nx
   return(col)
 }
 
@@ -192,6 +192,29 @@ show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
     # replace special characters
     name <- gsub("[^[:alnum:.]]", "_", name)
 
+    get.scde.server <- function(port,ip) {
+        if(exists("___scde.server", envir = globalenv())) {
+            server <- get("___scde.server", envir = globalenv())
+        } else {
+            server <- Rook::Rhttpd$new()
+            assign("___scde.server", server, envir = globalenv())
+            if(!missing(ip)) {
+                if(missing(port)) {
+                    server$start(listen = ip)
+                } else {
+                    server$start(listen = ip, port = port)
+                }
+            } else {
+                if(missing(port)) {
+                    server$start()
+                } else {
+                    server$start(port=port)
+                }
+            }
+        }
+        return(server)
+    }
+
     if(is.null(server)) {
         server <- get.scde.server(port=port, ip=ip)
     }
@@ -207,32 +230,6 @@ show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
     }
 
     return(invisible(server))
-}
-
-
-# get SCDE server from saved session
-#' @keywords internal
-get.scde.server <- function(port,ip) {
-    if(exists("___scde.server", envir = globalenv())) {
-        server <- get("___scde.server", envir = globalenv())
-    } else {
-        server <- Rook::Rhttpd$new()
-        assign("___scde.server", server, envir = globalenv())
-        if(!missing(ip)) {
-            if(missing(port)) {
-                server$start(listen = ip)
-            } else {
-                server$start(listen = ip, port = port)
-            }
-        } else {
-            if(missing(port)) {
-                server$start()
-            } else {
-                server$start(port=port)
-            }
-        }
-    }
-    return(server)
 }
 
 # BH P-value adjustment with a log option
@@ -255,7 +252,7 @@ bh.adjust <- function(x, log = FALSE) {
 # Returns enriched categories for a given gene list as compared with a given universe
 # returns a list with over and under fields containing list of over and underrepresented terms
 #' @keywords internal
-calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mingenes = 3, env = go.env, subset = NULL, list.genes = FALSE, over.only = FALSE) {
+calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mingenes = 3, env, subset = NULL, list.genes = FALSE, over.only = FALSE) {
     genelist <- unique(genelist)
     all.genes <- unique(ls(env))
     # determine sizes
@@ -424,7 +421,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
   df <- log10(df);
   df <- df[order(df$molecules,decreasing=FALSE),]
   if(plot) {
-    plot(df,col=adjustcolor(1,alpha=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
+    plot(df,col=adjustcolor(1,alpha.f=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
     abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
   }
   #abline(lm(genes ~ molecules, data=df),col=4)
@@ -433,7 +430,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
   suppressWarnings(pb <- data.frame(predict(m,interval='prediction',level = 1-p.level,type="response")))
   outliers <- rownames(df)[df$genes > pb$upr | df$genes < pb$lwr];
   if(plot) {
-    polygon(c(df$molecules,rev(df$molecules)),c(pb$lwr,rev(pb$upr)),col=adjustcolor(2,alpha=0.1),border = NA)
+    polygon(c(df$molecules,rev(df$molecules)),c(pb$lwr,rev(pb$upr)),col=adjustcolor(2,alpha.f=0.1),border = NA)
     points(df[outliers,],col=2,cex=0.6)
   }
   # set of filtered cells to move forward with

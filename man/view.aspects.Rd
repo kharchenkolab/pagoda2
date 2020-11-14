@@ -2,7 +2,7 @@
 % Please edit documentation in R/p1app4p2.R
 \name{view.aspects}
 \alias{view.aspects}
-\title{Internal function to visualize aspects of transcriptional heterogeneity as a heatmap. Used by \code{\link{pagoda.view.aspects}}.}
+\title{Internal function to visualize aspects of transcriptional heterogeneity as a heatmap.}
 \usage{
 view.aspects(
   mat,
@@ -42,6 +42,6 @@ view.aspects(
 A heatmap
 }
 \description{
-Internal function to visualize aspects of transcriptional heterogeneity as a heatmap. Used by \code{\link{pagoda.view.aspects}}.
+Internal function to visualize aspects of transcriptional heterogeneity as a heatmap.
 }
 \keyword{internal}

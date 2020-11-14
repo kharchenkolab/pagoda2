@@ -29,6 +29,8 @@ webP2proc(
 \item{go.env}{the GO environment used for the overdispersion analysis (default=NULL)}
 
 \item{make.gene.graph}{logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app}
+
+\item{appmetadata}{pagoda2 web application metadata (default=NULL)}
 }
 \value{
 a pagoda2 web application

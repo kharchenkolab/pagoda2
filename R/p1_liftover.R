@@ -159,7 +159,7 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #'
 #' @export 
 pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.method="complete", 
-  istance=NULL, weighted.correlation=TRUE, plot=FALSE, top=Inf, trim=0, abs=FALSE, ...) {
+  distance=NULL, weighted.correlation=TRUE, plot=FALSE, top=Inf, trim=0, abs=FALSE, ...) {
   if(is.null(distance)) {
     if(weighted.correlation) {
       #distance <- .Call("matWCorr", t(tamr$xv), t(tamr$xvw), PACKAGE = "pagoda2")

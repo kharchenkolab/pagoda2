@@ -1,7 +1,6 @@
 ---
 title: "Pagoda2 Walkthrough"
-output: 
-  rmarkdown::html_vignette:
+output: rmarkdown::html_vignette
     toc: true
 vignette: >
   %\VignetteIndexEntry{"Pagoda2 Walkthrough"}
@@ -269,13 +268,13 @@ p2web <-
 We can view this app directly from our R session
 
 ```{r}
-show.app(app=p2web, name='app')
+# show.app(app=p2web, name='app')
 ```
 
 This app will now be viewable as long as our R session is running. However we also have the option to serialize this app into a binary file on our hard drive that will allow us to view it after we close the R session directly from our browser. This takes about a minute to generate.
 
 ```{r}
-p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
+# p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
 ```
 
 You can view the offline app by pointing your browser to http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/index.html
@@ -284,7 +283,7 @@ The file can also be shared by uploading it to a web server and be viewed remote
 
 Finally don't forget to save your pagoda2 object (serializing is not a substitute for saving)
 ```{r}
-saveRDS(r, 'pagoda2object.rds')
+# saveRDS(r, 'pagoda2object.rds')
 ```
 
 # Quick Analysis

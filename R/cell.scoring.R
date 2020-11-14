@@ -15,9 +15,9 @@ get.control.geneset <- function(data, signature, n.bins=25, n.genes.per.bin=100)
     ## n.genes.per.bin <- 20
     ## DEVEL END
     ## Filter the signature
-    signature <- subset.signature.to.data(data, signature)
+    signature <- subsetSignatureToData(data, signature)
     ## Get gene bins by expression
-    gene.mean.expr <- apply(vals, 2, mean)
+    gene.mean.expr <- apply(data, 2, mean)
     gene.bins <- factor(ceiling(seq_along(gene.mean.expr) / n.bins))
     names(gene.bins) <- names(sort(gene.mean.expr))
     ## Generate a background signature
@@ -50,7 +50,7 @@ score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ..
     ## signature <- zheng.treg.common.sign
     ##
     ## Filter the signature
-    signature <- subset.signature.to.data(data, signature)
+    signature <- subsetSignatureToData(data, signature)
     ## Calculate cell scores
     cell.score <- apply(data[,signature], 1, mean)
     ret.vals <- cell.score
@@ -92,8 +92,8 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' @param signature character vector The gene signature from which to subset a character vector of genes 
 #' @param raise.warning boolean Warn if genes are missing (default=TRUE)
 #' @return The filtered subset of gene signatures
-#' @export subset.signature.to.data
-subset.signature.to.data <- function(data, signature, raise.warning=TRUE) {
+#' @export 
+subsetSignatureToData <- function(data, signature, raise.warning=TRUE) {
     keep.genes <- signature %in% colnames(data)
     ## Check if all genes found
     if (sum(keep.genes) != length(keep.genes) & raise.warning) {
@@ -117,7 +117,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
     #data <- vals
     #signature <- zheng.treg.common.sign
     ##
-    signature <- subset.signature.to.data(data, signature)
+    signature <- subsetSignatureToData(data, signature)
     ## Clip extreme values
     data.clip <- apply(data[,signature],2,function(x) {
         qs <- quantile(x, c(quantile.cutoff, 1- quantile.cutoff))
@@ -140,7 +140,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
 #' @return cell scores
 #' @export score.cells.nb0
 score.cells.nb0 <- function(data, signature) {
-    signature <- subset.signature.to.data(data,signature)
+    signature <- subsetSignatureToData(data,signature)
     scores <- apply(data,1,mean)
     return(scores)
 }
@@ -149,8 +149,8 @@ score.cells.nb0 <- function(data, signature) {
 #' 
 #' @param x values to scale
 #' @return the scaled values
-#' @export min.max.scale
-min.max.scale <- function(x) { 
+#' @export
+minMaxScale <- function(x) { 
     (x - min(x)) / (max(x) - min(x)) 
 }
 

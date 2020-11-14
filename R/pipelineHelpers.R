@@ -129,6 +129,7 @@ factorListToMetadata <- function(factor.list, p2=NULL) {
 #' @param make.de.sets boolean Whether differential expression sets should be made (default=TRUE)
 #' @param go.env the GO environment used for the overdispersion analysis (default=NULL)
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
+#' @param appmetadata pagoda2 web application metadata (default=NULL)
 #' @return a pagoda2 web application
 #' @export 
 webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
@@ -331,13 +332,14 @@ p2.metadata.from.factor <- function(metadata, displayname=NULL, s=1, v=1, start=
   invisible(ret)
 }
 
+
 #' Generate a Rook Server app from a pagoda2 object. 
 #' This generates a pagoda2 web object from a pagoda2 object by automating steps that most
 #' users will want to run. This function is a wrapper about the pagoda2 web constructor. 
 #' (Advanced users may wish to use that constructor directly.)
 #'
 #' @param r pagoda2 object
-#' @param dendrogramCellGoups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
+#' @param dendrogramCellGroups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added (default=list())
 #' @param geneSets a list of genesets to show
 #' @param show.depth boolean Include depth as a metadata row (default=TRUE)

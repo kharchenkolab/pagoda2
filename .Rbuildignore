@@ -1,3 +1,4 @@
+doc
 pagoda2.Rproj
 .travis.yml
 CHANGELOG.md
@@ -5,3 +6,5 @@ pagoda2*.tar.gz
 data-raw
 docker
 
+^doc$
+^Meta$
