@@ -377,8 +377,9 @@ Pagoda2 <- setRefClass(
         if(distance=='cosine') {
           #rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=T),sample(colnames(x),nrand,replace=T)),1,function(z) if(z[1]==z[2]) {return(NA); } else {1-cor(x[,z[1]],x[,z[2]])}))
           rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {1-sum(x[,z[1]]*x[,z[2]])/sqrt(sum(x[,z[1]]^2)*sum(x[,z[2]]^2))}))
-        } else if(distance=='JS') {
-          rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {jw.disR(x[,z[1]],x[,z[2]])}))
+        ## we no longer support 'JS'
+        ## } else if(distance=='JS') {
+        ##   rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {jw.disR(x[,z[1]],x[,z[2]])}))
         } else if(distance=='L2') {
           rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {sqrt(sum((x[,z[1]]-x[,z[2]])^2))}))
         } else if(distance=='L1') {

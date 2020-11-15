@@ -338,7 +338,7 @@ armaCor <- function(mat) {
 #' Return the mode of a vector
 #' 
 #' @param x the vector to return the mode of
-#' @return 
+#' @return the mode elements
 #' @keywords internal
 Mode <- function(x) {
   ux <- unique(x)

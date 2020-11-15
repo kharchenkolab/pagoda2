@@ -10,7 +10,7 @@ Mode(x)
 \item{x}{the vector to return the mode of}
 }
 \value{
-
+the mode elements
 }
 \description{
 Return the mode of a vector
