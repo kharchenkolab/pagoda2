@@ -23,7 +23,7 @@
 
 ## Web Demo of Application
 
-[10X PBMC Dataset](https://tinyurl.com/pagoda2demo)
+[10X PBMC Dataset](https://tinyurl.com/demopagoda2)
 
 
 ## Installation 
