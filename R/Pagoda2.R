@@ -319,6 +319,10 @@ Pagoda2 <- setRefClass(
     # make a Knn graph
     # note: for reproducibility, set.seed() and set n.cores=1
     makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL, var.scale=(type == "counts")) {
+      ## convert "euclidean" to "L2"
+      if (tolower(distance)=="euclidean"){
+        distance <- "L2"
+      }
       if(is.null(x)) {
         x.was.given <- FALSE;
         if(type=='counts') {
@@ -351,7 +355,7 @@ Pagoda2 <- setRefClass(
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
         xn <- N2R::Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
-      } else if(distance %in% c('L2','euclidean')) {
+      } else if(distance == "L2") {
         xn <- N2R::Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='L2')
       } else {
         stop("unknown distance measure specified. Currently supported: angular, L2")
@@ -491,7 +495,7 @@ Pagoda2 <- setRefClass(
             }
         }))
         d <- as.dist(1-cor(rx,method=dist))
-      } else if(dist=='euclidean') {
+      } else if (dist=='euclidean' || dist=="L2") {
         rx <- do.call(rbind,tapply(1:nrow(x),cl,function(ii) {
             if (legnth(ii) > 1) {
                 Matrix::colMeans(x[ii,])
