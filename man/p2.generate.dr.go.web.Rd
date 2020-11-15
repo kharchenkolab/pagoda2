@@ -14,3 +14,4 @@ p2.generate.dr.go.web(gene.names, n.cores = 1)
 \description{
 Generates zebrafish (Danio rerio) GO annotation for the web object
 }
+\keyword{internal}

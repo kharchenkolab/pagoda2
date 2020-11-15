@@ -14,3 +14,4 @@ p2.generate.human.go.web(gene.names, n.cores = 1)
 \description{
 Generates human GO annotation for the web object
 }
+\keyword{internal}

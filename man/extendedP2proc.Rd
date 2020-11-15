@@ -19,3 +19,10 @@ list of a pagoda2 object and go.env
 Perform extended pagoda2 processing. 
 Generate organism specific GO environment and calculate pathway overdispersion.
 }
+\examples{
+\donttest{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+p2 <- basicP2proc(cm)
+extendedP2proc(p2)
+}
+}

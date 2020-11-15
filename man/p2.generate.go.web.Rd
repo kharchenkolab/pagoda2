@@ -23,3 +23,4 @@ p2.generate.go.web(
 \description{
 Generates GO annotation for the web object for any species
 }
+\keyword{internal}

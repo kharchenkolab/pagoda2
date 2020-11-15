@@ -14,3 +14,4 @@ p2.generate.mouse.go.web(gene.names, n.cores = 1)
 \description{
 Generates mouse (Mus musculus) GO annotation for the web object
 }
+\keyword{internal}

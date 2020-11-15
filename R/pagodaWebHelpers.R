@@ -5,7 +5,7 @@ NULL
 #' 
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
-#' @export 
+#' @keywords internal
 p2.generate.human.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
     stop("Package \"org.Hs.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
@@ -19,7 +19,7 @@ p2.generate.human.go.web <- function(gene.names, n.cores = 1) {
 #' 
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
-#' @export 
+#' @keywords internal
 p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
     stop("Package \"org.Mm.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
@@ -33,7 +33,7 @@ p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
 #' 
 #' @param gene.names a character vector of genes to include
 #' @param n.cores numeric Number of cores to use (default=1)
-#' @export 
+#' @keywords internal
 p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Dr.eg.db", quietly = TRUE)) {
     stop("Package \"org.Dr.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
@@ -49,7 +49,7 @@ p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
 #' @param egALIAS2EG (default=NULL)
 #' @param egGO2ALLEGS (default=NULL)
 #' @param n.cores numeric Number of cores to use (default=1)
-#' @export 
+#' @keywords internal
 p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL, n.cores = 1) {
   if (!requireNamespace("GO.db", quietly = TRUE)) {
     stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
@@ -93,7 +93,7 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
 #' Generates GO annotation for the web object from the GO environment used for enrichment analysis
 #'
 #' @param go.env GO enviroment generated with p2.generate.go
-#' @export 
+#' @keywords internal
 p2.generate.go.web.fromGOEnv <- function(go.env){
   go.env <- as.list(go.env)
 

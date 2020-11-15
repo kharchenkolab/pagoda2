@@ -38,3 +38,10 @@ a pagoda2 web application
 \description{
 Generate a pagoda2 web object
 }
+\examples{
+\donttest{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+p2 <- basicP2proc(cm)
+webP2proc(p2)
+}
+}

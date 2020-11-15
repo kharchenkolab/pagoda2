@@ -2,7 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
-#define NDEBUG 1  // heavy attempt to squash error, 'Found ‘___assert_rtn’, possibly from ‘assert’ (C)'
+#define NDEBUG 1  // squash error, 'Found ‘___assert_rtn’, possibly from ‘assert’ (C)'
 #include <RcppEigen.h>
 #include <Rcpp.h>
 

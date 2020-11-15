@@ -63,3 +63,9 @@ Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
 make knn graph, identify clusters with infomap, multilevel and walktrap and make
 largeVis and tSNE embeddings.
 }
+\examples{
+\donttest{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+p2 <- basicP2proc(cm)
+}
+}

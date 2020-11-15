@@ -12,3 +12,4 @@ p2.generate.go.web.fromGOEnv(go.env)
 \description{
 Generates GO annotation for the web object from the GO environment used for enrichment analysis
 }
+\keyword{internal}
