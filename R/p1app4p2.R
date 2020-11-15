@@ -263,12 +263,28 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
 }
 
-# modified PAGODA1 app for browsing p2 results
+
+#' Modified PAGODA1 app (from scde) for browsing pagoda2 results
+#'
+#' @rdname p2ViewPagodaApp
+#' @field results result object returned by \code{scde.expression.difference()}. Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
+#' @field tam Combined pathways that are driven by the same gene sets
+#' @field genes List of genes to display in the Detailed clustering panel
+#' @field pathways character vector Pathway or gene names
+#' @field goenv environment mapping pathways to genes
+#' @field renv global environment 
+#' @field name app name (needs to be altered only if adding more than one app to the server using the 'server' parameter)
+#' @field trim Trim quantity used for Winsorization for visualization
+#' @field batch Any batch or other known confounders to be included in the visualization as a column color track
+#' @field embedding embedding information
+#' @field type Either 'counts' or a name of a 'reduction' in the pagoda2 object 
+#' @field veloinfo velocity information
 #' @exportClass p2ViewPagodaApp
 #' @export 
 p2ViewPagodaApp <- setRefClass(
     'p2ViewPagodaApp',
-    fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 'name', 'trim', 'batch','embedding','type','veloinfo'),
+    fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 
+      'name', 'trim', 'batch','embedding','type','veloinfo'),
     methods = list(
       initialize = function(results, ..., pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", trim = 1.1/nrow(p2$counts), embedding=NULL,type,veloinfo=NULL) {
         if (!requireNamespace("BiocGenerics", quietly = TRUE)) {

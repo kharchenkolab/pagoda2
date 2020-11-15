@@ -11,33 +11,33 @@ A Reference Class, which holds and process single cell RNA-seq data.
 \section{Fields}{
 
 \describe{
-\item{\code{counts}}{gene count matrix, normalized on total counts}
+\item{\code{counts}}{Gene count matrix, normalized on total counts}
 
-\item{\code{clusters}}{results of clustering}
+\item{\code{clusters}}{Results of clustering}
 
-\item{\code{graphs}}{graph representations of the dataset}
+\item{\code{graphs}}{Graph representations of the dataset}
 
-\item{\code{reductions}}{results of reductions, i.e. PCA}
+\item{\code{reductions}}{Results of reductions, e.g. PCA}
 
-\item{\code{embeddings}}{results of visualization algorithms, i.e. t-SNE or largeVis}
+\item{\code{embeddings}}{Results of visualization algorithms, t-SNE or largeVis}
 
-\item{\code{diffgenes}}{lists of differentially expressed genes}
+\item{\code{diffgenes}}{Lists of differentially expressed genes}
 
-\item{\code{pathways}}{pathway information}
+\item{\code{pathways}}{Pathway information}
 
-\item{\code{n.cores}}{number of cores, used for the analyses}
+\item{\code{n.cores}}{Number of cores, used for the analyses}
 
-\item{\code{misc}}{a list of miscelaneous structures}
+\item{\code{misc}}{List of miscelaneous structures}
 
-\item{\code{batch}}{batch factor for the dataset}
+\item{\code{batch}}{Batch factor for the dataset}
 
-\item{\code{modelType}}{plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)}
+\item{\code{modelType}}{Plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)}
 
-\item{\code{verbose}}{verbosity level}
+\item{\code{verbose}}{Verbosity level}
 
-\item{\code{depth}}{cell size factor}
+\item{\code{depth}}{Cell size factor}
 
-\item{\code{genegraphs}}{a slot to store graphical representations in gene space (i.e. gene kNN graphs)}
+\item{\code{genegraphs}}{Slot to store graphical representations in gene space (i.e. gene kNN graphs)}
 }}
 
 \section{Methods}{

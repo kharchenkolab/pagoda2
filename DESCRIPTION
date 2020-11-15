@@ -40,6 +40,7 @@ Suggests:
     BiocParallel,
     colorRamps, 
     dbscan, 
+    dplyr,
     ggplot2, 
     GO.db, 
     KernSmooth,
