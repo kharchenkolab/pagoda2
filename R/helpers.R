@@ -89,50 +89,6 @@ papply <- function(...,n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
 }
 
 
-#' Utility function to translate values into colors
-#'
-#' @param x input values
-#' @param gradientPalette gradient palette (default=NULL). If NULL, use colorRampPalette(c('gray90','red'), space = "Lab")(1024)
-#' @param zlim quantiles (default=NULL)
-#' @param gradient.range.quantile (default=0.95)
-#' 
-#' @keywords internal
-val2col <- function(x, gradientPalette=NULL, zlim=NULL, gradient.range.quantile=0.95) {
-  nx <- names(x);
-  if (all(sign(x)>=0)) {
-    if(is.null(gradientPalette)) {
-      gradientPalette <- colorRampPalette(c('gray90','red'), space = "Lab")(1024)
-    }
-    if (is.null(zlim)) {
-      zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile)))
-      if(diff(zlim)==0) {
-        zlim <- as.numeric(range(na.omit(x)))
-      }
-    }
-    x[x<zlim[1]] <- zlim[1]; x[x>zlim[2]] <- zlim[2];
-    x <- (x-zlim[1])/(zlim[2]-zlim[1])
-
-  } else {
-    if(is.null(gradientPalette)) {
-      gradientPalette <- colorRampPalette(c("blue", "grey90", "red"), space = "Lab")(1024)
-    }
-    if(is.null(zlim)) {
-      zlim <- c(-1,1)*as.numeric(quantile(na.omit(abs(x)),p=gradient.range.quantile))
-      if(diff(zlim)==0) {
-        zlim <- c(-1,1)*as.numeric(na.omit(max(abs(x))))
-      }
-    }
-    x[x<zlim[1]] <- zlim[1]; x[x>zlim[2]] <- zlim[2];
-    x <- (x-zlim[1])/(zlim[2]-zlim[1])
-
-  }
-
-  col <- gradientPalette[x*(length(gradientPalette)-1)+1]
-  names(col) <- nx
-  return(col)
-}
-
-
 #' Translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
 #' 
 #' @param d cell cluster dendrogram
