@@ -3,7 +3,7 @@
 //#ifdef _WIN32
 //#define ARMA_32BIT_WORD
 //#endif
-#define NDEBUG 1
+#define NDEBUG 1  // squash error, 'Found ‘___assert_rtn’, possibly from ‘assert’ (C)'
 #include <RcppArmadillo.h>
 #define NDEBUG 1
 #include <RcppEigen.h>

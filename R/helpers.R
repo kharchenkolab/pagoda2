@@ -88,18 +88,6 @@ papply <- function(...,n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
   lapply(...)
 }
 
-#' Jaro-Winkler distance
-#'
-#' @param x numeric vector first input
-#' @param y numeric vector second input
-#' 
-#' @keywords internal
-jw.disR <- function(x, y) {
-  x <- x+1/length(x)/1e3;
-  y <- y+1/length(y)/1e3;
-  a <- x*log(x)  + y*log(y) - (x+y)*log((x+y)/2);
-  sqrt(sum(a)/2)
-}
 
 #' Utility function to translate values into colors
 #'

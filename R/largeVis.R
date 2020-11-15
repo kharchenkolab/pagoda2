@@ -44,13 +44,13 @@ buildWijMatrix <- function(x, threads = NULL, perplexity = 50) {
 #' @param dim numeric The number of dimensions for the projection space (default=2)
 #' @param sgd_batches numeric The number of edges to process during SGD (default=NULL). Defaults to a value set based on the size of the dataset. If the parameter given is
 #' between \code{0} and \code{1}, the default value will be multiplied by the parameter.
-#' @param M numeric The number of negative edges to sample for each positive edge (default=5).
-#' @param gamma numeric The strength of the force pushing non-neighbor nodes apart (default=7).
-#' @param alpha numeric The hyperparameter in the distance function (default=1). The default distance function, \eqn{1 / (1 + \alpha \dot ||y_i - y_j||^2)}.  
+#' @param M numeric (largeVis) The number of negative edges to sample for each positive edge (default=5).
+#' @param gamma numeric (largeVis) The strength of the force pushing non-neighbor nodes apart (default=7).
+#' @param alpha numeric (largeVis) The hyperparameter in the distance function (default=1). The default distance function, \eqn{1 / (1 + \alpha \dot ||y_i - y_j||^2)}.  
 #' The function relates the distance between points in the low-dimensional projection to the likelihood that the two points are nearest neighbors. Increasing \eqn{\alpha} tends
 #' to push nodes and their neighbors closer together; decreasing \eqn{\alpha} produces a broader distribution. Setting \eqn{\alpha} to zero
 #' enables the alternative distance function. \eqn{\alpha} below zero is meaningless.
-#' @param rho numeric Initial learning rate (default=1)
+#' @param rho (largeVis) numeric Initial learning rate (default=1)
 #' @param coords An initialized coordinate matrix (default=NULL)
 #' @param useDegree boolean Whether to use vertex degree to determine weights in negative sampling (if TRUE) or the sum of the vertex's edges (if FALSE) (default=FALSE)
 #' @param momentum If not NULL, SGD with momentum is used, with this multiplier, which must be between 0 and 1 (default=NULL). Note that

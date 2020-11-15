@@ -20,6 +20,11 @@
 #' @param get.tsne boolean Whether to calculate tSNE embedding (default=TRUE) 
 #' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE) 
 #' @return a new pagoda2 object
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' p2 <- basicP2proc(cm)
+#' }
 #' @export 
 basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
   log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
@@ -62,6 +67,12 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, 
 #' @param p2 the pagoda 2 object 
 #' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
 #' @return list of a pagoda2 object and go.env
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' p2 <- basicP2proc(cm)
+#' extendedP2proc(p2)
+#' }
 #' @export 
 extendedP2proc <- function(p2, organism = 'hs') {
   if (organism == 'hs') {
@@ -131,6 +142,12 @@ factorListToMetadata <- function(factor.list, p2=NULL) {
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @param appmetadata pagoda2 web application metadata (default=NULL)
 #' @return a pagoda2 web application
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' p2 <- basicP2proc(cm)
+#' webP2proc(p2)
+#' }
 #' @export 
 webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
                       make.go.sets=TRUE, make.de.sets=TRUE, go.env=NULL,
@@ -182,6 +199,12 @@ webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
 #'     annotated at that GO term or to one of its child nodes in the GO ontology (default=NULL)
 #' @param eg.alias2eg mappings between common gene symbol identifiers and entrez gene identifiers (default=NULL)
 #' @param min.env.length numeric Minimum environment length (default=5)
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' p2 <- basicP2proc(cm)
+#' p2.generate.go(p2, organism='hs')
+#' }
 #' @export 
 p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, min.env.length=5) {
   if (is.null(organism) && (is.null(go2all.egs) || is.null(eg.alias2eg))) {
@@ -232,9 +255,15 @@ p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, 
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' 
-#' @param r a pagoda2 object
-#' @return a go environment object
-#' @export 
+#' @param r pagoda2 object
+#' @return a GO environment object
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' p2 <- basicP2proc(cm)
+#' p2.generate.dr.go(p2)
+#' }
+#' @export
 p2.generate.dr.go <- function(r) {
   p2.generate.go(r, "dr")
 }
@@ -242,8 +271,14 @@ p2.generate.dr.go <- function(r) {
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' 
-#' @param r a pagoda2 object
+#' @param r pagoda2 object
 #' @return a GO environment object
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' p2 <- basicP2proc(cm)
+#' p2.generate.human.go(p2)
+#' }
 #' @export
 p2.generate.human.go <- function(r) {
   p2.generate.go(r, "hs")
@@ -251,8 +286,14 @@ p2.generate.human.go <- function(r) {
 
 #' Generate a GO environment for mouse for overdispersion analysis for the the back end
 #' 
-#' @param r a pagoda2 object
+#' @param r pagoda2 object
 #' @return a GO environment object
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' p2 <- basicP2proc(cm)
+#' p2.generate.mouse.go(p2)
+#' }
 #' @export 
 p2.generate.mouse.go <- function(r) {
   p2.generate.go(r, "mm")

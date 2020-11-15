@@ -32,6 +32,9 @@ test_that("check basic qc of counts", {
 
 
 test_that("basic check of Pagoda2 class", {
+    cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    counts <- counts[rowSums(counts)>=10,]
     rownames(counts) <- make.unique(rownames(counts))
     r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
     expect_equal(dim(counts)[1], 2998)
