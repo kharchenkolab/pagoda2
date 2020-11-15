@@ -3,7 +3,9 @@
 //#ifdef _WIN32
 //#define ARMA_32BIT_WORD
 //#endif
+#define NDEBUG 1
 #include <RcppArmadillo.h>
+#define NDEBUG 1
 #include <RcppEigen.h>
 // copied from https://github.com/elbamos/largeVis
 #ifdef _OPENMP

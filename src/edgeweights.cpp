@@ -1,8 +1,10 @@
 //#define BOOST_DISABLE_ASSERTS
 
+
 // [[Rcpp::depends(RcppProgress)]]
-// [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::depends(RcppArmadillo)]]
+// [[Rcpp::depends(RcppEigen)]]
+
 
 #include "largeVis.h"
 #include <vector>
