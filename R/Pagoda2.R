@@ -14,20 +14,20 @@ NULL
 #' A Reference Class, which holds and process single cell RNA-seq data.
 #'
 #' @rdname Pagoda2
-#' @field counts Gene count matrix, normalized on total counts
-#' @field clusters Results of clustering
-#' @field graphs Graph representations of the dataset
-#' @field reductions Results of reductions, e.g. PCA
-#' @field embeddings Results of visualization algorithms, t-SNE or largeVis
-#' @field diffgenes Lists of differentially expressed genes
-#' @field pathways Pathway information
-#' @field n.cores Number of cores, used for the analyses
-#' @field misc List of miscelaneous structures
-#' @field batch Batch factor for the dataset
-#' @field modelType Plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)
-#' @field verbose Verbosity level
-#' @field depth Cell size factor
-#' @field genegraphs Slot to store graphical representations in gene space (i.e. gene kNN graphs)
+#' @field counts gene count matrix, normalized on total counts (and log-transformed if log.scale=T). The original count matrix is kept in $misc$rawCounts
+#' @field clusters results of clustering
+#' @field graphs graph representations of the dataset
+#' @field reductions results of reductions, i.e. PCA
+#' @field embeddings results of visualization algorithms, i.e. t-SNE, largeVis, UMAP
+#' @field diffgenes lists of differentially expressed genes
+#' @field pathways pathway information
+#' @field n.cores number of cores, used for the analyses
+#' @field misc a list of miscelaneous structures
+#' @field batch batch factor for the dataset
+#' @field modelType plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)
+#' @field verbose (logical) verbosity level (default:TRUE)
+#' @field depth cell size factors
+#' @field genegraphs a slot to store graphical representations in gene space (i.e. gene kNN graphs)
 #' @exportClass Pagoda2
 #' @export Pagoda2
 Pagoda2 <- setRefClass(
