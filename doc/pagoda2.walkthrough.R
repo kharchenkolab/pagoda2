@@ -156,13 +156,13 @@ p2web <-
   );
 
 ## -----------------------------------------------------------------------------
-show.app(app=p2web, name='app')
+# show.app(app=p2web, name='app')
 
 ## -----------------------------------------------------------------------------
-p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
+# p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
 
 ## -----------------------------------------------------------------------------
-saveRDS(r, 'pagoda2object.rds')
+# saveRDS(r, 'pagoda2object.rds')
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  

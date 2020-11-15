@@ -57,14 +57,6 @@ arma_mat_cor <- function(m) {
     .Call('_pagoda2_arma_mat_cor', PACKAGE = 'pagoda2', m)
 }
 
-n2Knn <- function(m, k, nThreads = 10L, verbose = TRUE, indexType = "angular", M = 12L, MaxM0 = 24L, ef_search_multiplier = 50, quiet = FALSE) {
-    .Call('_pagoda2_n2Knn', PACKAGE = 'pagoda2', m, k, nThreads, verbose, indexType, M, MaxM0, ef_search_multiplier, quiet)
-}
-
-n2CrossKnn <- function(mA, mB, k, nThreads = 10L, verbose = TRUE, indexType = "angular", M = 12L, MaxM0 = 24L, ef_search_multiplier = 50, quiet = FALSE) {
-    .Call('_pagoda2_n2CrossKnn', PACKAGE = 'pagoda2', mA, mB, k, nThreads, verbose, indexType, M, MaxM0, ef_search_multiplier, quiet)
-}
-
 matWCorr <- function(Mat, Matw) {
     .Call('_pagoda2_matWCorr', PACKAGE = 'pagoda2', Mat, Matw)
 }

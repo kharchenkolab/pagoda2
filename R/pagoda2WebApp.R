@@ -1,27 +1,39 @@
 ## Filename: pagoda2WebApp.R
 ## Author: Nikolas Barkas
 ## Date: Jan - Mar 2017
-## Description: The rook server for pagoda 2
-
+## Description: The rook server for pagoda2
 
 #' @import Rook
 #' @importFrom urltools url_decode
 #' @importFrom rjson fromJSON toJSON
 #' @import base64enc
+NULL
 
-#' @export pagoda2WebApp
+#' pagoda2WebApp class to create pagoda2 web applications via a Rook server
+#'
+#' @rdname pagoda2WebApp
 #' @exportClass pagoda2WebApp
+#' @field originalP2object Input pagoda2 object
+#' @field name string Display name for the application
+#' @field verbose integer Verbosity level (default=0). 
+#' @field mat Embedding
+#' @field cellmetadata metadata associated with pagoda2 object
+#' @field mainDendrogram hclust dendrogram of all cells in the pagoda2 object
+#' @field geneSets gene sets in the pagoda2 object
+#' @field rookRoot Rook server root directory
+#' @field appmetadata pagoda2 web application metadata
+#' @export 
 pagoda2WebApp <- setRefClass(
   'pagoda2WebApp',
   'contains' = 'Middleware', # Inherit from Middleware to handle static and dynamic files seperately
   fields = c(
-    "name", # The name of this application for display purposes
+    "originalP2object", 
+    "name", # The name of this application for display purposes (default="DefaultPagoda2Name")
     "verbose", # Server verbosity level
     "mat",
     "cellmetadata",
     "mainDendrogram",
     "geneSets",
-    "originalP2object",
     "rookRoot",
     "appmetadata"
   ),
@@ -30,7 +42,7 @@ pagoda2WebApp <- setRefClass(
     ## pagoda2obj: a pagoda2 object
     ## appName: the display name for this app
     ## verbose: verbosity level, def: 0, higher values will printmore
-    ## debug: T|F load debug version?, def: F
+    ## debug: TRUE|FFALSE load debug version?, def: FALSE
     ## dendGroups: a factor defining the groups of cells to use for the dendrogram
     ## keepOriginal: maintain a copy to the original RF object -- this allows for some extra capabilities
     initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
@@ -40,7 +52,7 @@ pagoda2WebApp <- setRefClass(
       ## Check that the object we are getting is what it should be
       if (class(pagoda2obj) != "Pagoda2") {
         message("We have an error");
-        stop("ERROR: The provided object is not a pagoda 2 object")
+        stop("ERROR: The provided object is not a pagoda2 object")
       }
       
       ## Keep the original pagoda 2 object
@@ -48,7 +60,7 @@ pagoda2WebApp <- setRefClass(
       
       ## Check that the dendGroups we are getting is what it should be
       if (length(dendGroups) != nrow(pagoda2obj$counts)) {
-        stop("ERROR: The provided dendGroups has a different number of cells than the pagoda 2 object")
+        stop("ERROR: The provided dendGroups has a different number of cells than the pagoda2 object")
       }
       
       ## Keep the name for later (consistent) use
@@ -57,7 +69,7 @@ pagoda2WebApp <- setRefClass(
       ## Using the cell grouping provided in dendGroups
       # Generate an hclust object of these cell groups
       # a cell ordering compatible with these groups
-      # an the number of cells in each group (for plotting purposes)
+      # and the number of cells in each group (for plotting purposes)
       mainDendrogram <<- .self$generateDendrogramOfGroups(pagoda2obj,dendGroups,innerOrder,orderDend);
       
       # Verbosity level
@@ -167,7 +179,7 @@ pagoda2WebApp <- setRefClass(
               xx <- r$counts[celsel,] %*% irlba::irlba(r$counts[celsel,],nv = nv,nu=0)$v
               colnames(xx) <- paste('PC',seq(ncol(xx)),sep='')
               
-              xn <- n2Knn(as.matrix(xx),k,nThreads=r$n.cores,verbose=0,indexType='L2')
+              xn <- N2R::Knn(as.matrix(xx),k,nThreads=r$n.cores,verbose=0,indexType='L2')
               
               xn <- xn[!xn$s==xn$e,]
               xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))

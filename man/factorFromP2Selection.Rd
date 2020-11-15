@@ -2,12 +2,24 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{factorFromP2Selection}
 \alias{factorFromP2Selection}
-\title{returns a factor of cell membership from a p2 selection}
+\title{Returns a factor of cell membership from a p2 selection object
+the factor only includes cells present in the selection. If the selection
+contains multiclassified cells an error is raised}
 \usage{
 factorFromP2Selection(sel, use.internal.name = FALSE, flatten = FALSE)
 }
+\arguments{
+\item{sel}{a pagoda2 selection as genereated by readPagoda2SelectionFile}
+
+\item{use.internal.name}{boolean Whether to use field 'internal.name' as factor names (default=FALSE)}
+
+\item{flatten}{boolean Whether to ignore multiclassified cells, overwriting randomly (default=FALSE)}
+}
+\value{
+factor of cell membership from a p2 selection object. The factor only includes cells present in the selection.
+}
 \description{
-returns a factor of cell membership from a p2 selection object
+Returns a factor of cell membership from a p2 selection object
 the factor only includes cells present in the selection. If the selection
 contains multiclassified cells an error is raised
 }

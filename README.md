@@ -79,3 +79,13 @@ docker run -p 8787:8787 pkharchenkolab/pagoda2:latest
 
 The first time you run this command, it will pull/download several images---please make sure that you have reliable internet access. You can then point your browser to http://localhost:8787/ to access an Rstudio environment with Pagoda2 installed (log in using credentials rstudio/pass). Explore the docker [--mount option](https://docs.docker.com/storage/volumes/) to allow the docker image to access your local files.
 
+### Citation
+
+If you find `pagoda2` useful for your publication, please cite:
+
+```
+Nikolas Barkas, Viktor Petukhov, Peter Kharchenko and Evan
+Biederstedt (2020). pagoda2: Single Cell Analysis and Differential
+Expression. R package version 0.1.5.
+https://github.com/kharchenkolab/pagoda2
+```

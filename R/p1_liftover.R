@@ -1,37 +1,41 @@
-# Functions from pagoda1
+## Functions from pagoda1, scde 
+## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 
-##' Collapse aspects driven by the same combinations of genes
-##'
-##' Examines PC loading vectors underlying the identified aspects and clusters aspects based
-##' on a product of loading and score correlation (raised to corr.power). Clusters of aspects
-##' driven by the same genes are determined based on the distance.threshold and collapsed.
-##'
-##' @param tam output of pagoda.top.aspects()
-##' @param pwpca output of pagoda.pathway.wPCA()
-##' @param clpca output of pagoda.gene.clusters() (optional)
-##' @param plot whether to plot the resulting clustering
-##' @param cluster.method one of the standard clustering methods to be used (fastcluster::hclust is used if available or stats::hclust)
-##' @param distance.threshold similarity threshold for grouping interdependent aspects
-##' @param corr.power power to which the product of loading and score correlation is raised
-##' @param abs Boolean of whether to use absolute correlation
-##' @param n.cores number of cores to use during processing
-##' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
-##'
-##' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
-##'
-##' @examples
-##' \donttest{
-##' ## data(pollen)
-##' ## cd <- clean.counts(pollen)
-##' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
-##' ## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), max.adj.var = 5, n.cores = 1, plot = FALSE)
-##' ## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, n.cores=10, n.internal.shuffles=50)
-##' ## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, plot=FALSE, z.score=1.96)  # top aspects based on GO only
-##' ## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
-##' }
-##'
-##' @export
-pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FALSE, cluster.method = "complete", distance.threshold = 0.01, corr.power = 4, n.cores = 1, abs = TRUE, ...) {
+#' Collapse aspects driven by the same combinations of genes.
+#' Examines PC loading vectors underlying the identified aspects and clusters aspects based
+#' on a product of loading and score correlation (raised to corr.power). Clusters of aspects
+#' driven by the same genes are determined based on the distance.threshold and collapsed.
+#'
+#' @param tam output of pagoda.top.aspects()
+#' @param pwpca output of pagoda.pathway.wPCA()
+#' @param clpca output of pagoda.gene.clusters() (optional) (default=NULL)
+#' @param plot boolean Whether to plot the resulting clustering (default=FALSE)
+#' @param cluster.method string One of the standard clustering methods to be used (default="complete") Note: fastcluster::hclust is used if available or stats::hclust)
+#' @param distance.threshold numeric Similarity threshold for grouping interdependent aspects (default=0.01)
+#' @param corr.power numeric Power to which the product of loading and score correlation is raised (default=4)
+#' @param abs boolean Whether to use absolute correlation (default=TRUE)
+#' @param n.cores numeric Number of cores to use during processing (default=1)
+#' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
+#' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
+#'
+#' @examples
+#' \donttest{
+#' ## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+#' ## data(pollen)  
+#' ## cd <- clean.counts(pollen)
+#' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, 
+#' ##     min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
+#' ## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), 
+#' ##     max.adj.var = 5, n.cores = 1, plot = FALSE)
+#' ## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, 
+#' ##     n.cores=10, n.internal.shuffles=50)
+#' ## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, 
+#' ##     plot=FALSE, z.score=1.96)  # top aspects based on GO only
+#' ## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
+#' }
+#'
+#' @export
+pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FALSE, cluster.method = "complete", distance.threshold = 0.01, corr.power = 4, abs = TRUE, n.cores = 1, ...) {
   pclc <- pathway.pc.correlation.distance(c(pwpca, clpca$cl.goc), tam$xv, target.ndf = 100, n.cores = n.cores)
   cda <- cor(t(tam$xv))
   if(abs) {
@@ -70,8 +74,16 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 }
 
 
+## xvl <- collapse.aspect.clusters(tamr$xv, tamr$xvw, ct, pick.top = FALSE, scale = TRUE)
 
-##' @export
+#' Collapse aspect clusters
+#'
+#' @param d something
+#' @param dw something
+#' @param ct something
+#' @param scale boolean Whether to scale... (default=TRUE)
+#' @param pick.top boolean Whether to pick max... (default=FALSE)
+#' @export 
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   if (!requireNamespace("pcaMethods", quietly = TRUE)) {
     stop("Package \"pcaMethods\" needed for this function to work. Please install it with `BiocManager::install('pcaMethods')`.", call. = FALSE)
@@ -112,37 +124,42 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 
 
 
-##' Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)
-##'
-##' Examines PC loading vectors underlying the identified aspects and clusters aspects based on score correlation. Clusters of aspects driven by the same patterns are determined based on the distance.threshold.
-##'
-##' @param tamr output of pagoda.reduce.loading.redundancy()
-##' @param distance.threshold similarity threshold for grouping interdependent aspects
-##' @param cluster.method one of the standard clustering methods to be used (fastcluster::hclust is used if available or stats::hclust)
-##' @param distance distance matrix
-##' @param weighted.correlation Boolean of whether to use a weighted correlation in determining the similarity of patterns
-##' @param plot Boolean of whether to show plot
-##' @param top Restrict output to the top n aspects of heterogeneity
-##' @param trim Winsorization trim to use prior to determining the top aspects
-##' @param abs Boolean of whether to use absolute correlation
-##' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
-##'
-##' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
-##'
-##' @examples
-##' \donttest{
-##' ## data(pollen)
-##' ## cd <- clean.counts(pollen)
-##' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
-##' ## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), max.adj.var = 5, n.cores = 1, plot = FALSE)
-##' ## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, n.cores=10, n.internal.shuffles=50)
-##' ## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, plot=FALSE, z.score=1.96)  # top aspects based on GO only
-##' ## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
-##' ## tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
-##' }
-##'
-##' @export
-pagoda.reduce.redundancy <- function(tamr, distance.threshold = 0.2, cluster.method = "complete", distance = NULL, weighted.correlation = TRUE, plot = FALSE, top = Inf, trim = 0, abs = FALSE, ...) {
+#' Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)
+#' Examines PC loading vectors underlying the identified aspects and clusters aspects based on score correlation. Clusters of aspects driven by the same patterns are determined based on the distance.threshold.
+#'
+#' @param tamr output of pagoda.reduce.loading.redundancy()
+#' @param distance.threshold numeric Similarity threshold for grouping interdependent aspects (default=0.2)
+#' @param cluster.method character One of the standard clustering methods to be used (default="complete") (Note: fastcluster::hclust is used if available or stats::hclust)
+#' @param distance distance matrix (default=NULL)
+#' @param weighted.correlation boolean Whether to use a weighted correlation in determining the similarity of patterns (default=TRUE)
+#' @param plot boolean Whether to show plot (default=FALSE)
+#' @param top bololean Restrict output to the top N aspects of heterogeneity (default=Inf, i.e. no restriction)
+#' @param trim numeric Winsorization trim to use prior to determining the top aspects (default=0)
+#' @param abs boolean Whether to use absolute correlation (default=FALSE)
+#' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
+#' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
+#'
+#' @examples
+#' \donttest{
+#' ## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+#' ## data(pollen)
+#' ## cd <- clean.counts(pollen)
+#' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, 
+#' ##             min.nonfailed=5, max.model.plots=10)
+#' ## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), 
+#' ##             max.adj.var = 5, n.cores = 1, plot = FALSE)
+#' ## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, n.cores=10, 
+#' ##             n.internal.shuffles=50)
+#' ## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, 
+#' ##             plot=FALSE, z.score=1.96)  # top aspects based on GO only
+#' ## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
+#' ## tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, 
+#' ##             labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
+#' }
+#'
+#' @export 
+pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.method="complete", 
+  distance=NULL, weighted.correlation=TRUE, plot=FALSE, top=Inf, trim=0, abs=FALSE, ...) {
   if(is.null(distance)) {
     if(weighted.correlation) {
       #distance <- .Call("matWCorr", t(tamr$xv), t(tamr$xvw), PACKAGE = "pagoda2")
@@ -196,24 +213,22 @@ pagoda.reduce.redundancy <- function(tamr, distance.threshold = 0.2, cluster.met
   return(tamr2)
 }
 
-##' Winsorize matrix
-##'
-##' Sets the ncol(mat)*trim top outliers in each row to the next lowest value same for the lowest outliers
-##'
-##' @param mat matrix
-##' @param trim fraction of outliers (on each side) that should be Winsorized, or (if the value is  >= 1) the number of outliers to be trimmed on each side
-##'
-##' @return Winsorized matrix
-##'
-##' @examples
-##' set.seed(0)
-##' mat <- matrix( c(rnorm(5*10,mean=0,sd=1), rnorm(5*10,mean=5,sd=1)), 10, 10)  # random matrix
-##' mat[1,1] <- 1000  # make outlier
-##' range(mat)  # look at range of values
-##' win.mat <- winsorize.matrix(mat, 0.1)
-##' range(win.mat)  # note outliers removed
-##'
-##' @export
+
+#' Sets the ncol(mat)*trim top outliers in each row to the next lowest value same for the lowest outliers
+#'
+#' @param mat matrix
+#' @param trim fraction of outliers (on each side) that should be Winsorized, or (if the value is  >= 1) the number of outliers to be trimmed on each side
+#' @return Winsorized matrix
+#'
+#' @examples
+#' set.seed(0)
+#' mat <- matrix( c(rnorm(5*10,mean=0,sd=1), rnorm(5*10,mean=5,sd=1)), 10, 10)  # random matrix
+#' mat[1,1] <- 1000  # make outlier
+#' range(mat)  # look at range of values
+#' win.mat <- winsorize.matrix(mat, 0.1)
+#' range(win.mat)  # note outliers removed
+#'
+#' @export
 winsorize.matrix <- function(mat, trim) {
   if(trim  >  0.5) { trim <- trim/ncol(mat)  }
   #wm <- .Call("winsorizeMatrix", mat, trim, PACKAGE = "pagoda2")
@@ -223,9 +238,16 @@ winsorize.matrix <- function(mat, trim) {
   return(wm)
 }
 
-
-##' @export
-pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = NULL) {
+#' Calculate correlation distance between PC magnitudes given a number of target dimensions
+#'
+#' @param pcc weighted PC magnitudes 
+#' e.g. scde::pagoda.pathway.wPCA() gives the weighted PC magnitudes for each gene provided
+#' e.g. scde::pagoda.gene.clusters() gives the weighted PC magnitudes for de novo gene sets identified by clustering on expression
+#' @param xv a matrix of normalized aspect patterns (rows- significant aspects, columns- cells
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @param target.ndf numeric Target dimensions (default=NULL)
+#' @export
+pathway.pc.correlation.distance <- function(pcc, xv, n.cores=1, target.ndf=NULL) {
   # all relevant gene names
   rotn <- unique(unlist(lapply(pcc[gsub("^#PC\\d+# ", "", rownames(xv))], function(d) rownames(d$xp$rotation))))
   # prepare an ordered (in terms of genes) and centered version of each component
@@ -243,7 +265,7 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = N
   #x <- .Call("plSemicompleteCor2", pl, PACKAGE = "pagoda2")
   x <- plSemicompleteCor2(pl)
 
-  if(!is.null(target.ndf)) {
+  if (!is.null(target.ndf)) {
     r <- x$r[upper.tri(x$r)]
     n <- x$n[upper.tri(x$n)]
     suppressWarnings(tv <- r*sqrt((n-2)/(1-r^2)))
@@ -263,5 +285,4 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores = 1, target.ndf = N
   d <- stats::as.dist(1-abs(cr))
   d[d<0] <- 0
   return(d)
-
 }

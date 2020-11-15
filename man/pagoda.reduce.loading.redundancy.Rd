@@ -2,7 +2,10 @@
 % Please edit documentation in R/p1_liftover.R
 \name{pagoda.reduce.loading.redundancy}
 \alias{pagoda.reduce.loading.redundancy}
-\title{Collapse aspects driven by the same combinations of genes}
+\title{Collapse aspects driven by the same combinations of genes.
+Examines PC loading vectors underlying the identified aspects and clusters aspects based
+on a product of loading and score correlation (raised to corr.power). Clusters of aspects
+driven by the same genes are determined based on the distance.threshold and collapsed.}
 \usage{
 pagoda.reduce.loading.redundancy(
   tam,
@@ -12,8 +15,8 @@ pagoda.reduce.loading.redundancy(
   cluster.method = "complete",
   distance.threshold = 0.01,
   corr.power = 4,
-  n.cores = 1,
   abs = TRUE,
+  n.cores = 1,
   ...
 )
 }
@@ -22,19 +25,19 @@ pagoda.reduce.loading.redundancy(
 
 \item{pwpca}{output of pagoda.pathway.wPCA()}
 
-\item{clpca}{output of pagoda.gene.clusters() (optional)}
+\item{clpca}{output of pagoda.gene.clusters() (optional) (default=NULL)}
 
-\item{plot}{whether to plot the resulting clustering}
+\item{plot}{boolean Whether to plot the resulting clustering (default=FALSE)}
 
-\item{cluster.method}{one of the standard clustering methods to be used (fastcluster::hclust is used if available or stats::hclust)}
+\item{cluster.method}{string One of the standard clustering methods to be used (default="complete") Note: fastcluster::hclust is used if available or stats::hclust)}
 
-\item{distance.threshold}{similarity threshold for grouping interdependent aspects}
+\item{distance.threshold}{numeric Similarity threshold for grouping interdependent aspects (default=0.01)}
 
-\item{corr.power}{power to which the product of loading and score correlation is raised}
+\item{corr.power}{numeric Power to which the product of loading and score correlation is raised (default=4)}
 
-\item{n.cores}{number of cores to use during processing}
+\item{abs}{boolean Whether to use absolute correlation (default=TRUE)}
 
-\item{abs}{Boolean of whether to use absolute correlation}
+\item{n.cores}{numeric Number of cores to use during processing (default=1)}
 
 \item{...}{additional arguments are passed to the pagoda.view.aspects() method during plotting}
 }
@@ -42,18 +45,24 @@ pagoda.reduce.loading.redundancy(
 a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 }
 \description{
+Collapse aspects driven by the same combinations of genes.
 Examines PC loading vectors underlying the identified aspects and clusters aspects based
 on a product of loading and score correlation (raised to corr.power). Clusters of aspects
 driven by the same genes are determined based on the distance.threshold and collapsed.
 }
 \examples{
 \donttest{
-## data(pollen)
+## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+## data(pollen)  
 ## cd <- clean.counts(pollen)
-## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
-## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), max.adj.var = 5, n.cores = 1, plot = FALSE)
-## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, n.cores=10, n.internal.shuffles=50)
-## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, plot=FALSE, z.score=1.96)  # top aspects based on GO only
+## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, 
+##     min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
+## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), 
+##     max.adj.var = 5, n.cores = 1, plot = FALSE)
+## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, 
+##     n.cores=10, n.internal.shuffles=50)
+## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, 
+##     plot=FALSE, z.score=1.96)  # top aspects based on GO only
 ## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
 }
 

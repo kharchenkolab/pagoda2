@@ -13,22 +13,23 @@ NULL
 
 #' A Reference Class, which holds and process single cell RNA-seq data.
 #'
-#' @field counts gene count matrix, normalized on total counts
-#' @field clusters results of clustering
-#' @field graphs graph representations of the dataset
-#' @field reductions results of reductions, i.e. PCA
-#' @field embeddings results of visualization algorithms, i.e. t-SNE or largeVis
-#' @field diffgenes lists of differentially expressed genes
-#' @field pathways pathway information
-#' @field n.cores number of cores, used for the analyses
-#' @field misc a list of miscelaneous structures
-#' @field batch batch factor for the dataset
-#' @field modelType plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)
-#' @field verbose verbosity level
-#' @field depth cell size factor
-#' @field genegraphs a slot to store graphical representations in gene space (i.e. gene kNN graphs)
-#' @export Pagoda2
+#' @rdname Pagoda2
+#' @field counts Gene count matrix, normalized on total counts
+#' @field clusters Results of clustering
+#' @field graphs Graph representations of the dataset
+#' @field reductions Results of reductions, e.g. PCA
+#' @field embeddings Results of visualization algorithms, t-SNE or largeVis
+#' @field diffgenes Lists of differentially expressed genes
+#' @field pathways Pathway information
+#' @field n.cores Number of cores, used for the analyses
+#' @field misc List of miscelaneous structures
+#' @field batch Batch factor for the dataset
+#' @field modelType Plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)
+#' @field verbose Verbosity level
+#' @field depth Cell size factor
+#' @field genegraphs Slot to store graphical representations in gene space (i.e. gene kNN graphs)
 #' @exportClass Pagoda2
+#' @export Pagoda2
 Pagoda2 <- setRefClass(
   "Pagoda2",
 
@@ -134,7 +135,7 @@ Pagoda2 <- setRefClass(
         stop("Cells with zero expression over all genes are not allowed")
       }
 
-      if(verbose) message(nrow(counts),"cells,",ncol(counts),"genes; normalizing ... ")
+      if(verbose) message(nrow(counts)," cells, ",ncol(counts)," genes; normalizing ... ")
 
       # get normalized matrix
       if(modelType=='linearObs') { # this shoudln't work well, since the depth dependency is not completely normalized out
@@ -276,7 +277,7 @@ Pagoda2 <- setRefClass(
         }
         
         if(persist) misc[['odgenes']] <<- rownames(df)[ods];
-        if(verbose) message(length(ods),'overdispersed genes ...',length(ods) )
+        if(verbose) message(length(ods),' overdispersed genes ... ',length(ods) )
 
         df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
         df$gsf[!is.finite(df$gsf)] <- 0;
@@ -349,9 +350,9 @@ Pagoda2 <- setRefClass(
         if(center) {
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
-        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
+        xn <- N2R::Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else if(distance %in% c('L2','euclidean')) {
-        xn <- n2Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='L2')
+        xn <- N2R::Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='L2')
       } else {
         stop("unknown distance measure specified. Currently supported: angular, L2")
       }
@@ -377,8 +378,9 @@ Pagoda2 <- setRefClass(
         if(distance=='cosine') {
           #rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=T),sample(colnames(x),nrand,replace=T)),1,function(z) if(z[1]==z[2]) {return(NA); } else {1-cor(x[,z[1]],x[,z[2]])}))
           rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {1-sum(x[,z[1]]*x[,z[2]])/sqrt(sum(x[,z[1]]^2)*sum(x[,z[2]]^2))}))
-        } else if(distance=='JS') {
-          rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {jw.disR(x[,z[1]],x[,z[2]])}))
+        ## we no longer support 'JS'
+        ## } else if(distance=='JS') {
+        ##   rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {jw.disR(x[,z[1]],x[,z[2]])}))
         } else if(distance=='L2') {
           rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {sqrt(sum((x[,z[1]]-x[,z[2]])^2))}))
         } else if(distance=='L1') {
@@ -472,7 +474,7 @@ Pagoda2 <- setRefClass(
         } else {
           cl <- clusters[[type]][[clusterName]]
           if(is.null(cl)) stop(paste("unable to find clustering",clusterName,'for',type))
-          if(verbose) message("using",clusterName," clustering for",type,"space\n")
+          if(verbose) message("using ",clusterName," clustering for ",type," space\n")
         }
       } else {
         if(!all(rownames(x) %in% names(groups))) { warning("provided cluster vector doesn't list groups for all of the cells")}
@@ -618,7 +620,7 @@ Pagoda2 <- setRefClass(
       if(center) {
         pcas <- pcas - Matrix::rowMeans(pcas)
       }
-      xn <- n2Knn(pcas, k, nThreads= n.cores, verbose=verbose)
+      xn <- N2R::Knn(pcas, k, nThreads= n.cores, verbose=verbose)
       diag(xn) <- 0; # Remove self edges
       xn <- as(xn,'dgTMatrix'); # will drop 0s
       # Turn into a dataframe, convert from correlation distance into weight
@@ -637,7 +639,7 @@ Pagoda2 <- setRefClass(
       if(is.null(embeddingType)) {
         # take the first one
         embeddingType <- names(embeddings[[type]])[1]
-        if(verbose) message("using",embeddingType,"embedding\n")
+        if(verbose) message("using ",embeddingType," embedding\n")
         emb <- embeddings[[type]][[embeddingType]]
 
       } else {
@@ -1823,13 +1825,13 @@ Pagoda2 <- setRefClass(
         }
         
         if (distance=='L2') {
-          if(verbose) message("running tSNE using",n.cores,"cores:\n")
+          if(verbose) message("running tSNE using ",n.cores," cores:\n")
           emb <- Rtsne::Rtsne(x, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         } else {
           if(verbose) message('calculating distance ... ');
           if(verbose) message('pearson ...')
           d <- 1-cor(t(x))
-          if(verbose) message("running tSNE using",n.cores,"cores:\n")
+          if(verbose) message("running tSNE using ",n.cores," cores:\n")
           emb <- Rtsne::Rtsne(d,is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         }
         rownames(emb) <- rownames(x)

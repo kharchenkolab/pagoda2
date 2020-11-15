@@ -20,13 +20,23 @@ SEXP matWCorr(SEXP Mat, SEXP Matw){
     for(int j=i+1;j<n;j++) {
       arma::colvec ic=m.col(i);
       arma::colvec jc=m.col(j);
+      // need to avoid 'explicitly assigning value of variable of type 'arma::colvec' (aka 'Col<double>') to itself [-Wself-assign-overloaded]'
+      arma::colvec *copyic = &ic;
+      arma::colvec *copyjc = &jc;
       // weight for this i,j
       arma::colvec jw=w.col(i) % w.col(j); jw=sqrt(jw);
       jw/=sum(jw);
       // shift by weighted means
-      ic-=dot(ic,jw); jc-=dot(jc,jw);
+      ic-=dot(ic,jw); 
+      jc-=dot(jc,jw);
       double nm=dot(ic % jc,jw);
-      ic%=ic; jc%=jc;
+      // we need to avoid warning which checks whether assignment operation survives self-assignment.
+      // ic%=ic; 
+      // jc%=jc;
+      *copyic%=ic;
+      *copyjc%=jc;
+      ic = *copyic;
+      jc =  *copyjc;   
       double dn=dot(ic,jw);
       dn*=dot(jc,jw);
       c(j,i)=nm/sqrt(dn);

@@ -2,7 +2,9 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{readPagoda2SelectionFile}
 \alias{readPagoda2SelectionFile}
-\title{reads a pagoda2 web app exported cell selection file}
+\title{Reads a pagoda2 web app exported cell selection file exported as a list
+of list objects that contain the name of the selection, 
+the color (as a hex string) and the identifiers of the individual cells}
 \usage{
 readPagoda2SelectionFile(filepath)
 }
@@ -10,7 +12,7 @@ readPagoda2SelectionFile(filepath)
 \item{filepath}{the path of the file load}
 }
 \description{
-reads a cell selection file exported by pagoda2 web interface as a list
-of list objects that contain the name of the selection, the color (as a hex string) and the
-identifiers of the individual cells
+Reads a pagoda2 web app exported cell selection file exported as a list
+of list objects that contain the name of the selection, 
+the color (as a hex string) and the identifiers of the individual cells
 }

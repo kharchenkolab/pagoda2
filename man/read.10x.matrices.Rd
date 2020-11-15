@@ -2,14 +2,14 @@
 % Please edit documentation in R/helpers.R
 \name{read.10x.matrices}
 \alias{read.10x.matrices}
-\title{Load 10X CellRanger count matrices}
+\title{Quick loading of 10X CellRanger count matrices}
 \usage{
 read.10x.matrices(matrixPaths, n.cores = 1, verbose = TRUE)
 }
 \arguments{
 \item{matrixPaths}{a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths}
 
-\item{n.cores}{numebr of cores to utilize in parallel (default=1)}
+\item{n.cores}{numeric Cores to utilize in parallel (default=1)}
 
 \item{verbose}{boolean Whether to output verbose output (default=TRUE)}
 }
@@ -17,5 +17,5 @@ read.10x.matrices(matrixPaths, n.cores = 1, verbose = TRUE)
 a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
 }
 \description{
-Quick loading of 10X CellRanger text matrices
+Quick loading of 10X CellRanger count matrices
 }

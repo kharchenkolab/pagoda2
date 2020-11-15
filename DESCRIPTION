@@ -1,58 +1,61 @@
 Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
-Version: 0.1.3
-Authors@R: c(person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
-Description: Analyzing and interactively exploring large single-cell RNA-seq datasets. Pagoda2 primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. The package also serves as the primary method for pre-processing data for Conos, <https://github.com/kharchenkolab/conos>
-Depends: R (>= 3.2.1), Matrix, igraph
-License: GPL-3 + file LICENSE
-Copyright: See the file COPYRIGHTS for various N2R copyright details
+Version: 1.0.0
+Authors@R: c(person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
+Description: Analyzing and interactively exploring large single-cell RNA-seq datasets. Pagoda2 primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. It performs basic tasks such as cell size normalization, gene variance normalization, and can be used to idetnify subpopulations and run differential expression within idividual samples. The package also serves as the primary method for preprocessing data for Conos, <https://github.com/kharchenkolab/conos>.
+License: GPL-3 
+Copyright: See the file COPYRIGHTS for various pagoda2 copyright details
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 3.2.1), Matrix, igraph
 biocViews:
 Imports:
-    AnnotationDbi,
-    BiocGenerics,
-    base64enc,
-    dendsort,
-    igraph,
-    irlba,
-    MASS,
-    magrittr,
-    Matrix,
-    mgcv,
-    parallel,
-    plyr,
-    Rcpp,
-    RcppArmadillo,
-    RcppProgress,
-    RcppSpdlog,
-    rjson,
-    RMTstat,
-    Rook,
-    Rtsne,
-    urltools,
-    stats,
-    utils,
+    base64enc, 
+    dendsort, 
     fastcluster,
-    sccore (>= 0.1.1)
+    graphics,
+    grDevices, 
+    irlba, 
+    magrittr, 
+    MASS, 
+    mgcv, 
+    methods,
+    N2R,
+    parallel, 
+    plyr, 
+    Rcpp,
+    rjson, 
+    rlang,
+    RMTstat, 
+    Rook, 
+    Rtsne, 
+    sccore (>= 0.1.1),
+    stats, 
+    urltools,
+    utils
+RoxygenNote: 7.1.1
 Suggests:
-    colorRamps,
-    dbscan,
-    ggplot2,
-    GO.db,
-    pcaMethods,
-    pheatmap,
-    rgl,
-    robustbase,
+    AnnotationDbi, 
+    BiocGenerics, 
+    BiocParallel,
+    colorRamps, 
+    dbscan, 
+    dplyr,
+    ggplot2, 
+    GO.db, 
+    KernSmooth,
+    knitr, 
     org.Dr.eg.db,
     org.Hs.eg.db,
     org.Mm.eg.db,
-    knitr, 
-    rmarkdown,
+    pcaMethods, 
+    pheatmap, 
+    rgl, 
+    rmarkdown, 
+    robustbase, 
+    testthat,
     uwot
-VignetteBuilder: knitr
-RoxygenNote: 7.1.1
-LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen, RcppSpdlog
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
 NeedsCompilation: yes
-Author: Peter Kharchenko [aut], Nikolas Barkas [aut], Viktor Petukhov [aut], Evan Biederstedt [cre, aut]
+Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Evan Biederstedt [cre, aut]
 Maintainer: Evan Biederstedt <evan.biederstedt@gmail.com>

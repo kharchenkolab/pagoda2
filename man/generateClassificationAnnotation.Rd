@@ -10,7 +10,7 @@ generateClassificationAnnotation(clustering, selections)
 \arguments{
 \item{clustering}{a factor that provides the clustering}
 
-\item{selection}{a p2 selection object that provided by the web interfact user}
+\item{selections}{a p2 selection object that provided by the web interfact user}
 }
 \value{
 a named factor that can be used for classification

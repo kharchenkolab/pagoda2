@@ -2,7 +2,9 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{getCellsInSelections}
 \alias{getCellsInSelections}
-\title{Returns all the cells that are in the designated selections}
+\title{Returns all the cells that are in the designated selections.
+Given a pagoda2 selections object and the names of some selections
+in it returns the names of the cells that are in these selections removed any duplicates}
 \usage{
 getCellsInSelections(p2selections, selectionNames)
 }
@@ -15,6 +17,7 @@ getCellsInSelections(p2selections, selectionNames)
 a character vector of cell names
 }
 \description{
+Returns all the cells that are in the designated selections.
 Given a pagoda2 selections object and the names of some selections
 in it returns the names of the cells that are in these selections removed any duplicates
 }

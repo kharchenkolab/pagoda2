@@ -1,28 +1,41 @@
 #' @import Rook
 #' @importFrom parallel mclapply
 #' @importFrom irlba irlba
-#'
+#' @importFrom graphics abline axis hist layout lcm legend mtext par points polygon
+#' @importFrom grDevices adjustcolor col2rgb colorRampPalette colors dev.size rainbow
+#' @importFrom methods as new
+#' @importFrom stats aggregate as.dendrogram as.dist cor cutree dendrapply dist hclust is.leaf na.omit order.dendrogram phyper predict pt qnorm qt quantile reorder rnorm sd setNames var
+#' @importFrom utils browseURL installed.packages read.delim
 NULL
 
-## Correct unloading of the library
-.onUnload <- function (libpath) {
+#' Correct unloading of the library
+#'
+#' @param libpath library path
+#' @keywords internal
+.onUnload <- function(libpath) {
   library.dynam.unload("pagoda2", libpath)
 }
 
-# translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
-multi2dend <- function(cl,counts,deep=FALSE,dist='cor') {
-  if(deep) {
-    clf <- as.integer(cl$memberships[1,]); # take the lowest level
+#' Translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
+#'
+#' @param cl clusters
+#' @param counts matrix of counts
+#' @param deep boolean (default=FALSE)
+#' @param dist character vector Distance metric (default='cor')
+#' @keywords internal
+multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
+  if (deep) {
+    clf <- as.integer(cl$memberships[1,]) # take the lowest level
   } else {
-    clf <- as.integer(membership(cl));
+    clf <- as.integer(membership(cl))
   }
   names(clf) <- names(membership(cl))
   clf.size <- unlist(tapply(clf,factor(clf,levels=seq(1,max(clf))),length))
-  rowFac <- rep(NA,nrow(counts));
-  rowFac[match(names(clf),rownames(counts))] <- clf;
-  lvec <- colSumByFac(counts,rowFac)[-1,,drop=FALSE];
+  rowFac <- rep(NA, nrow(counts));
+  rowFac[match(names(clf),rownames(counts))] <- clf
+  lvec <- colSumByFac(counts,rowFac)[-1,,drop=FALSE]
   if(dist=='JS') {
-    lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))));
+    lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))))
   } else { # use correlation distance in log10 space
     lvec.dist <- 1-cor(t(log10(lvec/pmax(1,Matrix::rowSums(lvec))+1)))
   }
@@ -32,26 +45,35 @@ multi2dend <- function(cl,counts,deep=FALSE,dist='cor') {
     v <- as.integer(mget("index",envir=env,ifnotfound=0)[[1]])+1;
     attr(l,'nodeId') <- v
     assign("index",v,envir=env)
-    attr(l,'nCells') <- sum(clf.size[as.integer(unlist(l))]);
+    attr(l,'nCells') <- sum(clf.size[as.integer(unlist(l))])
     if(is.leaf(l)) {
-      attr(l,'cells') <- names(clf)[clf==attr(l,'label')];
+      attr(l,'cells') <- names(clf)[clf==attr(l,'label')]
     }
-    attr(l,'root') <- FALSE;
+    attr(l,'root') <- FALSE
     return(l);
   }
   d <- dendrapply(d,addinfo,env=environment())
-  attr(d,'root') <- TRUE;
+  attr(d,'root') <- TRUE
   return(d)
 }
 
-
-# quick utility to check if given character vector is colors
-# thanks, Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#' Quick utility to check if given character vector is colors
+#' Thanks to Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#'
+#' @param x character vector to check
+#' @keywords internal
 areColors <- function(x) {
   is.character(x) & sapply(x, function(X) {tryCatch(is.matrix(col2rgb(X)), error = function(e) FALSE)})
 }
 
-papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
+#' Parallel, optionally verbose lapply. See ?parallel::mclapply for more info.
+#'
+#' @param ... Additional arguments passed to mclapply(), lapply(), or BiocParallel::bplapply()
+#' @param n.cores Number of cores to use (default=parallel::detectCores())
+#' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
+#' @return list, as returned by lapply
+#' @keywords internal
+papply <- function(...,n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
   if(n.cores>1) {
     if(requireNamespace("parallel", quietly = TRUE)) {
       return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule))
@@ -62,25 +84,26 @@ papply <- function(...,n.cores=detectCores(), mc.preschedule=FALSE) {
       return(BiocParallel::bplapply(... , BPPARAM = BiocParallel::MulticoreParam(workers = n.cores)))
     }
   }
-
   # fall back on lapply
   lapply(...)
 }
 
-jw.disR <- function(x,y) {
-  x <- x+1/length(x)/1e3;
-  y <- y+1/length(y)/1e3;
-  a <- x*log(x)  + y*log(y) - (x+y)*log((x+y)/2);
-  sqrt(sum(a)/2)
-}
 
-val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.95) {
+#' Utility function to translate values into colors
+#'
+#' @param x input values
+#' @param gradientPalette gradient palette (default=NULL). If NULL, use colorRampPalette(c('gray90','red'), space = "Lab")(1024)
+#' @param zlim quantiles (default=NULL)
+#' @param gradient.range.quantile (default=0.95)
+#' 
+#' @keywords internal
+val2col <- function(x, gradientPalette=NULL, zlim=NULL, gradient.range.quantile=0.95) {
   nx <- names(x);
-  if(all(sign(x)>=0)) {
+  if (all(sign(x)>=0)) {
     if(is.null(gradientPalette)) {
       gradientPalette <- colorRampPalette(c('gray90','red'), space = "Lab")(1024)
     }
-    if(is.null(zlim)) {
+    if (is.null(zlim)) {
       zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile)))
       if(diff(zlim)==0) {
         zlim <- as.numeric(range(na.omit(x)))
@@ -105,20 +128,23 @@ val2col <- function(x,gradientPalette=NULL,zlim=NULL,gradient.range.quantile=0.9
   }
 
   col <- gradientPalette[x*(length(gradientPalette)-1)+1]
-  names(col) <- nx;
+  names(col) <- nx
   return(col)
 }
 
 
-
-# translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
-cldend2array <- function(d,cells=NULL) {
-  if(is.null(cells)) { # figure out the total order of cells
-    cells <- unlist(dendrapply(d,attr,'cells'))
+#' Translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
+#' 
+#' @param d cell cluster dendrogram
+#' @param cells character vector of cells (default=NULL). If NULL, determine the total order of cells with unlist(dendrapply(d, attr, 'cells'))
+#' @keywords internal
+cldend2array <- function(d, cells=NULL) {
+  if (is.null(cells)) { # figure out the total order of cells
+    cells <- unlist(dendrapply(d, attr, 'cells'))
   }
   getcellbin <- function(l) {
     if(is.leaf(l)) {
-      vi <- match(attr(l,'cells'),cells)
+      vi <- match(attr(l,'cells'), cells)
       ra <- sparseMatrix(i=vi,p=c(0,length(vi)),x=rep(1,length(vi)),dims=c(length(cells),1),dimnames=list(NULL,attr(l,'nodeId')))
       return(ra);
     } else { # return rbind of the children arrays, plus your own
@@ -133,19 +159,52 @@ cldend2array <- function(d,cells=NULL) {
   return(t(a))
 }
 
-
+#' Set names equal to values, a stats::setNames wrapper function
+#'
+#' @param x an object for which names attribute will be meaningful 
+#' @return An object with names assigned equal to values
+#' @keywords internal
 sn <- function(x) { names(x) <- x; return(x); }
 
 
-
-
+#' Directly open the pagoda2 web application and view the 'p2web' application object from our R session
+#' 
+#' @param app pagoda2 application object
+#' @param name character Name of the application to view
+#' @param port numeric Port number
+#' @param ip numeric IP address
+#' @param browse boolean Whether to load the app into an HTML browser (default=TRUE)
+#' @param server server If NULL, will grab server with get.scde.server(port=port, ip=ip) (derfault=NULL)
 #' @export show.app
-show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
-                                        # replace special characters
+show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
+    # replace special characters
     name <- gsub("[^[:alnum:.]]", "_", name)
 
+    get.scde.server <- function(port,ip) {
+        if(exists("___scde.server", envir = globalenv())) {
+            server <- get("___scde.server", envir = globalenv())
+        } else {
+            server <- Rook::Rhttpd$new()
+            '___scde.server' = server
+            if(!missing(ip)) {
+                if(missing(port)) {
+                    server$start(listen = ip)
+                } else {
+                    server$start(listen = ip, port = port)
+                }
+            } else {
+                if(missing(port)) {
+                    server$start()
+                } else {
+                    server$start(port=port)
+                }
+            }
+        }
+        return(server)
+    }
+
     if(is.null(server)) {
-        server <- get.scde.server(port=port,ip=ip)
+        server <- get.scde.server(port=port, ip=ip)
     }
     server$add(app = app, name = name)
     if(is.function(server$listenPort)) {
@@ -161,31 +220,8 @@ show.app <- function(app, name, port, ip, browse = TRUE,  server = NULL) {
     return(invisible(server))
 }
 
-# get SCDE server from saved session
-get.scde.server <- function(port,ip) {
-    if(exists("___scde.server", envir = globalenv())) {
-        server <- get("___scde.server", envir = globalenv())
-    } else {
-        server <- Rook::Rhttpd$new()
-        assign("___scde.server", server, envir = globalenv())
-        if(!missing(ip)) {
-            if(missing(port)) {
-                server$start(listen = ip)
-            } else {
-                server$start(listen = ip, port = port)
-            }
-        } else {
-            if(missing(port)) {
-                server$start()
-            } else {
-                server$start(port=port)
-            }
-        }
-    }
-    return(server)
-}
-
 # BH P-value adjustment with a log option
+#' @keywords internal
 bh.adjust <- function(x, log = FALSE) {
     nai <- which(!is.na(x))
     ox <- x
@@ -201,9 +237,10 @@ bh.adjust <- function(x, log = FALSE) {
     return(ox)
 }
 
-# returns enriched categories for a given gene list as compared with a given universe
+# Returns enriched categories for a given gene list as compared with a given universe
 # returns a list with over and under fields containing list of over and underrepresented terms
-calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mingenes = 3, env = go.env, subset = NULL, list.genes = FALSE, over.only = FALSE) {
+#' @keywords internal
+calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mingenes = 3, env, subset = NULL, list.genes = FALSE, over.only = FALSE) {
     genelist <- unique(genelist)
     all.genes <- unique(ls(env))
     # determine sizes
@@ -275,9 +312,8 @@ calculate.go.enrichment <- function(genelist, universe, pvalue.cutoff = 1e-3, mi
     }
 }
 
-# faster matrix correlations with armadillo
-#' @title armaCor - matrix column correlations
-#' @description similar to cor() call, will calculate correlation between matrix columns
+#' armaCor - matrix column correlations. Allows faster matrix correlations with armadillo. Similar to cor() call, will calculate correlation between matrix columns
+#'
 #' @param mat matrix
 #' @return matrix with columns as correlations
 #' @export 
@@ -287,35 +323,35 @@ armaCor <- function(mat) {
   return(cd)
 }
 
-#' Find the mode of a vector
-#' @description return the mode of a vector
+#' Return the mode of a vector
+#' 
 #' @param x the vector to return the mode of
 #' @return the mode elements
+#' @keywords internal
 Mode <- function(x) {
   ux <- unique(x)
   ux[which.max(tabulate(match(x, ux)))]
 }
 
 
-# load 10x matrices from a named list of result folders
-##' Quick loading of 10X CellRanger text matrices
-##'
-##' @title Load 10X CellRanger count matrices
-##' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
-##' @param n.cores numebr of cores to utilize in parallel (default=1)
-##' @param verbose boolean Whether to output verbose output (default=TRUE)
-##' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
-##' @export
+
+#' Quick loading of 10X CellRanger count matrices
+#'
+#' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
+#' @param n.cores numeric Cores to utilize in parallel (default=1)
+#' @param verbose boolean Whether to output verbose output (default=TRUE)
+#' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
+#' @export
 read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
   if(length(matrixPaths)==1) {
     matrixPaths <- c('one'=matrixPaths);
-    single.dataset <- TRUE;
+    single.dataset <- TRUE
   } else {
-    single.dataset <- FALSE;
+    single.dataset <- FALSE
   }
   if(verbose) message("reading ",length(matrixPaths)," dataset(s) ")
   if(is.null(names(matrixPaths))) stop("matrixPaths must be a named vector")
-  dl <- pagoda2:::papply(sn(names(matrixPaths)),function(nam) {
+  dl <- papply(sn(names(matrixPaths)), function(nam) {
 
     matrixPath <- matrixPaths[nam];
     # read all count files (*_unique.counts) under a given path
@@ -348,17 +384,17 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
 
 
 
-##' filter cells based on the gene/molecule dependency
-##' @title Filter cells based on gene/molecule dependency
-##' @param countMatrix input count matrix to be filtered
-##' @param min.cell.size min allowed cell size (default 500)
-##' @param max.cell.size max allowed cell size (default 5e4)
-##' @param p.level statistical confidence level for deviation from the main trend, used for cell filtering
-##' @param alpha shading of the confidence band
-##' @param plot plot the molecule distribution and the gene/molecule dependency fit
-##' @param do.par reset graphical parameters prior to plotting
-##' @return a filtered matrix
-##' @export
+#' Filter cells based on gene/molecule dependency
+#'
+#' @param countMatrix input count matrix to be filtered
+#' @param min.cell.size numeric Min allowed cell size (default=500)
+#' @param max.cell.size numeric Max allowed cell size (default=5e4)
+#' @param p.level numeric Statistical confidence level for deviation from the main trend, used for cell filtering (default=min(1e-3,1/ncol(countMatrix)))
+#' @param alpha numeric Shading of the confidence band (default=0.1)
+#' @param plot boolean Plot the molecule distribution and the gene/molecule dependency fit (default=TRUE)
+#' @param do.par boolean Reset graphical parameters prior to plotting (default=TRUE)
+#' @return a filtered matrix
+#' @export gene.vs.molecule.cell.filter
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {
   if(plot) {
     if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
@@ -373,7 +409,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
   df <- log10(df);
   df <- df[order(df$molecules,decreasing=FALSE),]
   if(plot) {
-    plot(df,col=adjustcolor(1,alpha=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
+    plot(df,col=adjustcolor(1,alpha.f=alpha),cex=0.5,ylab='log10[ gene counts]',xlab='log10[ molecule counts]')
     abline(v=log10(c(min.cell.size,max.cell.size)),lty=2,col=2)
   }
   #abline(lm(genes ~ molecules, data=df),col=4)
@@ -382,7 +418,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
   suppressWarnings(pb <- data.frame(predict(m,interval='prediction',level = 1-p.level,type="response")))
   outliers <- rownames(df)[df$genes > pb$upr | df$genes < pb$lwr];
   if(plot) {
-    polygon(c(df$molecules,rev(df$molecules)),c(pb$lwr,rev(pb$upr)),col=adjustcolor(2,alpha=0.1),border = NA)
+    polygon(c(df$molecules,rev(df$molecules)),c(pb$lwr,rev(pb$upr)),col=adjustcolor(2,alpha.f=0.1),border = NA)
     points(df[outliers,],col=2,cex=0.6)
   }
   # set of filtered cells to move forward with
@@ -390,10 +426,10 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
   countMatrix[,valid.cells,drop=FALSE]
 }
 
-#' Get a vector of the names of an object named by the names themselves
-#' @description Get a named vector of the names of an object. This is useful
-#' with lapply when passing names of objects as it ensures that the output list
-#' is also named
+#' Get a vector of the names of an object named by the names themselves. 
+#' This is useful with lapply when passing names of objects as it ensures 
+#' that the output list is also named.
+#' 
 #' @param g an objects on which we can call names()
 #' @return vector with names of object
 #' @export 
@@ -403,9 +439,11 @@ namedNames <- function(g) {
   return(n)
 }
 
+#' @keywords internal
 embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
-  if (!requireNamespace("uwot", quietly=TRUE))
+  if (!requireNamespace("uwot", quietly=TRUE)){
     stop("You need to install package 'uwot' to be able to use UMAP embedding.")
+  }
 
   adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("dgTMatrix")
   vals.per.col <- split(setNames(adj.mat@x, adj.mat@i + 1), adj.mat@j + 1)

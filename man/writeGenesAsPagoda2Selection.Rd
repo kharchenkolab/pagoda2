@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{writeGenesAsPagoda2Selection}
 \alias{writeGenesAsPagoda2Selection}
-\title{writes a list of genes as a gene selection that can be loaded in the web interface}
+\title{Writes a list of genes as a gene selection that can be loaded in the web interface}
 \usage{
 writeGenesAsPagoda2Selection(name, genes, filename)
 }
@@ -13,6 +13,9 @@ writeGenesAsPagoda2Selection(name, genes, filename)
 
 \item{filename}{the filename to save to}
 }
+\value{
+NULL, writes to filepath the list of genes as a gene selection that can be loaded in the web interface
+}
 \description{
-writes a list of genes as a gene selection that can be loaded in the web interfact
+Writes a list of genes as a gene selection that can be loaded in the web interface
 }
