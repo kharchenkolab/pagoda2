@@ -1,2 +1,5 @@
-doc
-Meta
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+pagoda2*.tar.gz

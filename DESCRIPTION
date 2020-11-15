@@ -7,7 +7,6 @@ License: GPL-3
 Copyright: See the file COPYRIGHTS for various pagoda2 copyright details
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.2.1), Matrix, igraph
 biocViews:
 Imports:
     base64enc, 
@@ -33,6 +32,8 @@ Imports:
     stats, 
     urltools,
     utils
+Depends: 
+    R (>= 3.2.1), Matrix, igraph
 RoxygenNote: 7.1.1
 Suggests:
     AnnotationDbi, 
@@ -55,7 +56,10 @@ Suggests:
     robustbase, 
     testthat,
     uwot
-LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
+VignetteBuilder: knitr
+URL: https://github.com/kharchenkolab/pagoda2
+BugReports: https://github.com/kharchenkolab/pagoda2/issues
 NeedsCompilation: yes
+LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
 Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Evan Biederstedt [cre, aut]
 Maintainer: Evan Biederstedt <evan.biederstedt@gmail.com>

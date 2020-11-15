@@ -37,8 +37,8 @@ test_that("basic check of Pagoda2 class", {
     counts <- counts[rowSums(counts)>=10,]
     rownames(counts) <- make.unique(rownames(counts))
     r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
-    expect_equal(dim(counts)[1], 2998)
-    expect_equal(dim(counts)[2], 12693)
+    expect_equal(dim(counts)[1], 12693)
+    expect_equal(dim(counts)[2], 2998)
     r$adjustVariance(plot=TRUE, gam.k=10)
     expect_equal(r$batchNorm, "glm")
     r$calculatePcaReduction(nPcs=50, n.odgenes=3e3)

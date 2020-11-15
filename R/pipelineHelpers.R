@@ -64,14 +64,17 @@ basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, 
 #' Perform extended pagoda2 processing. 
 #' Generate organism specific GO environment and calculate pathway overdispersion.
 #' 
-#' @param p2 the pagoda 2 object 
+#' @param p2 the pagoda2 object 
 #' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
 #' @return list of a pagoda2 object and go.env
 #' @examples
-#' \donttest{
+#' \dontrun{
 #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-#' p2 <- basicP2proc(cm)
-#' extendedP2proc(p2)
+#' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+#' counts <- counts[rowSums(counts)>=10,]
+#' rownames(counts) <- make.unique(rownames(counts))
+#' r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
+#' extendedP2proc(r, organism = 'hs')
 #' }
 #' @export 
 extendedP2proc <- function(p2, organism = 'hs') {
@@ -131,6 +134,8 @@ factorListToMetadata <- function(factor.list, p2=NULL) {
   invisible(metadata)
 }
 
+
+
 #' Generate a pagoda2 web object
 #' 
 #' @param p2 pagoda2 object
@@ -142,12 +147,6 @@ factorListToMetadata <- function(factor.list, p2=NULL) {
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
 #' @param appmetadata pagoda2 web application metadata (default=NULL)
 #' @return a pagoda2 web application
-#' @examples
-#' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-#' p2 <- basicP2proc(cm)
-#' webP2proc(p2)
-#' }
 #' @export 
 webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
                       make.go.sets=TRUE, make.de.sets=TRUE, go.env=NULL,

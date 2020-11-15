@@ -1,10 +1,11 @@
 ## -----------------------------------------------------------------------------
-library(Matrix)
 library(pagoda2)
+library(dplyr)
+library(Matrix)
 library(igraph)
 
 ## -----------------------------------------------------------------------------
-cm <- readRDS(file.path(find.package('pagoda2'), 'extdata', 'sample_BM1.rds'))
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 dim(cm)
 
 ## -----------------------------------------------------------------------------
@@ -131,7 +132,7 @@ appmetadata <- list(apptitle = 'October_Demo_App')
 r$makeGeneKnnGraph(n.cores = 2)
 
 ## -----------------------------------------------------------------------------
-# Make a list for our metadata
+## # Make a list for our metadata
 additionalMetadata <- list()
 ## for Infomap use hue values from 0.1 to 0.5
 additionalMetadata$community <- p2.metadata.from.factor(r$clusters$PCA[['community']], displayname = 'Infomap', s = 0.7, v = 0.8,start = 0.1, end = 0.5)
@@ -156,57 +157,56 @@ p2web <-
   );
 
 ## -----------------------------------------------------------------------------
-# show.app(app=p2web, name='app')
+##  show.app(app=p2web, name='app')
 
 ## -----------------------------------------------------------------------------
-# p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
+##  p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
 
 ## -----------------------------------------------------------------------------
-# saveRDS(r, 'pagoda2object.rds')
+##  saveRDS(r, 'pagoda2object.rds')
 
 ## ----eval=FALSE---------------------------------------------------------------
 #  
-#  # Get your count matrix in sparse or full format
-#  # For example you can use the
-#  # readMM() from the Matrix package or the
-#  # read10xMatrix() function from the github barkasn/nbHelpers package
-#  # This matrix can be sparse matrix object from the Matrix package
+#  ## # Get your count matrix in sparse or full format
+#  ## # For example you can use the
+#  ## # readMM() from the Matrix package or the
+#  ## # read10xMatrix() function from the github barkasn/nbHelpers package
+#  ## # This matrix can be sparse matrix object from the Matrix package
+#  ##
+#  ## # countMatrix <- load_my_count_matrix()
+#  ## # Rows correspond to genes and Columns to cells
+#  ## # If you experience problems with duplicate cells you can use
+#  ## # rownames(countMatrix) <- make.unique(rownames(countMatrix))
 #  
-#  # countMatrix <- load_my_count_matrix()
-#  # Rows correspond to genes and Columns to cells
-#  # If you experience problems with duplicate cells you can use
-#  # rownames(countMatrix) <- make.unique(rownames(countMatrix))
+#  ## p2 <- basicP2proc(countMatrix, n.cores = 4) ## 'multilevel' run here
 #  
-#  p2 <- basicP2proc(countMatrix, n.cores = 4) ## 'multilevel' run here
+#  ## p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
+#  ## p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap')
 #  
-#  p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
-#  p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap')
+#  ## ext.res <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
 #  
-#  ext.res <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
+#  ## p2 <- ext.res$p2
+#  ## go.env <- ext.res$go.env
+#  ## rm(ext.res)
 #  
+#  ## # Make cell metadata from the default clusters generated during basicP2proc()
+#  ## # This is optional, metadata.forweb can also be NULL
+#  ## metadata.listfactors <- list(
+#  ##     infomap = p2$clusters$PCA$infomap,
+#  ##     multilevel = p2$clusters$PCA$multilevel,
+#  ##     walktrap = p2$clusters$PCA$walktrap
+#  ## );
+#  ## metadata.forweb <- factorListToMetadata(metadata.listfactors)
 #  
-#  p2 <- ext.res$p2
-#  go.env <- ext.res$go.env
-#  rm(ext.res)
+#  ## # Make the web object
+#  ## p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application', go.env = go.env)
 #  
-#  # Make cell metadata from the default clusters generated during basicP2proc()
-#  # This is optional, metadata.forweb can also be NULL
-#  metadata.listfactors <- list(
-#      infomap = p2$clusters$PCA$infomap,
-#      multilevel = p2$clusters$PCA$multilevel,
-#      walktrap = p2$clusters$PCA$walktrap
-#  );
-#  metadata.forweb <- factorListToMetadata(metadata.listfactors)
+#  ## # Serialize to file
+#  ## # The serialisedApp.bin file will now contain all the information
+#  ## # required to view the files via the web browser
+#  ## p2.webobject$serializeToStaticFast('serialisedApp.bin');
 #  
-#  # Make the web object
-#  p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application', go.env = go.env)
-#  
-#  # Serialize to file
-#  # The serialisedApp.bin file will now contain all the information
-#  # required to view the files via the web browser
-#  p2.webobject$serializeToStaticFast('serialisedApp.bin');
-#  
-#  # Alternatively you can view your dataset from the R session
-#  # show.app(p2.webobject, browse = TRUE)
+#  ## # Alternatively you can view your dataset from the R session
+#  ## # show.app(p2.webobject, browse = TRUE)
 #  
 

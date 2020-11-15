@@ -1,10 +1,8 @@
-doc
-pagoda2.Rproj
+^.*\.Rproj$
+^\.Rproj\.user$
 .travis.yml
 CHANGELOG.md
-pagoda2*.tar.gz
-data-raw
-docker
-
+^LICENSE\.md$
+^docker$
 ^doc$
 ^Meta$
