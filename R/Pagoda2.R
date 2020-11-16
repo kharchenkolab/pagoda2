@@ -11,48 +11,68 @@
 #' @importFrom magrittr %>%
 NULL
 
-#' A Reference Class, which holds and process single cell RNA-seq data.
-#'
-#' @rdname Pagoda2
-#' @field counts Gene count matrix, normalized on total counts
-#' @field clusters Results of clustering
-#' @field graphs Graph representations of the dataset
-#' @field reductions Results of reductions, e.g. PCA
-#' @field embeddings Results of visualization algorithms, t-SNE or largeVis
-#' @field diffgenes Lists of differentially expressed genes
-#' @field pathways Pathway information
-#' @field n.cores Number of cores, used for the analyses
-#' @field misc List of miscelaneous structures
-#' @field batch Batch factor for the dataset
-#' @field modelType Plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies)
-#' @field verbose Verbosity level
-#' @field depth Cell size factor
-#' @field genegraphs Slot to store graphical representations in gene space (i.e. gene kNN graphs)
-#' @exportClass Pagoda2
+
+#' @title Pagoda2 R6 class
+#' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
+#' @param type string Data type (default='counts'). Currenlty only 'counts' supported.
+#' @param n.cores Number of cores, used for the analyses
+#' @param verbose boolean Whether to give verbose output (default=TRUE)
+#' @param min.cells.per.gene
+#' @param trim (default=round(min.cells.per.gene/2))
+#' @param clusterType
+#' @param groups
 #' @export Pagoda2
-Pagoda2 <- setRefClass(
-  "Pagoda2",
+Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
+  public = list(
+    #' @field counts Gene count matrix, normalized on total counts (default=NULL)
+    counts = NULL,
 
-  fields=c('counts','clusters','graphs','reductions','embeddings','diffgenes',
-           'pathways','n.cores','misc','batch','modelType','verbose','depth','batchNorm','mat','genegraphs'),
+    #' @field clusters Results of clustering (default=list())
+    clusters = list(),
 
-  methods = list(
+    #' @field graphs Graph representations of the dataset (default=list())
+    graphs = list(),
+
+    #' @field reductions Results of reductions, e.g. PCA (default=list())
+    reductions = list(),
+
+    #' @field embeddings Results of visualization algorithms, t-SNE or largeVis (default=list())
+    embeddings = list(),
+
+    #' @field diffgenes Lists of differentially expressed genes (default=list())
+    diffgenes = list(),
+
+    #' @field pathways Pathway information (default=list())
+    pathways = list(),
+
+    #' @field n.cores number of cores (default=1)
+    n.cores = 1,
+
+    #' @field misc list with additional info (default=list())
+    misc = list(),
+    
+    #' @field batch Batch factor for the dataset (default=NULL)
+    batch = NULL,
+
+    #' @field genegraphs Slot to store graphical representations in gene space (i.e. gene kNN graphs) (default=list())
+    genegraphs = list(),
+
+
+    #' @description Initialize Conos class
+    #'
+    #' @param modelType Plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies) (default='plain')
+    #' @param min.cells.per.gene integer (default=0)
+    #' @param min.transcripts.per.cell integer (default=10)
+    #' @param lib.sizes
+    #' @param log.scale boolean (default=TRUE)
+    #' @param keep.genes
+    #' @return a new 'Pagoda2' object
     initialize=function(x, ..., modelType='plain', batchNorm='glm',
                         n.cores=parallel::detectCores(logical=FALSE), verbose=TRUE,
-                        min.cells.per.gene=0, trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10,
-                        lib.sizes=NULL, log.scale=TRUE, keep.genes = NULL) {
-      # # init all the output lists
-      embeddings <<- list();
-      graphs <<- list();
-      diffgenes <<- list();
-      reductions <<-list();
-      clusters <<- list();
-      pathways <<- list();
-      genegraphs <<- list();
+                        min.cells.per.gene=0, trim=round(min.cells.per.gene/2), 
+                        min.transcripts.per.cell=10,
+                        lib.sizes=NULL, log.scale=TRUE, keep.genes=NULL) {
       misc <<-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim);
-      batch <<- NULL;
-      counts <<- NULL;
-
 
       if(!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
         callSuper(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores);
@@ -75,16 +95,23 @@ Pagoda2 <- setRefClass(
       }
     },
 
-    # provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
+    #' @description Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
+    #'
+    #' @param countMatrix
+    #' @param depthScale numeric (defaul=1e3)
+    #' @param lib.sizes (default=NULL)
+    #' @param log.scale boolean (default=FALSE)
+    #' @param keep.genes (default=NULL)
+    #' @return count matrix 
     setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=30,
                             trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10, 
-                            lib.sizes=NULL, log.scale=FALSE, keep.genes = NULL) {
+                            lib.sizes=NULL, log.scale=FALSE, keep.genes=NULL) {
       # check names
       if(any(duplicated(rownames(countMatrix)))) {
-        stop("duplicate gene names are not allowed - please reduce")
+        stop("Duplicate gene names are not allowed - please reduce")
       }
       if(any(duplicated(colnames(countMatrix)))) {
-        stop("duplicate cell names are not allowed - please reduce")
+        stop("Duplicate cell names are not allowed - please reduce")
       }
       
       if(any(is.na(rownames(countMatrix)))) {
@@ -94,7 +121,7 @@ Pagoda2 <- setRefClass(
         stop("NA cell names are not allowed - please fix")
       }
       
-      if(ncol(countMatrix)<3) { stop("too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
+      if(ncol(countMatrix)<3) { stop("Too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
       
       counts <<- t(countMatrix)
       
@@ -111,7 +138,7 @@ Pagoda2 <- setRefClass(
 
       if(!is.null(batch)) {
         if(!all(colnames(countMatrix) %in% names(batch))) { 
-          stop("the supplied batch vector doesn't contain all the cells in its names attribute")
+          stop("The supplied batch vector doesn't contain all the cells in its names attribute")
         }
         colBatch <- as.factor(batch[colnames(countMatrix)])
         batch <<- colBatch;
@@ -224,8 +251,25 @@ Pagoda2 <- setRefClass(
       if(verbose) message("done.\n")
     },
 
-    # adjust variance of the residual matrix, determine overdispersed sites
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=(.self$modelType=='raw'), use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = .self$n.cores) {
+    #' @description Adjust variance of the residual matrix, determine overdispersed sites
+    #'
+    #' @param gam.k
+    #' @param alpha
+    #' @param plot boolean 
+    #' @param use.raw.variance
+    #' @param use.unadjusted.pvals
+    #' @param do.par
+    #' @param max.adjusted.variance
+    #' @param min.adjusted.variance
+    #' @param cells
+    #' @param verbose
+    #' @param min.gene.cells
+    #' @param persist
+    #' @param n.cores    
+    #' @return 
+    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=(.self$modelType=='raw'), 
+      use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
+      cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = .self$n.cores) {
       #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if(!is.null(cells)) { # translate cells into a rowSel boolean vector
         if(!(is.logical(cells) && length(cells)==nrow(counts))) {
@@ -316,9 +360,23 @@ Pagoda2 <- setRefClass(
       if(verbose) message("done.\n")
       return(invisible(df));
     },
-    # make a Knn graph
-    # note: for reproducibility, set.seed() and set n.cores=1
-    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,n.cores=.self$n.cores,distance='cosine',center=TRUE,x=NULL,verbose=TRUE,p=NULL, var.scale=(type == "counts")) {
+
+    #' @description Create Knn graph
+    #' 
+    #' @param k
+    #' @param nrand
+    #' @param weight.type
+    #' @param odgenes
+    #' @param distance
+    #' @param center
+    #' @param x
+    #' @param verbose
+    #' @param p
+    #' @param var.scale
+    #' @return
+    makeKnnGraph=function(k=30,nrand=1e3,type='counts',weight.type='1m',odgenes=NULL,
+      n.cores=.self$n.cores, distance='cosine', center=TRUE, x=NULL, verbose=TRUE, p=NULL, 
+      var.scale=(type == "counts")) {
       ## convert "euclidean" to "L2"
       if (tolower(distance)=="euclidean"){
         distance <- "L2"
@@ -411,8 +469,24 @@ Pagoda2 <- setRefClass(
       }
       return(invisible(g))
     },
-    # calculate clusters based on the kNN graph
-    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, return.details=FALSE, ...) {
+
+    #' @description Calculate clusters based on the kNN graph
+    #' 
+    #' @param method
+    #' @param name
+    #' @param subsampling.rate
+    #' @param n.subsamplings
+    #' @param cluster.stability.threshold
+    #' @param n.cores
+    #' @param g
+    #' @param min.cluster.size
+    #' @param persist
+    #' @param return.details
+    #' @param ...
+    #' @return
+    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', 
+      subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=.self$n.cores, 
+      g=NULL, min.cluster.size=1, persist=TRUE, return.details=FALSE, ...) {
 
       if(is.null(g)) {
         if(is.null(graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
@@ -455,14 +529,25 @@ Pagoda2 <- setRefClass(
       return(invisible(cls))
     },
 
+    #' @keywords internal
     geneKnnbyPCA = function() {
       warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
       .self$makeGeneKnnGraph();
     },
 
-    # take a given clustering and generate a hierarchical clustering
-    # TODO: add support for innerOrder
-    getHierarchicalDiffExpressionAspects = function(type='counts',groups=NULL,clusterName=NULL,method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=.self$n.cores, min.set.size=5 ) {
+    #' @description Take a given clustering and generate a hierarchical clustering
+    #' 
+    #' @param groups
+    #' @param clusterName
+    #' @param method
+    #' @param dist
+    #' @param persist
+    #' @param z.threshold
+    #' @param min.set.size
+    #' @return
+    getHierarchicalDiffExpressionAspects = function(type='counts',groups=NULL,clusterName=NULL,
+      method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, 
+      n.cores=.self$n.cores, min.set.size=5 ) {
       if(type=='counts') {
         x <- counts;
       } else {
@@ -587,9 +672,18 @@ Pagoda2 <- setRefClass(
       return(invisible(tamr))
     },
 
-    # Calculates gene Knn network for gene similarity
-    # Author: Simon Steiger
-    makeGeneKnnGraph = function(nPcs = 100, scale =TRUE , center=TRUE, fastpath =TRUE, maxit =1000, k = 30, n.cores = .self$n.cores, verbose =TRUE) {
+    #' @description Calculates gene Knn network for gene similarity
+    #'
+    #' @author Simon Steiger
+    #' @param nPcs integer (default=100)
+    #' @param scale boolean (default=TRUE)
+    #' @param center
+    #' @param fastpath
+    #' @param maxit
+    #' @param k
+    #' @return
+    makeGeneKnnGraph = function(nPcs = 100, scale =TRUE, center=TRUE, fastpath =TRUE, 
+      maxit =1000, k = 30, n.cores = .self$n.cores, verbose =TRUE) {
        # Transpose first
        x <- t(counts);
 
@@ -633,7 +727,14 @@ Pagoda2 <- setRefClass(
       genegraphs$graph <<- df;
     },
 
-    # calculate density-based clusters
+    #' @description Calculate density-based clusters
+    #' 
+    #' @param embeddingType
+    #' @param name
+    #' @param v
+    #' @param s
+    #' @param ...
+    #' @return
     getDensityClusters=function(type='counts', embeddingType=NULL, name='density', v=0.7, s=1, ...) {
       if (!requireNamespace("dbscan", quietly = TRUE)) {
         stop("Package \"dbscan\" needed for this function to work. Please install it.", call. = FALSE)
@@ -660,22 +761,24 @@ Pagoda2 <- setRefClass(
     },
     # determine subpopulation-specific genes
 
-    getDifferentialGenes=function(type='counts',clusterType=NULL,groups=NULL,name='customClustering', z.threshold=3,upregulated.only=FALSE,verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE) {
-      "Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test\n
-       - type data type (currently only default 'counts' is supported)\n
-       - clusterType optional cluster type to use as a group-defining factor\n
-       - groups explicit cell group specification - a named cell factor (use NA in the factor to exclude cells from the comparison)\n
-       - name name slot to store the results in\n
-       - z.threshold minimal absolute Z score (adjusted) to report\n
-       - upregulated.only whether to report only genes that are expressed significantly higher in each group\n
-       - verbose verbose flag\n
-       return a list, with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels); Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest; M - log2 fold change; highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group; fe - fraction of cells in a given group having non-zero expression level of a given gene;\n
-       Examples:\n\n
-         result <- r$getDifferentialGenes(groups=r$clusters$PCA$multilevel);\n
-         str(r$diffgenes)"
-
+    #' @description Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
+    #' 
+    #' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
+    #' @param groups Data type (default='counts'). Currenlty only 'counts' supported.
+    #' @param name string Slot to store the results in (default='customClustering')
+    #' @param z.threshold numeric Minimal absolute Z score (adjusted) to report (default=3)
+    #' @param upregulated.only boolean Whether to report only genes that are expressed significantly higher in each group (default=FALSE)
+    #' @param verbose boolean Whether to give verbose output (default=FALSE)
+    #' @param append.specificity.metrics boolean
+    #' @param append.auc boolean
+    #' @return list with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels) 
+    #'     Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: 
+    #'     Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest
+    #'     M - log2 fold change
+    #'     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
+    #'     fe - fraction of cells in a given group having non-zero expression level of a given gene
+    getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE) {
       # restrict counts to the cells for which non-NA value has been specified in groups
-
       if(is.null(groups)) {
         # look up the clustering based on a specified type
         if(is.null(clusterType)) {
@@ -776,7 +879,23 @@ Pagoda2 <- setRefClass(
       return(invisible(ds))
     },
 
-    plotDiffGeneHeatmap=function(type='counts',clusterType=NULL, groups=NULL, n.genes=100, z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
+    #' @description Plot heatmap of DE results
+    #' 
+    #' @param clusterType
+    #' @param groups
+    #' @param n.genes
+    #' @param z.score
+    #' @param gradient.range.quantile
+    #' @param inner.clustering
+    #' @param gradientPalette
+    #' @param v
+    #' @param s
+    #' @param box boolean (default=TRUE)
+    #' @param drawGroupNames (default=FALSE)
+    #' @return 
+    plotDiffGeneHeatmap=function(type='counts',clusterType=NULL, groups=NULL, n.genes=100, 
+      z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
+      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
       if(!is.null(clusterType)) {
         x <- diffgenes[[type]][[clusterType]];
         if(is.null(x)) { stop("differential genes for the specified cluster type haven't been calculated") }
@@ -885,7 +1004,9 @@ Pagoda2 <- setRefClass(
       abline(h=cumsum(rev(unlist(lapply(clgo[clclo],length)))),col=1,lty=3)
     },
 
-    # recalculate library sizes using robust regression within clusters
+    #' @description Recalculate library sizes using robust regression within clusters
+    #' 
+    #' @return
     getRefinedLibSizes=function(clusterType=NULL, groups=NULL,type='counts') {
       if (!requireNamespace("robustbase", quietly = TRUE)) {
         stop("Package \"robustbase\" needed for this function to work. Please install it.", call. = FALSE)
@@ -935,8 +1056,27 @@ Pagoda2 <- setRefClass(
       return(invisible(lib.sizes))
     },
 
-    # plot heatmap for a given set of genes
-    plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, z.score=2, gradient.range.quantile=0.95, cluster.genes=FALSE, inner.clustering=FALSE, gradientPalette=NULL, v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(counts)/1024)), ... ) {
+    #' @description Plot heatmap for a given set of genes
+    #' 
+    #' @param genes
+    #' @param clusterType
+    #' @param groups
+    #' @param z.score
+    #' @param grandient.range.quantile
+    #' @param cluster.genes
+    #' @param inner.clustering
+    #' @param gradientPalette
+    #' @param v
+    #' @param s
+    #' @param box
+    #' @param drawGroupNames
+    #' @param useRaster
+    #' @param smooth.span
+    #' @param ...
+    #' @return
+    plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, z.score=2, 
+      gradient.range.quantile=0.95, cluster.genes=FALSE, inner.clustering=FALSE, gradientPalette=NULL, 
+      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(counts)/1024)), ... ) {
       if(is.null(groups)) {
         # look up the clustering based on a specified type
         if(is.null(clusterType)) {
@@ -1032,7 +1172,11 @@ Pagoda2 <- setRefClass(
       }
     },
 
-    # show embedding
+    #' @description Show embedding
+    #' 
+    #' @param type
+    #' @param 
+    #' @return 
     plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL, groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
       if (is.null(type)) {
         if ('counts' %in% names(embeddings)) {
@@ -1073,7 +1217,13 @@ Pagoda2 <- setRefClass(
 
       sccore::embeddingPlot(emb, groups=groups, colors=colors, plot.theme=plot.theme, ...)
     },
-    # get overdispersed genes
+
+    #' @description Get overdispersed genes
+    #' 
+    #' @param n.odgenes
+    #' @param alpha
+    #' @param use.unadjusted.pvals boolean (default=FALSE)
+    #' @return 
     getOdGenes=function(n.odgenes=NULL,alpha=5e-2,use.unadjusted.pvals=FALSE) {
       if(is.null(misc[['varinfo']])) { stop("please run adjustVariance first")}
       if(is.null(n.odgenes)) { #return according to alpha
@@ -1087,6 +1237,11 @@ Pagoda2 <- setRefClass(
       }
     },
 
+    #' @description Return variance-normalized matrix for specified genes or a number of OD genes
+    #'
+    #' @param genes explicit vector of genes to return (default=NULL)
+    #' @param n.odgenes Whether a certain number of top overdispersed genes should be used (default=NULL - all significant ones); ignored if genes are passed
+    #' @return cell by gene matrix
     getNormalizedExpressionMatrix=function(n.odgenes=NULL,genes=NULL) {
       "Return variance-normalized matrix for specified genes or a number of OD genes\n
          - genes explicit vector of genes to return
@@ -1100,21 +1255,21 @@ Pagoda2 <- setRefClass(
       x
     },
     
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
-      "Calculate PCA reduction of the data\n
-       - nPcs number of PCs\n
-       - type dataset view to reduce (counts by default, but can specify a name of an existing reduction)\n
-       - name name for the PCA reduction to be created\n
-       - use.odgenes whether pre-calculated set of overdispersed genes should be used (default=TRUE)\n
-       - n.odgenes whether a certain number of top overdispersed genes should be used\n
-       - odgenes explicitly specify a set of genes to use for the reduction\n
-       - center should data be centerred prior to PCA (default=TRUE)\n
-       - cells optional subset of cells on which PCA should be ran\n
-       - fastpath use C implementation for speedup\n
-       - maxit maximum number of irlba iterations to use\n
-       - verbose verbose\n
-       - ... additional arguments forwarded to irlba::irlba\n
-       return invisible PCA result (the reduction itself is saved in $reductions[[name]])"
+    #' @description Calculate PCA reduction of the data
+    #' 
+    #' @param nPcs Number of PCs (default=20)
+    #' @param type Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')
+    #' @param name Name for the PCA reduction to be created (default='PCA')
+    #' @param use.odgenes boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)
+    #' @param n.odgenes Whether a certain number of top overdispersed genes should be used (default=NULL)
+    #' @param odgenes Explicitly specify a set of genes to use for the reduction (default=NULL)
+    #' @param center boolean Whether data should be centered prior to PCA (default=TRUE)
+    #' @param cells optional subset of cells on which PCA should be run (default=NULL)
+    #' @param fastpath boolean Use C implementation for speedup (default=TRUE)
+    #' @param ... additional arguments forwarded to irlba::irlba
+    #' @return Invisible PCA result (the reduction itself is saved in $reductions[[name]])"
+    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, 
+      odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
 
       if(type=='counts') {
         x <- counts;
@@ -1198,9 +1353,26 @@ Pagoda2 <- setRefClass(
       return(invisible(pcas))
     },
 
-    # will reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), and
-    # a set of recursively determined odgenes based on a given group (or a cluster info)
-    expandOdGenes=function(type='counts', clusterType=NULL, groups=NULL , min.group.size=30, od.alpha=1e-1, use.odgenes=FALSE, n.odgenes=NULL, odgenes=NULL, n.odgene.multiplier=1, gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=10,max.odgenes=Inf,take.top.odgenes=TRUE, recursive=TRUE) {
+    #' @description Reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
+    #'     and a set of recursively determined odgenes based on a given group (or a cluster info)
+    #' 
+    #' @param clusterType
+    #' @param groups
+    #' @param min.group.size
+    #' @param od.alpha
+    #' @param use.odgenes boolean (default=FALSE)
+    #' @param n.odgenes (default=NULL)
+    #' @param odgenes (default=NULL)
+    #' @param n.odgene.multiplier numeric (default=1)
+    #' @param gam.k
+    #' @param min.odgenes
+    #' @param max.odgenes
+    #' @param take.top.odgenes
+    #' @param recursive
+    #' @return 
+    expandOdGenes=function(type='counts', clusterType=NULL, groups=NULL , min.group.size=30, od.alpha=1e-1, 
+      use.odgenes=FALSE, n.odgenes=NULL, odgenes=NULL, n.odgene.multiplier=1, gam.k=10,verbose=FALSE,n.cores=.self$n.cores,
+      min.odgenes=10,max.odgenes=Inf,take.top.odgenes=TRUE, recursive=TRUE) {
       # determine groups
       if(is.null(groups)) {
         # look up the clustering based on a specified type
@@ -1307,7 +1479,34 @@ Pagoda2 <- setRefClass(
       return(invisible(odgenes));
     },
 
-    localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL , k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,take.top.odgenes=FALSE, recursive=TRUE,euclidean=FALSE,perplexity=k,debug=FALSE,return.pca=FALSE,skip.pca=FALSE) {
+    #' @description localPcaKnn description 
+    #' 
+    #' @param nPcs
+    #' @param clusterType
+    #' @param groups
+    #' @param k
+    #' @param b
+    #' @param a
+    #' @param min.group.size
+    #' @param name
+    #' @param baseReduction
+    #' @param od.alpha
+    #' @param n.odgenes
+    #' @param gam.k
+    #' @param min.odgenes
+    #' @param take.top.odgenes
+    #' @param recursive
+    #' @param euclidena
+    #' @param perplexity
+    #' @param debug
+    #' @param return.pca
+    #' @param skip.pca
+    #' @return 
+    localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL,
+     k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, 
+     n.odgenes=NULL,gam.k=10,verbose=FALSE,n.cores=.self$n.cores,min.odgenes=5,
+     take.top.odgenes=FALSE, recursive=TRUE,euclidean=FALSE,perplexity=k,debug=FALSE,
+     return.pca=FALSE,skip.pca=FALSE) {
       if(type=='counts') {
         x <- counts;
       } else {
@@ -1546,11 +1745,32 @@ Pagoda2 <- setRefClass(
       return(invisible(list(d=d,m=m,gpcs=gpcs)))
     },
 
-
-    # test pathway overdispersion
-    # this is a compressed version of the PAGODA1 approach
-    # env - pathway to gene environment
-    testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL,adjusted.pvalues=TRUE,z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE,name='pathwayPCA',correlation.distance.threshold=0.2,loading.distance.threshold=0.01,top.aspects=Inf,recalculate.pca=FALSE,save.pca=TRUE) {
+    ## env - pathway to gene environment
+    #' @description Test pathway overdispersion. Not that this is a compressed version of the PAGODA1 approach.
+    #' 
+    #' @param setenv
+    #' @param max.pathway.size
+    #' @param min.pathway.size
+    #' @param n.randomizations
+    #' @param score.alpha
+    #' @param plot
+    #' @param cells
+    #' @param adjusted.pvalues
+    #' @param z.score
+    #' @param lower.tail
+    #' @param use.oe.scale
+    #' @param return.table
+    #' @param name
+    #' @param correlation.distance.threshold
+    #' @param loading.distance.threshold
+    #' @param top.aspects
+    #' @param recalculate.pca
+    #' @param save.pca
+    #' @return
+    testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, 
+      n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL,adjusted.pvalues=TRUE,
+      z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE,name='pathwayPCA',
+      correlation.distance.threshold=0.2,loading.distance.threshold=0.01,top.aspects=Inf,recalculate.pca=FALSE,save.pca=TRUE) {
       nPcs <- 1;
 
       if(type=='counts') {
@@ -1758,8 +1978,23 @@ Pagoda2 <- setRefClass(
       return(invisible(tam3))
     },
 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, 
-                          distance='pearson', n.cores = .self$n.cores, n.sgd.cores=n.cores, ... ) {
+    #' @description Return embedding
+    #' 
+    #' @param embeddingType
+    #' @param name
+    #' @param dims
+    #' @param M
+    #' @param gamma
+    #' @param perplexity
+    #' @param sgd_batches
+    #' @param diffusion.steps
+    #' @param diffusion.power
+    #' @param distance
+    #' @param n.sgd.cores
+    #' @param ...    
+    #' @return 
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, 
+      sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = .self$n.cores, n.sgd.cores=n.cores, ... ) {
       
       if(dims<1) stop("dimensions must be >=1")
       if(type=='counts') {
@@ -1847,8 +2082,9 @@ Pagoda2 <- setRefClass(
         rownames(emb) <- rownames(x); colnames(emb) <- c("D1","D2")
         embeddings[[type]][[name]] <<- emb;
       } else if (embeddingType == "UMAP") {
-        if (!requireNamespace("uwot", quietly=TRUE))
+        if (!requireNamespace("uwot", quietly=TRUE)){
           stop("You need to install package 'uwot' to be able to use UMAP embedding.")
+        }
         
         distance <- switch (distance, pearson = "cosine", L2 = "euclidean", distance)
         
@@ -1861,10 +2097,10 @@ Pagoda2 <- setRefClass(
         emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         embeddings[[type]][[name]] <<- emb;
       } else {
-        stop('unknown embeddingType ',embeddingType,' specified');
+        stop('Unknown embeddingType ',embeddingType,' specified');
       }
 
-      return(invisible(emb));
+      return(invisible(emb))
      }
   )
-);
+)

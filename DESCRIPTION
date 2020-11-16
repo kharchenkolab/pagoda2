@@ -25,6 +25,7 @@ Imports:
     Rcpp,
     rjson, 
     rlang,
+    R6,
     RMTstat, 
     Rook, 
     Rtsne, 
