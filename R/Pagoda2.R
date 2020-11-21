@@ -28,7 +28,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @field counts Gene count matrix, normalized on total counts (default=NULL)
     counts = NULL,
 
-    ## 'raw', 'linearObs'
+    #' @field modelType 'plain', 'raw', 'linearObs'
     modelType = NULL,
 
     #' @field clusters Results of clustering (default=list())
@@ -45,9 +45,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @field diffgenes Lists of differentially expressed genes (default=list())
     diffgenes = list(),
-
-    #' @field pathways Pathway information (default=list())
-    pathways = list(),
 
     #' @field n.cores number of cores (default=1)
     n.cores = 1,
@@ -356,8 +353,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
         ## convert to log10 from natural log() by factor log10(exp(1))
         smoothScatter(log10(exp(1))*df$m,log10(exp(1))*df$v,main='',xlab='log10[ magnitude ]',ylab='log10[ variance ]')
-        grid <- seq(min(log10(exp(1))*df$m[vi]),max(log10(exp(1))*df$m[vi]),length.out=1000)
-        lines(grid,predict(m,newdata=data.frame(m=grid)),col="blue")
+        grid <- seq(min(log10(exp(1))*df$m[vi]), max(log10(exp(1))*df$m[vi]), length.out=1000)
+        lines(grid, predict(m, newdata=data.frame(m=grid)), col="blue")
         ## NOTE: overdispersed genes ods calcuated with log()-based corrections...
         if(length(ods)>0) {
           points(log10(exp(1))*df$m[ods],log10(exp(1))*df$v[ods],pch='.',col=2,cex=1)
@@ -397,8 +394,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           x <- counts;
           # Scale Raw counts
         } else {
-          if(type %in% names(reductions)) {
-            x <- reductions[[type]];
+          if(type %in% names(self$reductions)) {
+            x <- self$reductions[[type]];
           } else {
             stop('Specified reduction does not exist');
           }
@@ -500,7 +497,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (is.null(g)) {
         if (is.null(self$graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
-        g <- graphs[[type]];
+        g <- self$graphs[[type]];
       }
 
       if(is.null(method)) {
@@ -555,13 +552,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param z.threshold
     #' @param min.set.size
     #' @return
-    getHierarchicalDiffExpressionAspects = function(type='counts',groups=NULL,clusterName=NULL,
+    getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
       method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, 
       n.cores=self$n.cores, min.set.size=5 ) {
       if(type=='counts') {
-        x <- counts;
+        x <- self$counts
       } else {
-        x <- reductions[[type]];
+        x <- self$reductions[[type]]
       }
       if(is.null(groups)) {
         # retrieve clustering
@@ -734,7 +731,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # Turn into a dataframe, convert from correlation distance into weight
       df <- data.frame('from'=rownames(pcas)[xn@i+1],'to'=rownames(pcas)[xn@j+1],'w'=pmax(1-xn@x,0),stringsAsFactors=FALSE)
 
-      genegraphs$graph <<- df;
+      self$genegraphs$graph <<- df;
     },
 
     #' @description Calculate density-based clusters
@@ -750,15 +747,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("Package \"dbscan\" needed for this function to work. Please install it.", call. = FALSE)
       }
 
-      if(is.null(embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
+      if(is.null(self$embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
       if(is.null(embeddingType)) {
         # take the first one
-        embeddingType <- names(embeddings[[type]])[1]
+        embeddingType <- names(self$embeddings[[type]])[1]
         if(verbose) message("using ",embeddingType," embedding\n")
-        emb <- embeddings[[type]][[embeddingType]]
+        emb <- self$embeddings[[type]][[embeddingType]]
 
       } else {
-        emb <- embeddings[[type]][[embeddingType]]
+        emb <- self$embeddings[[type]][[embeddingType]]
         if(is.null(emb)) { stop("embedding ",embeddingType," for type ", type," doesn't exist")}
       }
 
@@ -878,12 +875,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if(is.null(groups)) {
         if(is.null(clusterType)) {
-          diffgenes[[type]][[names(self$clusters[[type]])[1]]] <<- ds;
+          self$diffgenes[[type]][[names(self$clusters[[type]])[1]]] <<- ds;
         } else {
-          diffgenes[[type]][[clusterType]] <<- ds;
+          self$diffgenes[[type]][[clusterType]] <<- ds;
         }
       } else {
-        diffgenes[[type]][[name]] <<- ds;
+        self$diffgenes[[type]][[name]] <<- ds;
       }
 
       return(invisible(ds))
@@ -907,10 +904,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
       v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
       if(!is.null(clusterType)) {
-        x <- diffgenes[[type]][[clusterType]];
+        x <- self$diffgenes[[type]][[clusterType]];
         if(is.null(x)) { stop("differential genes for the specified cluster type haven't been calculated") }
       } else {
-        x <- diffgenes[[type]][[1]];
+        x <- self$diffgenes[[type]][[1]];
         if(is.null(x)) { stop("no differential genes found for data type ",type) }
       }
 
@@ -1189,23 +1186,23 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @return 
     plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL, groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
       if (is.null(type)) {
-        if ('counts' %in% names(embeddings)) {
+        if ('counts' %in% names(self$embeddings)) {
           type <- 'counts'
-        } else if (length(embeddings) > 0) {
-          type <- names(embeddings)[1]
+        } else if (length(self$embeddings) > 0) {
+          type <- names(self$embeddings)[1]
         } else {
-          stop("first, generate an embedding")
+          stop("First, generate an embedding")
         }
       }
 
-      if(is.null(embeddings[[type]]))
-        stop("first, generate embeddings for type ",type)
+      if (is.null(self$embeddings[[type]]))
+        stop("First, generate embeddings for type ",type)
 
-      if(is.null(embeddingType)) {
+      if (is.null(embeddingType)) {
         embeddingType <- 1 # take the first one
       }
       
-      emb <- embeddings[[type]][[embeddingType]]
+      emb <- self$embeddings[[type]][[embeddingType]]
       
       if (!is.null(gene)) {
         if (!(gene %in% colnames(counts)))
@@ -1235,15 +1232,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param use.unadjusted.pvals boolean (default=FALSE)
     #' @return 
     getOdGenes=function(n.odgenes=NULL,alpha=5e-2,use.unadjusted.pvals=FALSE) {
-      if(is.null(misc[['varinfo']])) { stop("please run adjustVariance first")}
-      if(is.null(n.odgenes)) { #return according to alpha
-        if(use.unadjusted.pvals) {
-          rownames(misc[['varinfo']])[misc[['varinfo']]$lp <= log(alpha)]
+      if (is.null(self$misc[['varinfo']])) { stop("please run adjustVariance first")}
+      if (is.null(n.odgenes)) { #return according to alpha
+        if (use.unadjusted.pvals) {
+          rownames(self$misc[['varinfo']])[self$misc[['varinfo']]$lp <= log(alpha)]
         } else {
-          rownames(misc[['varinfo']])[misc[['varinfo']]$lpa <= log(alpha)]
+          rownames(self$misc[['varinfo']])[self$misc[['varinfo']]$lpa <= log(alpha)]
         }
       } else { # return top n.odgenes sites
-        rownames(misc[['varinfo']])[(order(misc[['varinfo']]$lp,decreasing=FALSE)[1:min(ncol(counts),n.odgenes)])]
+        rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp, decreasing=FALSE)[1:min(ncol(counts),n.odgenes)])]
       }
     },
 
@@ -1281,11 +1278,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, 
       odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
 
-      if(type=='counts') {
-        x <- counts;
+      if (type=='counts') {
+        x <- self$counts
       } else {
-        if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
-        x <- reductions[[type]]
+        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        x <- self$reductions[[type]]
       }
       if((use.odgenes || !is.null(n.odgenes)) && is.null(odgenes)) {
         if(is.null(misc[['odgenes']] )) { stop("please run adjustVariance() first")}
@@ -1354,7 +1351,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #pcas <- pcas[,-1]
       #pcas <- scde::winsorize.matrix(pcas,0.1)
       if(verbose) message(' done\n')
-      reductions[[name]] <<- pcas;
+      self$reductions[[name]] <<- pcas;
       ## nIcs <- nPcs;
       ## a <- ica.R.def(t(pcas),nIcs,tol=1e-3,fun='logcosh',maxit=200,verbose=T,alpha=1,w.init=matrix(rnorm(nIcs*nPcs),nIcs,nPcs))
       ## reductions[['ICA']] <<- as.matrix( x %*% pcs$v %*% a);
@@ -1518,10 +1515,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
      take.top.odgenes=FALSE, recursive=TRUE,euclidean=FALSE,perplexity=k,debug=FALSE,
      return.pca=FALSE,skip.pca=FALSE) {
       if(type=='counts') {
-        x <- counts;
+        x <- self$counts
       } else {
-        if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
-        x <- reductions[[type]]
+        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        x <- self$reductions[[type]]
       }
 
 
@@ -1535,8 +1532,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
-        groups <- as.factor(groups[names(groups) %in% rownames(x)]);
-        groups <- droplevels(groups);
+        groups <- as.factor(groups[names(groups) %in% rownames(x)])
+        groups <- droplevels(groups)
 
       }
       if(min.group.size>1) { groups[groups %in% levels(groups)[unlist(tapply(groups,groups,length))<min.group.size]] <- NA; groups <- droplevels(groups); }
@@ -1746,7 +1743,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       emb <- Rtsne::Rtsne(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores)$Y;
       rownames(emb) <- colnames(d)
-      embeddings[[type]][[name]] <<- emb;
+      self$embeddings[[type]][[name]] <<- emb;
 
       # calculate cell-cell distance, considering weighting
 
@@ -1784,12 +1781,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       nPcs <- 1;
 
       if(type=='counts') {
-        x <- counts;
+        x <- self$counts
         # apply scaling if using raw counts
         x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
       } else {
-        if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
-        x <- reductions[[type]]
+        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        x <- self$reductions[[type]]
       }
       if(!is.null(cells)) {
         x <- x[cells,]
@@ -1983,8 +1980,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # clean up aspect names, as GO ids are meaningless
       names(tam3$cnam) <- rownames(tam3$xv) <- paste0('aspect',1:nrow(tam3$xv))
 
-      misc[['pathwayOD']] <<- tam3;
-      reductions[[name]] <<- tam3$xv;
+      self$misc[['pathwayOD']] <<- tam3;
+      self$reductions[[name]] <<- tam3$xv;
       return(invisible(tam3))
     },
 
@@ -2010,8 +2007,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if(type=='counts') {
         x <- counts;
       } else {
-        if(!type %in% names(reductions)) { stop("reduction ",type,' not found')}
-        x <- reductions[[type]]
+        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        x <- self$reductions[[type]]
       }
       if(is.null(name)) { 
         name <- embeddingType 
@@ -2060,7 +2057,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
         coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x);
-        emb <- embeddings[[type]][[name]] <<- t(coords);
+        emb <- self$embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
         if(nrow(x)>4e4) {
           warning('Too many cells to pre-calcualte correlation distances, switching to L2. Please, consider using UMAP.');
@@ -2084,13 +2081,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           emb <- Rtsne::Rtsne(d,is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y;
         }
         rownames(emb) <- rownames(x)
-        embeddings[[type]][[name]] <<- emb;
+        self$embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
         g <- self$graphs[[type]];
         if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
         emb <- layout.fruchterman.reingold(g, weights=E(g)$weight)
         rownames(emb) <- rownames(x); colnames(emb) <- c("D1","D2")
-        embeddings[[type]][[name]] <<- emb;
+        self$embeddings[[type]][[name]] <<- emb;
       } else if (embeddingType == "UMAP") {
         if (!requireNamespace("uwot", quietly=TRUE)){
           stop("You need to install package 'uwot' to be able to use UMAP embedding.")
@@ -2100,12 +2097,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         
         emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         rownames(emb) <- rownames(x)
-        embeddings[[type]][[name]] <<- emb;
+        self$embeddings[[type]][[name]] <<- emb;
       } else if (embeddingType == "UMAP_graph") {
         g <- self$graphs[[type]];
         if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
         emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
-        embeddings[[type]][[name]] <<- emb;
+        self$embeddings[[type]][[name]] <<- emb;
       } else {
         stop('Unknown embeddingType ',embeddingType,' specified');
       }

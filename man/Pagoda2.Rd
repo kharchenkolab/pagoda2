@@ -15,6 +15,8 @@ Simon Steiger
 \describe{
 \item{\code{counts}}{Gene count matrix, normalized on total counts (default=NULL)}
 
+\item{\code{modelType}}{'plain', 'raw', 'linearObs'}
+
 \item{\code{clusters}}{Results of clustering (default=list())}
 
 \item{\code{graphs}}{Graph representations of the dataset (default=list())}
@@ -24,8 +26,6 @@ Simon Steiger
 \item{\code{embeddings}}{Results of visualization algorithms, t-SNE or largeVis (default=list())}
 
 \item{\code{diffgenes}}{Lists of differentially expressed genes (default=list())}
-
-\item{\code{pathways}}{Pathway information (default=list())}
 
 \item{\code{n.cores}}{number of cores (default=1)}
 
@@ -123,7 +123,8 @@ Provide the initial count matrix, and estimate deviance residual matrix (correct
   min.transcripts.per.cell = 10,
   lib.sizes = NULL,
   log.scale = FALSE,
-  keep.genes = NULL
+  keep.genes = NULL,
+  verbose = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -139,6 +140,8 @@ Provide the initial count matrix, and estimate deviance residual matrix (correct
 \item{\code{log.scale}}{boolean (default=FALSE)}
 
 \item{\code{keep.genes}}{(default=NULL)}
+
+\item{\code{verbose}}{}
 }
 \if{html}{\out{</div>}}
 }
@@ -156,7 +159,7 @@ Adjust variance of the residual matrix, determine overdispersed sites
   gam.k = 5,
   alpha = 0.05,
   plot = FALSE,
-  use.raw.variance = (.self$modelType == "raw"),
+  use.raw.variance = (self$modelType == "raw"),
   use.unadjusted.pvals = FALSE,
   do.par = TRUE,
   max.adjusted.variance = 1000,
@@ -165,7 +168,7 @@ Adjust variance of the residual matrix, determine overdispersed sites
   verbose = TRUE,
   min.gene.cells = 0,
   persist = is.null(cells),
-  n.cores = .self$n.cores
+  n.cores = self$n.cores
 )}\if{html}{\out{</div>}}
 }
 
@@ -196,7 +199,7 @@ Create Knn graph
   type = "counts",
   weight.type = "1m",
   odgenes = NULL,
-  n.cores = .self$n.cores,
+  n.cores = self$n.cores,
   distance = "cosine",
   center = TRUE,
   x = NULL,
@@ -234,7 +237,7 @@ Calculate clusters based on the kNN graph
   subsampling.rate = 0.8,
   n.subsamplings = 10,
   cluster.stability.threshold = 0.95,
-  n.cores = .self$n.cores,
+  n.cores = self$n.cores,
   g = NULL,
   min.cluster.size = 1,
   persist = TRUE,
@@ -279,7 +282,7 @@ Take a given clustering and generate a hierarchical clustering
   dist = "pearson",
   persist = TRUE,
   z.threshold = 2,
-  n.cores = .self$n.cores,
+  n.cores = self$n.cores,
   min.set.size = 5
 )}\if{html}{\out{</div>}}
 }
@@ -310,7 +313,7 @@ Calculates gene Knn network for gene similarity
   fastpath = TRUE,
   maxit = 1000,
   k = 30,
-  n.cores = .self$n.cores,
+  n.cores = self$n.cores,
   verbose = TRUE
 )}\if{html}{\out{</div>}}
 }
@@ -653,7 +656,7 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
   n.odgene.multiplier = 1,
   gam.k = 10,
   verbose = FALSE,
-  n.cores = .self$n.cores,
+  n.cores = self$n.cores,
   min.odgenes = 10,
   max.odgenes = Inf,
   take.top.odgenes = TRUE,
@@ -705,7 +708,7 @@ localPcaKnn description
   n.odgenes = NULL,
   gam.k = 10,
   verbose = FALSE,
-  n.cores = .self$n.cores,
+  n.cores = self$n.cores,
   min.odgenes = 5,
   take.top.odgenes = FALSE,
   recursive = TRUE,
@@ -792,7 +795,7 @@ Return embedding
   diffusion.steps = 0,
   diffusion.power = 0.5,
   distance = "pearson",
-  n.cores = .self$n.cores,
+  n.cores = self$n.cores,
   n.sgd.cores = n.cores,
   ...
 )}\if{html}{\out{</div>}}
