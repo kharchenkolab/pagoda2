@@ -91,7 +91,7 @@ pagoda2WebApp <- R6::R6Class("pagoda2WebApp", lock_objects=FALSE,
       
       # This Uses Middleware to process all the requests that
       # our class doesn't process
-      callSuper(app = Builder$new(
+      super$initialize(app = Builder$new(
         # JS and CSS that are NOT part of ExtJS
         Static$new(
           urls = c('/js','/css','/img'),
