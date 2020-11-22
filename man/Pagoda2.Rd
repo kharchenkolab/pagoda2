@@ -814,6 +814,7 @@ Return embedding
   M = 1,
   gamma = 1/M,
   perplexity = 50,
+  verbose = TRUE,
   sgd_batches = NULL,
   diffusion.steps = 0,
   diffusion.power = 0.5,
@@ -828,6 +829,8 @@ Return embedding
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+
+\item{\code{verbose}}{boolean (default=TRUE)}
 
 \item{\code{n.cores}}{Number of cores, used for the analyses}
 

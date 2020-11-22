@@ -2001,6 +2001,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param M
     #' @param gamma
     #' @param perplexity
+    #' @param verbose boolean (default=TRUE)
     #' @param sgd_batches
     #' @param diffusion.steps
     #' @param diffusion.power
@@ -2008,7 +2009,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param n.sgd.cores
     #' @param ...    
     #' @return 
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, 
+    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, verbose=TRUE,
       sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = self$n.cores, n.sgd.cores=n.cores, ... ) {
       
       if (dims<1) {
@@ -2061,11 +2062,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           }
           #browser()
           if(!is.na(perplexity)) {
-            wij <- buildWijMatrix(wij,perplexity=perplexity,threads=n.cores)
+            wij <- buildWijMatrix(wij, perplexity=perplexity, threads=n.cores)
           }
           
         }
-        coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = TRUE,sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
+        coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = verbose, sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x);
         emb <- self$embeddings[[type]][[name]] <<- t(coords);
       } else if(embeddingType=='tSNE') {
