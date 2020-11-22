@@ -74,7 +74,6 @@ Initialize Conos class
   x,
   ...,
   modelType = "plain",
-  batchNorm = "glm",
   n.cores = parallel::detectCores(logical = FALSE),
   verbose = TRUE,
   min.cells.per.gene = 0,
@@ -118,7 +117,7 @@ Provide the initial count matrix, and estimate deviance residual matrix (correct
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$setCountMatrix(
   countMatrix,
   depthScale = 1000,
-  min.cells.per.gene = 30,
+  min.cells.per.gene = 0,
   trim = round(min.cells.per.gene/2),
   min.transcripts.per.cell = 10,
   lib.sizes = NULL,
@@ -159,7 +158,7 @@ Adjust variance of the residual matrix, determine overdispersed sites
   gam.k = 5,
   alpha = 0.05,
   plot = FALSE,
-  use.raw.variance = (self$modelType == "raw"),
+  use.raw.variance = FALSE,
   use.unadjusted.pvals = FALSE,
   do.par = TRUE,
   max.adjusted.variance = 1000,
@@ -175,7 +174,13 @@ Adjust variance of the residual matrix, determine overdispersed sites
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{plot}}{boolean}
+\item{\code{gam.k}}{integer (default=5)}
+
+\item{\code{alpha}}{numeric (default=5e-2)}
+
+\item{\code{plot}}{boolean (default=FALSE)}
+
+\item{\code{use.raw.variance}}{(default=FALSE). If modelType=='raw', then this conditional will be used.}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
@@ -388,7 +393,7 @@ Determine differentially expressed genes, comparing each group against all other
 
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
-\item{\code{groups}}{Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{groups}}{Data type (default='counts'). Currently only 'counts' supported.}
 
 \item{\code{name}}{string Slot to store the results in (default='customClustering')}
 
@@ -492,7 +497,7 @@ Plot heatmap for a given set of genes
   box = TRUE,
   drawGroupNames = FALSE,
   useRaster = TRUE,
-  smooth.span = max(1, round(nrow(counts)/1024)),
+  smooth.span = max(1, round(nrow(self$counts)/1024)),
   ...
 )}\if{html}{\out{</div>}}
 }
@@ -634,7 +639,7 @@ Calculate PCA reduction of the data
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-Invisible PCA result (the reduction itself is saved in $reductions[[name]])"
+Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
 }
 }
 \if{html}{\out{<hr>}}
@@ -669,6 +674,14 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 \describe{
 \item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
 
+\item{\code{clusterType}}{(default=NULL)}
+
+\item{\code{groups}}{(default=NULL)}
+
+\item{\code{min.group.size}}{integer (default=30)}
+
+\item{\code{od.alpha}}{numeric (default=1e-1)}
+
 \item{\code{use.odgenes}}{boolean (default=FALSE)}
 
 \item{\code{n.odgenes}}{(default=NULL)}
@@ -677,9 +690,19 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 
 \item{\code{n.odgene.multiplier}}{numeric (default=1)}
 
+\item{\code{gam.k}}{integer (default=10)}
+
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
 \item{\code{n.cores}}{Number of cores, used for the analyses}
+
+\item{\code{min.odgenes}}{integer (default=10)}
+
+\item{\code{max.odgenes}}{integer (default=Inf)}
+
+\item{\code{take.top.odgenes}}{boolean (default=TRUE)}
+
+\item{\code{recursive}}{boolean (default=TRUE)}
 }
 \if{html}{\out{</div>}}
 }

@@ -9,38 +9,36 @@
 #' @import base64enc
 NULL
 
-#' @title pagoda2WebApp R6 class
-#' @description class to create pagoda2 web applications via a Rook server
+#' pagoda2WebApp class to create pagoda2 web applications via a Rook server
 #'
-#' @export pagoda2WebApp
-pagoda2WebApp <- R6::R6Class("pagoda2WebApp", lock_objects=FALSE,
-    ##inherit = 'Middleware', # Inherit from Middleware to handle static and dynamic files seperately
-  public = list(
-
-    #' @field originalP2object Input pagoda2 object
-    originalP2object = NULL,
-
-    #' @field name string Display name for the application
-    name = NULL, # The name of this application for display purposes (default="DefaultPagoda2Name")
-
-    #' @field verbose boolean Whether to give verbose output
-    verbose = FALSE,
-
-    #' @field cellmetadata metadata associated with pagoda2 object
-    cellmetadata = NULL,
-
-    #' @field mainDendrogram hclust dendrogram of all cells in the pagoda2 object
-    mainDendrogram = NULL,
-
-    #' @field geneSets gene sets in the pagoda2 object
-    geneSets = NULL,
-
-    #' @field rookRoot Rook server root directory
-    rookRoot = NULL,
-
-    #' @field appmetadata pagoda2 web application metadata
-    appmetadata = NULL,
-
+#' @rdname pagoda2WebApp
+#' @exportClass pagoda2WebApp
+#' @field originalP2object Input pagoda2 object
+#' @field name string Display name for the application
+#' @field verbose integer Verbosity level (default=0). 
+#' @field mat Embedding
+#' @field cellmetadata metadata associated with pagoda2 object
+#' @field mainDendrogram hclust dendrogram of all cells in the pagoda2 object
+#' @field geneSets gene sets in the pagoda2 object
+#' @field rookRoot Rook server root directory
+#' @field appmetadata pagoda2 web application metadata
+#' @export 
+pagoda2WebApp <- setRefClass(
+  'pagoda2WebApp',
+  'contains' = 'Middleware', # Inherit from Middleware to handle static and dynamic files seperately
+  fields = c(
+    "originalP2object", 
+    "name", # The name of this application for display purposes (default="DefaultPagoda2Name")
+    "verbose", # Server verbosity level
+    "mat",
+    "cellmetadata",
+    "mainDendrogram",
+    "geneSets",
+    "rookRoot",
+    "appmetadata"
+  ),
+  
+  methods = list(
     ## pagoda2obj: a pagoda2 object
     ## appName: the display name for this app
     ## verbose: verbosity level, def: 0, higher values will printmore
@@ -91,7 +89,7 @@ pagoda2WebApp <- R6::R6Class("pagoda2WebApp", lock_objects=FALSE,
       
       # This Uses Middleware to process all the requests that
       # our class doesn't process
-      super$initialize(app = Builder$new(
+      callSuper(app = Builder$new(
         # JS and CSS that are NOT part of ExtJS
         Static$new(
           urls = c('/js','/css','/img'),
@@ -807,10 +805,9 @@ pagoda2WebApp <- R6::R6Class("pagoda2WebApp", lock_objects=FALSE,
         }
       }
       t1 <- Sys.time()
-      if(verbose.timings){
-          message(paste0('Export list of embeddings: ', as.double(t1-t0,units="secs")," seconds \n"))       
-      }
-
+      if(verbose.timings) 
+          message(paste0('Export list of embeddings: ', as.double(t1-t0,units="secs")," seconds \n"))
+      
       # Export list with all included embeddings for easier iteration in Rcpp-function.
       exportList[["embedList"]] <- grep("emb_",names(exportList),value=TRUE)
       
@@ -1081,6 +1078,7 @@ pagoda2WebApp <- R6::R6Class("pagoda2WebApp", lock_objects=FALSE,
         }
       }
       resp
-     }
-  )
-)
+    } ## generateEmbeddingStructure
+    
+  ) # methods list
+) # setRefClass

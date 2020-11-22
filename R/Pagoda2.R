@@ -68,7 +68,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param log.scale boolean (default=TRUE)
     #' @param keep.genes
     #' @return a new 'Pagoda2' object
-    initialize=function(x, ..., modelType='plain', batchNorm='glm',
+    initialize=function(x, ..., modelType='plain', ## batchNorm='glm',
                         n.cores=parallel::detectCores(logical=FALSE), verbose=TRUE,
                         min.cells.per.gene=0, trim=round(min.cells.per.gene/2), 
                         min.transcripts.per.cell=10,
@@ -107,25 +107,25 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param keep.genes (default=NULL)
     #' @param verbose 
     #' @return count matrix 
-    setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=30,
+    setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=0, ## min.cells.per.gene=30?
                             trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10, 
                             lib.sizes=NULL, log.scale=FALSE, keep.genes=NULL, verbose=TRUE) {
       # check names
-      if(any(duplicated(rownames(countMatrix)))) {
+      if (any(duplicated(rownames(countMatrix)))) {
         stop("Duplicate gene names are not allowed - please reduce")
       }
-      if(any(duplicated(colnames(countMatrix)))) {
+      if (any(duplicated(colnames(countMatrix)))) {
         stop("Duplicate cell names are not allowed - please reduce")
       }
       
-      if(any(is.na(rownames(countMatrix)))) {
+      if (any(is.na(rownames(countMatrix)))) {
         stop("NA gene names are not allowed - please fix")
       }
-      if(any(is.na(colnames(countMatrix)))) {
+      if (any(is.na(colnames(countMatrix)))) {
         stop("NA cell names are not allowed - please fix")
       }
       
-      if(ncol(countMatrix)<3) { stop("Too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
+      if (ncol(countMatrix)<3) { stop("Too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
       
       counts <<- t(countMatrix)
       
@@ -140,16 +140,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         return()
       }
 
-      if(!is.null(self$batch)) {
-        if(!all(colnames(countMatrix) %in% names(self$batch))) { 
+      if (!is.null(self$batch)) {
+        if (!all(colnames(countMatrix) %in% names(self$batch))) { 
           stop("The supplied batch vector doesn't contain all the cells in its names attribute")
         }
         colBatch <- as.factor(self$batch[colnames(countMatrix)])
         self$batch <<- colBatch;
       }
 
-      if(!is.null(lib.sizes)) {
-        if(!all(colnames(countMatrix) %in% names(lib.sizes))) { 
+      if (!is.null(lib.sizes)) {
+        if (!all(colnames(countMatrix) %in% names(lib.sizes))) { 
           stop("the supplied lib.sizes vector doesn't contain all the cells in its names attribute")
         }
         lib.sizes <- lib.sizes[colnames(countMatrix)]
@@ -166,17 +166,17 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("Cells with zero expression over all genes are not allowed")
       }
 
-      if(verbose) message(nrow(counts)," cells, ",ncol(counts)," genes; normalizing ... ")
+      if (verbose) message(nrow(counts)," cells, ",ncol(counts)," genes; normalizing ... ")
 
       # get normalized matrix
-      if(self$modelType=='linearObs') { # this shouldn't work well, since the depth dependency is not completely normalized out
+      if (self$modelType=='linearObs') { # this shouldn't work well, since the depth dependency is not completely normalized out
 
         # winsorize in normalized space first in hopes of getting a more stable depth estimate
-        if(trim>0) {
+        if (trim>0) {
           counts <<- counts / as.numeric(depth);
-          inplaceWinsorizeSparseCols(counts,trim,n.cores);
+          inplaceWinsorizeSparseCols(counts, trim, self$n.cores);
           counts <<- counts*as.numeric(depth);
-          if(is.null(lib.sizes)) {
+          if (is.null(lib.sizes)) {
             depth <<- round(Matrix::rowSums(counts))
           }
         }
@@ -192,7 +192,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         gene.av <- (Matrix::colSums(counts)+n.depth.slices)/(sum(depth)+n.depth.slices)
 
         # pooled counts, df for all genes
-        tc <- colSumByFac(counts,as.integer(depth.fac))[-1,,drop=FALSE]
+        tc <- colSumByFac(counts, as.integer(depth.fac))[-1,,drop=FALSE]
         tc <- log(tc+1)- log(as.numeric(tapply(depth,depth.fac,sum))+1)
         md <- log(as.numeric(tapply(depth,depth.fac,mean)))
         # combined lm
@@ -200,22 +200,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         colnames(cm$coef) <- colnames(counts)
         # adjust counts
         # predict log(p) for each non-0 entry
-        count.gene <- rep(1:counts@Dim[2],diff(counts@p))
+        count.gene <- rep(1:counts@Dim[2], diff(counts@p))
         exp.x <- exp(log(gene.av)[count.gene] - cm$coef[1,count.gene] - ldepth[counts@i+1]*cm$coef[2,count.gene])
         counts@x <<- as.numeric(counts@x*exp.x/(depth[counts@i+1]/depthScale)); # normalize by depth as well
         # performa another round of trim
         if(trim>0) {
-          inplaceWinsorizeSparseCols(counts,trim,n.cores);
+          inplaceWinsorizeSparseCols(counts, trim, self$n.cores);
         }
 
 
         # regress out on non-0 observations of ecah gene
         #non0LogColLmS(counts,mx,ldepth)
-      } else if(self$modelType=='plain') {
-        if(verbose) message("Using plain model ")
+      } else if (self$modelType=='plain') {
+        if (verbose) message("Using plain model ")
 
-        if(!is.null(self$batch)) {
-          if(verbose) message("Batch ... ")
+        if (!is.null(self$batch)) {
+          if (verbose) message("Batch ... ")
 
           # dataset-wide gene average
           gene.av <- (Matrix::colSums(counts)+length(levels(self$batch)))/(sum(depth)+length(levels(self$batch)))
@@ -231,28 +231,28 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           counts@x <<- as.numeric(counts@x/bc[cbind(count.gene,as.integer(self$batch)[counts@i+1])])
         }
 
-        if(trim>0) {
-          if(verbose) message("Winsorizing ... ")
+        if (trim>0) {
+          if (verbose) message("Winsorizing ... ")
           counts <<- counts/as.numeric(depth);
           
-          inplaceWinsorizeSparseCols(counts,trim,n.cores);
+          inplaceWinsorizeSparseCols(counts, trim, self$n.cores);
           counts <<- counts*as.numeric(depth);
           
-          if(is.null(lib.sizes)) {
+          if (is.null(lib.sizes)) {
             depth <<- round(Matrix::rowSums(counts))
           }
         }
 
         counts <<- counts/as.numeric(depth/depthScale);
       } else {
-        stop('modelType ',modelType,' is not implemented');
+        stop('modelType ',self$modelType,' is not implemented');
       }
-      if(log.scale) {
-        if(verbose) message("log scale ... ")
+      if (log.scale) {
+        if (verbose) message("log scale ... ")
         counts@x <<- as.numeric(log(counts@x+1))
       }
       misc[['rescaled.mat']] <<- NULL;
-      if(verbose) message("done.\n")
+      if (verbose) message("done.\n")
 
       self$counts <- counts
       self$misc <- misc
@@ -260,10 +260,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Adjust variance of the residual matrix, determine overdispersed sites
     #'
-    #' @param gam.k
-    #' @param alpha
-    #' @param plot boolean 
-    #' @param use.raw.variance
+    #' @param gam.k integer (default=5)
+    #' @param alpha numeric (default=5e-2)
+    #' @param plot boolean (default=FALSE)
+    #' @param use.raw.variance (default=FALSE). If modelType=='raw', then this conditional will be used.
     #' @param use.unadjusted.pvals
     #' @param do.par
     #' @param max.adjusted.variance
@@ -274,69 +274,76 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param persist
     #' @param n.cores    
     #' @return 
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=(self$modelType=='raw'), 
+    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=FALSE, 
       use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
       cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = self$n.cores) {
       #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
-      if(!is.null(cells)) { # translate cells into a rowSel boolean vector
-        if(!(is.logical(cells) && length(cells)==nrow(counts))) {
-          if(is.character(cells) || is.integer(cells)) {
-            rowSel <- rep(FALSE,nrow(counts)); names(rowSel) <- rownames(counts); rowSel[cells] <- TRUE;
+      if (!is.null(cells)) { # translate cells into a rowSel boolean vector
+        if (!(is.logical(cells) && length(cells)==nrow(self$counts))) {
+          if (is.character(cells) || is.integer(cells)) {
+            rowSel <- rep(FALSE, nrow(self$counts))
+            names(rowSel) <- rownames(self$counts)
+            rowSel[cells] <- TRUE
           } else {
-            stop("cells argument must be either a logical vector over rows of the count matrix (cells), a vector of cell names or cell integer ids (row numbers)");
+            stop("Cells argument must be either a logical vector over rows of the count matrix (cells), a vector of cell names or cell integer ids (row numbers)");
           }
         }
       } else {
-        rowSel <- NULL;
+        rowSel <- NULL
       }
 
-      if(verbose) message("calculating variance fit ...")
-      df <- colMeanVarS(counts,rowSel,n.cores);
+      if (verbose) message("calculating variance fit ...")
+      df <- colMeanVarS(self$counts, rowSel, n.cores);
 
-      if(use.raw.variance) { # use raw variance estimates without relative adjustments
-        rownames(df) <- colnames(counts);
+      if (use.raw.variance) { # use raw variance estimates without relative adjustments
+        rownames(df) <- colnames(self$counts);
         vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
         df$lp <- df$lpa <- log(df$v);
         df$qv <- df$v
         df$gsf <- 1; # no rescaling of variance
-        ods <- order(df$v,decreasing=TRUE); if(length(ods)>1e3) { ods <- ods[1:1e3] }
-        if(persist) misc[['odgenes']] <<- rownames(df)[ods];
+        ods <- order(df$v, decreasing=TRUE); if(length(ods)>1e3) { ods <- ods[1:1e3] }
+        if (persist) {
+          self$misc[['odgenes']] <<- rownames(df)[ods]
+        }
       } else {
         # gene-relative normalizaton 
         df$m <- log(df$m); df$v <- log(df$v);
-        rownames(df) <- colnames(counts);
+        rownames(df) <- colnames(self$counts);
         vi <- which(is.finite(df$v) & df$nobs>=min.gene.cells);
-        if(length(vi)<gam.k*1.5) { gam.k=1 };# too few genes
-        if(gam.k<2) {
-          if(verbose) message(" using lm ")
+        if (length(vi)<gam.k*1.5) { gam.k=1 };# too few genes
+        if (gam.k<2) {
+          if (verbose) message(" using lm ")
           m <- lm(v ~ m, data = df[vi,])
         } else {
-          if(verbose) message(" using gam ")
+          if (verbose) message(" using gam ")
           m <- mgcv::gam(as.formula(paste0('v ~ s(m, k = ',gam.k,')')), data = df[vi,])
         }
-        df$res <- -Inf;  df$res[vi] <- resid(m,type='response')
+        df$res <- -Inf
+        df$res[vi] <- resid(m,type='response')
         n.obs <- df$nobs; #diff(counts@p)
         suppressWarnings(df$lp <- as.numeric(pf(exp(df$res),n.obs,n.obs,lower.tail=FALSE,log.p=TRUE)))
         df$lpa <- bh.adjust(df$lp,log=TRUE)
-        n.cells <- nrow(counts)
+        n.cells <- nrow(self$counts)
         df$qv <- as.numeric(qchisq(df$lp, n.cells-1, lower.tail = FALSE, log.p=TRUE)/n.cells)
 
-        if(use.unadjusted.pvals) {
+        if (use.unadjusted.pvals) {
           ods <- which(df$lp<log(alpha))
         } else {
           ods <- which(df$lpa<log(alpha))
         }
         
-        if(persist) misc[['odgenes']] <<- rownames(df)[ods];
-        if(verbose) message(length(ods),' overdispersed genes ... ',length(ods) )
+        if (persist) {
+          self$misc[['odgenes']] <<- rownames(df)[ods]
+        }
+        if (verbose) message(length(ods),' overdispersed genes ... ',length(ods) )
 
-        df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v));
-        df$gsf[!is.finite(df$gsf)] <- 0;
+        df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v))
+        df$gsf[!is.finite(df$gsf)] <- 0
       }
 
-      if(persist) {
-        if(verbose) message('persisting ... ')
-        misc[['varinfo']] <<- df;
+      if (persist) {
+        if (verbose) message('persisting ... ')
+        self$misc[['varinfo']] <<- df
       }
 
       # rescale mat variance
@@ -351,20 +358,21 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if(do.par) {
           par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);
         }
-        ## convert to log10 from natural log() by factor log10(exp(1))
         smoothScatter(log10(exp(1))*df$m,log10(exp(1))*df$v,main='',xlab='log10[ magnitude ]',ylab='log10[ variance ]')
-        grid <- seq(min(log10(exp(1))*df$m[vi]), max(log10(exp(1))*df$m[vi]), length.out=1000)
-        lines(grid, predict(m, newdata=data.frame(m=grid)), col="blue")
-        ## NOTE: overdispersed genes ods calcuated with log()-based corrections...
+        vi <- which(is.finite(log10(exp(1))*df$v) & df$nobs>=min.gene.cells);
+        grid <- seq(min(log10(exp(1))*df$m[vi]),max(log10(exp(1))*df$m[vi]),length.out=1000)
+        lines(grid,predict(m,newdata=data.frame(m=grid)),col="blue")
         if(length(ods)>0) {
           points(log10(exp(1))*df$m[ods],log10(exp(1))*df$v[ods],pch='.',col=2,cex=1)
         }
         smoothScatter(log10(exp(1))*df$m[vi],log10(exp(1))*df$qv[vi],xlab='log10[ magnitude ]',ylab='',main='adjusted')
         abline(h=1,lty=2,col=8)
-        if(is.finite(max.adjusted.variance)) { abline(h=max.adjusted.variance,lty=2,col=1) }
+        if(is.finite(max.adjusted.variance)) { 
+          abline(h=max.adjusted.variance,lty=2,col=1)
+        }
         points(log10(exp(1))*df$m[ods],log10(exp(1))*df$qv[ods],col=2,pch='.')
       }
-      if(verbose) message("done.\n")
+      if(verbose) cat("done.\n")
       return(invisible(df));
     },
 
@@ -388,13 +396,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (tolower(distance)=="euclidean"){
         distance <- "L2"
       }
-      if(is.null(x)) {
+      if (is.null(x)) {
         x.was.given <- FALSE;
-        if(type=='counts') {
-          x <- counts;
+        if (type=='counts') {
+          x <- self$counts;
           # Scale Raw counts
         } else {
-          if(type %in% names(self$reductions)) {
+          if (type %in% names(self$reductions)) {
             x <- self$reductions[[type]];
           } else {
             stop('Specified reduction does not exist');
@@ -402,12 +410,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
         
         if (var.scale) {
-          x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+          x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
         }
 
-        if(!is.null(odgenes)) {
-          if(!all(odgenes %in% rownames(x))) { warning("not all of the provided odgenes are present in the selected matrix")}
-          if(verbose) message("using provided odgenes ... ")
+        if (!is.null(odgenes)) {
+          if (!all(odgenes %in% rownames(x))) { warning("not all of the provided odgenes are present in the selected matrix")}
+          if (verbose) message("using provided odgenes ... ")
           x <- x[,odgenes]
         }
 
@@ -415,15 +423,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         x.was.given <- TRUE;
       }
 
-      if(distance %in% c('cosine','angular')) {
-        if(center) {
+      if (distance %in% c('cosine','angular')) {
+        if (center) {
           x<- x - Matrix::rowMeans(x) # centering for consine distance
         }
         xn <- N2R::Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else if(distance == "L2") {
         xn <- N2R::Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='L2')
       } else {
-        stop("unknown distance measure specified. Currently supported: angular, L2")
+        stop("Unknown distance measure specified. Currently supported: angular, L2")
       }
       colnames(xn) <- rownames(xn) <- rownames(x);
 
@@ -442,35 +450,35 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #df <- data.frame(from=rownames(x)[xn$s+1],to=rownames(x)[xn$e+1],weight=xn$d,stringsAsFactors=F)
       #if(weight.type=='rank') { df$rank <- xn$r }
 
-      if(weight.type %in% c("cauchy","normal") && ncol(x)>sqrt(nrand)) {
+      if (weight.type %in% c("cauchy","normal") && ncol(x)>sqrt(nrand)) {
         # generate some random pair data for scaling
-        if(distance=='cosine') {
+        if (distance=='cosine') {
           #rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=T),sample(colnames(x),nrand,replace=T)),1,function(z) if(z[1]==z[2]) {return(NA); } else {1-cor(x[,z[1]],x[,z[2]])}))
           rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {1-sum(x[,z[1]]*x[,z[2]])/sqrt(sum(x[,z[1]]^2)*sum(x[,z[2]]^2))}))
         ## we no longer support 'JS'
         ## } else if(distance=='JS') {
         ##   rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {jw.disR(x[,z[1]],x[,z[2]])}))
-        } else if(distance=='L2') {
+        } else if (distance=='L2') {
           rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {sqrt(sum((x[,z[1]]-x[,z[2]])^2))}))
-        } else if(distance=='L1') {
+        } else if (distance=='L1') {
           rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=TRUE),sample(colnames(x),nrand,replace=TRUE)),1,function(z) if(z[1]==z[2]) {return(NA); } else {sum(abs(x[,z[1]]-x[,z[2]]))}))
         }
         suppressWarnings(rd.model <- MASS::fitdistr(rd,weight.type))
-        if(weight.type=='cauchy') {
+        if (weight.type=='cauchy') {
           xn@x <- 1/pcauchy(xn@x,location=rd.model$estimate['location'],scale=rd.model$estimate['scale'])-1
         } else {
           xn@x <- 1/pnorm(xn@x,mean=rd.model$estimate['mean'],sd=rd.model$estimate['sd'])-1
         }
       }
       xn@x <- pmax(0,xn@x);
-      if(weight.type=='constant') { xn@x <- 1}
-      if(weight.type=='1m') { xn@x <- pmax(0,1-xn@x) }
+      if (weight.type=='constant') { xn@x <- 1}
+      if (weight.type=='1m') { xn@x <- pmax(0,1-xn@x) }
       #if(weight.type=='rank') { xn@x <- sqrt(df$rank) };
       # make a weighted edge matrix for the largeVis as well
       sxn <- (xn+t(xn))/2;
       g <- igraph::graph_from_adjacency_matrix(sxn,mode='undirected',weighted=TRUE)
-      if(!x.was.given) {
-        if(is.null(misc[['edgeMat']])) { misc[['edgeMat']] <<- list() }
+      if (!x.was.given) {
+        if (is.null(self$misc[['edgeMat']])) { self$misc[['edgeMat']] <<- list() }
         self$misc[['edgeMat']][[type]] <<- xn;
         self$graphs[[type]] <<- g;
       }
@@ -496,12 +504,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       g=NULL, min.cluster.size=1, persist=TRUE, return.details=FALSE, ...) {
 
       if (is.null(g)) {
-        if (is.null(self$graphs[[type]])) { stop("call makeKnnGraph(type='",type,"', ...) first")}
+        if (is.null(self$graphs[[type]])) { stop("Call makeKnnGraph(type='",type,"', ...) first")}
         g <- self$graphs[[type]];
       }
 
-      if(is.null(method)) {
-        if(length(vcount(g))<2000) {
+      if (is.null(method)) {
+        if (length(vcount(g))<2000) {
           method <- igraph::infomap.community;
         } else {
           method <- igraph::multilevel.community;
@@ -521,7 +529,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       cls.groups <- as.factor(membership(cls));
 
       # cleanup the clusters to remove very small ones
-      if(min.cluster.size>1) {
+      if (min.cluster.size>1) {
         cn <- names(cls.groups);
         vg <- which(unlist(tapply(cls.groups,cls.groups,length))>=min.cluster.size);
         cls.groups <- as.integer(cls.groups); cls.groups[!cls.groups %in% vg] <- NA;
@@ -529,7 +537,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         names(cls.groups) <- cn;
       }
        
-      if(persist) {
+      if (persist) {
         self$clusters[[type]][[name]] <<- cls.groups;
         self$misc[['community']][[type]][[name]] <<- cls;
       }
@@ -538,8 +546,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @keywords internal
     geneKnnbyPCA = function() {
-      warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead');
-      self$makeGeneKnnGraph();
+      warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead')
+      self$makeGeneKnnGraph()
     },
 
     #' @description Take a given clustering and generate a hierarchical clustering
@@ -555,30 +563,30 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
       method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, 
       n.cores=self$n.cores, min.set.size=5 ) {
-      if(type=='counts') {
+      if (type=='counts') {
         x <- self$counts
       } else {
         x <- self$reductions[[type]]
       }
-      if(is.null(groups)) {
+      if (is.null(groups)) {
         # retrieve clustering
-        if(is.null(self$clusters)) stop("Please generate clusters first")
-        if(is.null(self$clusters[[type]])) stop(paste("Please generate clusters for",type,"first"))
-        if(is.null(clusterName)) { # use the first clustering
-          if(length(self$clusters[[type]])<1) stop(paste("Please generate clusters for",type,"first"))
+        if (is.null(self$clusters)) stop("Please generate clusters first")
+        if (is.null(self$clusters[[type]])) stop(paste("Please generate clusters for",type,"first"))
+        if (is.null(clusterName)) { # use the first clustering
+          if (length(self$clusters[[type]])<1) stop(paste("Please generate clusters for",type,"first"))
           cl <- self$clusters[[type]][[1]];
         } else {
           cl <- self$clusters[[type]][[clusterName]]
-          if(is.null(cl)) stop(paste("Unable to find clustering",clusterName,'for',type))
-          if(verbose) message("Using ",clusterName," clustering for ",type," space\n")
+          if (is.null(cl)) stop(paste("Unable to find clustering",clusterName,'for',type))
+          if (verbose) message("Using ",clusterName," clustering for ",type," space\n")
         }
       } else {
-        if(!all(rownames(x) %in% names(groups))) { warning("Provided cluster vector doesn't list groups for all of the cells")}
+        if (!all(rownames(x) %in% names(groups))) { warning("Provided cluster vector doesn't list groups for all of the cells")}
         cl <- groups;
       }
       cl <- as.factor(cl[match(rownames(x),names(cl))]);
 
-      if(dist %in% c('pearson','spearman')) {
+      if (dist %in% c('pearson','spearman')) {
         rx <- do.call(cbind,tapply(1:nrow(x),cl,function(ii) {
             if (length(ii) > 1) {
                 Matrix::colMeans(x[ii,])
@@ -596,15 +604,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
             }
         }))
         d <- dist(rx)
-      } else if(dist=='JS') {
+      } else if (dist=='JS') {
         # this one has to be done on counts, even if we're working with a reduction
-        cl <- as.factor(cl[match(rownames(misc[['rawCounts']]),names(cl))]);
-        lvec <- colSumByFac(misc[['rawCounts']],as.integer(cl))[-1,] + 1
+        cl <- as.factor(cl[match(rownames(self$misc[['rawCounts']]),names(cl))]);
+        lvec <- colSumByFac(self$misc[['rawCounts']],as.integer(cl))[-1,] + 1
         d <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))));
         colnames(d) <- rownames(d) <- which(table(cl)>0)
         d <- as.dist(d)
       } else {
-        stop("unknown distance",dist,"requested")
+        stop("Unknown distance",dist,"requested")
       }
 
       dd <- as.dendrogram(hclust(d,method=method))
@@ -612,8 +620,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # walk down the dendrogram to generate diff. expression on every split
       diffcontrasts <- function(l,env) {
         v <- mget("contrasts",envir=env,ifnotfound=0)[[1]]
-        if(!is.list(v)) v <- list();
-        if(is.leaf(l)) return(NULL)
+        if (!is.list(v)) v <- list();
+        if (is.leaf(l)) return(NULL)
         lcl <- rep(NA,nrow(x));
         names(lcl) <- rownames(x)
         lcl[names(lcl) %in% names(cl)[cl %in% unlist(l[[1]])]] <- paste(unlist(l[[1]]),collapse='.');
@@ -631,22 +639,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       #dexp <- papply(dc,function(x) getDifferentialGenes(groups=x,z.threshold=z.threshold),n.cores=n.cores)
 
-      x <- counts;
-      x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p)); # apply variance scaling
+      x <- self$counts;
+      x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'],diff(x@p)); # apply variance scaling
       x <- t(x)
       dexp <- papply(dc,function(g) {
         dg <- getDifferentialGenes(groups=g,z.threshold=z.threshold)
         dg <- lapply(dg,function(x) x[x$Z>=z.threshold,])
         # calculate average profiles
         x <- x[rownames(x) %in% unlist(lapply(dg,rownames)),]
-        if(nrow(x)<1) return(NULL);
+        if (nrow(x)<1) return(NULL);
         x <- x-rowMeans(x[,!is.na(g)])
         sf <- rep(1,nrow(x)); names(sf) <- rownames(x);
-        if(nrow(dg[[1]])>0) {
+        if (nrow(dg[[1]])>0) {
           ig <- which(names(sf) %in% rownames(dg[[1]]))
           sf[ig] <- 1/length(ig)
         }
-        if(nrow(dg[[2]])>0) {
+        if (nrow(dg[[2]])>0) {
           ig <- which(names(sf) %in% rownames(dg[[2]]))
           sf[ig] <- -1/length(ig)
         }
@@ -667,14 +675,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       dgl <- lapply(dexp,function(d) as.character(unlist(lapply(d$dg,function(x) rownames(x)[x$Z>=z.threshold]))))
       tamr$env <- list2env(dgl[unlist(lapply(dgl,length))>=min.set.size])
 
-      misc[['pathwayOD']] <<- tamr;
+      self$misc[['pathwayOD']] <<- tamr;
 
       # fake pathwayODInfo
       zs <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$Z)))))
       mval <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$M)))))
       vdf <- data.frame(i=1:nrow(tamr$xv),npc=1,valid=TRUE,sd=apply(tamr$xv,1,sd),cz=zs,z=zs,oe=mval,n=unlist(lapply(dexp,function(x) sum(unlist(lapply(x$dg,nrow))))))
       vdf$name <- rownames(vdf) <- names(dexp);
-      misc[['pathwayODInfo']] <<- vdf
+      self$misc[['pathwayODInfo']] <<- vdf
 
       return(invisible(tamr))
     },
@@ -692,7 +700,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     makeGeneKnnGraph = function(nPcs = 100, scale =TRUE, center=TRUE, fastpath =TRUE, 
       maxit =1000, k = 30, n.cores = self$n.cores, verbose =TRUE) {
        # Transpose first
-       x <- t(counts);
+       x <- t(self$counts)
 
       # TODO: factor out gene PCA calculation
       # Do the PCA
@@ -722,7 +730,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #genegraphs$geneRotated <<- pcas;
 
       # Using cosine distance only here
-      if(center) {
+      if (center) {
         pcas <- pcas - Matrix::rowMeans(pcas)
       }
       xn <- N2R::Knn(pcas, k, nThreads= n.cores, verbose=verbose)
@@ -747,16 +755,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("Package \"dbscan\" needed for this function to work. Please install it.", call. = FALSE)
       }
 
-      if(is.null(self$embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
-      if(is.null(embeddingType)) {
+      if (is.null(self$embeddings[[type]])) { stop("First, generate embeddings for type ",type)}
+      if (is.null(embeddingType)) {
         # take the first one
         embeddingType <- names(self$embeddings[[type]])[1]
-        if(verbose) message("using ",embeddingType," embedding\n")
+        if (verbose) message("using ",embeddingType," embedding\n")
         emb <- self$embeddings[[type]][[embeddingType]]
 
       } else {
         emb <- self$embeddings[[type]][[embeddingType]]
-        if(is.null(emb)) { stop("embedding ",embeddingType," for type ", type," doesn't exist")}
+        if (is.null(emb)) { stop("embedding ",embeddingType," for type ", type," doesn't exist")}
       }
 
       cl <- dbscan::dbscan(emb, ...)$cluster;
@@ -771,7 +779,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
     #' 
     #' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
-    #' @param groups Data type (default='counts'). Currenlty only 'counts' supported.
+    #' @param groups Data type (default='counts'). Currently only 'counts' supported.
     #' @param name string Slot to store the results in (default='customClustering')
     #' @param z.threshold numeric Minimal absolute Z score (adjusted) to report (default=3)
     #' @param upregulated.only boolean Whether to report only genes that are expressed significantly higher in each group (default=FALSE)
@@ -786,23 +794,23 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'     fe - fraction of cells in a given group having non-zero expression level of a given gene
     getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE) {
       # restrict counts to the cells for which non-NA value has been specified in groups
-      if(is.null(groups)) {
+      if (is.null(groups)) {
         # look up the clustering based on a specified type
-        if(is.null(clusterType)) {
+        if (is.null(clusterType)) {
           # take the first one
           cols <- self$clusters[[type]][[1]]
         } else {
           cols <- self$clusters[[type]][[clusterType]]
-          if(is.null(cols)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if (is.null(cols)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
         cols <- groups;
       }
-      cm <- counts;
-      if(!all(rownames(cm) %in% names(cols))) { warning("cluster vector doesn't specify groups for all of the cells, dropping missing cells from comparison")}
+      cm <- self$counts;
+      if (!all(rownames(cm) %in% names(cols))) { warning("cluster vector doesn't specify groups for all of the cells, dropping missing cells from comparison")}
       # determine a subset of cells that's in the cols and cols[cell]!=NA
       valid.cells <- rownames(cm) %in% names(cols)[!is.na(cols)];
-      if(!all(valid.cells)) {
+      if (!all(valid.cells)) {
         # take a subset of the count matrix
         cm <- cm[valid.cells,]
       }
@@ -810,7 +818,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       cols <- as.factor(cols[match(rownames(cm),names(cols))]);
 
       cols <- as.factor(cols);
-      if(verbose) {
+      if (verbose) {
         message("running differential expression with ",length(levels(cols))," clusters ... ")
       }
       # use offsets based on the base model
@@ -841,12 +849,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
 
       # correct for multiple hypothesis
-      if(verbose) {
+      if (verbose) {
         message("adjusting p-values ... ")
       }
       x <- matrix(qnorm(bh.adjust(pnorm(as.numeric(abs(x)), lower.tail = FALSE, log.p = TRUE), log = TRUE), lower.tail = FALSE, log.p = TRUE),ncol=ncol(x))*sign(x)
       rownames(x) <- colnames(cm); colnames(x) <- levels(cols)[1:ncol(x)];
-      if(verbose) {
+      if (verbose) {
         message("done.\n")
       }
 
@@ -873,8 +881,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           papply(function(n) appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts=cm, append.auc=append.auc), n.cores=n.cores)
       }
 
-      if(is.null(groups)) {
-        if(is.null(clusterType)) {
+      if (is.null(groups)) {
+        if (is.null(clusterType)) {
           self$diffgenes[[type]][[names(self$clusters[[type]])[1]]] <<- ds;
         } else {
           self$diffgenes[[type]][[clusterType]] <<- ds;
@@ -903,37 +911,37 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     plotDiffGeneHeatmap=function(type='counts',clusterType=NULL, groups=NULL, n.genes=100, 
       z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
       v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
-      if(!is.null(clusterType)) {
+      if (!is.null(clusterType)) {
         x <- self$diffgenes[[type]][[clusterType]];
-        if(is.null(x)) { stop("differential genes for the specified cluster type haven't been calculated") }
+        if (is.null(x)) { stop("Differential genes for the specified cluster type haven't been calculated") }
       } else {
         x <- self$diffgenes[[type]][[1]];
-        if(is.null(x)) { stop("no differential genes found for data type ",type) }
+        if (is.null(x)) { stop("No differential genes found for data type ",type) }
       }
 
-      if(is.null(groups)) {
+      if (is.null(groups)) {
         # look up the clustering based on a specified type
-        if(is.null(clusterType)) {
+        if (is.null(clusterType)) {
           # take the first one
           cols <- self$clusters[[type]][[1]]
         } else {
           cols <- self$clusters[[type]][[clusterType]]
-          if(is.null(cols)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if(is.null(cols)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
         # use clusters information
-        if(!all(rownames(counts) %in% names(groups))) { warning("provided cluster vector doesn't list groups for all of the cells")}
-        cols <- as.factor(groups[match(rownames(counts),names(groups))]);
+        if (!all(rownames(self$counts) %in% names(groups))) { warning("provided cluster vector doesn't list groups for all of the cells")}
+        cols <- as.factor(groups[match(rownames(self$counts),names(groups))]);
       }
       cols <- as.factor(cols);
       # select genes to show
-      if(!is.null(z.score)) {
+      if (!is.null(z.score)) {
         x <- lapply(x,function(d) d[d$Z >= z.score & d$highest==TRUE,])
-        if(!is.null(n.genes)) {
+        if (!is.null(n.genes)) {
           x <- lapply(x,function(d) {if(nrow(d)>0) { d[1:min(nrow(d),n.genes),]}})
         }
       } else {
-        if(!is.null(n.genes)) {
+        if (!is.null(n.genes)) {
           x <- lapply(x,function(d) {if(nrow(d)>0) { d[1:min(nrow(d),n.genes),]}})
         }
       }
@@ -943,27 +951,27 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #x <- x[!unlist(lapply(x,is.null))]
       #cols <- cols[cols %in% names(x)]
       #cols <- droplevels(cols)
-      em <- counts[,unlist(x)];
+      em <- self$counts[,unlist(x)];
       # renormalize rows
-      if(all(sign(em)>=0)) {
-        if(is.null(gradientPalette)) {
+      if (all(sign(em)>=0)) {
+        if (is.null(gradientPalette)) {
           gradientPalette <- colorRampPalette(c('gray90','red'), space = "Lab")(1024)
         }
         em <- apply(em,1,function(x) {
           zlim <- as.numeric(quantile(x,p=c(1-gradient.range.quantile,gradient.range.quantile)))
-          if(diff(zlim)==0) {
+          if (diff(zlim)==0) {
             zlim <- as.numeric(range(x))
           }
           x[x<zlim[1]] <- zlim[1]; x[x>zlim[2]] <- zlim[2];
           x <- (x-zlim[1])/(zlim[2]-zlim[1])
         })
       } else {
-        if(is.null(gradientPalette)) {
+        if (is.null(gradientPalette)) {
           gradientPalette <- colorRampPalette(c("blue", "grey90", "red"), space = "Lab")(1024)
         }
         em <- apply(em,1,function(x) {
           zlim <- c(-1,1)*as.numeric(quantile(abs(x),p=gradient.range.quantile))
-          if(diff(zlim)==0) {
+          if (diff(zlim)==0) {
             zlim <- c(-1,1)*as.numeric(max(abs(x)))
           }
           x[x<zlim[1]] <- zlim[1]; x[x>zlim[2]] <- zlim[2];
@@ -973,13 +981,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       # cluster cell types by averages
       rowfac <- factor(rep(names(x),unlist(lapply(x,length))),levels=names(x))
-      if(inner.clustering) {
+      if (inner.clustering) {
         clclo <- hclust(as.dist(1-cor(do.call(cbind,tapply(1:nrow(em),rowfac,function(ii) Matrix::colMeans(em[ii,,drop=FALSE]))))),method='complete')$order
       } else {
         clclo <- 1:length(levels(rowfac))
       }
 
-      if(inner.clustering) {
+      if (inner.clustering) {
         # cluster genes within each cluster
         clgo <- tapply(1:nrow(em),rowfac,function(ii) {
           ii[hclust(as.dist(1-cor(t(em[ii,]))),method='complete')$order]
@@ -987,10 +995,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         clgo <- tapply(1:nrow(em),rowfac,I)
       }
-      if(inner.clustering) {
+      if (inner.clustering) {
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
-          if(length(ii)>3) {
+          if (length(ii)>3) {
             ii[hclust(as.dist(1-cor(em[,ii,drop=FALSE])),method='complete')$order]
           } else {
             ii
@@ -1018,21 +1026,21 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (!requireNamespace("robustbase", quietly = TRUE)) {
         stop("Package \"robustbase\" needed for this function to work. Please install it.", call. = FALSE)
       }
-
-      if(is.null(groups)) {
+ 
+      if (is.null(groups)) {
         # look up the clustering based on a specified type
-        if(is.null(clusterType)) {
+        if (is.null(clusterType)) {
           # take the first one
           groups <- self$clusters[[type]][[1]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
-          if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if (is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
         }
       }
-      if(is.null(groups)) { stop("clustering must be determined first, or passed as a groups parameter") }
+      if (is.null(groups)) { stop("Clustering must be determined first, or passed as a groups parameter") }
 
       # calculated pooled profiles per cluster
-      lvec <- colSumByFac(misc[['rawCounts']],as.integer(groups))[-1,,drop=FALSE];
+      lvec <- colSumByFac(self$misc[['rawCounts']],as.integer(groups))[-1,,drop=FALSE];
       lvec <- t(lvec/pmax(1,Matrix::rowSums(lvec)))*1e4
 
       # TODO: implement internal robust regression
@@ -1046,7 +1054,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         av <- lvec[,j]
         avi <- which(av>0)
         av <- av[avi]
-        cvm <- as.matrix(misc[['rawCounts']][ii,avi])
+        cvm <- as.matrix(self$misc[['rawCounts']][ii,avi])
         x <- unlist(lapply(ii,function(i) {
           cv <- cvm[i,]
           #as.numeric(coef(glm(cv~av+0,family=poisson(link='identity'),start=sum(cv)/1e4)))
@@ -1056,8 +1064,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         x
       },mc.cores=30)
 
-      lib.sizes <- unlist(x)[rownames(misc[['rawCounts']])]
-      lib.sizes <- lib.sizes/mean(lib.sizes)*mean(Matrix::rowSums(misc[['rawCounts']]))
+      lib.sizes <- unlist(x)[rownames(self$misc[['rawCounts']])]
+      lib.sizes <- lib.sizes/mean(lib.sizes)*mean(Matrix::rowSums(self$misc[['rawCounts']]))
 
       depth <<- lib.sizes;
       return(invisible(lib.sizes))
@@ -1083,7 +1091,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @return
     plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, z.score=2, 
       gradient.range.quantile=0.95, cluster.genes=FALSE, inner.clustering=FALSE, gradientPalette=NULL, 
-      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(counts)/1024)), ... ) {
+      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(self$counts)/1024)), ... ) {
       if(is.null(groups)) {
         # look up the clustering based on a specified type
         if(is.null(clusterType)) {
@@ -1091,19 +1099,19 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           cols <- self$clusters[[type]][[1]]
         } else {
           cols <- self$clusters[[type]][[clusterType]]
-          if(is.null(cols)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if(is.null(cols)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
         # use clusters information
-        if(!all(rownames(counts) %in% names(groups))) { warning("provided cluster vector doesn't list groups for all of the cells")}
-        cols <- as.factor(groups[match(rownames(counts),names(groups))]);
+        if(!all(rownames(self$counts) %in% names(groups))) { warning("provided cluster vector doesn't list groups for all of the cells")}
+        cols <- as.factor(groups[match(rownames(self$counts),names(groups))]);
       }
       cols <- as.factor(cols);
       # make expression matrix
-      if(!all(genes %in% colnames(counts))) { warning(paste("the following specified genes were not found in the data: [",paste(genes[!genes %in% colnames(counts)],collapse=" "),"], omitting",sep="")) }
-      x <- intersect(genes,colnames(counts));
-      if(length(x)<1) { stop("too few genes") }
-      em <- as.matrix(t(counts[,x]));
+      if(!all(genes %in% colnames(self$counts))) { warning(paste("the following specified genes were not found in the data: [",paste(genes[!genes %in% colnames(counts)],collapse=" "),"], omitting",sep="")) }
+      x <- intersect(genes,colnames(self$counts));
+      if(length(x)<1) { stop("Too few genes") }
+      em <- as.matrix(t(self$counts[,x]));
 
       # renormalize rows
       if(all(sign(em)>=0)) {
@@ -1205,7 +1213,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       emb <- self$embeddings[[type]][[embeddingType]]
       
       if (!is.null(gene)) {
-        if (!(gene %in% colnames(counts)))
+        if (!(gene %in% colnames(self$counts)))
           stop("Gene '", gene, "' isn't presented in the count matrix")
         
         colors <- self$counts[,gene]
@@ -1218,7 +1226,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           groups <- self$clusters[[type]][[1]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
-          if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if(is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
         }
       }
 
@@ -1232,7 +1240,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param use.unadjusted.pvals boolean (default=FALSE)
     #' @return 
     getOdGenes=function(n.odgenes=NULL,alpha=5e-2,use.unadjusted.pvals=FALSE) {
-      if (is.null(self$misc[['varinfo']])) { stop("please run adjustVariance first")}
+      if (is.null(self$misc[['varinfo']])) { stop("Please run adjustVariance first")}
       if (is.null(n.odgenes)) { #return according to alpha
         if (use.unadjusted.pvals) {
           rownames(self$misc[['varinfo']])[self$misc[['varinfo']]$lp <= log(alpha)]
@@ -1240,7 +1248,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           rownames(self$misc[['varinfo']])[self$misc[['varinfo']]$lpa <= log(alpha)]
         }
       } else { # return top n.odgenes sites
-        rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp, decreasing=FALSE)[1:min(ncol(counts),n.odgenes)])]
+        rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp, decreasing=FALSE)[1:min(ncol(self$counts),n.odgenes)])]
       }
     },
 
@@ -1274,23 +1282,23 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param cells optional subset of cells on which PCA should be run (default=NULL)
     #' @param fastpath boolean Use C implementation for speedup (default=TRUE)
     #' @param ... additional arguments forwarded to irlba::irlba
-    #' @return Invisible PCA result (the reduction itself is saved in $reductions[[name]])"
+    #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
     calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, 
       odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
 
       if (type=='counts') {
         x <- self$counts
       } else {
-        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        if(!type %in% names(self$reductions)) { stop("Reduction ",type,' not found')}
         x <- self$reductions[[type]]
       }
       if((use.odgenes || !is.null(n.odgenes)) && is.null(odgenes)) {
-        if(is.null(misc[['odgenes']] )) { stop("please run adjustVariance() first")}
-        odgenes <- misc[['odgenes']];
+        if(is.null(self$misc[['odgenes']] )) { stop("Please run adjustVariance() first")}
+        odgenes <- self$misc[['odgenes']];
         if(!is.null(n.odgenes)) {
           if(n.odgenes>length(odgenes)) {
             #warning("number of specified odgenes is higher than the number of the statistically significant sites, will take top ",n.odgenes,' sites')
-            odgenes <- rownames(misc[['varinfo']])[(order(misc[['varinfo']]$lp,decreasing=FALSE)[1:min(ncol(counts),n.odgenes)])]
+            odgenes <- rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp,decreasing=FALSE)[1:min(ncol(self$counts),n.odgenes)])]
           } else {
             odgenes <- odgenes[1:n.odgenes]
           }
@@ -1305,7 +1313,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # apply scaling if using raw counts
       if(var.scale) {
         #x <- t(t(x)*misc[['varinfo']][colnames(x),'gsf'])
-        x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+        x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
       }
       if(verbose) message('.')
       
@@ -1363,19 +1371,19 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
     #'     and a set of recursively determined odgenes based on a given group (or a cluster info)
     #' 
-    #' @param clusterType
-    #' @param groups
-    #' @param min.group.size
-    #' @param od.alpha
+    #' @param clusterType (default=NULL)
+    #' @param groups (default=NULL)
+    #' @param min.group.size integer (default=30)
+    #' @param od.alpha numeric (default=1e-1)
     #' @param use.odgenes boolean (default=FALSE)
     #' @param n.odgenes (default=NULL)
     #' @param odgenes (default=NULL)
     #' @param n.odgene.multiplier numeric (default=1)
-    #' @param gam.k
-    #' @param min.odgenes
-    #' @param max.odgenes
-    #' @param take.top.odgenes
-    #' @param recursive
+    #' @param gam.k integer (default=10)
+    #' @param min.odgenes integer (default=10)
+    #' @param max.odgenes integer (default=Inf)
+    #' @param take.top.odgenes boolean (default=TRUE)
+    #' @param recursive boolean (default=TRUE)
     #' @return 
     expandOdGenes=function(type='counts', clusterType=NULL, groups=NULL , min.group.size=30, od.alpha=1e-1, 
       use.odgenes=FALSE, n.odgenes=NULL, odgenes=NULL, n.odgene.multiplier=1, gam.k=10,verbose=FALSE,n.cores=self$n.cores,
@@ -1388,24 +1396,24 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           groups <- self$clusters[[type]][[1]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
-          if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if(is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
-        groups <- as.factor(groups[names(groups) %in% rownames(counts)]);
+        groups <- as.factor(groups[names(groups) %in% rownames(self$counts)]);
         groups <- droplevels(groups);
       }
 
 
       # determine initial set of odgenes
       if((use.odgenes || !is.null(n.odgenes)) && is.null(odgenes)) {
-        if(is.null(misc[['varinfo']] )) { stop("please run adjustVariance() first")}
-        df <- misc$varinfo
+        if(is.null(self$misc[['varinfo']] )) { stop("Please run adjustVariance() first")}
+        df <- self$misc$varinfo
         odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log(od.alpha)]
         #odgenes <- misc[['odgenes']];
         if(!is.null(n.odgenes)) {
           if(n.odgenes>length(odgenes)) {
             #warning("number of specified odgenes is higher than the number of the statistically significant sites, will take top ",n.odgenes,' sites')
-            odgenes <- rownames(misc[['varinfo']])[(order(misc[['varinfo']]$lp,decreasing=FALSE)[1:min(ncol(counts),n.odgenes)])]
+            odgenes <- rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp,decreasing=FALSE)[1:min(ncol(self$counts),n.odgenes)])]
           } else {
             odgenes <- odgenes[1:n.odgenes]
           }
@@ -1431,7 +1439,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # derive cluster hierarchy
 
         # use raw counts to derive clustering
-        z <- misc$rawCounts;
+        z <- self$misc$rawCounts;
         rowFac <- rep(-1,nrow(z)); names(rowFac) <- rownames(z);
         rowFac[match(names(groups),rownames(z))] <- as.integer(groups);
         tc <- colSumByFac(z,as.integer(rowFac))[-1,,drop=FALSE];
@@ -1482,7 +1490,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       odg <- unique(unlist(lapply(gpcs,function(z) z$odgenes)))
       # TODO: consider gsf?
       odgenes <- unique(c(odgenes,odg));
-      misc[['odgenes']] <<- odgenes;
+      self$misc[['odgenes']] <<- odgenes;
       return(invisible(odgenes));
     },
 
@@ -1517,7 +1525,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if(type=='counts') {
         x <- self$counts
       } else {
-        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        if(!type %in% names(self$reductions)) { stop("Reduction ",type,' not found')}
         x <- self$reductions[[type]]
       }
 
@@ -1529,7 +1537,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           groups <- self$clusters[[type]][[1]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
-          if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+          if(is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
         }
       } else {
         groups <- as.factor(groups[names(groups) %in% rownames(x)])
@@ -1553,7 +1561,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         ## hc <- hclust(as.dist(d),method='ward.D')
 
         # use raw counts to derive clustering
-        z <- misc$rawCounts;
+        z <- self$misc$rawCounts;
         rowFac <- rep(-1,nrow(z)); names(rowFac) <- rownames(z);
         rowFac[match(names(groups),rownames(z))] <- as.integer(groups);
         tc <- colSumByFac(z,as.integer(rowFac))[-1,,drop=FALSE];
@@ -1778,14 +1786,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL,adjusted.pvalues=TRUE,
       z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE,name='pathwayPCA',
       correlation.distance.threshold=0.2,loading.distance.threshold=0.01,top.aspects=Inf,recalculate.pca=FALSE,save.pca=TRUE) {
-      nPcs <- 1;
+      nPcs <- 1
 
       if(type=='counts') {
         x <- self$counts
         # apply scaling if using raw counts
-        x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+        x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
       } else {
-        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        if(!type %in% names(self$reductions)) { stop("Reduction ",type,' not found')}
         x <- self$reductions[[type]]
       }
       if(!is.null(cells)) {
@@ -1794,7 +1802,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       proper.gene.names <- colnames(x);
 
-      if(is.null(misc[['pwpca']]) || recalculate.pca) {
+      if(is.null(self$misc[['pwpca']]) || recalculate.pca) {
         if(verbose) {
           message("determining valid pathways")
         }
@@ -1841,12 +1849,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           return(list(xp=pcs,z=z,n=ngenes))
         }, n.cores = n.cores,mc.preschedule=TRUE)
         if(save.pca) {
-          misc[['pwpca']] <<- pwpca;
+          self$misc[['pwpca']] <<- pwpca;
         }
       } else {
         if(verbose) {
           message("reusing previous overdispersion calculations")
-          pwpca <- misc[['pwpca']];
+          pwpca <- self$misc[['pwpca']];
         }
       }
 
@@ -1925,7 +1933,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         vdf$valid <- vdf$z  >=  z.score
       }
 
-      if(!any(vdf$valid)) { stop("no significantly overdispersed pathways found at z.score threshold of ",z.score) };
+      if(!any(vdf$valid)) { stop("No significantly overdispersed pathways found at z.score threshold of ",z.score) };
 
       # apply additional filtering based on >0.5 sd above the local random estimate
       vdf$valid <- vdf$valid & unlist(lapply(pwpca,function(x) !is.null(x$xp$scores)))
@@ -1957,7 +1965,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
       rownames(xmv) <- paste("#PC", vdf$npc[vdf$valid], "# ", names(pwpca)[vdf$i[vdf$valid]], sep = "")
       rownames(vdf) <- paste("#PC", vdf$npc, "# ", vdf$name, sep = "")
-      misc[['pathwayODInfo']] <<- vdf
+      self$misc[['pathwayODInfo']] <<- vdf
 
       # collapse gene loading
       if(verbose) {
@@ -2003,19 +2011,21 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, 
       sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = self$n.cores, n.sgd.cores=n.cores, ... ) {
       
-      if(dims<1) stop("dimensions must be >=1")
-      if(type=='counts') {
-        x <- counts;
+      if (dims<1) {
+        stop("Dimensions must be >=1")
+      }
+      if (type=='counts') {
+        x <- self$counts;
       } else {
-        if(!type %in% names(self$reductions)) { stop("reduction ",type,' not found')}
+        if (!type %in% names(self$reductions)) { stop("Reduction ",type,' not found')}
         x <- self$reductions[[type]]
       }
-      if(is.null(name)) { 
+      if (is.null(name)) { 
         name <- embeddingType 
       }
 
-      if(embeddingType=='largeVis') {
-        edgeMat <- misc[['edgeMat']][[type]];
+      if (embeddingType=='largeVis') {
+        edgeMat <- self$misc[['edgeMat']][[type]];
         if(is.null(edgeMat)) { stop(paste('KNN graph for type ',type,' not found. Please run makeKnnGraph with type=',type,sep='')) }
         if(is.null(sgd_batches)) { sgd_batches <- nrow(edgeMat)*1e3 }
         #edgeMat <- sparseMatrix(i=xn$s+1,j=xn$e+1,x=xn$rd,dims=c(nrow(x),nrow(x)))
@@ -2032,9 +2042,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         #require(largeVis)
         #if(!is.null(seed)) { set.seed(seed) }
         if(!is.na(perplexity)) {
-          wij <- buildWijMatrix(edgeMat,perplexity=perplexity,threads=n.cores)
+          wij <- buildWijMatrix(edgeMat, perplexity=perplexity, threads=n.cores)
         } else {
-          wij <- edgeMat;
+          wij <- edgeMat
         }
 
         if(diffusion.steps>0) {
@@ -2084,7 +2094,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         self$embeddings[[type]][[name]] <<- emb;
       } else if(embeddingType=='FR') {
         g <- self$graphs[[type]];
-        if(is.null(g)){ stop(paste("generate KNN graph first (type=",type,")",sep=''))}
+        if(is.null(g)){ stop(paste("Generate KNN graph first (type=",type,")",sep=''))}
         emb <- layout.fruchterman.reingold(g, weights=E(g)$weight)
         rownames(emb) <- rownames(x); colnames(emb) <- c("D1","D2")
         self$embeddings[[type]][[name]] <<- emb;
