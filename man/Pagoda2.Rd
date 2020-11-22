@@ -208,9 +208,9 @@ Create Knn graph
   distance = "cosine",
   center = TRUE,
   x = NULL,
-  verbose = TRUE,
   p = NULL,
-  var.scale = (type == "counts")
+  var.scale = (type == "counts"),
+  verbose = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -737,7 +737,6 @@ localPcaKnn description
   recursive = TRUE,
   euclidean = FALSE,
   perplexity = k,
-  debug = FALSE,
   return.pca = FALSE,
   skip.pca = FALSE
 )}\if{html}{\out{</div>}}
@@ -829,6 +828,8 @@ Return embedding
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+
+\item{\code{embeddingType}}{'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default)}
 
 \item{\code{verbose}}{boolean (default=TRUE)}
 

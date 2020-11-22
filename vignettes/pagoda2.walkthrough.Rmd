@@ -208,7 +208,9 @@ To add GO Terms as genesets run the following
 ```{r}
 library(GO.db)
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
+
 sn <- function(x) { names(x) <- x; x}
+
 genesets.go <- lapply(sn(names(go.env)),function(x) {
   list(properties=list(locked=TRUE, genesetname=x, shortdescription=as.character(termDescriptions[x])), genes=c(go.env[[x]]))
 })
@@ -263,7 +265,7 @@ p2web <-
     geneSets = genesets,
     appmetadata = appmetadata,
     show.clusters = FALSE # Hide the clusters that were used for the dendrogram from the metadata
-  );
+  )
 ```
 
 We can view this app directly from our R session
@@ -323,7 +325,7 @@ This currently only works for human (organism='hs') and mouse (organism='mm') da
 ##     infomap = p2$clusters$PCA$infomap,
 ##     multilevel = p2$clusters$PCA$multilevel,
 ##     walktrap = p2$clusters$PCA$walktrap
-## );
+## )
 ## metadata.forweb <- factorListToMetadata(metadata.listfactors)
 
 ## # Make the web object
@@ -332,7 +334,7 @@ This currently only works for human (organism='hs') and mouse (organism='mm') da
 ## # Serialize to file
 ## # The serialisedApp.bin file will now contain all the information
 ## # required to view the files via the web browser
-## p2.webobject$serializeToStaticFast('serialisedApp.bin');
+## p2.webobject$serializeToStaticFast('serialisedApp.bin')
 
 ## # Alternatively you can view your dataset from the R session
 ## # show.app(p2.webobject, browse = TRUE)
