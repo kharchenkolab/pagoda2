@@ -15,7 +15,10 @@ Simon Steiger
 \describe{
 \item{\code{counts}}{Gene count matrix, normalized on total counts (default=NULL)}
 
-\item{\code{modelType}}{'plain', 'raw', 'linearObs'}
+\item{\code{modelType}}{string Model used to normalize count matrices. Only supported values are 'raw', 'plain', and 'linearObs'.
+'plain'---Normalize by regressing out on the non-zero observations of each gene (default).
+'raw'---Use the raw count matrices, without normalization. The expression matrix taken "as is" without normalization, although log.scale still applies. 
+'linearObs'---Fit a linear model of pooled counts across all genes against depth. This approach isn't recommened, as the depth dependency is not completely normalized out.}
 
 \item{\code{clusters}}{Results of clustering (default=list())}
 
@@ -72,7 +75,6 @@ Initialize Conos class
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$new(
   x,
-  ...,
   modelType = "plain",
   n.cores = parallel::detectCores(logical = FALSE),
   verbose = TRUE,
@@ -88,19 +90,25 @@ Initialize Conos class
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{modelType}}{Plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies) (default='plain')}
+\item{\code{x}}{input count matrix}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{modelType}}{Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.}
+
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
-\item{\code{min.cells.per.gene}}{integer (default=0)}
+\item{\code{min.cells.per.gene}}{integer Minimum number of cells per gene, used to subset counts for coverage (default=0)}
 
-\item{\code{trim}}{(default=round(min.cells.per.gene/2))}
+\item{\code{trim}}{numeric Parameter used for winsorizing count data (default=round(min.cells.per.gene/2)). If value>0, will winsorize counts in normalized space in the hopes of getting a more stable depth estimates. If value<=0, ignored.}
 
-\item{\code{min.transcripts.per.cell}}{integer (default=10)}
+\item{\code{min.transcripts.per.cell}}{integer Minimum number of transcripts per cells, used to subset counts for coverage (default=10)}
 
-\item{\code{log.scale}}{boolean (default=TRUE)}
+\item{\code{lib.sizes}}{(default=NULL)}
+
+\item{\code{log.scale}}{boolean If TRUE, scale counts by log() (default=TRUE)}
+
+\item{\code{keep.genes}}{list of genes to keep in count matrix after filtering out by coverage but before normalization (default=NULL)}
 }
 \if{html}{\out{</div>}}
 }
@@ -130,22 +138,26 @@ Provide the initial count matrix, and estimate deviance residual matrix (correct
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{depthScale}}{numeric (defaul=1e3)}
+\item{\code{depthScale}}{numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale)}
 
-\item{\code{trim}}{(default=round(min.cells.per.gene/2))}
+\item{\code{min.cells.per.gene}}{integer Minimum number of cells per gene, used to subset counts for coverage (default=0)}
+
+\item{\code{trim}}{numeric Parameter used for winsorizing count data (default=round(min.cells.per.gene/2)). If value>0, will winsorize counts in normalized space in the hopes of getting a more stable depth estimates. If value<=0, ignored.}
+
+\item{\code{min.transcripts.per.cell}}{integer Minimum number of transcripts per cells, used to subset counts for coverage (default=10)}
 
 \item{\code{lib.sizes}}{(default=NULL)}
 
-\item{\code{log.scale}}{boolean (default=FALSE)}
+\item{\code{log.scale}}{boolean If TRUE, scale counts by log() (default=TRUE)}
 
-\item{\code{keep.genes}}{(default=NULL)}
+\item{\code{keep.genes}}{list of genes to keep in count matrix after filtering out by coverage but before normalization (default=NULL)}
 
-\item{\code{verbose}}{}
+\item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-count matrix
+normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
 }
 }
 \if{html}{\out{<hr>}}
@@ -182,9 +194,23 @@ Adjust variance of the residual matrix, determine overdispersed sites
 
 \item{\code{use.raw.variance}}{(default=FALSE). If modelType=='raw', then this conditional will be used.}
 
+\item{\code{use.unadjusted.pvals}}{boolean (default=FALSE)}
+
+\item{\code{do.par}}{boolean (default=TRUE)}
+
+\item{\code{max.adjusted.variance}}{numeric (default=1e3)}
+
+\item{\code{min.adjusted.variance}}{numeric (default=1e-3)}
+
+\item{\code{cells}}{(default=NULL)}
+
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
-\item{\code{n.cores}}{}
+\item{\code{min.gene.cells}}{integer (default=0)}
+
+\item{\code{persist}}{boolean (default=TRUE, i.e. is.null(cells))}
+
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 }
 \if{html}{\out{</div>}}
 }
@@ -217,9 +243,27 @@ Create Knn graph
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{k}}{integer (default=30)}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{nrand}}{numeric (default=1e3)}
+
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+
+\item{\code{weight.type}}{string (default='1m')}
+
+\item{\code{odgenes}}{(default=NULL)}
+
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
+
+\item{\code{distance}}{string (default='cosine')}
+
+\item{\code{center}}{boolean (default=TRUE)}
+
+\item{\code{x}}{(default=NULL)}
+
+\item{\code{p}}{(default=NULL)}
+
+\item{\code{var.scale}}{boolean (default=TRUE)}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 }
@@ -254,9 +298,29 @@ Calculate clusters based on the kNN graph
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{method}}{(default=igraph::multilevel.community)}
+
+\item{\code{name}}{string (default='community')}
+
+\item{\code{subsampling.rate}}{numeric (default=0.8)}
+
+\item{\code{n.subsamplings}}{integer (default=10)}
+
+\item{\code{cluster.stability.threshold}}{numeric (default=0.95)}
+
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
+
+\item{\code{g}}{(default=NULL)}
+
+\item{\code{min.cluster.size}}{(default=1)}
+
+\item{\code{persist}}{boolean (default=TRUE)}
+
+\item{\code{return.details}}{(default=FALSE)}
+
+\item{\code{...}}{additional parameters to pass to 'method'}
 }
 \if{html}{\out{</div>}}
 }
@@ -295,9 +359,23 @@ Take a given clustering and generate a hierarchical clustering
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
+
+\item{\code{clusterName}}{(default=NULL)}
+
+\item{\code{method}}{string (default='ward.D')}
+
+\item{\code{dist}}{string (default='pearson')}
+
+\item{\code{persist}}{boolean (default=TRUE)}
+
+\item{\code{z.threshold}}{numeric (default=2)}
+
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
+
+\item{\code{min.set.size}}{integer (default=5)}
 }
 \if{html}{\out{</div>}}
 }
@@ -330,7 +408,15 @@ Calculates gene Knn network for gene similarity
 
 \item{\code{scale}}{boolean (default=TRUE)}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{center}}{boolean (default=TRUE)}
+
+\item{\code{fastpath}}{boolean (default=TRUE)}
+
+\item{\code{maxit}}{integer (default=1000)}
+
+\item{\code{k}}{integer (default=30)}
+
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 }
@@ -359,7 +445,11 @@ Calculate density-based clusters
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+
+\item{\code{embeddingType}}{(default=NULL)}
+
+\item{\code{name}}{string}
 }
 \if{html}{\out{</div>}}
 }
@@ -389,11 +479,11 @@ Determine differentially expressed genes, comparing each group against all other
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
-\item{\code{groups}}{Data type (default='counts'). Currently only 'counts' supported.}
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
 \item{\code{name}}{string Slot to store the results in (default='customClustering')}
 
@@ -444,7 +534,11 @@ Plot heatmap of DE results
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+
+\item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
+
+\item{\code{groups}}{factor named with cell names specifying clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
 \item{\code{box}}{boolean (default=TRUE)}
 
@@ -468,7 +562,9 @@ Recalculate library sizes using robust regression within clusters
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
+
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 }
 \if{html}{\out{</div>}}
 }
@@ -505,7 +601,9 @@ Plot heatmap for a given set of genes
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+
+\item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 }
 \if{html}{\out{</div>}}
 }
@@ -534,7 +632,9 @@ Show embedding
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+
+\item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 }
 \if{html}{\out{</div>}}
 }
@@ -672,9 +772,9 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{clusterType}}{(default=NULL)}
+\item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
 \item{\code{groups}}{(default=NULL)}
 
@@ -694,7 +794,7 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
 \item{\code{min.odgenes}}{integer (default=10)}
 
@@ -745,11 +845,13 @@ localPcaKnn description
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+
+\item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 }
 \if{html}{\out{</div>}}
 }
@@ -789,7 +891,7 @@ Test pathway overdispersion. Not that this is a compressed version of the PAGODA
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 }
@@ -827,13 +929,21 @@ Return embedding
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currenlty only 'counts' supported.}
+\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{embeddingType}}{'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default)}
+\item{\code{embeddingType}}{string 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default='largeVis')}
+
+\item{\code{name}}{string (default=NULL)}
+
+\item{\code{dims}}{integer (default=2)}
+
+\item{\code{M}}{integer}
+
+\item{\code{gamma}}{integer}
 
 \item{\code{verbose}}{boolean (default=TRUE)}
 
-\item{\code{n.cores}}{Number of cores, used for the analyses}
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
 \item{\code{...}}{}
 }

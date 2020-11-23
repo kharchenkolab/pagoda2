@@ -15,20 +15,26 @@ NULL
 
 #' @title Pagoda2 R6 class
 #' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
-#' @param type string Data type (default='counts'). Currenlty only 'counts' supported.
-#' @param n.cores Number of cores, used for the analyses
+#' @param type string Data type (default='counts'). Currently only 'counts' supported.
+#' @param n.cores numeric Number of cores to use (default=1)
 #' @param verbose boolean Whether to give verbose output (default=TRUE)
-#' @param min.cells.per.gene
-#' @param trim (default=round(min.cells.per.gene/2))
-#' @param clusterType
-#' @param groups
+#' @param lib.sizes (default=NULL)
+#' @param log.scale boolean If TRUE, scale counts by log() (default=TRUE)
+#' @param min.cells.per.gene integer Minimum number of cells per gene, used to subset counts for coverage (default=0)
+#' @param min.transcripts.per.cell integer Minimum number of transcripts per cells, used to subset counts for coverage (default=10)
+#' @param keep.genes list of genes to keep in count matrix after filtering out by coverage but before normalization (default=NULL)
+#' @param trim numeric Parameter used for winsorizing count data (default=round(min.cells.per.gene/2)). If value>0, will winsorize counts in normalized space in the hopes of getting a more stable depth estimates. If value<=0, ignored.
+#' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
 #' @export Pagoda2
 Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
   public = list(
     #' @field counts Gene count matrix, normalized on total counts (default=NULL)
     counts = NULL,
 
-    #' @field modelType 'plain', 'raw', 'linearObs'
+    #' @field modelType string Model used to normalize count matrices. Only supported values are 'raw', 'plain', and 'linearObs'.
+    #'     'plain'---Normalize by regressing out on the non-zero observations of each gene (default).
+    #'     'raw'---Use the raw count matrices, without normalization. The expression matrix taken "as is" without normalization, although log.scale still applies. 
+    #'     'linearObs'---Fit a linear model of pooled counts across all genes against depth. This approach isn't recommened, as the depth dependency is not completely normalized out.
     modelType = NULL,
 
     #' @field clusters Results of clustering (default=list())
@@ -61,14 +67,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Initialize Conos class
     #'
-    #' @param modelType Plain (default) or raw (expression matrix taken as is without normalization, though log.scale still applies) (default='plain')
-    #' @param min.cells.per.gene integer (default=0)
-    #' @param min.transcripts.per.cell integer (default=10)
-    #' @param lib.sizes
-    #' @param log.scale boolean (default=TRUE)
-    #' @param keep.genes
+    #' @param x input count matrix
+    #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
     #' @return a new 'Pagoda2' object
-    initialize=function(x, ..., modelType='plain', ## batchNorm='glm',
+    initialize=function(x, modelType='plain', ## batchNorm='glm',
                         n.cores=parallel::detectCores(logical=FALSE), verbose=TRUE,
                         min.cells.per.gene=0, trim=round(min.cells.per.gene/2), 
                         min.transcripts.per.cell=10,
@@ -101,13 +103,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
     #'
     #' @param countMatrix
-    #' @param depthScale numeric (defaul=1e3)
-    #' @param lib.sizes (default=NULL)
-    #' @param log.scale boolean (default=FALSE)
-    #' @param keep.genes (default=NULL)
-    #' @param verbose 
-    #' @return count matrix 
-    setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=0, ## min.cells.per.gene=30?
+    #' @param depthScale numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale)
+    #' @return normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
+    setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=0, 
                             trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10, 
                             lib.sizes=NULL, log.scale=FALSE, keep.genes=NULL, verbose=TRUE) {
       # check names
@@ -125,7 +123,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("NA cell names are not allowed - please fix")
       }
       
-      if (ncol(countMatrix)<3) { stop("Too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") }
+      if (ncol(countMatrix)<3) { 
+        stop("Too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") 
+      }
       
       counts <<- t(countMatrix)
       
@@ -150,7 +150,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (!is.null(lib.sizes)) {
         if (!all(colnames(countMatrix) %in% names(lib.sizes))) { 
-          stop("the supplied lib.sizes vector doesn't contain all the cells in its names attribute")
+          stop("The supplied lib.sizes vector doesn't contain all the cells in its names attribute")
         }
         lib.sizes <- lib.sizes[colnames(countMatrix)]
         depth <<- lib.sizes/mean(lib.sizes)*mean(Matrix::colSums(countMatrix))
@@ -204,13 +204,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         count.gene <- rep(1:counts@Dim[2], diff(counts@p))
         exp.x <- exp(log(gene.av)[count.gene] - cm$coef[1,count.gene] - ldepth[counts@i+1]*cm$coef[2,count.gene])
         counts@x <<- as.numeric(counts@x*exp.x/(depth[counts@i+1]/depthScale)) # normalize by depth as well
-        # performa another round of trim
+        # perform a another round of trimming
         if(trim>0) {
           inplaceWinsorizeSparseCols(counts, trim, self$n.cores)
         }
 
 
-        # regress out on non-0 observations of ecah gene
+        # regress out on non-0 observations of each gene
         #non0LogColLmS(counts,mx,ldepth)
       } else if (self$modelType=='plain') {
         if (verbose) message("Using plain model ")
@@ -265,15 +265,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param alpha numeric (default=5e-2)
     #' @param plot boolean (default=FALSE)
     #' @param use.raw.variance (default=FALSE). If modelType=='raw', then this conditional will be used.
-    #' @param use.unadjusted.pvals
-    #' @param do.par
-    #' @param max.adjusted.variance
-    #' @param min.adjusted.variance
-    #' @param cells
-    #' @param verbose
-    #' @param min.gene.cells
-    #' @param persist
-    #' @param n.cores    
+    #' @param use.unadjusted.pvals boolean (default=FALSE)
+    #' @param do.par boolean (default=TRUE)
+    #' @param max.adjusted.variance numeric (default=1e3)
+    #' @param min.adjusted.variance numeric (default=1e-3)
+    #' @param cells (default=NULL)
+    #' @param min.gene.cells integer (default=0)
+    #' @param persist boolean (default=TRUE, i.e. is.null(cells))
     #' @return 
     adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=FALSE, 
       use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
@@ -383,16 +381,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Create Knn graph
     #' 
-    #' @param k
-    #' @param nrand
-    #' @param weight.type
-    #' @param odgenes
-    #' @param distance
-    #' @param center
-    #' @param x
-    #' @param p
-    #' @param var.scale
-    #' @param verbose
+    #' @param k integer (default=30)
+    #' @param nrand numeric (default=1e3)
+    #' @param weight.type string (default='1m')
+    #' @param odgenes (default=NULL)
+    #' @param distance string (default='cosine')
+    #' @param center boolean (default=TRUE)
+    #' @param x (default=NULL)
+    #' @param p (default=NULL)
+    #' @param var.scale boolean (default=TRUE)
     #' @return
     makeKnnGraph=function(k=30, nrand=1e3, type='counts', weight.type='1m',
       odgenes=NULL, n.cores=self$n.cores, distance='cosine', center=TRUE, 
@@ -492,17 +489,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate clusters based on the kNN graph
     #' 
-    #' @param method
-    #' @param name
-    #' @param subsampling.rate
-    #' @param n.subsamplings
-    #' @param cluster.stability.threshold
-    #' @param n.cores
-    #' @param g
-    #' @param min.cluster.size
-    #' @param persist
-    #' @param return.details
-    #' @param ...
+    #' @param method (default=igraph::multilevel.community)
+    #' @param name string (default='community')
+    #' @param subsampling.rate numeric (default=0.8)
+    #' @param n.subsamplings integer (default=10)
+    #' @param cluster.stability.threshold numeric (default=0.95)
+    #' @param g (default=NULL)
+    #' @param min.cluster.size (default=1)
+    #' @param persist boolean (default=TRUE)
+    #' @param return.details (default=FALSE)
+    #' @param ... additional parameters to pass to 'method'
     #' @return
     getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', 
       subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=self$n.cores, 
@@ -552,19 +548,20 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @keywords internal
     geneKnnbyPCA = function() {
-      warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead')
+      ##warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead')
+      .Deprecated("makeGeneKnnGraph()")
       self$makeGeneKnnGraph()
     },
 
     #' @description Take a given clustering and generate a hierarchical clustering
     #' 
-    #' @param groups
-    #' @param clusterName
-    #' @param method
-    #' @param dist
-    #' @param persist
-    #' @param z.threshold
-    #' @param min.set.size
+    #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
+    #' @param clusterName (default=NULL)
+    #' @param method string (default='ward.D')
+    #' @param dist string (default='pearson')
+    #' @param persist boolean (default=TRUE)
+    #' @param z.threshold numeric (default=2)
+    #' @param min.set.size integer (default=5)
     #' @return
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
       method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5 ){
@@ -698,10 +695,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @author Simon Steiger
     #' @param nPcs integer (default=100)
     #' @param scale boolean (default=TRUE)
-    #' @param center
-    #' @param fastpath
-    #' @param maxit
-    #' @param k
+    #' @param center boolean (default=TRUE)
+    #' @param fastpath boolean (default=TRUE)
+    #' @param maxit integer (default=1000)
+    #' @param k integer (default=30)
     #' @return
     makeGeneKnnGraph = function(nPcs = 100, scale =TRUE, center=TRUE, fastpath =TRUE, 
       maxit =1000, k = 30, n.cores = self$n.cores, verbose =TRUE) {
@@ -750,8 +747,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate density-based clusters
     #' 
-    #' @param embeddingType
-    #' @param name
+    #' @param embeddingType (default=NULL)
+    #' @param name string
     #' @param v
     #' @param s
     #' @param ...
@@ -787,8 +784,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
     #' 
-    #' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
-    #' @param groups Data type (default='counts'). Currently only 'counts' supported.
+    #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
     #' @param name string Slot to store the results in (default='customClustering')
     #' @param z.threshold numeric Minimal absolute Z score (adjusted) to report (default=3)
     #' @param upregulated.only boolean Whether to report only genes that are expressed significantly higher in each group (default=FALSE)
@@ -907,8 +903,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Plot heatmap of DE results
     #' 
-    #' @param clusterType
-    #' @param groups
+    #' @param groups factor named with cell names specifying clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
     #' @param n.genes
     #' @param z.score
     #' @param gradient.range.quantile
@@ -924,7 +919,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
       if (!is.null(clusterType)) {
         x <- self$diffgenes[[type]][[clusterType]]
-        if (is.null(x)) { stop("Differential genes for the specified cluster type haven't been calculated") }
+        if (is.null(x)) { stop("Differential genes for the specified cluster type ", clusterType, " haven't been calculated") }
       } else {
         x <- self$diffgenes[[type]][[1]]
         if (is.null(x)) { stop("No differential genes found for data type ",type) }
@@ -1086,7 +1081,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Plot heatmap for a given set of genes
     #' 
     #' @param genes
-    #' @param clusterType
     #' @param groups
     #' @param z.score
     #' @param grandient.range.quantile
@@ -1397,7 +1391,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
     #'     and a set of recursively determined odgenes based on a given group (or a cluster info)
     #' 
-    #' @param clusterType (default=NULL)
     #' @param groups (default=NULL)
     #' @param min.group.size integer (default=30)
     #' @param od.alpha numeric (default=1e-1)
@@ -1527,7 +1520,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description localPcaKnn description 
     #' 
     #' @param nPcs
-    #' @param clusterType
     #' @param groups
     #' @param k
     #' @param b
@@ -2031,11 +2023,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Return embedding
     #' 
-    #' @param embeddingType 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default)
-    #' @param name
-    #' @param dims
-    #' @param M
-    #' @param gamma
+    #' @param embeddingType string 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default='largeVis')
+    #' @param name string (default=NULL)
+    #' @param dims integer (default=2)
+    #' @param M integer 
+    #' @param gamma integer
     #' @param perplexity
     #' @param verbose boolean (default=TRUE)
     #' @param sgd_batches
