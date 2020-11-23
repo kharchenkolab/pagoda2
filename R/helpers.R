@@ -217,7 +217,7 @@ show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
         browseURL(url);
     }
 
-    return(invisible(server))
+    invisible(server)
 }
 
 # BH P-value adjustment with a log option
@@ -435,7 +435,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
 #' @export 
 namedNames <- function(g) {
   n <- names(g)
-  names(n) <- n;
+  names(n) <- n
   return(n)
 }
 

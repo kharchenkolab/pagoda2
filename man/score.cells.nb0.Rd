@@ -7,7 +7,7 @@
 score.cells.nb0(data, signature)
 }
 \arguments{
-\item{data}{the matrix}
+\item{data}{matrix}
 
 \item{signature}{the genes in the signature}
 }

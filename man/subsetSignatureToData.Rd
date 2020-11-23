@@ -8,7 +8,7 @@ with optional warning if genes are missing}
 subsetSignatureToData(data, signature, raise.warning = TRUE)
 }
 \arguments{
-\item{data}{the matrix}
+\item{data}{matrix}
 
 \item{signature}{character vector The gene signature from which to subset a character vector of genes}
 

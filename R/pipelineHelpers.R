@@ -4,7 +4,7 @@
 #' make knn graph, identify clusters with infomap, multilevel and walktrap and make
 #' largeVis and tSNE embeddings.
 #' 
-#' @param cd count matrix, rows are genes, columns are cells
+#' @param cd count matrix whereby rows are genes, columns are cells.
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @param batch optional batch factor (default=NULL)
 #' @param n.odgenes numeric Number of top overdispersed genes to use (dfault=3e3)

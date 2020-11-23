@@ -16,9 +16,9 @@ Simon Steiger
 \item{\code{counts}}{Gene count matrix, normalized on total counts (default=NULL)}
 
 \item{\code{modelType}}{string Model used to normalize count matrices. Only supported values are 'raw', 'plain', and 'linearObs'.
-'plain'---Normalize by regressing out on the non-zero observations of each gene (default).
-'raw'---Use the raw count matrices, without normalization. The expression matrix taken "as is" without normalization, although log.scale still applies. 
-'linearObs'---Fit a linear model of pooled counts across all genes against depth. This approach isn't recommened, as the depth dependency is not completely normalized out.}
+-- 'plain': Normalize by regressing out on the non-zero observations of each gene (default).
+-- 'raw': Use the raw count matrices, without normalization. The expression matrix taken "as is" without normalization, although log.scale still applies. 
+-- 'linearObs': Fit a linear model of pooled counts across all genes against depth. This approach isn't recommened, as the depth dependency is not completely normalized out.}
 
 \item{\code{clusters}}{Results of clustering (default=list())}
 
@@ -192,7 +192,7 @@ Adjust variance of the residual matrix, determine overdispersed sites
 
 \item{\code{plot}}{boolean (default=FALSE)}
 
-\item{\code{use.raw.variance}}{(default=FALSE). If modelType=='raw', then this conditional will be used.}
+\item{\code{use.raw.variance}}{(default=FALSE). If modelType='raw', then this conditional will be used as TRUE.}
 
 \item{\code{use.unadjusted.pvals}}{boolean (default=FALSE)}
 
@@ -449,7 +449,13 @@ Calculate density-based clusters
 
 \item{\code{embeddingType}}{(default=NULL)}
 
-\item{\code{name}}{string}
+\item{\code{name}}{string (default='density')}
+
+\item{\code{v}}{numeric (default=0.7)}
+
+\item{\code{s}}{numeric (default=1)}
+
+\item{\code{...}}{additional parameters passed to dbscan::dbscan(emb, ...)}
 }
 \if{html}{\out{</div>}}
 }
@@ -538,11 +544,25 @@ Plot heatmap of DE results
 
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
-\item{\code{groups}}{factor named with cell names specifying clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
+
+\item{\code{n.genes}}{integer (default=100)}
+
+\item{\code{z.score}}{numeric (default=2)}
+
+\item{\code{gradient.range.quantile}}{numeric (default=0.95)}
+
+\item{\code{inner.clustering}}{boolean (default=FALSE)}
+
+\item{\code{gradientPalette}}{(default=NULL)}
+
+\item{\code{v}}{numeric (default=0.8)}
+
+\item{\code{s}}{numeric (default=1)}
 
 \item{\code{box}}{boolean (default=TRUE)}
 
-\item{\code{drawGroupNames}}{(default=FALSE)}
+\item{\code{drawGroupNames}}{boolean (default=FALSE)}
 }
 \if{html}{\out{</div>}}
 }
@@ -563,6 +583,8 @@ Recalculate library sizes using robust regression within clusters
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
+
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 }
@@ -601,9 +623,37 @@ Plot heatmap for a given set of genes
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{genes}}{}
+
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
+
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
+
+\item{\code{z.score}}{numeric (default=2)}
+
+\item{\code{cluster.genes}}{boolean (default=FALSE)}
+
+\item{\code{inner.clustering}}{boolean (default=FALSE)}
+
+\item{\code{gradientPalette}}{(default=NULL)}
+
+\item{\code{v}}{numeric (default=0.8)}
+
+\item{\code{s}}{numeric (default=1)}
+
+\item{\code{box}}{boolean (default=TRUE)}
+
+\item{\code{drawGroupNames}}{boolean (default=FALSE)}
+
+\item{\code{useRaster}}{boolean (default=TRUE)}
+
+\item{\code{smooth.span}}{(default=max(1,round(nrow(self$counts)/1024)))}
+
+\item{\code{...}}{additional parameters passed to internal function used for heatmap plotting, my.heatmap2()}
+
+\item{\code{grandient.range.quantile}}{(default=0.95)}
 }
 \if{html}{\out{</div>}}
 }
@@ -635,6 +685,8 @@ Show embedding
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
+
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 }
 \if{html}{\out{</div>}}
 }
@@ -658,6 +710,10 @@ Get overdispersed genes
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{n.odgenes}}{(default=NULL)}
+
+\item{\code{alpha}}{numeric (default=5e-2)}
+
 \item{\code{use.unadjusted.pvals}}{boolean (default=FALSE)}
 }
 \if{html}{\out{</div>}}
@@ -672,15 +728,15 @@ Get overdispersed genes
 \subsection{Method \code{getNormalizedExpressionMatrix()}}{
 Return variance-normalized matrix for specified genes or a number of OD genes
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pagoda2$getNormalizedExpressionMatrix(n.odgenes = NULL, genes = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pagoda2$getNormalizedExpressionMatrix(genes = NULL, n.odgenes = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{n.odgenes}}{Whether a certain number of top overdispersed genes should be used (default=NULL - all significant ones); ignored if genes are passed}
+\item{\code{genes}}{vector of gene names to explicitly return (default=NULL)}
 
-\item{\code{genes}}{explicit vector of genes to return (default=NULL)}
+\item{\code{n.odgenes}}{overdispersed genes to be used (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.}
 }
 \if{html}{\out{</div>}}
 }
@@ -776,7 +832,7 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
-\item{\code{groups}}{(default=NULL)}
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
 \item{\code{min.group.size}}{integer (default=30)}
 
@@ -845,13 +901,49 @@ localPcaKnn description
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{nPcs}}{integer (default=5)}
+
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
+
+\item{\code{k}}{integer (default=30)}
+
+\item{\code{b}}{numeric (default=1)}
+
+\item{\code{a}}{numeric (default=1)}
+
+\item{\code{min.group.size}}{integer (default=30)}
+
+\item{\code{name}}{string (default='localPCA')}
+
+\item{\code{baseReduction}}{string (default='PCA')}
+
+\item{\code{od.alpha}}{numeric (default=1e-1)}
+
+\item{\code{n.odgenes}}{(default=NULL)}
+
+\item{\code{gam.k}}{integer (default=10)}
+
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
+
+\item{\code{min.odgenes}}{integer (default=5)}
+
+\item{\code{take.top.odgenes}}{boolean (default=FALSE)}
+
+\item{\code{recursive}}{boolean (default=FALSE)}
+
+\item{\code{euclidean}}{boolean (default=FALSE)}
+
+\item{\code{perplexity}}{integer (default=k)}
+
+\item{\code{return.pca}}{boolean (default=FALSE)}
+
+\item{\code{skip.pca}}{boolean (default=FALSE)}
 }
 \if{html}{\out{</div>}}
 }
@@ -863,7 +955,7 @@ localPcaKnn description
 \if{html}{\out{<a id="method-testPathwayOverdispersion"></a>}}
 \if{latex}{\out{\hypertarget{method-testPathwayOverdispersion}{}}}
 \subsection{Method \code{testPathwayOverdispersion()}}{
-Test pathway overdispersion. Not that this is a compressed version of the PAGODA1 approach.
+Test pathway overdispersion. Note: this is a compressed version of the PAGODA1 approach.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$testPathwayOverdispersion(
   setenv,
@@ -891,9 +983,41 @@ Test pathway overdispersion. Not that this is a compressed version of the PAGODA
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{setenv}}{specific environment for GO pathway analysis}
+
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
+\item{\code{max.pathway.size}}{numeric (default=1e3)}
+
+\item{\code{min.pathway.size}}{numeric (default=10)}
+
+\item{\code{n.randomizations}}{integer (default=5)}
+
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
+
+\item{\code{score.alpha}}{numeric (default=0.05)}
+
+\item{\code{plot}}{boolean (default=FALSE)}
+
+\item{\code{cells}}{(default=NULL)}
+
+\item{\code{adjusted.pvalues}}{boolean (default=TRUE)}
+
+\item{\code{z.score}}{numeric (default=qnorm(0.05/2, lower.tail = FALSE))}
+
+\item{\code{use.oe.scale}}{boolean (default=FALSE)}
+
+\item{\code{return.table}}{boolean (default=FALSE)}
+
+\item{\code{name}}{string (default='pathwayPCA')}
+
+\item{\code{loading.distance.threshold}}{numeric (default=0.2)}
+
+\item{\code{top.aspects}}{(default=Inf)}
+
+\item{\code{recalculate.pca}}{boolean (default=FALSE)}
+
+\item{\code{save.pca}}{boolean (default=TRUE)}
 }
 \if{html}{\out{</div>}}
 }

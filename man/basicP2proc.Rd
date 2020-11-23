@@ -25,7 +25,7 @@ basicP2proc(
 )
 }
 \arguments{
-\item{cd}{count matrix, rows are genes, columns are cells}
+\item{cd}{count matrix whereby rows are genes, columns are cells.}
 
 \item{n.cores}{numeric Number of cores to use (default=1)}
 
