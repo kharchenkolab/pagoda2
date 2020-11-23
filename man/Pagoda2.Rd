@@ -352,7 +352,8 @@ Take a given clustering and generate a hierarchical clustering
   persist = TRUE,
   z.threshold = 2,
   n.cores = self$n.cores,
-  min.set.size = 5
+  min.set.size = 5,
+  verbose = TRUE
 )}\if{html}{\out{</div>}}
 }
 
@@ -376,6 +377,8 @@ Take a given clustering and generate a hierarchical clustering
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
 \item{\code{min.set.size}}{integer (default=5)}
+
+\item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 }
 \if{html}{\out{</div>}}
 }

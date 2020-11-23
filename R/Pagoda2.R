@@ -565,7 +565,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param min.set.size integer (default=5)
     #' @return
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
-      method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5 ){
+      method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5, verbose=TRUE ){
       if (type=='counts') {
         x <- self$counts
       } else {
@@ -584,7 +584,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
             stop(paste("Please generate clusters for",type,"first"))
           }
           ## use last-generated clustering
-          cl <- self$clusters[[type]][length(self$clusters[[type]])]
+          cl <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           cl <- self$clusters[[type]][[clusterName]]
           if (is.null(cl)) {
@@ -815,7 +815,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
           # take the last clustering generated
-          cols <- self$clusters[[type]][length(self$clusters[[type]])]
+          cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           cols <- self$clusters[[type]][[clusterType]]
           if (is.null(cols)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
@@ -904,9 +904,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (is.null(groups)) {
         if (is.null(clusterType)) {
-          # self$diffgenes[[type]][[names(self$clusters[[type]])[1]]] <<- ds
+          # self$diffgenes[[type]][[ names(self$clusters[[type]])[1] ]] <<- ds
           ## take last clustering generated
-          self$diffgenes[[type]][[names(self$clusters[[type]][length(self$clusters[[type]])])]] <<- ds
+          self$diffgenes[[type]][[names(self$clusters[[type]] [length(self$clusters[[type]])]) ]] <<- ds
         } else {
           self$diffgenes[[type]][[clusterType]] <<- ds
         }
@@ -946,7 +946,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
           # take last-generated clustering
-          cols <- self$clusters[[type]][length(self$clusters[[type]])]
+          cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           cols <- self$clusters[[type]][[clusterType]]
           if (is.null(cols)) { 
@@ -1058,7 +1058,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
           # take the last-generated clustering
-          groups <- self$clusters[[type]][length(self$clusters[[type]])]
+          groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
           if (is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
@@ -1120,7 +1120,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
           # take last-generated clustering
-          cols <- self$clusters[[type]][length(self$clusters[[type]])]
+          cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           cols <- self$clusters[[type]][[clusterType]]
           if (is.null(cols)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
@@ -1261,7 +1261,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (!(gene %in% colnames(self$counts))){
           stop("Gene '", gene, "' isn't presented in the count matrix")
         }
-        
         colors <- self$counts[,gene]
       }
 
@@ -1270,7 +1269,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # groups <- self$clusters[[type]][[1]]
           ## Take last-genereated clustering
-          groups <- self$clusters[[type]][length(self$clusters[[type]])]
+          groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
           if (is.null(groups)) { 
@@ -1440,7 +1439,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
           # take last-generated clustering
-          groups <- self$clusters[[type]][length(self$clusters[[type]])]
+          groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
           if (is.null(groups)) { 
@@ -1583,7 +1582,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
           # take last-generated clustering
-          groups <- self$clusters[[type]][length(self$clusters[[type]])]
+          groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
         } else {
           groups <- self$clusters[[type]][[clusterType]]
           if (is.null(groups)) { 
