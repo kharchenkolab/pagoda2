@@ -1227,7 +1227,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param type
     #' @param 
     #' @return 
-    plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL, 
+    plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL,
       groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
 
       if (is.null(type)) {

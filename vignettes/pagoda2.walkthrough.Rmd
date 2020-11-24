@@ -109,25 +109,25 @@ r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma
 and we plot the data:
 
 ```{r}
-r$plotEmbedding(type='PCA', show.legend=FALSE, mark.clusters=TRUE, min.group.size=50, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (largeVis)')
+r$plotEmbedding(type='PCA', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (largeVis)')
 ```
 
 Next we can generate and plot a tSNE embedding. This can take a while to run!
 ```{r}
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (tSNE)')
 ```
 
 We can overlay the expresssion of specific marker genes on this embedding to identify clusters. For example HBB will identify heme cells.
 
 ```{r}
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
 ```
 
 ```{r}
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
 ```
 
 Pagoda2 allows us to generate multiple alternative clusterings. Here will will use multilevel and walktrap
@@ -149,8 +149,8 @@ We can now compare these against `infomap.community`.
 ```{r message=FALSE}
 ## infomap.community vs multilevel.community
 par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
 ```
 
 #### infomap.community vs. walktrap.community
@@ -158,8 +158,8 @@ r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.
 ```{r message=FALSE}
 ## infomap.community vs walktrap.community
 par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
 ```
 
 
@@ -180,7 +180,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ```{r}
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
 ```
 
 At this point we can perform pathway overdispersion analysis (in the same wy we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it take too long!). Overdispersion analysis usually takes too long with the latest datasets composed of 1000's of cells, for this reason we prefer hierarchical differential expression. 

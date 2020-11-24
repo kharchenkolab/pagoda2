@@ -51,19 +51,19 @@ M <- 30
 r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M, alpha=1)
 
 ## -----------------------------------------------------------------------------
-r$plotEmbedding(type='PCA', show.legend=FALSE, mark.clusters=TRUE, min.group.size=50, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (largeVis)')
+r$plotEmbedding(type='PCA', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (largeVis)')
 
 ## -----------------------------------------------------------------------------
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (tSNE)')
 
 ## -----------------------------------------------------------------------------
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
 
 ## -----------------------------------------------------------------------------
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
 
 ## -----------------------------------------------------------------------------
 r$getKnnClusters(method=multilevel.community, type='PCA', name='multilevel')
@@ -75,14 +75,14 @@ str(r$clusters)
 ## ----message=FALSE------------------------------------------------------------
 ## infomap.community vs multilevel.community
 par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
 
 ## ----message=FALSE------------------------------------------------------------
 ## infomap.community vs walktrap.community
 par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
 
 ## -----------------------------------------------------------------------------
 r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
@@ -93,7 +93,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ## -----------------------------------------------------------------------------
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
 
 ## -----------------------------------------------------------------------------
 suppressMessages(library(org.Hs.eg.db))
