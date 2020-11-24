@@ -66,6 +66,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @field genegraphs Slot to store graphical representations in gene space (i.e. gene kNN graphs) (default=list())
     genegraphs = list(),
 
+    #' @field depth Cell size factor
+    depth = NULL,
+
 
     #' @description Initialize Conos class
     #'
@@ -258,6 +261,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (verbose) message("done.\n")
 
       self$counts <- counts
+      self$depth <- depth
       self$misc <- misc
     },
 
@@ -1094,7 +1098,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       lib.sizes <- unlist(x)[rownames(self$misc[['rawCounts']])]
       lib.sizes <- lib.sizes/mean(lib.sizes)*mean(Matrix::rowSums(self$misc[['rawCounts']]))
 
-      depth <<- lib.sizes
+      self$depth <<- lib.sizes
       invisible(lib.sizes)
     },
 

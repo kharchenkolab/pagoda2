@@ -37,6 +37,8 @@ Simon Steiger
 \item{\code{batch}}{Batch factor for the dataset (default=NULL)}
 
 \item{\code{genegraphs}}{Slot to store graphical representations in gene space (i.e. gene kNN graphs) (default=list())}
+
+\item{\code{depth}}{Cell size factor}
 }
 \if{html}{\out{</div>}}
 }
