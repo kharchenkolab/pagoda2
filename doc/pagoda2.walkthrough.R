@@ -1,8 +1,8 @@
-## -----------------------------------------------------------------------------
-library(pagoda2)
-library(dplyr)
+## ----message=FALSE------------------------------------------------------------
 library(Matrix)
 library(igraph)
+library(pagoda2)
+library(dplyr)
 
 ## -----------------------------------------------------------------------------
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
@@ -72,10 +72,17 @@ r$getKnnClusters(method=walktrap.community, type='PCA', name='walktrap')
 ## -----------------------------------------------------------------------------
 str(r$clusters)
 
-## -----------------------------------------------------------------------------
+## ----message=FALSE------------------------------------------------------------
+## infomap.community vs multilevel.community
 par(mfrow=c(1,2))
 r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
 r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
+
+## ----message=FALSE------------------------------------------------------------
+## infomap.community vs walktrap.community
+par(mfrow=c(1,2))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
 
 ## -----------------------------------------------------------------------------
 r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
@@ -113,7 +120,9 @@ str(genesets[1:2])
 ## -----------------------------------------------------------------------------
 library(GO.db)
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
+
 sn <- function(x) { names(x) <- x; x}
+
 genesets.go <- lapply(sn(names(go.env)),function(x) {
   list(properties=list(locked=TRUE, genesetname=x, shortdescription=as.character(termDescriptions[x])), genes=c(go.env[[x]]))
 })
@@ -154,7 +163,7 @@ p2web <-
     geneSets = genesets,
     appmetadata = appmetadata,
     show.clusters = FALSE # Hide the clusters that were used for the dendrogram from the metadata
-  );
+  )
 
 ## -----------------------------------------------------------------------------
 ##  show.app(app=p2web, name='app')
@@ -195,7 +204,7 @@ p2web <-
 #  ##     infomap = p2$clusters$PCA$infomap,
 #  ##     multilevel = p2$clusters$PCA$multilevel,
 #  ##     walktrap = p2$clusters$PCA$walktrap
-#  ## );
+#  ## )
 #  ## metadata.forweb <- factorListToMetadata(metadata.listfactors)
 #  
 #  ## # Make the web object
@@ -204,7 +213,7 @@ p2web <-
 #  ## # Serialize to file
 #  ## # The serialisedApp.bin file will now contain all the information
 #  ## # required to view the files via the web browser
-#  ## p2.webobject$serializeToStaticFast('serialisedApp.bin');
+#  ## p2.webobject$serializeToStaticFast('serialisedApp.bin')
 #  
 #  ## # Alternatively you can view your dataset from the R session
 #  ## # show.app(p2.webobject, browse = TRUE)
