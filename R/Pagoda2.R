@@ -18,7 +18,7 @@ NULL
 #' @param type string Data type (default='counts'). Currently only 'counts' supported.
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @param verbose boolean Whether to give verbose output (default=TRUE)
-#' @param lib.sizes (default=NULL)
+#' @param lib.sizes character vector of library sizes (default=NULL)
 #' @param log.scale boolean If TRUE, scale counts by log() (default=TRUE)
 #' @param min.cells.per.gene integer Minimum number of cells per gene, used to subset counts for coverage (default=0)
 #' @param min.transcripts.per.cell integer Minimum number of transcripts per cells, used to subset counts for coverage (default=10)
@@ -26,6 +26,7 @@ NULL
 #' @param trim numeric Parameter used for winsorizing count data (default=round(min.cells.per.gene/2)). If value>0, will winsorize counts in normalized space in the hopes of getting a more stable depth estimates. If value<=0, ignored.
 #' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
 #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
+#' @param plot boolean Whether to output the plot (default=FALSE)
 #' @export Pagoda2
 Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
   public = list(
@@ -70,7 +71,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
-    #' @return a new 'Pagoda2' object
+    #' @return new 'Pagoda2' object
     initialize=function(x, modelType='plain', ## batchNorm='glm',
                         n.cores=parallel::detectCores(logical=FALSE), verbose=TRUE,
                         min.cells.per.gene=0, trim=round(min.cells.per.gene/2), 
@@ -261,19 +262,19 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     },
 
     #' @description Adjust variance of the residual matrix, determine overdispersed sites
+    #' This is done to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis.
     #'
-    #' @param gam.k integer (default=5)
-    #' @param alpha numeric (default=5e-2)
-    #' @param plot boolean (default=FALSE)
+    #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=5). If gam.k<2, linear regression is used 'lm(v ~ m)'.
+    #' @param alpha numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
     #' @param use.raw.variance (default=FALSE). If modelType='raw', then this conditional will be used as TRUE.
-    #' @param use.unadjusted.pvals boolean (default=FALSE)
-    #' @param do.par boolean (default=TRUE)
-    #' @param max.adjusted.variance numeric (default=1e3)
-    #' @param min.adjusted.variance numeric (default=1e-3)
-    #' @param cells (default=NULL)
-    #' @param min.gene.cells integer (default=0)
-    #' @param persist boolean (default=TRUE, i.e. is.null(cells))
-    #' @return 
+    #' @param use.unadjusted.pvals boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).
+    #' @param do.par boolean Whether to put multiple graphs into a signle plot with par() (default=TRUE)
+    #' @param max.adjusted.variance numeric Maximum adjusted variance (default=1e3). The gene scale factor is defined as sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v))
+    #' @param min.adjusted.variance numeric Minimum adjusted variance (default=1e-3). The gene scale factor is defined as sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v))
+    #' @param cells character vector Subset of cells upon which to perform variance normalization with adjustVariance() (default=NULL)
+    #' @param min.gene.cells integer Minimum number of genes per cells (default=0). This parameter is used to filter counts.
+    #' @param persist boolean Whether to save results (default=TRUE, i.e. is.null(cells)).
+    #' @return residual matrix with adjusted variance
     adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=FALSE, 
       use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
       cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = self$n.cores) {
@@ -380,18 +381,19 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(df)
     },
 
-    #' @description Create Knn graph
+    #' @description Create k-nearest neighbor graph
     #' 
-    #' @param k integer (default=30)
+    #' @param k integer Number of k clusters for k-NN (default=30)
     #' @param nrand numeric (default=1e3)
-    #' @param weight.type string (default='1m')
-    #' @param odgenes (default=NULL)
-    #' @param distance string (default='cosine')
-    #' @param center boolean (default=TRUE)
+    #' @param type string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.
+    #' @param weight.type string 'cauchy', 'normal', 'constant', '1m' (default='1m')
+    #' @param odgenes character vector Overdispersed genes to retrieve (default=NULL)
+    #' @param distance string 'cosine', 'L2', 'L1', 'cauchy', 'euclidean' (default='cosine')
+    #' @param center boolean Whether to use centering when distance='cosine' (default=TRUE). The parameter is ignored otherwise.
     #' @param x (default=NULL)
     #' @param p (default=NULL)
     #' @param var.scale boolean (default=TRUE)
-    #' @return
+    #' @return k-NN graph
     makeKnnGraph=function(k=30, nrand=1e3, type='counts', weight.type='1m',
       odgenes=NULL, n.cores=self$n.cores, distance='cosine', center=TRUE, 
       x=NULL, p=NULL, var.scale=(type == "counts"), verbose=TRUE) {
@@ -428,7 +430,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (distance %in% c('cosine','angular')) {
         if (center) {
-          x<- x - Matrix::rowMeans(x) # centering for consine distance
+          x<- x - Matrix::rowMeans(x) # centering for cosine distance
         }
         xn <- N2R::Knn(as.matrix(x), k, nThreads=n.cores, verbose=verbose, indexType='angular')
       } else if (distance == "L2") {
@@ -490,23 +492,21 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate clusters based on the kNN graph
     #' 
-    #' @param method (default=igraph::multilevel.community)
-    #' @param name string (default='community')
-    #' @param subsampling.rate numeric (default=0.8)
-    #' @param n.subsamplings integer (default=10)
-    #' @param cluster.stability.threshold numeric (default=0.95)
-    #' @param g (default=NULL)
-    #' @param min.cluster.size (default=1)
-    #' @param persist boolean (default=TRUE)
-    #' @param return.details (default=FALSE)
+    #' @param method Method to use (default=igraph::multilevel.community). Accepted methods are either 'igraph::infomap.community' or 'igraph::multilevel.community'. 
+    #'     If NULL, if the number of vertices of the graph is greater than or equal to 2000, 'igraph::multilevel.community' will be used. Otherwise, 'igraph::infomap.community' will be used.
+    #' @param name string Name of the community structure calculated from 'method' (default='community')
+    #' @param g Input graph (default=NULL). If NULL, access graph from self$graphs[[type]].
+    #' @param min.cluster.size Minimum size of clusters (default=1). This parameter is primarily used to remove very small clusters.
+    #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
     #' @param ... additional parameters to pass to 'method'
-    #' @return
+    #' @return the community structure calculated from 'method'
     getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', 
-      subsampling.rate=0.8, n.subsamplings=10, cluster.stability.threshold=0.95, n.cores=self$n.cores, 
-      g=NULL, min.cluster.size=1, persist=TRUE, return.details=FALSE, ...) {
+      n.cores=self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, ...) {
 
       if (is.null(g)) {
-        if (is.null(self$graphs[[type]])) { stop("Call makeKnnGraph(type='",type,"', ...) first")}
+        if (is.null(self$graphs[[type]])) { 
+          stop("Call makeKnnGraph(type='",type,"', ...) first")
+        }
         g <- self$graphs[[type]]
       }
 
@@ -556,6 +556,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Take a given clustering and generate a hierarchical clustering
     #' 
+    #' @param type string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.
     #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
     #' @param clusterName (default=NULL)
     #' @param method string (default='ward.D')
@@ -563,7 +564,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param persist boolean (default=TRUE)
     #' @param z.threshold numeric (default=2)
     #' @param min.set.size integer (default=5)
-    #' @return
+    #' @return hierarchical clustering
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
       method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5, verbose=TRUE ){
       
@@ -704,13 +705,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Calculates gene Knn network for gene similarity
     #'
     #' @author Simon Steiger
-    #' @param nPcs integer (default=100)
-    #' @param scale boolean (default=TRUE)
-    #' @param center boolean (default=TRUE)
-    #' @param fastpath boolean (default=TRUE)
-    #' @param maxit integer (default=1000)
-    #' @param k integer (default=30)
-    #' @return
+    #' @param nPcs integer Number of principal components (default=100). This is the parameter 'nv' in irlba::irlba(), the number of right singular vectors to estimate.
+    #' @param center boolean Whether to center the PCA (default=TRUE)
+    #' @param fastpath boolean Whether to try a (fast) C algorithm implementation if possible (default=TRUE). This parameter is equivalent to 'fastpath' in irlba::irlba().
+    #' @param maxit integer Maximum number of iterations (default=1000). This parameter is equivalent to 'maxit' in irlba::irlba().
+    #' @param k integer Number of k clusters for calculating k-NN on the resulting principal components (default=30).
+    #' @return graph with gene similarity
     makeGeneKnnGraph = function(nPcs = 100, scale =TRUE, center=TRUE, fastpath =TRUE, 
       maxit =1000, k = 30, n.cores = self$n.cores, verbose =TRUE) {
        # Transpose first
@@ -758,12 +758,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate density-based clusters
     #' 
-    #' @param embeddingType (default=NULL)
-    #' @param name string (default='density')
-    #' @param v numeric (default=0.7)
-    #' @param s numeric (default=1)
+    #' @param embeddingType The type of embedding used when calculating with `getEmbedding()` (default=NULL). Accepted values are: 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' 
+    #' @param name string Name fo the clustering (default='density').
+    #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
+    #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
     #' @param ... additional parameters passed to dbscan::dbscan(emb, ...)
-    #' @return
+    #' @return density-based clusters
     getDensityClusters=function(type='counts', embeddingType=NULL, name='density', v=0.7, s=1, ...) {
       if (!requireNamespace("dbscan", quietly = TRUE)) {
         stop("Package \"dbscan\" needed for this function to work. Please install it.", call. = FALSE)
@@ -1223,7 +1223,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param type
     #' @param 
     #' @return 
-    plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL, groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
+    plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL, 
+      groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
+
       if (is.null(type)) {
         if ('counts' %in% names(self$embeddings)) {
           type <- 'counts'
@@ -1284,10 +1286,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Get overdispersed genes
     #' 
-    #' @param n.odgenes (default=NULL)
-    #' @param alpha numeric (default=5e-2)
-    #' @param use.unadjusted.pvals boolean (default=FALSE)
-    #' @return 
+    #' @param n.odgenes character vector Overdispersed genes to retrieve (default=NULL)
+    #' @param alpha numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
+    #' @param use.unadjusted.pvals boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).
+    #' @return vector of overdispersed genes
     getOdGenes=function(n.odgenes=NULL, alpha=5e-2, use.unadjusted.pvals=FALSE) {
       if (is.null(self$misc[['varinfo']])) { 
         stop("Please run adjustVariance first")
@@ -1305,7 +1307,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Return variance-normalized matrix for specified genes or a number of OD genes
     #'
-    #' @param n.odgenes overdispersed genes to be used (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.
+    #' @param n.odgenes overdispersed genes to retrieve (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.
     #' @param genes vector of gene names to explicitly return (default=NULL)
     #' @return cell by gene matrix
     getNormalizedExpressionMatrix=function(genes=NULL, n.odgenes=NULL) {
@@ -1324,7 +1326,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param name Name for the PCA reduction to be created (default='PCA')
     #' @param use.odgenes boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)
     #' @param n.odgenes Whether a certain number of top overdispersed genes should be used (default=NULL)
-    #' @param odgenes Explicitly specify a set of genes to use for the reduction (default=NULL)
+    #' @param odgenes Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL)
     #' @param center boolean Whether data should be centered prior to PCA (default=TRUE)
     #' @param cells optional subset of cells on which PCA should be run (default=NULL)
     #' @param fastpath boolean Use C implementation for speedup (default=TRUE)
@@ -1827,7 +1829,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param min.pathway.size numeric (default=10)
     #' @param n.randomizations integer (default=5)
     #' @param score.alpha numeric (default=0.05)
-    #' @param plot boolean (default=FALSE)
     #' @param cells (default=NULL)
     #' @param adjusted.pvalues boolean (default=TRUE)
     #' @param z.score numeric (default=qnorm(0.05/2, lower.tail = FALSE))

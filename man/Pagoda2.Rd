@@ -104,7 +104,7 @@ Initialize Conos class
 
 \item{\code{min.transcripts.per.cell}}{integer Minimum number of transcripts per cells, used to subset counts for coverage (default=10)}
 
-\item{\code{lib.sizes}}{(default=NULL)}
+\item{\code{lib.sizes}}{character vector of library sizes (default=NULL)}
 
 \item{\code{log.scale}}{boolean If TRUE, scale counts by log() (default=TRUE)}
 
@@ -113,7 +113,7 @@ Initialize Conos class
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-a new 'Pagoda2' object
+new 'Pagoda2' object
 }
 }
 \if{html}{\out{<hr>}}
@@ -146,7 +146,7 @@ Provide the initial count matrix, and estimate deviance residual matrix (correct
 
 \item{\code{min.transcripts.per.cell}}{integer Minimum number of transcripts per cells, used to subset counts for coverage (default=10)}
 
-\item{\code{lib.sizes}}{(default=NULL)}
+\item{\code{lib.sizes}}{character vector of library sizes (default=NULL)}
 
 \item{\code{log.scale}}{boolean If TRUE, scale counts by log() (default=TRUE)}
 
@@ -165,6 +165,7 @@ normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
 \if{latex}{\out{\hypertarget{method-adjustVariance}{}}}
 \subsection{Method \code{adjustVariance()}}{
 Adjust variance of the residual matrix, determine overdispersed sites
+This is done to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$adjustVariance(
   gam.k = 5,
@@ -186,43 +187,43 @@ Adjust variance of the residual matrix, determine overdispersed sites
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{gam.k}}{integer (default=5)}
+\item{\code{gam.k}}{integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=5). If gam.k<2, linear regression is used 'lm(v ~ m)'.}
 
-\item{\code{alpha}}{numeric (default=5e-2)}
+\item{\code{alpha}}{numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.}
 
-\item{\code{plot}}{boolean (default=FALSE)}
+\item{\code{plot}}{boolean Whether to output the plot (default=FALSE)}
 
 \item{\code{use.raw.variance}}{(default=FALSE). If modelType='raw', then this conditional will be used as TRUE.}
 
-\item{\code{use.unadjusted.pvals}}{boolean (default=FALSE)}
+\item{\code{use.unadjusted.pvals}}{boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).}
 
-\item{\code{do.par}}{boolean (default=TRUE)}
+\item{\code{do.par}}{boolean Whether to put multiple graphs into a signle plot with par() (default=TRUE)}
 
-\item{\code{max.adjusted.variance}}{numeric (default=1e3)}
+\item{\code{max.adjusted.variance}}{numeric Maximum adjusted variance (default=1e3). The gene scale factor is defined as sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v))}
 
-\item{\code{min.adjusted.variance}}{numeric (default=1e-3)}
+\item{\code{min.adjusted.variance}}{numeric Minimum adjusted variance (default=1e-3). The gene scale factor is defined as sqrt(pmax(min.adjusted.variance,pmin(max.adjusted.variance,df$qv))/exp(df$v))}
 
-\item{\code{cells}}{(default=NULL)}
+\item{\code{cells}}{character vector Subset of cells upon which to perform variance normalization with adjustVariance() (default=NULL)}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
-\item{\code{min.gene.cells}}{integer (default=0)}
+\item{\code{min.gene.cells}}{integer Minimum number of genes per cells (default=0). This parameter is used to filter counts.}
 
-\item{\code{persist}}{boolean (default=TRUE, i.e. is.null(cells))}
+\item{\code{persist}}{boolean Whether to save results (default=TRUE, i.e. is.null(cells)).}
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+residual matrix with adjusted variance
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-makeKnnGraph"></a>}}
 \if{latex}{\out{\hypertarget{method-makeKnnGraph}{}}}
 \subsection{Method \code{makeKnnGraph()}}{
-Create Knn graph
+Create k-nearest neighbor graph
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$makeKnnGraph(
   k = 30,
@@ -243,21 +244,21 @@ Create Knn graph
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{k}}{integer (default=30)}
+\item{\code{k}}{integer Number of k clusters for k-NN (default=30)}
 
 \item{\code{nrand}}{numeric (default=1e3)}
 
-\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+\item{\code{type}}{string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.}
 
-\item{\code{weight.type}}{string (default='1m')}
+\item{\code{weight.type}}{string 'cauchy', 'normal', 'constant', '1m' (default='1m')}
 
-\item{\code{odgenes}}{(default=NULL)}
+\item{\code{odgenes}}{character vector Overdispersed genes to retrieve (default=NULL)}
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
-\item{\code{distance}}{string (default='cosine')}
+\item{\code{distance}}{string 'cosine', 'L2', 'L1', 'cauchy', 'euclidean' (default='cosine')}
 
-\item{\code{center}}{boolean (default=TRUE)}
+\item{\code{center}}{boolean Whether to use centering when distance='cosine' (default=TRUE). The parameter is ignored otherwise.}
 
 \item{\code{x}}{(default=NULL)}
 
@@ -270,7 +271,7 @@ Create Knn graph
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+k-NN graph
 }
 }
 \if{html}{\out{<hr>}}
@@ -283,14 +284,10 @@ Calculate clusters based on the kNN graph
   type = "counts",
   method = igraph::multilevel.community,
   name = "community",
-  subsampling.rate = 0.8,
-  n.subsamplings = 10,
-  cluster.stability.threshold = 0.95,
   n.cores = self$n.cores,
   g = NULL,
   min.cluster.size = 1,
   persist = TRUE,
-  return.details = FALSE,
   ...
 )}\if{html}{\out{</div>}}
 }
@@ -300,32 +297,25 @@ Calculate clusters based on the kNN graph
 \describe{
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{method}}{(default=igraph::multilevel.community)}
+\item{\code{method}}{Method to use (default=igraph::multilevel.community). Accepted methods are either 'igraph::infomap.community' or 'igraph::multilevel.community'. 
+If NULL, if the number of vertices of the graph is greater than or equal to 2000, 'igraph::multilevel.community' will be used. Otherwise, 'igraph::infomap.community' will be used.}
 
-\item{\code{name}}{string (default='community')}
-
-\item{\code{subsampling.rate}}{numeric (default=0.8)}
-
-\item{\code{n.subsamplings}}{integer (default=10)}
-
-\item{\code{cluster.stability.threshold}}{numeric (default=0.95)}
+\item{\code{name}}{string Name of the community structure calculated from 'method' (default='community')}
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
-\item{\code{g}}{(default=NULL)}
+\item{\code{g}}{Input graph (default=NULL). If NULL, access graph from self$graphs[[type]].}
 
-\item{\code{min.cluster.size}}{(default=1)}
+\item{\code{min.cluster.size}}{Minimum size of clusters (default=1). This parameter is primarily used to remove very small clusters.}
 
-\item{\code{persist}}{boolean (default=TRUE)}
-
-\item{\code{return.details}}{(default=FALSE)}
+\item{\code{persist}}{boolean Whether to save the clusters and community structure (default=TRUE)}
 
 \item{\code{...}}{additional parameters to pass to 'method'}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+the community structure calculated from 'method'
 }
 }
 \if{html}{\out{<hr>}}
@@ -360,7 +350,7 @@ Take a given clustering and generate a hierarchical clustering
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+\item{\code{type}}{string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.}
 
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
@@ -383,7 +373,7 @@ Take a given clustering and generate a hierarchical clustering
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+hierarchical clustering
 }
 }
 \if{html}{\out{<hr>}}
@@ -407,17 +397,15 @@ Calculates gene Knn network for gene similarity
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{nPcs}}{integer (default=100)}
+\item{\code{nPcs}}{integer Number of principal components (default=100). This is the parameter 'nv' in irlba::irlba(), the number of right singular vectors to estimate.}
 
-\item{\code{scale}}{boolean (default=TRUE)}
+\item{\code{center}}{boolean Whether to center the PCA (default=TRUE)}
 
-\item{\code{center}}{boolean (default=TRUE)}
+\item{\code{fastpath}}{boolean Whether to try a (fast) C algorithm implementation if possible (default=TRUE). This parameter is equivalent to 'fastpath' in irlba::irlba().}
 
-\item{\code{fastpath}}{boolean (default=TRUE)}
+\item{\code{maxit}}{integer Maximum number of iterations (default=1000). This parameter is equivalent to 'maxit' in irlba::irlba().}
 
-\item{\code{maxit}}{integer (default=1000)}
-
-\item{\code{k}}{integer (default=30)}
+\item{\code{k}}{integer Number of k clusters for calculating k-NN on the resulting principal components (default=30).}
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
@@ -426,7 +414,7 @@ Calculates gene Knn network for gene similarity
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+graph with gene similarity
 }
 }
 \if{html}{\out{<hr>}}
@@ -450,20 +438,20 @@ Calculate density-based clusters
 \describe{
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{embeddingType}}{(default=NULL)}
+\item{\code{embeddingType}}{The type of embedding used when calculating with `getEmbedding()` (default=NULL). Accepted values are: 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph'}
 
-\item{\code{name}}{string (default='density')}
+\item{\code{name}}{string Name fo the clustering (default='density').}
 
-\item{\code{v}}{numeric (default=0.7)}
+\item{\code{v}}{numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().}
 
-\item{\code{s}}{numeric (default=1)}
+\item{\code{s}}{numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().}
 
 \item{\code{...}}{additional parameters passed to dbscan::dbscan(emb, ...)}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+density-based clusters
 }
 }
 \if{html}{\out{<hr>}}
@@ -713,16 +701,16 @@ Get overdispersed genes
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{n.odgenes}}{(default=NULL)}
+\item{\code{n.odgenes}}{character vector Overdispersed genes to retrieve (default=NULL)}
 
-\item{\code{alpha}}{numeric (default=5e-2)}
+\item{\code{alpha}}{numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.}
 
-\item{\code{use.unadjusted.pvals}}{boolean (default=FALSE)}
+\item{\code{use.unadjusted.pvals}}{boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+vector of overdispersed genes
 }
 }
 \if{html}{\out{<hr>}}
@@ -739,7 +727,7 @@ Return variance-normalized matrix for specified genes or a number of OD genes
 \describe{
 \item{\code{genes}}{vector of gene names to explicitly return (default=NULL)}
 
-\item{\code{n.odgenes}}{overdispersed genes to be used (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.}
+\item{\code{n.odgenes}}{overdispersed genes to retrieve (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.}
 }
 \if{html}{\out{</div>}}
 }
@@ -783,7 +771,7 @@ Calculate PCA reduction of the data
 
 \item{\code{n.odgenes}}{Whether a certain number of top overdispersed genes should be used (default=NULL)}
 
-\item{\code{odgenes}}{Explicitly specify a set of genes to use for the reduction (default=NULL)}
+\item{\code{odgenes}}{Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL)}
 
 \item{\code{center}}{boolean Whether data should be centered prior to PCA (default=TRUE)}
 
@@ -1000,7 +988,7 @@ Test pathway overdispersion. Note: this is a compressed version of the PAGODA1 a
 
 \item{\code{score.alpha}}{numeric (default=0.05)}
 
-\item{\code{plot}}{boolean (default=FALSE)}
+\item{\code{plot}}{boolean Whether to output the plot (default=FALSE)}
 
 \item{\code{cells}}{(default=NULL)}
 
