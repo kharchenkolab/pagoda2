@@ -566,6 +566,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @return
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
       method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5, verbose=TRUE ){
+      
       if (type=='counts') {
         x <- self$counts
       } else {
@@ -627,7 +628,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("Unknown distance",dist,"requested")
       }
 
-      dd <- as.dendrogram(hclust(d,method=method))
+      dd <- as.dendrogram(hclust(d, method=method))
 
       # walk down the dendrogram to generate diff. expression on every split
       diffcontrasts <- function(l,env) {
@@ -655,7 +656,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'],diff(x@p)) # apply variance scaling
       x <- t(x)
       dexp <- papply(dc,function(g) {
-        dg <- getDifferentialGenes(groups=g,z.threshold=z.threshold)
+        dg <- self$getDifferentialGenes(groups=g, z.threshold=z.threshold)
         dg <- lapply(dg,function(x) x[x$Z>=z.threshold,])
         # calculate average profiles
         x <- x[rownames(x) %in% unlist(lapply(dg,rownames)),]
@@ -677,13 +678,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         return(list(dg=dg,pt=pt))
       },n.cores=n.cores)
 
-
       dexp <- dexp[!unlist(lapply(dexp,is.null))] # remove cases where nothing was reported
       dexp <- dexp[!unlist(lapply(dexp,function(x){class(x) == 'try-error'}))] ## remove cases that failed
 
       # fake pathwayOD output
       tamr <- list(xv=do.call(rbind,lapply(dexp,function(x) x$pt)),
                    cnam=lapply(sn(names(dexp)),function(n) c(n)))
+
 
       dgl <- lapply(dexp,function(d) as.character(unlist(lapply(d$dg,function(x) rownames(x)[x$Z>=z.threshold]))))
       tamr$env <- list2env(dgl[unlist(lapply(dgl,length))>=min.set.size])
@@ -906,7 +907,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # self$diffgenes[[type]][[ names(self$clusters[[type]])[1] ]] <<- ds
           ## take last clustering generated
-          self$diffgenes[[type]][[names(self$clusters[[type]] [length(self$clusters[[type]])]) ]] <<- ds
+          self$diffgenes[[type]][[names(self$clusters[[type]])[length(self$clusters[[type]])]]] <<- ds
         } else {
           self$diffgenes[[type]][[clusterType]] <<- ds
         }

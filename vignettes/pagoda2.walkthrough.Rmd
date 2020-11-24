@@ -142,13 +142,27 @@ Internally the clusters are saved in the clusters variable under the reduction f
 str(r$clusters)
 ```
 
-We can now compare these against infomap:
+We can now compare these against `infomap.community`. 
 
-```{r}
+#### infomap.community vs. multilevel.community
+
+```{r message=FALSE}
+## infomap.community vs multilevel.community
 par(mfrow=c(1,2))
 r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
 r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
 ```
+
+#### infomap.community vs. walktrap.community
+
+```{r message=FALSE}
+## infomap.community vs walktrap.community
+par(mfrow=c(1,2))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
+```
+
+
 
 We can then perform differential expression between these clusters
 
