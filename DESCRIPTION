@@ -45,6 +45,7 @@ Suggests:
     dplyr,
     ggplot2, 
     GO.db, 
+    gridExtra,
     KernSmooth,
     knitr, 
     org.Dr.eg.db,

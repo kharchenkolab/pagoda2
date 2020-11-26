@@ -1,4 +1,3 @@
----
 title: "Pagoda2 Walkthrough"
 output: rmarkdown::html_vignette
     toc: true
@@ -279,11 +278,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 7 ...
+##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 9 2 2 11 11 2 5 3 5 7 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 8 4 4 11 11 4 6 5 6 9 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 4 8 8 7 7 8 9 3 9 5 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 9 4 9 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -318,7 +317,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 21 clusters ...
+## running differential expression with 22 clusters ...
 ```
 
 ```
@@ -393,18 +392,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 15.vs.17  :List of 2
+##  $ 14.vs.15:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "15.vs.17"
-##   .. ..$ shortdescription: chr "15.vs.17"
-##   ..$ genes     : chr [1:157] "TSC22D3" "SSR4" "CD79A" "KLF2" ...
-##  $ 15.17.vs.2:List of 2
+##   .. ..$ genesetname     : chr "14.vs.15"
+##   .. ..$ shortdescription: chr "14.vs.15"
+##   ..$ genes     : chr [1:134] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
+##  $ 3.vs.9  :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "15.17.vs.2"
-##   .. ..$ shortdescription: chr "15.17.vs.2"
-##   ..$ genes     : chr [1:309] "MZB1" "JCHAIN" "HSP90B1" "ITM2C" ...
+##   .. ..$ genesetname     : chr "3.vs.9"
+##   .. ..$ shortdescription: chr "3.vs.9"
+##   ..$ genes     : chr [1:122] "FTH1" "TYROBP" "FTL" "CTSS" ...
 ```
 
 To add GO Terms as genesets run the following

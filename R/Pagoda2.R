@@ -391,9 +391,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param type string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.
     #' @param weight.type string 'cauchy', 'normal', 'constant', '1m' (default='1m')
     #' @param odgenes character vector Overdispersed genes to retrieve (default=NULL)
-    #' @param distance string 'cosine', 'L2', 'L1', 'cauchy', 'euclidean' (default='cosine')
+    #' @param distance string Distance metric used: 'cosine', 'L2', 'L1', 'cauchy', 'euclidean' (default='cosine')
     #' @param center boolean Whether to use centering when distance='cosine' (default=TRUE). The parameter is ignored otherwise.
-    #' @param x (default=NULL)
+    #' @param x counts or reduction to use (default=NULL). If NULL, uses counts. Otherwise, checks for the reduction in self$reductions[[type]] 
     #' @param p (default=NULL)
     #' @param var.scale boolean (default=TRUE)
     #' @return k-NN graph
@@ -565,16 +565,19 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' 
     #' @param type string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.
     #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
-    #' @param clusterName (default=NULL)
-    #' @param method string (default='ward.D')
-    #' @param dist string (default='pearson')
-    #' @param persist boolean (default=TRUE)
-    #' @param z.threshold numeric (default=2)
-    #' @param min.set.size integer (default=5)
+    #' @param clusterName string Cluster name to access (default=NULL)
+    #' @param dist string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')
+    #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
+    #' @param z.threshold numeric Threshold of z-scores to filter, >=z.threshold are kept (default=2)
+    #' @param min.set.size integer Minimum threshold of sets to keep (default=5)
     #' @return hierarchical clustering
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
-      method='ward.D', dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5, verbose=TRUE ){
-      
+      dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5, verbose=TRUE ){
+   
+      if (tolower(dist)=="euclidean"){
+        dist <- "L2"
+      }
+
       if (type=='counts') {
         x <- self$counts
       } else {
@@ -616,7 +619,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
             }
         }))
         d <- as.dist(1-cor(rx,method=dist))
-      } else if (dist=='euclidean' || dist=="L2") {
+      } else if (dist=="L2") {
         rx <- do.call(rbind,tapply(1:nrow(x),cl,function(ii) {
             if (legnth(ii) > 1) {
                 Matrix::colMeans(x[ii,])
@@ -927,15 +930,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Plot heatmap of DE results
     #' 
-    #' @param n.genes integer (default=100)
-    #' @param z.score numeric (default=2)
+    #' @param n.genes integer Number of genes to plot (default=100)
+    #' @param z.score numeric Threshold of z-scores to filter; only greater than or equal to this value are kept (default=2)
     #' @param gradient.range.quantile numeric (default=0.95)
-    #' @param inner.clustering boolean (default=FALSE)
-    #' @param gradientPalette (default=NULL)
-    #' @param v numeric (default=0.8)
-    #' @param s numeric (default=1)
-    #' @param box boolean (default=TRUE)
-    #' @param drawGroupNames boolean (default=FALSE)
+    #' @param inner.clustering boolean Whether to cluster cells within each cluster (default=FALSE)
+    #' @param gradientPalette palette of colors to use (default=NULL). If NULL, uses 'colorRampPalette(c('gray90','red'), space = "Lab")(1024)'
+    #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
+    #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
+    #' @param box boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)
+    #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
+        #' @param ... additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
     #' @return 
     plotDiffGeneHeatmap=function(type='counts', clusterType=NULL, groups=NULL, n.genes=100, 
       z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
@@ -1048,7 +1052,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       cellcols <- colors$colors[unlist(clco[clclo])]
       genecols <- rev(rep(colors$palette,unlist(lapply(clgo,length)[clclo])))
       bottomMargin <- ifelse(drawGroupNames,4,0.5)
-      my.heatmap2(em[rev(unlist(clgo[clclo])),unlist(clco[clclo])],col=gradientPalette,Colv=NA,Rowv=NA,labRow=NA,labCol=NA,RowSideColors=genecols,ColSideColors=cellcols,margins=c(bottomMargin,0.5),ColSideColors.unit.vsize=0.05,RowSideColors.hsize=0.05,useRaster=T, box=box, ...)
+      my.heatmap2(em[rev(unlist(clgo[clclo])),unlist(clco[clclo])],col=gradientPalette,Colv=NA,Rowv=NA,labRow=NA,labCol=NA,RowSideColors=genecols,ColSideColors=cellcols,margins=c(bottomMargin,0.5),ColSideColors.unit.vsize=0.05,RowSideColors.hsize=0.05,useRaster=TRUE, box=box, ...)
       abline(v=cumsum(unlist(lapply(clco[clclo],length))),col=1,lty=3)
       abline(h=cumsum(rev(unlist(lapply(clgo[clclo],length)))),col=1,lty=3)
     },
@@ -1111,13 +1115,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param z.score numeric (default=2)
     #' @param grandient.range.quantile (default=0.95)
     #' @param cluster.genes boolean (default=FALSE)
-    #' @param inner.clustering boolean (default=FALSE)
-    #' @param gradientPalette (default=NULL)
-    #' @param v numeric (default=0.8)
-    #' @param s numeric (default=1)
-    #' @param box boolean (default=TRUE)
-    #' @param drawGroupNames boolean (default=FALSE)
-    #' @param useRaster boolean (default=TRUE)
+    #' @param inner.clustering boolean Whether to cluster cells within each cluster (default=FALSE)
+    #' @param gradientPalette palette of colors to use (default=NULL). If NULL, uses 'colorRampPalette(c('gray90','red'), space = "Lab")(1024)'
+    #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
+    #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
+    #' @param box boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)
+    #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
+    #' @param useRaster boolean If TRUE a bitmap raster is used to plot the image instead of polygons (default=TRUE). The grid must be regular in that case, otherwise an error is raised. For more information, see graphics::image().
     #' @param smooth.span (default=max(1,round(nrow(self$counts)/1024)))
     #' @param ... additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
     #' @return
@@ -1227,8 +1231,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Show embedding
     #' 
-    #' @param type
-    #' @param 
+    #' @param type (default=NULL)
+    #' @param embeddingType (default=NULL)
+    #' @param clusterType (default=NULL)
+    #' @param groups (default=NULL)
+    #' @param colors (default=NULL)
+    #' @param gene (default=NULL)
+    #' @param plot.theme (default=ggplot2::theme_bw()) 
+    #' @param ...
     #' @return 
     plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL,
       groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
@@ -1248,13 +1258,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (is.null(self$embeddings[[type]])){
         stop("First, generate embeddings for type ",type)
       }
-
-      ## previous code:
-      ## """
-      ##if (is.null(embeddingType)) {
-      ##  embeddingType <- 1 # take the first one
-      ##}
-      ## """
 
       if (is.null(embeddingType)){
         ## take the most recently generated embedding
