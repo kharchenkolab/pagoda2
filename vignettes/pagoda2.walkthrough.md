@@ -21,6 +21,7 @@ library(Matrix)
 library(igraph)
 library(pagoda2)
 library(dplyr)
+library(ggplot2)
 ```
 
 ## Part 1: Loading the QC'ing the dataset
@@ -229,11 +230,7 @@ and we plot the data:
 
 
 ```r
-r$plotEmbedding(type='PCA', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (largeVis)')
-```
-
-```
-## Warning: Ignoring unknown parameters: main
+r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (largeVis)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
@@ -242,11 +239,7 @@ Next we can generate and plot a tSNE embedding. This can take a while to run!
 
 ```r
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (tSNE)')
-```
-
-```
-## Warning: Ignoring unknown parameters: main
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
@@ -256,7 +249,7 @@ We can overlay the expresssion of specific marker genes on this embedding to ide
 
 ```r
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
@@ -264,7 +257,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ```r
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
@@ -286,67 +279,36 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 7 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 5 9 9 11 11 9 3 1 3 6 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 9 2 2 11 11 2 5 3 5 7 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 8 8 7 7 8 9 4 9 3 ...
+##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 4 8 8 7 7 8 9 3 9 5 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
 We can now compare these against `infomap.community`. 
 
-#### infomap.community vs. multilevel.community
+#### infomap.community vs. multilevel.community vs. walktrap.community
 
 
 ```r
-## infomap.community vs multilevel.community
-par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
-```
-
-```
-## Warning: Ignoring unknown parameters: main
+r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
 
 ```r
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
-```
-
-```
-## Warning: Ignoring unknown parameters: main
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-2.png)
 
-#### infomap.community vs. walktrap.community
-
-
 ```r
-## infomap.community vs walktrap.community
-par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
+r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-```
-## Warning: Ignoring unknown parameters: main
-```
-
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
-
-```r
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
-```
-
-```
-## Warning: Ignoring unknown parameters: main
-```
-
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-2.png)
-
-
+![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-3.png)
 
 We can then perform differential expression between these clusters
 
@@ -356,7 +318,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 22 clusters ...
+## running differential expression with 21 clusters ...
 ```
 
 ```
@@ -375,16 +337,16 @@ de <- r$diffgenes$PCA[[1]][['2']]
 r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 ```
 
-![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
+![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
 
 
 
 ```r
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, legend.title=gene)
 ```
 
-![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
 
 At this point we can perform pathway overdispersion analysis (in the same wy we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it take too long!). Overdispersion analysis usually takes too long with the latest datasets composed of 1000's of cells, for this reason we prefer hierarchical differential expression. 
 
@@ -431,31 +393,24 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.15:List of 2
+##  $ 15.vs.17  :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.15"
-##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:137] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
-##  $ 3.vs.9  :List of 2
+##   .. ..$ genesetname     : chr "15.vs.17"
+##   .. ..$ shortdescription: chr "15.vs.17"
+##   ..$ genes     : chr [1:157] "TSC22D3" "SSR4" "CD79A" "KLF2" ...
+##  $ 15.17.vs.2:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "3.vs.9"
-##   .. ..$ shortdescription: chr "3.vs.9"
-##   ..$ genes     : chr [1:126] "FTH1" "TYROBP" "FTL" "CTSS" ...
+##   .. ..$ genesetname     : chr "15.17.vs.2"
+##   .. ..$ shortdescription: chr "15.17.vs.2"
+##   ..$ genes     : chr [1:309] "MZB1" "JCHAIN" "HSP90B1" "ITM2C" ...
 ```
 
 To add GO Terms as genesets run the following
 
 ```r
 library(GO.db)
-```
-
-```
-## 
-```
-
-```r
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
 
 sn <- function(x) { names(x) <- x; x}

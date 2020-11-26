@@ -66,9 +66,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @field genegraphs Slot to store graphical representations in gene space (i.e. gene kNN graphs) (default=list())
     genegraphs = list(),
 
-    #' @field depth Cell size factor
+    #' @field depth Number of molecules measured per cell (default=NULL)
     depth = NULL,
-
 
     #' @description Initialize Conos class
     #'
@@ -107,7 +106,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
     #'
-    #' @param countMatrix
+    #' @param countMatrix input count matrix 
     #' @param depthScale numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale)
     #' @return normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
     setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=0, 
@@ -480,8 +479,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
       }
       xn@x <- pmax(0,xn@x)
-      if (weight.type=='constant') { xn@x <- 1}
-      if (weight.type=='1m') { xn@x <- pmax(0,1-xn@x) }
+      if (weight.type=='constant') { 
+        xn@x <- 1
+      }
+      if (weight.type=='1m') { 
+        xn@x <- pmax(0,1-xn@x) 
+      }
       #if(weight.type=='rank') { xn@x <- sqrt(df$rank) }
       # make a weighted edge matrix for the largeVis as well
       sxn <- (xn+t(xn))/2
