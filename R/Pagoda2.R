@@ -1438,7 +1438,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param n.odgenes (default=NULL)
     #' @param odgenes (default=NULL)
     #' @param n.odgene.multiplier numeric (default=1)
-    #' @param gam.k integer (default=10)
+    #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.
     #' @param min.odgenes integer (default=10)
     #' @param max.odgenes integer (default=Inf)
     #' @param take.top.odgenes boolean (default=TRUE)

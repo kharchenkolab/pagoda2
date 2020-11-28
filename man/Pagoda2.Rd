@@ -38,7 +38,7 @@ Simon Steiger
 
 \item{\code{genegraphs}}{Slot to store graphical representations in gene space (i.e. gene kNN graphs) (default=list())}
 
-\item{\code{depth}}{Cell size factor}
+\item{\code{depth}}{Number of molecules measured per cell (default=NULL)}
 }
 \if{html}{\out{</div>}}
 }
@@ -140,6 +140,8 @@ Provide the initial count matrix, and estimate deviance residual matrix (correct
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{countMatrix}}{input count matrix}
+
 \item{\code{depthScale}}{numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale)}
 
 \item{\code{min.cells.per.gene}}{integer Minimum number of cells per gene, used to subset counts for coverage (default=0)}
@@ -258,11 +260,11 @@ Create k-nearest neighbor graph
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
-\item{\code{distance}}{string 'cosine', 'L2', 'L1', 'cauchy', 'euclidean' (default='cosine')}
+\item{\code{distance}}{string Distance metric used: 'cosine', 'L2', 'L1', 'cauchy', 'euclidean' (default='cosine')}
 
 \item{\code{center}}{boolean Whether to use centering when distance='cosine' (default=TRUE). The parameter is ignored otherwise.}
 
-\item{\code{x}}{(default=NULL)}
+\item{\code{x}}{counts or reduction to use (default=NULL). If NULL, uses counts. Otherwise, checks for the reduction in self$reductions[[type]]}
 
 \item{\code{p}}{(default=NULL)}
 
@@ -339,7 +341,6 @@ Take a given clustering and generate a hierarchical clustering
   type = "counts",
   groups = NULL,
   clusterName = NULL,
-  method = "ward.D",
   dist = "pearson",
   persist = TRUE,
   z.threshold = 2,
@@ -356,19 +357,17 @@ Take a given clustering and generate a hierarchical clustering
 
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
-\item{\code{clusterName}}{(default=NULL)}
+\item{\code{clusterName}}{string Cluster name to access (default=NULL)}
 
-\item{\code{method}}{string (default='ward.D')}
+\item{\code{dist}}{string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')}
 
-\item{\code{dist}}{string (default='pearson')}
+\item{\code{persist}}{boolean Whether to save the clusters and community structure (default=TRUE)}
 
-\item{\code{persist}}{boolean (default=TRUE)}
-
-\item{\code{z.threshold}}{numeric (default=2)}
+\item{\code{z.threshold}}{numeric Threshold of z-scores to filter, >=z.threshold are kept (default=2)}
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
-\item{\code{min.set.size}}{integer (default=5)}
+\item{\code{min.set.size}}{integer Minimum threshold of sets to keep (default=5)}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 }
@@ -539,23 +538,25 @@ Plot heatmap of DE results
 
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
-\item{\code{n.genes}}{integer (default=100)}
+\item{\code{n.genes}}{integer Number of genes to plot (default=100)}
 
-\item{\code{z.score}}{numeric (default=2)}
+\item{\code{z.score}}{numeric Threshold of z-scores to filter; only greater than or equal to this value are kept (default=2)}
 
 \item{\code{gradient.range.quantile}}{numeric (default=0.95)}
 
-\item{\code{inner.clustering}}{boolean (default=FALSE)}
+\item{\code{inner.clustering}}{boolean Whether to cluster cells within each cluster (default=FALSE)}
 
-\item{\code{gradientPalette}}{(default=NULL)}
+\item{\code{gradientPalette}}{palette of colors to use (default=NULL). If NULL, uses 'colorRampPalette(c('gray90','red'), space = "Lab")(1024)'}
 
-\item{\code{v}}{numeric (default=0.8)}
+\item{\code{v}}{numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().}
 
-\item{\code{s}}{numeric (default=1)}
+\item{\code{s}}{numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().}
 
-\item{\code{box}}{boolean (default=TRUE)}
+\item{\code{box}}{boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)}
 
-\item{\code{drawGroupNames}}{boolean (default=FALSE)}
+\item{\code{drawGroupNames}}{boolean Whether to draw group names (default=FALSE)}
+
+\item{\code{...}}{additional parameters passed to internal function used for heatmap plotting, my.heatmap2()}
 }
 \if{html}{\out{</div>}}
 }
@@ -628,19 +629,19 @@ Plot heatmap for a given set of genes
 
 \item{\code{cluster.genes}}{boolean (default=FALSE)}
 
-\item{\code{inner.clustering}}{boolean (default=FALSE)}
+\item{\code{inner.clustering}}{boolean Whether to cluster cells within each cluster (default=FALSE)}
 
-\item{\code{gradientPalette}}{(default=NULL)}
+\item{\code{gradientPalette}}{palette of colors to use (default=NULL). If NULL, uses 'colorRampPalette(c('gray90','red'), space = "Lab")(1024)'}
 
-\item{\code{v}}{numeric (default=0.8)}
+\item{\code{v}}{numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().}
 
-\item{\code{s}}{numeric (default=1)}
+\item{\code{s}}{numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().}
 
-\item{\code{box}}{boolean (default=TRUE)}
+\item{\code{box}}{boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)}
 
-\item{\code{drawGroupNames}}{boolean (default=FALSE)}
+\item{\code{drawGroupNames}}{boolean Whether to draw group names (default=FALSE)}
 
-\item{\code{useRaster}}{boolean (default=TRUE)}
+\item{\code{useRaster}}{boolean If TRUE a bitmap raster is used to plot the image instead of polygons (default=TRUE). The grid must be regular in that case, otherwise an error is raised. For more information, see graphics::image().}
 
 \item{\code{smooth.span}}{(default=max(1,round(nrow(self$counts)/1024)))}
 
@@ -675,11 +676,19 @@ Show embedding
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+\item{\code{type}}{(default=NULL)}
 
-\item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
+\item{\code{embeddingType}}{(default=NULL)}
 
-\item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
+\item{\code{clusterType}}{(default=NULL)}
+
+\item{\code{groups}}{(default=NULL)}
+
+\item{\code{colors}}{(default=NULL)}
+
+\item{\code{gene}}{(default=NULL)}
+
+\item{\code{plot.theme}}{(default=ggplot2::theme_bw())}
 }
 \if{html}{\out{</div>}}
 }
@@ -839,7 +848,7 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 
 \item{\code{n.odgene.multiplier}}{numeric (default=1)}
 
-\item{\code{gam.k}}{integer (default=10)}
+\item{\code{gam.k}}{integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
