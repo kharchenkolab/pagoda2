@@ -1148,9 +1148,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # take the last-generated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
+          if (is.null(groups)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         } else {
           groups <- self$clusters[[type]][[clusterType]]
-          if (is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
+          if (is.null(groups)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         }
       }
 
@@ -1389,6 +1394,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           # groups <- self$clusters[[type]][[1]]
           ## Take last-genereated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
+          if (is.null(groups)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         } else {
           groups <- self$clusters[[type]][[clusterType]]
           if (is.null(groups)) { 
@@ -1434,11 +1442,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
     },
 
-
     #' @description Return variance-normalized matrix for specified genes or a number of OD genes
     #'
     #' @param n.odgenes overdispersed genes to retrieve (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.
     #' @param genes vector of gene names to explicitly return (default=NULL)
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$getNormalizedExpressionMatrix()
+    #' 
     #' @return cell by gene matrix
     getNormalizedExpressionMatrix=function(genes=NULL, n.odgenes=NULL) {
       if (is.null(genes)) {
@@ -1448,7 +1463,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'], diff(x@p))
       return(x)
     },
-    
+
+
     #' @description Calculate PCA reduction of the data
     #' 
     #' @param nPcs Number of PCs (default=20)
@@ -1461,6 +1477,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param cells optional subset of cells on which PCA should be run (default=NULL)
     #' @param fastpath boolean Use C implementation for speedup (default=TRUE)
     #' @param ... additional arguments forwarded to irlba::irlba
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=15)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
+    #' 
     #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
     calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, 
       odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
@@ -1563,7 +1587,20 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param max.odgenes integer (default=Inf)
     #' @param take.top.odgenes boolean (default=TRUE)
     #' @param recursive boolean (default=TRUE)
-    #' @return 
+    #' @examples
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
+    #' p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+    #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+    #' p2_object$expandOdGenes(type='PCA')
+    #' 
+    #' @return List of overdispersed genes
     expandOdGenes=function(type='counts', clusterType=NULL, groups=NULL , min.group.size=30, od.alpha=1e-1, 
       use.odgenes=FALSE, n.odgenes=NULL, odgenes=NULL, n.odgene.multiplier=1, gam.k=10,verbose=FALSE,n.cores=self$n.cores,
       min.odgenes=10,max.odgenes=Inf,take.top.odgenes=TRUE, recursive=TRUE) {
@@ -1573,6 +1610,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # take last-generated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
+          if (is.null(groups)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         } else {
           groups <- self$clusters[[type]][[clusterType]]
           if (is.null(groups)) { 
@@ -1678,6 +1718,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(odgenes)
     },
 
+
     #' @description localPcaKnn description 
     #' 
     #' @param nPcs integer (default=5)
@@ -1707,7 +1748,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (type=='counts') {
         x <- self$counts
       } else {
-        if (!type %in% names(self$reductions)) { stop("Reduction ",type,' not found')}
+        if (!type %in% names(self$reductions)) { 
+          stop("Reduction ",type,' not found')
+        }
         x <- self$reductions[[type]]
       }
 
@@ -1716,6 +1759,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # take last-generated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
+          if (is.null(groups)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         } else {
           groups <- self$clusters[[type]][[clusterType]]
           if (is.null(groups)) { 
@@ -2186,6 +2232,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(tam3)
     },
 
+
     #' @description Return embedding
     #' 
     #' @param embeddingType string 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default='largeVis')
@@ -2201,6 +2248,17 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param distance
     #' @param n.sgd.cores
     #' @param ...    
+    #' @examples
+    #' cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+    #' counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
+    #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30, alpha=1)
+    #' 
     #' @return 
     getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, verbose=TRUE,
       sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = self$n.cores, n.sgd.cores=n.cores, ... ) {

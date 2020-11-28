@@ -83,6 +83,149 @@ p2_object$adjustVariance(plot=TRUE, gam.k=10)
 p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
 p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
 
+
+## ------------------------------------------------
+## Method `Pagoda2$getDensityClusters`
+## ------------------------------------------------
+
+  
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDensityClusters(type='PCA')
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getDifferentialGenes`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+
+
+## ------------------------------------------------
+## Method `Pagoda2$plotGeneHeatmap`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+de <- p2_object$diffgenes$PCA[[1]][['2']]
+p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+
+
+## ------------------------------------------------
+## Method `Pagoda2$plotEmbedding`
+## ------------------------------------------------
+
+\dontrun{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+library(ggplot2)
+p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, 
+  title='clusters (UMAP)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getOdGenes`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getNormalizedExpressionMatrix`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$getNormalizedExpressionMatrix()
+
+
+## ------------------------------------------------
+## Method `Pagoda2$calculatePcaReduction`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=15)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
+
+
+## ------------------------------------------------
+## Method `Pagoda2$expandOdGenes`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+p2_object$expandOdGenes(type='PCA')
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getEmbedding`
+## ------------------------------------------------
+
+cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30, alpha=1)
+
 }
 \author{
 Simon Steiger
@@ -626,6 +769,24 @@ Calculate density-based clusters
 \subsection{Returns}{
 density-based clusters
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{  
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDensityClusters(type='PCA')
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getDifferentialGenes"></a>}}
@@ -677,6 +838,24 @@ list with each element of the list corresponding to a cell group in the provided
     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
     fe - fraction of cells in a given group having non-zero expression level of a given gene
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-plotDiffGeneHeatmap"></a>}}
@@ -771,7 +950,6 @@ Plot heatmap for a given set of genes
   type = "counts",
   clusterType = NULL,
   groups = NULL,
-  z.score = 2,
   gradient.range.quantile = 0.95,
   cluster.genes = FALSE,
   inner.clustering = FALSE,
@@ -796,8 +974,6 @@ Plot heatmap for a given set of genes
 \item{\code{clusterType}}{Optional cluster type to use as a group-defining factor (default=NULL)}
 
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
-
-\item{\code{z.score}}{numeric (default=2)}
 
 \item{\code{cluster.genes}}{boolean (default=FALSE)}
 
@@ -826,6 +1002,26 @@ Plot heatmap for a given set of genes
 \subsection{Returns}{
 
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+de <- p2_object$diffgenes$PCA[[1]][['2']]
+p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-plotEmbedding"></a>}}
@@ -867,6 +1063,28 @@ Show embedding
 \subsection{Returns}{
 
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\dontrun{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+library(ggplot2)
+p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, 
+  title='clusters (UMAP)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getOdGenes"></a>}}
@@ -895,6 +1113,25 @@ Get overdispersed genes
 \subsection{Returns}{
 vector of overdispersed genes
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getNormalizedExpressionMatrix"></a>}}
@@ -917,6 +1154,20 @@ Return variance-normalized matrix for specified genes or a number of OD genes
 \subsection{Returns}{
 cell by gene matrix
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$getNormalizedExpressionMatrix()
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-calculatePcaReduction"></a>}}
@@ -971,6 +1222,20 @@ Calculate PCA reduction of the data
 \subsection{Returns}{
 Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=15)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-expandOdGenes"></a>}}
@@ -1037,8 +1302,27 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
+List of overdispersed genes
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+p2_object$expandOdGenes(type='PCA')
 
 }
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-localPcaKnn"></a>}}
@@ -1250,6 +1534,23 @@ Return embedding
 \subsection{Returns}{
 
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30, alpha=1)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-clone"></a>}}
