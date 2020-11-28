@@ -278,11 +278,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 8 4 4 11 11 4 6 5 6 9 ...
+##   ..$ multilevel: Factor w/ 10 levels "1","2","3","4",..: 4 8 8 10 10 8 2 1 2 5 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 9 4 9 3 ...
+##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 9 5 9 4 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -292,22 +292,13 @@ We can now compare these against `infomap.community`.
 
 
 ```r
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 
 ![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
-
-```r
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
-```
-
-![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-2.png)
-
-```r
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
-```
-
-![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-3.png)
 
 We can then perform differential expression between these clusters
 
@@ -317,7 +308,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 22 clusters ...
+## running differential expression with 21 clusters ...
 ```
 
 ```
@@ -380,6 +371,10 @@ hdea <- r$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='communit
 ## Using community clustering for PCA space
 ```
 
+```
+## Error in hclust(d, method = method): object 'method' not found
+```
+
 
 Next we will generate a web app that will allow us to browse the dataset interactively. Note that all these steps can be performed with the basicP2web() function.
 
@@ -387,29 +382,31 @@ We will need to prepare a set of genes that we want to be accessible from the ap
 
 ```r
 genesets <- hierDiffToGenesets(hdea)
+```
+
+```
+## Error in as.list(output$env): object 'hdea' not found
+```
+
+```r
 str(genesets[1:2])
 ```
 
 ```
-## List of 2
-##  $ 14.vs.15:List of 2
-##   ..$ properties:List of 3
-##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.15"
-##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:134] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
-##  $ 3.vs.9  :List of 2
-##   ..$ properties:List of 3
-##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "3.vs.9"
-##   .. ..$ shortdescription: chr "3.vs.9"
-##   ..$ genes     : chr [1:122] "FTH1" "TYROBP" "FTL" "CTSS" ...
+## Error in str(genesets[1:2]): object 'genesets' not found
 ```
 
 To add GO Terms as genesets run the following
 
 ```r
 library(GO.db)
+```
+
+```
+## 
+```
+
+```r
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
 
 sn <- function(x) { names(x) <- x; x}
@@ -421,12 +418,20 @@ genesets.go <- lapply(sn(names(go.env)),function(x) {
 genesets <- c(genesets, genesets.go)
 ```
 
+```
+## Error in eval(expr, envir, enclos): object 'genesets' not found
+```
+
 Add per cluster differentially expressed genes to the gene sets
 
 ```r
 deSets <- get.de.geneset(r, groups = r$clusters$PCA[['community']], prefix = 'de_')
 ## concatenate
 genesets <- c(genesets, deSets)
+```
+
+```
+## Error in eval(expr, envir, enclos): object 'genesets' not found
 ```
 
 ## Part 3: Generate web app
@@ -486,6 +491,10 @@ p2web <-
 ```
 ## Warning in if (class(pagoda2obj) != "Pagoda2") {: the condition has length > 1
 ## and only the first element will be used
+```
+
+```
+## Error in .Object$initialize(...): object 'genesets' not found
 ```
 
 We can view this app directly from our R session

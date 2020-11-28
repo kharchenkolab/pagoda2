@@ -150,7 +150,7 @@ We can now compare these against `infomap.community`.
 plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
-grid.arrange(plt1, plt2, plt3, ncol=3)
+gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 
 We can then perform differential expression between these clusters

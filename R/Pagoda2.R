@@ -730,7 +730,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         pt <- colSums(x*sf)
         pt[is.na(g)] <- 0
         return(list(dg=dg,pt=pt))
-      },n.cores=n.cores)
+      }, n.cores=n.cores)
 
       dexp <- dexp[!unlist(lapply(dexp,is.null))] # remove cases where nothing was reported
       dexp <- dexp[!unlist(lapply(dexp,function(x){class(x) == 'try-error'}))] ## remove cases that failed
@@ -852,7 +852,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         embeddingType <- names(self$embeddings[[type]][length(self$embeddings[[type]])])
         if (verbose) message("using ",embeddingType," embedding\n")
         emb <- self$embeddings[[type]][[embeddingType]]
-
+        if (is.null(emb)) { 
+          stop("embedding ",embeddingType," for type ", type," doesn't exist")
+        }
       } else {
         emb <- self$embeddings[[type]][[embeddingType]]
         if (is.null(emb)) { 
@@ -876,8 +878,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param z.threshold numeric Minimal absolute Z score (adjusted) to report (default=3)
     #' @param upregulated.only boolean Whether to report only genes that are expressed significantly higher in each group (default=FALSE)
     #' @param verbose boolean Whether to give verbose output (default=FALSE)
-    #' @param append.specificity.metrics boolean
-    #' @param append.auc boolean
+    #' @param append.specificity.metrics boolean Whether to append specifity metrics (default=TRUE). Uses the function sccore::appendSpecificityMetricsToDE(). 
+    #' @param append.auc boolean If TRUE, append AUC values (default=FALSE). Parameter ignored if append.specificity.metrics is FALSE.
     #' @examples 
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -903,9 +905,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # take the last clustering generated
           cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
+          if (is.null(cols)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         } else {
           cols <- self$clusters[[type]][[clusterType]]
-          if (is.null(cols)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
+          if (is.null(cols)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         }
       } else {
         cols <- groups
@@ -986,7 +993,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (append.specificity.metrics) {
         ds <- names(ds) %>% setNames(., .) %>%
-          papply(function(n) appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts=cm, append.auc=append.auc), n.cores=self$n.cores)
+          papply(function(n) sccore::appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts=cm, append.auc=append.auc), n.cores=self$n.cores)
       }
 
       if (is.null(groups)) {
@@ -1023,12 +1030,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
       if (!is.null(clusterType)) {
         x <- self$diffgenes[[type]][[clusterType]]
-        if (is.null(x)) { stop("Differential genes for the specified cluster type ", clusterType, " haven't been calculated") }
+        if (is.null(x)) { 
+          stop("Differential genes for the specified cluster type ", clusterType, " haven't been calculated") 
+        }
       } else {
         ## x <- self$diffgenes[[type]][[1]]
         ## take last generated item
         x <- self$diffgenes[[type]][length(self$diffgenes[[type]])]
-        if (is.null(x)) { stop("No differential genes found for data type ",type) }
+        if (is.null(x)) { 
+          stop("No differential genes found for data type ",type) 
+        }
       }
 
       if (is.null(groups)) {
@@ -1036,6 +1047,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # take last-generated clustering
           cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
+          if (is.null(cols)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         } else {
           cols <- self$clusters[[type]][[clusterType]]
           if (is.null(cols)) { 
@@ -1136,8 +1150,17 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Recalculate library sizes using robust regression within clusters
     #' 
+    #' @examples 
+    #' \dontrun{
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')p2_object$getKnnClusters(method=infomap.community, type='PCA')p2_object$getRefinedLibSizes(type='PCA')
+    #' lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
     #' @return
-    getRefinedLibSizes=function(clusterType=NULL, groups=NULL,type='counts') {
+    getRefinedLibSizes=function(clusterType=NULL, groups=NULL, type='counts', n.cores=self$n.cores) {
 
       if (!requireNamespace("robustbase", quietly = TRUE)) {
         stop("Package \"robustbase\" needed for this function to work. Please install it.", call. = FALSE)
@@ -1149,7 +1172,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           # take the last-generated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
           if (is.null(groups)) { 
-            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+            stop(paste("Please generate clusters for",type,"first"))
           }
         } else {
           groups <- self$clusters[[type]][[clusterType]]
@@ -1182,7 +1205,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }))
         names(x) <- ii
         x
-      },mc.cores=30)
+      },mc.cores=n.cores)
 
       lib.sizes <- unlist(x)[rownames(self$misc[['rawCounts']])]
       lib.sizes <- lib.sizes/mean(lib.sizes)*mean(Matrix::rowSums(self$misc[['rawCounts']]))
@@ -1193,9 +1216,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Plot heatmap for a given set of genes
     #' 
-    #' @param genes 
-    #' @param grandient.range.quantile (default=0.95)
-    #' @param cluster.genes boolean (default=FALSE)
+    #' @param genes character vector Gene names
+    #' @param gradient.range.quantile numeric Trimming quantile (default=0.95)
+    #' @param cluster.genes boolean Whether to cluster genes within each cluster using hclust() (default=FALSE)
     #' @param inner.clustering boolean Whether to cluster cells within each cluster (default=FALSE)
     #' @param gradientPalette palette of colors to use (default=NULL). If NULL, uses 'colorRampPalette(c('gray90','red'), space = "Lab")(1024)'
     #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
@@ -1228,9 +1251,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(clusterType)) {
           # take last-generated clustering
           cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
+          if (is.null(cols)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         } else {
           cols <- self$clusters[[type]][[clusterType]]
-          if (is.null(cols)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
+          if (is.null(cols)) { 
+            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+          }
         }
       } else {
         # use clusters information
@@ -1239,7 +1267,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
       cols <- as.factor(cols)
       # make expression matrix
-      if (!all(genes %in% colnames(self$counts))) { warning(paste("the following specified genes were not found in the data: [",paste(genes[!genes %in% colnames(counts)],collapse=" "),"], omitting",sep="")) }
+      if (!all(genes %in% colnames(self$counts))) { 
+        warning(paste("The following specified genes were not found in the data: [",paste(genes[!genes %in% colnames(counts)],collapse=" "),"], omitting",sep="")) 
+      }
       x <- intersect(genes,colnames(self$counts))
       if (length(x)<1) { 
         stop("Too few genes") 
@@ -1252,7 +1282,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           gradientPalette <- colorRampPalette(c('gray90','red'), space = "Lab")(1024)
         }
         em <- t(apply(em,1,function(x) {
-          zlim <- as.numeric(quantile(x,p=c(1-gradient.range.quantile,gradient.range.quantile)))
+          zlim <- as.numeric(quantile(x, p=c(1-gradient.range.quantile,gradient.range.quantile)))
           if (diff(zlim)==0) {
             zlim <- as.numeric(range(x))
           }
@@ -1280,7 +1310,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (cluster.genes) {
         # cluster genes within each cluster
-        clgo <- hclust(as.dist(1-cor(t(em))),method='complete')$order
+        clgo <- hclust(as.dist(1-cor(t(em))), method='complete')$order
       } else {
         clgo <- 1:nrow(em)
       }
@@ -1289,7 +1319,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
           if (length(ii)>3) {
-            ii[hclust(as.dist(1-cor(em[,ii,drop=FALSE])),method='single')$order]
+            ii[hclust(as.dist(1-cor(em[,ii,drop=FALSE])), method='single')$order]
           } else {
             ii
           }
@@ -1326,11 +1356,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Show embedding
     #' 
-    #' @param type (default=NULL)
-    #' @param embeddingType (default=NULL)
-    #' @param clusterType (default=NULL)
-    #' @param groups (default=NULL)
-    #' @param colors (default=NULL)
+    #' @param type string Either 'counts' or the name of a stored embedding, names(self$embeddings) (default=NULL)
+    #' @param embeddingType string Embedding type (default=NULL). If NULL, takes the most recently generated embedding.
+    #' @param clusterType Name of cluster to access (default=NULL). If NULL, takes the most recently generated clustering. Parameter ignored if groups is not NULL.
+    #' @param groups factor named with cell names specifying the clusters of cells (default=NULL)
+    #' @param colors character vector List of gene names (default=NULL)
     #' @param gene (default=NULL)
     #' @param plot.theme (default=ggplot2::theme_bw()) 
     #' @param ...
@@ -1395,7 +1425,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           ## Take last-genereated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
           if (is.null(groups)) { 
-            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+            stop(paste("Please generate clusters for",type,"first"))
           }
         } else {
           groups <- self$clusters[[type]][[clusterType]]
@@ -1611,7 +1641,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           # take last-generated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
           if (is.null(groups)) { 
-            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+            stop(paste("Please generate clusters for",type,"first"))
           }
         } else {
           groups <- self$clusters[[type]][[clusterType]]
@@ -1760,7 +1790,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           # take last-generated clustering
           groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
           if (is.null(groups)) { 
-            stop("Clustering ",clusterType," for type ", type," doesn't exist")
+            stop(paste("Please generate clusters for",type,"first"))
           }
         } else {
           groups <- self$clusters[[type]][[clusterType]]

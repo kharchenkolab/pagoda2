@@ -824,9 +824,9 @@ Determine differentially expressed genes, comparing each group against all other
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=FALSE)}
 
-\item{\code{append.specificity.metrics}}{boolean}
+\item{\code{append.specificity.metrics}}{boolean Whether to append specifity metrics (default=TRUE). Uses the function sccore::appendSpecificityMetricsToDE().}
 
-\item{\code{append.auc}}{boolean}
+\item{\code{append.auc}}{boolean If TRUE, append AUC values (default=FALSE). Parameter ignored if append.specificity.metrics is FALSE.}
 }
 \if{html}{\out{</div>}}
 }
@@ -921,7 +921,12 @@ Plot heatmap of DE results
 \subsection{Method \code{getRefinedLibSizes()}}{
 Recalculate library sizes using robust regression within clusters
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Pagoda2$getRefinedLibSizes(clusterType = NULL, groups = NULL, type = "counts")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Pagoda2$getRefinedLibSizes(
+  clusterType = NULL,
+  groups = NULL,
+  type = "counts",
+  n.cores = self$n.cores
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -932,6 +937,8 @@ Recalculate library sizes using robust regression within clusters
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
+
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 }
 \if{html}{\out{</div>}}
 }
@@ -967,7 +974,7 @@ Plot heatmap for a given set of genes
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{genes}}{}
+\item{\code{genes}}{character vector Gene names}
 
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
@@ -975,7 +982,9 @@ Plot heatmap for a given set of genes
 
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
-\item{\code{cluster.genes}}{boolean (default=FALSE)}
+\item{\code{gradient.range.quantile}}{numeric Trimming quantile (default=0.95)}
+
+\item{\code{cluster.genes}}{boolean Whether to cluster genes within each cluster using hclust() (default=FALSE)}
 
 \item{\code{inner.clustering}}{boolean Whether to cluster cells within each cluster (default=FALSE)}
 
@@ -994,8 +1003,6 @@ Plot heatmap for a given set of genes
 \item{\code{smooth.span}}{(default=max(1,round(nrow(self$counts)/1024)))}
 
 \item{\code{...}}{additional parameters passed to internal function used for heatmap plotting, my.heatmap2()}
-
-\item{\code{grandient.range.quantile}}{(default=0.95)}
 }
 \if{html}{\out{</div>}}
 }
@@ -1044,15 +1051,15 @@ Show embedding
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{type}}{(default=NULL)}
+\item{\code{type}}{string Either 'counts' or the name of a stored embedding, names(self$embeddings) (default=NULL)}
 
-\item{\code{embeddingType}}{(default=NULL)}
+\item{\code{embeddingType}}{string Embedding type (default=NULL). If NULL, takes the most recently generated embedding.}
 
-\item{\code{clusterType}}{(default=NULL)}
+\item{\code{clusterType}}{Name of cluster to access (default=NULL). If NULL, takes the most recently generated clustering. Parameter ignored if groups is not NULL.}
 
-\item{\code{groups}}{(default=NULL)}
+\item{\code{groups}}{factor named with cell names specifying the clusters of cells (default=NULL)}
 
-\item{\code{colors}}{(default=NULL)}
+\item{\code{colors}}{character vector List of gene names (default=NULL)}
 
 \item{\code{gene}}{(default=NULL)}
 
