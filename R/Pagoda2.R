@@ -73,7 +73,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
-    #' @return new 'Pagoda2' object
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores=1) 
+    #' 
+    #' @return new 'Pagoda2' object 
     initialize=function(x, modelType='plain', ## batchNorm='glm',
                         n.cores=parallel::detectCores(logical=FALSE), verbose=TRUE,
                         min.cells.per.gene=0, trim=round(min.cells.per.gene/2), 
@@ -107,7 +113,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
     #'
     #' @param countMatrix input count matrix 
-    #' @param depthScale numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale)
+    #' @param depthScale numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale).
     #' @return normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
     setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=0, 
                             trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10, 
@@ -277,6 +283,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param cells character vector Subset of cells upon which to perform variance normalization with adjustVariance() (default=NULL)
     #' @param min.gene.cells integer Minimum number of genes per cells (default=0). This parameter is used to filter counts.
     #' @param persist boolean Whether to save results (default=TRUE, i.e. is.null(cells)).
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' 
     #' @return residual matrix with adjusted variance
     adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=FALSE, 
       use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
@@ -396,6 +409,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param x counts or reduction to use (default=NULL). If NULL, uses counts. Otherwise, checks for the reduction in self$reductions[[type]] 
     #' @param p (default=NULL)
     #' @param var.scale boolean (default=TRUE)
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+    #' 
     #' @return k-NN graph
     makeKnnGraph=function(k=30, nrand=1e3, type='counts', weight.type='1m',
       odgenes=NULL, n.cores=self$n.cores, distance='cosine', center=TRUE, 
@@ -506,6 +527,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param min.cluster.size Minimum size of clusters (default=1). This parameter is primarily used to remove very small clusters.
     #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
     #' @param ... additional parameters to pass to 'method'
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+    #' p2_object$getKnnClusters(method=infomap.community, type='counts')
+    #'
     #' @return the community structure calculated from 'method'
     getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', 
       n.cores=self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, ...) {
@@ -570,6 +600,19 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
     #' @param z.threshold numeric Threshold of z-scores to filter, >=z.threshold are kept (default=2)
     #' @param min.set.size integer Minimum threshold of sets to keep (default=5)
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
+    #' p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30, alpha=1)
+    #' p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
+    #' hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
+    #' 
     #' @return hierarchical clustering
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
       dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5, verbose=TRUE ){
@@ -720,6 +763,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param fastpath boolean Whether to try a (fast) C algorithm implementation if possible (default=TRUE). This parameter is equivalent to 'fastpath' in irlba::irlba().
     #' @param maxit integer Maximum number of iterations (default=1000). This parameter is equivalent to 'maxit' in irlba::irlba().
     #' @param k integer Number of k clusters for calculating k-NN on the resulting principal components (default=30).
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
+    #' 
     #' @return graph with gene similarity
     makeGeneKnnGraph = function(nPcs = 100, scale =TRUE, center=TRUE, fastpath =TRUE, 
       maxit =1000, k = 30, n.cores = self$n.cores, verbose =TRUE) {
@@ -772,9 +824,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param name string Name fo the clustering (default='density').
     #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
     #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
+    #' @param verbose boolean Whether to give verbose output (default=TRUE)
     #' @param ... additional parameters passed to dbscan::dbscan(emb, ...)
     #' @return density-based clusters
-    getDensityClusters=function(type='counts', embeddingType=NULL, name='density', v=0.7, s=1, ...) {
+    getDensityClusters=function(type='counts', embeddingType=NULL, name='density', v=0.7, s=1, verbose=TRUE, ...) {
       if (!requireNamespace("dbscan", quietly = TRUE)) {
         stop("Package \"dbscan\" needed for this function to work. Please install it.", call. = FALSE)
       }
@@ -1569,7 +1622,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param baseReduction string (default='PCA')
     #' @param od.alpha numeric (default=1e-1)
     #' @param n.odgenes (default=NULL)
-    #' @param gam.k integer (default=10)
+    #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.
     #' @param min.odgenes integer (default=5)
     #' @param take.top.odgenes boolean (default=FALSE)
     #' @param recursive boolean (default=FALSE)

@@ -6,6 +6,84 @@
 \description{
 The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
 }
+\examples{
+
+## ------------------------------------------------
+## Method `Pagoda2$new`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores=1) 
+
+
+## ------------------------------------------------
+## Method `Pagoda2$adjustVariance`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+
+
+## ------------------------------------------------
+## Method `Pagoda2$makeKnnGraph`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getKnnClusters`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+p2_object$getKnnClusters(method=infomap.community, type='counts')
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getHierarchicalDiffExpressionAspects`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
+p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
+p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30, alpha=1)
+p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
+hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
+
+
+## ------------------------------------------------
+## Method `Pagoda2$makeGeneKnnGraph`
+## ------------------------------------------------
+
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
+
+}
 \author{
 Simon Steiger
 }
@@ -117,6 +195,18 @@ Initialize Conos class
 \subsection{Returns}{
 new 'Pagoda2' object
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores=1) 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setCountMatrix"></a>}}
@@ -142,7 +232,7 @@ Provide the initial count matrix, and estimate deviance residual matrix (correct
 \describe{
 \item{\code{countMatrix}}{input count matrix}
 
-\item{\code{depthScale}}{numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale)}
+\item{\code{depthScale}}{numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale).}
 
 \item{\code{min.cells.per.gene}}{integer Minimum number of cells per gene, used to subset counts for coverage (default=0)}
 
@@ -222,6 +312,19 @@ This is done to normalize the extent to which genes with (very) different expres
 \subsection{Returns}{
 residual matrix with adjusted variance
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-makeKnnGraph"></a>}}
@@ -277,6 +380,20 @@ Create k-nearest neighbor graph
 \subsection{Returns}{
 k-NN graph
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getKnnClusters"></a>}}
@@ -321,6 +438,21 @@ If NULL, if the number of vertices of the graph is greater than or equal to 2000
 \subsection{Returns}{
 the community structure calculated from 'method'
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+p2_object$getKnnClusters(method=infomap.community, type='counts')
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-geneKnnbyPCA"></a>}}
@@ -376,6 +508,25 @@ Take a given clustering and generate a hierarchical clustering
 \subsection{Returns}{
 hierarchical clustering
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
+p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
+p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30, alpha=1)
+p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
+hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-makeGeneKnnGraph"></a>}}
@@ -417,6 +568,21 @@ Calculates gene Knn network for gene similarity
 \subsection{Returns}{
 graph with gene similarity
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getDensityClusters"></a>}}
@@ -430,6 +596,7 @@ Calculate density-based clusters
   name = "density",
   v = 0.7,
   s = 1,
+  verbose = TRUE,
   ...
 )}\if{html}{\out{</div>}}
 }
@@ -446,6 +613,8 @@ Calculate density-based clusters
 \item{\code{v}}{numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().}
 
 \item{\code{s}}{numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().}
+
+\item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
 \item{\code{...}}{additional parameters passed to dbscan::dbscan(emb, ...)}
 }
@@ -927,7 +1096,7 @@ localPcaKnn description
 
 \item{\code{n.odgenes}}{(default=NULL)}
 
-\item{\code{gam.k}}{integer (default=10)}
+\item{\code{gam.k}}{integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
