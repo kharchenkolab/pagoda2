@@ -594,6 +594,7 @@ Calculate density-based clusters
   type = "counts",
   embeddingType = NULL,
   name = "density",
+  eps = 0.5,
   v = 0.7,
   s = 1,
   verbose = TRUE,
@@ -609,6 +610,8 @@ Calculate density-based clusters
 \item{\code{embeddingType}}{The type of embedding used when calculating with `getEmbedding()` (default=NULL). Accepted values are: 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph'}
 
 \item{\code{name}}{string Name fo the clustering (default='density').}
+
+\item{\code{eps}}{numeric value of the eps parameter, fed into dbscan::dbscan(x=emb, eps=eps, ...)}
 
 \item{\code{v}}{numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().}
 

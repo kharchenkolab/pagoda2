@@ -822,12 +822,24 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' 
     #' @param embeddingType The type of embedding used when calculating with `getEmbedding()` (default=NULL). Accepted values are: 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' 
     #' @param name string Name fo the clustering (default='density').
+    #' @param eps numeric value of the eps parameter, fed into dbscan::dbscan(x=emb, eps=eps, ...)
     #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
     #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
     #' @param verbose boolean Whether to give verbose output (default=TRUE)
     #' @param ... additional parameters passed to dbscan::dbscan(emb, ...)
+    #' @examples   
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+    #' p2_object$getDensityClusters(type='PCA')
+    #' 
     #' @return density-based clusters
-    getDensityClusters=function(type='counts', embeddingType=NULL, name='density', v=0.7, s=1, verbose=TRUE, ...) {
+    getDensityClusters=function(type='counts', embeddingType=NULL, name='density', eps=0.5, v=0.7, s=1, verbose=TRUE, ...) {
       if (!requireNamespace("dbscan", quietly = TRUE)) {
         stop("Package \"dbscan\" needed for this function to work. Please install it.", call. = FALSE)
       }
@@ -848,7 +860,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
       }
 
-      cl <- dbscan::dbscan(emb, ...)$cluster
+      cl <- dbscan::dbscan(emb, eps=eps, ...)$cluster
       cols <- rainbow(length(unique(cl)),v=v,s=s)[cl+1]
       cols[cl==0] <- "gray70"
       names(cols) <- rownames(emb)
@@ -858,7 +870,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     },
     # determine subpopulation-specific genes
 
-
     #' @description Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
     #' 
     #' @param name string Slot to store the results in (default='customClustering')
@@ -867,6 +878,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param verbose boolean Whether to give verbose output (default=FALSE)
     #' @param append.specificity.metrics boolean
     #' @param append.auc boolean
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+    #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+    #' 
     #' @return list with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels) 
     #'     Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: 
     #'     Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest
@@ -981,6 +1004,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(ds)
     },
 
+
     #' @description Plot heatmap of DE results
     #' 
     #' @param n.genes integer Number of genes to plot (default=100)
@@ -992,7 +1016,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
     #' @param box boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)
     #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
-        #' @param ... additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
+    #' @param ... additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
     #' @return 
     plotDiffGeneHeatmap=function(type='counts', clusterType=NULL, groups=NULL, n.genes=100, 
       z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
@@ -1165,7 +1189,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Plot heatmap for a given set of genes
     #' 
     #' @param genes 
-    #' @param z.score numeric (default=2)
     #' @param grandient.range.quantile (default=0.95)
     #' @param cluster.genes boolean (default=FALSE)
     #' @param inner.clustering boolean Whether to cluster cells within each cluster (default=FALSE)
@@ -1177,8 +1200,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param useRaster boolean If TRUE a bitmap raster is used to plot the image instead of polygons (default=TRUE). The grid must be regular in that case, otherwise an error is raised. For more information, see graphics::image().
     #' @param smooth.span (default=max(1,round(nrow(self$counts)/1024)))
     #' @param ... additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+    #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+    #' de <- p2_object$diffgenes$PCA[[1]][['2']]
+    #' p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+    #' 
     #' @return
-    plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, z.score=2, 
+    plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, 
       gradient.range.quantile=0.95, cluster.genes=FALSE, inner.clustering=FALSE, gradientPalette=NULL, 
       v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(self$counts)/1024)), ... ) {
       if (is.null(groups)) {
@@ -1292,6 +1329,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param gene (default=NULL)
     #' @param plot.theme (default=ggplot2::theme_bw()) 
     #' @param ...
+    #' @examples 
+    #' \dontrun{
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+    #' library(ggplot2)
+    #' p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, 
+    #'   title='clusters (UMAP)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+    #' }
+    #' 
     #' @return 
     plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL,
       groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
@@ -1352,6 +1405,19 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param n.odgenes character vector Overdispersed genes to retrieve (default=NULL)
     #' @param alpha numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
     #' @param use.unadjusted.pvals boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).
+    #' @examples 
+    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    #' rownames(counts) <- make.unique(rownames(counts))
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
+    #' p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+    #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+    #' odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
+    #' 
     #' @return vector of overdispersed genes
     getOdGenes=function(n.odgenes=NULL, alpha=5e-2, use.unadjusted.pvals=FALSE) {
       if (is.null(self$misc[['varinfo']])) { 
@@ -1368,6 +1434,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
     },
 
+
     #' @description Return variance-normalized matrix for specified genes or a number of OD genes
     #'
     #' @param n.odgenes overdispersed genes to retrieve (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.
@@ -1378,7 +1445,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         genes <- self$getOdGenes(n.odgenes)
       }
       x <- self$counts[,genes]
-      x@x <- x@x*rep(misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+      x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'], diff(x@p))
       return(x)
     },
     
