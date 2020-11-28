@@ -117,6 +117,21 @@ p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
 
 
 ## ------------------------------------------------
+## Method `Pagoda2$getRefinedLibSizes`
+## ------------------------------------------------
+
+\donttest{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')p2_object$getKnnClusters(method=infomap.community, type='PCA')p2_object$getRefinedLibSizes(type='PCA')
+lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
+}
+
+
+## ------------------------------------------------
 ## Method `Pagoda2$plotGeneHeatmap`
 ## ------------------------------------------------
 
@@ -138,7 +153,7 @@ p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PC
 ## Method `Pagoda2$plotEmbedding`
 ## ------------------------------------------------
 
-\dontrun{
+\donttest{
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
@@ -616,6 +631,7 @@ Take a given clustering and generate a hierarchical clustering
   type = "counts",
   groups = NULL,
   clusterName = NULL,
+  method = "ward.D",
   dist = "pearson",
   persist = TRUE,
   z.threshold = 2,
@@ -633,6 +649,8 @@ Take a given clustering and generate a hierarchical clustering
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
 \item{\code{clusterName}}{string Cluster name to access (default=NULL)}
+
+\item{\code{method}}{string The agglomeration method to be used in stats::hcust(method=method) (default='ward.D'). Accepted values are: "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC). For more information, see stats::hclust().}
 
 \item{\code{dist}}{string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')}
 
@@ -945,6 +963,23 @@ Recalculate library sizes using robust regression within clusters
 \subsection{Returns}{
 
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')p2_object$getKnnClusters(method=infomap.community, type='PCA')p2_object$getRefinedLibSizes(type='PCA')
+lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-plotGeneHeatmap"></a>}}
@@ -1072,7 +1107,7 @@ Show embedding
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{\dontrun{
+\preformatted{\donttest{
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
@@ -1448,7 +1483,7 @@ Test pathway overdispersion. Note: this is a compressed version of the PAGODA1 a
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{setenv}}{specific environment for GO pathway analysis}
+\item{\code{setenv}}{Specific environment for pathway analysis}
 
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
@@ -1520,15 +1555,17 @@ Return embedding
 \describe{
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{embeddingType}}{string 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default='largeVis')}
+\item{\code{embeddingType}}{string Type of embedding to construct (default='largeVis'). Possible values are: 'largeVis', 'tSNE', 'FR' (Fruchterman–Reingold), 'UMAP', 'UMAP_graph'}
 
-\item{\code{name}}{string (default=NULL)}
+\item{\code{name}}{string Name of the embedding (default=NULL). If NULL, the name = embeddingType.}
 
 \item{\code{dims}}{integer (default=2)}
 
-\item{\code{M}}{integer}
+\item{\code{M}}{numeric (largeVis) The number of negative edges to sample for each positive edge (default=5). Parameter only used if embeddingType is 'largeVis'.}
 
-\item{\code{gamma}}{integer}
+\item{\code{gamma}}{numeric (largeVis) The strength of the force pushing non-neighbor nodes apart (default=7). Parameter only used if embeddingType is 'largeVis'.}
+
+\item{\code{perplexity}}{numeric (default=50)}
 
 \item{\code{verbose}}{boolean (default=TRUE)}
 

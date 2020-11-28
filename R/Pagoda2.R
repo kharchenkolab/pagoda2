@@ -596,6 +596,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param type string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.
     #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
     #' @param clusterName string Cluster name to access (default=NULL)
+    #' @param method string The agglomeration method to be used in stats::hcust(method=method) (default='ward.D'). Accepted values are: "ward.D", "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC). For more information, see stats::hclust().
     #' @param dist string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')
     #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
     #' @param z.threshold numeric Threshold of z-scores to filter, >=z.threshold are kept (default=2)
@@ -614,7 +615,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
     #' 
     #' @return hierarchical clustering
-    getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL,
+    getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL, method='ward.D',
       dist='pearson', persist=TRUE, z.threshold=2, n.cores=self$n.cores, min.set.size=5, verbose=TRUE ){
    
       if (tolower(dist)=="euclidean"){
@@ -1151,7 +1152,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Recalculate library sizes using robust regression within clusters
     #' 
     #' @examples 
-    #' \dontrun{
+    #' \donttest{
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
@@ -1159,6 +1160,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')p2_object$getKnnClusters(method=infomap.community, type='PCA')p2_object$getRefinedLibSizes(type='PCA')
     #' lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
+    #' }
+    #'
     #' @return
     getRefinedLibSizes=function(clusterType=NULL, groups=NULL, type='counts', n.cores=self$n.cores) {
 
@@ -1365,7 +1368,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param plot.theme (default=ggplot2::theme_bw()) 
     #' @param ...
     #' @examples 
-    #' \dontrun{
+    #' \donttest{
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
@@ -2030,7 +2033,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Test pathway overdispersion. Note: this is a compressed version of the PAGODA1 approach.
     #' 
-    #' @param setenv specific environment for GO pathway analysis
+    #' @param setenv Specific environment for pathway analysis
     #' @param max.pathway.size numeric (default=1e3)
     #' @param min.pathway.size numeric (default=10)
     #' @param n.randomizations integer (default=5)
@@ -2265,12 +2268,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Return embedding
     #' 
-    #' @param embeddingType string 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph' (default='largeVis')
-    #' @param name string (default=NULL)
+    #' @param embeddingType string Type of embedding to construct (default='largeVis'). Possible values are: 'largeVis', 'tSNE', 'FR' (Fruchterman–Reingold), 'UMAP', 'UMAP_graph' 
+    #' @param name string Name of the embedding (default=NULL). If NULL, the name = embeddingType.
     #' @param dims integer (default=2)
-    #' @param M integer 
-    #' @param gamma integer
-    #' @param perplexity
+    #' @param M numeric (largeVis) The number of negative edges to sample for each positive edge (default=5). Parameter only used if embeddingType is 'largeVis'.
+    #' @param gamma numeric (largeVis) The strength of the force pushing non-neighbor nodes apart (default=7). Parameter only used if embeddingType is 'largeVis'.
+    #' @param perplexity numeric (default=50)
     #' @param verbose boolean (default=TRUE)
     #' @param sgd_batches
     #' @param diffusion.steps
