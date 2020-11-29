@@ -74,9 +74,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores=1) 
     #' 
     #' @return new 'Pagoda2' object 
@@ -284,10 +287,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param min.gene.cells integer Minimum number of genes per cells (default=0). This parameter is used to filter counts.
     #' @param persist boolean Whether to save results (default=TRUE, i.e. is.null(cells)).
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
     #' 
     #' @return residual matrix with adjusted variance
@@ -408,16 +415,21 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param center boolean Whether to use centering when distance='cosine' (default=TRUE). The parameter is ignored otherwise.
     #' @param x counts or reduction to use (default=NULL). If NULL, uses counts. Otherwise, checks for the reduction in self$reductions[[type]] 
     #' @param p (default=NULL)
-    #' @param var.scale boolean (default=TRUE)
+    #' @param var.scale boolean Apply scaling if using raw counts (default=TRUE). If type="counts", var.scale is TRUE by default.
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object   
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Generate a kNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
     #' 
-    #' @return k-NN graph
+    #' @return kNN graph, stored in self$graphs
     makeKnnGraph=function(k=30, nrand=1e3, type='counts', weight.type='1m',
       odgenes=NULL, n.cores=self$n.cores, distance='cosine', center=TRUE, 
       x=NULL, p=NULL, var.scale=(type == "counts"), verbose=TRUE) {
@@ -526,14 +538,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param g Input graph (default=NULL). If NULL, access graph from self$graphs[[type]].
     #' @param min.cluster.size Minimum size of clusters (default=1). This parameter is primarily used to remove very small clusters.
     #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
-    #' @param ... additional parameters to pass to 'method'
+    #' @param ... Additional parameters to pass to 'method'
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a KNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+    #' ## Call clusters based on KNN
     #' p2_object$getKnnClusters(method=infomap.community, type='counts')
     #'
     #' @return the community structure calculated from 'method'
@@ -584,6 +604,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(cls)
     },
 
+    #' @description Deprecated function. Use makeGeneKnnGraph() instead.
+    #' 
     #' @keywords internal
     geneKnnbyPCA = function() {
       ##warning('geneKnnbyPCA is deprecated use makeGeneKnnGraph() instead')
@@ -602,16 +624,26 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param z.threshold numeric Threshold of z-scores to filter, >=z.threshold are kept (default=2)
     #' @param min.set.size integer Minimum threshold of sets to keep (default=5)
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a KNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
+    #' ## Call clusters based on KNN
     #' p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30, alpha=1)
+    #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
+    #' ## Perform differential expression
     #' hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
     #' 
     #' @return hierarchical clustering
@@ -765,17 +797,21 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param maxit integer Maximum number of iterations (default=1000). This parameter is equivalent to 'maxit' in irlba::irlba().
     #' @param k integer Number of k clusters for calculating k-NN on the resulting principal components (default=30).
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Generate pagoda2 object 
+    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
+    #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
     #' p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
     #' 
     #' @return graph with gene similarity
-    makeGeneKnnGraph = function(nPcs = 100, scale =TRUE, center=TRUE, fastpath =TRUE, 
-      maxit =1000, k = 30, n.cores = self$n.cores, verbose =TRUE) {
+    makeGeneKnnGraph = function(nPcs=100, center=TRUE, fastpath=TRUE, maxit=1000, k=30, n.cores=self$n.cores, verbose=TRUE) {
        # Transpose first
        x <- t(self$counts)
 
@@ -827,15 +863,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
     #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
     #' @param verbose boolean Whether to give verbose output (default=TRUE)
-    #' @param ... additional parameters passed to dbscan::dbscan(emb, ...)
-    #' @examples   
+    #' @param ... Additional parameters passed to dbscan::dbscan(emb, ...)
+    #' @examples  
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a KNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
     #' p2_object$getDensityClusters(type='PCA')
     #' 
@@ -882,18 +925,27 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param append.specificity.metrics boolean Whether to append specifity metrics (default=TRUE). Uses the function sccore::appendSpecificityMetricsToDE(). 
     #' @param append.auc boolean If TRUE, append AUC values (default=FALSE). Parameter ignored if append.specificity.metrics is FALSE.
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a KNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' ## Call clusters based on KNN
     #' p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+    #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
     #' 
-    #' @return list with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels) 
+    #' @return List with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels) 
     #'     Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns: 
     #'     Z - adjusted Z score, with positive values indicating higher expression in a given group compare to the rest
     #'     M - log2 fold change
@@ -1016,16 +1068,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Plot heatmap of DE results
     #' 
     #' @param n.genes integer Number of genes to plot (default=100)
-    #' @param z.score numeric Threshold of z-scores to filter; only greater than or equal to this value are kept (default=2)
-    #' @param gradient.range.quantile numeric (default=0.95)
+    #' @param z.score numeric Threshold of z-scores to filter (default=2). Only greater than or equal to this value are kept.
+    #' @param gradient.range.quantile numeric Trimming quantile (default=0.95)
     #' @param inner.clustering boolean Whether to cluster cells within each cluster (default=FALSE)
     #' @param gradientPalette palette of colors to use (default=NULL). If NULL, uses 'colorRampPalette(c('gray90','red'), space = "Lab")(1024)'
     #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
     #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
     #' @param box boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)
     #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
-    #' @param ... additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
-    #' @return 
+    #' @param ... Additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
+    #' @return heatmap of DE results
     plotDiffGeneHeatmap=function(type='counts', clusterType=NULL, groups=NULL, n.genes=100, 
       z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
       v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
@@ -1153,12 +1205,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' 
     #' @examples 
     #' \donttest{
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
-    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')p2_object$getKnnClusters(method=infomap.community, type='PCA')p2_object$getRefinedLibSizes(type='PCA')
+    #' ## Reduce the dataset dimensions by running PCA
+    #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a kNN graph of cells that will allow us to identify clusters of cells
+    #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' ## Call clusters based on kNN
+    #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
+    #' p2_object$getRefinedLibSizes(type='PCA')
     #' lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
     #' }
     #'
@@ -1230,17 +1292,26 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
     #' @param useRaster boolean If TRUE a bitmap raster is used to plot the image instead of polygons (default=TRUE). The grid must be regular in that case, otherwise an error is raised. For more information, see graphics::image().
     #' @param smooth.span (default=max(1,round(nrow(self$counts)/1024)))
-    #' @param ... additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
+    #' @param ... Additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a kNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' ## Call clusters based on kNN
     #' p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+    #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
     #' de <- p2_object$diffgenes$PCA[[1]][['2']]
     #' p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
@@ -1366,24 +1437,32 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param colors character vector List of gene names (default=NULL)
     #' @param gene (default=NULL)
     #' @param plot.theme (default=ggplot2::theme_bw()) 
-    #' @param ...
+    #' @param ... Additional parameters passed to sccore::embeddingPlot()
     #' @examples 
     #' \donttest{
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a kNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' ## Call clusters based on kNN
     #' p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
     #' library(ggplot2)
     #' p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, 
     #'   title='clusters (UMAP)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
     #' }
     #' 
-    #' @return 
+    #' @return plot of the embedding
     plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL,
       groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
 
@@ -1447,15 +1526,24 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param alpha numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
     #' @param use.unadjusted.pvals boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a kNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' ## Call clusters based on kNN
     #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+    #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
     #' odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
     #' 
@@ -1480,10 +1568,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param n.odgenes overdispersed genes to retrieve (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.
     #' @param genes vector of gene names to explicitly return (default=NULL)
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
     #' p2_object$getNormalizedExpressionMatrix()
     #' 
@@ -1509,13 +1601,20 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param center boolean Whether data should be centered prior to PCA (default=TRUE)
     #' @param cells optional subset of cells on which PCA should be run (default=NULL)
     #' @param fastpath boolean Use C implementation for speedup (default=TRUE)
+    #' @param maxit numeric Maximum number of iterations (default=100). For more information, see 'maxit' parameter in irlba::irlba(). 
+    #' @param var.scale boolean Apply scaling if using raw counts (default=TRUE). If type="counts", var.scale is TRUE by default.
     #' @param ... additional arguments forwarded to irlba::irlba
     #' @examples 
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1) 
+    #' ## Generate pagoda2 object 
+    #' p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
+    #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=15)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
     #' 
     #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
@@ -1621,15 +1720,24 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param take.top.odgenes boolean (default=TRUE)
     #' @param recursive boolean (default=TRUE)
     #' @examples
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a kNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+    #' ## Call clusters based on kNN
     #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+    #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
     #' p2_object$expandOdGenes(type='PCA')
     #' 
@@ -2038,13 +2146,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param min.pathway.size numeric (default=10)
     #' @param n.randomizations integer (default=5)
     #' @param score.alpha numeric (default=0.05)
-    #' @param cells (default=NULL)
+    #' @param cells character vector (default=NULL)
     #' @param adjusted.pvalues boolean (default=TRUE)
     #' @param z.score numeric (default=qnorm(0.05/2, lower.tail = FALSE))
     #' @param use.oe.scale boolean (default=FALSE)
     #' @param return.table boolean (default=FALSE)
     #' @param name string (default='pathwayPCA')
-    #' @param correlation.distance.threshold
+    #' @param correlation.distance.threshold numeric (default=0.2)
     #' @param loading.distance.threshold numeric (default=0.2)
     #' @param top.aspects (default=Inf)
     #' @param recalculate.pca boolean (default=FALSE)
@@ -2275,24 +2383,33 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param gamma numeric (largeVis) The strength of the force pushing non-neighbor nodes apart (default=7). Parameter only used if embeddingType is 'largeVis'.
     #' @param perplexity numeric (default=50)
     #' @param verbose boolean (default=TRUE)
-    #' @param sgd_batches
-    #' @param diffusion.steps
-    #' @param diffusion.power
-    #' @param distance
-    #' @param n.sgd.cores
-    #' @param ...    
+    #' @param sgd_batches numeric The number of edges to process during SGD (default=NULL). Passed to projectKNNs(). Defaults to a value set based on the size of the dataset. If the parameter given is
+    #'     between \code{0} and \code{1}, the default value will be multiplied by the parameter.
+    #' @param diffusion.steps numeric (default=0)
+    #' @param diffusion.power numeric (default=0.5)
+    #' @param distance string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')
+    #' @param n.sgd.cores numeric Number of cores to use (default=n.cores)
+    #' @param ...  Additional parameters passed to embedding functions, Rtsne::Rtsne() if 'L2', uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'
     #' @examples
+    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
+    #' ## Generate pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+    #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
+    #' ## Reduce the dataset dimensions by running PCA
     #' p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    #' ## Generate a kNN graph of cells that will allow us to identify clusters of cells
     #' p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
+    #' ## Call clusters based on kNN
     #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
+    #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30, alpha=1)
     #' 
-    #' @return 
+    #' @return embedding stored in self$embedding
     getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, verbose=TRUE,
       sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = self$n.cores, n.sgd.cores=n.cores, ... ) {
       
@@ -2355,7 +2472,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           }
           
         }
-        coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = verbose, sgd_batches = sgd_batches,gamma=gamma, seed=1, threads=n.cores, ...)
+        coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = verbose, sgd_batches = sgd_batches, gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x)
         emb <<- t(coords)
         self$embeddings[[type]][[name]] <<- emb
@@ -2386,7 +2503,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else if (embeddingType=='FR') {
         g <- self$graphs[[type]]
         if (is.null(g)){ 
-          stop(paste0("Generate KNN graph first (type=",type,")"))
+          stop(paste0("Generate kNN graph first (type=",type,")"))
         }
         emb <- layout.fruchterman.reingold(g, weights=E(g)$weight)
         rownames(emb) <- rownames(x)
@@ -2405,7 +2522,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else if (embeddingType == "UMAP_graph") {
         g <- self$graphs[[type]]
         if (is.null(g)){ 
-          stop(paste0("generate KNN graph first (type=",type,")"))
+          stop(paste0("generate kNN graph first (type=",type,")"))
         }
         emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         self$embeddings[[type]][[name]] <<- emb
