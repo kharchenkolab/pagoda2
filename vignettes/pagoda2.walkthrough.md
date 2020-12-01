@@ -148,6 +148,7 @@ Also note the n.cores parameter. Change this value to match the number of CPU co
 
 Next, we’ll adjust the variance, to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis:
 
+
 ```r
 r$adjustVariance(plot=TRUE, gam.k=10)
 ```
@@ -278,17 +279,17 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 20 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 7 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 10 levels "1","2","3","4",..: 4 8 8 10 10 8 2 1 2 5 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 9 8 8 2 2 8 4 3 4 7 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 9 5 9 4 ...
+##   ..$ walktrap  : Factor w/ 13 levels "1","2","3","4",..: 1 8 8 7 7 8 10 2 10 4 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
 We can now compare these against `infomap.community`. 
 
-#### infomap.community vs. multilevel.community vs. walktrap.community
+#### Infomap.community vs. multilevel.community vs. walktrap.community
 
 
 ```r
@@ -308,7 +309,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 21 clusters ...
+## running differential expression with 20 clusters ...
 ```
 
 ```
@@ -371,10 +372,6 @@ hdea <- r$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='communit
 ## Using community clustering for PCA space
 ```
 
-```
-## Error in hclust(d, method = method): object 'method' not found
-```
-
 
 Next we will generate a web app that will allow us to browse the dataset interactively. Note that all these steps can be performed with the basicP2web() function.
 
@@ -382,18 +379,23 @@ We will need to prepare a set of genes that we want to be accessible from the ap
 
 ```r
 genesets <- hierDiffToGenesets(hdea)
-```
-
-```
-## Error in as.list(output$env): object 'hdea' not found
-```
-
-```r
 str(genesets[1:2])
 ```
 
 ```
-## Error in str(genesets[1:2]): object 'genesets' not found
+## List of 2
+##  $ 13.vs.7   :List of 2
+##   ..$ properties:List of 3
+##   .. ..$ locked          : logi TRUE
+##   .. ..$ genesetname     : chr "13.vs.7"
+##   .. ..$ shortdescription: chr "13.vs.7"
+##   ..$ genes     : chr [1:488] "VIM" "HLA-A" "RPS4X" "CD74" ...
+##  $ 17.vs.7.13:List of 2
+##   ..$ properties:List of 3
+##   .. ..$ locked          : logi TRUE
+##   .. ..$ genesetname     : chr "17.vs.7.13"
+##   .. ..$ shortdescription: chr "17.vs.7.13"
+##   ..$ genes     : chr [1:28] "PF4" "TMSB4X" "FERMT3" "PPBP" ...
 ```
 
 To add GO Terms as genesets run the following
@@ -418,20 +420,12 @@ genesets.go <- lapply(sn(names(go.env)),function(x) {
 genesets <- c(genesets, genesets.go)
 ```
 
-```
-## Error in eval(expr, envir, enclos): object 'genesets' not found
-```
-
 Add per cluster differentially expressed genes to the gene sets
 
 ```r
 deSets <- get.de.geneset(r, groups = r$clusters$PCA[['community']], prefix = 'de_')
 ## concatenate
 genesets <- c(genesets, deSets)
-```
-
-```
-## Error in eval(expr, envir, enclos): object 'genesets' not found
 ```
 
 ## Part 3: Generate web app
@@ -494,7 +488,7 @@ p2web <-
 ```
 
 ```
-## Error in .Object$initialize(...): object 'genesets' not found
+## Error in callSuper(App$new(function(env) {: could not find function "callSuper"
 ```
 
 We can view this app directly from our R session
