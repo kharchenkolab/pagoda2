@@ -40,14 +40,14 @@ str(cm)
 ```
 
 Next let's look at the distribution of molecules per cell and molecules per gene for this dataset in log10 scale:
-```{r, fig.height=8, fig.width=12}
+```{r, fig.height=8, fig.width=10}
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='log10(molecules per cell)')
 hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='log10(molecules per gene])')
 ```
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the pagoda2 default QC function to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
-```{r, fig.height=8, fig.width=12}
+```{r, fig.height=8, fig.width=10}
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 ```
 
@@ -81,7 +81,7 @@ Also note the n.cores parameter. Change this value to match the number of CPU co
 
 Next, we’ll adjust the variance, to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis:
 
-```{r, fig.height=8, fig.width=12}
+```{r, fig.height=8, fig.width=10}
 r$adjustVariance(plot=TRUE, gam.k=10)
 ```
 
