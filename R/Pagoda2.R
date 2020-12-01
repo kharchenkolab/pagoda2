@@ -27,6 +27,7 @@ NULL
 #' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
 #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
 #' @param plot boolean Whether to output the plot (default=FALSE)
+#'
 #' @export Pagoda2
 Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
   public = list(
@@ -2533,4 +2534,5 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(emb)
      }
   )
+
 )
