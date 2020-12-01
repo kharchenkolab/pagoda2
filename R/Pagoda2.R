@@ -1465,7 +1465,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' 
     #' @return plot of the embedding
     plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL,
-      groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
+      groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw() + ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5)), ...) {
 
       if (is.null(type)) {
         if ('counts' %in% names(self$embeddings)) {
