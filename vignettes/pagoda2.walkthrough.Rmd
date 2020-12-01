@@ -175,7 +175,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ```{r}
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, legend.title=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, legend.title=gene)
 ```
 
 At this point we can perform pathway overdispersion analysis (in the same wy we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it take too long!). Overdispersion analysis usually takes too long with the latest datasets composed of 1000's of cells, for this reason we prefer hierarchical differential expression. 

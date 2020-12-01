@@ -277,9 +277,9 @@ str(r$clusters)
 ##  $ PCA:List of 3
 ##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 5 11 11 2 2 11 6 3 6 8 ...
+##   ..$ multilevel: Factor w/ 10 levels "1","2","3","4",..: 8 7 7 10 10 7 3 1 3 6 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 2 8 8 7 7 8 9 4 9 3 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 9 4 9 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -330,7 +330,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ```r
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, legend.title=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, legend.title=gene)
 ```
 
 ![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
@@ -391,13 +391,20 @@ str(genesets[1:2])
 ##   .. ..$ locked          : logi TRUE
 ##   .. ..$ genesetname     : chr "3.vs.9"
 ##   .. ..$ shortdescription: chr "3.vs.9"
-##   ..$ genes     : chr [1:124] "FTH1" "TYROBP" "FTL" "CTSS" ...
+##   ..$ genes     : chr [1:121] "FTH1" "TYROBP" "FTL" "CTSS" ...
 ```
 
 To add GO Terms as genesets run the following
 
 ```r
 library(GO.db)
+```
+
+```
+## 
+```
+
+```r
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
 
 sn <- function(x) { names(x) <- x; x}
