@@ -42,8 +42,8 @@ str(cm)
 Next let's look at the distribution of molecules per cell and molecules per gene for this dataset in log10 scale:
 ```{r, fig.height=8, fig.width=10}
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
-hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='log10(molecules per cell)')
-hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='log10(molecules per gene])')
+hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
+hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 ```
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the pagoda2 default QC function to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
@@ -59,6 +59,7 @@ abline(v=1, lty=2, col=2)
 ```
 
 Let's filter and check the size of the resulting matrix:
+
 ```{r}
 counts <- counts[rowSums(counts)>=10, ]
 dim(counts)
@@ -110,25 +111,27 @@ r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma
 and we plot the data:
 
 ```{r}
-r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (largeVis)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (largeVis)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 Next we can generate and plot a tSNE embedding. This can take a while to run!
 ```{r}
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-We can overlay the expresssion of specific marker genes on this embedding to identify clusters. For example HBB will identify heme cells.
+We can overlay the expresssion of specific marker genes on this embedding to identify clusters. 
+
+For example, HBB will identify heme cells.
 
 ```{r}
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ```{r}
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 Pagoda2 allows us to generate multiple alternative clusterings. Here will will use multilevel and walktrap
@@ -148,9 +151,9 @@ We can now compare these against `infomap.community`.
 #### Infomap.community vs. multilevel.community vs. walktrap.community
 
 ```{r, fig.height=8, fig.width=12}
-plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
-plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
-plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='walktrap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 

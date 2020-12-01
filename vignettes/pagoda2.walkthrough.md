@@ -72,8 +72,8 @@ Next let's look at the distribution of molecules per cell and molecules per gene
 
 ```r
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
-hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='log10(molecules per cell)')
-hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='log10(molecules per gene])')
+hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
+hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 ```
 
 ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)
@@ -97,6 +97,7 @@ abline(v=1, lty=2, col=2)
 ![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
 
 Let's filter and check the size of the resulting matrix:
+
 
 ```r
 counts <- counts[rowSums(counts)>=10, ]
@@ -223,7 +224,7 @@ and we plot the data:
 
 
 ```r
-r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (largeVis)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (largeVis)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
@@ -232,17 +233,19 @@ Next we can generate and plot a tSNE embedding. This can take a while to run!
 
 ```r
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
 
-We can overlay the expresssion of specific marker genes on this embedding to identify clusters. For example HBB will identify heme cells.
+We can overlay the expresssion of specific marker genes on this embedding to identify clusters. 
+
+For example, HBB will identify heme cells.
 
 
 ```r
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
@@ -250,7 +253,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ```r
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
@@ -272,11 +275,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 4 10 10 11 11 10 5 2 5 8 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 5 10 10 11 11 10 6 3 6 8 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 9 9 8 8 9 10 5 10 4 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 9 4 9 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -286,9 +289,9 @@ We can now compare these against `infomap.community`.
 
 
 ```r
-plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
-plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
-plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='walktrap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 
@@ -302,7 +305,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 22 clusters ...
+## running differential expression with 21 clusters ...
 ```
 
 ```
@@ -377,31 +380,24 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.15:List of 2
+##  $ 13.vs.8   :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.15"
-##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:137] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
-##  $ 3.vs.9  :List of 2
+##   .. ..$ genesetname     : chr "13.vs.8"
+##   .. ..$ shortdescription: chr "13.vs.8"
+##   ..$ genes     : chr [1:1672] "RPL21" "RPL31" "RPS6" "RPS27" ...
+##  $ 14.vs.8.13:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "3.vs.9"
-##   .. ..$ shortdescription: chr "3.vs.9"
-##   ..$ genes     : chr [1:113] "FTH1" "TYROBP" "FTL" "CTSS" ...
+##   .. ..$ genesetname     : chr "14.vs.8.13"
+##   .. ..$ shortdescription: chr "14.vs.8.13"
+##   ..$ genes     : chr [1:484] "VIM" "HLA-A" "RPS4X" "AIF1" ...
 ```
 
 To add GO Terms as genesets run the following
 
 ```r
 library(GO.db)
-```
-
-```
-## 
-```
-
-```r
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
 
 sn <- function(x) { names(x) <- x; x}
@@ -478,10 +474,6 @@ p2web <-
 ```
 ## Warning in if (class(pagoda2obj) != "Pagoda2") {: the condition has length > 1
 ## and only the first element will be used
-```
-
-```
-## Error in callSuper(App$new(function(env) {: could not find function "callSuper"
 ```
 
 We can view this app directly from our R session
