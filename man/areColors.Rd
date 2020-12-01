@@ -3,7 +3,7 @@
 \name{areColors}
 \alias{areColors}
 \title{Quick utility to check if given character vector is colors
-Thanks to Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}
+Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation}
 \usage{
 areColors(x)
 }
@@ -12,6 +12,6 @@ areColors(x)
 }
 \description{
 Quick utility to check if given character vector is colors
-Thanks to Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 }
 \keyword{internal}

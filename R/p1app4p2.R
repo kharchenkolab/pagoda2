@@ -1037,7 +1037,7 @@ tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes
   xp$zlim <- zlim
 
   #xp$consensus.pc <- consensus.npc
-  return(invisible(xp))
+  invisible(xp)
 }
 
 # convert R color to a web hex representation

@@ -1,4 +1,3 @@
----
 title: "Pagoda2 Walkthrough"
 output: rmarkdown::html_vignette
     toc: true
@@ -20,6 +19,7 @@ library(Matrix)
 library(igraph)
 library(pagoda2)
 library(dplyr)
+library(ggplot2)
 ```
 
 ## Part 1: Loading the QC'ing the dataset
@@ -40,14 +40,14 @@ str(cm)
 ```
 
 Next let's look at the distribution of molecules per cell and molecules per gene for this dataset in log10 scale:
-```{r}
+```{r, fig.height=8, fig.width=10}
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='log10(molecules per cell)')
 hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='log10(molecules per gene])')
 ```
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the pagoda2 default QC function to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
-```{r}
+```{r, fig.height=8, fig.width=10}
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 ```
 
@@ -80,7 +80,8 @@ Check that you have the matrix in the correct orientation and that number of cel
 Also note the n.cores parameter. Change this value to match the number of CPU cores on your system.
 
 Next, we’ll adjust the variance, to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis:
-```{r}
+
+```{r, fig.height=8, fig.width=10}
 r$adjustVariance(plot=TRUE, gam.k=10)
 ```
 
@@ -109,25 +110,25 @@ r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma
 and we plot the data:
 
 ```{r}
-r$plotEmbedding(type='PCA', show.legend=FALSE, mark.clusters=TRUE, min.group.size=50, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (largeVis)')
+r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (largeVis)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 Next we can generate and plot a tSNE embedding. This can take a while to run!
 ```{r}
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 We can overlay the expresssion of specific marker genes on this embedding to identify clusters. For example HBB will identify heme cells.
 
 ```{r}
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ```{r}
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 Pagoda2 allows us to generate multiple alternative clusterings. Here will will use multilevel and walktrap
@@ -142,12 +143,15 @@ Internally the clusters are saved in the clusters variable under the reduction f
 str(r$clusters)
 ```
 
-We can now compare these against infomap:
+We can now compare these against `infomap.community`. 
 
-```{r}
-par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
+#### Infomap.community vs. multilevel.community vs. walktrap.community
+
+```{r, fig.height=8, fig.width=12}
+plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 
 We can then perform differential expression between these clusters
@@ -166,7 +170,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ```{r}
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, legend.title=gene)
 ```
 
 At this point we can perform pathway overdispersion analysis (in the same wy we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it take too long!). Overdispersion analysis usually takes too long with the latest datasets composed of 1000's of cells, for this reason we prefer hierarchical differential expression. 
@@ -208,7 +212,9 @@ To add GO Terms as genesets run the following
 ```{r}
 library(GO.db)
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
+
 sn <- function(x) { names(x) <- x; x}
+
 genesets.go <- lapply(sn(names(go.env)),function(x) {
   list(properties=list(locked=TRUE, genesetname=x, shortdescription=as.character(termDescriptions[x])), genes=c(go.env[[x]]))
 })
@@ -263,7 +269,7 @@ p2web <-
     geneSets = genesets,
     appmetadata = appmetadata,
     show.clusters = FALSE # Hide the clusters that were used for the dendrogram from the metadata
-  );
+  )
 ```
 
 We can view this app directly from our R session
@@ -323,7 +329,7 @@ This currently only works for human (organism='hs') and mouse (organism='mm') da
 ##     infomap = p2$clusters$PCA$infomap,
 ##     multilevel = p2$clusters$PCA$multilevel,
 ##     walktrap = p2$clusters$PCA$walktrap
-## );
+## )
 ## metadata.forweb <- factorListToMetadata(metadata.listfactors)
 
 ## # Make the web object
@@ -332,7 +338,7 @@ This currently only works for human (organism='hs') and mouse (organism='mm') da
 ## # Serialize to file
 ## # The serialisedApp.bin file will now contain all the information
 ## # required to view the files via the web browser
-## p2.webobject$serializeToStaticFast('serialisedApp.bin');
+## p2.webobject$serializeToStaticFast('serialisedApp.bin')
 
 ## # Alternatively you can view your dataset from the R session
 ## # show.app(p2.webobject, browse = TRUE)

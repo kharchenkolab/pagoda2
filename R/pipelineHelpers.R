@@ -4,9 +4,8 @@
 #' make knn graph, identify clusters with infomap, multilevel and walktrap and make
 #' largeVis and tSNE embeddings.
 #' 
-#' @param cd count matrix, rows are genes, columns are cells
+#' @param cd count matrix whereby rows are genes, columns are cells.
 #' @param n.cores numeric Number of cores to use (default=1)
-#' @param batch optional batch factor (default=NULL)
 #' @param n.odgenes numeric Number of top overdispersed genes to use (dfault=3e3)
 #' @param nPcs numeric Number of PCs to use (default=100)
 #' @param k numeric Default number of neighbors to use in kNN graph (default=30)
@@ -26,12 +25,12 @@
 #' p2 <- basicP2proc(cm)
 #' }
 #' @export 
-basicP2proc <- function(cd, n.cores = 1, batch = NULL, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
-  log.scale=TRUE, trim=10, keep.genes = NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
+basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
+  log.scale=TRUE, trim=10, keep.genes=NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
   get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
-  p2 <- Pagoda2$new(cd, n.cores = n.cores, batch = batch, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell);
+  p2 <- Pagoda2$new(cd, n.cores = n.cores, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell);
   p2$adjustVariance(plot=FALSE, gam.k=10);
   p2$calculatePcaReduction(nPcs = nPcs, n.odgenes = n.odgenes, maxit = 1000)
   ## Make KNN graph and generate clustering
@@ -395,14 +394,12 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
                         show.batch = TRUE, show.clusters = TRUE, appname = "Pagoda2 Application",
                         innerOrder=NULL, orderDend=FALSE, appmetadata = NULL) {
   # Build the metadata
-  metadata <- list();
+  metadata <- list()
 
   if (show.depth) {
-    if ("depth" %in% names(r@.xData)) {
-      if (!is.null(r@.xData$depth)) {
+      if (!is.null(r$depth)) {
         levels  <- 20
-
-        dpt <- log10(r@.xData$depth+0.00001)
+        dpt <- log10(r$depth+0.00001)
         max <- max(dpt)
         min <- min(dpt)
         dptnorm <- floor((dpt - min) / (max - min) * levels)
@@ -412,22 +409,19 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
           displayname = 'Depth'
         )
       }
-    }
   }
 
   if (show.batch) {
-    if(!nlevels(r$batch)<=1){
-      batchData <- as.numeric(r$batch) - 1;
-      names(batchData) <- names(r$batch);
-      if ( "batch" %in% names(r@.xData) ) {
-        if ( !is.null(r@.xData$batch)  ) {
+    if (!nlevels(r$batch)<=1){
+      batchData <- as.numeric(r$batch) - 1
+      names(batchData) <- names(r$batch)
+        if ( !is.null(r$batch)  ) {
           metadata$batch <- list(
             data = batchData,
             palette = rainbow(n = length(levels(r$batch))),
             displayname = 'Batch'
           )
         }
-      }
     }
   }
 
@@ -443,7 +437,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
   }
 
   # User provided metadata
-  for ( itemName in names(additionalMetadata)) {
+  for (itemName in names(additionalMetadata)) {
     metadata[[itemName]] <- additionalMetadata[[itemName]]
   }
 
@@ -461,7 +455,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
     innerOrder = innerOrder,
     orderDend = orderDend,
     appmetadata = appmetadata
-  );
+  )
 
   invisible(p2w)
 }

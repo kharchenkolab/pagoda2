@@ -88,7 +88,7 @@ plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddin
 #' Subset a gene signature to the genes in the given matrix
 #' with optional warning if genes are missing
 #' 
-#' @param data the matrix
+#' @param data matrix
 #' @param signature character vector The gene signature from which to subset a character vector of genes 
 #' @param raise.warning boolean Warn if genes are missing (default=TRUE)
 #' @return The filtered subset of gene signatures
@@ -135,7 +135,7 @@ score.cells.nb1 <- function(data,signature, quantile.cutoff=0.01) {
 
 #' Score cells by getting mean expression of genes in signatures
 #' 
-#' @param data the matrix
+#' @param data matrix
 #' @param signature the genes in the signature
 #' @return cell scores
 #' @export score.cells.nb0

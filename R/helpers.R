@@ -58,7 +58,7 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
 }
 
 #' Quick utility to check if given character vector is colors
-#' Thanks to Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#' Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 #'
 #' @param x character vector to check
 #' @keywords internal
@@ -173,7 +173,7 @@ show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
         browseURL(url);
     }
 
-    return(invisible(server))
+    invisible(server)
 }
 
 # BH P-value adjustment with a log option
@@ -391,7 +391,7 @@ gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cel
 #' @export 
 namedNames <- function(g) {
   n <- names(g)
-  names(n) <- n;
+  names(n) <- n
   return(n)
 }
 

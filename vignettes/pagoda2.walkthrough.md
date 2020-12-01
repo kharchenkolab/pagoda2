@@ -1,4 +1,3 @@
----
 title: "Pagoda2 Walkthrough"
 output: rmarkdown::html_vignette
     toc: true
@@ -21,6 +20,7 @@ library(Matrix)
 library(igraph)
 library(pagoda2)
 library(dplyr)
+library(ggplot2)
 ```
 
 ## Part 1: Loading the QC'ing the dataset
@@ -131,7 +131,7 @@ r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
 ```
 
 ```
-## using plain model
+## Using plain model
 ```
 
 ```
@@ -147,6 +147,7 @@ Check that you have the matrix in the correct orientation and that number of cel
 Also note the n.cores parameter. Change this value to match the number of CPU cores on your system.
 
 Next, we’ll adjust the variance, to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis:
+
 
 ```r
 r$adjustVariance(plot=TRUE, gam.k=10)
@@ -168,11 +169,11 @@ r$adjustVariance(plot=TRUE, gam.k=10)
 ## persisting ...
 ```
 
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+
 ```
 ## done.
 ```
-
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
 
 There are many alternative ways of proceeding with the downstream analysis. Below we’ll use the simplest, default scenario, where we first reduce the dataset dimensions by running PCA, and then move into k-nearest neighbor graph space for clustering and visualization calculations. First, the PCA reduction. Depending on the complexity of the dataset you are analysing you may want to adjust the nPcs parameter.
 
@@ -229,12 +230,7 @@ and we plot the data:
 
 
 ```r
-r$plotEmbedding(type='PCA', show.legend=FALSE, mark.clusters=TRUE, min.group.size=50, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (largeVis)')
-```
-
-```
-## Warning: Ignoring unknown parameters: mark.clusters, min.group.size,
-## mark.cluster.cex, main
+r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (largeVis)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
@@ -243,27 +239,7 @@ Next we can generate and plot a tSNE embedding. This can take a while to run!
 
 ```r
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-```
-
-```
-## calculating distance ...
-```
-
-```
-## pearson ...
-```
-
-```
-## running tSNE using 2 cores:
-```
-
-```r
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='clusters (tSNE)')
-```
-
-```
-## Warning: Ignoring unknown parameters: mark.clusters, min.group.size,
-## mark.cluster.cex, main
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)
@@ -273,7 +249,7 @@ We can overlay the expresssion of specific marker genes on this embedding to ide
 
 ```r
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
@@ -281,7 +257,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ```r
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=1, alpha=0.1, title=gene, plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
@@ -305,37 +281,25 @@ str(r$clusters)
 ##  $ PCA:List of 3
 ##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 9 11 11 2 2 11 5 3 5 7 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 4 10 10 11 11 10 5 2 5 8 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 7 7 8 9 5 9 4 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 9 9 8 8 9 10 5 10 4 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
-We can now compare these against infomap:
+We can now compare these against `infomap.community`. 
+
+#### Infomap.community vs. multilevel.community vs. walktrap.community
 
 
 ```r
-par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='infomap clusters (tSNE)')
-```
-
-```
-## Warning: Ignoring unknown parameters: mark.clusters, min.group.size,
-## mark.cluster.cex, main
+plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='infomap clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, alpha=0.1, title='multlevel clusters (tSNE)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 
 ![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
-
-```r
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.clusters=TRUE, min.group.size=1, shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main='multlevel clusters (tSNE)')
-```
-
-```
-## Warning: Ignoring unknown parameters: mark.clusters, min.group.size,
-## mark.cluster.cex, main
-```
-
-![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-2.png)
 
 We can then perform differential expression between these clusters
 
@@ -370,7 +334,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ```r
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, mark.cluster.cex=1, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, legend.title=gene)
 ```
 
 ![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
@@ -405,7 +369,7 @@ hdea <- r$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='communit
 ```
 
 ```
-## using community clustering for PCA space
+## Using community clustering for PCA space
 ```
 
 
@@ -425,21 +389,30 @@ str(genesets[1:2])
 ##   .. ..$ locked          : logi TRUE
 ##   .. ..$ genesetname     : chr "14.vs.15"
 ##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:160] "PRTN3" "ELANE" "MPO" "AZU1" ...
-##  $ 10.vs.3 :List of 2
+##   ..$ genes     : chr [1:137] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
+##  $ 3.vs.9  :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "10.vs.3"
-##   .. ..$ shortdescription: chr "10.vs.3"
-##   ..$ genes     : chr [1:110] "H2AFZ" "HMGB1" "PTMA" "LYZ" ...
+##   .. ..$ genesetname     : chr "3.vs.9"
+##   .. ..$ shortdescription: chr "3.vs.9"
+##   ..$ genes     : chr [1:113] "FTH1" "TYROBP" "FTL" "CTSS" ...
 ```
 
 To add GO Terms as genesets run the following
 
 ```r
 library(GO.db)
+```
+
+```
+## 
+```
+
+```r
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
+
 sn <- function(x) { names(x) <- x; x}
+
 genesets.go <- lapply(sn(names(go.env)),function(x) {
   list(properties=list(locked=TRUE, genesetname=x, shortdescription=as.character(termDescriptions[x])), genes=c(go.env[[x]]))
 })
@@ -506,7 +479,16 @@ p2web <-
     geneSets = genesets,
     appmetadata = appmetadata,
     show.clusters = FALSE # Hide the clusters that were used for the dendrogram from the metadata
-  );
+  )
+```
+
+```
+## Warning in if (class(pagoda2obj) != "Pagoda2") {: the condition has length > 1
+## and only the first element will be used
+```
+
+```
+## Error in callSuper(App$new(function(env) {: could not find function "callSuper"
 ```
 
 We can view this app directly from our R session
@@ -569,7 +551,7 @@ This currently only works for human (organism='hs') and mouse (organism='mm') da
 ##     infomap = p2$clusters$PCA$infomap,
 ##     multilevel = p2$clusters$PCA$multilevel,
 ##     walktrap = p2$clusters$PCA$walktrap
-## );
+## )
 ## metadata.forweb <- factorListToMetadata(metadata.listfactors)
 
 ## # Make the web object
@@ -578,7 +560,7 @@ This currently only works for human (organism='hs') and mouse (organism='mm') da
 ## # Serialize to file
 ## # The serialisedApp.bin file will now contain all the information
 ## # required to view the files via the web browser
-## p2.webobject$serializeToStaticFast('serialisedApp.bin');
+## p2.webobject$serializeToStaticFast('serialisedApp.bin')
 
 ## # Alternatively you can view your dataset from the R session
 ## # show.app(p2.webobject, browse = TRUE)

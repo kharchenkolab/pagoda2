@@ -9,7 +9,6 @@ largeVis and tSNE embeddings.}
 basicP2proc(
   cd,
   n.cores = 1,
-  batch = NULL,
   n.odgenes = 3000,
   nPcs = 100,
   k = 30,
@@ -25,11 +24,9 @@ basicP2proc(
 )
 }
 \arguments{
-\item{cd}{count matrix, rows are genes, columns are cells}
+\item{cd}{count matrix whereby rows are genes, columns are cells.}
 
 \item{n.cores}{numeric Number of cores to use (default=1)}
-
-\item{batch}{optional batch factor (default=NULL)}
 
 \item{n.odgenes}{numeric Number of top overdispersed genes to use (dfault=3e3)}
 
