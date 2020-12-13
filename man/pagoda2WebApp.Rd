@@ -5,6 +5,96 @@
 \alias{pagoda2WebApp-class}
 \alias{pagoda2WebApp}
 \title{pagoda2WebApp class to create pagoda2 web applications via a Rook server}
+\arguments{
+\item{pagoda2obj}{Pagoda2 object}
+
+\item{appName}{string Display name for the app (default="DefaultPagoda2Name")}
+
+\item{dendGroups}{factor defining the groups of cells to use for the dendrogram}
+
+\item{geneSets}{Gene sets in the pagoda2 object}
+
+\item{metadata}{Pagoda2 cell metadata}
+
+\item{appmetadata}{Pagoda2 web application metadata (default=NULL)}
+
+\item{dendrogramCellGroups}{Cell groups to input into hclust()}
+
+\item{v}{float64 array}
+
+\item{env}{The environment argument is a true R environment object which the application is free to modify. Please see the Rook documentation for more details.}
+
+\item{filename}{path to filename}
+
+\item{binary.filename}{path to binary file (default=NULL)}
+
+\item{verbose}{boolean Whether to give verbose output (default=FALSE)}
+
+\item{matsparse}{Sparse matrix}
+
+\item{arr}{An array (default=NULL)}
+
+\item{reduc}{reduction}
+
+\item{embed}{embedding}
+
+\item{message}{Message to output for the console}
+
+\item{graph}{Input graph}
+}
+\value{
+new pagoda2WebApp object
+Generate a dendrogram of groups
+
+List of hcGroups, cellorder, and cluster.sizes
+Compress int32 array
+
+compressed array
+Compress float64 array
+
+compressed array  
+Handle httpd server calls
+
+Read a static file from the filesystem, and put in the response
+
+Content to display or error page
+Convert serialized file to static file
+
+static file written by WriteListToBinary(expL=exportList, outfile=binary.filename, verbose=verbose)  
+Create simple List from sparse Matrix with Dimnames as JSON
+
+List with slots i, p, x
+Serialise an R array to a JSON object
+
+Serialised version of the array in JSON, which includes dimension information as separate fields
+Compress the embedding
+
+compressed embedding as JSON
+Logging function for console
+
+printed message
+Parse dendrogram into JSON
+
+JSON with parsed dendrogram 
+Parse mainDendrogram$cellorder into JSON
+
+JSON with parsed cell order from mainDendrogram$cellorder
+Parse pathways from originalP2object$misc$pathwayOD$xv into JSON
+
+JSON with parsed cell order from mainDendrogram$cellorder   
+Parse cellmetadata into JSON
+
+JSON with parsed cellmetadata  
+Parse originalP2object$misc$varinfo[,c("m","qv")] into JSON
+
+JSON with parsed information from genename, dispersion, mean gene expression   
+Generate a JSON list representation of the gene kNN network
+
+JSON with gene kNN network
+Generate information about the embeddings we are exporting
+
+List with embeddings
+}
 \description{
 pagoda2WebApp class to create pagoda2 web applications via a Rook server
 }
@@ -15,19 +105,17 @@ pagoda2WebApp class to create pagoda2 web applications via a Rook server
 
 \item{\code{name}}{string Display name for the application}
 
-\item{\code{verbose}}{integer Verbosity level (default=0).}
-
 \item{\code{mat}}{Embedding}
 
-\item{\code{cellmetadata}}{metadata associated with pagoda2 object}
+\item{\code{cellmetadata}}{Metadata associated with pagoda2 object}
 
-\item{\code{mainDendrogram}}{hclust dendrogram of all cells in the pagoda2 object}
+\item{\code{mainDendrogram}}{Dendrogram from hclust() of all cells in the pagoda2 object}
 
-\item{\code{geneSets}}{gene sets in the pagoda2 object}
+\item{\code{geneSets}}{Gene sets in the pagoda2 object}
 
 \item{\code{rookRoot}}{Rook server root directory}
 
-\item{\code{appmetadata}}{pagoda2 web application metadata}
+\item{\code{appmetadata}}{Pagoda2 web application metadata}
 }}
 
 
