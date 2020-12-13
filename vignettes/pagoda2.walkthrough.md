@@ -428,7 +428,7 @@ genesets <- c(genesets, deSets)
 Next we can add metadata to our web app. The metadata we add can be completely arbitrary and include processing parameters, notes of anything else we like. They are provided in a list of strings. If we include an entry called apptitle, this will appear as an app title in our web browser when we open the app.
 
 ```r
-appmetadata <- list(apptitle = 'October_Demo_App')
+appmetadata <- list(apptitle = 'Demo_App')
 ```
 
 We also want to update the original pagoda2 object to contain a KNN graph of genes. We will need this to enable the 'find similar gene' feature of our webapp. This takes a moment to complete.
@@ -494,7 +494,7 @@ This app will now be viewable as long as our R session is running. However we al
 
 
 ```r
-##  p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
+##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
 You can view the offline app by pointing your browser to http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/index.html

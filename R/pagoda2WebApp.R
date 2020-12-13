@@ -56,7 +56,7 @@ pagoda2WebApp <- setRefClass(
                           innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
 
       ## Check that the object we are getting is what it should be
-      if (class(pagoda2obj) != "Pagoda2") {
+      if (suppressWarnings(class(pagoda2obj) != "Pagoda2")) {
         message("We have an error")
         stop("ERROR: The provided object is not a pagoda2 object")
       }
