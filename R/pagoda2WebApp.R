@@ -39,16 +39,18 @@ pagoda2WebApp <- setRefClass(
   ),
   
   methods = list(
-    #' Initalize the pagoda2WebApp
-    #'
-    #' @param pagoda2obj Pagoda2 object
-    #' @param appName string Display name for the app (default="DefaultPagoda2Name")
-    #' @param dendGroups factor defining the groups of cells to use for the dendrogram
-    #' @param geneSets Gene sets in the pagoda2 object 
-    #' @param metadata Pagoda2 cell metadata 
-    #' @param appmetadata Pagoda2 web application metadata (default=NULL)
-    #'
-    #' @return new pagoda2WebApp object
+
+    ## @titlepagoda2WebApp initalize
+    ## @description Initalize the pagoda2WebApp
+    ##
+    ## @param pagoda2obj Pagoda2 object
+    ## @param appName string Display name for the app (default="DefaultPagoda2Name")
+    ## @param dendGroups factor defining the groups of cells to use for the dendrogram
+    ## @param geneSets Gene sets in the pagoda2 object 
+    ## @param metadata Pagoda2 cell metadata 
+    ## @param appmetadata Pagoda2 web application metadata (default=NULL)
+    ##
+    ## @return new pagoda2WebApp object
     initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
                           verbose = 0, debug, geneSets, metadata=metadata,
                           innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
@@ -111,13 +113,20 @@ pagoda2WebApp <- setRefClass(
           res$finish()
         })
       ));
-    },
+    }
+  ) # methods list
+) # setRefClass
 
-    #' Generate a dendrogram of groups
-    #'
-    #' @param dendrogramCellGroups Cell groups to input into hclust()
-    #' 
-    #' @return List of hcGroups, cellorder, and cluster.sizes
+
+
+#' Generate a dendrogram of groups
+#'
+#' @name pagoda2WebApp_generateDendrogramOfGroups
+#' @param dendrogramCellGroups Cell groups to input into hclust()
+#' 
+#' @return List of hcGroups, cellorder, and cluster.sizes
+NULL 
+pagoda2WebApp$methods(
     generateDendrogramOfGroups = function(r, dendrogramCellGroups,innerOrder = NULL,orderDend=FALSE){
       cl0 <- dendrogramCellGroups
       # Generate an hclust objct of the above groups
@@ -126,11 +135,11 @@ pagoda2WebApp <- setRefClass(
       lvec <- t(lvec/pmax(1,rowSums(lvec)))
       colnames(lvec) <- which(table(cl0)>0)
       rownames(lvec) <- colnames(r$misc[['rawCounts']])
-      ld <- jsDist(lvec)
+      ld <- jsDist(lvec);
       colnames(ld) <- rownames(ld) <- colnames(lvec)
       
       #hcGroup is a hclust object of whatever cell groupings we provided above
-      hcGroups <- hclust(as.dist(ld), method = 'ward.D')
+      hcGroups <- hclust(as.dist(ld), method = 'ward.D');
       
       if(orderDend){
         hcGroups <- dendsort::dendsort(hcGroups)
@@ -148,13 +157,13 @@ pagoda2WebApp <- setRefClass(
           
         } else {
           if(length(names(cl0)[cl0 == x]) < 5){
-            base::sample(names(cl0)[cl0 == x])
+            base::sample(names(cl0)[cl0 == x]);
             message(paste("Cluster", x ,"contains less than 5 cells - no Ordering applied"))
           } else {
             if(innerOrder == "odPCA") {
               
               if(!"odgenes" %in% names(r$misc)){
-                stop("Missing odgenes for odPCA")
+                stop("Missing odgenes for odPCA");
               } else {
                 celsel <- names(cl0)[cl0 == x]
                 vpca <- r$counts[celsel, r$misc$odgenes] %*% irlba::irlba(r$counts[celsel,r$misc$odgenes],nv = 1,nu=0)$v # run a PCA on overdispersed genes just in this selection.
@@ -163,7 +172,7 @@ pagoda2WebApp <- setRefClass(
               
             } else if (innerOrder == "reductdist") {
               if(!"PCA" %in% names(originalP2object$reductions)){
-                stop("Missing PCA reduction, , run calculatePcaReduction first")
+                stop("Missing PCA reduction, , run calculatePcaReduction first");
               } else {
                 
                 celsel <- names(cl0)[cl0 == x]
@@ -173,7 +182,7 @@ pagoda2WebApp <- setRefClass(
             } else if(innerOrder == "graphbased") {
               
               if(!"PCA" %in% names(r$graphs)){
-                stop("Missing graph, , run makeKnnGraph first")
+                stop("Missing graph, , run makeKnnGraph first");
               } else {
                 celsel <- names(cl0)[cl0==x]
                 sgraph <- igraph::induced_subgraph(r$graphs$PCA,(celsel))
@@ -188,7 +197,7 @@ pagoda2WebApp <- setRefClass(
               xx <- r$counts[celsel,] %*% irlba::irlba(r$counts[celsel,],nv = nv,nu=0)$v
               colnames(xx) <- paste('PC',seq(ncol(xx)),sep='')
               
-              xn <- N2R::Knn(as.matrix(xx),k,nThreads=r$n.cores,verbose=0,indexType='L2')
+              xn <- n2Knn(as.matrix(xx),k,nThreads=r$n.cores,verbose=0,indexType='L2')
               
               xn <- xn[!xn$s==xn$e,]
               xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))
@@ -218,13 +227,19 @@ pagoda2WebApp <- setRefClass(
         hc = hcGroups,
         cellorder = cellorder,
         cluster.sizes = cellorder.cluster.sizes
-      );
-    },
-    
-    #' Compress int32 array
-    #'
-    #' @param v int32 array
-    #' @return compressed array
+      )
+    }
+)
+
+  
+#' @name pagoda2WebApp_packCompressInt32Array
+#' @title pagoda2WebApp_packCompressInt32Array
+#' @description Compress int32 array
+#'
+#' @param v int32 array
+#' @return compressed array
+NULL 
+pagoda2WebApp$methods(
     packCompressInt32Array = function(v) {
       rawConn <-  rawConnection(raw(0), "wb")
       writeBin(v, rawConn);
@@ -233,12 +248,17 @@ pagoda2WebApp <- setRefClass(
       close(rawConn);
       
       xSend
-    },
-    
-    #' Compress float64 array
-    #' 
-    #' @param v float64 array
-    #' @return compressed array  
+    }
+)
+
+#' @name pagoda2WebApp_packCompressFloat64Array
+#' @title pagoda2WebApp_packCompressFloat64Array
+#' @description Compress float64 array
+#' 
+#' @param v float64 array
+#' @return compressed array 
+NULL 
+pagoda2WebApp$methods(
     packCompressFloat64Array = function(v){
       rawConn <- rawConnection(raw(0), "wb")
       writeBin(v, rawConn);
@@ -247,13 +267,18 @@ pagoda2WebApp <- setRefClass(
       close(rawConn)
       
       xSend
-    },
-    
-    #' Handle httpd server calls
-    #'
-    #' @param env The environment argument is a true R environment object which the application is free to modify. Please see the Rook documentation for more details.
-    #' 
-    #' @return 
+    }
+)
+
+#' @name pagoda2WebApp_call
+#' @title pagoda2WebApp_call   
+#' @description Handle httpd server calls
+#'
+#' @param env The environment argument is a true R environment object which the application is free to modify. Please see the Rook documentation for more details.
+#' 
+#' @return NULL
+NULL 
+pagoda2WebApp$methods(
     call = function(env) {
       path <- env[['PATH_INFO']]
       request <- Request$new(env)
@@ -774,12 +799,17 @@ pagoda2WebApp <- setRefClass(
                 app$call(env);
               }
       ) # switch
-    }, # call = function(env)
-    
-    #' Read a static file from the filesystem, and put in the response
-    #'
-    #' @param filename path to filename
-    #' @return Content to display or error page
+    } # call = function(env)
+)
+
+#' @name pagoda2WebApp_readStaticFile
+#' @title pagoda2WebApp_readStaticFile   
+#' @description Read a static file from the filesystem, and put in the response
+#'
+#' @param filename path to filename
+#' @return Content to display or error page
+NULL 
+pagoda2WebApp$methods(
     readStaticFile =  function(filename) {
       filename <- file.path(rookRoot,filename);
       content <- NULL;
@@ -790,23 +820,30 @@ pagoda2WebApp <- setRefClass(
       }, error = function(e) {
         content <- paste0("File not found: ", filename);
       })
-    },
+    }
+)
     
-    ##updateRookRoot = function(newRoot) {
-    ##  # Update the object variable
-    ##  rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
-    ##  
-    ##  # Update the middleware static server
-    ##  .self$app$app$file_server$root <- rookRoot;
-    ##},
-  
-    #' Convert serialized file to static file
-    #'
-    #' @param binary.filename path to binary file (default=NULL)
-    #' @param verbose boolean Whether to give verbose output (default=FALSE)
-    #' @return static file written by WriteListToBinary(expL=exportList, outfile=binary.filename, verbose=verbose)  
+##updateRookRoot = function(newRoot) {
+##  # Update the object variable
+##  rookRoot <<- file.path(system.file(package='pagoda2'),'rookServerDocs');
+##  
+##  # Update the middleware static server
+##  .self$app$app$file_server$root <- rookRoot;
+##},
+
+#' @name pagoda2WebApp_serializeToStaticFast
+#' @title pagoda2WebApp_serializeToStaticFast 
+#' @description Convert serialized file to static file
+#'
+#' @param binary.filename path to binary file (default=NULL)
+#' @param verbose boolean Whether to give verbose output (default=FALSE)
+#' @return static file written by WriteListToBinary(expL=exportList, outfile=binary.filename, verbose=verbose) 
+NULL 
+pagoda2WebApp$methods(
     serializeToStaticFast = function(binary.filename=NULL, verbose = FALSE, verbose.timings = FALSE){
-      if (is.null(binary.filename)) { stop('Please specify a directory'); }
+      if (is.null(binary.filename)) { 
+        stop('Please specify a directory')
+      }
 
       
       exportList <- new("list");
@@ -988,13 +1025,18 @@ pagoda2WebApp <- setRefClass(
       ##return(invisible(exportList));
       
       ## Return NULL
-      NULL;
-    },
-    
-    #' Create simple List from sparse Matrix with Dimnames as JSON
-    #'
-    #' @param matsparse Sparse matrix
-    #' @return List with slots i, p, x
+      NULL
+    }
+)
+  
+#' @name pagoda2WebApp_sparseMatList
+#' @title pagoda2WebApp_sparseMatList
+#' @description Create simple List from sparse Matrix with Dimnames as JSON
+#'
+#' @param matsparse Sparse matrix
+#' @return List with slots i, p, x
+NULL
+pagoda2WebApp$methods(
     sparseMatList = function(matsparse){
       mslist <- new("list")
       mslist[["matsparse_i"]] <- matsparse@i
@@ -1004,12 +1046,17 @@ pagoda2WebApp <- setRefClass(
       mslist[["matsparse_dimnames1"]] <- toJSON(matsparse@Dimnames[[1]])
       mslist[["matsparse_dimnames2"]] <- toJSON(matsparse@Dimnames[[2]])
       return(mslist)
-    },
+    }
+)
     
-    #' Serialise an R array to a JSON object
-    #'
-    #' @param arr An array (default=NULL)
-    #' @return Serialised version of the array in JSON, which includes dimension information as separate fields
+#' @name pagoda2WebApp_arrayToJSON
+#' @title pagoda2WebApp_arrayToJSON
+#' @description Serialise an R array to a JSON object
+#'
+#' @param arr An array (default=NULL)
+#' @return Serialised version of the array in JSON, which includes dimension information as separate fields
+NULL
+pagoda2WebApp$methods(
     arrayToJSON = function(a = NULL) {
       if (is.null(a) | !is.array(a) ) {
         NULL
@@ -1017,13 +1064,18 @@ pagoda2WebApp <- setRefClass(
         # Serialised Array
         toJSON(list(values = a, dim =dim(a), rownames = rownames(a), colnames= colnames(a)));
       }
-    },
+    }
+)
 
-    #' Compress the embedding
-    #'
-    #' @param reduc reduction
-    #' @param embed embedding
-    #' @return compressed embedding as JSON
+#' @name pagoda2WebApp_getCompressedEmbedding
+#' @title pagoda2WebApp_getCompressedEmbedding
+#' @description Compress the embedding
+#'
+#' @param reduc reduction
+#' @param embed embedding
+#' @return compressed embedding as JSON
+NULL
+pagoda2WebApp$methods(
     getCompressedEmbedding = function(reduc, embed) {
       emb <- originalP2object$embeddings[[reduc]][[embed]];
       ## Flip Y coordinate
@@ -1035,51 +1087,80 @@ pagoda2WebApp <- setRefClass(
         colnames = colnames(emb)
       );
       toJSON(ret)
-    },
+    }
+)
     
-    
-    #' Logging function for console
-    #'
-    #' @param message Message to output for the console
-    #' @return printed message
+#' @name pagoda2WebApp_serverLog
+#' @title pagoda2WebApp_serverLog
+#' @description Logging function for console
+#'
+#' @param message Message to output for the console
+#' @return printed message
+NULL
+pagoda2WebApp$methods(
     serverLog = function(message) {
       print(message);
-    },
-    
-    #' Parse dendrogram into JSON
-    #'
-    #' @return JSON with parsed dendrogram 
+    }
+)
+ 
+#' @name pagoda2WebApp_reducedDendrogramJSON
+#' @title pagoda2WebApp_reducedDendrogramJSON
+#' @description Parse dendrogram into JSON
+#'
+#' @return JSON with parsed dendrogram 
+NULL
+pagoda2WebApp$methods(
     reducedDendrogramJSON = function() {
       h <- mainDendrogram$hc
       l <- unclass(h)[c("merge", "height", "order","labels")];
       l$clusterMemberCount <-  mainDendrogram$cluster.sizes;
       return(toJSON(l));
-    },
-    
-    #' Parse mainDendrogram$cellorder into JSON
-    #'
-    #' @return JSON with parsed cell order from mainDendrogram$cellorder
+    }
+)
+ 
+#' @name pagoda2WebApp_cellOrderJSON
+#' @title pagoda2WebApp_cellOrderJSON
+#' @description Parse mainDendrogram$cellorder into JSON
+#'
+#' @return JSON with parsed cell order from mainDendrogram$cellorder
+NULL
+pagoda2WebApp$methods(
     cellOrderJSON = function() {
       toJSON(mainDendrogram$cellorder);
-    },
-    
-    #' Parse pathways from originalP2object$misc$pathwayOD$xv into JSON
-    #'
-    #' @return JSON with parsed cell order from mainDendrogram$cellorder   
+    }
+)
+
+#' @name pagoda2WebApp_availableAspectsJSON
+#' @title pagoda2WebApp_availableAspectsJSON
+#' @description Parse pathways from originalP2object$misc$pathwayOD$xv into JSON
+#'
+#' @return JSON with parsed cell order from mainDendrogram$cellorder  
+NULL 
+pagoda2WebApp$methods(
     availableAspectsJSON = function() {
       toJSON(rownames(originalP2object$misc$pathwayOD$xv));
-    },
-    
-    #' Parse cellmetadata into JSON
-    #'
-    #' @return JSON with parsed cellmetadata  
+    }
+)
+ 
+#' @name pagoda2WebApp_cellmetadataJSON
+#' @title pagoda2WebApp_cellmetadataJSON
+#' @description Parse cellmetadata into JSON
+#'
+#' @return JSON with parsed cellmetadata  
+NULL
+pagoda2WebApp$methods(
     cellmetadataJSON = function() {
       toJSON(cellmetadata);
-    },
-    
-    #' Parse originalP2object$misc$varinfo[,c("m","qv")] into JSON
-    #'
-    #' @return JSON with parsed information from genename, dispersion, mean gene expression   
+    }
+)
+ 
+#' @name pagoda2WebApp_geneInformationJSON
+#' @title pagoda2WebApp_geneInformationJSON
+#' @description Parse originalP2object$misc$varinfo[,c("m","qv")] into JSON
+#'
+#' @return JSON with parsed information from genename, dispersion, mean gene expression   
+NULL
+pagoda2WebApp$methods(
     geneInformationJSON = function() {
       dataset <- originalP2object$misc$varinfo[,c("m","qv")];
       dataset$name <- rownames(dataset);
@@ -1101,19 +1182,31 @@ pagoda2WebApp <- setRefClass(
       retd <- unname(retd);
       
       toJSON(retd);
-    },
-    
-    #' Generate a JSON list representation of the gene kNN network
-    #'
-    #' @param graph Input graph
-    #' @return JSON with gene kNN network
+    }
+)
+ 
+
+#' @name pagoda2WebApp_generateGeneKnnJSON
+#' @title pagoda2WebApp_generateGeneKnnJSON
+#' @description Generate a JSON list representation of the gene kNN network
+#'
+#' @param graph Input graph
+#' @return JSON with gene kNN network
+NULL
+pagoda2WebApp$methods(
     generateGeneKnnJSON = function(graph) {
         toJSON(split(originalP2object$genegraphs$graph$to, originalP2object$genegraphs$graph$from))
-    },
-    
-    #' Generate information about the embeddings we are exporting
-    #'
-    #' @return List with embeddings
+    }
+)
+
+
+#' @name pagoda2WebApp_generateEmbeddingStructure 
+#' @title pagoda2WebApp_generateEmbeddingStructure 
+#' @description Generate information about the embeddings we are exporting
+#'
+#' @return List with embeddings
+NULL
+pagoda2WebApp$methods(
     generateEmbeddingStructure = function() {
       resp <- list();
       i <- 0;
@@ -1127,6 +1220,4 @@ pagoda2WebApp <- setRefClass(
       }
       resp
     } ## generateEmbeddingStructure
-    
-  ) # methods list
-) # setRefClass
+)
