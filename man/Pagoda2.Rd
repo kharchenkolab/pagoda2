@@ -94,7 +94,7 @@ p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
 ## Call clusters based on KNN
 p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
 ## Generate embedding of the data
-p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30, alpha=1)
+p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30)
 ## Perform differential expression
 p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
 ## Perform differential expression
@@ -352,7 +352,7 @@ p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
 ## Call clusters based on kNN
 p2_object$getKnnClusters(method=infomap.community, type='PCA')
 ## Generate embedding of the data
-p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30, alpha=1)
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30)
 
 }
 \author{
@@ -821,7 +821,7 @@ p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
 ## Call clusters based on KNN
 p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
 ## Generate embedding of the data
-p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30, alpha=1)
+p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30)
 ## Perform differential expression
 p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
 ## Perform differential expression
@@ -1833,7 +1833,7 @@ p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
 ## Call clusters based on kNN
 p2_object$getKnnClusters(method=infomap.community, type='PCA')
 ## Generate embedding of the data
-p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30, alpha=1)
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30)
 
 }
 \if{html}{\out{</div>}}

@@ -107,7 +107,7 @@ r$getKnnClusters(method=infomap.community, type='PCA')
 Next we generate a 2 dimensional embedding of the data for visualization purposes with largeVis. LargeVis is much faster that the tSNE often used in single-cell analysis.
 ```{r}
 M <- 30
-r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M, alpha=1)
+r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M)
 ```
 
 and we plot the data:

@@ -63,5 +63,5 @@ URL: https://github.com/kharchenkolab/pagoda2
 BugReports: https://github.com/kharchenkolab/pagoda2/issues
 NeedsCompilation: yes
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
-Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Evan Biederstedt [cre, aut]
+Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Simon Steiger [ctb], Evan Biederstedt [cre, aut]
 Maintainer: Evan Biederstedt <evan.biederstedt@gmail.com>

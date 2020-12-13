@@ -213,7 +213,7 @@ Next we generate a 2 dimensional embedding of the data for visualization purpose
 
 ```r
 M <- 30
-r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M, alpha=1)
+r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M)
 ```
 
 ```
@@ -232,7 +232,7 @@ r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.siz
 Next we can generate and plot a tSNE embedding. This can take a while to run!
 
 ```r
-r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
+r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50, verbose=FALSE)
 r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 

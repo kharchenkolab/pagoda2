@@ -641,7 +641,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' ## Call clusters based on KNN
     #' p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
     #' ## Generate embedding of the data
-    #' p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30, alpha=1)
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30)
     #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
     #' ## Perform differential expression
@@ -2408,7 +2408,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' ## Call clusters based on kNN
     #' p2_object$getKnnClusters(method=infomap.community, type='PCA')
     #' ## Generate embedding of the data
-    #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30, alpha=1)
+    #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30)
     #' 
     #' @return embedding stored in self$embedding
     getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, verbose=TRUE,
