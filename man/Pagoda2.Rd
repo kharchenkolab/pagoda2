@@ -14,7 +14,7 @@ The class encompasses gene count matrices, providing methods for normalization, 
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -27,7 +27,7 @@ p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -42,7 +42,7 @@ p2_object$adjustVariance(plot=TRUE, gam.k=10)
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object   
@@ -59,7 +59,7 @@ p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -80,7 +80,7 @@ p2_object$getKnnClusters(method=infomap.community, type='counts')
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -98,7 +98,9 @@ p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=
 ## Perform differential expression
 p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
 ## Perform differential expression
-hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
+hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', 
+            clusterName='walktrap', z.threshold=3)
+
 
 
 ## ------------------------------------------------
@@ -107,7 +109,7 @@ hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -126,7 +128,7 @@ p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
  
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -148,7 +150,7 @@ p2_object$getDensityClusters(type='PCA')
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -174,7 +176,7 @@ p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -198,7 +200,7 @@ lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -216,7 +218,8 @@ p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, 
 ## Perform differential expression
 p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
 de <- p2_object$diffgenes$PCA[[1]][['2']]
-p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], 
+    groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
 
 
 ## ------------------------------------------------
@@ -226,7 +229,7 @@ p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PC
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -242,8 +245,9 @@ p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel
 ## Generate embedding of the data
 p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
 library(ggplot2)
-p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, 
-  title='clusters (UMAP)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50,
+     shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (UMAP)', 
+     plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 }
 
 
@@ -253,7 +257,7 @@ p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.clu
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -279,7 +283,7 @@ odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -295,7 +299,7 @@ p2_object$getNormalizedExpressionMatrix()
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -312,7 +316,7 @@ p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -338,7 +342,7 @@ p2_object$expandOdGenes(type='PCA')
 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -470,7 +474,7 @@ new 'Pagoda2' object
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -590,7 +594,7 @@ residual matrix with adjusted variance
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -662,7 +666,7 @@ kNN graph, stored in self$graphs
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object   
@@ -725,7 +729,7 @@ the community structure calculated from 'method'
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -807,7 +811,7 @@ hierarchical clustering
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -825,7 +829,9 @@ p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=
 ## Perform differential expression
 p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
 ## Perform differential expression
-hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
+hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', 
+            clusterName='walktrap', z.threshold=3)
+
 
 }
 \if{html}{\out{</div>}}
@@ -876,7 +882,7 @@ graph with gene similarity
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -940,7 +946,7 @@ density-based clusters
 \preformatted{ 
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1015,7 +1021,7 @@ List with each element of the list corresponding to a cell group in the provided
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1125,14 +1131,14 @@ Recalculate library sizes using robust regression within clusters
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+recalculated library sizes
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1216,13 +1222,13 @@ Plot heatmap for a given set of genes
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+plot of gene heatmap
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1240,7 +1246,8 @@ p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, 
 ## Perform differential expression
 p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
 de <- p2_object$diffgenes$PCA[[1]][['2']]
-p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], 
+    groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
 
 }
 \if{html}{\out{</div>}}
@@ -1295,7 +1302,7 @@ plot of the embedding
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1311,8 +1318,9 @@ p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel
 ## Generate embedding of the data
 p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
 library(ggplot2)
-p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, 
-  title='clusters (UMAP)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50,
+     shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (UMAP)', 
+     plot.theme=theme(plot.title = element_text(hjust = 0.5)))
 }
 
 }
@@ -1352,7 +1360,7 @@ vector of overdispersed genes
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1402,7 +1410,7 @@ cell by gene matrix
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1478,7 +1486,7 @@ Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1565,7 +1573,7 @@ List of overdispersed genes
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
@@ -1594,7 +1602,8 @@ p2_object$expandOdGenes(type='PCA')
 \if{html}{\out{<a id="method-localPcaKnn"></a>}}
 \if{latex}{\out{\hypertarget{method-localPcaKnn}{}}}
 \subsection{Method \code{localPcaKnn()}}{
-localPcaKnn description
+localPcaKnn description here
+More details here
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$localPcaKnn(
   nPcs = 5,
@@ -1672,14 +1681,15 @@ localPcaKnn description
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+localPcaKnn return here
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-testPathwayOverdispersion"></a>}}
 \if{latex}{\out{\hypertarget{method-testPathwayOverdispersion}{}}}
 \subsection{Method \code{testPathwayOverdispersion()}}{
-Test pathway overdispersion. Note: this is a compressed version of the PAGODA1 approach.
+Test pathway overdispersion. 
+Note: this is a compressed version of the PAGODA1 approach.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$testPathwayOverdispersion(
   setenv,
@@ -1748,7 +1758,7 @@ Test pathway overdispersion. Note: this is a compressed version of the PAGODA1 a
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+pathway output
 }
 }
 \if{html}{\out{<hr>}}
@@ -1819,7 +1829,7 @@ embedding stored in self$embedding
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
-## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 

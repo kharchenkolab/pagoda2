@@ -266,9 +266,7 @@ additionalMetadata$walktrap <- p2.metadata.from.factor(r$clusters$PCA[['walktrap
 
 We are now ready to build our app.
 ```{r}
-p2web <-
-  make.p2.app(
-    r,
+p2web <- make.p2.app(r, 
     dendrogramCellGroups = r$clusters$PCA$community,
     additionalMetadata = additionalMetadata,
     geneSets = genesets,

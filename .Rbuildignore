@@ -6,3 +6,5 @@ CHANGELOG.md
 ^docker$
 ^doc$
 ^Meta$
+^vignettes\*.md$
+^vignettes\figure$

@@ -56,9 +56,10 @@ pagoda2WebApp <- setRefClass(
                           innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
 
       ## Check that the object we are getting is what it should be
-      if (suppressWarnings(class(pagoda2obj) != "Pagoda2")) {
-        message("We have an error")
-        stop("ERROR: The provided object is not a pagoda2 object")
+      ## should be both `"Pagoda2" "R6"`
+      '%ni%' <- Negate('%in%')
+      if (all(class(pagoda2obj) %ni% "Pagoda2")) {   
+        stop("The provided object 'pagoda2obj' is not a pagoda2 object")
       }
       
       ## Keep the original pagoda 2 object
@@ -66,7 +67,7 @@ pagoda2WebApp <- setRefClass(
       
       ## Check that the dendGroups we are getting is what it should be
       if (length(dendGroups) != nrow(pagoda2obj$counts)) {
-        stop("ERROR: The provided dendGroups has a different number of cells than the pagoda2 object")
+        stop("The provided dendGroups has a different number of cells than the pagoda2 object")
       }
       
       ## Keep the name for later (consistent) use

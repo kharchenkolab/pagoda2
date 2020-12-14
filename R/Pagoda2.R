@@ -77,7 +77,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -290,7 +291,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -420,7 +422,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object   
@@ -543,7 +546,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -627,7 +631,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -645,7 +650,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
     #' ## Perform differential expression
-    #' hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='walktrap', z.threshold=3)
+    #' hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', 
+    #'             clusterName='walktrap', z.threshold=3)
+    #' 
     #' 
     #' @return hierarchical clustering
     getHierarchicalDiffExpressionAspects = function(type='counts', groups=NULL, clusterName=NULL, method='ward.D',
@@ -800,7 +807,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -868,7 +876,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples  
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -928,7 +937,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1078,6 +1088,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param box boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)
     #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
     #' @param ... Additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
+    #' 
     #' @return heatmap of DE results
     plotDiffGeneHeatmap=function(type='counts', clusterType=NULL, groups=NULL, n.genes=100, 
       z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
@@ -1208,7 +1219,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1225,7 +1237,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
     #' }
     #'
-    #' @return
+    #' @return recalculated library sizes
     getRefinedLibSizes=function(clusterType=NULL, groups=NULL, type='counts', n.cores=self$n.cores) {
 
       if (!requireNamespace("robustbase", quietly = TRUE)) {
@@ -1297,7 +1309,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1315,9 +1328,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' ## Perform differential expression
     #' p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
     #' de <- p2_object$diffgenes$PCA[[1]][['2']]
-    #' p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+    #' p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], 
+    #'     groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
     #' 
-    #' @return
+    #' @return plot of gene heatmap
     plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, 
       gradient.range.quantile=0.95, cluster.genes=FALSE, inner.clustering=FALSE, gradientPalette=NULL, 
       v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(self$counts)/1024)), ... ) {
@@ -1443,7 +1457,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1459,8 +1474,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' ## Generate embedding of the data
     #' p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
     #' library(ggplot2)
-    #' p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=1, alpha=0.1, 
-    #'   title='clusters (UMAP)', plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+    #' p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50,
+    #'      shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (UMAP)', 
+    #'      plot.theme=theme(plot.title = element_text(hjust = 0.5)))
     #' }
     #' 
     #' @return plot of the embedding
@@ -1529,7 +1545,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1571,7 +1588,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1608,7 +1626,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1723,7 +1742,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
@@ -1861,7 +1881,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     },
 
 
-    #' @description localPcaKnn description 
+    #' @description localPcaKnn description here
+    #' More details here
     #' 
     #' @param nPcs integer (default=5)
     #' @param k integer (default=30)
@@ -1880,7 +1901,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param perplexity integer (default=k)
     #' @param return.pca boolean (default=FALSE)
     #' @param skip.pca boolean (default=FALSE)
-    #' @return 
+    #'
+    #' @return localPcaKnn return here
     localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL,
       k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, 
       n.odgenes=NULL, gam.k=10, verbose=FALSE, n.cores=self$n.cores, min.odgenes=5,
@@ -2140,7 +2162,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     ## env - pathway to gene environment
 
-    #' @description Test pathway overdispersion. Note: this is a compressed version of the PAGODA1 approach.
+    #' @description Test pathway overdispersion. 
+    #' Note: this is a compressed version of the PAGODA1 approach.
     #' 
     #' @param setenv Specific environment for pathway analysis
     #' @param max.pathway.size numeric (default=1e3)
@@ -2158,7 +2181,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param top.aspects (default=Inf)
     #' @param recalculate.pca boolean (default=FALSE)
     #' @param save.pca boolean (default=TRUE)
-    #' @return
+    #'
+    #' @return pathway output
     testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, 
       n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL, adjusted.pvalues=TRUE,
       z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE, name='pathwayPCA',
@@ -2394,7 +2418,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
-    #' ## Perform QC, i.e. filter any cells that don't fit the expected detected gene vs molecule count relationship
+    #' ## Perform QC, i.e. filter any cells that
+    #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 

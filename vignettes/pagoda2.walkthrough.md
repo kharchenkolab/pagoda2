@@ -467,8 +467,7 @@ additionalMetadata$walktrap <- p2.metadata.from.factor(r$clusters$PCA[['walktrap
 We are now ready to build our app.
 
 ```r
-p2web <-
-  make.p2.app(
+p2web <- make.p2.app(
     r,
     dendrogramCellGroups = r$clusters$PCA$community,
     additionalMetadata = additionalMetadata,
@@ -478,10 +477,6 @@ p2web <-
   )
 ```
 
-```
-## Warning in if (class(pagoda2obj) != "Pagoda2") {: the condition has length > 1
-## and only the first element will be used
-```
 
 We can view this app directly from our R session
 
