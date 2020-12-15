@@ -117,7 +117,7 @@ First we will generate a pagoda object that will contain all our results. Our in
 
 ```r
 rownames(counts) <- make.unique(rownames(counts))
-r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
+r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=1)
 ```
 
 ```
@@ -434,7 +434,7 @@ appmetadata <- list(apptitle = 'Demo_App')
 We also want to update the original pagoda2 object to contain a KNN graph of genes. We will need this to enable the 'find similar gene' feature of our webapp. This takes a moment to complete.
 
 ```r
-r$makeGeneKnnGraph(n.cores = 2)
+r$makeGeneKnnGraph(n.cores = 1)
 ```
 
 ```
