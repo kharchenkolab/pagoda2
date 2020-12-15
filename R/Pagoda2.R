@@ -6,10 +6,14 @@
 #' @import igraph
 #' @import sccore
 #' @import R6
+#' @import RMTstat 
 #' @importFrom irlba irlba
 #' @importFrom parallel mclapply
 #' @importFrom Rcpp sourceCpp
 #' @importFrom magrittr %>%
+#' @importFrom mgcv gam
+#' @importFrom N2R Knn
+#' @importFrom Rtsne Rtsne
 NULL
 
 
