@@ -10,6 +10,7 @@ LazyData: true
 biocViews:
 Imports:
     base64enc, 
+    data.table,
     dendsort, 
     fastcluster,
     graphics,
