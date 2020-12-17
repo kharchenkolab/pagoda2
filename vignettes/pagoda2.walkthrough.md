@@ -1,8 +1,8 @@
 # Pagoda2 Walkthrough
 
-# Introduction
+# Overview
 
-This walkthrough will guide you over the analysis of a single-cell RNA-seq sample with pagoda. We will start with loading and quality controlling the dataset. Then we will process the dataset with pagoda2 and finally generate an interactive web application for interactive exploration of the dataset.
+This walkthrough will guide you through the analysis of single-cell RNA-seq with pagodaw. We will begin with loading the dataset and performing QC. Then we will process the dataset with pagoda2 and finally generate an interactive web application for interactive exploration of the dataset.
 
 # Analysis
 
