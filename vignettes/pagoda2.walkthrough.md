@@ -16,9 +16,9 @@ library(dplyr)
 library(ggplot2)
 ```
 
-## Part 1: Loading the QC'ing the dataset
+## Part 1: Loading and QC'ing the dataset
 
-For the purposes of this exercise we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
+For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command loads the data as a sparse matrix and checks its size:
 
 ```r
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
@@ -110,14 +110,14 @@ dim(counts)
 
 
 ## Part 2: Analysing data with Pagoda2
-We see that we now have 12k genes and 2998 cells. We are now ready to analyse our data with Pagoda2. Keep in mind that all of the following steps can be done with just two functions automatically but for the purposes of this coarse we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
+We see that we now have 12k genes and 2998 cells. We are now ready to analyse our data with Pagoda2. Keep in mind that all of the following steps can be done with just two functions automatically but for the purposes of this tutorial we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
 
 First we will generate a pagoda object that will contain all our results. Our input matrix contains duplicated gene names (usually originating from different transcripts in the counting process). The easier way to resolve this problem is by making the gene names unique:
 
 
 ```r
 rownames(counts) <- make.unique(rownames(counts))
-r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=1)
+r <- Pagoda2$new(counts, log.scale=TRUE, n.cores=1)
 ```
 
 ```
@@ -335,7 +335,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)
 
-At this point we can perform pathway overdispersion analysis (in the same wy we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it take too long!). Overdispersion analysis usually takes too long with the latest datasets composed of 1000's of cells, for this reason we prefer hierarchical differential expression. 
+At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it takes too long!). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells, for this reason we prefer hierarchical differential expression. 
 
 We will need the output of the first of the following two blocks for our web app generation:
 
@@ -568,8 +568,8 @@ You can make cell selection file from a web selection object generated in R usin
 this file over email to unambiguously communicate cell subsets.
 
 In R it is often easier to work with cell selections in the form of factors. To convert a selection to a factor you can use the 
-factorFromP2Selection() function. This will returned a named factor of the membership of each cell in selections. However in order
-to do this you will need to ensure that every cell belong only to one selection. You can check if any cells are in multiple clusters
+factorFromP2Selection() function. This will returned a named factor of the membership of each cell in selections. However, in order
+to do this, you will need to ensure that every cell belong only to one selection. You can check if any cells are in multiple clusters
 and clean up your selection object using the functions: calcMulticlassified(), removeSelectionOverlaps(), plotSelectionOverlaps() and
 plotMulticlassified(). 
 
