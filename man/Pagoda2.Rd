@@ -18,7 +18,7 @@ cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
-p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores=1) 
+p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 
 
 ## ------------------------------------------------
@@ -478,7 +478,7 @@ cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate pagoda2 object 
-p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores=1) 
+p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 
 }
 \if{html}{\out{</div>}}
@@ -1451,7 +1451,7 @@ Calculate PCA reduction of the data
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{nPcs}}{Number of principal components (default=20)}
+\item{\code{nPcs}}{Number of principal components (PCs) (default=20)}
 
 \item{\code{type}}{Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')}
 
@@ -1506,7 +1506,7 @@ p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
 \if{html}{\out{<a id="method-expandOdGenes"></a>}}
 \if{latex}{\out{\hypertarget{method-expandOdGenes}{}}}
 \subsection{Method \code{expandOdGenes()}}{
-Reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
+Reset overdispersed genes 'odgenes' to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
     and a set of recursively determined odgenes based on a given group (or a cluster info)
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$expandOdGenes(
@@ -1524,7 +1524,6 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
   n.cores = self$n.cores,
   min.odgenes = 10,
   max.odgenes = Inf,
-  take.top.odgenes = TRUE,
   recursive = TRUE
 )}\if{html}{\out{</div>}}
 }
@@ -1542,11 +1541,11 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 
 \item{\code{od.alpha}}{numeric The Type I error probability or the significance level for calculating overdispersed genes (default=1e-1). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.}
 
-\item{\code{use.odgenes}}{boolean (default=FALSE)}
+\item{\code{use.odgenes}}{boolean Whether pre-calculated set of overdispersed genes should be used (default=FALSE)}
 
 \item{\code{n.odgenes}}{integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.}
 
-\item{\code{odgenes}}{(default=NULL)}
+\item{\code{odgenes}}{Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL) #' @param odgenes (default=NULL)}
 
 \item{\code{n.odgene.multiplier}}{numeric (default=1)}
 
@@ -1556,13 +1555,11 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
-\item{\code{min.odgenes}}{integer (default=10)}
+\item{\code{min.odgenes}}{integer Minimum number of overdispersed genes to use (default=10)}
 
-\item{\code{max.odgenes}}{integer (default=Inf)}
+\item{\code{max.odgenes}}{integer Maximum number of overdispersed genes to use (default=Inf)}
 
-\item{\code{take.top.odgenes}}{boolean (default=TRUE)}
-
-\item{\code{recursive}}{boolean (default=TRUE)}
+\item{\code{recursive}}{boolean Whether to determine groups for which variance normalization will be rerun (default=TRUE)}
 }
 \if{html}{\out{</div>}}
 }
@@ -1665,17 +1662,17 @@ local PCA implementation
 
 \item{\code{min.odgenes}}{integer (default=5)}
 
-\item{\code{take.top.odgenes}}{boolean (default=FALSE)}
+\item{\code{take.top.odgenes}}{boolean Take top overdispersed genes in decreasing order (default=FALSE)}
 
-\item{\code{recursive}}{boolean (default=FALSE)}
+\item{\code{recursive}}{boolean Whether to recursively determine groups for which variance normalization will be rerun (default=FALSE)}
 
-\item{\code{euclidean}}{boolean (default=FALSE)}
+\item{\code{euclidean}}{boolean Whether to applied euclidean-based distance similarity during variance normalization (default=FALSE)}
 
-\item{\code{perplexity}}{integer (default=k)}
+\item{\code{perplexity}}{integer Perplexity parameter within Rtsne::Rtsne() (default=k). Please see Rtsne for more details.}
 
-\item{\code{return.pca}}{boolean (default=FALSE)}
+\item{\code{return.pca}}{boolean Whether to return the PCs (default=FALSE)}
 
-\item{\code{skip.pca}}{boolean (default=FALSE)}
+\item{\code{skip.pca}}{boolean If TRUE and return.pca=TRUE, will return a list of scale factors, cells, and overdispersed genes, i.e. list(sf=sf, cells=cells, odgenes=odgenes) (default=FALSE). Otherwise, ignored.}
 }
 \if{html}{\out{</div>}}
 }

@@ -87,7 +87,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate pagoda2 object 
-    #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, , min.cells.per.gene=10, n.cores=1) 
+    #' p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' 
     #' @return new 'Pagoda2' object 
     initialize=function(x, modelType='plain', ## batchNorm='glm',
@@ -1614,7 +1614,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate PCA reduction of the data
     #' 
-    #' @param nPcs Number of principal components (default=20)
+    #' @param nPcs Number of principal components (PCs) (default=20)
     #' @param type Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')
     #' @param name Name for the PCA reduction to be created (default='PCA')
     #' @param use.odgenes boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)
@@ -1727,19 +1727,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(pcas)
     },
 
-    #' @description Reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
+    #' @description Reset overdispersed genes 'odgenes' to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
     #'     and a set of recursively determined odgenes based on a given group (or a cluster info)
     #' 
     #' @param min.group.size integer Number of minimum cells for filtering out group size (default=30)
     #' @param od.alpha numeric The Type I error probability or the significance level for calculating overdispersed genes (default=1e-1). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
-    #' @param use.odgenes boolean (default=FALSE)
-    #' @param odgenes (default=NULL)
+    #' @param use.odgenes boolean Whether pre-calculated set of overdispersed genes should be used (default=FALSE)
+    #' @param odgenes Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL) #' @param odgenes (default=NULL)
     #' @param n.odgene.multiplier numeric (default=1)
     #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.
-    #' @param min.odgenes integer (default=10)
-    #' @param max.odgenes integer (default=Inf)
-    #' @param take.top.odgenes boolean (default=TRUE)
-    #' @param recursive boolean (default=TRUE)
+    #' @param min.odgenes integer Minimum number of overdispersed genes to use (default=10)
+    #' @param max.odgenes integer Maximum number of overdispersed genes to use (default=Inf)
+    #' @param recursive boolean Whether to determine groups for which variance normalization will be rerun (default=TRUE)
     #' @examples
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
@@ -1766,7 +1765,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @return List of overdispersed genes
     expandOdGenes=function(type='counts', clusterType=NULL, groups=NULL , min.group.size=30, od.alpha=1e-1, 
       use.odgenes=FALSE, n.odgenes=NULL, odgenes=NULL, n.odgene.multiplier=1, gam.k=10,verbose=FALSE,n.cores=self$n.cores,
-      min.odgenes=10,max.odgenes=Inf,take.top.odgenes=TRUE, recursive=TRUE) {
+      min.odgenes=10,max.odgenes=Inf,recursive=TRUE) {
       # determine groups
       if (is.null(groups)) {
         # look up the clustering based on a specified type
@@ -1819,7 +1818,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         return(odgenes)
       }
 
-      # determine groups for which variance normalization will be reran
+      # determine groups for which variance normalization will be rerun
       if (recursive) {
         if (verbose) message("recursive group enumeration ...")
         # derive cluster hierarchy
@@ -1894,12 +1893,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param od.alpha numeric Significance level for calculating overdispersed genes (default=1e-1). P-values will be filtered by <log(od.alpha).
     #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.
     #' @param min.odgenes integer (default=5)
-    #' @param take.top.odgenes boolean (default=FALSE)
-    #' @param recursive boolean (default=FALSE)
-    #' @param euclidean boolean (default=FALSE)
-    #' @param perplexity integer (default=k)
-    #' @param return.pca boolean (default=FALSE)
-    #' @param skip.pca boolean (default=FALSE)
+    #' @param take.top.odgenes boolean Take top overdispersed genes in decreasing order (default=FALSE)
+    #' @param recursive boolean Whether to recursively determine groups for which variance normalization will be rerun (default=FALSE)
+    #' @param euclidean boolean Whether to applied euclidean-based distance similarity during variance normalization (default=FALSE)
+    #' @param perplexity integer Perplexity parameter within Rtsne::Rtsne() (default=k). Please see Rtsne for more details.
+    #' @param return.pca boolean Whether to return the PCs (default=FALSE)
+    #' @param skip.pca boolean If TRUE and return.pca=TRUE, will return a list of scale factors, cells, and overdispersed genes, i.e. list(sf=sf, cells=cells, odgenes=odgenes) (default=FALSE). Otherwise, ignored.
     #'
     #' @return localPcaKnn return here
     localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL,
@@ -2035,7 +2034,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         return(list(pcs=pcs, sf=sf, df=df, cells=cells, pcas=pcas, odgenes=odgenes))
       },n.cores=n.cores)
       if (verbose) message(" done\n")
-      if (return.pca) return(gpcs)
+      if (return.pca){
+        return(gpcs)
+      }
 
       ivi <- unlist(lapply(gpcs,is.null))
       if (any(ivi)) {
