@@ -21,6 +21,7 @@ NULL
 #' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
 #' @param type string Data type (default='counts'). Currently only 'counts' supported.
 #' @param n.cores numeric Number of cores to use (default=1)
+#' @param n.odgenes integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.
 #' @param verbose boolean Whether to give verbose output (default=TRUE)
 #' @param lib.sizes character vector of library sizes (default=NULL)
 #' @param log.scale boolean If TRUE, scale counts by log() (default=TRUE)
@@ -1543,7 +1544,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Get overdispersed genes
     #' 
-    #' @param n.odgenes character vector Overdispersed genes to retrieve (default=NULL)
     #' @param alpha numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
     #' @param use.unadjusted.pvals boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).
     #' @examples 
@@ -1587,7 +1587,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Return variance-normalized matrix for specified genes or a number of OD genes
     #'
-    #' @param n.odgenes overdispersed genes to retrieve (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.
     #' @param genes vector of gene names to explicitly return (default=NULL)
     #' @examples 
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
@@ -1615,11 +1614,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate PCA reduction of the data
     #' 
-    #' @param nPcs Number of PCs (default=20)
+    #' @param nPcs Number of principal components (default=20)
     #' @param type Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')
     #' @param name Name for the PCA reduction to be created (default='PCA')
     #' @param use.odgenes boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)
-    #' @param n.odgenes Whether a certain number of top overdispersed genes should be used (default=NULL)
     #' @param odgenes Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL)
     #' @param center boolean Whether data should be centered prior to PCA (default=TRUE)
     #' @param cells optional subset of cells on which PCA should be run (default=NULL)
@@ -1732,10 +1730,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Reset odgenes to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
     #'     and a set of recursively determined odgenes based on a given group (or a cluster info)
     #' 
-    #' @param min.group.size integer (default=30)
-    #' @param od.alpha numeric (default=1e-1)
+    #' @param min.group.size integer Number of minimum cells for filtering out group size (default=30)
+    #' @param od.alpha numeric The Type I error probability or the significance level for calculating overdispersed genes (default=1e-1). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
     #' @param use.odgenes boolean (default=FALSE)
-    #' @param n.odgenes (default=NULL)
     #' @param odgenes (default=NULL)
     #' @param n.odgene.multiplier numeric (default=1)
     #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.
@@ -1885,18 +1882,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     },
 
 
-    #' @description localPcaKnn description here
-    #' More details here
+    #' @description local PCA implementation
     #' 
-    #' @param nPcs integer (default=5)
-    #' @param k integer (default=30)
-    #' @param b numeric (default=1)
-    #' @param a numeric (default=1)
+    #' @param nPcs integer Number of principal components (default=5)
+    #' @param k integer Number of components for kNN graph (default=30)
+    #' @param b numeric Constant within exp(-b*(ncid/cldsd)^2), used for calculating cell relevance per cluster (default=1)
+    #' @param a numeric Constant within (1-exp(-a*(dsq)/(p$pcs$trsd^2))) * (pk %o% pk) (default=1)
     #' @param min.group.size integer (default=30)
     #' @param name string (default='localPCA')
     #' @param baseReduction string (default='PCA')
-    #' @param od.alpha numeric (default=1e-1)
-    #' @param n.odgenes (default=NULL)
+    #' @param od.alpha numeric Significance level for calculating overdispersed genes (default=1e-1). P-values will be filtered by <log(od.alpha).
     #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.
     #' @param min.odgenes integer (default=5)
     #' @param take.top.odgenes boolean (default=FALSE)
@@ -1997,15 +1992,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         cells <- names(groups)[groups %in% group]
 
         # variance normalization
-        df <- self$adjustVariance(persist=FALSE,gam.k=gam.k,verbose=FALSE,cells=cells,n.cores=1)
+        df <- self$adjustVariance(persist=FALSE, gam.k=gam.k, verbose=FALSE, cells=cells, n.cores=1)
         if (!is.null(n.odgenes)) {
-          odgenes <- rownames(df)[order(df$lp,decreasing=FALSE)[1:n.odgenes]]
+          odgenes <- rownames(df)[order(df$lp, decreasing=FALSE)[1:n.odgenes]]
         } else {
           odgenes <- rownames(df)[!is.na(df$lpa) & df$lpa<log(od.alpha)]
         }
         if (length(odgenes)<min.odgenes) {
           if (take.top.odgenes) {
-            odgenes <- rownames(df)[order(df$lp,decreasing=FALSE)[1:min.odgenes]]
+            odgenes <- rownames(df)[order(df$lp, decreasing=FALSE)[1:min.odgenes]]
           } else {
             return(NULL)
           }
@@ -2013,7 +2008,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         sf <- df$gsf[match(odgenes,rownames(df))]
 
         if (return.pca && skip.pca) {
-          return(list(sf=sf,cells=cells,odgenes=odgenes))
+          return(list(sf=sf, cells=cells, odgenes=odgenes))
         }
 
 

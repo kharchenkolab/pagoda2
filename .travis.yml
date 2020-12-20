@@ -2,7 +2,7 @@ language: r
 
 
 before_install:
-  - sudo apt-get -y install libglu1-mesa-dev
+  - sudo apt-get -y install libglu1-mesa-dev libharfbuzz-dev libfribidi-dev 
 
 ## minimal travis config
 ## https://docs.travis-ci.com/user/languages/r/

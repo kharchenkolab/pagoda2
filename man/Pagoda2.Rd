@@ -1345,7 +1345,7 @@ Get overdispersed genes
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{n.odgenes}}{character vector Overdispersed genes to retrieve (default=NULL)}
+\item{\code{n.odgenes}}{integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.}
 
 \item{\code{alpha}}{numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.}
 
@@ -1399,7 +1399,7 @@ Return variance-normalized matrix for specified genes or a number of OD genes
 \describe{
 \item{\code{genes}}{vector of gene names to explicitly return (default=NULL)}
 
-\item{\code{n.odgenes}}{overdispersed genes to retrieve (default=NULL). If NULL, all significant overdispersed genes are used. If 'genes' is not NULL, this parameter is ignored.}
+\item{\code{n.odgenes}}{integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.}
 }
 \if{html}{\out{</div>}}
 }
@@ -1451,7 +1451,7 @@ Calculate PCA reduction of the data
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{nPcs}}{Number of PCs (default=20)}
+\item{\code{nPcs}}{Number of principal components (default=20)}
 
 \item{\code{type}}{Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')}
 
@@ -1459,7 +1459,7 @@ Calculate PCA reduction of the data
 
 \item{\code{use.odgenes}}{boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)}
 
-\item{\code{n.odgenes}}{Whether a certain number of top overdispersed genes should be used (default=NULL)}
+\item{\code{n.odgenes}}{integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.}
 
 \item{\code{odgenes}}{Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL)}
 
@@ -1538,13 +1538,13 @@ Reset odgenes to be a superset of the standard odgene selection (guided by n.odg
 
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
-\item{\code{min.group.size}}{integer (default=30)}
+\item{\code{min.group.size}}{integer Number of minimum cells for filtering out group size (default=30)}
 
-\item{\code{od.alpha}}{numeric (default=1e-1)}
+\item{\code{od.alpha}}{numeric The Type I error probability or the significance level for calculating overdispersed genes (default=1e-1). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.}
 
 \item{\code{use.odgenes}}{boolean (default=FALSE)}
 
-\item{\code{n.odgenes}}{(default=NULL)}
+\item{\code{n.odgenes}}{integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.}
 
 \item{\code{odgenes}}{(default=NULL)}
 
@@ -1602,8 +1602,7 @@ p2_object$expandOdGenes(type='PCA')
 \if{html}{\out{<a id="method-localPcaKnn"></a>}}
 \if{latex}{\out{\hypertarget{method-localPcaKnn}{}}}
 \subsection{Method \code{localPcaKnn()}}{
-localPcaKnn description here
-More details here
+local PCA implementation
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$localPcaKnn(
   nPcs = 5,
@@ -1634,7 +1633,7 @@ More details here
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{nPcs}}{integer (default=5)}
+\item{\code{nPcs}}{integer Number of principal components (default=5)}
 
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
@@ -1642,11 +1641,11 @@ More details here
 
 \item{\code{groups}}{factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.}
 
-\item{\code{k}}{integer (default=30)}
+\item{\code{k}}{integer Number of components for kNN graph (default=30)}
 
-\item{\code{b}}{numeric (default=1)}
+\item{\code{b}}{numeric Constant within exp(-b*(ncid/cldsd)^2), used for calculating cell relevance per cluster (default=1)}
 
-\item{\code{a}}{numeric (default=1)}
+\item{\code{a}}{numeric Constant within (1-exp(-a*(dsq)/(p$pcs$trsd^2))) * (pk %o% pk) (default=1)}
 
 \item{\code{min.group.size}}{integer (default=30)}
 
@@ -1654,9 +1653,9 @@ More details here
 
 \item{\code{baseReduction}}{string (default='PCA')}
 
-\item{\code{od.alpha}}{numeric (default=1e-1)}
+\item{\code{od.alpha}}{numeric Significance level for calculating overdispersed genes (default=1e-1). P-values will be filtered by <log(od.alpha).}
 
-\item{\code{n.odgenes}}{(default=NULL)}
+\item{\code{n.odgenes}}{integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.}
 
 \item{\code{gam.k}}{integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.}
 
