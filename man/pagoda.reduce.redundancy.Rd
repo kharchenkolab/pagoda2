@@ -19,7 +19,7 @@ pagoda.reduce.redundancy(
 )
 }
 \arguments{
-\item{tamr}{output of pagoda.reduce.loading.redundancy()}
+\item{tamr}{Combined pathways that show similar expression patterns, output of pagoda.reduce.loading.redundancy()}
 
 \item{distance.threshold}{numeric Similarity threshold for grouping interdependent aspects (default=0.2)}
 
@@ -40,7 +40,7 @@ pagoda.reduce.redundancy(
 \item{...}{additional arguments are passed to the pagoda.view.aspects() method during plotting}
 }
 \value{
-a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
+List structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 }
 \description{
 Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)

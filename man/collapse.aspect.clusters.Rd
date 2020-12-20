@@ -2,21 +2,21 @@
 % Please edit documentation in R/p1_liftover.R
 \name{collapse.aspect.clusters}
 \alias{collapse.aspect.clusters}
-\title{Collapse aspect clusters}
+\title{Collapse aspect patterns into clusters}
 \usage{
 collapse.aspect.clusters(d, dw, ct, scale = TRUE, pick.top = FALSE)
 }
 \arguments{
-\item{d}{something}
+\item{d}{matrix of normalized aspect patterns (rows: significant aspects, columns: cells), normally the output $xv in 'tamr', the combined pathways that show similar expression patterns}
 
-\item{dw}{something}
+\item{dw}{corresponding weight matrix to parameter 'd'}
 
-\item{ct}{something}
+\item{ct}{clusters, either output of fastcluster::hclust() or stats::hclust()}
 
-\item{scale}{boolean Whether to scale... (default=TRUE)}
+\item{scale}{boolean Whether to scale aspects (default=TRUE)}
 
-\item{pick.top}{boolean Whether to pick max... (default=FALSE)}
+\item{pick.top}{boolean Whether to pick top aspects (default=FALSE)}
 }
 \description{
-Collapse aspect clusters
+Collapse aspect patterns into clusters
 }

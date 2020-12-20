@@ -7,11 +7,10 @@
 pathway.pc.correlation.distance(pcc, xv, n.cores = 1, target.ndf = NULL)
 }
 \arguments{
-\item{pcc}{weighted PC magnitudes 
-e.g. scde::pagoda.pathway.wPCA() gives the weighted PC magnitudes for each gene provided
+\item{pcc}{weighted PC magnitudes e.g. scde::pagoda.pathway.wPCA() gives the weighted PC magnitudes for each gene provided; 
 e.g. scde::pagoda.gene.clusters() gives the weighted PC magnitudes for de novo gene sets identified by clustering on expression}
 
-\item{xv}{a matrix of normalized aspect patterns (rows- significant aspects, columns- cells}
+\item{xv}{a matrix of normalized aspect patterns (rows: significant aspects, columns: cells)}
 
 \item{n.cores}{numeric Number of cores to use (default=1)}
 

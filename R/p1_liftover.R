@@ -2,13 +2,25 @@
 ## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 
 #' Collapse aspects driven by the same combinations of genes.
+#' (Aspects are some pattern across cells, for instance sequencing depth, or PC corresponding to an undesired process such as ribosomal pathway variation.)
 #' Examines PC loading vectors underlying the identified aspects and clusters aspects based
 #' on a product of loading and score correlation (raised to corr.power). Clusters of aspects
 #' driven by the same genes are determined based on the distance.threshold and collapsed.
 #'
-#' @param tam output of pagoda.top.aspects()
-#' @param pwpca output of pagoda.pathway.wPCA()
-#' @param clpca output of pagoda.gene.clusters() (optional) (default=NULL)
+#' @param tam output of pagoda.top.aspects(), i.e. a list structure containing the following items:
+    #' xv: a matrix of normalized aspect patterns (rows: significant aspects, columns: cells)
+    #' xvw: corresponding weight matrix 
+    #' gw: set of genes driving the significant aspects 
+    #' df: text table with the significance testing results 
+#' @param pwpca output of pagoda.pathway.wPCA(), i.e. a list of weighted PCA info for each valid gene set
+#' @param clpca output of pagoda.gene.clusters() (optional) (default=NULL). The output of pagoda.gene.clusters() is 
+    #' a list structure containing the following fields:
+    #' clusters: alist of genes in each cluster values
+    #' xf: extreme value distribution fit for the standardized lambda1 of a randomly generated pattern
+    #' tci: index of a top cluster in each random iteration
+    #' cl.goc: weighted PCA info for each real gene cluster
+    #' varm: standardized lambda1 values for each randomly generated matrix cluster
+    #' clvlm: a linear model describing dependency of the cluster lambda1 on a Tracy-Widom lambda1 expectation
 #' @param plot boolean Whether to plot the resulting clustering (default=FALSE)
 #' @param cluster.method string One of the standard clustering methods to be used (default="complete") Note: fastcluster::hclust is used if available or stats::hclust)
 #' @param distance.threshold numeric Similarity threshold for grouping interdependent aspects (default=0.01)
@@ -76,13 +88,13 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 
 ## xvl <- collapse.aspect.clusters(tamr$xv, tamr$xvw, ct, pick.top = FALSE, scale = TRUE)
 
-#' Collapse aspect clusters
+#' Collapse aspect patterns into clusters
 #'
-#' @param d something
-#' @param dw something
-#' @param ct something
-#' @param scale boolean Whether to scale... (default=TRUE)
-#' @param pick.top boolean Whether to pick max... (default=FALSE)
+#' @param d matrix of normalized aspect patterns (rows: significant aspects, columns: cells), normally the output $xv in 'tamr', the combined pathways that show similar expression patterns
+#' @param dw corresponding weight matrix to parameter 'd'
+#' @param ct clusters, either output of fastcluster::hclust() or stats::hclust()
+#' @param scale boolean Whether to scale aspects (default=TRUE)
+#' @param pick.top boolean Whether to pick top aspects (default=FALSE)
 #' @export 
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   if (!requireNamespace("pcaMethods", quietly = TRUE)) {
@@ -127,7 +139,7 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #' Collapse aspects driven by similar patterns (i.e. separate the same sets of cells)
 #' Examines PC loading vectors underlying the identified aspects and clusters aspects based on score correlation. Clusters of aspects driven by the same patterns are determined based on the distance.threshold.
 #'
-#' @param tamr output of pagoda.reduce.loading.redundancy()
+#' @param tamr Combined pathways that show similar expression patterns, output of pagoda.reduce.loading.redundancy()
 #' @param distance.threshold numeric Similarity threshold for grouping interdependent aspects (default=0.2)
 #' @param cluster.method character One of the standard clustering methods to be used (default="complete") (Note: fastcluster::hclust is used if available or stats::hclust)
 #' @param distance distance matrix (default=NULL)
@@ -137,7 +149,7 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #' @param trim numeric Winsorization trim to use prior to determining the top aspects (default=0)
 #' @param abs boolean Whether to use absolute correlation (default=FALSE)
 #' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
-#' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
+#' @return List structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 #'
 #' @examples
 #' \donttest{
@@ -216,8 +228,8 @@ pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.metho
 
 #' Sets the ncol(mat)*trim top outliers in each row to the next lowest value same for the lowest outliers
 #'
-#' @param mat matrix
-#' @param trim fraction of outliers (on each side) that should be Winsorized, or (if the value is  >= 1) the number of outliers to be trimmed on each side
+#' @param mat Numeric matrix
+#' @param trim numeric Fraction of outliers (on each side) that should be Winsorized, or (if the value is  >= 1) the number of outliers to be trimmed on each side
 #' @return Winsorized matrix
 #'
 #' @examples
@@ -230,7 +242,9 @@ pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.metho
 #'
 #' @export
 winsorize.matrix <- function(mat, trim) {
-  if(trim  >  0.5) { trim <- trim/ncol(mat)  }
+  if (trim  >  0.5) { 
+    trim <- trim/ncol(mat)  
+  }
   #wm <- .Call("winsorizeMatrix", mat, trim, PACKAGE = "pagoda2")
   wm <- winsorizeMatrix(mat, trim)
   rownames(wm) <- rownames(mat)
@@ -240,10 +254,9 @@ winsorize.matrix <- function(mat, trim) {
 
 #' Calculate correlation distance between PC magnitudes given a number of target dimensions
 #'
-#' @param pcc weighted PC magnitudes 
-#' e.g. scde::pagoda.pathway.wPCA() gives the weighted PC magnitudes for each gene provided
-#' e.g. scde::pagoda.gene.clusters() gives the weighted PC magnitudes for de novo gene sets identified by clustering on expression
-#' @param xv a matrix of normalized aspect patterns (rows- significant aspects, columns- cells
+#' @param pcc weighted PC magnitudes e.g. scde::pagoda.pathway.wPCA() gives the weighted PC magnitudes for each gene provided; 
+    #' e.g. scde::pagoda.gene.clusters() gives the weighted PC magnitudes for de novo gene sets identified by clustering on expression
+#' @param xv a matrix of normalized aspect patterns (rows: significant aspects, columns: cells)
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @param target.ndf numeric Target dimensions (default=NULL)
 #' @export

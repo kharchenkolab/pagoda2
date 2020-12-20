@@ -3,6 +3,7 @@
 \name{pagoda.reduce.loading.redundancy}
 \alias{pagoda.reduce.loading.redundancy}
 \title{Collapse aspects driven by the same combinations of genes.
+(Aspects are some pattern across cells, for instance sequencing depth, or PC corresponding to an undesired process such as ribosomal pathway variation.)
 Examines PC loading vectors underlying the identified aspects and clusters aspects based
 on a product of loading and score correlation (raised to corr.power). Clusters of aspects
 driven by the same genes are determined based on the distance.threshold and collapsed.}
@@ -21,11 +22,22 @@ pagoda.reduce.loading.redundancy(
 )
 }
 \arguments{
-\item{tam}{output of pagoda.top.aspects()}
+\item{tam}{output of pagoda.top.aspects(), i.e. a list structure containing the following items:
+xv: a matrix of normalized aspect patterns (rows: significant aspects, columns: cells)
+xvw: corresponding weight matrix 
+gw: set of genes driving the significant aspects 
+df: text table with the significance testing results}
 
-\item{pwpca}{output of pagoda.pathway.wPCA()}
+\item{pwpca}{output of pagoda.pathway.wPCA(), i.e. a list of weighted PCA info for each valid gene set}
 
-\item{clpca}{output of pagoda.gene.clusters() (optional) (default=NULL)}
+\item{clpca}{output of pagoda.gene.clusters() (optional) (default=NULL). The output of pagoda.gene.clusters() is 
+a list structure containing the following fields:
+clusters: alist of genes in each cluster values
+xf: extreme value distribution fit for the standardized lambda1 of a randomly generated pattern
+tci: index of a top cluster in each random iteration
+cl.goc: weighted PCA info for each real gene cluster
+varm: standardized lambda1 values for each randomly generated matrix cluster
+clvlm: a linear model describing dependency of the cluster lambda1 on a Tracy-Widom lambda1 expectation}
 
 \item{plot}{boolean Whether to plot the resulting clustering (default=FALSE)}
 
@@ -46,6 +58,7 @@ a list structure analogous to that returned by pagoda.top.aspects(), but with ad
 }
 \description{
 Collapse aspects driven by the same combinations of genes.
+(Aspects are some pattern across cells, for instance sequencing depth, or PC corresponding to an undesired process such as ribosomal pathway variation.)
 Examines PC loading vectors underlying the identified aspects and clusters aspects based
 on a product of loading and score correlation (raised to corr.power). Clusters of aspects
 driven by the same genes are determined based on the distance.threshold and collapsed.
