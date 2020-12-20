@@ -57,6 +57,7 @@ Suggests:
     rgl, 
     rmarkdown, 
     robustbase, 
+    scde,
     testthat,
     uwot
 VignetteBuilder: knitr

@@ -415,7 +415,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @description Create k-nearest neighbor graph
     #' 
     #' @param k integer Number of k clusters for k-NN (default=30)
-    #' @param nrand numeric (default=1e3)
+    #' @param nrand numeric Number of randomizations i.e. the gene sets (of the same size) to be evaluated in parallel with each gene set (default=1e3)
     #' @param type string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.
     #' @param weight.type string 'cauchy', 'normal', 'constant', '1m' (default='1m')
     #' @param odgenes character vector Overdispersed genes to retrieve (default=NULL)
@@ -1887,12 +1887,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param k integer Number of components for kNN graph (default=30)
     #' @param b numeric Constant within exp(-b*(ncid/cldsd)^2), used for calculating cell relevance per cluster (default=1)
     #' @param a numeric Constant within (1-exp(-a*(dsq)/(p$pcs$trsd^2))) * (pk %o% pk) (default=1)
-    #' @param min.group.size integer (default=30)
-    #' @param name string (default='localPCA')
-    #' @param baseReduction string (default='PCA')
+    #' @param min.group.size integer Number of minimum cells for filtering out group size (default=30)
+    #' @param name string Title (default='localPCA')
     #' @param od.alpha numeric Significance level for calculating overdispersed genes (default=1e-1). P-values will be filtered by <log(od.alpha).
     #' @param gam.k integer The k used for the generalized additive model 'v ~ s(m, k =gam.k)' (default=10). If gam.k<2, linear regression is used 'lm(v ~ m)'.
-    #' @param min.odgenes integer (default=5)
+    #' @param min.odgenes integer Minimum number of overdispersed genes to use (default=5)
     #' @param take.top.odgenes boolean Take top overdispersed genes in decreasing order (default=FALSE)
     #' @param recursive boolean Whether to recursively determine groups for which variance normalization will be rerun (default=FALSE)
     #' @param euclidean boolean Whether to applied euclidean-based distance similarity during variance normalization (default=FALSE)
@@ -1902,7 +1901,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'
     #' @return localPcaKnn return here
     localPcaKnn=function(nPcs=5, type='counts', clusterType=NULL, groups=NULL,
-      k=30, b=1, a=1, min.group.size=30, name='localPCA', baseReduction='PCA', od.alpha=1e-1, 
+      k=30, b=1, a=1, min.group.size=30, name='localPCA', od.alpha=1e-1, 
       n.odgenes=NULL, gam.k=10, verbose=FALSE, n.cores=self$n.cores, min.odgenes=5,
       take.top.odgenes=FALSE, recursive=TRUE, euclidean=FALSE, perplexity=k,
       return.pca=FALSE, skip.pca=FALSE) {
@@ -2163,31 +2162,35 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     ## env - pathway to gene environment
 
     #' @description Test pathway overdispersion. 
-    #' Note: this is a compressed version of the PAGODA1 approach.
+    #' Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-dbmi.github.io/scde/>
     #' 
     #' @param setenv Specific environment for pathway analysis
-    #' @param max.pathway.size numeric (default=1e3)
-    #' @param min.pathway.size numeric (default=10)
-    #' @param n.randomizations integer (default=5)
-    #' @param score.alpha numeric (default=0.05)
-    #' @param cells character vector (default=NULL)
-    #' @param adjusted.pvalues boolean (default=TRUE)
-    #' @param z.score numeric (default=qnorm(0.05/2, lower.tail = FALSE))
-    #' @param use.oe.scale boolean (default=FALSE)
-    #' @param return.table boolean (default=FALSE)
-    #' @param name string (default='pathwayPCA')
-    #' @param correlation.distance.threshold numeric (default=0.2)
-    #' @param loading.distance.threshold numeric (default=0.2)
-    #' @param top.aspects (default=Inf)
-    #' @param recalculate.pca boolean (default=FALSE)
-    #' @param save.pca boolean (default=TRUE)
+    #' @param min.pathway.size integer Minimum number of observed genes that should be contained in a valid gene set (default=10)
+    #' @param max.pathway.size integer Maximum number of observed genes in a valid gene set (default=1e3)
+    #' @param n.randomizations numeric Number of random gene sets (of the same size) to be evaluated in parallel with each gene set (default=5). (This can be kept at 5 or 10, but should be increased to 50-100 if the significance of pathway overdispersion will be determined relative to random gene set models.)
+    #' @param score.alpha numeric Significance level of the confidence interval for determining upper/lower bounds (default=0.05)
+    #' @param cells character vector Specific cells to investigate (default=NULL)
+    #' @param adjusted.pvalues boolean Whether to use adjusted p-values (default=TRUE)
+    #' @param z.score numeric Z-score to be used as a cutoff for statistically significant patterns (default=qnorm(0.05/2, lower.tail = FALSE))
+    #' @param use.oe.scale boolean Whether the variance of the returned aspect patterns should be normalized using observed/expected value instead of the default chi-squared derived variance corresponding to overdispersion Z-score (default=FALSE)
+    #' @param return.table boolean Whether to return a text table with results (default=FALSE)
+    #' @param name string Title (default='pathwayPCA')
+    #' @param correlation.distance.threshold numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.redundancy() (default=0.2)
+    #' @param loading.distance.threshold numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.loading.redundancy() (default=0.2)
+    #' @param top.aspects Restrict output to the top N aspects of heterogeneity (default=Inf)
+    #' @param recalculate.pca boolean Whether to recalculate PCA (default=FALSE)
+    #' @param save.pca boolean Whether to save the PCA results (default=TRUE). If TRUE, caches them in self$misc[['pwpca']].
     #'
     #' @return pathway output
     testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, 
       n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL, adjusted.pvalues=TRUE,
       z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE, name='pathwayPCA',
       correlation.distance.threshold=0.2, loading.distance.threshold=0.01, top.aspects=Inf, recalculate.pca=FALSE, save.pca=TRUE) {
-      
+  
+      if (!requireNamespace("scde", quietly=TRUE)){
+        stop("You need to install package 'scde' to be able to use testPathwayOverdispersion().")
+      }
+
       nPcs <- 1
       if (type=='counts') {
         x <- self$counts
@@ -2376,14 +2379,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (verbose) {
         message("clustering aspects based on gene loading ... ",appendLF=FALSE)
       }
-      tam2 <- pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=FALSE,distance.threshold=loading.distance.threshold,n.cores=n.cores)
+      tam2 <- scde::pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=FALSE,distance.threshold=loading.distance.threshold,n.cores=n.cores)
       if (verbose) {
         message(nrow(tam2$xv)," aspects remaining")
       }
       if (verbose) {
         message("clustering aspects based on pattern similarity ... ",appendLF=FALSE)
       }
-      tam3 <- pagoda.reduce.redundancy(tam2,distance.threshold=correlation.distance.threshold,top=top.aspects)
+      tam3 <- scde::pagoda.reduce.redundancy(tam2, distance.threshold=correlation.distance.threshold,top=top.aspects)
       if (verbose) {
         message(nrow(tam3$xv)," aspects remaining\n")
       }
@@ -2403,15 +2406,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' 
     #' @param embeddingType string Type of embedding to construct (default='largeVis'). Possible values are: 'largeVis', 'tSNE', 'FR' (Fruchterman–Reingold), 'UMAP', 'UMAP_graph' 
     #' @param name string Name of the embedding (default=NULL). If NULL, the name = embeddingType.
-    #' @param dims integer (default=2)
+    #' @param dims integer Parameter 'dims' Matrix::sparseMatrix(); a non-negative, integer, dimensions vector of length 2 (default=2). See Matrix package documentation for more details.
     #' @param M numeric (largeVis) The number of negative edges to sample for each positive edge (default=5). Parameter only used if embeddingType is 'largeVis'.
     #' @param gamma numeric (largeVis) The strength of the force pushing non-neighbor nodes apart (default=7). Parameter only used if embeddingType is 'largeVis'.
-    #' @param perplexity numeric (default=50)
-    #' @param verbose boolean (default=TRUE)
+    #' @param perplexity numeric Parameter 'perplexity' within largeVis::buildWijMatrix() (default=50). Please see the largeVis documentation for more details.
+    #' @param verbose boolean Whether to give verbose output (default=TRUE)
     #' @param sgd_batches numeric The number of edges to process during SGD (default=NULL). Passed to projectKNNs(). Defaults to a value set based on the size of the dataset. If the parameter given is
     #'     between \code{0} and \code{1}, the default value will be multiplied by the parameter.
-    #' @param diffusion.steps numeric (default=0)
-    #' @param diffusion.power numeric (default=0.5)
+    #' @param diffusion.steps integer Iteration steps to use. If 0, no steps are run. (default=0)
+    #' @param diffusion.power numeric Factor to be used when calculating diffusion, (default=0.5)
     #' @param distance string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')
     #' @param n.sgd.cores numeric Number of cores to use (default=n.cores)
     #' @param ...  Additional parameters passed to embedding functions, Rtsne::Rtsne() if 'L2', uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'
@@ -2484,7 +2487,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (diffusion.steps>0) {
           Dinv <- Diagonal(nrow(wij),1/colSums(wij))
           W <- Dinv %*% wij 
-          W <- (1-diffusion.power)*Diagonal(nrow(wij)) + diffusion.power*W
+          W <- 
           #W <- (Diagonal(nrow(wij)) + W)/2
           #W <- (Diagonal(nrow(wij)) + sign(W)*(abs(W)^(diffusion.power)))/2
 

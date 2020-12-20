@@ -64,7 +64,7 @@ tp2c.view.pathways(
 
 \item{plot}{boolean Whether to plot (default=TRUE)}
 
-\item{trim}{numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts))}
+\item{trim}{numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a pagoda2 object.}
 
 \item{showPC}{boolean (default=TRUE)}
 

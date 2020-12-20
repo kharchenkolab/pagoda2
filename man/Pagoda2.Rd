@@ -635,7 +635,7 @@ Create k-nearest neighbor graph
 \describe{
 \item{\code{k}}{integer Number of k clusters for k-NN (default=30)}
 
-\item{\code{nrand}}{numeric (default=1e3)}
+\item{\code{nrand}}{numeric Number of randomizations i.e. the gene sets (of the same size) to be evaluated in parallel with each gene set (default=1e3)}
 
 \item{\code{type}}{string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.}
 
@@ -1611,7 +1611,6 @@ local PCA implementation
   a = 1,
   min.group.size = 30,
   name = "localPCA",
-  baseReduction = "PCA",
   od.alpha = 0.1,
   n.odgenes = NULL,
   gam.k = 10,
@@ -1644,11 +1643,9 @@ local PCA implementation
 
 \item{\code{a}}{numeric Constant within (1-exp(-a*(dsq)/(p$pcs$trsd^2))) * (pk %o% pk) (default=1)}
 
-\item{\code{min.group.size}}{integer (default=30)}
+\item{\code{min.group.size}}{integer Number of minimum cells for filtering out group size (default=30)}
 
-\item{\code{name}}{string (default='localPCA')}
-
-\item{\code{baseReduction}}{string (default='PCA')}
+\item{\code{name}}{string Title (default='localPCA')}
 
 \item{\code{od.alpha}}{numeric Significance level for calculating overdispersed genes (default=1e-1). P-values will be filtered by <log(od.alpha).}
 
@@ -1660,7 +1657,7 @@ local PCA implementation
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
-\item{\code{min.odgenes}}{integer (default=5)}
+\item{\code{min.odgenes}}{integer Minimum number of overdispersed genes to use (default=5)}
 
 \item{\code{take.top.odgenes}}{boolean Take top overdispersed genes in decreasing order (default=FALSE)}
 
@@ -1685,7 +1682,7 @@ localPcaKnn return here
 \if{latex}{\out{\hypertarget{method-testPathwayOverdispersion}{}}}
 \subsection{Method \code{testPathwayOverdispersion()}}{
 Test pathway overdispersion. 
-Note: this is a compressed version of the PAGODA1 approach.
+Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-dbmi.github.io/scde/>
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$testPathwayOverdispersion(
   setenv,
@@ -1717,39 +1714,39 @@ Note: this is a compressed version of the PAGODA1 approach.
 
 \item{\code{type}}{string Data type (default='counts'). Currently only 'counts' supported.}
 
-\item{\code{max.pathway.size}}{numeric (default=1e3)}
+\item{\code{max.pathway.size}}{integer Maximum number of observed genes in a valid gene set (default=1e3)}
 
-\item{\code{min.pathway.size}}{numeric (default=10)}
+\item{\code{min.pathway.size}}{integer Minimum number of observed genes that should be contained in a valid gene set (default=10)}
 
-\item{\code{n.randomizations}}{integer (default=5)}
+\item{\code{n.randomizations}}{numeric Number of random gene sets (of the same size) to be evaluated in parallel with each gene set (default=5). (This can be kept at 5 or 10, but should be increased to 50-100 if the significance of pathway overdispersion will be determined relative to random gene set models.)}
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
-\item{\code{score.alpha}}{numeric (default=0.05)}
+\item{\code{score.alpha}}{numeric Significance level of the confidence interval for determining upper/lower bounds (default=0.05)}
 
 \item{\code{plot}}{boolean Whether to output the plot (default=FALSE)}
 
-\item{\code{cells}}{character vector (default=NULL)}
+\item{\code{cells}}{character vector Specific cells to investigate (default=NULL)}
 
-\item{\code{adjusted.pvalues}}{boolean (default=TRUE)}
+\item{\code{adjusted.pvalues}}{boolean Whether to use adjusted p-values (default=TRUE)}
 
-\item{\code{z.score}}{numeric (default=qnorm(0.05/2, lower.tail = FALSE))}
+\item{\code{z.score}}{numeric Z-score to be used as a cutoff for statistically significant patterns (default=qnorm(0.05/2, lower.tail = FALSE))}
 
-\item{\code{use.oe.scale}}{boolean (default=FALSE)}
+\item{\code{use.oe.scale}}{boolean Whether the variance of the returned aspect patterns should be normalized using observed/expected value instead of the default chi-squared derived variance corresponding to overdispersion Z-score (default=FALSE)}
 
-\item{\code{return.table}}{boolean (default=FALSE)}
+\item{\code{return.table}}{boolean Whether to return a text table with results (default=FALSE)}
 
-\item{\code{name}}{string (default='pathwayPCA')}
+\item{\code{name}}{string Title (default='pathwayPCA')}
 
-\item{\code{correlation.distance.threshold}}{numeric (default=0.2)}
+\item{\code{correlation.distance.threshold}}{numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.redundancy() (default=0.2)}
 
-\item{\code{loading.distance.threshold}}{numeric (default=0.2)}
+\item{\code{loading.distance.threshold}}{numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.loading.redundancy() (default=0.2)}
 
-\item{\code{top.aspects}}{(default=Inf)}
+\item{\code{top.aspects}}{Restrict output to the top N aspects of heterogeneity (default=Inf)}
 
-\item{\code{recalculate.pca}}{boolean (default=FALSE)}
+\item{\code{recalculate.pca}}{boolean Whether to recalculate PCA (default=FALSE)}
 
-\item{\code{save.pca}}{boolean (default=TRUE)}
+\item{\code{save.pca}}{boolean Whether to save the PCA results (default=TRUE). If TRUE, caches them in self$misc[['pwpca']].}
 }
 \if{html}{\out{</div>}}
 }
@@ -1791,22 +1788,22 @@ Return embedding
 
 \item{\code{name}}{string Name of the embedding (default=NULL). If NULL, the name = embeddingType.}
 
-\item{\code{dims}}{integer (default=2)}
+\item{\code{dims}}{integer Parameter 'dims' Matrix::sparseMatrix(); a non-negative, integer, dimensions vector of length 2 (default=2). See Matrix package documentation for more details.}
 
 \item{\code{M}}{numeric (largeVis) The number of negative edges to sample for each positive edge (default=5). Parameter only used if embeddingType is 'largeVis'.}
 
 \item{\code{gamma}}{numeric (largeVis) The strength of the force pushing non-neighbor nodes apart (default=7). Parameter only used if embeddingType is 'largeVis'.}
 
-\item{\code{perplexity}}{numeric (default=50)}
+\item{\code{perplexity}}{numeric Parameter 'perplexity' within largeVis::buildWijMatrix() (default=50). Please see the largeVis documentation for more details.}
 
-\item{\code{verbose}}{boolean (default=TRUE)}
+\item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
 \item{\code{sgd_batches}}{numeric The number of edges to process during SGD (default=NULL). Passed to projectKNNs(). Defaults to a value set based on the size of the dataset. If the parameter given is
 between \code{0} and \code{1}, the default value will be multiplied by the parameter.}
 
-\item{\code{diffusion.steps}}{numeric (default=0)}
+\item{\code{diffusion.steps}}{integer Iteration steps to use. If 0, no steps are run. (default=0)}
 
-\item{\code{diffusion.power}}{numeric (default=0.5)}
+\item{\code{diffusion.power}}{numeric Factor to be used when calculating diffusion, (default=0.5)}
 
 \item{\code{distance}}{string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')}
 
