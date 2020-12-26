@@ -6,26 +6,6 @@
 \description{
 Modified PAGODA1 app (from scde) for browsing pagoda2 results
 }
-\examples{
-
-## ------------------------------------------------
-## Method `p2ViewPagodaApp$new`
-## ------------------------------------------------
-
-
-
-## ------------------------------------------------
-## Method `p2ViewPagodaApp$getgenecldata`
-## ------------------------------------------------
-
-
-
-## ------------------------------------------------
-## Method `p2ViewPagodaApp$call`
-## ------------------------------------------------
-
-
-}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -110,14 +90,6 @@ p2ViewPagodaApp Conos class
 \subsection{Returns}{
 new 'p2ViewPagodaApp' object
 }
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{
-}
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getgenecldata"></a>}}
@@ -142,14 +114,6 @@ new 'p2ViewPagodaApp' object
 \subsection{Returns}{
 
 }
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{
-}
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-call"></a>}}
@@ -170,14 +134,6 @@ new 'p2ViewPagodaApp' object
 \subsection{Returns}{
 
 }
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{
-}
-\if{html}{\out{</div>}}
-
-}
-
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-clone"></a>}}

@@ -324,7 +324,6 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       #' @param embedding Embedding information (default=NULL)
       #' @param type Either 'counts' or a name of a 'reduction' in the pagoda2 object 
       #' @param veloinfo Velocity information (default=NULL)
-      #' @examples 
       #' 
       #' @return new 'p2ViewPagodaApp' object 
       initialize = function(results, pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", 
@@ -365,7 +364,6 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       #' @param genes character vector Gene names (default=NULL)
       #' @param gcl pathway or gene-weighted PCA (default=NULL). If NULL, uses tp2c.view.pathways(self$genes, self$results$p2, goenv=goenv, vhc=self$results$hvc, plot=FALSE, trim=ltrim, n.genes=Inf).
       #' @param ltrim numeric Winsorization trim that should be applied (default=0)
-      #' @examples 
       #' 
       #' @return 
       getgenecldata = function(genes = NULL, gcl = NULL, ltrim = 0) { # helper function to get the heatmap data for a given set of genes
@@ -406,7 +404,6 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       #' @description
       #'
       #' @param env The environment argument is a true R environment object which the application is free to modify. Please see the Rook documentation for more details.
-      #' @examples 
       #' 
       #' @return
       call = function(env){

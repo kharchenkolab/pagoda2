@@ -78,8 +78,7 @@ score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ..
 #' @param embeddingType character Type of embedding to plot (default="tSNE")
 #' @return NULL, simply updates p2obj$plotEmbedding()
 #' @export 
-plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddingType = 'tSNE') 
-{
+plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddingType = 'tSNE') {
     p2obj$plotEmbedding(type = type, embeddingType = embeddingType, colors = values, alpha = 0.2, do.par = FALSE)
     legend(x = "topleft", bty = "n", legend = title)
     invisible(NULL)
