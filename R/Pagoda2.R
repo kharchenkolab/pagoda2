@@ -408,7 +408,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
         points(log10(exp(1))*df$m[ods], log10(exp(1))*df$qv[ods], col=2, pch='.')
       }
-      if (verbose) cat("done.\n")
+      if (verbose) message("done.")
       invisible(df)
     },
 
