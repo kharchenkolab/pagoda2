@@ -4,10 +4,12 @@
 \alias{read.10x.matrices}
 \title{Quick loading of 10X CellRanger count matrices}
 \usage{
-read.10x.matrices(matrixPaths, n.cores = 1, verbose = TRUE)
+read.10x.matrices(matrixPaths, version = "V3", n.cores = 1, verbose = TRUE)
 }
 \arguments{
 \item{matrixPaths}{a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths}
+
+\item{version}{string Version of 10x output to read (default='V3'). Must be one of 'V2' or 'V3'.}
 
 \item{n.cores}{numeric Cores to utilize in parallel (default=1)}
 

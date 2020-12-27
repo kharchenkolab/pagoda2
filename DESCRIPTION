@@ -23,6 +23,7 @@ Imports:
     N2R,
     parallel, 
     plyr, 
+    R.utils,
     Rcpp,
     rjson, 
     rlang,

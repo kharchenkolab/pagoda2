@@ -1,4 +1,5 @@
 #' @import Rook
+#' @import R.utils
 #' @import data.table
 #' @import Matrix
 #' @importFrom parallel mclapply
@@ -296,13 +297,17 @@ Mode <- function(x) {
 #' Quick loading of 10X CellRanger count matrices
 #'
 #' @param matrixPaths a single path to the folder containing matrix.mtx, genes.tsv and barcodes.tsv files, OR a named list of such paths
+#' @param version string Version of 10x output to read (default='V3'). Must be one of 'V2' or 'V3'.
 #' @param n.cores numeric Cores to utilize in parallel (default=1)
 #' @param verbose boolean Whether to output verbose output (default=TRUE)
 #' @return a sparse matrix representation of the data (or a list of sparse matrices if a list of paths was passed)
 #' @export
-read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
+read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE) {
+  if (version != 'V2' && version != 'V3'){
+    stop('Unknown value for "version", it must be either "V2" or "V3"')
+  }
   if(length(matrixPaths)==1) {
-    matrixPaths <- c('one'=matrixPaths);
+    matrixPaths <- c('one'=matrixPaths)
     single.dataset <- TRUE
   } else {
     single.dataset <- FALSE
@@ -311,33 +316,45 @@ read.10x.matrices <- function(matrixPaths, n.cores=1, verbose=TRUE) {
   if(is.null(names(matrixPaths))) stop("matrixPaths must be a named vector")
   dl <- papply(sn(names(matrixPaths)), function(nam) {
 
-    matrixPath <- matrixPaths[nam];
+    matrixPath <- matrixPaths[nam]
     # read all count files (*_unique.counts) under a given path
     #cat("loading data from ",matrixPath, " ");
-    fn <- paste(matrixPath,'matrix.mtx',sep='/');
+    fn <- paste(matrixPath,'matrix.mtx',sep='/')
     if(file.exists(fn)) {
-      x <- as(readMM(fn),'dgCMatrix'); # convert to the required sparse matrix representation
+      x <- as(readMM(fn),'dgCMatrix') # convert to the required sparse matrix representation
     } else if(file.exists(paste(fn,'gz',sep='.'))) {
-      x <- as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))),'dgCMatrix'); # convert to the required sparse matrix representation
+      x <- as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))),'dgCMatrix') # convert to the required sparse matrix representation
     } else {
-      stop(paste('cant open',fn));
+      stop(paste('cant open',fn))
     }
-    fn <- paste(matrixPath,'genes.tsv',sep='/');
-    if(file.exists(paste(fn,'gz',sep='.'))) { fn <- paste(fn,'gz',sep='.') }
+    if (version == 'V2') {
+      fn <- paste(matrixPath,'genes.tsv',sep='/')
+    } else if (version == 'V3') {
+      fn <- paste(matrixPath,'features.tsv',sep='/')
+    }
+    if(file.exists(paste(fn,'gz',sep='.'))) { 
+      fn <- paste(fn,'gz',sep='.') 
+    }
     gs <- read.delim(fn,header=FALSE)
     rownames(x) <- gs[,2]    
 
-    fn <- paste(matrixPath,'barcodes.tsv',sep='/');
-    if(file.exists(paste(fn,'gz',sep='.'))) { fn <- paste(fn,'gz',sep='.') }
+    fn <- paste(matrixPath,'barcodes.tsv',sep='/')
+    if(file.exists(paste(fn,'gz',sep='.'))) { 
+      fn <- paste(fn,'gz',sep='.') 
+    }
     gs <- read.delim(fn,header=FALSE)
     colnames(x) <- gs[,1]
 
     if(verbose) message(".")
-    colnames(x) <- paste(nam,colnames(x),sep='_');
+    colnames(x) <- paste(nam,colnames(x),sep='_')
     x
-  },n.cores=n.cores)
+  }, n.cores=n.cores)
   if(verbose) message(" done")
-  if(single.dataset) { return(dl[[1]]); } else { return(dl) }
+  if(single.dataset) { 
+    return(dl[[1]]) 
+  } else { 
+    return(dl) 
+  }
 }
 
 
@@ -426,108 +443,55 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
 #' @param path string Location of 10x output
 #' @param version string Version of 10x output to read (default='V3'). Must be one of 'V2' or 'V3'.
 #' @param transcript.id string Transcript identifier to use (default='SYMBOL'). Must be either 'SYMBOL' or 'ENSEMBL'.
-#' 
-#' @return parsed 10x output into a data.table
-read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL') {
-    if (version == 'V2') {
-        unpackFunction <- I
-        suffix <- ''
-    } else if (version == 'V3') {
-        unpackFunction <- gzfile
-        suffix <- '.gz'
-    } else {
-        stop('Unknown file version!')
-    }
-    if(transcript.id == 'SYMBOL') {
-        transcript.id.col.idx = 2
-    } else if (transcript.id == 'ENSEMBL') {
-        transcript.id.col.idx = 1
-    } else {
-        stop('Unknown transcript identifier')
-    }
-    matrixFile <- paste0(path, '/matrix.mtx', suffix)
-    if (version == 'V2') {
-        genesFile <- paste0(path, '/genes.tsv', suffix)
-    } else if (version == 'V3') {
-        genesFile <- paste0(path, '/features.tsv', suffix)
-    }
-    barcodesFile <- paste0(path, '/barcodes.tsv', suffix)
-    if (!file.exists(matrixFile)) { stop('Matrix file does not exist')  }
-    if (!file.exists(genesFile)) { stop('Genes file does not exist') }
-    if (!file.exists(barcodesFile)) { stop('Barcodes file does not exist') }
-    x <- as(Matrix::readMM(unpackFunction(matrixFile)), 'dgCMatrix')
-    genes <- read.table(unpackFunction(genesFile))
-    rownames(x) <- genes[,transcript.id.col.idx]
-    barcodes <- read.table(unpackFunction(barcodesFile))
-    colnames(x) <- barcodes[,1]
-    invisible(x)
-}
-
-
-#' Read multiple 10x matrices into a single sparse array. 
-#' Given a named list of paths of 10X matrices return a single large matrix
-#' with all the data and cell prefixed with the corresponding sample name
-#' 
-#' @param paths named vector of location of the data (readable by read10Xmatrix())
-#' @param min.common.genes numeric Minimum number of common genes to allow (default=1000)
-#' @param common.genes boolean Subset all matrices to common genes, required for merge (default=FALSE)
-#' @param merge boolean Merge all the matrices to one, requires common.genes and prefix.cells (default=FALSE)
-#' @param prefix.cells boolean Prefix all cells with the name of the respective path in paths (default=FALSE)
-#' @param prefix.sep character Separator for prefix of cells (default='_')
-#' @return Sparse matrix of the Matrix package that contains all the data prefixes by the corresponding sample name
-#' 
+#' @param verbose boolean Whether to return verbose output
+#' @return parsed 10x outputs into a matrix
+#'
 #' @export 
-read10Xmatrices <- function(paths, min.common.genes=1000, common.genes=FALSE, 
-  merge=FALSE, prefix.cells=FALSE, prefix.sep='_') {
-
-  if (merge && !common.genes){
-    stop("Can't merge matrices if common.genes is not set.")
+read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=TRUE) {
+  if (version != 'V2' && version != 'V3'){
+    stop('Unknown value for "version", it must be either "V2" or "V3"')
   }
-  if (merge && !prefix.cells){
-    stop("Can't merge matrices if prefix.cells is not set.")
+  if (transcript.id == 'SYMBOL') {
+    transcript.id.col.idx = 2
+  } else if (transcript.id == 'ENSEMBL') {
+    transcript.id.col.idx = 1
+  } else {
+    stop('Unknown transcript identifier "transcript.id", it must be either "SYMBOL" or "ENSEMBL"')
   }
-
-  # Read the matrices one by one
-  matrices <- sapply(paths, read10xMatrix)
-
-  ## Prefix the arrays
-  if (prefix.cells) {
-    matrices <- mapply(
-      function(m, name) {
-        colnames(m) <- paste(name, colnames(m), sep=prefix.sep)
-        m
-      },
-      matrices,
-      names(matrices)
-    )
+  matrixFile <- paste0(path, '/', list.files()[grepl("matrix", list.files())])
+  barcodesFile <- paste0(path, '/', list.files()[grepl("barcodes", list.files())])
+  if (version == 'V2') {
+    genesFile <- paste0(path, '/', list.files()[grepl("genes", list.files())])
+  } else if (version == 'V3') {
+    genesFile <- paste0(path, '/', list.files()[grepl("features", list.files())])
   }
-
-  ## Merge the arrays
-  if (merge) {
-    ## Get the genes in each array
-    genelists <- lapply(matrices, function(x) rownames(x))
-    ## Find the common genes
-    commongenes <- Reduce(intersect, genelists)
-    ## Stop if common genes too low
-    if (length(commongenes) < min.common.genes){
-      stop('The number of common genes is too low! Try setting a lower value for "min.common.genes"')
-    }
-    # Subset to common genes
-    matrices <- mapply(
-      function(m, name) {
-        m[commongenes,]
-      },
-      matrices,
-      names(matrices)
-    )
-
-    if (merge) {
-      matrices <- Reduce(cbind, matrices)
+  if (!file.exists(matrixFile)) { 
+    stop('Matrix file does not exist')  
+  }
+  if (!file.exists(barcodesFile)) { 
+    stop('Barcodes file does not exist') 
+  }
+  if (!file.exists(genesFile)) { 
+    if (version == 'V2') {
+      stop('Genes file does not exist') 
+    } else if (version == 'V3') {
+      stop('Features file does not exist') 
     }
   }
-
-  invisible(matrices)
+  if (verbose) message("Reading in matrix...")
+  x <- as(Matrix::readMM(matrixFile), 'dgCMatrix')
+  if (verbose) {
+    if (version == 'V2') {
+      message("Reading in genes...")
+    } else if (version == 'V3') {
+      message("Reading in features...")
+    }
+  }
+  genes <- fread(genesFile)
+  rownames(x) <- genes[,transcript.id.col.idx]
+  if (verbose) message("Reading in barcodes...")
+  barcodes <- fread(barcodesFile)
+  colnames(x) <- barcodes[,1]
+  invisible(x)
 }
-
-
 
