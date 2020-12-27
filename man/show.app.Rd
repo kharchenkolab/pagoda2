@@ -19,6 +19,9 @@ show.app(app, name, port, ip, browse = TRUE, server = NULL)
 
 \item{server}{server If NULL, will grab server with get.scde.server(port=port, ip=ip) (derfault=NULL)}
 }
+\value{
+application within browser
+}
 \description{
 Directly open the pagoda2 web application and view the 'p2web' application object from our R session
 }

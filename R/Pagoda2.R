@@ -75,7 +75,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @field depth Number of molecules measured per cell (default=NULL)
     depth = NULL,
 
-    #' @description Initialize Conos class
+    #' @description Initialize Pagoda2 class
     #'
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
@@ -500,7 +500,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #df <- data.frame(from=rownames(x)[xn$s+1],to=rownames(x)[xn$e+1],weight=xn$d,stringsAsFactors=F)
       #if(weight.type=='rank') { df$rank <- xn$r }
 
-      if (weight.type %in% c("cauchy","normal") && ncol(x)>sqrt(nrand)) {
+      if (weight.type %in% c("cauchy", "normal") && ncol(x)>sqrt(nrand)) {
         # generate some random pair data for scaling
         if (distance=='cosine') {
           #rd <- na.omit(apply(cbind(sample(colnames(x),nrand,replace=T),sample(colnames(x),nrand,replace=T)),1,function(z) if(z[1]==z[2]) {return(NA); } else {1-cor(x[,z[1]],x[,z[2]])}))

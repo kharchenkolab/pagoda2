@@ -17,6 +17,9 @@ collapse.aspect.clusters(d, dw, ct, scale = TRUE, pick.top = FALSE)
 
 \item{pick.top}{boolean Whether to pick top aspects (default=FALSE)}
 }
+\value{
+list of clusters from matrix of normalized aspect patterns and clusters from the corresponding weight matrix
+}
 \description{
 Collapse aspect patterns into clusters
 }

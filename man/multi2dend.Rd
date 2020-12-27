@@ -15,6 +15,9 @@ multi2dend(cl, counts, deep = FALSE, dist = "cor")
 
 \item{dist}{character vector Distance metric (default='cor')}
 }
+\value{
+cell dendrogram
+}
 \description{
 Translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
 }

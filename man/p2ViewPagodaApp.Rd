@@ -4,7 +4,8 @@
 \alias{p2ViewPagodaApp}
 \title{p2ViewPagodaApp R6 class}
 \description{
-Modified PAGODA1 app (from scde) for browsing pagoda2 results
+Modified PAGODA1 app (from scde) for browsing pagoda2 results. 
+Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in scde
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
@@ -46,7 +47,7 @@ Modified PAGODA1 app (from scde) for browsing pagoda2 results
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-p2ViewPagodaApp Conos class
+Initialize p2ViewPagodaApp class
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{p2ViewPagodaApp$new(
   results,
@@ -95,7 +96,7 @@ new 'p2ViewPagodaApp' object
 \if{html}{\out{<a id="method-getgenecldata"></a>}}
 \if{latex}{\out{\hypertarget{method-getgenecldata}{}}}
 \subsection{Method \code{getgenecldata()}}{
-
+Helper function to get the heatmap data for a given set of genes
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{p2ViewPagodaApp$getgenecldata(genes = NULL, gcl = NULL, ltrim = 0)}\if{html}{\out{</div>}}
 }
@@ -112,14 +113,14 @@ new 'p2ViewPagodaApp' object
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+heatmap data for a given set of genes
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-call"></a>}}
 \if{latex}{\out{\hypertarget{method-call}{}}}
 \subsection{Method \code{call()}}{
-
+Call Rook application. Using client-side ExtJS framework and Inchlib HTML5 canvas libraries to create the graphical user interface for PAGODA
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{p2ViewPagodaApp$call(env)}\if{html}{\out{</div>}}
 }
@@ -132,7 +133,7 @@ new 'p2ViewPagodaApp' object
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-
+modified PAGODA1 app
 }
 }
 \if{html}{\out{<hr>}}

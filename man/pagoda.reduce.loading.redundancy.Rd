@@ -3,10 +3,12 @@
 \name{pagoda.reduce.loading.redundancy}
 \alias{pagoda.reduce.loading.redundancy}
 \title{Collapse aspects driven by the same combinations of genes.
-(Aspects are some pattern across cells, for instance sequencing depth, or PC corresponding to an undesired process such as ribosomal pathway variation.)
-Examines PC loading vectors underlying the identified aspects and clusters aspects based
-on a product of loading and score correlation (raised to corr.power). Clusters of aspects
-driven by the same genes are determined based on the distance.threshold and collapsed.}
+(Aspects are some pattern across cells e.g. sequencing depth, 
+or PC corresponding to an undesired process such as ribosomal pathway variation.)
+Examines PC loading vectors underlying the identified aspects and clusters of aspects based
+on a product of loading and score correlation (raised to corr.power). 
+Clusters of aspects driven by the same genes are determined based 
+on the parameter "distance.threshold".}
 \usage{
 pagoda.reduce.loading.redundancy(
   tam,
@@ -58,10 +60,12 @@ a list structure analogous to that returned by pagoda.top.aspects(), but with ad
 }
 \description{
 Collapse aspects driven by the same combinations of genes.
-(Aspects are some pattern across cells, for instance sequencing depth, or PC corresponding to an undesired process such as ribosomal pathway variation.)
-Examines PC loading vectors underlying the identified aspects and clusters aspects based
-on a product of loading and score correlation (raised to corr.power). Clusters of aspects
-driven by the same genes are determined based on the distance.threshold and collapsed.
+(Aspects are some pattern across cells e.g. sequencing depth, 
+or PC corresponding to an undesired process such as ribosomal pathway variation.)
+Examines PC loading vectors underlying the identified aspects and clusters of aspects based
+on a product of loading and score correlation (raised to corr.power). 
+Clusters of aspects driven by the same genes are determined based 
+on the parameter "distance.threshold".
 }
 \examples{
 \donttest{

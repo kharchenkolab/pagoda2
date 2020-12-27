@@ -214,10 +214,10 @@ validateSelectionsObject <- function(selections) {
 #' @param clustering a named factor of clusters, where every entry is a cell
 #' @param selections a pagoda2 selection object
 #' @param multiClassCutoff numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)
-#' @param ambiguous.ratio numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.3)
+#' @param ambiguous.ratio numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.5)
 #' @return a data.frame with two columns, one for cluster and one for selections, each cluster appears only once
 #' @export 
-getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff = 0.3, ambiguous.ratio = 0.5) {
+getClusterLabelsFromSelection <- function(clustering, selections, multiClassCutoff=0.3, ambiguous.ratio=0.5) {
   if (!is.factor(clustering)) {
     stop('clustering is not a factor')
   }
@@ -377,8 +377,8 @@ compareClusterings <- function(cl1, cl2, filename = NA) {
     stop("Package \"pheatmap\" needed for this function to work. Please install it.", call. = FALSE)
   }
 
-  n1 <- names(cl1);
-  n2 <- names(cl2);
+  n1 <- names(cl1)
+  n2 <- names(cl2)
 
   if(!all(n1 %in% n2) || !all(n2 %in% n1)) {
     warning('Clusterings do not completely overlap!')
@@ -437,7 +437,9 @@ diffExprOnP2FromWebSelectionOneGroup <- function(p2, sel, groupname) {
 #' @param x p2 selection object
 #' @return list of names from the specified selection object
 #' @export 
-getIntExtNamesP2Selection <- function(x) unlist(lapply(x, function(y) {y$name}))
+getIntExtNamesP2Selection <- function(x){
+  unlist(lapply(x, function(y) {y$name}))
+}
 
 
 

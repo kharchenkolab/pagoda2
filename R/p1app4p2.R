@@ -7,7 +7,7 @@ NULL
 #' @param mat Numeric matrix
 #' @param row.clustering Row dendrogram (default=NA)
 #' @param cell.clustering Column dendrogram (default=NA)
-#' @param zlim numeric Range of the normalized gene expression levels, inputted as a list: c(lower_bound, upper_bound). Values outside this range will be Winsorized. Useful for increasing the contrast of the heatmap visualizations. Default, set to the 5th and 95th percentiles.
+#' @param zlim numeric Range of the normalized gene expression levels, inputted as a list: c(lower_bound, upper_bound) (default=c(-1, 1)*quantile(mat, p = 0.95)). Values outside this range will be Winsorized. Useful for increasing the contrast of the heatmap visualizations. Default, set to the 5th and 95th percentiles.
 #' @param row.cols Matrix of row colors (default=NULL)
 #' @param col.cols Matrix of column colors (default=NULL). Useful for visualizing cell annotations such as batch labels.
 #' @param cols Heatmap colors (default=colorRampPalette(c("darkgreen", "white", "darkorange"), space = "Lab")(1024))
@@ -265,16 +265,16 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
 
 #' @title p2ViewPagodaApp R6 class
-#' @description Modified PAGODA1 app (from scde) for browsing pagoda2 results
+#' @description Modified PAGODA1 app (from scde) for browsing pagoda2 results. 
+#' Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in scde
 #'
 #' @export p2ViewPagodaApp 
 p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
-    ##fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 
+    ## fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 
     ##  'name', 'trim', 'batch','embedding','type','veloinfo'),
 
     ## tam? 
-    ## #' @field tam Combined pathways that are driven by the same gene sets
-
+    ## @field tam Combined pathways that are driven by the same gene sets
     public = list(
 
       #' @field results Result object returned by \code{scde.expression.difference()} (default=NULL). Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
@@ -312,7 +312,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
 
 
 
-      #' @description p2ViewPagodaApp Conos class
+      #' @description Initialize p2ViewPagodaApp class
       #'
       #' @param results Result object returned by \code{scde.expression.difference()}. Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
       #' @param pathways character vector Pathway or gene names (default=NULL)
@@ -359,13 +359,13 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
           gc()
       },
 
-      #' @description
+      #' @description Helper function to get the heatmap data for a given set of genes
       #'
       #' @param genes character vector Gene names (default=NULL)
       #' @param gcl pathway or gene-weighted PCA (default=NULL). If NULL, uses tp2c.view.pathways(self$genes, self$results$p2, goenv=goenv, vhc=self$results$hvc, plot=FALSE, trim=ltrim, n.genes=Inf).
       #' @param ltrim numeric Winsorization trim that should be applied (default=0)
       #' 
-      #' @return 
+      #' @return heatmap data for a given set of genes
       getgenecldata = function(genes = NULL, gcl = NULL, ltrim = 0) { # helper function to get the heatmap data for a given set of genes
         if(is.null(gcl)) {
           gcl <- tp2c.view.pathways(self$genes, self$results$p2, goenv=goenv, vhc=self$results$hvc, plot=FALSE, trim=ltrim, n.genes=Inf)
@@ -401,11 +401,11 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
         ol
       },
 
-      #' @description
+      #' @description Call Rook application. Using client-side ExtJS framework and Inchlib HTML5 canvas libraries to create the graphical user interface for PAGODA
       #'
       #' @param env The environment argument is a true R environment object which the application is free to modify. Please see the Rook documentation for more details.
       #' 
-      #' @return
+      #' @return modified PAGODA1 app
       call = function(env){
             path <- env[['PATH_INFO']]
             req <- Request$new(env)
@@ -616,7 +616,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
                      rownames(df) <- cellorder
                      
                      # quick quantile range
-                     qrng <- function(x,gradient.range.quantile=0.95) {
+                     qrng <- function(x, gradient.range.quantile=0.95) {
                        if(all(sign(na.omit(x))>=0)) {
                          zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile),na.rm=TRUE))
                          if(diff(zlim)==0) {

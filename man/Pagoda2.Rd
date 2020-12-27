@@ -426,7 +426,7 @@ Simon Steiger
 \if{html}{\out{<a id="method-new"></a>}}
 \if{latex}{\out{\hypertarget{method-new}{}}}
 \subsection{Method \code{new()}}{
-Initialize Conos class
+Initialize Pagoda2 class
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$new(
   x,

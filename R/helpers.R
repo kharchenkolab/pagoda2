@@ -25,6 +25,7 @@ NULL
 #' @param counts matrix of counts
 #' @param deep boolean (default=FALSE)
 #' @param dist character vector Distance metric (default='cor')
+#' @return cell dendrogram
 #' @keywords internal
 multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   if (deep) {
@@ -64,6 +65,7 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
 #' Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 #'
 #' @param x character vector to check
+#' @return boolean whether character vector is colors
 #' @keywords internal
 areColors <- function(x) {
   is.character(x) & sapply(x, function(X) {tryCatch(is.matrix(col2rgb(X)), error = function(e) FALSE)})
@@ -76,7 +78,7 @@ areColors <- function(x) {
 #' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
 #' @return list, as returned by lapply
 #' @keywords internal
-papply <- function(...,n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
+papply <- function(..., n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
   if(n.cores>1) {
     if(requireNamespace("parallel", quietly = TRUE)) {
       return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule))
@@ -96,6 +98,7 @@ papply <- function(...,n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
 #' 
 #' @param d cell cluster dendrogram
 #' @param cells character vector of cells (default=NULL). If NULL, determine the total order of cells with unlist(dendrapply(d, attr, 'cells'))
+#' @return array with one row per node with 1/0 cluster membership
 #' @keywords internal
 cldend2array <- function(d, cells=NULL) {
   if (is.null(cells)) { # figure out the total order of cells
@@ -134,6 +137,7 @@ sn <- function(x) { names(x) <- x; return(x); }
 #' @param ip numeric IP address
 #' @param browse boolean Whether to load the app into an HTML browser (default=TRUE)
 #' @param server server If NULL, will grab server with get.scde.server(port=port, ip=ip) (derfault=NULL)
+#' @return application within browser
 #' @export show.app
 show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
     # replace special characters

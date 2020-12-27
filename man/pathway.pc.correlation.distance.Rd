@@ -16,6 +16,9 @@ e.g. scde::pagoda.gene.clusters() gives the weighted PC magnitudes for de novo g
 
 \item{target.ndf}{numeric Target dimensions (default=NULL)}
 }
+\value{
+correlation distance matrix, akin to stats dist
+}
 \description{
 Calculate correlation distance between PC magnitudes given a number of target dimensions
 }

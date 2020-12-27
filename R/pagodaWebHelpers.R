@@ -74,8 +74,8 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
   go.env <- go.env[unlist(lapply(go.env, length)) > 5]
 
   ## Put the GO Term annotation generated in a format suitable for the web interface
-  nms <- names(go.env);
-  names(nms) <- nms;
+  nms <- names(go.env)
+  names(nms) <- nms
   geneSets <- lapply(nms, function(x) {
     list(
       properties = list(
@@ -98,8 +98,8 @@ p2.generate.go.web.fromGOEnv <- function(go.env){
   go.env <- as.list(go.env)
 
   ## Put the GO Term annotation generated in a format suitable for the web interface
-  nms <- names(go.env);
-  names(nms) <- nms;
+  nms <- names(go.env)
+  names(nms) <- nms
   geneSets <- lapply(nms, function(x) {
     list(
       properties = list(

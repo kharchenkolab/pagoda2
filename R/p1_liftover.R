@@ -2,10 +2,12 @@
 ## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 
 #' Collapse aspects driven by the same combinations of genes.
-#' (Aspects are some pattern across cells, for instance sequencing depth, or PC corresponding to an undesired process such as ribosomal pathway variation.)
-#' Examines PC loading vectors underlying the identified aspects and clusters aspects based
-#' on a product of loading and score correlation (raised to corr.power). Clusters of aspects
-#' driven by the same genes are determined based on the distance.threshold and collapsed.
+#' (Aspects are some pattern across cells e.g. sequencing depth, 
+#' or PC corresponding to an undesired process such as ribosomal pathway variation.)
+#' Examines PC loading vectors underlying the identified aspects and clusters of aspects based
+#' on a product of loading and score correlation (raised to corr.power). 
+#' Clusters of aspects driven by the same genes are determined based 
+#' on the parameter "distance.threshold".
 #'
 #' @param tam output of pagoda.top.aspects(), i.e. a list structure containing the following items:
     #' xv: a matrix of normalized aspect patterns (rows: significant aspects, columns: cells)
@@ -95,6 +97,7 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 #' @param ct clusters, either output of fastcluster::hclust() or stats::hclust()
 #' @param scale boolean Whether to scale aspects (default=TRUE)
 #' @param pick.top boolean Whether to pick top aspects (default=FALSE)
+#' @return list of clusters from matrix of normalized aspect patterns and clusters from the corresponding weight matrix
 #' @export 
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   if (!requireNamespace("pcaMethods", quietly = TRUE)) {
@@ -259,6 +262,7 @@ winsorize.matrix <- function(mat, trim) {
 #' @param xv a matrix of normalized aspect patterns (rows: significant aspects, columns: cells)
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @param target.ndf numeric Target dimensions (default=NULL)
+#' @return correlation distance matrix, akin to stats dist
 #' @export
 pathway.pc.correlation.distance <- function(pcc, xv, n.cores=1, target.ndf=NULL) {
   # all relevant gene names

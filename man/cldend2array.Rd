@@ -11,6 +11,9 @@ cldend2array(d, cells = NULL)
 
 \item{cells}{character vector of cells (default=NULL). If NULL, determine the total order of cells with unlist(dendrapply(d, attr, 'cells'))}
 }
+\value{
+array with one row per node with 1/0 cluster membership
+}
 \description{
 Translate cell cluster dendrogram to an array, one row per node with 1/0 cluster membership
 }

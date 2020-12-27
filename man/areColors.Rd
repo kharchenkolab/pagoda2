@@ -10,6 +10,9 @@ areColors(x)
 \arguments{
 \item{x}{character vector to check}
 }
+\value{
+boolean whether character vector is colors
+}
 \description{
 Quick utility to check if given character vector is colors
 Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
