@@ -1451,11 +1451,11 @@ Calculate PCA reduction of the data
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{nPcs}}{Number of principal components (PCs) (default=20)}
+\item{\code{nPcs}}{numeric Number of principal components (PCs) (default=20)}
 
-\item{\code{type}}{Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')}
+\item{\code{type}}{string Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')}
 
-\item{\code{name}}{Name for the PCA reduction to be created (default='PCA')}
+\item{\code{name}}{string Name for the PCA reduction to be created (default='PCA')}
 
 \item{\code{use.odgenes}}{boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)}
 

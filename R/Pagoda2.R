@@ -1614,9 +1614,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate PCA reduction of the data
     #' 
-    #' @param nPcs Number of principal components (PCs) (default=20)
-    #' @param type Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')
-    #' @param name Name for the PCA reduction to be created (default='PCA')
+    #' @param nPcs numeric Number of principal components (PCs) (default=20)
+    #' @param type string Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')
+    #' @param name string Name for the PCA reduction to be created (default='PCA')
     #' @param use.odgenes boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)
     #' @param odgenes Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL)
     #' @param center boolean Whether data should be centered prior to PCA (default=TRUE)
