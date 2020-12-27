@@ -1641,7 +1641,7 @@ local PCA implementation
 
 \item{\code{b}}{numeric Constant within exp(-b*(ncid/cldsd)^2), used for calculating cell relevance per cluster (default=1)}
 
-\item{\code{a}}{numeric Constant within (1-exp(-a*(dsq)/(p$pcs$trsd^2))) * (pk %o% pk) (default=1)}
+\item{\code{a}}{numeric Constant within "(1-exp(-a*(dsq)/(p$pcs$trsd^2)))*(pk /outerproduct pk)" (default=1)}
 
 \item{\code{min.group.size}}{integer Number of minimum cells for filtering out group size (default=30)}
 
