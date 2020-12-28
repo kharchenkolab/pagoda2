@@ -1,14 +1,3 @@
----
-title: "Pagoda2 Walkthrough"
-output: 
-  rmarkdown::html_vignette:
-    toc: true
-vignette: >
-  %\VignetteIndexEntry{"Pagoda2 Walkthrough"}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
-
 # Overview
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2. We will begin with loading the dataset and performing QC. Then we will process the dataset with pagoda2 and finally generate an interactive web application for interactive exploration of the dataset.
