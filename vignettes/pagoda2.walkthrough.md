@@ -1,4 +1,13 @@
-# Pagoda2 Walkthrough
+---
+title: "Pagoda2 Walkthrough"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{"Pagoda2 Walkthrough"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
 # Overview
 
@@ -18,7 +27,7 @@ library(ggplot2)
 
 ## Part 1: Loading and QC'ing the dataset
 
-For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command loads the data as a sparse matrix and checks its size:
+For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 
 ```r
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
@@ -163,11 +172,15 @@ r$adjustVariance(plot=TRUE, gam.k=10)
 ## persisting ...
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+```
+##  using gam
+```
 
 ```
 ## done.
 ```
+
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
 
 There are many alternative ways of proceeding with the downstream analysis. Below we’ll use the simplest, default scenario, where we first reduce the dataset dimensions by running PCA, and then move into k-nearest neighbor graph space for clustering and visualization calculations. First, the PCA reduction. Depending on the complexity of the dataset you are analysing you may want to adjust the nPcs parameter.
 
@@ -232,7 +245,7 @@ r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.siz
 Next we can generate and plot a tSNE embedding. This can take a while to run!
 
 ```r
-r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50, verbose=FALSE)
+r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
 r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
@@ -275,11 +288,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 24 levels "1","2","3","4",..: 4 1 1 6 6 1 2 3 2 14 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 10 levels "1","2","3","4",..: 8 7 7 10 10 7 3 1 3 6 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 5 11 11 2 2 11 6 3 6 8 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 9 4 9 3 ...
+##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 2 8 8 7 7 8 9 5 9 4 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -305,7 +318,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 22 clusters ...
+## running differential expression with 24 clusters ...
 ```
 
 ```
@@ -380,18 +393,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.15:List of 2
+##  $ 17.vs.19  :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.15"
-##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:137] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
-##  $ 3.vs.9  :List of 2
+##   .. ..$ genesetname     : chr "17.vs.19"
+##   .. ..$ shortdescription: chr "17.vs.19"
+##   ..$ genes     : chr [1:157] "TSC22D3" "SSR4" "CD79A" "KLF2" ...
+##  $ 17.19.vs.2:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "3.vs.9"
-##   .. ..$ shortdescription: chr "3.vs.9"
-##   ..$ genes     : chr [1:121] "FTH1" "TYROBP" "FTL" "CTSS" ...
+##   .. ..$ genesetname     : chr "17.19.vs.2"
+##   .. ..$ shortdescription: chr "17.19.vs.2"
+##   ..$ genes     : chr [1:313] "MZB1" "JCHAIN" "HSP90B1" "ITM2C" ...
 ```
 
 To add GO Terms as genesets run the following
@@ -467,8 +480,7 @@ additionalMetadata$walktrap <- p2.metadata.from.factor(r$clusters$PCA[['walktrap
 We are now ready to build our app.
 
 ```r
-p2web <- make.p2.app(
-    r,
+p2web <- make.p2.app(r, 
     dendrogramCellGroups = r$clusters$PCA$community,
     additionalMetadata = additionalMetadata,
     geneSets = genesets,
@@ -476,7 +488,6 @@ p2web <- make.p2.app(
     show.clusters = FALSE # Hide the clusters that were used for the dendrogram from the metadata
   )
 ```
-
 
 We can view this app directly from our R session
 
@@ -564,12 +575,12 @@ Pagoda2 allows you to easily work with cell selections generated in R or via the
 You can read a file of cell selections generated with the web interface using the readPagoda2SelectionFile() function. This will
 generate a list object that contains all the information about the selections. 
 
-You can make cell selection file from a web selection object generated in R using the writePagoda2SelectionFile() function. You can send
+You can make a cell selection file from a web selection object generated in R using the writePagoda2SelectionFile() function. You can send
 this file over email to unambiguously communicate cell subsets.
 
 In R it is often easier to work with cell selections in the form of factors. To convert a selection to a factor you can use the 
-factorFromP2Selection() function. This will returned a named factor of the membership of each cell in selections. However, in order
-to do this, you will need to ensure that every cell belong only to one selection. You can check if any cells are in multiple clusters
+factorFromP2Selection() function. This will return a named factor of the membership of each cell in selections. However, in order
+to do this, you will need to ensure that every cell belongs only to one selection. You can check if any cells are in multiple clusters
 and clean up your selection object using the functions: calcMulticlassified(), removeSelectionOverlaps(), plotSelectionOverlaps() and
 plotMulticlassified(). 
 
