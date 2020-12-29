@@ -31,7 +31,7 @@ Imports:
     RMTstat, 
     Rook, 
     Rtsne, 
-    sccore (>= 0.1.0), 
+    sccore (>= 0.1.1), 
     stats, 
     urltools,
     utils
