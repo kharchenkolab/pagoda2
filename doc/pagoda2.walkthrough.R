@@ -3,6 +3,31 @@ library(Matrix)
 library(igraph)
 library(pagoda2)
 library(dplyr)
+library(ggplot2)
+
+## -----------------------------------------------------------------------------
+countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+
+## ----message=FALSE------------------------------------------------------------
+p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
+                    n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
+
+## -----------------------------------------------------------------------------
+## calculate pathway overdispersion for human
+## ext.res <- extendedP2proc(p2.processed, organism = 'hs')
+
+## create app object
+## p2app <- webP2proc(ext.res$p2, title = 'Quick pagoda2 app', go.env = ext.res$go.env)
+
+## open app in the web browser via R session
+## show.app(app=p2app, name='pagoda2 app')
+
+## ----message=FALSE------------------------------------------------------------
+library(Matrix)
+library(igraph)
+library(pagoda2)
+library(dplyr)
+library(ggplot2)
 
 ## -----------------------------------------------------------------------------
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
@@ -14,12 +39,12 @@ cm[1:3, 1:3]
 ## -----------------------------------------------------------------------------
 str(cm)
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=8, fig.width=10----------------------------------------------
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
-hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='log10(molecules per cell)')
-hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='log10(molecules per gene])')
+hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
+hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=8, fig.width=10----------------------------------------------
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 
 ## -----------------------------------------------------------------------------
@@ -32,9 +57,9 @@ dim(counts)
 
 ## -----------------------------------------------------------------------------
 rownames(counts) <- make.unique(rownames(counts))
-r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
+r <- Pagoda2$new(counts, log.scale=TRUE, n.cores=1)
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=8, fig.width=10----------------------------------------------
 r$adjustVariance(plot=TRUE, gam.k=10)
 
 ## -----------------------------------------------------------------------------
@@ -48,22 +73,22 @@ r$getKnnClusters(method=infomap.community, type='PCA')
 
 ## -----------------------------------------------------------------------------
 M <- 30
-r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M, alpha=1)
+r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M)
 
 ## -----------------------------------------------------------------------------
-r$plotEmbedding(type='PCA', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (largeVis)')
+r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (largeVis)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
 ## -----------------------------------------------------------------------------
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
-r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='clusters (tSNE)')
+r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
 ## -----------------------------------------------------------------------------
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
 ## -----------------------------------------------------------------------------
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
 ## -----------------------------------------------------------------------------
 r$getKnnClusters(method=multilevel.community, type='PCA', name='multilevel')
@@ -72,17 +97,11 @@ r$getKnnClusters(method=walktrap.community, type='PCA', name='walktrap')
 ## -----------------------------------------------------------------------------
 str(r$clusters)
 
-## ----message=FALSE------------------------------------------------------------
-## infomap.community vs multilevel.community
-par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
-
-## ----message=FALSE------------------------------------------------------------
-## infomap.community vs walktrap.community
-par(mfrow=c(1,2))
-r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='infomap clusters (tSNE)')
-r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, shuffle.colors=FALSE, alpha=0.1, main='multlevel clusters (tSNE)')
+## ---- fig.height=8, fig.width=12----------------------------------------------
+plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='infomap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='multlevel clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='walktrap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 
 ## -----------------------------------------------------------------------------
 r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
@@ -93,7 +112,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ## -----------------------------------------------------------------------------
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, alpha=0.1, main=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, legend.title=gene)
 
 ## -----------------------------------------------------------------------------
 suppressMessages(library(org.Hs.eg.db))
@@ -135,10 +154,10 @@ deSets <- get.de.geneset(r, groups = r$clusters$PCA[['community']], prefix = 'de
 genesets <- c(genesets, deSets)
 
 ## -----------------------------------------------------------------------------
-appmetadata <- list(apptitle = 'October_Demo_App')
+appmetadata <- list(apptitle = 'Demo_App')
 
 ## -----------------------------------------------------------------------------
-r$makeGeneKnnGraph(n.cores = 2)
+r$makeGeneKnnGraph(n.cores = 1)
 
 ## -----------------------------------------------------------------------------
 ## # Make a list for our metadata
@@ -155,9 +174,7 @@ names(p1) <- levels(a)
 additionalMetadata$walktrap <- p2.metadata.from.factor(r$clusters$PCA[['walktrap']], displayname = 'Walktrap', pal = p1)
 
 ## -----------------------------------------------------------------------------
-p2web <-
-  make.p2.app(
-    r,
+p2web <- make.p2.app(r, 
     dendrogramCellGroups = r$clusters$PCA$community,
     additionalMetadata = additionalMetadata,
     geneSets = genesets,
@@ -169,53 +186,8 @@ p2web <-
 ##  show.app(app=p2web, name='app')
 
 ## -----------------------------------------------------------------------------
-##  p2web$serializeToStaticFast('october2018_pbmc.bin', verbose=TRUE)
+##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 
 ## -----------------------------------------------------------------------------
 ##  saveRDS(r, 'pagoda2object.rds')
-
-## ----eval=FALSE---------------------------------------------------------------
-#  
-#  ## # Get your count matrix in sparse or full format
-#  ## # For example you can use the
-#  ## # readMM() from the Matrix package or the
-#  ## # read10xMatrix() function from the github barkasn/nbHelpers package
-#  ## # This matrix can be sparse matrix object from the Matrix package
-#  ##
-#  ## # countMatrix <- load_my_count_matrix()
-#  ## # Rows correspond to genes and Columns to cells
-#  ## # If you experience problems with duplicate cells you can use
-#  ## # rownames(countMatrix) <- make.unique(rownames(countMatrix))
-#  
-#  ## p2 <- basicP2proc(countMatrix, n.cores = 4) ## 'multilevel' run here
-#  
-#  ## p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
-#  ## p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap')
-#  
-#  ## ext.res <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
-#  
-#  ## p2 <- ext.res$p2
-#  ## go.env <- ext.res$go.env
-#  ## rm(ext.res)
-#  
-#  ## # Make cell metadata from the default clusters generated during basicP2proc()
-#  ## # This is optional, metadata.forweb can also be NULL
-#  ## metadata.listfactors <- list(
-#  ##     infomap = p2$clusters$PCA$infomap,
-#  ##     multilevel = p2$clusters$PCA$multilevel,
-#  ##     walktrap = p2$clusters$PCA$walktrap
-#  ## )
-#  ## metadata.forweb <- factorListToMetadata(metadata.listfactors)
-#  
-#  ## # Make the web object
-#  ## p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application', go.env = go.env)
-#  
-#  ## # Serialize to file
-#  ## # The serialisedApp.bin file will now contain all the information
-#  ## # required to view the files via the web browser
-#  ## p2.webobject$serializeToStaticFast('serialisedApp.bin')
-#  
-#  ## # Alternatively you can view your dataset from the R session
-#  ## # show.app(p2.webobject, browse = TRUE)
-#  
 
