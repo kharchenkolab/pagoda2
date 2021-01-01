@@ -39,7 +39,7 @@ Next we feed this input into the function `basicP2proc()`, which performs all ba
 
 ```r
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
-    n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
+                    n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 ```
 
 ```
