@@ -38,61 +38,8 @@ Next we feed this input into the function `basicP2proc()`, which performs all ba
 
 
 ```r
-p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
-```
-
-```
-## 3000 cells, 12546 genes; normalizing ...
-```
-
-```
-## Using plain model
-```
-
-```
-## Winsorizing ...
-```
-
-```
-## log scale ...
-```
-
-```
-## done.
-```
-
-```
-## calculating variance fit ...
-```
-
-```
-##  using gam
-```
-
-```
-## 173 overdispersed genes ... 173
-```
-
-```
-## persisting ...
-```
-
-```
-## done.
-```
-
-```
-## running PCA using 2000 OD genes .
-```
-
-```
-## .
-## .
-## .
-```
-
-```
-##  done
+p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
+    n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 ```
 
 ```
@@ -100,10 +47,6 @@ p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, n.odg
 ## adding data ... done
 ## building index ... done
 ## querying ... done
-```
-
-```
-## running tSNE using 2 cores:
 ```
 
 We can now quickly view the results via the interactive web application. First we run `extendedP2proc()` to calculate pathway overdispersion for a specific organism using GO. We currently support three organisms: 'hs' (Homo Sapiens), 'mm' (Mus Musculus, mouse) or 'dr' (Danio Rerio, zebrafish). (This can take some time to run, so we'll omit it for the vignettes.) Then create a pagoda2 "web object" to be used for the application. This can be accessed via your web browser with the function `show.app()`. 
@@ -120,7 +63,7 @@ We can now quickly view the results via the interactive web application. First w
 ## show.app(app=p2app, name='pagoda2 app')
 ```
 
-And that's it! You will now be able to interactive with the processed dataset via the web brower. The more in-depth demo regarding the web application can be found (here)[https://www.youtube.com/watch?v=xzpG1ZYE4Og].
+And that's it! You will now be able to interactive with the processed dataset via the web brower. The more in-depth demo regarding the web application can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
 # II. In-Depth Processing and Analysis 
@@ -402,11 +345,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 7 ...
+##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 10 levels "1","2","3","4",..: 4 1 1 10 10 1 5 3 5 7 ...
+##   ..$ multilevel: Factor w/ 12 levels "1","2","3","4",..: 10 9 9 7 7 9 4 3 4 2 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 7 7 8 9 5 9 4 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 8 8 7 7 8 9 4 9 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -432,7 +375,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 21 clusters ...
+## running differential expression with 22 clusters ...
 ```
 
 ```
@@ -507,18 +450,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 18.19.vs.20.12.21:List of 2
+##  $ 14.vs.15:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "18.19.vs.20.12.21"
-##   .. ..$ shortdescription: chr "18.19.vs.20.12.21"
-##   ..$ genes     : chr [1:38] "CD63" "IFITM3" "TMSB4X" "GPX4" ...
-##  $ 15.vs.17         :List of 2
+##   .. ..$ genesetname     : chr "14.vs.15"
+##   .. ..$ shortdescription: chr "14.vs.15"
+##   ..$ genes     : chr [1:137] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
+##  $ 13.vs.7 :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "15.vs.17"
-##   .. ..$ shortdescription: chr "15.vs.17"
-##   ..$ genes     : chr [1:157] "TSC22D3" "SSR4" "CD79A" "KLF2" ...
+##   .. ..$ genesetname     : chr "13.vs.7"
+##   .. ..$ shortdescription: chr "13.vs.7"
+##   ..$ genes     : chr [1:1672] "RPL21" "RPL31" "RPS6" "RPS27" ...
 ```
 
 To add GO Terms as genesets run the following
@@ -617,7 +560,7 @@ This app will now be viewable as long as our R session is running. However we al
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
-The more in-depth demo regarding the web application and how it is used can be found (here)[https://www.youtube.com/watch?v=xzpG1ZYE4Og].
+The more in-depth demo regarding the web application and how it is used can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
 You can view the offline app by pointing your browser to http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/index.html

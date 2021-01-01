@@ -63,7 +63,7 @@ We can now quickly view the results via the interactive web application. First w
 ## show.app(app=p2app, name='pagoda2 app')
 ```
 
-And that's it! You will now be able to interactive with the processed dataset via the web brower. The more in-depth demo regarding the web application can be found (here)[https://www.youtube.com/watch?v=xzpG1ZYE4Og].
+And that's it! You will now be able to interactive with the processed dataset via the web brower. The more in-depth demo regarding the web application can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
 # II. In-Depth Processing and Analysis 
@@ -344,7 +344,7 @@ This app will now be viewable as long as our R session is running. However we al
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
-The more in-depth demo regarding the web application and how it is used can be found (here)[https://www.youtube.com/watch?v=xzpG1ZYE4Og].
+The more in-depth demo regarding the web application and how it is used can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
 You can view the offline app by pointing your browser to http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/index.html
