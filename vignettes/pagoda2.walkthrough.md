@@ -3,12 +3,9 @@
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
 
-Pagoda2 is an R package developed for analyzing standalone scRNAseq datasets. For joint analysis of multiple datasets, please see the package [Conos](https://github.com/kharchenkolab/conos). Note that pagoda2 is primarily used to preprocess input datasets for Conos. 
+Pagoda2 performs basic tasks such as cell size normalization/corrections and residual gene variance normalization, and can then be used to perform tasks such as identifying subpopulations and running differential expression within individual samples. The companion web application allows users to interactively explore the transcriptional signatures of subpopulations within the dataset. Users are able to investigate the molecular identity of selected entities, and inspect the associated gene expression patterns through annotated gene sets and pathways, including Gene Ontology (GO) categories. Users may also perform differential expression of selected cells via the frontend application.
 
-Pagoda2 performs basic tasks such as cell size normalization and gene variance normalization, and can then be used to perform tasks such as identifying subpopulations and running differential expression within individual samples. The companion web application allows users to interactively explore the transcriptional signatures of the dataset. Users are able to investigate the molecular identity of selected entities, and inspect the associated gene expression patterns through annotated gene sets and pathways, including Gene Ontology (GO) categories. Users may also perform differential expression of selected cells within the frontend aplication.
-
-We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`.  We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail the steps involved in quality control and processing. Finally we generate an interactive web application in order to explore the dataset.
-
+We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`. We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail and motivate the steps involved in quality control/processing. Finally we will generate an interactive web application in order to explore the dataset.
 
 
 # I. Fast Processing and Exploration with Pagoda2
@@ -32,7 +29,7 @@ We have pre-generated a dataset of 3000 bone marrow cells that you can load as a
 countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 ```
 
-Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e., the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
+Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
 
 
 Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters with infomap, multilevel and walktrap and generate largeVis and tSNE embeddings.
@@ -50,7 +47,7 @@ p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10,
 ## querying ... done
 ```
 
-We can now quickly view the results via the interactive web application. First we run `extendedP2proc()` to calculate pathway overdispersion for a specific organism using GO. We currently support three organisms: 'hs' (Homo Sapiens), 'mm' (Mus Musculus, mouse) or 'dr' (Danio Rerio, zebrafish). (This can take some time to run, so we'll omit it for the vignettes.) Then create a pagoda2 "web object" to be used for the application. This can be accessed via your web browser with the function `show.app()`. 
+We can now quickly view the results via the interactive web application. First we run `extendedP2proc()` to calculate pathway overdispersion for a specific organism using GO. We currently support three organisms: 'hs' (Homo Sapiens), 'mm' (Mus Musculus, mouse) or 'dr' (Danio Rerio, zebrafish). (This can take some time to run, so we'll omit it for the vignettes.) Then we create a pagoda2 "web object" to be used for the application. This can be accessed via your web browser with the function `show.app()`. 
 
 
 ```r
@@ -64,12 +61,12 @@ We can now quickly view the results via the interactive web application. First w
 ## show.app(app=p2app, name='pagoda2 app')
 ```
 
-And that's it! You will now be able to interactive with the processed dataset via the web brower. The more in-depth demo regarding the web application can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
+And that's it! You will now be able to interact with the processed dataset via the web browser. The more in-depth demo regarding the web application can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
 # II. In-Depth Processing and Analysis 
 
-We now will more slowly re-run the steps within `basicP2proc()`, starting from the beginning.
+We now will re-run and explain each step within `basicP2proc()`, starting from the beginning. 
 
 
 ## Preliminary: Loading the libraries
@@ -116,7 +113,8 @@ cm[1:3, 1:3]
 ## FAM138A                                         .
 ## OR4F5                                           .
 ```
-We can get more information about how the matrix is stored by running str(). To find out more information about the sparse matrix format check the documentation of the 'Matrix' R package.
+
+We can get more information about how the matrix is stored by running `str()`. To find out more information about the sparse matrix format, check the documentation of the 'Matrix' package.
 
 ```r
 str(cm)
@@ -134,7 +132,9 @@ str(cm)
 ##   ..@ factors : list()
 ```
 
-Next let's look at the distribution of molecules per cell and molecules per gene for this dataset in log10 scale:
+In order to catch outliers, we can begin with a fairly basic procedure of looking at the dependency between the number of molecules measured per cell and the number of genes per cell. Let's plot the distribution of molecules per cell and molecules per gene for this dataset in log10 scale. 
+
+:
 
 ```r
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
@@ -144,7 +144,7 @@ hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='mole
 
 ![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
 
-This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the pagoda2 default QC function to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
+This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the default QC function `gene.vs.molecule.cell.filter()` to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
 
 ```r
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -152,7 +152,7 @@ counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 
 ![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
 
-Next thing we want to do is to find lowly expressed genes and remove them from the dataset. Subsequent pagoda processing will do this automatically for extremely lowly expressed genes anyway.
+Next thing we want to do is to find lowly expressed genes and remove them from the dataset. (Subsequent pagoda2 steps will do this automatically for extremely lowly expressed genes anyway, but for the purpose of this tutorial, we demonstrate this.)
 
 
 ```r
@@ -162,7 +162,7 @@ abline(v=1, lty=2, col=2)
 
 ![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
 
-Let's filter and check the size of the resulting matrix:
+Let's filter out counts less than 10 and check the size of the resulting matrix:
 
 
 ```r
@@ -177,9 +177,9 @@ dim(counts)
 
 ## Part 2: Analysing Data with Pagoda2
 
-We see that we now have 12k genes and 2998 cells. We are now ready to analyze our data with Pagoda2. Keep in mind that all of the following steps can be done with just two functions automatically but for the purposes of this tutorial we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
+We see that we now have 12k genes and 2998 cells. We are now ready to analyze our data with Pagoda2. Remember: all of the following steps can be done with just two functions automatically (see above) but for the purposes of this tutorial we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
 
-First we will generate a pagoda object that will contain all our results. Our input matrix contains duplicated gene names (usually originating from different transcripts in the counting process). The easier way to resolve this problem is by making the gene names unique:
+First we will generate a pagoda2 object that will contain all our results. Our input matrix contains duplicated gene names (usually originating from different transcripts in the counting process). The easier way to resolve this problem is by making the gene names unique:
 
 
 ```r
@@ -203,11 +203,17 @@ r <- Pagoda2$new(counts, log.scale=TRUE, n.cores=1)
 ## done.
 ```
 
-Check that you have the matrix in the correct orientation and that number of cells you are getting here is what you expect (like we do here). The input matrix must be in the genes x cells configuration.
+Check that you have the matrix in the correct orientation and that number of cells you are getting here is what you expect (like we do here). The input matrix must be in the genes by cells configuration.
 
-Also note the n.cores parameter. Change this value to match the number of CPU cores on your system.
+Next, we’ll adjust the variance with `adjustVariance()` in order to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream analysis. 
 
-Next, we’ll adjust the variance, to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis:
+In order to motivate what we are doing by variance normalization, recall that our goal is to measure the variance of a given gene. (Remember: we are looking
+at the variation of this gene across the population of cells measured.)
+The key dependency of this variance is the magnitude. If you thus observe highly-expressed genes, these will always give you high expression variance, 
+regardless of whether these are specific to a cell subpopulation or not. 
+
+For variance normalization, we begin by fitting a smooth linear model of variance by magnitude for the dataset. We then quantify the deviation against this dataset-wide trend, and rescale the variance to put the genes on a comparable scale for downstream analysis.
+
 
 
 ```r
@@ -240,7 +246,9 @@ r$adjustVariance(plot=TRUE, gam.k=10)
 
 ![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
 
-There are many alternative ways of proceeding with the downstream analysis. Below we’ll use the simplest, default scenario, where we first reduce the dataset dimensions by running PCA, and then move into k-nearest neighbor graph space for clustering and visualization calculations. First, the PCA reduction. Depending on the complexity of the dataset you are analysing you may want to adjust the nPcs parameter.
+Now that the variance of the gene expression is on a comparable scale, there are many alternative ways of proceeding with the downstream analysis. Below we’ll use the simplest default scenario, whereby we first reduce the dataset dimensions by running PCA, and then move into the k-nearest neighbor (KNN) graph space for clustering and visualization calculations. 
+
+First, we generate the PCA reduction. Depending on the complexity of the dataset you are analyzing, you may want to adjust the parameter `nPcs`.
 
 
 ```r
@@ -261,7 +269,7 @@ r$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
 ##  done
 ```
 
-Next we will generate a KNN graph of cells that will allow us to identify clusters of cells.
+We will now construct a KNN graph space that will allow us to identify clusters of cells:
 
 ```r
 r$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
@@ -274,13 +282,13 @@ r$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
 ## querying ... done
 ```
 
-Next on the basis of this KNN we will call clusters
+On the basis of this KNN graph, we will call clusters
 
 ```r
 r$getKnnClusters(method=infomap.community, type='PCA')
 ```
 
-Next we generate a 2 dimensional embedding of the data for visualization purposes with largeVis. LargeVis is much faster that the tSNE often used in single-cell analysis.
+Next we generate a 2D embedding of the data with largeVis for visualization:
 
 ```r
 M <- 30
@@ -290,8 +298,9 @@ r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma
 ```
 ## Estimating embeddings.
 ```
+(Note that largeVis is much faster that the tSNE, which often used in single-cell analysis.)
 
-and we plot the data:
+We now visualize the data:
 
 
 ```r
@@ -300,7 +309,7 @@ r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.siz
 
 ![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
 
-Next we can generate and plot a tSNE embedding. This can take a while to run!
+We next can constructr and plot a tSNE embedding. (This can take some time to complete.)
 
 ```r
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
@@ -309,9 +318,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups
 
 ![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
 
-We can overlay the expresssion of specific marker genes on this embedding to identify clusters. 
-
-For example, HBB will identify heme cells.
+Note that we are overlay the expresssion of specific marker genes on this embedding to identify clusters. For instance, subsetting by `"HBB"` will identify heme cells:
 
 
 ```r
@@ -321,6 +328,8 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
 
+Similarly, subsetting by the marker gene `"LYZ"` should show us CD14+ Monocytes:
+
 
 ```r
 gene <-"LYZ"
@@ -329,7 +338,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
 
-Pagoda2 allows us to generate multiple alternative clusterings. Here will will use multilevel and walktrap
+Pagoda2 allows us to generate multiple alternative clusterings. Here we will construct multilevel and walktrap clusterings (along with the infomap clusterings generated above):
 
 ```r
 r$getKnnClusters(method=multilevel.community, type='PCA', name='multilevel')
@@ -346,11 +355,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 23 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 9 11 11 3 3 11 6 4 6 8 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 5 8 8 2 2 8 6 4 6 9 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 13 levels "1","2","3","4",..: 9 9 9 8 8 9 10 3 10 2 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 8 8 7 7 8 9 4 9 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -368,7 +377,7 @@ gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 
 ![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
 
-We can then perform differential expression between these clusters
+We can then perform differential expression between these clusters:
 
 
 ```r
@@ -376,7 +385,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 22 clusters ...
+## running differential expression with 23 clusters ...
 ```
 
 ```
@@ -388,7 +397,8 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 
-and visualise the top markers of a specific cluster
+and visualise the top markers of a specific cluster:
+
 
 ```r
 de <- r$diffgenes$PCA[[1]][['2']]
@@ -397,6 +407,7 @@ r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
 ![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
 
+Let's further investigate the marker gene `"CD74"` as shown above, with `plotEmbedding()`:
 
 
 ```r
@@ -406,7 +417,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
 
-At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1) or look for hierarchical differential expression. The following two chunks will run overdispersion analysis (don't run the second one, it takes too long!). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells, for this reason we prefer hierarchical differential expression. 
+At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1 in [scde](https://hms-dbmi.github.io/scde/)) or investigate hierarchical differential expression. The following two code snippetss will run overdispersion analysis (although we don't run the second in this tutorial, as it takes too long to complete). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells---for this reason we prefer hierarchical differential expression. 
 
 We will need the output of the first of the following two blocks for our web app generation:
 
@@ -424,7 +435,7 @@ go.env <- list2env(eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(ri
 
 ```r
 ## DON'T RUN
-## test over dispersion
+## test overdispersion
 # r$testPathwayOverdispersion(go.env, verbose=TRUE, correlation.distance.threshold=0.95, recalculate.pca=FALSE, top.aspects=15)
 ```
 
@@ -440,9 +451,9 @@ hdea <- r$getHierarchicalDiffExpressionAspects(type='PCA', clusterName='communit
 ```
 
 
-Next we will generate a web app that will allow us to browse the dataset interactively. Note that all these steps can be performed with the basicP2web() function.
+Next we will generate a web app that will allow us to browse the dataset interactively. (Note that all these steps can be performed with the `basicP2web()` function, as described above in the first section.)
 
-We will need to prepare a set of genes that we want to be accessible from the app. For the hierarchical differential expression to work we must include the geneset from the hierarchical differential expression. However we can include any genesets we want, including GO geneset and custom sets of marker genes.
+We will need to prepare a set of genes that we want to be accessible from the application. For the hierarchical differential expression to work, we must include the geneset used from the hierarchical differential expression. However we can include any genesets we want, including GO geneset and custom sets of marker genes:
 
 ```r
 genesets <- hierDiffToGenesets(hdea)
@@ -456,16 +467,16 @@ str(genesets[1:2])
 ##   .. ..$ locked          : logi TRUE
 ##   .. ..$ genesetname     : chr "14.vs.15"
 ##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:160] "PRTN3" "ELANE" "MPO" "AZU1" ...
-##  $ 10.vs.3 :List of 2
+##   ..$ genes     : chr [1:133] "EEF1A1" "RPL10A" "RPS4X" "GNB2L1" ...
+##  $ 3.vs.8  :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "10.vs.3"
-##   .. ..$ shortdescription: chr "10.vs.3"
-##   ..$ genes     : chr [1:110] "H2AFZ" "HMGB1" "PTMA" "LYZ" ...
+##   .. ..$ genesetname     : chr "3.vs.8"
+##   .. ..$ shortdescription: chr "3.vs.8"
+##   ..$ genes     : chr [1:128] "FTH1" "TYROBP" "FTL" "CTSS" ...
 ```
 
-To add GO Terms as genesets run the following
+To add GO Terms as genesets, run the following
 
 ```r
 library(GO.db)
@@ -478,16 +489,17 @@ library(GO.db)
 ```r
 termDescriptions <- Term(GOTERM[names(go.env)]) # saves a good minute or so compared to individual lookups
 
-sn <- function(x) { names(x) <- x; x}
+sn <- function(x) { names(x) <- x; x}  ## utility function
 
 genesets.go <- lapply(sn(names(go.env)),function(x) {
   list(properties=list(locked=TRUE, genesetname=x, shortdescription=as.character(termDescriptions[x])), genes=c(go.env[[x]]))
 })
+
 ## concatenate
 genesets <- c(genesets, genesets.go)
 ```
 
-Add per cluster differentially expressed genes to the gene sets
+Add per cluster differentially expressed genes to the gene sets:
 
 ```r
 deSets <- get.de.geneset(r, groups = r$clusters$PCA[['community']], prefix = 'de_')
@@ -495,14 +507,14 @@ deSets <- get.de.geneset(r, groups = r$clusters$PCA[['community']], prefix = 'de
 genesets <- c(genesets, deSets)
 ```
 
-## Part 3: Generate web app
+## Part 3: Generate Frontend Application
 Next we can add metadata to our web app. The metadata we add can be completely arbitrary and include processing parameters, notes of anything else we like. They are provided in a list of strings. If we include an entry called apptitle, this will appear as an app title in our web browser when we open the app.
 
 ```r
 appmetadata <- list(apptitle = 'Demo_App')
 ```
 
-We also want to update the original pagoda2 object to contain a KNN graph of genes. We will need this to enable the 'find similar gene' feature of our webapp. This takes a moment to complete.
+We also want to update the original pagoda2 object to contain a KNN graph of genes. We will need this to enable the 'find similar gene' feature of our application. This takes a moment to complete.
 
 ```r
 r$makeGeneKnnGraph(n.cores = 1)
@@ -517,7 +529,7 @@ r$makeGeneKnnGraph(n.cores = 1)
 
 Finally before we make our web app we want to generate metadata for the cells. The exact data that we will want to incorporate will depend on the dataset we are processing. For example if we are co-processing multiple samples we will usually want to label cells by the sample of origin. We might also want to add our clusterings as metadata. 
 
-Several functions give very detailed control over how metadata will be presented and generated. For example we can generate different palettes or set colors manually. The factorListToMetadata() function will do everything for us, check its documentation for more details. Here we will generate metadata for the different clusterings we previously generated manually
+Several functions give very detailed control over how metadata will be presented and generated. For example we can generate different palettes or set colors manually. The factorListToMetadata() function will do everything for us, check its documentation for more details. Here we will generate metadata for the different clusterings we previously generated manually:
 
 
 ```r
@@ -535,7 +547,7 @@ names(p1) <- levels(a)
 additionalMetadata$walktrap <- p2.metadata.from.factor(r$clusters$PCA[['walktrap']], displayname = 'Walktrap', pal = p1)
 ```
 
-We are now ready to build our app.
+We are now ready to build our app:
 
 ```r
 p2web <- make.p2.app(r, 
@@ -547,28 +559,28 @@ p2web <- make.p2.app(r,
   )
 ```
 
-We can view this app directly from our R session
+We can view this app directly from our R session, which will open the application in the browser:
 
 
 ```r
 ##  show.app(app=p2web, name='app')
 ```
 
-This app will now be viewable as long as our R session is running. However we also have the option to serialize this app into a binary file on our hard drive that will allow us to view it after we close the R session directly from our browser. This takes about a minute to generate.
+This app will now be viewable as long as our R session is running. However we also have the option to serialize this app into a binary file `*.bin` on our hard drive that will allow us to view it after we close the R session directly from our browser:
 
 
 ```r
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
-The more in-depth demo regarding the web application and how it is used can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
+For the more in-depth demo regarding how to use the web application to analyze datasets, please check [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
 You can view the offline app by pointing your browser to http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/index.html
 
 The file can also be shared by uploading it to a web server and be viewed remotely by navigating to the following URL: http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL= [URL TO FILE]
 
-Finally don't forget to save your pagoda2 object (serializing is not a substitute for saving)
+Finally don't forget to save your pagoda2 object as an rds object:
 
 ```r
 ##  saveRDS(r, 'pagoda2object.rds')
