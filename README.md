@@ -11,9 +11,9 @@
   * [Installing with Mac OS](#installing-with-mac-os)
   * [Pagoda2 via Docker](#pagoda2-via-docker)
 
-## Pagoda2: Rapid Processing and Analysis of Large scRNAseq Datasets
+## Pagoda2: Rapid Processing and Interactive Analysis of Large Datasets
 
-Pagoda2 was written to be optimized to quickly process and analyze modern scRNAseq datasets, which are both large (approximately 10^6 cells or greater) and sparse. Broadly speaking, the toolkit provides methods for quality control, filtering, clustering, visualization, differential expression, cross-cutting aspects/states, and geneset/pathway overdispersion analysis. The companion frontend application allows users to inspect the gene expression patterns of subpopulations through annotated gene sets and pathways, including Gene Ontology (GO) categories. Users may also perform differential expression from their browsers via the frontend application.
+Pagoda2 was written to be optimized to quickly process and analyze modern scRNAseq datasets, which are both large (approximately 1e6 cells or greater) and sparse. Broadly speaking, the toolkit provides methods for quality control, filtering, clustering, visualization, differential expression, cross-cutting aspects/states, and geneset/pathway overdispersion analysis. The companion frontend application allows users to inspect the gene expression patterns of subpopulations through annotated gene sets and pathways, including Gene Ontology (GO) categories. Users may also perform differential expression from their browsers via the frontend application.
 
 Note that Pagoda2 is an R package developed for analyzing standalone scRNAseq datasets. For joint analysis of multiple datasets, please see the package [Conos](https://github.com/kharchenkolab/conos). (Pagoda2 is primarily used to preprocess input datasets for Conos.)
 
