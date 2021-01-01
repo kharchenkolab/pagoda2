@@ -2169,7 +2169,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     ## env - pathway to gene environment
 
-    #' @description Test pathway overdispersion. 
+    #' @description Test pathway overdispersion
     #' Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-dbmi.github.io/scde/>
     #' 
     #' @param setenv Specific environment for pathway analysis
@@ -2183,15 +2183,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param use.oe.scale boolean Whether the variance of the returned aspect patterns should be normalized using observed/expected value instead of the default chi-squared derived variance corresponding to overdispersion Z-score (default=FALSE)
     #' @param return.table boolean Whether to return a text table with results (default=FALSE)
     #' @param name string Title (default='pathwayPCA')
-    #' @param correlation.distance.threshold numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.redundancy() (default=0.2)
-    #' @param loading.distance.threshold numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.loading.redundancy() (default=0.2)
+    #' @param correlation.distance.threshold numeric Similarity threshold for grouping interdependent aspects in pagoda.reduce.redundancy() (default=0.2)
+    #' @param loading.distance.threshold numeric Similarity threshold for grouping interdependent aspects in pagoda.reduce.loading.redundancy() (default=0.2)
     #' @param top.aspects Restrict output to the top N aspects of heterogeneity (default=Inf)
     #' @param recalculate.pca boolean Whether to recalculate PCA (default=FALSE)
     #' @param save.pca boolean Whether to save the PCA results (default=TRUE). If TRUE, caches them in self$misc[['pwpca']].
     #'
     #' @return pathway output
     testPathwayOverdispersion=function(setenv, type='counts', max.pathway.size=1e3, min.pathway.size=10, 
-      n.randomizations=5, verbose=FALSE, score.alpha=0.05, plot=FALSE, cells=NULL, adjusted.pvalues=TRUE,
+      n.randomizations=5, verbose=FALSE, n.cores=self$n.cores, score.alpha=0.05, plot=FALSE, cells=NULL, adjusted.pvalues=TRUE,
       z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE, name='pathwayPCA',
       correlation.distance.threshold=0.2, loading.distance.threshold=0.01, top.aspects=Inf, recalculate.pca=FALSE, save.pca=TRUE) {
   
@@ -2387,14 +2387,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (verbose) {
         message("clustering aspects based on gene loading ... ",appendLF=FALSE)
       }
-      tam2 <- scde::pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=FALSE,distance.threshold=loading.distance.threshold,n.cores=n.cores)
+      saveRDS(xmv, "/Users/evanbiederstedt/downloads/xmv.rds")
+      saveRDS(pwpca, "/Users/evanbiederstedt/downloads/pwpca.rds")
+      tam2 <- pagoda.reduce.loading.redundancy(list(xv=xmv,xvw=matrix(1,ncol=ncol(xmv),nrow=nrow(xmv))),pwpca,NULL,plot=FALSE,distance.threshold=loading.distance.threshold,n.cores=n.cores)
       if (verbose) {
         message(nrow(tam2$xv)," aspects remaining")
       }
       if (verbose) {
         message("clustering aspects based on pattern similarity ... ",appendLF=FALSE)
       }
-      tam3 <- scde::pagoda.reduce.redundancy(tam2, distance.threshold=correlation.distance.threshold,top=top.aspects)
+      tam3 <- pagoda.reduce.redundancy(tam2, distance.threshold=correlation.distance.threshold,top=top.aspects)
       if (verbose) {
         message(nrow(tam3$xv)," aspects remaining\n")
       }

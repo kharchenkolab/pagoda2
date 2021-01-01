@@ -142,8 +142,10 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
   #hca$plotting.order <- c(cumsum(cluster.sizes)-round(cluster.sizes/2),rep(0,length(hca$order)-length(hca$original.order)))
   hca$plotting.order <- c((cumsum(cluster.sizes)-round(cluster.sizes/2))[match(1:length(mo),mo)],rep(0,length(hca$order)-length(hca$original.order)))
 
-  if(is.null(p2$misc[['pathwayOD']])) stop("pathwayOD missing, please run testPathwayOverdispersion()")
-  tamr <- p2$misc[['pathwayOD']];
+  if(is.null(p2$misc[['pathwayOD']])){
+    stop("pathwayOD missing, please run testPathwayOverdispersion()")
+  }
+  tamr <- p2$misc[['pathwayOD']]
   env <- tamr$env; 
   if(is.null(zlim)) { zlim <- c(-1, 1)*quantile(tamr$xv, p = 0.95) }
 
@@ -165,10 +167,10 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
     if(is.null(rownames(embedding))) { stop("provided 2D embedding lacks cell names") }
     vi <- rownames(embedding) %in% colnames(tamr$xv);
     if(!all(vi)) {
-      warning("provided 2D embedding contains cells that are not in the tamr");
+      warning("provided 2D embedding contains cells that are not in the tamr")
       embedding <- embedding[vi,];
       if(nrow(embedding)<2) {
-        stop("provided 2D embedding contains too few cells after intersecting with the cell names in tamr");
+        stop("provided 2D embedding contains too few cells after intersecting with the cell names in tamr")
       }
     }
     # flip embedding y axis since this is what p1 does

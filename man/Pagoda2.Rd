@@ -1681,7 +1681,7 @@ localPcaKnn return here
 \if{html}{\out{<a id="method-testPathwayOverdispersion"></a>}}
 \if{latex}{\out{\hypertarget{method-testPathwayOverdispersion}{}}}
 \subsection{Method \code{testPathwayOverdispersion()}}{
-Test pathway overdispersion. 
+Test pathway overdispersion
 Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-dbmi.github.io/scde/>
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$testPathwayOverdispersion(
@@ -1691,6 +1691,7 @@ Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-
   min.pathway.size = 10,
   n.randomizations = 5,
   verbose = FALSE,
+  n.cores = self$n.cores,
   score.alpha = 0.05,
   plot = FALSE,
   cells = NULL,
@@ -1722,6 +1723,8 @@ Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-
 
 \item{\code{verbose}}{boolean Whether to give verbose output (default=TRUE)}
 
+\item{\code{n.cores}}{numeric Number of cores to use (default=1)}
+
 \item{\code{score.alpha}}{numeric Significance level of the confidence interval for determining upper/lower bounds (default=0.05)}
 
 \item{\code{plot}}{boolean Whether to output the plot (default=FALSE)}
@@ -1738,9 +1741,9 @@ Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-
 
 \item{\code{name}}{string Title (default='pathwayPCA')}
 
-\item{\code{correlation.distance.threshold}}{numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.redundancy() (default=0.2)}
+\item{\code{correlation.distance.threshold}}{numeric Similarity threshold for grouping interdependent aspects in pagoda.reduce.redundancy() (default=0.2)}
 
-\item{\code{loading.distance.threshold}}{numeric Similarity threshold for grouping interdependent aspects in scde::pagoda.reduce.loading.redundancy() (default=0.2)}
+\item{\code{loading.distance.threshold}}{numeric Similarity threshold for grouping interdependent aspects in pagoda.reduce.loading.redundancy() (default=0.2)}
 
 \item{\code{top.aspects}}{Restrict output to the top N aspects of heterogeneity (default=Inf)}
 

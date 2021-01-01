@@ -279,6 +279,7 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores=1, target.ndf=NULL)
     return(list(i = mi[mo], v = rt[mo]))
   })
 
+  saveRDS(pl, "/Users/evanbiederstedt/downloads/pl.rds")
   #x <- .Call("plSemicompleteCor2", pl, PACKAGE = "pagoda2")
   x <- plSemicompleteCor2(pl)
 

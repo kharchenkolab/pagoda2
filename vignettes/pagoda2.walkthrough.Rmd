@@ -11,9 +11,64 @@ vignette: >
 
 # Overview
 
-This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2. We will begin with loading the dataset and performing QC. Then we will process the dataset with pagoda2 and finally generate an interactive web application for interactive exploration of the dataset.
+This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
 
-# Analysis
+Pagoda2 is an R package developed for analyzing standalone scRNAseq datasets. For joint analysis of multiple datasets, please see the package [Conos](https://github.com/kharchenkolab/conos). Note that pagoda2 is primarily used to preprocess input datasets for Conos. 
+
+Pagoda2 performs basic tasks such as cell size normalization and gene variance normalization, and can then be used to perform tasks such as identifying subpopulations and running differential expression within individual samples. The companion web application allows users to interactively explore the transcriptional signatures of the dataset. Users are able to investigate the molecular identity of selected entities, and inspect the associated gene expression patterns through annotated gene sets and pathways, including Gene Ontology (GO) categories. Users may also perform differential expression of selected cells within the frontend aplication.
+
+We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`.  We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail the steps involved in quality control and processing. Finally we generate an interactive web application in order to explore the dataset.
+
+
+
+# I. Fast Processing and Exploration with Pagoda2
+
+This is the rapid walkthrough of pagoda2, showing how the package allows users to quickly process their datasets and load them into an interactive frontend application.
+
+## Preliminary: Loading the libraries
+```{r message=FALSE}
+library(Matrix)
+library(igraph)
+library(pagoda2)
+library(dplyr)
+library(ggplot2)
+```
+
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix:
+
+```{r}
+countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+```
+
+Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e., the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
+
+
+Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters with infomap, multilevel and walktrap and generate largeVis and tSNE embeddings.
+
+```{r}
+p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
+```
+
+We can now quickly view the results via the interactive web application. First we run `extendedP2proc()` to calculate pathway overdispersion for a specific organism using GO. We currently support three organisms: 'hs' (Homo Sapiens), 'mm' (Mus Musculus, mouse) or 'dr' (Danio Rerio, zebrafish). (This can take some time to run, so we'll omit it for the vignettes.) Then create a pagoda2 "web object" to be used for the application. This can be accessed via your web browser with the function `show.app()`. 
+
+```{r}
+## calculate pathway overdispersion for human
+## ext.res <- extendedP2proc(p2.processed, organism = 'hs')
+
+## create app object
+## p2app <- webP2proc(ext.res$p2, title = 'Quick pagoda2 app', go.env = ext.res$go.env)
+
+## open app in the web browser via R session
+## show.app(app=p2app, name='pagoda2 app')
+```
+
+And that's it! You will now be able to interactive with the processed dataset via the web brower. The more in-depth demo regarding the web application can be found (here)[https://www.youtube.com/watch?v=xzpG1ZYE4Og].
+
+
+# II. In-Depth Processing and Analysis 
+
+We now will more slowly re-run the steps within `basicP2proc()`, starting from the beginning.
+
 
 ## Preliminary: Loading the libraries
 ```{r message=FALSE}
@@ -68,8 +123,9 @@ dim(counts)
 ```
 
 
-## Part 2: Analysing data with Pagoda2
-We see that we now have 12k genes and 2998 cells. We are now ready to analyse our data with Pagoda2. Keep in mind that all of the following steps can be done with just two functions automatically but for the purposes of this tutorial we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
+## Part 2: Analysing Data with Pagoda2
+
+We see that we now have 12k genes and 2998 cells. We are now ready to analyze our data with Pagoda2. Keep in mind that all of the following steps can be done with just two functions automatically but for the purposes of this tutorial we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
 
 First we will generate a pagoda object that will contain all our results. Our input matrix contains duplicated gene names (usually originating from different transcripts in the counting process). The easier way to resolve this problem is by making the gene names unique:
 
@@ -287,6 +343,9 @@ This app will now be viewable as long as our R session is running. However we al
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
+The more in-depth demo regarding the web application and how it is used can be found (here)[https://www.youtube.com/watch?v=xzpG1ZYE4Og].
+
+
 You can view the offline app by pointing your browser to http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/index.html
 
 The file can also be shared by uploading it to a web server and be viewed remotely by navigating to the following URL: http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaURL/index.html?fileURL= [URL TO FILE]
@@ -296,76 +355,4 @@ Finally don't forget to save your pagoda2 object (serializing is not a substitut
 ##  saveRDS(r, 'pagoda2object.rds')
 ```
 
-# Quick Analysis
 
-
-The following describes how to get quickly from a count matrix to to a viewable pagoda2 app that allows you to view your data.
-This currently only works for human (organism='hs') and mouse (organism='mm') datasets.
-
-```{r eval=FALSE}
-
-## # Get your count matrix in sparse or full format
-## # For example you can use the 
-## # readMM() from the Matrix package or the
-## # read10xMatrix() function from the github barkasn/nbHelpers package
-## # This matrix can be sparse matrix object from the Matrix package
-## 
-## # countMatrix <- load_my_count_matrix()
-## # Rows correspond to genes and Columns to cells
-## # If you experience problems with duplicate cells you can use
-## # rownames(countMatrix) <- make.unique(rownames(countMatrix))
-
-## p2 <- basicP2proc(countMatrix, n.cores = 4) ## 'multilevel' run here
-
-## p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
-## p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap')
-
-## ext.res <- extendedP2proc(p2, n.cores = 4, organism = 'hs')
-
-## p2 <- ext.res$p2
-## go.env <- ext.res$go.env
-## rm(ext.res)
-
-## # Make cell metadata from the default clusters generated during basicP2proc()
-## # This is optional, metadata.forweb can also be NULL
-## metadata.listfactors <- list(
-##     infomap = p2$clusters$PCA$infomap,
-##     multilevel = p2$clusters$PCA$multilevel,
-##     walktrap = p2$clusters$PCA$walktrap
-## )
-## metadata.forweb <- factorListToMetadata(metadata.listfactors)
-
-## # Make the web object
-## p2.webobject <- webP2proc(p2, additionalMetadata = metadata.forweb, title = 'Quick pagoda2 application', go.env = go.env)
-
-## # Serialize to file
-## # The serialisedApp.bin file will now contain all the information
-## # required to view the files via the web browser
-## p2.webobject$serializeToStaticFast('serialisedApp.bin')
-
-## # Alternatively you can view your dataset from the R session
-## # show.app(p2.webobject, browse = TRUE)
-
-```
-
-You can now navigate to <http://pklab.med.harvard.edu/nikolas/pagoda2/frontend/current/pagodaLocal/> and open the 'serialisedApp.bin' file when prompted to view your data.
-
-
-# Working with Cell Selections
-
-
-Pagoda2 allows you to easily work with cell selections generated in R or via the web interface.
-
-You can read a file of cell selections generated with the web interface using the readPagoda2SelectionFile() function. This will
-generate a list object that contains all the information about the selections. 
-
-You can make a cell selection file from a web selection object generated in R using the writePagoda2SelectionFile() function. You can send
-this file over email to unambiguously communicate cell subsets.
-
-In R it is often easier to work with cell selections in the form of factors. To convert a selection to a factor you can use the 
-factorFromP2Selection() function. This will return a named factor of the membership of each cell in selections. However, in order
-to do this, you will need to ensure that every cell belongs only to one selection. You can check if any cells are in multiple clusters
-and clean up your selection object using the functions: calcMulticlassified(), removeSelectionOverlaps(), plotSelectionOverlaps() and
-plotMulticlassified(). 
-
-You can also convert a factor to a pagoda2 selection using the factorToP2selection() function.

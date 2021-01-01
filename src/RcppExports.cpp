@@ -5,6 +5,7 @@
 #define NDEBUG 1
 #include <RcppEigen.h>
 #include <Rcpp.h>
+
 using namespace Rcpp;
 
 // WriteListToBinary

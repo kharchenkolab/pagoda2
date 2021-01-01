@@ -1,13 +1,26 @@
 #include "pagoda2.h"
+
+#include <stdlib.h>
+
 // [[Rcpp::depends(RcppArmadillo)]]
 
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
 #include <cmath>
+#include <queue>
+#include <algorithm>
+#include <iostream>
+#include <chrono>
+#include <vector>
+#include <queue>
+#include <list>
 
-using namespace Rcpp;
 
 #ifdef _OPENMP
   #include <omp.h>
 #endif
+
+using namespace Rcpp;
 
 
 // [[Rcpp::export]]
@@ -42,7 +55,7 @@ SEXP matWCorr(SEXP Mat, SEXP Matw){
       c(j,i)=nm/sqrt(dn);
       //R_CheckUserInterrupt();
     }
-    R_CheckUserInterrupt();
+    Rcpp::checkUserInterrupt();
   }
   return wrap(c);
 }
@@ -51,7 +64,8 @@ SEXP matWCorr(SEXP Mat, SEXP Matw){
 // [[Rcpp::export]]
 SEXP winsorizeMatrix(SEXP Mat, SEXP Trim){
   arma::mat m=Rcpp::as<arma::mat>(Mat);
-  int n=m.n_cols; int k=m.n_rows;
+  int n=m.n_cols; 
+  int k=m.n_rows;
   int ntr=round(n * Rcpp::as<double>(Trim)); // number of positions to trim (from each side)
   if(ntr==0) { return wrap(m); } // nothing needs to be done
   for(int i=0;i<k;i++) { // for every row of the matrix
@@ -71,10 +85,11 @@ SEXP winsorizeMatrix(SEXP Mat, SEXP Trim){
       //R_CheckUserInterrupt();
     }
     m.row(i)=z;
-    R_CheckUserInterrupt();
+    Rcpp::checkUserInterrupt();
   }
   return wrap(m);
 }
+
 
 // [[Rcpp::export]]
 SEXP plSemicompleteCor2(SEXP Pl) {
@@ -108,8 +123,11 @@ SEXP plSemicompleteCor2(SEXP Pl) {
           l22+=v1[k1]*v1[k1];
         } else if(id<0) { // need to advance k2
           do { k2++; } while(i2[k2]<i1[k1] && k2<v2s);
-          if(k2==v2s) { break; } // v2 ended, done with this pair
-          if(i2[k2]==i1[k1]) { // hit the same gene
+          if(k2==v2s) { 
+            // v2 ended, done with this pair
+            break; 
+          } else if (i2[k2]==i1[k1]) { 
+            // hit the same gene
             sgc++;
             l12+=v2[k2]*v1[k1];
             l11+=v2[k2]*v2[k2];
@@ -117,14 +135,16 @@ SEXP plSemicompleteCor2(SEXP Pl) {
           }
         }
       }
+      Rcpp::checkUserInterrupt();
       double cv=l11*l22;
       if(cv>0) { cv=l12/sqrt(cv); }
       cm(i,j)=cv; cm(j,i)=cv;
       sgc=v1s+v2s-sgc;
       cn(i,j)=sgc; cn(j,i)=sgc;
     }
-    R_CheckUserInterrupt();
+    Rcpp::checkUserInterrupt();
   };
   return List::create(Named("r") = wrap(cm),
                       Named("n") = wrap(cn));
 }
+

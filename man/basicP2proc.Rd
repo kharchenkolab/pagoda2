@@ -3,7 +3,7 @@
 \name{basicP2proc}
 \alias{basicP2proc}
 \title{Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
-make knn graph, identify clusters with infomap, multilevel and walktrap and make
+make knn graph, identify clusters with multilevel, and generate
 largeVis and tSNE embeddings.}
 \usage{
 basicP2proc(
@@ -57,12 +57,14 @@ a new pagoda2 object
 }
 \description{
 Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
-make knn graph, identify clusters with infomap, multilevel and walktrap and make
+make knn graph, identify clusters with multilevel, and generate
 largeVis and tSNE embeddings.
 }
 \examples{
-\donttest{
+donttest{
+## load count matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+## perform basic p2 processing
 p2 <- basicP2proc(cm)
 }
 }

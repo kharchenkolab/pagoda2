@@ -1,7 +1,7 @@
 ### A Collection of functions for quick analysis of single cell data with pagoda2
 
 #' Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
-#' make knn graph, identify clusters with infomap, multilevel and walktrap and make
+#' make knn graph, identify clusters with multilevel, and generate
 #' largeVis and tSNE embeddings.
 #' 
 #' @param cd count matrix whereby rows are genes, columns are cells.
@@ -20,23 +20,26 @@
 #' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE) 
 #' @return a new pagoda2 object
 #' @examples
-#' \donttest{
+#' donttest{
+#' ## load count matrix
 #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' ## perform basic p2 processing
 #' p2 <- basicP2proc(cm)
 #' }
 #' @export 
 basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
   log.scale=TRUE, trim=10, keep.genes=NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
   get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
+
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
-  p2 <- Pagoda2$new(cd, n.cores = n.cores, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell);
-  p2$adjustVariance(plot=FALSE, gam.k=10);
+  p2 <- Pagoda2$new(cd, n.cores = n.cores, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell)
+  p2$adjustVariance(plot=FALSE, gam.k=10)
   p2$calculatePcaReduction(nPcs = nPcs, n.odgenes = n.odgenes, maxit = 1000)
   ## Make KNN graph and generate clustering
   p2$makeKnnGraph(k = k, type='PCA', center=TRUE, weight.type = 'none', n.cores = n.cores, distance = 'cosine')
   ##p2$getKnnClusters(method = igraph::infomap.community, type = 'PCA' ,name = 'infomap')
-  p2$getKnnClusters(method = igraph::multilevel.community, type = 'PCA', name = 'multilevel');
+  p2$getKnnClusters(method = igraph::multilevel.community, type = 'PCA', name = 'multilevel')
   ##p2$getKnnClusters(method = igraph::walktrap.community, type = 'PCA', name = 'walktrap');
 
   ## Generate embeddings
@@ -47,14 +50,14 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
   if (get.tsne) {
     if(perplexity > nrow(p2$counts)/5) {
       perplexity <- floor((nrow(p2$counts)-1)/3)
-      message("perplexity is too large, reducing to ",perplexity,"\n");
+      message("perplexity is too large, reducing to ",perplexity,"\n")
     }
 
       p2$getEmbedding(type = 'PCA', embeddingType = 'tSNE', perplexity = perplexity, distance='L2');
   }
   ## Required for web app generation
   if (make.geneknn) {
-      p2$makeGeneKnnGraph();
+      p2$makeGeneKnnGraph()
   }
   ## return
   invisible(p2)
