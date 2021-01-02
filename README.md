@@ -4,7 +4,7 @@
 
 # Pagoda2
 
-- [Analysis Walkthroughs](#analysis-walkthroughs)
+- [Tutorials](#tutorials)
 - [Web Demo of Application](#web-demo-of-application)
 - [Installation](#installation)
   * [Installing Linux Dependencies](#installing-linux-dependencies)
@@ -17,8 +17,10 @@ Pagoda2 is an R package for analyzing and interactively exploring large-scale si
 
 Note that Pagoda2 is an R package developed for analyzing standalone scRNAseq datasets. For joint analysis of multiple datasets, please see the package [Conos](https://github.com/kharchenkolab/conos). (Pagoda2 is primarily used to preprocess input datasets for Conos.)
 
+Several methods within this package were developed based on the originals implemented within [SCDE](http://hms-dbmi.github.io/scde/) and PAGODA1.
 
-## Analysis Walkthroughs
+
+## Tutorials
 
 **Basic Walkthrough**
 * [HTML version](https://htmlpreview.github.io/?https://raw.githubusercontent.com/kharchenkolab/pagoda2/master/doc/pagoda2.walkthrough.html) 
