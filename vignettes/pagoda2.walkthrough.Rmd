@@ -65,7 +65,7 @@ And that's it! You will now be able to interact with the processed dataset via t
 
 # II. In-Depth Processing and Analysis 
 
-We now will re-run and explain each step within `basicP2proc()`, starting from the beginning. 
+We now will re-run and explain each step within `basicP2proc()`, starting from the beginning:
 
 
 ## Preliminary: Loading the libraries
@@ -95,9 +95,7 @@ We can get more information about how the matrix is stored by running `str()`. T
 str(cm)
 ```
 
-In order to catch outliers, we can begin with a fairly basic procedure of looking at the dependency between the number of molecules measured per cell and the number of genes per cell. Let's plot the distribution of molecules per cell and molecules per gene for this dataset in log10 scale. 
-
-:
+In order to catch outliers, we can begin with a fairly basic procedure of looking at the dependency between the number of molecules measured per cell and the number of genes per cell. Let's plot the distribution of molecules per cell and molecules per gene for this dataset in log10 scale:
 ```{r, fig.height=8, fig.width=10}
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
