@@ -2,16 +2,17 @@
 % Please edit documentation in R/largeVis.R
 \name{buildWijMatrix}
 \alias{buildWijMatrix}
-\title{buildWijMatrix}
+\title{Rescale the weights in an edge matrix to match a given perplexity.
+From largeVis, <https://github.com/elbamos/largeVis>}
 \usage{
 buildWijMatrix(x, threads = NULL, perplexity = 50)
 }
 \arguments{
 \item{x}{An edgematrix, either an `edgematrix` object or a sparse matrix.}
 
-\item{threads}{The maximum number of threads to spawn. Determined automatically if \code{NULL} (the default).}
+\item{threads}{numeric The maximum number of threads to spawn (default=NULL). Determined automatically if NULL (default=NULL)}
 
-\item{perplexity}{Given perplexity.}
+\item{perplexity}{numeric Given perplexity (default=50)}
 }
 \value{
 A \code{list} with the following components: \describe{

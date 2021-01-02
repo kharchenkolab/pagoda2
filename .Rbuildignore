@@ -3,8 +3,8 @@
 .travis.yml
 CHANGELOG.md
 ^LICENSE\.md$
-pagoda2*.tar.gz
-data-raw
+^docker$
 ^doc$
 ^Meta$
-^\.graphics$
+^vignettes\*.md$
+^vignettes\figure$

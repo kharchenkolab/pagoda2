@@ -2,12 +2,13 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{basicP2proc}
 \alias{basicP2proc}
-\title{Perform basic pagoda2 processing}
+\title{Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
+make knn graph, identify clusters with multilevel, and generate
+largeVis and tSNE embeddings.}
 \usage{
 basicP2proc(
   cd,
   n.cores = 1,
-  batch = NULL,
   n.odgenes = 3000,
   nPcs = 100,
   k = 30,
@@ -23,41 +24,47 @@ basicP2proc(
 )
 }
 \arguments{
-\item{cd}{count matrix, rows are genes, columns are cells}
+\item{cd}{count matrix whereby rows are genes, columns are cells.}
 
-\item{n.cores}{number of cores to use}
+\item{n.cores}{numeric Number of cores to use (default=1)}
 
-\item{batch}{optional batch factor (default=NULL)}
+\item{n.odgenes}{numeric Number of top overdispersed genes to use (dfault=3e3)}
 
-\item{n.odgenes}{number of top overdispersed genes to use (dfault=3e3)}
+\item{nPcs}{numeric Number of PCs to use (default=100)}
 
-\item{nPcs}{number of PCs to use}
+\item{k}{numeric Default number of neighbors to use in kNN graph (default=30)}
 
-\item{k}{default number of neighbors to use in kNN graph}
+\item{perplexity}{numeric Perplexity to use in generating tSNE and largeVis embeddings (default=50)}
 
-\item{perplexity}{perplexity to use in generating tSNE and largeVis embeddings (default=50)}
+\item{log.scale}{boolean Whether to use log scale normalization (default=TRUE)}
 
-\item{log.scale}{whether to use log scale normalization (default=T)}
+\item{trim}{numeric Number of cells to trim in winsorization (default=10)}
 
-\item{trim}{number of cells to trim in winsorization (default=10)}
+\item{keep.genes}{optional set of genes to keep from being filtered out (even at low counts) (default=NULL)}
 
-\item{keep.genes}{optional set of genes to keep from being filtered out (even at low counts, default=NULL)}
+\item{min.cells.per.gene}{numeric Minimal number of cells required for gene to be kept (unless listed in keep.genes) (default=0)}
 
-\item{min.cells.per.gene}{minimal number of cells required for gene to be kept (unless listed in keep.genes)}
+\item{min.transcripts.per.cell}{numeric Minimumal number of molecules/reads for a cell to be admitted (default=100)}
 
-\item{min.transcripts.per.cell}{minimumal number of molecules/reads for a cell to be admitted}
+\item{get.largevis}{boolean Whether to caluclate largeVis embedding (default=TRUE)}
 
-\item{get.largevis}{whether to caluclate largeVis embedding}
+\item{get.tsne}{boolean Whether to calculate tSNE embedding (default=TRUE)}
 
-\item{get.tsne}{whether to calculate tSNE embedding}
-
-\item{make.geneknn}{whether pre-calculate gene kNN (for gene search)}
+\item{make.geneknn}{boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE)}
 }
 \value{
 a new pagoda2 object
 }
 \description{
-adjust variance, calculate pca reduction
-make knn graph, identify clusters with infomap, multilevel and walktrap and make
-largeVis and tSNE embeddings
+Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
+make knn graph, identify clusters with multilevel, and generate
+largeVis and tSNE embeddings.
+}
+\examples{
+donttest{
+## load count matrix
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+## perform basic p2 processing
+p2 <- basicP2proc(cm)
+}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebHelpers.R
 \name{p2.generate.go.web}
 \alias{p2.generate.go.web}
-\title{Generates human go annotation for the web object for any species}
+\title{Generates GO annotation for the web object for any species}
 \usage{
 p2.generate.go.web(
   gene.names,
@@ -13,7 +13,14 @@ p2.generate.go.web(
 }
 \arguments{
 \item{gene.names}{a character vector of genes to include}
+
+\item{egALIAS2EG}{(default=NULL)}
+
+\item{egGO2ALLEGS}{(default=NULL)}
+
+\item{n.cores}{numeric Number of cores to use (default=1)}
 }
 \description{
-generates a humna go annotation for the pagoda2 web object
+Generates GO annotation for the web object for any species
 }
+\keyword{internal}

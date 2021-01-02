@@ -2,14 +2,17 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{make.p2.app}
 \alias{make.p2.app}
-\title{Generate a Rook Server app from a pagoda2 object}
+\title{Generate a Rook Server app from a pagoda2 object. 
+This generates a pagoda2 web object from a pagoda2 object by automating steps that most
+users will want to run. This function is a wrapper about the pagoda2 web constructor. 
+(Advanced users may wish to use that constructor directly.)}
 \usage{
 make.p2.app(
   r,
   dendrogramCellGroups,
   additionalMetadata = list(),
   geneSets,
-  show.depth = T,
+  show.depth = TRUE,
   show.batch = TRUE,
   show.clusters = TRUE,
   appname = "Pagoda2 Application",
@@ -21,27 +24,32 @@ make.p2.app(
 \arguments{
 \item{r}{pagoda2 object}
 
-\item{additionalMetadata}{a list of metadata other than depth, batch and cluster that are automatically added}
+\item{dendrogramCellGroups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
+
+\item{additionalMetadata}{a list of metadata other than depth, batch and cluster that are automatically added (default=list())}
 
 \item{geneSets}{a list of genesets to show}
 
-\item{show.depth}{logical, include depth as a metadata row}
+\item{show.depth}{boolean Include depth as a metadata row (default=TRUE)}
 
-\item{show.batch}{logical, include batch as a metadata row}
+\item{show.batch}{boolean Include batch as a metadata row (default=TRUE)}
 
-\item{show.clusters}{logical, include clusters as a metadata row}
+\item{show.clusters}{boolean Include clusters as a metadata row (default=TRUE)}
 
-\item{appname}{application name}
+\item{appname}{character Application name (default="Pagoda2 Application")}
 
-\item{innerOrder}{Ordering of cells inside the clusters provided in dendrogramCellGroups. This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL}
+\item{innerOrder}{Ordering of cells inside the clusters provided in dendrogramCellGroups (default=NULL). This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL}
 
-\item{dendrogramCelllGoups}{a named factor of cell groups, used to generate the main dendrogram, limits zoom in}
+\item{orderDend}{boolean Whether to order dendrogram (default=FALSE)}
+
+\item{appmetadata}{pagoda2 web application metadata (default=NULL)}
 }
 \value{
 a pagoda2 web object that presents a Rook compatible interface
 }
 \description{
-Generates a pagoda 2 web object from pagoda2 object by automating steps that most
-users will want to run. This function is a wrapper about the pagoda2 web constructor. Advanced users
-may wish to use the constructor directly
+Generate a Rook Server app from a pagoda2 object. 
+This generates a pagoda2 web object from a pagoda2 object by automating steps that most
+users will want to run. This function is a wrapper about the pagoda2 web constructor. 
+(Advanced users may wish to use that constructor directly.)
 }

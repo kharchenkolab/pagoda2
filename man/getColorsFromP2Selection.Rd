@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{getColorsFromP2Selection}
 \alias{getColorsFromP2Selection}
-\title{get the colors for each selection from a p2 selection object}
+\title{Retrieves the colors of each selection from a p2 selection object as a names vector of strings}
 \usage{
 getColorsFromP2Selection(sel)
 }
@@ -13,6 +13,5 @@ getColorsFromP2Selection(sel)
 a named vector of hex colours
 }
 \description{
-retrieves the colors of each selection from a p2 selection object as
-a names vector of strings
+Retrieves the colors of each selection from a p2 selection object as a names vector of strings
 }

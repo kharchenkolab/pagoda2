@@ -23,36 +23,36 @@ projectKNNs(
 \arguments{
 \item{wij}{A symmetric sparse matrix of edge weights, in C-compressed format, as created with the \code{Matrix} package.}
 
-\item{dim}{The number of dimensions for the projection space.}
+\item{dim}{numeric The number of dimensions for the projection space (default=2)}
 
-\item{sgd_batches}{The number of edges to process during SGD. Defaults to a value set based on the size of the dataset. If the parameter given is
+\item{sgd_batches}{numeric The number of edges to process during SGD (default=NULL). Defaults to a value set based on the size of the dataset. If the parameter given is
 between \code{0} and \code{1}, the default value will be multiplied by the parameter.}
 
-\item{M}{The number of negative edges to sample for each positive edge.}
+\item{M}{numeric (largeVis) The number of negative edges to sample for each positive edge (default=5).}
 
-\item{gamma}{The strength of the force pushing non-neighbor nodes apart.}
+\item{gamma}{numeric (largeVis) The strength of the force pushing non-neighbor nodes apart (default=7).}
 
-\item{alpha}{Hyperparameter used in the default distance function, \eqn{1 / (1 + \alpha \dot ||y_i - y_j||^2)}.  The function relates the distance
-between points in the low-dimensional projection to the likelihood that the two points are nearest neighbors. Increasing \eqn{\alpha} tends
+\item{alpha}{numeric (largeVis) The hyperparameter in the distance function (default=1). The default distance function, \eqn{1 / (1 + \alpha \dot ||y_i - y_j||^2)}.
+The function relates the distance between points in the low-dimensional projection to the likelihood that the two points are nearest neighbors. Increasing \eqn{\alpha} tends
 to push nodes and their neighbors closer together; decreasing \eqn{\alpha} produces a broader distribution. Setting \eqn{\alpha} to zero
 enables the alternative distance function. \eqn{\alpha} below zero is meaningless.}
 
-\item{rho}{Initial learning rate.}
+\item{rho}{(largeVis) numeric Initial learning rate (default=1)}
 
-\item{coords}{An initialized coordinate matrix.}
+\item{coords}{An initialized coordinate matrix (default=NULL)}
 
-\item{useDegree}{Whether to use vertex degree to determine weights in negative sampling (if \code{TRUE}), or the sum of the vertex's edges (the default). See Notes.}
+\item{useDegree}{boolean Whether to use vertex degree to determine weights in negative sampling (if TRUE) or the sum of the vertex's edges (if FALSE) (default=FALSE)}
 
-\item{momentum}{If not \code{NULL} (the default), SGD with momentum is used, with this multiplier, which must be between 0 and 1. Note that
+\item{momentum}{If not NULL, SGD with momentum is used, with this multiplier, which must be between 0 and 1 (default=NULL). Note that
 momentum can drastically speed-up training time, at the cost of additional memory consumed.}
 
-\item{seed}{Random seed to be passed to the C++ functions; sampled from hardware entropy pool if \code{NULL} (the default).
+\item{seed}{numeric Random seed to be passed to the C++ functions (default=NULL). Sampled from hardware entropy pool if \code{NULL} (the default).
 Note that if the seed is not \code{NULL} (the default), the maximum number of threads will be set to 1 in phases of the algorithm
 that would otherwise be non-deterministic.}
 
-\item{threads}{The maximum number of threads to spawn. Determined automatically if \code{NULL} (the default).}
+\item{threads}{numeric The maximum number of threads to spawn (default=NULL). Determined automatically if \code{NULL} (the default).}
 
-\item{verbose}{Verbosity}
+\item{verbose}{boolean Verbosity (default=getOption("verbose", TRUE))}
 }
 \value{
 A dense [N,D] matrix of the coordinates projecting the w_ij matrix into the lower-dimensional space.

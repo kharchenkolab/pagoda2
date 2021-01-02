@@ -9,6 +9,9 @@ getIntExtNamesP2Selection(x)
 \arguments{
 \item{x}{p2 selection object}
 }
+\value{
+list of names from the specified selection object
+}
 \description{
 Get a mapping form internal to external names for the specified selection object
 }

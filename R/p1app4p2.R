@@ -1,14 +1,71 @@
 #' @import Rook
 #' @import rjson
+NULL
 
-#' @export p2.make.pagoda1.app
-p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, title = "pathway clustering", zlim = NULL,embedding=NULL,inner.clustering=TRUE,groups=NULL,clusterType=NULL,embeddingType=NULL,veloinfo=NULL,type='PCA', min.group.size=1, batch.colors=NULL,n.cores=10) {
+#' Internal function to visualize aspects of transcriptional heterogeneity as a heatmap.
+#'
+#' @param mat Numeric matrix
+#' @param row.clustering Row dendrogram (default=NA)
+#' @param cell.clustering Column dendrogram (default=NA)
+#' @param zlim numeric Range of the normalized gene expression levels, inputted as a list: c(lower_bound, upper_bound) (default=c(-1, 1)*quantile(mat, p = 0.95)). Values outside this range will be Winsorized. Useful for increasing the contrast of the heatmap visualizations. Default, set to the 5th and 95th percentiles.
+#' @param row.cols Matrix of row colors (default=NULL)
+#' @param col.cols Matrix of column colors (default=NULL). Useful for visualizing cell annotations such as batch labels.
+#' @param cols Heatmap colors (default=colorRampPalette(c("darkgreen", "white", "darkorange"), space = "Lab")(1024))
+#' @param show.row.var.colors boolean Whether to show row variance as a color track (default=TRUE)
+#' @param top integer Restrict output to the top n aspects of heterogeneity (default=Inf)
+#' @param ... additional arguments for heatmap plotting
+#' @return A heatmap
+#'
+#' @keywords internal
+view.aspects <- function(mat, row.clustering = NA, cell.clustering = NA, zlim = c(-1, 1)*quantile(mat, p = 0.95), 
+    row.cols=NULL, col.cols=NULL, cols = colorRampPalette(c("darkgreen", "white", "darkorange"), space = "Lab")(1024), show.row.var.colors=TRUE, top=Inf, ...) {
+    #row.cols, col.cols are matrices for now
+    rcmvar <- apply(mat, 1, var)
+    mat[mat<zlim[1]] <- zlim[1]
+    mat[mat > zlim[2]] <- zlim[2]
+    if(class(row.clustering) == "hclust") { row.clustering <- as.dendrogram(row.clustering) }
+    if(class(cell.clustering) == "hclust") { cell.clustering <- as.dendrogram(cell.clustering) }
+    if(show.row.var.colors) {
+        if(is.null(row.cols)) {
+            icols <- colorRampPalette(c("white", "black"), space = "Lab")(1024)[1023*(rcmvar/max(rcmvar))+1]
+            row.cols <- cbind(var = icols)
+        }
+    }
+    my.heatmap2(mat, Rowv = row.clustering, Colv = cell.clustering, zlim = zlim, RowSideColors = row.cols, ColSideColors = col.cols, col = cols, ...)
+}
+
+
+#' Create pagoda1 web application from pagoda2 object
+#' Pagoda1 found here: <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+#'
+#' @param p2 pagoda2 object
+#' @param col.cols Matrix of column colors (default=NULL). Useful for visualizing cell annotations such as batch labels. 
+#' @param row.clustering Row dendrogram (default=NULL)
+#' @param title character Title to use (default="pathway clustering")
+#' @param zlim Range of the normalized gene expression levels (default=NULL). Input as a list: c(lower_bound, upper_bound). Values outside this range will be Winsorized. Useful for increasing the contrast of the heatmap visualizations. If NULL, set to the 5th and 95th percentiles. 
+#' @param embedding A 2-D embedding of the cells (PCA, tSNE, etc.), passed as a data frame with two columns (two dimensions) and rows corresponding to cells (row names have to match cell names) (default=NULL).
+#' @param inner.clustering boolean Whether to get overall cell clustering (default=TRUE).
+#' @param groups factor describing grouping of different cells. If provided, the cross-fits and the expected expression magnitudes will be determined separately within each group. The factor should have the same length as ncol(counts) (default=NULL).
+#' @param clusterType cluster type (default=NULL). If NULL, takes the latest cluster in the pagoda2 object using 'p2$clusters[[type]][[1]]'
+#' @param embeddingType embedding type (default=NULL). If NULL, takes the latest embedding in the pagoda2 object using p2$embeddings[[type]][[1]] 
+#' @param veloinfo cell velocity information, cell velocities (grid and cell) (default=NULL)
+#' @param type character Either 'counts' or a name of a 'reduction' in the pagoda2 object (default='PCA')
+#' @param min.group.size integer Minimum group size (default=1)
+#' @param batch.colors colors of the batches, i.e. the factor (corresponding to rows of the model matrix) specifying batch assignment of each cell(default=NULL)
+#' @param n.cores numeric Number of cores (default=10)
+#' @return pagoda1 web application
+#' @export 
+p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = "pathway clustering", 
+  zlim = NULL, embedding=NULL, inner.clustering=TRUE, groups=NULL, clusterType=NULL,
+  embeddingType=NULL, veloinfo=NULL, type='PCA', min.group.size=1, batch.colors=NULL, n.cores=10) {
   if (!requireNamespace("GO.db", quietly = TRUE)) {
     stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
   }
-
+  if (!requireNamespace("BiocGenerics", quietly = TRUE)) {
+    stop("Package \"BiocGenerics\" needed for this function to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+  }
   # rcm - xv
-  if(type=='counts') {
+  if (type=='counts') {
     x <- p2$counts;
     x <- t(t(x)*p2$misc[['varinfo']][colnames(x),'gsf'])
   } else {
@@ -23,14 +80,14 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
       groups <- p2$clusters[[type]][[1]]
     } else {
       groups <- p2$clusters[[type]][[clusterType]]
-      if(is.null(groups)) { stop("clustering ",clusterType," for type ", type," doesn't exist")}
+      if(is.null(groups)) { stop("Clustering ",clusterType," for type ", type," doesn't exist")}
     }
   }
   groups <- as.factor(groups[rownames(x)]);
   groups <- droplevels(groups);
 
   if(is.null(embedding)) {
-    if(is.null(p2$embeddings[[type]])) { stop("first, generate embeddings for type ",type)}
+    if(is.null(p2$embeddings[[type]])) { stop("First, generate embeddings for type ",type)}
     if(is.null(embeddingType)) {
       # take the first one
       embedding <- p2$embeddings[[type]][[1]]
@@ -85,8 +142,10 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
   #hca$plotting.order <- c(cumsum(cluster.sizes)-round(cluster.sizes/2),rep(0,length(hca$order)-length(hca$original.order)))
   hca$plotting.order <- c((cumsum(cluster.sizes)-round(cluster.sizes/2))[match(1:length(mo),mo)],rep(0,length(hca$order)-length(hca$original.order)))
 
-  if(is.null(p2$misc[['pathwayOD']])) stop("pathwayOD missing, please run testPathwayOverdispersion()")
-  tamr <- p2$misc[['pathwayOD']];
+  if(is.null(p2$misc[['pathwayOD']])){
+    stop("pathwayOD missing, please run testPathwayOverdispersion()")
+  }
+  tamr <- p2$misc[['pathwayOD']]
   env <- tamr$env; 
   if(is.null(zlim)) { zlim <- c(-1, 1)*quantile(tamr$xv, p = 0.95) }
 
@@ -108,10 +167,10 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
     if(is.null(rownames(embedding))) { stop("provided 2D embedding lacks cell names") }
     vi <- rownames(embedding) %in% colnames(tamr$xv);
     if(!all(vi)) {
-      warning("provided 2D embedding contains cells that are not in the tamr");
+      warning("provided 2D embedding contains cells that are not in the tamr")
       embedding <- embedding[vi,];
       if(nrow(embedding)<2) {
-        stop("provided 2D embedding contains too few cells after intersecting with the cell names in tamr");
+        stop("provided 2D embedding contains too few cells after intersecting with the cell names in tamr")
       }
     }
     # flip embedding y axis since this is what p1 does
@@ -166,7 +225,7 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
                             colors=colorRampPalette(c("white","black"),space="Lab")(1024),
                             quantile.range=0.95))
   if(!is.null(p2$batch)) {
-    batch.colors <- fac2col(p2$batch,s=1.0,v=0.5,shuffle=F,level.colors=batch.colors,return.details=TRUE)
+    batch.colors <- fac2col(p2$batch,s=1.0,v=0.5,shuffle=FALSE,level.colors=batch.colors,return.details=TRUE)
     acol <- c(acol,list('batch'=list(data=p2$batch,colors=as.character(batch.colors$palette),text=as.character(p2$batch))))
   }
   col.cols <- rev(c(acol,col.cols))
@@ -206,50 +265,116 @@ p2.make.pagoda1.app <- function(p2, col.cols = NULL, row.clustering = NULL, titl
 
 }
 
-# modified PAGODA1 app for browsing p2 results
-#' @export p2ViewPagodaApp
-#' @exportClass p2ViewPagodaApp
-p2ViewPagodaApp <- setRefClass(
-    'p2ViewPagodaApp',
-    fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 'name', 'trim', 'batch','embedding','type','veloinfo'),
-    methods = list(
-      initialize = function(results, ..., pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", trim = 1.1/nrow(p2$counts), embedding=NULL,type,veloinfo=NULL) {
-        if(!missing(results) && class(results)=='p2ViewPagodaApp') { # copy constructor
-          callSuper(results);
-        } else {
-          callSuper();
-          results <<- results
-          type <<- type;
+
+#' @title p2ViewPagodaApp R6 class
+#' @description Modified PAGODA1 app (from scde) for browsing pagoda2 results. 
+#' Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in scde
+#'
+#' @export p2ViewPagodaApp 
+p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
+    ## fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 
+    ##  'name', 'trim', 'batch','embedding','type','veloinfo'),
+
+    ## tam? 
+    ## @field tam Combined pathways that are driven by the same gene sets
+    public = list(
+
+      #' @field results Result object returned by \code{scde.expression.difference()} (default=NULL). Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
+      results = NULL,
+
+      #' @field type Either 'counts' or a name of a 'reduction' in the pagoda2 object 
+      type = NULL,
+
+      #' @field genes List of genes to display in the Detailed clustering panel (default=list())
+      genes = list(),
+
+      #' @field batch Any batch or other known confounders to be included in the visualization as a column color track (default=NULL)
+      batch = NULL,
+
+      #' @field pathways character vector Pathway or gene names (default=NULL)
+      pathways = NULL,
+
+      #' @field name App name (needs to be altered only if adding more than one app to the server using the 'server' parameter) (default=NULL)
+      name = NULL,
+
+      #' @field trim Trim quantity used for Winsorization for visualization
+      trim = NULL,
+
+      #' @field embedding Embedding information (default=NULL)
+      embedding = NULL,
+
+      #' @field veloinfo Velocity information (default=NULL)
+      veloinfo = NULL,
+
+      #' @field goenv environment mapping pathways to genes (default=NULL)
+      goenv = NULL,
+
+      #' @field renv Global environment (default=NULL)
+      renv = NULL,
+
+
+
+      #' @description Initialize p2ViewPagodaApp class
+      #'
+      #' @param results Result object returned by \code{scde.expression.difference()}. Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
+      #' @param pathways character vector Pathway or gene names (default=NULL)
+      #' @param genes list Genes to display in the Detailed clustering panel (default=list())
+      #' @param goenv Environment mapping pathways to genes (default=NULL)
+      #' @param batch Any batch or other known confounders to be included in the visualization as a column color track (default=NULL)
+      #' @param name string App name (needs to be altered only if adding more than one app to the server using the 'server' parameter) (default="pathway overdispersion")
+      #' @param trim numeric Trim quantity used for Winsorization for visualization (default=1.1/nrow(p2$counts) whereby the 'counts' from the Pagoda2 object is the gene count matrix, normalized on total counts (default=NULL)
+      #' @param embedding Embedding information (default=NULL)
+      #' @param type Either 'counts' or a name of a 'reduction' in the pagoda2 object 
+      #' @param veloinfo Velocity information (default=NULL)
+      #' 
+      #' @return new 'p2ViewPagodaApp' object 
+      initialize = function(results, pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", 
+        trim = 1.1/nrow(p2$counts), embedding=NULL, type, veloinfo=NULL) {
+        if (!requireNamespace("BiocGenerics", quietly = TRUE)) {
+          stop("Package \"BiocGenerics\" needed for this function to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+        }
+        ##if (!missing(results) && class(results)=='p2ViewPagodaApp') { # copy constructor
+          ##callSuper(results);
+        ##} else {
+          ##callSuper();
+          self$results <<- results
+          self$type <<- type
           #results$tvc$order <<- rev(results$tvc$order);
-          results$tvc$labels <<- as.character(1:nrow(results$rcm));
-          rownames(results$rcm) <<- as.character(1:nrow(results$rcm));
-          genes <<- genes
-          genes$svar <<- genes$var/max(genes$var)
-          genes <<- genes
-          batch <<- results$p2$batch
-          pathways <<- pathways
-          name <<- name
-          trim <<- trim
-          embedding <<- embedding
-          veloinfo <<- veloinfo;
+          self$results$tvc$labels <<- as.character(1:nrow(self$results$rcm))
+          rownames(self$results$rcm) <<- as.character(1:nrow(self$results$rcm))
+          self$genes <<- genes
+          self$genes$svar <<- self$genes$var/max(self$genes$var)
+          ## genes <<- genes  ??
+          self$batch <<- self$results$p2$batch
+          self$pathways <<- pathways
+          self$name <<- name
+          self$trim <<- trim
+          self$embedding <<- embedding
+          self$veloinfo <<- veloinfo
           # reverse lookup environment
-          xl <- as.list(goenv);
+          xl <- as.list(self$goenv)
           gel <- tapply(rep(names(xl), unlist(lapply(xl, length))), unlist(xl), I)
           gel <- gel[nchar(names(gel)) > 0]
-          renv <<- list2env(gel,parent=emptyenv());
-          goenv <<- list2env(xl,parent=emptyenv());
+          self$renv <<- list2env(gel, parent=emptyenv())
+          self$goenv <<- list2env(xl, parent=emptyenv())
           rm(xl,gel)
           gc()
-        }
       },
 
+      #' @description Helper function to get the heatmap data for a given set of genes
+      #'
+      #' @param genes character vector Gene names (default=NULL)
+      #' @param gcl pathway or gene-weighted PCA (default=NULL). If NULL, uses tp2c.view.pathways(self$genes, self$results$p2, goenv=goenv, vhc=self$results$hvc, plot=FALSE, trim=ltrim, n.genes=Inf).
+      #' @param ltrim numeric Winsorization trim that should be applied (default=0)
+      #' 
+      #' @return heatmap data for a given set of genes
       getgenecldata = function(genes = NULL, gcl = NULL, ltrim = 0) { # helper function to get the heatmap data for a given set of genes
         if(is.null(gcl)) {
-          gcl <- t.p2c.view.pathways(genes,results$p2,goenv=goenv,vhc=results$hvc,plot=FALSE,trim=ltrim,n.genes=Inf)
+          gcl <- tp2c.view.pathways(self$genes, self$results$p2, goenv=goenv, vhc=self$results$hvc, plot=FALSE, trim=ltrim, n.genes=Inf)
           #gcl <- t.view.pathways(genes, mat = mat, matw = matw, env = goenv, vhc = results$hvc, plot = FALSE, trim = ltrim)
         }
 
-        matrix <- gcl$vmap[rev(gcl$row.order), results$hvc$order, drop = FALSE]
+        matrix <- gcl$vmap[rev(gcl$row.order), self$results$hvc$order, drop = FALSE]
         matrix <- list(data = as.numeric(t(matrix)),
                        dim = dim(matrix),
                        rows = rownames(matrix),
@@ -267,7 +392,7 @@ p2ViewPagodaApp <- setRefClass(
                           zlim = c(-1,1)*max(abs(rcmvar))
                           )
 
-          colcols <- matrix(gcl$oc[results$hvc$order], nrow = 1)
+          colcols <- matrix(gcl$oc[self$results$hvc$order], nrow = 1)
           colcols <- list(data = as.numeric(t(colcols)),
                           dim = dim(colcols),
                           colors = gcl$oc.col,
@@ -278,6 +403,11 @@ p2ViewPagodaApp <- setRefClass(
         ol
       },
 
+      #' @description Call Rook application. Using client-side ExtJS framework and Inchlib HTML5 canvas libraries to create the graphical user interface for PAGODA
+      #'
+      #' @param env The environment argument is a true R environment object which the application is free to modify. Please see the Rook documentation for more details.
+      #' 
+      #' @return modified PAGODA1 app
       call = function(env){
             path <- env[['PATH_INFO']]
             req <- Request$new(env)
@@ -289,7 +419,7 @@ p2ViewPagodaApp <- setRefClass(
                                      <meta charset = "utf-8" >
                                      <html >
                                      <head >
-                                     <title > ', name, '</title >
+                                     <title > ', self$name, '</title >
                                      <meta http-equiv = "Content-Type" content = "text/html charset = iso-8859-1" >
                                      <link rel = "stylesheet" type = "text/css" href = "http://pklab.med.harvard.edu/sde/extjs/resources/ext-theme-neptune/ext-theme-neptune-all.css" / >
                                      <link rel = "stylesheet" type = "text/css" href = "http://pklab.med.harvard.edu/sde/extjs/examples/shared/example.css" / >
@@ -309,30 +439,30 @@ p2ViewPagodaApp <- setRefClass(
                    },
                    '/pathcl.json' = { # report pathway clustering heatmap data
                      # column dendrogram
-                     treeg <- list(merge=as.vector(t(results$hvc$merge)),height=results$hvc$height,order=results$hvc$plotting.order)
+                     treeg <- list(merge=as.vector(t(self$results$hvc$merge)),height=self$results$hvc$height,order=self$results$hvc$plotting.order)
 
-                     matrix <- results$rcm[rev(results$tvc$order), results$hvc$order]
+                     matrix <- self$results$rcm[rev(self$results$tvc$order), self$results$hvc$order]
                      matrix <- list(data = as.numeric(t(matrix)),
                                     dim = dim(matrix),
                                     rows = rownames(matrix),
                                     cols = colnames(matrix),
-                                    colors = results$cols,
-                                    zlim = as.numeric(results$zlim2)
+                                    colors = self$results$cols,
+                                    zlim = as.numeric(self$results$zlim2)
                                     )
 
                      icols <- colorRampPalette(c("white", "black"), space = "Lab")(256)
-                     rcmvar <- matrix(apply(results$rcm[rev(results$tvc$order), , drop = FALSE], 1, var), ncol = 1)
+                     rcmvar <- matrix(apply(self$results$rcm[rev(self$results$tvc$order), , drop = FALSE], 1, var), ncol = 1)
                      rowcols <- list(data = as.numeric(t(rcmvar)),
                                      dim = dim(rcmvar),
                                      colors = icols,
                                      zlim = c(0, max(rcmvar))
                                      )
                      # translate colcol structure into a uniform data/dim/colors/zlim (for gradients)/text
-                     colcols <- lapply(results$colcol,function(x) {
+                     colcols <- lapply(self$results$colcol,function(x) {
                        # is it a numeric gradient?
                        if(is.numeric(x$data)) {
                          colors <- x$colors;
-                         data <- as.numeric(x$data[results$hvc$order]);
+                         data <- as.numeric(x$data[self$results$hvc$order]);
                          dim <- c(1,length(data))
                          # establish limits
                          if(is.null(x$zlim)) {
@@ -357,16 +487,20 @@ p2ViewPagodaApp <- setRefClass(
                          } else {
                            zlim <- x$zlim;
                          }
-                         text <- x$text; if(!is.null(text)) { text <- text[results$hvc$order]; }
+                         text <- x$text; if(!is.null(text)) { text <- text[self$results$hvc$order]; }
                          return(list(data=data,dim=dim,colors=col2hex(colors),zlim=zlim))
                        } else if(!is.null(x$legacy)) {
-                         data <- col2hex(as.character(x$data[results$hvc$order]));
+                         data <- col2hex(as.character(x$data[self$results$hvc$order]));
                          dim <- c(1,length(data));
                          return(list(data=data,dim=dim,legacy=TRUE))
                        } else { # treat as a factor
-                         data <- as.integer(x$data)[results$hvc$order];
-                         if(is.null(x$text)) { text <- as.character(x$data) } else { text <- x$text }
-                         text <- text[results$hvc$order];
+                         data <- as.integer(x$data)[self$results$hvc$order];
+                         if(is.null(x$text)) { 
+                          text <- as.character(x$data) 
+                         } else { 
+                          text <- x$text 
+                         }
+                         text <- text[self$results$hvc$order];
                          dim <- c(1,length(data));
                          colors <- x$colors;
                          if(is.null(colors)) { colors <- rainbow(length(levels(x$data))) }
@@ -378,11 +512,12 @@ p2ViewPagodaApp <- setRefClass(
                      #                dim = dim(results$colcol),
                      #                rows=rev(rownames(results$colcol))
                      #)
-                     ol <- list(matrix = matrix, rowcols = rowcols, colcols = colcols, coldend = treeg, trim = trim)
-                     if(!is.null(embedding)) {
+                     ol <- list(matrix = matrix, rowcols = rowcols, colcols = colcols, coldend = treeg, trim = self$trim)
+                     if(!is.null(self$embedding)) {
                        # report embedding, along with the position of each cell in the pathway matrix
-                       edf <- data.frame(t(cbind(embedding,match(rownames(embedding),matrix$cols)))); rownames(df) <- NULL;
-                       ol$embedding <- list(data=edf,xrange=range(embedding[,1]),yrange=range(embedding[,2]),hasvelo=(!is.null(veloinfo) && !(class(veloinfo) == 'uninitializedField') && is.list(veloinfo)));
+                       edf <- data.frame(t(cbind(self$embedding,match(rownames(self$embedding),matrix$cols))))
+                       rownames(df) <- NULL
+                       ol$embedding <- list(data=edf,xrange=range(self$embedding[,1]),yrange=range(self$embedding[,2]),hasvelo=(!is.null(self$veloinfo) && !(class(self$veloinfo) == 'uninitializedField') && is.list(self$veloinfo)))
                      }
 
                      s <- toJSON(ol)
@@ -395,10 +530,10 @@ p2ViewPagodaApp <- setRefClass(
                      }
                    },
                    '/getvel.json' = { # report cell velocities (grid and cell)
-                     if(is.null(veloinfo)) return(NULL);
-                     x <- veloinfo$proj$garrows;
-                     y <- veloinfo$proj$arrows;
-                     cellorder <- colnames(results$rcm)[results$hvc$order]
+                     if(is.null(self$veloinfo)) return(NULL);
+                     x <- self$veloinfo$proj$garrows;
+                     y <- self$veloinfo$proj$arrows;
+                     cellorder <- colnames(self$results$rcm)[self$results$hvc$order]
                      y <- y[match(cellorder,rownames(y)),]
                      
                      ol <- list(gvel=unname(split(x, 1:nrow(x))),cvel=unname(split(y, 1:nrow(y)))); # some gymnatics to work around rjson limitations
@@ -418,20 +553,20 @@ p2ViewPagodaApp <- setRefClass(
 
                      #cat("celli=",celli," gridi=",gridi)
                      if(gridi>0) {
-                       vel <- veloinfo$proj$gvel[,gridi]
-                       esh <- veloinfo$proj$geshifts[,gridi]
+                       vel <- self$veloinfo$proj$gvel[,gridi]
+                       esh <- self$veloinfo$proj$geshifts[,gridi]
                      } else if(celli>0) {
-                       cell <- colnames(results$rcm)[results$hvc$order[celli]]
-                       vel <- veloinfo$proj$vel[,cell]
-                       esh <- veloinfo$proj$eshifts[,cell]
+                       cell <- colnames(self$results$rcm)[self$results$hvc$order[celli]]
+                       vel <- self$veloinfo$proj$vel[,cell]
+                       esh <- self$veloinfo$proj$eshifts[,cell]
                      }
-                     df <- data.frame(gene=rownames(veloinfo$proj$gvel),vel=vel,proj=esh)
+                     df <- data.frame(gene=rownames(self$veloinfo$proj$gvel),vel=vel,proj=esh)
                      vel <- vel/sqrt(sum(vel*vel))
                      esh <- esh/sqrt(sum(esh*esh))
                      vcos <- esh*vel*length(vel);
                      vcos <- sign(vcos)*sqrt(abs(vcos))
 
-                     df$cos <- vcos;
+                     df$cos <- vcos
                      df <- df[is.finite(df$cos),]
                      df <- df[order(abs(df$cos),decreasing=TRUE),]
                      lgt <- df
@@ -471,19 +606,19 @@ p2ViewPagodaApp <- setRefClass(
                      gene <- fromJSON(url_decode(req$params()$gene))
                      if(is.null(gene)) { return(NULL) }
                      # report value vectors using the same order of cells as in the matrix
-                     cellorder <- colnames(results$rcm)[results$hvc$order]
-                     om <- match(cellorder,colnames(veloinfo$fit$conv.emat.norm));
+                     cellorder <- colnames(self$results$rcm)[self$results$hvc$order]
+                     om <- match(cellorder,colnames(self$veloinfo$fit$conv.emat.norm));
                      #df <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,om],n=veloinfo$fit$conv.nmat.norm[gene,om],r=0)
                      # working around lack of NA index support in Matrix
                      ev <- rep(NA,length(cellorder));
                      df <- data.frame(e=ev,n=ev,r=ev);
                      vi <- !is.na(om);
-                     df[vi,] <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,om[vi]],n=veloinfo$fit$conv.nmat.norm[gene,om[vi]],r=0)
+                     df[vi,] <- data.frame(e=self$veloinfo$fit$conv.emat.norm[gene,om[vi]],n=self$veloinfo$fit$conv.nmat.norm[gene,om[vi]],r=0)
                      
                      rownames(df) <- cellorder
                      
                      # quick quantile range
-                     qrng <- function(x,gradient.range.quantile=0.95) {
+                     qrng <- function(x, gradient.range.quantile=0.95) {
                        if(all(sign(na.omit(x))>=0)) {
                          zlim <- as.numeric(quantile(na.omit(x),p=c(1-gradient.range.quantile,gradient.range.quantile),na.rm=TRUE))
                          if(diff(zlim)==0) {
@@ -500,14 +635,14 @@ p2ViewPagodaApp <- setRefClass(
                      #df <- data.frame(e=veloinfo$fit$conv.emat.norm[gene,],n=veloinfo$fit$conv.nmat.norm[gene,],r=0,embedding[match(colnames(veloinfo$fit$conv.emat.norm),rownames(embedding)),])
                      
                      # estimate residual
-                     df$r=df$n- (df$e*veloinfo$fit$ko[gene,'g'] + veloinfo$fit$ko[gene,'o'])
+                     df$r=df$n- (df$e*self$veloinfo$fit$ko[gene,'g'] + self$veloinfo$fit$ko[gene,'o'])
 
                      full.rng <- apply(df,2,range,na.rm=TRUE);
                      full.rng <- full.rng+c(-1,1) %o% apply(full.rng,2,diff)*0.1/2
 
                      df[is.na(df)] <- 0;
                      
-                     ol <- list(fit=df,rng=data.frame(apply(df,2,qrng)),fullrng=data.frame(full.rng),gamma=veloinfo$fit$ko[gene,'g'],offset=veloinfo$fit$ko[gene,'o'],gene=gene)
+                     ol <- list(fit=df,rng=data.frame(apply(df,2,qrng)),fullrng=data.frame(full.rng),gamma=self$veloinfo$fit$ko[gene,'g'],offset=self$veloinfo$fit$ko[gene,'o'],gene=gene)
 
                      #ol <- list(fit=data.frame(t(df)),rng=data.frame(t(apply(df,2,range))),gamma=veloinfo$fit$ko[gene,'g'],offset=veloinfo$fit$ko[gene,'o'],gene=gene)
                      
@@ -542,7 +677,7 @@ p2ViewPagodaApp <- setRefClass(
 
                      n.pcs <- as.integer(gsub("^#PC(\\d+)# .*", "\\1", pws))
                      n.pcs[is.na(n.pcs)]<-1
-                     x <- t.p2c.view.pathways(gsub("^#PC\\d+# ", "", pws), results$p2, goenv = goenv, n.pc = n.pcs, n.genes = ngenes, two.sided = twosided, vhc = results$hvc, plot = FALSE, trim = ltrim, batch = batch)
+                     x <- tp2c.view.pathways(gsub("^#PC\\d+# ", "", pws), self$results$p2, goenv = goenv, n.pc = n.pcs, n.genes = ngenes, two.sided = twosided, vhc = self$results$hvc, plot = FALSE, trim = ltrim, batch = self$batch)
                      ol <- getgenecldata(genes = NULL, gcl = x, ltrim = ltrim)
                      s <- toJSON(ol)
 
@@ -560,14 +695,14 @@ p2ViewPagodaApp <- setRefClass(
                      par <- as.list(x[,2]); names(par) <- x[,1];
                      ngenes <- ifelse(is.null(par$ngenes), 20, as.integer(par$ngenes))
                      twosided <- ifelse(is.null(par$twosided), FALSE, as.logical(par$twosided))
-                     ltrim <- ifelse(is.null(par$trim), 0/nrow(results$p2$counts), as.numeric(par$trim))
+                     ltrim <- ifelse(is.null(par$trim), 0/nrow(self$results$p2$counts), as.numeric(par$trim))
                      pat <- fromJSON(par$pattern)
                      # reorder the pattern back according to column clustering
-                     pat[results$hvc$order] <- pat
+                     pat[self$results$hvc$order] <- pat
                      #patc <- matCorr(as.matrix(t(mat)), as.matrix(pat, ncol = 1))
-                     patc <- smatColVecCorr(results$p2$counts,pat,FALSE)
+                     patc <- smatColVecCorr(self$results$p2$counts,pat,FALSE)
                      if(twosided) { patc <- abs(patc) }
-                     mgenes <- colnames(results$p2$counts)[order(as.numeric(patc), decreasing = TRUE)[1:ngenes]]
+                     mgenes <- colnames(self$results$p2$counts)[order(as.numeric(patc), decreasing = TRUE)[1:ngenes]]
                      ol <- getgenecldata(mgenes, ltrim = ltrim)
                      ol$pattern <- pat
                      s <- toJSON(ol)
@@ -589,9 +724,9 @@ p2ViewPagodaApp <- setRefClass(
                      twosided <- ifelse(is.null(par$twosided), FALSE, as.logical(par$twosided))
                      ltrim <- ifelse(is.null(par$trim), 0, as.numeric(par$trim))
                      cells <- fromJSON(url_decode(par$cells))
-                     ci <- rownames(results$p2$counts) %in% cells;
-                     groups <- rep('other',length(ci)); groups[ci] <- 'group'; names(groups) <- rownames(results$p2$counts);
-                     ds <- results$p2$getDifferentialGenes(type='PCA',groups=groups,upregulated.only=TRUE,verbose=FALSE)
+                     ci <- rownames(self$results$p2$counts) %in% cells;
+                     groups <- rep('other',length(ci)); groups[ci] <- 'group'; names(groups) <- rownames(self$results$p2$counts);
+                     ds <- self$results$p2$getDifferentialGenes(type='PCA',groups=groups,upregulated.only=TRUE,verbose=FALSE)
                      mgenes <- rownames(ds[['group']])[1:ngenes]
                      ol <- getgenecldata(mgenes, ltrim = ltrim); #ol$sigdiff <- names(sigdiff);
                      s <- toJSON(ol)
@@ -604,8 +739,8 @@ p2ViewPagodaApp <- setRefClass(
                    },
                    '/clinfo.json' = {
                      pathcl <- ifelse(is.null(req$params()$pathcl), 1, as.integer(req$params()$pathcl))
-                     ii <- which(results$ct == pathcl)
-                     tpi <- order(results$matvar[ii], decreasing = TRUE)
+                     ii <- which(self$results$ct == pathcl)
+                     tpi <- order(self$results$matvar[ii], decreasing = TRUE)
                      #tpi <- tpi[seq(1, min(length(tpi), 15))]
                      npc <- gsub("^#PC(\\d+)#.*", "\\1", names(ii[tpi]))
                      nams <- gsub("^#PC\\d+# ", "", names(ii[tpi]))
@@ -615,7 +750,7 @@ p2ViewPagodaApp <- setRefClass(
                        tpn <- nams;
                      }
 
-                     lgt <- data.frame(do.call(rbind, lapply(seq_along(tpn), function(i) c(id = names(ii[tpi[i]]), name = tpn[i], npc = npc[i], od = as.numeric(results$matvar[ii[tpi[i]]])/max(results$matvar), sign = as.numeric(results$matrcmcor[ii[tpi[i]]]), initsel = as.integer(results$matvar[ii[tpi[i]]] >= results$matvar[ii[tpi[1]]]*0.8)))))
+                     lgt <- data.frame(do.call(rbind, lapply(seq_along(tpn), function(i) c(id = names(ii[tpi[i]]), name = tpn[i], npc = npc[i], od = as.numeric(self$results$matvar[ii[tpi[i]]])/max(self$results$matvar), sign = as.numeric(self$results$matrcmcor[ii[tpi[i]]]), initsel = as.integer(self$results$matvar[ii[tpi[i]]] >= self$results$matvar[ii[tpi[1]]]*0.8)))))
 
                      # process additional filters
                      if(!is.null(req$params()$filter)) {
@@ -649,7 +784,7 @@ p2ViewPagodaApp <- setRefClass(
                      }
                    },
                    '/genes.json' = {
-                     lgt <- genes
+                     lgt <- self$genes
                      if(!is.null(req$params()$filter)) {
                        fl <- fromJSON(url_decode(req$params()$filter))
                        for( fil in fl) {
@@ -681,7 +816,7 @@ p2ViewPagodaApp <- setRefClass(
                      }
                    },
                    '/pathways.json' = {
-                     lgt <- pathways
+                     lgt <- self$pathways
                      if(!is.null(req$params()$filter)) {
                        fl <- fromJSON(url_decode(req$params()$filter))
                        for( fil in fl) {
@@ -714,7 +849,7 @@ p2ViewPagodaApp <- setRefClass(
                    },
                    '/testenr.json' = { # run an enrichment test
                        selgenes <- fromJSON(url_decode(req$POST()$genes))
-                       lgt <- calculate.go.enrichment(selgenes, colnames(results$p2$counts), pvalue.cutoff = 0.99, env = renv, over.only = TRUE)$over
+                       lgt <- calculate.go.enrichment(selgenes, colnames(self$results$p2$counts), pvalue.cutoff = 0.99, env = renv, over.only = TRUE)$over
                        lgt <- lgt[is.finite(lgt$Z),];
                        if(is.element("GO.db",installed.packages()[,1])) {
                          lgt$nam <- paste(lgt$t, unlist(lapply(BiocGenerics::mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
@@ -762,8 +897,35 @@ p2ViewPagodaApp <- setRefClass(
     )
 )
 
-#' @export t.p2c.view.pathways
-t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
+#' View pathway or gene-weighted PCA
+#' Pagoda2 version of the function pagoda.show.pathways()
+#' Takes in a list of pathways (or a list of genes), runs weighted PCA, optionally showing the result.
+#'
+#' @param pathways character vector of pathway or gene names
+#' @param p2 pagoda2 object
+#' @param goenv environment mapping pathways to genes (default=NULL)
+#' @param batch factor (corresponding to rows of the model matrix) specifying batch assignment of each cell, to perform batch correction (default=NULL).
+#' @param n.genes integer Number of genes to show (default=20)
+#' @param two.sided boolean If TRUE, the set of shown genes should be split among highest and lowest loading (default=TRUE). If FALSE, genes with highest absolute loading should be shown.
+#' @param n.pc integer vector Number of principal component to show for each listed pathway(default=rep(1, length(pathways)))
+#' @param colcols column color matrix (default=NULL)
+#' @param zlim numeric z color limit (default=NULL)
+#' @param labRow row labels (default=NA)
+#' @param vhc cell clustering (default=NULL)
+#' @param cexCol positive numbers, used as cex.axis in for the row or column axis labeling(default=1)
+#' @param cexRow positive numbers, used as cex.axis in for the row or column axis labeling(default=1)
+#' @param nstarts integer Number of random starts to use (default=50)
+#' @param row.order row order (default=NULL). If NULL, uses order from hclust.
+#' @param show.Colv boolean Whether to show cell dendrogram (default=TRUE)
+#' @param plot boolean Whether to plot (default=TRUE)
+#' @param trim numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a pagoda2 object.
+#' @param showPC boolean (default=TRUE)
+#' @param ... parameters to pass to my.heatmap2. Only if plot is TRUE.
+#' @return cell scores along the first principal component of shown genes (returned as invisible)
+#' @export tp2c.view.pathways
+tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), 
+  colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, 
+  plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
   # are these genes or pathways being passed?
   if(!is.null(goenv)) {
     x <- pathways %in% ls(goenv)
@@ -914,13 +1076,12 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
     }
   }
 
-  if(plot) {
+  if (plot){
     if(show.Colv) {
       my.heatmap2(vmap[row.order, , drop = FALSE], Rowv = NA, Colv = as.dendrogram(vhc), zlim = zlim, col = col, scale = "none", RowSideColors = ld, ColSideColors = z, labRow = labRow, cexCol = cexCol, cexRow = cexRow, ...)
     } else {
       my.heatmap2(vmap[row.order, vhc$order, drop = FALSE], Rowv = NA, Colv = NA, zlim = zlim, col = col, scale = "none", RowSideColors = ld, ColSideColors = z[,vhc$order], labRow = labRow, cexCol = cexCol, cexRow = cexRow, ...)
-        }
-
+    }
   }
   xp$vhc <- vhc
   xp$lab <- lab
@@ -935,10 +1096,12 @@ t.p2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.gene
   xp$zlim <- zlim
 
   #xp$consensus.pc <- consensus.npc
-  return(invisible(xp))
+  invisible(xp)
 }
 
+
 # convert R color to a web hex representation
+#' @keywords internal
 col2hex <- function(col) {
     unlist(lapply(col, function(c) {
         c <- col2rgb(c)
@@ -946,133 +1109,216 @@ col2hex <- function(col) {
     }))
 }
 
-
-
-#' Utility function to generate a pagoda2 app from a conos object
-#' 
-#' @param conos Conos object
-#' @param cdl list Optional list of raw matrices (so that gene merging doesn't have to be redone) (default=NULL)
-#' @param metadata list Optional list of (named) metadata factors (default=NULL)
-#' @param filename string Name of the *.bin file to seralize for the pagoda2 application if save=TRUE (default='conos_app.bin')
-#' @param save boolean Save serialized *bin file specified in filename (default=TRUE)
-#' @param n.cores integer Number of cores (default=2)
-#' @param go.env GO environment for the organism of interest (default=NULL)
-#' @param cell.subset string Cells to subset with the conos embedding conos$embedding. If NULL, uses all cells via rownames(conos$embedding) (default-NULL)
-#' @param max.cells numeric Limit to the cells that are included in the conos. If Inf, there is no limit (default=Inf)
-#' @param additional.embeddings list Additional embeddings to add to conos for the pagoda2 app (default=NULL)
-#' @param test.pathway.overdispersion boolean Find all IDs using GO category against either org.Hs.eg.db ('hs') or org.Mm.eg.db ('mm') (default=FALSE
-#' @param organism string Organism of interest, either 'hs' (Homo sapiens) or 'mm' (Mus musculus, i.e. mouse) (default=NULL). Only used if test.pathway.overdispersion is TRUE.
-#' @param return.details boolean If TRUE, return list of p2 application, pagoda2 object, list of raw matrices, and cell names. If FALSE, simply return pagoda2 app object. (default=FALSE)
-#' @return pagoda2 app object
-#' @export 
-p2app4conos <- function(conos, cdl=NULL, metadata=NULL, filename='conos_app.bin', save=TRUE, n.cores=2, go.env=NULL, cell.subset=NULL, max.cells=Inf, additional.embeddings=NULL, test.pathway.overdispersion=FALSE, organism=NULL, return.details=FALSE) {
-  
-  if(is.null(cdl)) {
-    #cdl <- lapply(conos$samples,function(p) t(p$misc$rawCounts))
-    cdl <- lapply(conos:::rawMatricesWithCommonGenes(conos),t)
-  }
-  samf <- lapply(conos$samples,function(x) rownames(x$counts))
-  samf <- as.factor(setNames(rep(names(samf),unlist(lapply(samf,length))),unlist(samf)))
-
-  if(!is.null(cell.subset)) {
-    cell.subset <- intersect(cell.subset,rownames(conos$embedding))
-  } else {
-    cell.subset <- rownames(conos$embedding)  
-  }
-  
-  samf <- droplevels(samf[names(samf) %in% cell.subset])
-  cdl <- lapply(cdl,function(x) x[,colnames(x) %in% cell.subset,drop=F])
-  
-  # limit to the cells that are included in the conos
-  vc <- unlist(lapply(cdl,colnames));
-  if(length(vc)>max.cells) { # subsample
-    cat("subsampling",length(vc),"cells down to",max.cells,'...');
-    vc <- sample(vc,max.cells)
-    cat('done\n');
-  } 
-  cdl <- lapply(cdl,function(d) d[,colnames(d) %in% intersect(vc,names(samf))])
-  cm <- do.call(cbind,cdl);
-  
-   
-  cp2 <- basicP2proc(cm,min.cells.per.gene=1,  nPcs=50, get.tsne=T, get.largevis=F, make.geneknn=T, n.cores=n.cores)
-  
-  if (test.pathway.overdispersion) {
-    if (organism =='mm') { 
-      suppressMessages(library(org.Mm.eg.db))
-      # translate gene names to ids
-      ids <- unlist(lapply(mget(colnames(cp2$counts),org.Mm.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-      # reverse map
-      rids <- names(ids); names(rids) <- ids;
-      # list all the ids per GO category
-      go.env <- list2env(eapply(org.Mm.egGO2ALLEGS,function(x) as.character(na.omit(rids[x]))))
-    } else if (organism =='hs') {
-      suppressMessages(library(org.Hs.eg.db))
-      ids <- unlist(lapply(mget(colnames(cp2$counts),org.Hs.egALIAS2EG,ifnotfound=NA),function(x) x[1]))
-      rids <- names(ids); names(rids) <- ids;
-      # list all the ids per GO category
-      go.env <- list2env(eapply(org.Hs.egGO2ALLEGS,function(x) as.character(na.omit(rids[x]))))
-    } else { 
-      stop("Unknown organism")
+#' @keywords internal
+my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
+          distfun = dist, hclustfun = hclust,
+          reorderfun = function(d,w) reorder(d,w),
+          add.expr, symm = FALSE, revC = identical(Colv, "Rowv"),
+          scale = c("none","row", "column"), na.rm=TRUE,
+          margins = c(5, 5),internal.margin=0.5, ColSideColors, RowSideColors,
+          cexRow = 0.2 + 1/log10(nr), cexCol = 0.2 + 1/log10(nc),
+          labRow = NULL, labCol = NULL, main = NULL, xlab = NULL, ylab = NULL,
+          keep.dendro = FALSE,
+          grid = FALSE, grid.col=1,grid.lwd=1,
+          verbose = getOption("verbose"), Colv.vsize=0.15, Rowv.hsize=0.15, 
+          ColSideColors.unit.vsize=0.02, RowSideColors.hsize=0.02, lasCol=2, 
+          lasRow=2, respect=FALSE, box=FALSE, zlim=NULL, ...)
+{
+    scale <- if(symm && missing(scale)) "none" else match.arg(scale)
+    if(length(di <- dim(x)) != 2 || !is.numeric(x)){
+        stop("'x' must be a numeric matrix")
     }
-  }
-    
-  if(!is.null(go.env)) {
-    #cp2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='community',z.threshold=3)
-    # here we test for pathway overdispersion, but recursive diff expression, as shown above will work just as well
-    cp2$testPathwayOverdispersion(go.env,verbose=T,correlation.distance.threshold=0.95,recalculate.pca=F,top.aspects=15)
-    
-    library(GO.db)
-    termDescriptions <- Term(GOTERM[names(go.env)]); # saves a good minute or so compared to individual lookups
-    sn <- function(x) { names(x) <- x; x}
-    geneSets <- lapply(sn(names(go.env)),function(x) {
-      list(properties=list(locked=T,genesetname=x,shortdescription=as.character(termDescriptions[x])),genes=c(go.env[[x]]))
-    })
-  } else {
-    hdea <- cp2$getHierarchicalDiffExpressionAspects(type='PCA',z.threshold=3)
-    geneSets <- hierDiffToGenesets(hdea);
-  }
-  
+    nr <- di[1]
+    nc <- di[2]
+    if(nr < 1 || nc <= 1){
+        stop("'x' must have at least one row and 2 columns")
+    }
+    if(!is.numeric(margins) || length(margins) != 2){
+        stop("'margins' must be a numeric vector of length 2")
+    }
 
-  # add all kinds of embeddings
-  # various joint embeddding versions
-  #cp2$embeddings$Conos <- list("All"=t(conO$embedding),"cochlea"=t(conC$embedding),"DRG"=t(conD$embedding),"Merged"=t(conO$embedding),"Refined"=t(con2$embedding))
-  cn <- rownames(cp2$counts); # cell names
-  cp2$embeddings$Conos <- list("All"=conos$embedding[cn,])
-  # hack: add placeholder spaces, so that old p2 version picks up the new embeddings
-  cp2$reductions$Conos <- list(); 
+    if(is.null(zlim)) {
+      zlim <- range(x[is.finite(x)])
+    } else {
+      x[x<zlim[1]] <- zlim[1]; x[x>zlim[2]] <- zlim[2];
+    }
 
-  cp2$embeddings$sample <- lapply(conos$samples,function(x) { em <- x$embeddings$PCA[[1]]; em[rownames(em) %in% cn,] }) # embeddings of the individual samples
-  cp2$embeddings$sample <- cp2$embeddings$sample[!unlist(lapply(cp2$embeddings$sample,is.null))]
-  if(length(cp2$embeddings$sample)>1) {
-    cp2$reductions$sample <- list();
-  } else {
-    cp2$embeddings$sample <- NULL;
-    
-  }
-  
-  if(!is.null(additional.embeddings)) {
-    cp2$embeddings$Other <- lapply(additional.embeddings, function(em) { em[rownames(em) %in% cn,] })
-    cp2$reductions$Other <- list();
-  }
-  
-  
-  # additional metadata with different factors .. you probably want to include something like sample or tissue (or patient type)
-  metadata <- c(metadata,list(sample=samf));
-  metadata <- lapply(metadata, function(d) d[cn])
-  meta <- lapply(conos:::sn(names(metadata)),function(n) p2.metadata.from.factor(droplevels(as.factor(metadata[[n]])),displayname=n))
-  
-  p2app <- make.p2.app(cp2, dendrogramCellGroups = as.factor(conos$clusters[[1]]$groups[cn]), additionalMetadata = meta, geneSets = geneSets,innerOrder='odPCA');
-  
-  # Optional showing of app
-  #show.app(p2app, name='newPagoda',browse=F)
-  # Save serialised web object, RDS app and session image
-  if(save){
-    p2app$serializeToStaticFast(binary.filename = filename,verbose=TRUE)
-  } 
-  if(return.details) {
-    return(list(app=p2app,p2=cp2,cdl=cdl,cn=cn))
-  } else {
-    invisible(p2app)
-  }
+    doRdend <- !identical(Rowv,NA)
+    doCdend <- !identical(Colv,NA)
+    ## by default order by row/col means
+    if(is.null(Rowv)) Rowv <- rowMeans(x, na.rm = na.rm)
+    if(is.null(Colv)) Colv <- colMeans(x, na.rm = na.rm)
+
+    ## get the dendrograms and reordering indices
+
+    if(doRdend) {
+        if(inherits(Rowv, "dendrogram"))
+            ddr <- Rowv
+        else {
+            hcr <- hclustfun(distfun(x))
+            ddr <- as.dendrogram(hcr)
+            if(!is.logical(Rowv) || Rowv)
+                ddr <- reorderfun(ddr, Rowv)
+        }
+        if(nr != length(rowInd <- order.dendrogram(ddr)))
+            stop("row dendrogram ordering gave index of wrong length")
+    }
+    else rowInd <- 1:nr
+
+    if(doCdend) {
+        if(inherits(Colv, "dendrogram"))
+            ddc <- Colv
+        else if(identical(Colv, "Rowv")) {
+            if(nr != nc)
+                stop('Colv = "Rowv" but nrow(x) != ncol(x)')
+            ddc <- ddr
+        }
+        else {
+            hcc <- hclustfun(distfun(if(symm)x else t(x)))
+            ddc <- as.dendrogram(hcc)
+            if(!is.logical(Colv) || Colv)
+                ddc <- reorderfun(ddc, Colv)
+        }
+        if(nc != length(colInd <- order.dendrogram(ddc)))
+            stop("column dendrogram ordering gave index of wrong length")
+    }
+    else colInd <- 1:nc
+
+    ## reorder x
+    x <- x[rowInd, colInd, drop=FALSE]
+
+    labRow <-
+        if(is.null(labRow))
+            if(is.null(rownames(x))) (1:nr)[rowInd] else rownames(x)
+        else labRow[rowInd]
+    labCol <-
+        if(is.null(labCol))
+            if(is.null(colnames(x))) (1:nc)[colInd] else colnames(x)
+        else labCol[colInd]
+
+    if(scale == "row") {
+        x <- sweep(x, 1, rowMeans(x, na.rm = na.rm))
+        sx <- apply(x, 1, sd, na.rm = na.rm)
+        x <- sweep(x, 1, sx, "/")
+    }
+    else if(scale == "column") {
+        x <- sweep(x, 2, colMeans(x, na.rm = na.rm))
+        sx <- apply(x, 2, sd, na.rm = na.rm)
+        x <- sweep(x, 2, sx, "/")
+    }
+
+    ## Calculate the plot layout
+    ds <- dev.size(units="cm");
+
+
+    lmat <- rbind(c(NA, 3), 2:1)
+    if(doRdend) {
+      lwid <- c(if(is.character(Rowv.hsize)) Rowv.hsize else lcm(Rowv.hsize*ds[1]), 1)
+    } else {
+      lmat[2,1] <- NA; lmat[1,2] <- 2; lwid <- c(0, 1)
+    }
+    if(doCdend) {
+      lhei <- c(if(is.character(Colv.vsize)) Colv.vsize else lcm(Colv.vsize*ds[2]), 1)
+    } else {
+      lmat[1,2] <- NA; lhei <- c(0,1);
+    }
+    #lwid <- c(if(doRdend) lcm(Rowv.hsize*ds[1]) else "0.5 cm", 1)
+    #lhei <- c((if(doCdend) lcm(Colv.vsize*ds[2]) else "0.5 cm"), 1)
+    if(!missing(ColSideColors) && !is.null(ColSideColors)) { ## add middle row to layout
+
+      if(is.matrix(ColSideColors)) {
+        if(ncol(ColSideColors)!=nc)
+          stop("'ColSideColors' matrix must have the same number of columns as length ncol(x)")
+        if(is.character(ColSideColors.unit.vsize)) {
+          ww <- paste(as.numeric(gsub("(\\d+\\.?\\d*)(.*)","\\1",ColSideColors.unit.vsize,perl=TRUE))*nrow(ColSideColors),gsub("(\\d+\\.?\\d*)(.*)","\\2",ColSideColors.unit.vsize,perl=TRUE),sep="")
+        } else {
+          ww <- lcm(ColSideColors.unit.vsize*ds[2]*nrow(ColSideColors))
+        }
+        lmat <- rbind(lmat[1,]+1, c(NA,1), lmat[2,]+1)
+        lhei <- c(lhei[1], ww, lhei[2])
+      } else {
+        if(!is.character(ColSideColors) || length(ColSideColors) != nc)
+          stop("'ColSideColors' must be a character vector of length ncol(x)")
+        if(is.character(ColSideColors.unit.vsize)) {
+          ww <- paste(as.numeric(gsub("(\\d+\\.?\\d*)(.*)","\\1",ColSideColors.unit.vsize,perl=TRUE)),gsub("(\\d+\\.?\\d*)(.*)","\\2",ColSideColors.unit.vsize,perl=TRUE),sep="")
+        } else {
+          ww <- lcm(ColSideColors.unit.vsize*ds[2])
+        }
+        lmat <- rbind(lmat[1,]+1, c(NA,1), lmat[2,]+1)
+        lhei <- c(lhei[1], ww, lhei[2])
+      }
+    }
+    if(!missing(RowSideColors) && !is.null(RowSideColors)) { ## add middle column to layout
+        if(!is.character(RowSideColors) || length(RowSideColors) != nr)
+            stop("'RowSideColors' must be a character vector of length nrow(x)")
+        lmat <- cbind(lmat[,1]+1, c(rep(NA, nrow(lmat)-1), 1), lmat[,2]+1)
+        lwid <- c(lwid[1], if(is.character(RowSideColors.hsize)) RowSideColors.hsize else lcm(RowSideColors.hsize*ds[1]), lwid[2])
+      }
+    lmat[is.na(lmat)] <- 0
+    if(verbose) {
+        message("layout: widths = ", lwid, ", heights = ", lhei,"; lmat=\n")
+        print(lmat)
+    }
+
+    ## Graphics `output' -----------------------
+
+    op <- par(no.readonly = TRUE)
+    #on.exit(par(op))
+    layout(lmat, widths = lwid, heights = lhei, respect = respect)
+    ## draw the side bars
+    if(!missing(RowSideColors) && !is.null(RowSideColors)) {
+        par(mar = c(margins[1],0, 0,internal.margin))
+        image(rbind(1:nr), col = RowSideColors[rowInd], axes = FALSE)
+        if(box) { box(); }
+    }
+    if(!missing(ColSideColors) && !is.null(ColSideColors)) {
+        par(mar = c(internal.margin,0, 0,margins[2]))
+        if(is.matrix(ColSideColors)) {
+          image(t(matrix(1:length(ColSideColors),byrow=TRUE,nrow=nrow(ColSideColors),ncol=ncol(ColSideColors))), col = as.vector(t(ColSideColors[,colInd,drop=FALSE])), axes = FALSE)
+          if(box) { box(); }
+        } else {
+          image(cbind(1:nc), col = ColSideColors[colInd], axes = FALSE)
+          if(box) { box(); }
+        }
+    }
+    ## draw the main carpet
+    par(mar = c(margins[1], 0, 0, margins[2]))
+    if(!symm || scale != "none")
+        x <- t(x)
+    if(revC) { # x columns reversed
+        iy <- nr:1
+        ddr <- rev(ddr)
+        x <- x[,iy,drop=FALSE]
+    } else iy <- 1:nr
+
+    image(1:nc, 1:nr, x, xlim = 0.5+ c(0, nc), ylim = 0.5+ c(0, nr),
+          axes = FALSE, xlab = "", ylab = "", zlim=zlim, ...)
+    if(box) { box(); }
+    axis(1, 1:nc, labels= labCol, las= lasCol, line= -0.5, tick= 0, cex.axis= cexCol)
+    if(!is.null(xlab)) mtext(xlab, side = 1, line = margins[1] - 1.25)
+    axis(4, iy, labels= labRow, las= lasRow, line= -0.5, tick= 0, cex.axis= cexRow)
+    if(!is.null(ylab)) mtext(ylab, side = 4, line = margins[2] - 1.25,las=lasRow)
+    if (!missing(add.expr))
+        eval(substitute(add.expr))
+
+
+    if(grid) {
+      abline(v=c(1:nc)-0.5,col=grid.col,lwd=grid.lwd)
+      abline(h=c(1:nr)-0.5,col=grid.col,lwd=grid.lwd)
+      box(col=grid.col,lwd=grid.lwd)
+    }
+
+    ## the two dendrograms :
+    if(doRdend) {
+      par(mar = c(margins[1], 0, 0, 0))
+      plot(ddr, horiz = TRUE, axes = FALSE, yaxs = "i", leaflab = "none",xaxs="i")
+    }
+
+    if(doCdend) {
+      par(mar = c(internal.margin, 0, if(!is.null(main)) 1 else 0, margins[2]))
+      plot(ddc, axes = FALSE, xaxs = "i", leaflab = "none",yaxs="i")
+    }
+    invisible(list(rowInd = rowInd, colInd = colInd,
+                   Rowv = if(keep.dendro && doRdend) ddr,
+                   Colv = if(keep.dendro && doCdend) ddc ))
 }
-

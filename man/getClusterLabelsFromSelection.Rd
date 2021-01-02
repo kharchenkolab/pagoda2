@@ -2,7 +2,16 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{getClusterLabelsFromSelection}
 \alias{getClusterLabelsFromSelection}
-\title{Given a clustering vector and a set of selections assign names to the clusters}
+\title{Assign names to the clusters, given a clustering vector and a set of selections.
+This function will use a set of pagoda2 cell seletcion to identify
+the clusters in a a named factor. It is meant to be used to import user defined annotations
+that are defined as selections into a more formal categorization of cells that are defined by cluster.
+To help with this the function allows a percent of cells to have been classified in the selections into
+multiple groups, something which may be the result of the users making wrong selections. The percent of
+cells allows to be multiselected in any given group is defined by multiClassCutoff. Furthermore
+the method will assign each cluster to a selection only if the most popular cluster to the next most popular
+exceed the ambiguous.ratio in terms of cell numbers. If a cluster does not satisfy this condtiion it is not
+assigned.}
 \usage{
 getClusterLabelsFromSelection(
   clustering,
@@ -16,14 +25,15 @@ getClusterLabelsFromSelection(
 
 \item{selections}{a pagoda2 selection object}
 
-\item{multiClasscutoff}{percent of cells in any one cluster that can be multiassigned}
+\item{multiClassCutoff}{numeric Percent of cells in any one cluster that can be multiassigned (default=0.3)}
 
-\item{ambiguour.ratio}{the ratio of first and second cell numbers for any cluster to produce a valid clustering}
+\item{ambiguous.ratio}{numeric Ratio of first and second cell numbers for any cluster to produce a valid clustering (default=0.5)}
 }
 \value{
-a data.frame with two colums, one for cluster and one for selections, each cluster appears only once
+a data.frame with two columns, one for cluster and one for selections, each cluster appears only once
 }
 \description{
+Assign names to the clusters, given a clustering vector and a set of selections.
 This function will use a set of pagoda2 cell seletcion to identify
 the clusters in a a named factor. It is meant to be used to import user defined annotations
 that are defined as selections into a more formal categorization of cells that are defined by cluster.

@@ -2,21 +2,30 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{extendedP2proc}
 \alias{extendedP2proc}
-\title{Perform extended pagoda2 processing}
+\title{Perform extended pagoda2 processing. 
+Generate organism specific GO environment and calculate pathway overdispersion.}
 \usage{
-extendedP2proc(p2, n.cores = 20, organism = "hs")
+extendedP2proc(p2, organism = "hs")
 }
 \arguments{
-\item{p2}{the pagoda 2 object}
+\item{p2}{the pagoda2 object}
 
-\item{n.cores}{number of cores to use}
-
-\item{organism}{organisms hs, mm or dr}
+\item{organism}{character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')}
 }
 \value{
-a list of a p2 object and a go.env
+list of a pagoda2 object and go.env
 }
 \description{
-generate organism specific GO environment and
-calculate pathway overdispersion
+Perform extended pagoda2 processing. 
+Generate organism specific GO environment and calculate pathway overdispersion.
+}
+\examples{
+\dontrun{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+counts <- counts[rowSums(counts)>=10,]
+rownames(counts) <- make.unique(rownames(counts))
+r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
+extendedP2proc(r, organism = 'hs')
+}
 }

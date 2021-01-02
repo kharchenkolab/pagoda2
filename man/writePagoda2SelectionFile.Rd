@@ -2,16 +2,20 @@
 % Please edit documentation in R/pagodaWebSelections.R
 \name{writePagoda2SelectionFile}
 \alias{writePagoda2SelectionFile}
-\title{writes a pagoda2 selection object as a p2 pagoda2 selection files}
+\title{Writes a pagoda2 selection object as a p2 selection file that be be
+loaded to the web interface}
 \usage{
 writePagoda2SelectionFile(sel, filepath)
 }
 \arguments{
 \item{sel}{pagoda2 selection object}
 
-\item{filepath}{name of file to write to}
+\item{filepath}{name of file to which to write}
+}
+\value{
+NULL, writes to filepath the pagoda2 selection object as a p2 selection file that be be loaded to the web interface
 }
 \description{
-writes a pagoda2 selection object as a p2 selection file that be be
-loaded to the web interfact
+Writes a pagoda2 selection object as a p2 selection file that be be
+loaded to the web interface
 }

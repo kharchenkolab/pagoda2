@@ -2,7 +2,7 @@
 % Please edit documentation in R/pagodaWebHelpers.R
 \name{p2.generate.go.web.fromGOEnv}
 \alias{p2.generate.go.web.fromGOEnv}
-\title{Generates GO annotation for the web object}
+\title{Generates GO annotation for the web object from the GO environment used for enrichment analysis}
 \usage{
 p2.generate.go.web.fromGOEnv(go.env)
 }
@@ -10,6 +10,6 @@ p2.generate.go.web.fromGOEnv(go.env)
 \item{go.env}{GO enviroment generated with p2.generate.go}
 }
 \description{
-Generates GO annotation for the web object from the go environment used for
-enrichment analysis
+Generates GO annotation for the web object from the GO environment used for enrichment analysis
 }
+\keyword{internal}

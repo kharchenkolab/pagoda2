@@ -2,18 +2,22 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{get.de.geneset}
 \alias{get.de.geneset}
-\title{Generate differential expression genesets for the web app given a cell grouping}
+\title{Generate differential expression genesets for the web app given a cell grouping by
+calculating DE sets between each cell set and everything else}
 \usage{
 get.de.geneset(pagObj, groups, prefix = "de_")
 }
 \arguments{
 \item{pagObj}{pagoda object}
 
-\item{groups}{a named factor to do the de by}
+\item{groups}{named factor to do the de by}
 
-\item{prefix}{a character  prefix to assign to genesets generated}
+\item{prefix}{chararcter Prefix to assign to genesets generated (default="de_")}
+}
+\value{
+a pagoda2 web object
 }
 \description{
 Generate differential expression genesets for the web app given a cell grouping by
-Calculating de sets between every cell set and everything else individually
+calculating DE sets between each cell set and everything else
 }

@@ -13,5 +13,5 @@ validateSelectionsObject(selections)
 a logical value indicating if the object is valid
 }
 \description{
-validates a pagoda2 selection object
+Validates a pagoda2 selection object
 }

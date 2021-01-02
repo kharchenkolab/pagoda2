@@ -2,7 +2,9 @@
 % Please edit documentation in R/helpers.R
 \name{namedNames}
 \alias{namedNames}
-\title{Get a vector of the names of an object named by the names themselves}
+\title{Get a vector of the names of an object named by the names themselves. 
+This is useful with lapply when passing names of objects as it ensures 
+that the output list is also named.}
 \usage{
 namedNames(g)
 }
@@ -13,7 +15,7 @@ namedNames(g)
 vector with names of object
 }
 \description{
-Get a named vector of the names of an object. This is useful
-with lapply when passing names of objects as it ensures that the output list
-is also named
+Get a vector of the names of an object named by the names themselves. 
+This is useful with lapply when passing names of objects as it ensures 
+that the output list is also named.
 }

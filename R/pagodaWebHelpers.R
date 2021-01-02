@@ -1,36 +1,39 @@
 #' @importFrom parallel mclapply
 NULL
 
-#' Generates human go annotation for the web object
-#' @description generates a humna go annotation for the pagoda2 web object
+#' Generates human GO annotation for the web object
+#' 
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.human.go.web
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @keywords internal
 p2.generate.human.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Hs.eg.db", quietly = TRUE)) {
     stop("Package \"org.Hs.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
   }
 
   p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Hs.eg.db::org.Hs.egALIAS2EG, 
-                     egGO2ALLEGS = org.Hs.eg.db::org.Hs.egGO2ALLEGS, n.cores = n.cores);
+                     egGO2ALLEGS = org.Hs.eg.db::org.Hs.egGO2ALLEGS, n.cores = n.cores)
 }
 
-#' Generates mouse go annotation for the web object
-#' @description generates a humna go annotation for the pagoda2 web object
+#' Generates mouse (Mus musculus) GO annotation for the web object
+#' 
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.mouse.go.web
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @keywords internal
 p2.generate.mouse.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
     stop("Package \"org.Mm.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
   }
 
   p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Mm.eg.db::org.Mm.egALIAS2EG, 
-                     egGO2ALLEGS = org.Mm.eg.db::org.Mm.egGO2ALLEGS, n.cores = n.cores);
+                     egGO2ALLEGS = org.Mm.eg.db::org.Mm.egGO2ALLEGS, n.cores = n.cores)
 }
 
-#' Generates mouse go annotation for the web object
-#' @description generates a danio rerio go annotation for the pagoda2 web object
+#' Generates zebrafish (Danio rerio) GO annotation for the web object
+#' 
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.dr.go.web
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @keywords internal
 p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
   if (!requireNamespace("org.Dr.eg.db", quietly = TRUE)) {
     stop("Package \"org.Dr.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
@@ -40,10 +43,13 @@ p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
 }
 
 
-#' Generates human go annotation for the web object for any species
-#' @description generates a humna go annotation for the pagoda2 web object
+#' Generates GO annotation for the web object for any species
+#' 
 #' @param gene.names a character vector of genes to include
-#' @export p2.generate.go.web
+#' @param egALIAS2EG (default=NULL)
+#' @param egGO2ALLEGS (default=NULL)
+#' @param n.cores numeric Number of cores to use (default=1)
+#' @keywords internal
 p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NULL, n.cores = 1) {
   if (!requireNamespace("GO.db", quietly = TRUE)) {
     stop("Package \"GO.db\" needed for this function to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
@@ -57,6 +63,10 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
     stop("gene.names needs to be a character vector of gene names")
   }
 
+  if (!requireNamespace("AnnotationDbi", quietly = TRUE)) {
+    stop("Package \"AnnotationDbi\" needed for this function to work. Please install it with `BiocManager::install('AnnotationDbi')`.", call. = FALSE)
+  }
+
   ids <- unlist(mclapply(AnnotationDbi::mget(gene.names, egALIAS2EG, ifnotfound = NA), function(x) x[1], mc.cores = n.cores))
   rids <- names(ids)
   names(rids) <- ids
@@ -64,8 +74,8 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
   go.env <- go.env[unlist(lapply(go.env, length)) > 5]
 
   ## Put the GO Term annotation generated in a format suitable for the web interface
-  nms <- names(go.env);
-  names(nms) <- nms;
+  nms <- names(go.env)
+  names(nms) <- nms
   geneSets <- lapply(nms, function(x) {
     list(
       properties = list(
@@ -80,17 +90,16 @@ p2.generate.go.web  <- function (gene.names, egALIAS2EG = NULL, egGO2ALLEGS = NU
   invisible(geneSets)
 }
 
-#' Generates GO annotation for the web object
-#' @description Generates GO annotation for the web object from the go environment used for
-#' enrichment analysis
+#' Generates GO annotation for the web object from the GO environment used for enrichment analysis
+#'
 #' @param go.env GO enviroment generated with p2.generate.go
-#' @export p2.generate.go.web.fromGOEnv
-p2.generate.go.web.fromGOEnv  <- function (go.env) {
+#' @keywords internal
+p2.generate.go.web.fromGOEnv <- function(go.env){
   go.env <- as.list(go.env)
 
   ## Put the GO Term annotation generated in a format suitable for the web interface
-  nms <- names(go.env);
-  names(nms) <- nms;
+  nms <- names(go.env)
+  names(nms) <- nms
   geneSets <- lapply(nms, function(x) {
     list(
       properties = list(

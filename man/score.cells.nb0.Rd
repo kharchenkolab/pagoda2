@@ -2,12 +2,12 @@
 % Please edit documentation in R/cell.scoring.R
 \name{score.cells.nb0}
 \alias{score.cells.nb0}
-\title{Score cells by getting mean expression of genes in signtures}
+\title{Score cells by getting mean expression of genes in signatures}
 \usage{
 score.cells.nb0(data, signature)
 }
 \arguments{
-\item{data}{the matrix}
+\item{data}{matrix}
 
 \item{signature}{the genes in the signature}
 }
@@ -15,5 +15,5 @@ score.cells.nb0(data, signature)
 cell scores
 }
 \description{
-Score cells by getting mean expression of genes in signtures
+Score cells by getting mean expression of genes in signatures
 }

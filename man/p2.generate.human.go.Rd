@@ -7,11 +7,18 @@
 p2.generate.human.go(r)
 }
 \arguments{
-\item{r}{a pagoda2 object}
+\item{r}{pagoda2 object}
 }
 \value{
-a go environment object
+a GO environment object
 }
 \description{
 Generate a GO environment for human for overdispersion analysis for the the back end
+}
+\examples{
+\donttest{
+cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+p2 <- basicP2proc(cm)
+p2.generate.human.go(p2)
+}
 }
