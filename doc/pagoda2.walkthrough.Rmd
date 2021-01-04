@@ -39,8 +39,7 @@ countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2
 
 Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
 
-
-Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters with infomap, multilevel and walktrap and generate largeVis and tSNE embeddings.
+Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters by [multilevel optimization](https://igraph.org/c/doc/igraph-Community.html#igraph_community_multilevel) (the Louvain algorithm), and generate largeVis and tSNE embeddings.
 
 ```{r message=FALSE}
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
@@ -65,7 +64,7 @@ And that's it! You will now be able to interact with the processed dataset via t
 
 # II. In-Depth Processing and Analysis 
 
-We now will re-run and explain each step within `basicP2proc()`, starting from the beginning. 
+We now will re-run and explain each step within `basicP2proc()`, starting from the beginning:
 
 
 ## Preliminary: Loading the libraries
@@ -95,9 +94,7 @@ We can get more information about how the matrix is stored by running `str()`. T
 str(cm)
 ```
 
-In order to catch outliers, we can begin with a fairly basic procedure of looking at the dependency between the number of molecules measured per cell and the number of genes per cell. Let's plot the distribution of molecules per cell and molecules per gene for this dataset in log10 scale. 
-
-:
+In order to catch outliers, we can begin with a fairly basic procedure of looking at the dependency between the number of molecules measured per cell and the number of genes per cell. Let's plot the distribution of molecules per cell and molecules per gene for this dataset in log10 scale:
 ```{r, fig.height=8, fig.width=10}
 par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')

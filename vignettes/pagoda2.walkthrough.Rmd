@@ -39,8 +39,7 @@ countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2
 
 Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
 
-
-Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters with infomap, multilevel and walktrap and generate largeVis and tSNE embeddings.
+Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters by [multilevel optimization](https://igraph.org/c/doc/igraph-Community.html#igraph_community_multilevel) (the Louvain algorithm), and generate largeVis and tSNE embeddings.
 
 ```{r message=FALSE}
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 

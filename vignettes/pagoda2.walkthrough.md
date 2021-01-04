@@ -1,3 +1,14 @@
+---
+title: "Pagoda2 Walkthrough"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{"Pagoda2 Walkthrough"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
 # Overview
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
@@ -30,8 +41,7 @@ countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2
 
 Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
 
-
-Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters with infomap, multilevel and walktrap and generate largeVis and tSNE embeddings.
+Next we feed this input into the function `basicP2proc()`, which performs all basic pagoda2 processing. That is, the function will adjust the variance, calculate PCA reduction, make a KNN graph, identify clusters by [multilevel optimization](https://igraph.org/c/doc/igraph-Community.html#igraph_community_multilevel) (the Louvain algorithm), and generate largeVis and tSNE embeddings.
 
 
 ```r
@@ -352,11 +362,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 20 levels "1","2","3","4",..: 4 1 1 7 7 1 2 3 2 8 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 6 1 1 3 3 1 7 5 7 4 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 7 10 10 11 11 10 5 3 5 8 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 1 8 8 7 7 8 9 5 9 4 ...
+##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 10 7 10 4 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -382,7 +392,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 22 clusters ...
+## running differential expression with 20 clusters ...
 ```
 
 ```
@@ -468,18 +478,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.15:List of 2
+##  $ 14.vs.8   :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.15"
-##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:133] "EEF1A1" "RPS4X" "RPL10A" "GNB2L1" ...
-##  $ 13.vs.8 :List of 2
+##   .. ..$ genesetname     : chr "14.vs.8"
+##   .. ..$ shortdescription: chr "14.vs.8"
+##   ..$ genes     : chr [1:490] "VIM" "HLA-A" "RPS4X" "AIF1" ...
+##  $ 18.vs.8.14:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "13.vs.8"
-##   .. ..$ shortdescription: chr "13.vs.8"
-##   ..$ genes     : chr [1:1611] "RPL21" "RPL31" "RPS6" "RPS27" ...
+##   .. ..$ genesetname     : chr "18.vs.8.14"
+##   .. ..$ shortdescription: chr "18.vs.8.14"
+##   ..$ genes     : chr [1:28] "PF4" "TMSB4X" "FERMT3" "PPBP" ...
 ```
 
 To add GO Terms as genesets, run the following
