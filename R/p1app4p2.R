@@ -337,26 +337,26 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
           ##callSuper(results);
         ##} else {
           ##callSuper();
-          self$results <<- results
-          self$type <<- type
-          #results$tvc$order <<- rev(results$tvc$order);
-          self$results$tvc$labels <<- as.character(1:nrow(self$results$rcm))
-          rownames(self$results$rcm) <<- as.character(1:nrow(self$results$rcm))
-          self$genes <<- genes
-          self$genes$svar <<- self$genes$var/max(self$genes$var)
-          ## genes <<- genes  ??
-          self$batch <<- self$results$p2$batch
-          self$pathways <<- pathways
-          self$name <<- name
-          self$trim <<- trim
-          self$embedding <<- embedding
-          self$veloinfo <<- veloinfo
+          self$results <- results
+          self$type <- type
+          #results$tvc$order <- rev(results$tvc$order);
+          self$results$tvc$labels <- as.character(1:nrow(self$results$rcm))
+          rownames(self$results$rcm) <- as.character(1:nrow(self$results$rcm))
+          self$genes <- genes
+          self$genes$svar <- self$genes$var/max(self$genes$var)
+          ## genes <- genes  ??
+          self$batch <- self$results$p2$batch
+          self$pathways <- pathways
+          self$name <- name
+          self$trim <- trim
+          self$embedding <- embedding
+          self$veloinfo <- veloinfo
           # reverse lookup environment
           xl <- as.list(self$goenv)
           gel <- tapply(rep(names(xl), unlist(lapply(xl, length))), unlist(xl), I)
           gel <- gel[nchar(names(gel)) > 0]
-          self$renv <<- list2env(gel, parent=emptyenv())
-          self$goenv <<- list2env(xl, parent=emptyenv())
+          self$renv <- list2env(gel, parent=emptyenv())
+          self$goenv <- list2env(xl, parent=emptyenv())
           rm(xl,gel)
           gc()
       },
