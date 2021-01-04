@@ -97,7 +97,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
                         lib.sizes=NULL, log.scale=TRUE, keep.genes=NULL) {
 
       self$n.cores <- n.cores
-      misc <<-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
+      misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
       self$modelType = modelType
 
       ##if (!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
@@ -147,14 +147,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("Too few cells remaining after min.count.per.cell filter applied - have you pre-filtered the count matrix to include only cells of a realistic size?") 
       }
       
-      counts <<- t(countMatrix)
+      counts <- t(countMatrix)
       
       # Keep genes of sufficient coverage or genes that are in the keep.genes list
-      counts <<- counts[,diff(counts@p) >= min.cells.per.gene | colnames(counts) %in% keep.genes]
+      counts <- counts[,diff(counts@p) >= min.cells.per.gene | colnames(counts) %in% keep.genes]
 
       # Save the filtered count matrix in misc$rawCounts
-      misc[['rawCounts']] <<- counts
-      misc$depthScale <<- depthScale
+      misc[['rawCounts']] <- counts
+      misc$depthScale <- depthScale
 
       if (self$modelType == 'raw') {
         return()
@@ -165,7 +165,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           stop("The supplied batch vector doesn't contain all the cells in its names attribute")
         }
         colBatch <- as.factor(self$batch[colnames(countMatrix)])
-        self$batch <<- colBatch
+        self$batch <- colBatch
       }
 
       if (!is.null(lib.sizes)) {
@@ -173,14 +173,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           stop("The supplied lib.sizes vector doesn't contain all the cells in its names attribute")
         }
         lib.sizes <- lib.sizes[colnames(countMatrix)]
-        depth <<- lib.sizes/mean(lib.sizes)*mean(Matrix::colSums(countMatrix))
+        depth <- lib.sizes/mean(lib.sizes)*mean(Matrix::colSums(countMatrix))
       } else {
-        depth <<- Matrix::colSums(countMatrix)
+        depth <- Matrix::colSums(countMatrix)
       }
       
       cell.filt.mask <- (depth >= min.transcripts.per.cell)
-      counts <<- counts[cell.filt.mask,]
-      depth <<- depth[cell.filt.mask]
+      counts <- counts[cell.filt.mask,]
+      depth <- depth[cell.filt.mask]
       
       if (any(depth == 0)) {
         stop("Cells with zero expression over all genes are not allowed")
@@ -193,11 +193,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
         # winsorize in normalized space first in hopes of getting a more stable depth estimate
         if (trim>0) {
-          counts <<- counts / as.numeric(depth)
+          counts <- counts / as.numeric(depth)
           inplaceWinsorizeSparseCols(counts, trim, self$n.cores)
-          counts <<- counts*as.numeric(depth)
+          counts <- counts*as.numeric(depth)
           if (is.null(lib.sizes)) {
-            depth <<- round(Matrix::rowSums(counts))
+            depth <- round(Matrix::rowSums(counts))
           }
         }
 
@@ -223,7 +223,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # predict log(p) for each non-0 entry
         count.gene <- rep(1:counts@Dim[2], diff(counts@p))
         exp.x <- exp(log(gene.av)[count.gene] - cm$coef[1,count.gene] - ldepth[counts@i+1]*cm$coef[2,count.gene])
-        counts@x <<- as.numeric(counts@x*exp.x/(depth[counts@i+1]/depthScale)) # normalize by depth as well
+        counts@x <- as.numeric(counts@x*exp.x/(depth[counts@i+1]/depthScale)) # normalize by depth as well
         # perform a another round of trimming
         if (trim>0) {
           inplaceWinsorizeSparseCols(counts, trim, self$n.cores)
@@ -249,30 +249,30 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           # adjust every non-0 entry
           count.gene <- rep(1:counts@Dim[2],diff(counts@p))
           
-          counts@x <<- as.numeric(counts@x/bc[cbind(count.gene,as.integer(self$batch)[counts@i+1])])
+          counts@x <- as.numeric(counts@x/bc[cbind(count.gene,as.integer(self$batch)[counts@i+1])])
         }
 
         if (trim>0) {
           if (verbose) message("Winsorizing ... ")
-          counts <<- counts/as.numeric(depth)
+          counts <- counts/as.numeric(depth)
           
           inplaceWinsorizeSparseCols(counts, trim, self$n.cores)
-          counts <<- counts*as.numeric(depth)
+          counts <- counts*as.numeric(depth)
           
           if (is.null(lib.sizes)) {
-            depth <<- round(Matrix::rowSums(counts))
+            depth <- round(Matrix::rowSums(counts))
           }
         }
 
-        counts <<- counts/as.numeric(depth/depthScale)
+        counts <- counts/as.numeric(depth/depthScale)
       } else {
         stop('modelType ',self$modelType,' is not implemented')
       }
       if (log.scale) {
         if (verbose) message("log scale ... ")
-        counts@x <<- as.numeric(log(counts@x+1))
+        counts@x <- as.numeric(log(counts@x+1))
       }
-      misc[['rescaled.mat']] <<- NULL
+      misc[['rescaled.mat']] <- NULL
       if (verbose) message("done.\n")
 
       self$counts <- counts
@@ -338,7 +338,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           ods <- ods[1:1e3] 
         }
         if (persist) {
-          self$misc[['odgenes']] <<- rownames(df)[ods]
+          self$misc[['odgenes']] <- rownames(df)[ods]
         }
       } else {
         # gene-relative normalizaton 
@@ -369,7 +369,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
         
         if (persist) {
-          self$misc[['odgenes']] <<- rownames(df)[ods]
+          self$misc[['odgenes']] <- rownames(df)[ods]
         }
         if (verbose) message(length(ods),' overdispersed genes ... ',length(ods) )
 
@@ -379,7 +379,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (persist) {
         if (verbose) message('persisting ... ')
-        self$misc[['varinfo']] <<- df
+        self$misc[['varinfo']] <- df
       }
 
       # rescale mat variance
@@ -388,7 +388,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       ##   #df$gsf <- geneScaleFactors <- sqrt(1/exp(df$v));
       ##   inplaceColMult(counts,geneScaleFactors,rowSel);  # normalize variance of each gene
       ##   #inplaceColMult(counts,rep(1/mean(Matrix::colSums(counts)),ncol(counts))); # normalize the column sums to be around 1
-      ##   if(persist) misc[['rescaled.mat']] <<- geneScaleFactors;
+      ##   if(persist) misc[['rescaled.mat']] <- geneScaleFactors;
       ## }
       if (plot) {
         if (do.par) {
@@ -540,9 +540,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       sxn <- (xn+t(xn))/2
       g <- igraph::graph_from_adjacency_matrix(sxn,mode='undirected',weighted=TRUE)
       if (!x.was.given) {
-        if (is.null(self$misc[['edgeMat']])) { self$misc[['edgeMat']] <<- list() }
-        self$misc[['edgeMat']][[type]] <<- xn
-        self$graphs[[type]] <<- g
+        if (is.null(self$misc[['edgeMat']])) { self$misc[['edgeMat']] <- list() }
+        self$misc[['edgeMat']][[type]] <- xn
+        self$graphs[[type]] <- g
       }
       invisible(g)
     },
@@ -616,8 +616,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
        
       if (persist) {
-        self$clusters[[type]][[name]] <<- cls.groups
-        self$misc[['community']][[type]][[name]] <<- cls
+        self$clusters[[type]][[name]] <- cls.groups
+        self$misc[['community']][[type]][[name]] <- cls
       }
       invisible(cls)
     },
@@ -797,14 +797,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       dgl <- lapply(dexp,function(d) as.character(unlist(lapply(d$dg,function(x) rownames(x)[x$Z>=z.threshold]))))
       tamr$env <- list2env(dgl[unlist(lapply(dgl,length))>=min.set.size])
 
-      self$misc[['pathwayOD']] <<- tamr
+      self$misc[['pathwayOD']] <- tamr
 
       # fake pathwayODInfo
       zs <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$Z)))))
       mval <- unlist(lapply(dexp,function(x) max(unlist(lapply(x$dg,function(y) y$M)))))
       vdf <- data.frame(i=1:nrow(tamr$xv),npc=1,valid=TRUE,sd=apply(tamr$xv,1,sd),cz=zs,z=zs,oe=mval,n=unlist(lapply(dexp,function(x) sum(unlist(lapply(x$dg,nrow))))))
       vdf$name <- rownames(vdf) <- names(dexp)
-      self$misc[['pathwayODInfo']] <<- vdf
+      self$misc[['pathwayODInfo']] <- vdf
 
       invisible(tamr)
     },
@@ -861,8 +861,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       colnames(pcas) <- paste0('PC',seq(ncol(pcas)))
 
       # Save into genegraphs slot
-      #genegraphs$genePCs <<- pcs
-      #genegraphs$geneRotated <<- pcas
+      #genegraphs$genePCs <- pcs
+      #genegraphs$geneRotated <- pcas
 
       # Using cosine distance only here
       if (center) {
@@ -874,7 +874,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # Turn into a dataframe, convert from correlation distance into weight
       df <- data.frame('from'=rownames(pcas)[xn@i+1],'to'=rownames(pcas)[xn@j+1],'w'=pmax(1-xn@x,0),stringsAsFactors=FALSE)
 
-      self$genegraphs$graph <<- df
+      self$genegraphs$graph <- df
     },
 
     #' @description Calculate density-based clusters
@@ -933,8 +933,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       cols <- rainbow(length(unique(cl)),v=v,s=s)[cl+1]
       cols[cl==0] <- "gray70"
       names(cols) <- rownames(emb)
-      self$clusters[[type]][[name]] <<- cols
-      self$misc[['clusters']][[type]][[name]] <<- cols
+      self$clusters[[type]][[name]] <- cols
+      self$misc[['clusters']][[type]][[name]] <- cols
       invisible(cols)
     },
     # determine subpopulation-specific genes
@@ -1075,14 +1075,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (is.null(groups)) {
         if (is.null(clusterType)) {
-          # self$diffgenes[[type]][[ names(self$clusters[[type]])[1] ]] <<- ds
+          # self$diffgenes[[type]][[ names(self$clusters[[type]])[1] ]] <- ds
           ## take last clustering generated
-          self$diffgenes[[type]][[names(self$clusters[[type]])[length(self$clusters[[type]])]]] <<- ds
+          self$diffgenes[[type]][[names(self$clusters[[type]])[length(self$clusters[[type]])]]] <- ds
         } else {
-          self$diffgenes[[type]][[clusterType]] <<- ds
+          self$diffgenes[[type]][[clusterType]] <- ds
         }
       } else {
-        self$diffgenes[[type]][[name]] <<- ds
+        self$diffgenes[[type]][[name]] <- ds
       }
 
       invisible(ds)
@@ -1301,7 +1301,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       lib.sizes <- unlist(x)[rownames(self$misc[['rawCounts']])]
       lib.sizes <- lib.sizes/mean(lib.sizes)*mean(Matrix::rowSums(self$misc[['rawCounts']]))
 
-      self$depth <<- lib.sizes
+      self$depth <- lib.sizes
       invisible(lib.sizes)
     },
 
@@ -1709,7 +1709,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         pcas <- as.matrix(x %*% pcs$v)
       }
-      misc$PCA <<- pcs
+      misc$PCA <- pcs
       if (verbose) message('.')
       #pcas <- scde::winsorize.matrix(pcas,0.05)
       # # control for sequencing depth
@@ -1726,11 +1726,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #pcas <- pcas[,-1]
       #pcas <- scde::winsorize.matrix(pcas,0.1)
       if (verbose) message(' done\n')
-      self$reductions[[name]] <<- pcas
+      self$reductions[[name]] <- pcas
       ## nIcs <- nPcs;
       ## a <- ica.R.def(t(pcas),nIcs,tol=1e-3,fun='logcosh',maxit=200,verbose=T,alpha=1,w.init=matrix(rnorm(nIcs*nPcs),nIcs,nPcs))
-      ## reductions[['ICA']] <<- as.matrix( x %*% pcs$v %*% a);
-      ## colnames(reductions[['ICA']]) <<- paste('IC',seq(ncol(reductions[['ICA']])),sep='');
+      ## reductions[['ICA']] <- as.matrix( x %*% pcs$v %*% a);
+      ## colnames(reductions[['ICA']]) <- paste('IC',seq(ncol(reductions[['ICA']])),sep='');
 
       invisible(pcas)
     },
@@ -1884,7 +1884,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       odg <- unique(unlist(lapply(gpcs,function(z) z$odgenes)))
       # TODO: consider gsf?
       odgenes <- unique(c(odgenes,odg))
-      self$misc[['odgenes']] <<- odgenes
+      self$misc[['odgenes']] <- odgenes
       invisible(odgenes)
     },
 
@@ -2153,12 +2153,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (verbose) message(".")
       g <- graph_from_adjacency_matrix(m,mode='undirected',weighted=TRUE)
       if (verbose) message(".")
-      self$graphs[[name]] <<- g
+      self$graphs[[name]] <- g
       if (verbose) message(" done.\n")
 
       emb <- Rtsne::Rtsne(d,is_distance=TRUE, perplexity=perplexity, num_threads=n.cores)$Y
       rownames(emb) <- colnames(d)
-      self$embeddings[[type]][[name]] <<- emb
+      self$embeddings[[type]][[name]] <- emb
 
       # calculate cell-cell distance, considering weighting
 
@@ -2263,7 +2263,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           return(list(xp=pcs,z=z,n=ngenes))
         }, n.cores = n.cores,mc.preschedule=TRUE)
         if (save.pca) {
-          self$misc[['pwpca']] <<- pwpca
+          self$misc[['pwpca']] <- pwpca
         }
       } else {
         if (verbose) {
@@ -2381,7 +2381,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
       rownames(xmv) <- paste("#PC", vdf$npc[vdf$valid], "# ", names(pwpca)[vdf$i[vdf$valid]], sep = "")
       rownames(vdf) <- paste("#PC", vdf$npc, "# ", vdf$name, sep = "")
-      self$misc[['pathwayODInfo']] <<- vdf
+      self$misc[['pathwayODInfo']] <- vdf
 
       # collapse gene loading
       if (verbose) {
@@ -2406,8 +2406,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # clean up aspect names, as GO ids are meaningless
       names(tam3$cnam) <- rownames(tam3$xv) <- paste0('aspect',1:nrow(tam3$xv))
 
-      self$misc[['pathwayOD']] <<- tam3
-      self$reductions[[name]] <<- tam3$xv
+      self$misc[['pathwayOD']] <- tam3
+      self$reductions[[name]] <- tam3$xv
       invisible(tam3)
     },
 
@@ -2513,8 +2513,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
         coords <- projectKNNs(wij = wij, M = M, dim=dims, verbose = verbose, sgd_batches = sgd_batches, gamma=gamma, seed=1, threads=n.cores, ...)
         colnames(coords) <- rownames(x)
-        emb <<- t(coords)
-        self$embeddings[[type]][[name]] <<- emb
+        emb <- t(coords)
+        self$embeddings[[type]][[name]] <- emb
       } else if (embeddingType=='tSNE') {
         if (nrow(x)>4e4) {
           warning('Too many cells to pre-calculate correlation distances, switching to L2. Please consider using UMAP.')
@@ -2538,7 +2538,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           emb <- Rtsne::Rtsne(d, is_distance=TRUE, perplexity=perplexity, dims=dims, num_threads=n.cores, ... )$Y
         }
         rownames(emb) <- rownames(x)
-        self$embeddings[[type]][[name]] <<- emb
+        self$embeddings[[type]][[name]] <- emb
       } else if (embeddingType=='FR') {
         g <- self$graphs[[type]]
         if (is.null(g)){ 
@@ -2547,7 +2547,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         emb <- layout.fruchterman.reingold(g, weights=E(g)$weight)
         rownames(emb) <- rownames(x)
         colnames(emb) <- c("D1","D2")
-        self$embeddings[[type]][[name]] <<- emb
+        self$embeddings[[type]][[name]] <- emb
       } else if (embeddingType == "UMAP") {
         if (!requireNamespace("uwot", quietly=TRUE)){
           stop("You need to install package 'uwot' to be able to use UMAP embedding.")
@@ -2557,14 +2557,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         
         emb <- uwot::umap(as.matrix(x), metric=distance, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
         rownames(emb) <- rownames(x)
-        self$embeddings[[type]][[name]] <<- emb
+        self$embeddings[[type]][[name]] <- emb
       } else if (embeddingType == "UMAP_graph") {
         g <- self$graphs[[type]]
         if (is.null(g)){ 
           stop(paste0("generate kNN graph first (type=",type,")"))
         }
         emb <- embedKnnGraphUmap(g, verbose=verbose, n_threads=n.cores, n_sgd_threads=n.sgd.cores, n_components=dims, ...)
-        self$embeddings[[type]][[name]] <<- emb
+        self$embeddings[[type]][[name]] <- emb
       } else {
         stop('Unknown embeddingType ',embeddingType,' specified')
       }
