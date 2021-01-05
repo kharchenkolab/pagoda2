@@ -97,7 +97,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
                         lib.sizes=NULL, log.scale=TRUE, keep.genes=NULL) {
 
       self$n.cores <- n.cores
-      misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
+      self$misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
       self$modelType = modelType
 
       ##if (!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
@@ -153,8 +153,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       counts <- counts[,diff(counts@p) >= min.cells.per.gene | colnames(counts) %in% keep.genes]
 
       # Save the filtered count matrix in misc$rawCounts
-      misc[['rawCounts']] <- counts
-      misc$depthScale <- depthScale
+      self$misc[['rawCounts']] <- counts
+      self$misc$depthScale <- depthScale
 
       if (self$modelType == 'raw') {
         return()
@@ -272,12 +272,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (verbose) message("log scale ... ")
         counts@x <- as.numeric(log(counts@x+1))
       }
-      misc[['rescaled.mat']] <- NULL
+      self$misc[['rescaled.mat']] <- NULL
       if (verbose) message("done.\n")
 
       self$counts <- counts
       self$depth <- depth
-      self$misc <- misc
     },
 
     #' @description Adjust variance of the residual matrix, determine overdispersed sites
@@ -394,7 +393,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (do.par) {
           par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
         }
-        smoothScatter(log10(exp(1))*df$m, log10(exp(1))*df$v, main='', xlab='log10[ magnitude ]',ylab='log10[ variance ]')
+        suppressWarnings(smoothScatter(log10(exp(1))*df$m, log10(exp(1))*df$v, main='', xlab='log10[ magnitude ]',ylab='log10[ variance ]'))
         vi <- which(is.finite(log10(exp(1))*df$v) & df$nobs>=min.gene.cells)
         grid <- seq(min(log10(exp(1))*df$m[vi]), max(log10(exp(1))*df$m[vi]), length.out=1000)
         ## re-calculate m
@@ -409,7 +408,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (length(ods)>0) {
           points(log10(exp(1))*df$m[ods], log10(exp(1))*df$v[ods], pch='.',col=2,cex=1)
         }
-        smoothScatter(log10(exp(1))*df$m[vi], log10(exp(1))*df$qv[vi], xlab='log10[ magnitude ]',ylab='',main='adjusted')
+        suppressWarnings(smoothScatter(log10(exp(1))*df$m[vi], log10(exp(1))*df$qv[vi], xlab='log10[ magnitude ]',ylab='',main='adjusted'))
         abline(h=1,lty=2,col=8)
         if (is.finite(max.adjusted.variance)) { 
           abline(h=max.adjusted.variance, lty=2, col=1)
@@ -1709,7 +1708,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         pcas <- as.matrix(x %*% pcs$v)
       }
-      misc$PCA <- pcs
+      self$misc$PCA <- pcs
       if (verbose) message('.')
       #pcas <- scde::winsorize.matrix(pcas,0.05)
       # # control for sequencing depth
