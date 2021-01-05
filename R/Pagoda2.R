@@ -393,7 +393,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (do.par) {
           par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
         }
-        smoothScatter(log10(exp(1))*df$m, log10(exp(1))*df$v, main='', xlab='log10[ magnitude ]',ylab='log10[ variance ]')
+        suppressWarnings(smoothScatter(log10(exp(1))*df$m, log10(exp(1))*df$v, main='', xlab='log10[ magnitude ]',ylab='log10[ variance ]'))
         vi <- which(is.finite(log10(exp(1))*df$v) & df$nobs>=min.gene.cells)
         grid <- seq(min(log10(exp(1))*df$m[vi]), max(log10(exp(1))*df$m[vi]), length.out=1000)
         ## re-calculate m
@@ -408,7 +408,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (length(ods)>0) {
           points(log10(exp(1))*df$m[ods], log10(exp(1))*df$v[ods], pch='.',col=2,cex=1)
         }
-        smoothScatter(log10(exp(1))*df$m[vi], log10(exp(1))*df$qv[vi], xlab='log10[ magnitude ]',ylab='',main='adjusted')
+        suppressWarnings(smoothScatter(log10(exp(1))*df$m[vi], log10(exp(1))*df$qv[vi], xlab='log10[ magnitude ]',ylab='',main='adjusted'))
         abline(h=1,lty=2,col=8)
         if (is.finite(max.adjusted.variance)) { 
           abline(h=max.adjusted.variance, lty=2, col=1)
