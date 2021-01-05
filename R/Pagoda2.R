@@ -153,8 +153,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       counts <- counts[,diff(counts@p) >= min.cells.per.gene | colnames(counts) %in% keep.genes]
 
       # Save the filtered count matrix in misc$rawCounts
-      misc[['rawCounts']] <- counts
-      misc$depthScale <- depthScale
+      self$misc[['rawCounts']] <- counts
+      self$misc$depthScale <- depthScale
 
       if (self$modelType == 'raw') {
         return()
@@ -272,12 +272,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (verbose) message("log scale ... ")
         counts@x <- as.numeric(log(counts@x+1))
       }
-      misc[['rescaled.mat']] <- NULL
+      self$misc[['rescaled.mat']] <- NULL
       if (verbose) message("done.\n")
 
       self$counts <- counts
       self$depth <- depth
-      self$misc <- misc
     },
 
     #' @description Adjust variance of the residual matrix, determine overdispersed sites
@@ -1709,7 +1708,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         pcas <- as.matrix(x %*% pcs$v)
       }
-      misc$PCA <- pcs
+      self$misc$PCA <- pcs
       if (verbose) message('.')
       #pcas <- scde::winsorize.matrix(pcas,0.05)
       # # control for sequencing depth
