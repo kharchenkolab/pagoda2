@@ -97,7 +97,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
                         lib.sizes=NULL, log.scale=TRUE, keep.genes=NULL) {
 
       self$n.cores <- n.cores
-      misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
+      self$misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
       self$modelType = modelType
 
       ##if (!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
