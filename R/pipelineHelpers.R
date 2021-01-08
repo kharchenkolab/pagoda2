@@ -20,7 +20,7 @@
 #' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE) 
 #' @return a new pagoda2 object
 #' @examples
-#' donttest{
+#' \donttest{
 #' ## load count matrix
 #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 #' ## perform basic p2 processing

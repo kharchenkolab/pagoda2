@@ -61,7 +61,7 @@ make knn graph, identify clusters with multilevel, and generate
 largeVis and tSNE embeddings.
 }
 \examples{
-donttest{
+\donttest{
 ## load count matrix
 cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
 ## perform basic p2 processing
