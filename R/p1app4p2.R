@@ -205,12 +205,12 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
       })
     } else {
       # assume it's the old kind
-      rn <- rownames(col.cols);
+      rn <- rownames(col.cols)
       col.cols <- lapply(1:nrow(col.cols),function(i) {
         list("data"=col.cols[i,],"legacy"=TRUE)
       })
-      names(col.cols) <- rn;
-      col.cols <- rev(col.cols);
+      names(col.cols) <- rn
+      col.cols <- rev(col.cols)
     }
   }
 
