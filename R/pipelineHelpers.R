@@ -22,7 +22,7 @@
 #' @examples
 #' \donttest{
 #' ## load count matrix
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' ## perform basic p2 processing
 #' p2 <- basicP2proc(cm)
 #' }
@@ -71,7 +71,7 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
 #' @return list of a pagoda2 object and go.env
 #' @examples
 #' \dontrun{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 #' counts <- counts[rowSums(counts)>=10,]
 #' rownames(counts) <- make.unique(rownames(counts))
@@ -202,7 +202,7 @@ webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
 #' @param min.env.length numeric Minimum environment length (default=5)
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.go(p2, organism='hs')
 #' }
@@ -260,7 +260,7 @@ p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, 
 #' @return a GO environment object
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.dr.go(p2)
 #' }
@@ -276,7 +276,7 @@ p2.generate.dr.go <- function(r) {
 #' @return a GO environment object
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.human.go(p2)
 #' }
@@ -291,7 +291,7 @@ p2.generate.human.go <- function(r) {
 #' @return a GO environment object
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.mouse.go(p2)
 #' }

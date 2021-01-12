@@ -16,6 +16,8 @@
 #' @importFrom Rtsne Rtsne
 NULL
 
+## data for pagoda2 examples
+drat:::add("kharchenkolab")
 
 #' @title Pagoda2 R6 class
 #' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
@@ -82,7 +84,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -297,7 +299,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -438,7 +440,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
@@ -564,7 +566,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
@@ -651,7 +653,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
@@ -828,7 +830,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -899,7 +901,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples  
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -962,7 +964,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -1245,7 +1247,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -1336,7 +1338,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -1485,7 +1487,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -1573,7 +1575,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -1617,7 +1619,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -1656,7 +1658,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
@@ -1772,7 +1774,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
@@ -2453,7 +2455,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)

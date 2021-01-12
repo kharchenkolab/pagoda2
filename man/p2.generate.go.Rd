@@ -29,7 +29,7 @@ Generate a GO environment for the organism specified
 }
 \examples{
 \donttest{
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 p2 <- basicP2proc(cm)
 p2.generate.go(p2, organism='hs')
 }

@@ -12,6 +12,7 @@ Imports:
     base64enc, 
     data.table,
     dendsort, 
+    drat,
     fastcluster,
     graphics,
     grDevices, 
@@ -62,6 +63,7 @@ Suggests:
     testthat,
     uwot
 VignetteBuilder: knitr
+Additional_repositories: https://github.com/kharchenkolab/p2data
 URL: https://github.com/kharchenkolab/pagoda2
 BugReports: https://github.com/kharchenkolab/pagoda2/issues
 NeedsCompilation: yes
