@@ -16,8 +16,7 @@
 #' @importFrom Rtsne Rtsne
 NULL
 
-## data for pagoda2 examples
-drat:::add("kharchenkolab")
+
 
 #' @title Pagoda2 R6 class
 #' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.

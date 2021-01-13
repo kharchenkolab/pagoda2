@@ -45,6 +45,16 @@ devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
 
 If you are using Mac OS, please see instructions below. 
 
+The package `pagoda2` depends on data in a data package (`p2data`) that is available through a drat repository on GitHub. To use the hurricaneexposure package, you will need to install hurricaneexposuredata on your computer. You can do that by adding the drat archive to the list of repositories your system will query when adding and updating R packages. Once you do this, you can install the hurricaneexposuredata using the install.packages function (and later update it using the update.packages function):
+
+```r
+library(drat)
+addRepo("kharchenkolab")
+install.packages("p2data")
+```
+
+You will want to have the latest version of the hurricaneexposuredata package. If you have previously installed hurricaneexposuredata, you may need to re-run the above code if you update the hurricaneexposure package, to update to the latest data.
+
 
 ### Installing Linux dependencies
 
