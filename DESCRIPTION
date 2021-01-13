@@ -54,7 +54,6 @@ Suggests:
     org.Dr.eg.db,
     org.Hs.eg.db,
     org.Mm.eg.db,
-    p2data, 
     pcaMethods, 
     pheatmap, 
     rgl, 
