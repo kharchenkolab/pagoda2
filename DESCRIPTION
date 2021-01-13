@@ -61,7 +61,8 @@ Suggests:
     robustbase, 
     scde,
     testthat,
-    uwot
+    uwot,
+    p2data
 VignetteBuilder: knitr
 Additional_repositories: https://kharchenkolab.github.io/drat/
 URL: https://github.com/kharchenkolab/pagoda2
