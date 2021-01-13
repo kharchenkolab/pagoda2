@@ -64,7 +64,7 @@ Suggests:
     testthat,
     uwot
 VignetteBuilder: knitr
-Additional_repositories: https://github.com/kharchenkolab/drat
+Additional_repositories: https://kharchenkolab.github.io/drat/
 URL: https://github.com/kharchenkolab/pagoda2
 BugReports: https://github.com/kharchenkolab/pagoda2/issues
 NeedsCompilation: yes
