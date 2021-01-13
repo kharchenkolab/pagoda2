@@ -54,6 +54,7 @@ Suggests:
     org.Dr.eg.db,
     org.Hs.eg.db,
     org.Mm.eg.db,
+    p2data
     pcaMethods, 
     pheatmap, 
     rgl, 
@@ -61,8 +62,7 @@ Suggests:
     robustbase, 
     scde,
     testthat,
-    uwot,
-    p2data
+    uwot
 VignetteBuilder: knitr
 Additional_repositories: https://kharchenkolab.github.io/drat/
 URL: https://github.com/kharchenkolab/pagoda2
