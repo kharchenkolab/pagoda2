@@ -7,6 +7,8 @@ License: GPL-3
 Copyright: See the file COPYRIGHTS for various pagoda2 copyright details
 Encoding: UTF-8
 LazyData: true
+Depends: 
+    R (>= 3.2.1), Matrix, igraph
 biocViews:
 Imports:
     base64enc, 
@@ -36,8 +38,6 @@ Imports:
     stats, 
     urltools,
     utils
-Depends: 
-    R (>= 3.2.1), Matrix, igraph
 RoxygenNote: 7.1.1
 Suggests:
     AnnotationDbi, 
