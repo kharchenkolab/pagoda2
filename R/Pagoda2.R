@@ -1,7 +1,7 @@
 #' @useDynLib pagoda2
 #' @import MASS
 #' @import Matrix
-#' @importFrom Rcpp evalCpp
+#' @importFrom Rcpp evalCpp sourceCpp
 #' @import Rook
 #' @import igraph
 #' @import sccore
@@ -9,7 +9,6 @@
 #' @import RMTstat 
 #' @importFrom irlba irlba
 #' @importFrom parallel mclapply
-#' @importFrom Rcpp sourceCpp
 #' @importFrom magrittr %>%
 #' @importFrom mgcv gam
 #' @importFrom N2R Knn

@@ -7,7 +7,6 @@
 #' @importFrom urltools url_decode
 #' @importFrom rjson fromJSON toJSON
 #' @importFrom dendsort dendsort
-#' @import base64enc
 NULL
 
 
@@ -55,6 +54,10 @@ pagoda2WebApp <- setRefClass(
     initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
                           verbose = 0, debug, geneSets, metadata=metadata,
                           innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
+
+      if (!requireNamespace("base64enc", quietly = TRUE)) {
+        stop("Package \"base64enc\" needed for the pagoda2WebApp class to work. Please install in with install.packages('base64enc').", call. = FALSE)
+      }
 
       ## Check that the object we are getting is what it should be
       ## should be both `"Pagoda2" "R6"`
@@ -246,7 +249,7 @@ pagoda2WebApp$methods(
       rawConn <- rawConnection(raw(0), "wb")
       writeBin(v, rawConn)
       xCompress <- memCompress(rawConnectionValue(rawConn), 'gzip')
-      xSend <- base64encode(xCompress)
+      xSend <- base64enc::base64encode(xCompress)
       close(rawConn)
       
       xSend
@@ -265,7 +268,7 @@ pagoda2WebApp$methods(
       rawConn <- rawConnection(raw(0), "wb")
       writeBin(v, rawConn)
       xCompress <- memCompress(rawConnectionValue(rawConn),'gzip')
-      xSend <- base64encode(xCompress)
+      xSend <- base64enc::base64encode(xCompress)
       close(rawConn)
       
       xSend

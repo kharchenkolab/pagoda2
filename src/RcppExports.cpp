@@ -2,6 +2,7 @@
 // Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #include <RcppArmadillo.h>
+#define NDEBUG 1
 #include <RcppEigen.h>
 #include <Rcpp.h>
 

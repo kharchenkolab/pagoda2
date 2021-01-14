@@ -11,8 +11,6 @@ Depends:
     R (>= 3.2.1), Matrix, igraph
 biocViews:
 Imports:
-    base64enc, 
-    data.table,
     dendsort, 
     drat,
     fastcluster,
@@ -41,9 +39,11 @@ Imports:
 RoxygenNote: 7.1.1
 Suggests:
     AnnotationDbi, 
+    base64enc,
     BiocGenerics, 
     BiocParallel,
     colorRamps, 
+    data.table,
     dbscan, 
     dplyr,
     ggplot2, 
