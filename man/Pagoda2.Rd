@@ -6,6 +6,386 @@
 \description{
 The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
 }
+\examples{
+
+## ------------------------------------------------
+## Method `Pagoda2$new`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$adjustVariance`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$makeKnnGraph`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object   
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getKnnClusters`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+## Call clusters based on KNN
+p2_object$getKnnClusters(method=infomap.community, type='counts')
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getHierarchicalDiffExpressionAspects`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
+## Call clusters based on KNN
+p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
+## Perform differential expression
+hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', 
+            clusterName='walktrap', z.threshold=3)
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$makeGeneKnnGraph`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getDensityClusters`
+## ------------------------------------------------
+
+ 
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDensityClusters(type='PCA')
+} 
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getDifferentialGenes`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on KNN
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+} 
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getRefinedLibSizes`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getRefinedLibSizes(type='PCA')
+lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$plotGeneHeatmap`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+de <- p2_object$diffgenes$PCA[[1]][['2']]
+p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], 
+    groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+} 
+
+
+## ------------------------------------------------
+## Method `Pagoda2$plotEmbedding`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+library(ggplot2)
+p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50,
+     shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (UMAP)', 
+     plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getOdGenes`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
+} 
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getNormalizedExpressionMatrix`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$getNormalizedExpressionMatrix()
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$calculatePcaReduction`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=15)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$expandOdGenes`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+p2_object$expandOdGenes(type='PCA')
+}
+
+
+## ------------------------------------------------
+## Method `Pagoda2$getEmbedding`
+## ------------------------------------------------
+
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30)
+} 
+
+}
 \author{
 Simon Steiger
 }
@@ -117,6 +497,23 @@ Initialize Pagoda2 class
 \subsection{Returns}{
 new 'Pagoda2' object
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-setCountMatrix"></a>}}
@@ -222,6 +619,25 @@ This is done to normalize the extent to which genes with (very) different expres
 \subsection{Returns}{
 residual matrix with adjusted variance
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-makeKnnGraph"></a>}}
@@ -277,6 +693,27 @@ Create k-nearest neighbor graph
 \subsection{Returns}{
 kNN graph, stored in self$graphs
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object   
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getKnnClusters"></a>}}
@@ -321,6 +758,31 @@ If NULL, if the number of vertices of the graph is greater than or equal to 2000
 \subsection{Returns}{
 the community structure calculated from 'method'
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
+## Call clusters based on KNN
+p2_object$getKnnClusters(method=infomap.community, type='counts')
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-geneKnnbyPCA"></a>}}
@@ -380,6 +842,38 @@ Take a given clustering and generate a hierarchical clustering
 \subsection{Returns}{
 hierarchical clustering
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=20, type='PCA', center=FALSE, distance='cosine')
+## Call clusters based on KNN
+p2_object$getKnnClusters(method=walktrap.community,type='PCA',name='walktrap')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'largeVis', M=30, perplexity=30, gamma=1/30)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='walktrap')
+## Perform differential expression
+hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA', 
+            clusterName='walktrap', z.threshold=3)
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-makeGeneKnnGraph"></a>}}
@@ -420,6 +914,28 @@ Calculates gene Knn network for gene similarity
 \subsection{Returns}{
 graph with gene similarity
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getDensityClusters"></a>}}
@@ -463,6 +979,33 @@ Calculate density-based clusters
 \subsection{Returns}{
 density-based clusters
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{ 
+\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+p2_object$getDensityClusters(type='PCA')
+} 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getDifferentialGenes"></a>}}
@@ -514,6 +1057,35 @@ List with each element of the list corresponding to a cell group in the provided
     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
     fe - fraction of cells in a given group having non-zero expression level of a given gene
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a KNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on KNN
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+} 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-plotDiffGeneHeatmap"></a>}}
@@ -603,6 +1175,33 @@ Recalculate library sizes using robust regression within clusters
 \subsection{Returns}{
 recalculated library sizes
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+p2_object$getRefinedLibSizes(type='PCA')
+lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-plotGeneHeatmap"></a>}}
@@ -667,6 +1266,38 @@ Plot heatmap for a given set of genes
 \subsection{Returns}{
 plot of gene heatmap
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
+de <- p2_object$diffgenes$PCA[[1]][['2']]
+p2_object$plotGeneHeatmap(genes=rownames(de)[1:15], 
+    groups=p2_object$clusters$PCA[[1]], cluster.genes=TRUE)
+} 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-plotEmbedding"></a>}}
@@ -710,6 +1341,37 @@ Show embedding
 \subsection{Returns}{
 plot of the embedding
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=multilevel.community,type='PCA',name='multilevel')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=20, perplexity=30, gamma=1/20)
+library(ggplot2)
+p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50,
+     shuffle.colors=FALSE, font.size=1, alpha=0.1, title='clusters (UMAP)', 
+     plot.theme=theme(plot.title = element_text(hjust = 0.5)))
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getOdGenes"></a>}}
@@ -738,6 +1400,36 @@ Get overdispersed genes
 \subsection{Returns}{
 vector of overdispersed genes
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
+} 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-getNormalizedExpressionMatrix"></a>}}
@@ -760,6 +1452,26 @@ Return variance-normalized matrix for specified genes or a number of OD genes
 \subsection{Returns}{
 cell by gene matrix
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+p2_object$getNormalizedExpressionMatrix()
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-calculatePcaReduction"></a>}}
@@ -818,6 +1530,27 @@ Calculate PCA reduction of the data
 \subsection{Returns}{
 Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=15)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-expandOdGenes"></a>}}
@@ -883,6 +1616,36 @@ Reset overdispersed genes 'odgenes' to be a superset of the standard odgene sele
 \subsection{Returns}{
 List of overdispersed genes
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=50, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', M=20, perplexity=30, gamma=1/20)
+## Perform differential expression
+p2_object$getDifferentialGenes(type='PCA',verbose=TRUE)
+p2_object$expandOdGenes(type='PCA')
+}
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-localPcaKnn"></a>}}
@@ -1110,6 +1873,33 @@ between \code{0} and \code{1}, the default value will be multiplied by the param
 \subsection{Returns}{
 embedding stored in self$embedding
 }
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{\donttest{
+## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+cm <- p2data::sample_BM1
+## Perform QC, i.e. filter any cells that
+counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
+rownames(counts) <- make.unique(rownames(counts))
+## Generate pagoda2 object 
+p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
+## Normalize gene expression variance 
+p2_object$adjustVariance(plot=TRUE, gam.k=10)
+## Reduce the dataset dimensions by running PCA
+p2_object$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+## Generate a kNN graph of cells that will allow us to identify clusters of cells
+p2_object$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
+## Call clusters based on kNN
+p2_object$getKnnClusters(method=infomap.community, type='PCA')
+## Generate embedding of the data
+p2_object$getEmbedding(type='PCA', embeddingType = 'UMAP', M=30, perplexity=30, gamma=1/30)
+} 
+
+}
+\if{html}{\out{</div>}}
+
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-clone"></a>}}

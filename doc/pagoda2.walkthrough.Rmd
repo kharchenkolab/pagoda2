@@ -31,10 +31,10 @@ library(dplyr)
 library(ggplot2)
 ```
 
-We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix:
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data` (See the README of pagoda2 for installation details). The following command load the data as a sparse matrix:
 
 ```{r}
-countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+countMatrix <- p2data::sample_BM1
 ```
 
 Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
@@ -80,7 +80,7 @@ library(ggplot2)
 
 For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 ```{r}
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 dim(cm)
 ```
 

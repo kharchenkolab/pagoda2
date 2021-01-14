@@ -1,3 +1,14 @@
+---
+title: "Pagoda2 Walkthrough"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{"Pagoda2 Walkthrough"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
 # Overview
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
@@ -21,11 +32,11 @@ library(dplyr)
 library(ggplot2)
 ```
 
-We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix:
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data` (See the README of pagoda2 for installation details). The following command load the data as a sparse matrix:
 
 
 ```r
-countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+countMatrix <- p2data::sample_BM1
 ```
 
 Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
@@ -82,7 +93,7 @@ library(ggplot2)
 For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 
 ```r
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 dim(cm)
 ```
 
@@ -351,11 +362,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 20 levels "1","2","3","4",..: 4 1 1 7 7 1 2 3 2 8 ...
+##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 7 10 10 11 11 10 5 3 5 8 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 6 10 10 1 1 10 7 4 7 9 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 10 7 10 4 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 10 5 10 4 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -381,7 +392,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 20 clusters ...
+## running differential expression with 21 clusters ...
 ```
 
 ```
@@ -467,18 +478,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.8   :List of 2
+##  $ 13.vs.8   :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.8"
-##   .. ..$ shortdescription: chr "14.vs.8"
-##   ..$ genes     : chr [1:490] "VIM" "HLA-A" "RPS4X" "AIF1" ...
-##  $ 18.vs.8.14:List of 2
+##   .. ..$ genesetname     : chr "13.vs.8"
+##   .. ..$ shortdescription: chr "13.vs.8"
+##   ..$ genes     : chr [1:1672] "RPL21" "RPL31" "RPS6" "RPS27" ...
+##  $ 14.vs.8.13:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "18.vs.8.14"
-##   .. ..$ shortdescription: chr "18.vs.8.14"
-##   ..$ genes     : chr [1:28] "PF4" "TMSB4X" "FERMT3" "PPBP" ...
+##   .. ..$ genesetname     : chr "14.vs.8.13"
+##   .. ..$ shortdescription: chr "14.vs.8.13"
+##   ..$ genes     : chr [1:484] "VIM" "HLA-A" "RPS4X" "AIF1" ...
 ```
 
 To add GO Terms as genesets, run the following

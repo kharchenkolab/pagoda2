@@ -6,7 +6,7 @@ library(dplyr)
 library(ggplot2)
 
 ## -----------------------------------------------------------------------------
-countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+countMatrix <- p2data::sample_BM1
 
 ## ----message=FALSE------------------------------------------------------------
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
@@ -30,7 +30,7 @@ library(dplyr)
 library(ggplot2)
 
 ## -----------------------------------------------------------------------------
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 dim(cm)
 
 ## -----------------------------------------------------------------------------

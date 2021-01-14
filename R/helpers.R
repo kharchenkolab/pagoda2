@@ -62,7 +62,7 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
 }
 
 #' Quick utility to check if given character vector is colors
-#' Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#' Thanks to Stackoverflow: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 #'
 #' @param x character vector to check
 #' @return boolean whether character vector is colors
