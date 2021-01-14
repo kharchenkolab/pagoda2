@@ -3,9 +3,12 @@ library(pagoda2)
 library(dplyr)
 library(Matrix)
 library(igraph)
-library(drat)
-addRepo("kharchenkolab")
-install.packages("p2data")
+
+if (!requireNamespace("p2data", quietly = TRUE)) {
+    library(drat)
+    addRepo("kharchenkolab")
+    install.packages("p2data")
+}
 
 
 test_that("namedNames() functionality", {
