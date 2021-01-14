@@ -1,14 +1,14 @@
 
-library(pagoda2)
-library(dplyr)
-library(Matrix)
-library(igraph)
-
 if (!requireNamespace("p2data", quietly = TRUE)) {
     library(drat)
     addRepo("kharchenkolab")
     install.packages("p2data")
 }
+
+library(pagoda2)
+library(dplyr)
+library(Matrix)
+library(igraph)
 
 
 test_that("namedNames() functionality", {
