@@ -26,9 +26,7 @@ We have pre-generated a dataset of 3000 bone marrow cells that you can load as a
 
 
 ```r
-library(drat)
-addRepo("kharchenkolab")
-install.packages("p2data", repos="http://cran.us.r-project.org")
+install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
 ```
 
 
