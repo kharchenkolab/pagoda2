@@ -1,3 +1,4 @@
+
 # Overview
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
@@ -6,12 +7,12 @@ Pagoda2 performs basic tasks such as cell size normalization/corrections and res
 
 We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`. We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail and motivate the steps involved in quality control/processing. Finally we will generate an interactive web application in order to explore the dataset.
 
-
 # I. Fast Processing and Exploration with Pagoda2
 
 This is the rapid walkthrough of pagoda2, showing how the package allows users to quickly process their datasets and load them into an interactive frontend application.
 
 ## Preliminary: Loading the libraries
+
 
 ```r
 library(Matrix)
@@ -21,7 +22,17 @@ library(dplyr)
 library(ggplot2)
 ```
 
-We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data` (See the README of pagoda2 for installation details). The following command load the data as a sparse matrix:
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data` (See the README of pagoda2 for installation details).
+
+
+```r
+library(drat)
+addRepo("kharchenkolab")
+install.packages("p2data", repos="http://cran.us.r-project.org")
+```
+
+
+The following command load the dataset of 3000 bone marrow cells as a sparse matrix:
 
 
 ```r
@@ -34,6 +45,8 @@ Next we feed this input into the function `basicP2proc()`, which performs all ba
 
 
 ```r
+## load the dataset
+countMatrix <- p2data::sample_BM1
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 ```
@@ -353,9 +366,9 @@ str(r$clusters)
 ##  $ PCA:List of 3
 ##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 6 10 10 1 1 10 7 4 7 9 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 7 1 1 4 4 1 8 5 8 10 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 10 5 10 4 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 10 4 10 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
