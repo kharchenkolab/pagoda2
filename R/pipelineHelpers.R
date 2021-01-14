@@ -19,7 +19,14 @@
 #' @param get.tsne boolean Whether to calculate tSNE embedding (default=TRUE) 
 #' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE) 
 #' @return a new pagoda2 object
-#'
+#' @examples
+#' \donttest{
+#' ## load count matrix
+#' cm <- p2data::sample_BM1
+#' ## perform basic p2 processing
+#' p2 <- basicP2proc(cm)
+#' }
+#' 
 #' @export 
 basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
   log.scale=TRUE, trim=10, keep.genes=NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
@@ -64,7 +71,15 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
 #' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
 #' @return list of a pagoda2 object and go.env
 #' @examples
-#'
+#' \dontrun{
+#' cm <- p2data::sample_BM1
+#' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+#' counts <- counts[rowSums(counts)>=10,]
+#' rownames(counts) <- make.unique(rownames(counts))
+#' r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
+#' extendedP2proc(r, organism = 'hs')
+#' }
+#' 
 #' @export 
 extendedP2proc <- function(p2, organism = 'hs') {
   if (organism == 'hs') {
@@ -187,6 +202,13 @@ webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
 #'     annotated at that GO term or to one of its child nodes in the GO ontology (default=NULL)
 #' @param eg.alias2eg mappings between common gene symbol identifiers and entrez gene identifiers (default=NULL)
 #' @param min.env.length numeric Minimum environment length (default=5)
+#' @examples
+#' \donttest{
+#' cm <- p2data::sample_BM1
+#' p2 <- basicP2proc(cm)
+#' p2.generate.go(p2, organism='hs')
+#' }
+#' 
 #' @export 
 p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, min.env.length=5) {
   if (is.null(organism) && (is.null(go2all.egs) || is.null(eg.alias2eg))) {
@@ -239,6 +261,13 @@ p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, 
 #' 
 #' @param r pagoda2 object
 #' @return a GO environment object
+#' @examples
+#' \donttest{
+#' cm <- p2data::sample_BM1
+#' p2 <- basicP2proc(cm)
+#' p2.generate.dr.go(p2)
+#' }
+#' 
 #' @export
 p2.generate.dr.go <- function(r) {
   p2.generate.go(r, "dr")
@@ -249,6 +278,13 @@ p2.generate.dr.go <- function(r) {
 #' 
 #' @param r pagoda2 object
 #' @return a GO environment object
+#' @examples
+#' \donttest{
+#' cm <- p2data::sample_BM1
+#' p2 <- basicP2proc(cm)
+#' p2.generate.human.go(p2)
+#' }
+#' 
 #' @export
 p2.generate.human.go <- function(r) {
   p2.generate.go(r, "hs")
@@ -258,6 +294,13 @@ p2.generate.human.go <- function(r) {
 #' 
 #' @param r pagoda2 object
 #' @return a GO environment object
+#' @examples
+#' \donttest{
+#' cm <- p2data::sample_BM1
+#' p2 <- basicP2proc(cm)
+#' p2.generate.mouse.go(p2)
+#' }
+#' 
 #' @export 
 p2.generate.mouse.go <- function(r) {
   p2.generate.go(r, "mm")
