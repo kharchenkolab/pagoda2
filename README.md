@@ -48,6 +48,12 @@ The package `pagoda2` depends on data in a data package (`p2data`) that is avail
 A) Users could install `p2data` by adding the `drat` archive to the list of repositories your system will query when adding and updating R packages. Once you do this, you can install `p2data` with `install.packages()`, using the command:
 
 ```r
+install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
+```
+
+As detailed within the drat [documentation](https://dirk.eddelbuettel.com/code/drat.html), users could also use the following command:
+
+```r
 library(drat)
 addRepo("kharchenkolab")
 install.packages("p2data")
