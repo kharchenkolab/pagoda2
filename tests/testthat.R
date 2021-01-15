@@ -1,8 +1,6 @@
 
 if (!requireNamespace("p2data", quietly = TRUE)) {
-    library(drat)
-    addRepo("kharchenkolab")
-    install.packages("p2data")
+    install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
 }
 
 library(pagoda2)
