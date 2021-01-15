@@ -85,7 +85,7 @@ difference was imperceptible with small (MNIST-size) datasets, but the results s
 is to use the edge weights, consistent with the reference implementation.
 }
 \examples{
-\dontrun{
+\donttest{
 data(CO2)
 CO2$Plant <- as.integer(CO2$Plant)
 CO2$Type <- as.integer(CO2$Type)

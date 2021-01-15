@@ -17,8 +17,9 @@ Generate a GO environment for mouse for overdispersion analysis for the the back
 }
 \examples{
 \donttest{
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 p2 <- basicP2proc(cm)
 p2.generate.mouse.go(p2)
 }
+
 }

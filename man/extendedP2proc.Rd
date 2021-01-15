@@ -21,11 +21,12 @@ Generate organism specific GO environment and calculate pathway overdispersion.
 }
 \examples{
 \dontrun{
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 counts <- counts[rowSums(counts)>=10,]
 rownames(counts) <- make.unique(rownames(counts))
 r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
 extendedP2proc(r, organism = 'hs')
 }
+
 }

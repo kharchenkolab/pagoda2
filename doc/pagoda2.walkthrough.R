@@ -5,10 +5,14 @@ library(pagoda2)
 library(dplyr)
 library(ggplot2)
 
-## -----------------------------------------------------------------------------
-countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+## ----message=FALSE------------------------------------------------------------
+library(drat)
+addRepo("kharchenkolab")
+install.packages("p2data")
 
 ## ----message=FALSE------------------------------------------------------------
+## load the dataset
+countMatrix <- p2data::sample_BM1
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 
@@ -30,7 +34,7 @@ library(dplyr)
 library(ggplot2)
 
 ## -----------------------------------------------------------------------------
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 dim(cm)
 
 ## -----------------------------------------------------------------------------

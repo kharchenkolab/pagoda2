@@ -63,7 +63,7 @@ largeVis and tSNE embeddings.
 \examples{
 \donttest{
 ## load count matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## perform basic p2 processing
 p2 <- basicP2proc(cm)
 }

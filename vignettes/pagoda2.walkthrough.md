@@ -1,3 +1,4 @@
+
 # Overview
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
@@ -6,12 +7,12 @@ Pagoda2 performs basic tasks such as cell size normalization/corrections and res
 
 We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`. We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail and motivate the steps involved in quality control/processing. Finally we will generate an interactive web application in order to explore the dataset.
 
-
 # I. Fast Processing and Exploration with Pagoda2
 
 This is the rapid walkthrough of pagoda2, showing how the package allows users to quickly process their datasets and load them into an interactive frontend application.
 
 ## Preliminary: Loading the libraries
+
 
 ```r
 library(Matrix)
@@ -21,11 +22,19 @@ library(dplyr)
 library(ggplot2)
 ```
 
-We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix:
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data` (See the README of pagoda2 for installation details).
 
 
 ```r
-countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
+```
+
+
+The following command load the dataset of 3000 bone marrow cells as a sparse matrix:
+
+
+```r
+countMatrix <- p2data::sample_BM1
 ```
 
 Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
@@ -34,6 +43,9 @@ Next we feed this input into the function `basicP2proc()`, which performs all ba
 
 
 ```r
+## load the dataset
+countMatrix <- p2data::sample_BM1
+## all basic pagoda2 processing with basicP2proc()
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 ```
@@ -82,7 +94,7 @@ library(ggplot2)
 For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 
 ```r
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 dim(cm)
 ```
 
@@ -351,11 +363,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 20 levels "1","2","3","4",..: 4 1 1 7 7 1 2 3 2 8 ...
+##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 7 10 10 11 11 10 5 3 5 8 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 7 1 1 4 4 1 8 5 8 10 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 10 7 10 4 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 7 7 6 6 7 10 4 10 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -381,7 +393,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 20 clusters ...
+## running differential expression with 21 clusters ...
 ```
 
 ```
@@ -467,18 +479,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.8   :List of 2
+##  $ 13.vs.8   :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.8"
-##   .. ..$ shortdescription: chr "14.vs.8"
-##   ..$ genes     : chr [1:490] "VIM" "HLA-A" "RPS4X" "AIF1" ...
-##  $ 18.vs.8.14:List of 2
+##   .. ..$ genesetname     : chr "13.vs.8"
+##   .. ..$ shortdescription: chr "13.vs.8"
+##   ..$ genes     : chr [1:1672] "RPL21" "RPL31" "RPS6" "RPS27" ...
+##  $ 14.vs.8.13:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "18.vs.8.14"
-##   .. ..$ shortdescription: chr "18.vs.8.14"
-##   ..$ genes     : chr [1:28] "PF4" "TMSB4X" "FERMT3" "PPBP" ...
+##   .. ..$ genesetname     : chr "14.vs.8.13"
+##   .. ..$ shortdescription: chr "14.vs.8.13"
+##   ..$ genes     : chr [1:484] "VIM" "HLA-A" "RPS4X" "AIF1" ...
 ```
 
 To add GO Terms as genesets, run the following

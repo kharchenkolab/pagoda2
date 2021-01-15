@@ -1,9 +1,6 @@
 
 library(pagoda2)
 library(dplyr)
-library(Matrix)
-library(igraph)
-
 
 test_that("namedNames() functionality", {
     expect_equal(namedNames(c(1, 2, 3)), NULL)
@@ -12,7 +9,7 @@ test_that("namedNames() functionality", {
 
 test_that("check cm dims", {
 	## We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly
-    cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    cm <- p2data::sample_BM1
     expect_equal(dim(cm)[1], 33694)
     expect_equal(dim(cm)[2], 3000)
 })
@@ -20,7 +17,7 @@ test_that("check cm dims", {
 
 test_that("check basic qc of counts", {
 	## remove two cells
-    cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    cm <- p2data::sample_BM1
     counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     expect_equal(dim(counts)[1], 33694)
     expect_equal(dim(counts)[2], 2998)
@@ -32,7 +29,7 @@ test_that("check basic qc of counts", {
 
 
 test_that("basic check of Pagoda2 class", {
-    cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    cm <- p2data::sample_BM1
     counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     counts <- counts[rowSums(counts)>=10,]
     rownames(counts) <- make.unique(rownames(counts))

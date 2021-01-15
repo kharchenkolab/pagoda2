@@ -1,6 +1,5 @@
 #' @import Rook
 #' @import R.utils
-#' @import data.table
 #' @import Matrix
 #' @importFrom parallel mclapply
 #' @importFrom irlba irlba
@@ -62,7 +61,7 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
 }
 
 #' Quick utility to check if given character vector is colors
-#' Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#' Thanks to Stackoverflow: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 #'
 #' @param x character vector to check
 #' @return boolean whether character vector is colors
@@ -452,6 +451,11 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
 #'
 #' @export 
 read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=TRUE) {
+
+  if (!requireNamespace("data.table", quietly=TRUE)){
+    stop("You need to install package 'data.table' to be able to use this function.")
+  }
+
   if (version != 'V2' && version != 'V3'){
     stop('Unknown value for "version", it must be either "V2" or "V3"')
   }
@@ -491,10 +495,10 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
       message("Reading in features...")
     }
   }
-  genes <- fread(genesFile)
+  genes <- data.table::fread(genesFile)
   rownames(x) <- genes[,transcript.id.col.idx]
   if (verbose) message("Reading in barcodes...")
-  barcodes <- fread(barcodesFile)
+  barcodes <- data.table::fread(barcodesFile)
   colnames(x) <- barcodes[,1]
   invisible(x)
 }
