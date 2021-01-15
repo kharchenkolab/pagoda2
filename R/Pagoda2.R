@@ -102,6 +102,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       self$misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
       self$modelType = modelType
 
+      if (!requireNamespace("p2data", quietly = TRUE)) {
+        stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+      }
       ##if (!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
       ##  super$initialize(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores)
       ##} else {

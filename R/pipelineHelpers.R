@@ -32,6 +32,9 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
   log.scale=TRUE, trim=10, keep.genes=NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
   get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
 
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
   p2 <- Pagoda2$new(cd, n.cores = n.cores, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell)
@@ -82,6 +85,11 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
 #' 
 #' @export 
 extendedP2proc <- function(p2, organism = 'hs') {
+
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
+
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
   } else if (organism == 'mm') {
@@ -211,6 +219,11 @@ webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
 #' 
 #' @export 
 p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, min.env.length=5) {
+  
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
+
   if (is.null(organism) && (is.null(go2all.egs) || is.null(eg.alias2eg))) {
     stop('Either organism or go2all.egs and eg.alias2eg must be specified');
   }
@@ -270,6 +283,9 @@ p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, 
 #' 
 #' @export
 p2.generate.dr.go <- function(r) {
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   p2.generate.go(r, "dr")
 }
 
@@ -287,6 +303,9 @@ p2.generate.dr.go <- function(r) {
 #' 
 #' @export
 p2.generate.human.go <- function(r) {
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   p2.generate.go(r, "hs")
 }
 
@@ -303,6 +322,9 @@ p2.generate.human.go <- function(r) {
 #' 
 #' @export 
 p2.generate.mouse.go <- function(r) {
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   p2.generate.go(r, "mm")
 }
 
