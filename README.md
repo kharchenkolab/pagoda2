@@ -51,7 +51,7 @@ A) Users could install `p2data` by adding the `drat` archive to the list of repo
 install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
 ```
 
-As detailed within the drat [documentation](https://dirk.eddelbuettel.com/code/drat.html), the following command is also a valid approach:
+As detailed within the [drat documentation](https://dirk.eddelbuettel.com/code/drat.html), the following command is also a valid approach:
 
 ```r
 library(drat)
