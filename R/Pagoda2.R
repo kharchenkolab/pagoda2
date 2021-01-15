@@ -13,6 +13,7 @@
 #' @importFrom mgcv gam
 #' @importFrom N2R Knn
 #' @importFrom Rtsne Rtsne
+#' @import drat
 NULL
 
 

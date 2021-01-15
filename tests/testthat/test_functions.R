@@ -1,8 +1,6 @@
 
-library(dplyr)
-library(Matrix)
-library(igraph)
 library(pagoda2)
+library(dplyr)
 
 test_that("namedNames() functionality", {
     expect_equal(namedNames(c(1, 2, 3)), NULL)
