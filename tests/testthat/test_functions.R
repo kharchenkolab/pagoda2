@@ -37,7 +37,7 @@ test_that("basic check of Pagoda2 class", {
     expect_equal(dim(counts)[1], 1432)
     expect_equal(dim(counts)[2], 50)
     r$adjustVariance(plot=TRUE, gam.k=10)
-    r$calculatePcaReduction(nPcs=50, n.odgenes=3e3)
+    suppressWarnings(r$calculatePcaReduction(nPcs=50, n.odgenes=3e3))
     r$makeKnnGraph(k=40, type='PCA', center=TRUE, distance='cosine')
     ## number of OD genes is now 0
     expect_equal(length(r$misc$odgenes), 0)
