@@ -1,4 +1,4 @@
-## Functions from pagoda1, scde 
+## Functions from pagoda1, 'SCDE' 
 ## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 
 #' Collapse aspects driven by the same combinations of genes.
@@ -88,7 +88,6 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 }
 
 
-## xvl <- collapse.aspect.clusters(tamr$xv, tamr$xvw, ct, pick.top = FALSE, scale = TRUE)
 
 #' Collapse aspect patterns into clusters
 #'

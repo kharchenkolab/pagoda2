@@ -69,9 +69,9 @@ score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ..
     return(ret.vals)
 }
 
-#' Plot the embedding of a pagoda2 object with the given values
+#' Plot the embedding of a 'pagoda2' object with the given values
 #' 
-#' @param p2obj the pagoda2 object
+#' @param p2obj the 'pagoda2' object
 #' @param values the values to plot, fed into p2obj$plotEmbedding(colors=values)
 #' @param title character Title for the plot (default="")
 #' @param type character Type reduction on which the embedding is based on (default="PCA")

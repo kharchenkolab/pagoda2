@@ -128,9 +128,9 @@ cldend2array <- function(d, cells=NULL) {
 sn <- function(x) { names(x) <- x; return(x); }
 
 
-#' Directly open the pagoda2 web application and view the 'p2web' application object from our R session
+#' Directly open the 'pagoda2' web application and view the 'p2web' application object from our R session
 #' 
-#' @param app pagoda2 application object
+#' @param app 'pagoda2' application object
 #' @param name character Name of the application to view
 #' @param port numeric Port number
 #' @param ip numeric IP address
