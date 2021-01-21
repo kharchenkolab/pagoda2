@@ -3,7 +3,7 @@
 \name{tp2c.view.pathways}
 \alias{tp2c.view.pathways}
 \title{View pathway or gene-weighted PCA
-Pagoda2 version of the function pagoda.show.pathways()
+'Pagoda2' version of the function pagoda.show.pathways()
 Takes in a list of pathways (or a list of genes), runs weighted PCA, optionally showing the result.}
 \usage{
 tp2c.view.pathways(
@@ -32,7 +32,7 @@ tp2c.view.pathways(
 \arguments{
 \item{pathways}{character vector of pathway or gene names}
 
-\item{p2}{pagoda2 object}
+\item{p2}{'pagoda2' object}
 
 \item{goenv}{environment mapping pathways to genes (default=NULL)}
 
@@ -64,7 +64,7 @@ tp2c.view.pathways(
 
 \item{plot}{boolean Whether to plot (default=TRUE)}
 
-\item{trim}{numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a pagoda2 object.}
+\item{trim}{numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a 'pagoda2' object.}
 
 \item{showPC}{boolean (default=TRUE)}
 
@@ -75,6 +75,6 @@ cell scores along the first principal component of shown genes (returned as invi
 }
 \description{
 View pathway or gene-weighted PCA
-Pagoda2 version of the function pagoda.show.pathways()
+'Pagoda2' version of the function pagoda.show.pathways()
 Takes in a list of pathways (or a list of genes), runs weighted PCA, optionally showing the result.
 }

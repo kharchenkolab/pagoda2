@@ -267,7 +267,7 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
 
 #' @title p2ViewPagodaApp R6 class
-#' @description Modified 'PAGODA1' app (from scde) for browsing 'pagoda2' results. 
+#' @description Modified 'PAGODA1' app (from 'SCDE') for browsing 'pagoda2' results. 
 #' Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in 'SCDE'
 #'
 #' @export p2ViewPagodaApp 

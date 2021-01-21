@@ -20,7 +20,7 @@ Perform extended pagoda2 processing.
 Generate organism specific GO environment and calculate pathway overdispersion.
 }
 \examples{
-\dontrun{
+\donttest{
 cm <- p2data::sample_BM1
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 counts <- counts[rowSums(counts)>=10,]

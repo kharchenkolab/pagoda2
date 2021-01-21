@@ -3,7 +3,7 @@
 \name{sgdBatches}
 \alias{sgdBatches}
 \title{Calculate the default number of batches for a given number of vertices and edges.
-The formula used is the one used by the \code{LargeVis} reference implementation.  This is substantially less than the recommendation \eqn{E * 10000} in the original paper.}
+The formula used is the one used by the 'largeVis' reference implementation.  This is substantially less than the recommendation \eqn{E * 10000} in the original paper.}
 \usage{
 sgdBatches(N, E = 150 * N/2)
 }
@@ -17,7 +17,7 @@ The recommended number of sgd batches.
 }
 \description{
 Calculate the default number of batches for a given number of vertices and edges.
-The formula used is the one used by the \code{LargeVis} reference implementation.  This is substantially less than the recommendation \eqn{E * 10000} in the original paper.
+The formula used is the one used by the 'largeVis' reference implementation.  This is substantially less than the recommendation \eqn{E * 10000} in the original paper.
 }
 \examples{
 # Observe that increasing K has no effect on processing time

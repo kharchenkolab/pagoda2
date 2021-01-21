@@ -12,15 +12,13 @@ The class encompasses gene count matrices, providing methods for normalization, 
 ## Method `Pagoda2$new`
 ## ------------------------------------------------
 
-\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
-}
 
 
 ## ------------------------------------------------
@@ -33,7 +31,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -50,7 +48,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object   
+## Generate Pagoda2 object   
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -69,7 +67,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -92,7 +90,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -122,7 +120,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -143,7 +141,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -167,7 +165,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -194,7 +192,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -219,7 +217,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -249,7 +247,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -278,7 +276,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -306,7 +304,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -324,7 +322,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=15)
@@ -343,7 +341,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -371,7 +369,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -495,19 +493,17 @@ Initialize Pagoda2 class
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-new 'Pagoda2' object
+new Pagoda2 object
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{\donttest{
-## Load pre-generated a dataset of 3000 bone marrow cells as matrix
+\preformatted{## Load pre-generated a dataset of 3000 bone marrow cells as matrix
 cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
-}
 
 }
 \if{html}{\out{</div>}}
@@ -627,7 +623,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -701,7 +697,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object   
+## Generate Pagoda2 object   
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -766,7 +762,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -850,7 +846,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -922,7 +918,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -988,7 +984,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1065,7 +1061,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1183,7 +1179,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1274,7 +1270,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1349,7 +1345,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1408,7 +1404,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1460,7 +1456,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1538,7 +1534,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=15)
@@ -1624,7 +1620,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1881,7 +1877,7 @@ cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)

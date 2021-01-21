@@ -67,20 +67,3 @@ on a product of loading and score correlation (raised to corr.power).
 Clusters of aspects driven by the same genes are determined based 
 on the parameter "distance.threshold".
 }
-\examples{
-\donttest{
-## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
-## data(pollen)  
-## cd <- clean.counts(pollen)
-## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, 
-##     min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
-## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), 
-##     max.adj.var = 5, n.cores = 1, plot = FALSE)
-## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, 
-##     n.cores=10, n.internal.shuffles=50)
-## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, 
-##     plot=FALSE, z.score=1.96)  # top aspects based on GO only
-## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
-}
-
-}

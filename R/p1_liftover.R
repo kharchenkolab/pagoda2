@@ -1,4 +1,4 @@
-## Functions from pagoda1, 'SCDE' 
+## Functions from 'PAGODA1', 'SCDE' 
 ## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 
 #' Collapse aspects driven by the same combinations of genes.
@@ -31,22 +31,6 @@
 #' @param n.cores numeric Number of cores to use during processing (default=1)
 #' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
 #' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
-#'
-#' @examples
-#' \donttest{
-#' ## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
-#' ## data(pollen)  
-#' ## cd <- clean.counts(pollen)
-#' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, 
-#' ##     min.count.threshold=2, min.nonfailed=5, max.model.plots=10)
-#' ## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), 
-#' ##     max.adj.var = 5, n.cores = 1, plot = FALSE)
-#' ## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, 
-#' ##     n.cores=10, n.internal.shuffles=50)
-#' ## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, 
-#' ##     plot=FALSE, z.score=1.96)  # top aspects based on GO only
-#' ## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
-#' }
 #'
 #' @export
 pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FALSE, cluster.method = "complete", distance.threshold = 0.01, corr.power = 4, abs = TRUE, n.cores = 1, ...) {
@@ -97,6 +81,7 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 #' @param scale boolean Whether to scale aspects (default=TRUE)
 #' @param pick.top boolean Whether to pick top aspects (default=FALSE)
 #' @return list of clusters from matrix of normalized aspect patterns and clusters from the corresponding weight matrix
+#'
 #' @export 
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
   if (!requireNamespace("pcaMethods", quietly = TRUE)) {
@@ -152,24 +137,6 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #' @param abs boolean Whether to use absolute correlation (default=FALSE)
 #' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
 #' @return List structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
-#'
-#' @examples
-#' \donttest{
-#' ## # Example from scde, <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
-#' ## data(pollen)
-#' ## cd <- clean.counts(pollen)
-#' ## knn <- knn.error.models(cd, k=ncol(cd)/4, n.cores=10, min.count.threshold=2, 
-#' ##             min.nonfailed=5, max.model.plots=10)
-#' ## varinfo <- pagoda.varnorm(knn, counts = cd, trim = 3/ncol(cd), 
-#' ##             max.adj.var = 5, n.cores = 1, plot = FALSE)
-#' ## pwpca <- pagoda.pathway.wPCA(varinfo, go.env, n.components=1, n.cores=10, 
-#' ##             n.internal.shuffles=50)
-#' ## tam <- pagoda.top.aspects(pwpca, return.table = TRUE, 
-#' ##             plot=FALSE, z.score=1.96)  # top aspects based on GO only
-#' ## tamr <- pagoda.reduce.loading.redundancy(tam, pwpca)
-#' ## tamr2 <- pagoda.reduce.redundancy(tamr, distance.threshold = 0.9, plot = TRUE, 
-#' ##             labRow = NA, labCol = NA, box = TRUE, margins = c(0.5, 0.5), trim = 0)
-#' }
 #'
 #' @export 
 pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.method="complete", 
@@ -278,8 +245,6 @@ pathway.pc.correlation.distance <- function(pcc, xv, n.cores=1, target.ndf=NULL)
     return(list(i = mi[mo], v = rt[mo]))
   })
 
-  saveRDS(pl, "/Users/evanbiederstedt/downloads/pl.rds")
-  #x <- .Call("plSemicompleteCor2", pl, PACKAGE = "pagoda2")
   x <- plSemicompleteCor2(pl)
 
   if (!is.null(target.ndf)) {

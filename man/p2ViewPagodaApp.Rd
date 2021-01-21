@@ -4,15 +4,15 @@
 \alias{p2ViewPagodaApp}
 \title{p2ViewPagodaApp R6 class}
 \description{
-Modified PAGODA1 app (from scde) for browsing pagoda2 results. 
-Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in scde
+Modified 'PAGODA1' app (from 'SCDE') for browsing 'pagoda2' results. 
+Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in 'SCDE'
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
 \item{\code{results}}{Result object returned by \code{scde.expression.difference()} (default=NULL). Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.}
 
-\item{\code{type}}{Either 'counts' or a name of a 'reduction' in the pagoda2 object}
+\item{\code{type}}{Either 'counts' or a name of a 'reduction' in the 'pagoda2' object}
 
 \item{\code{genes}}{List of genes to display in the Detailed clustering panel (default=list())}
 
@@ -78,11 +78,11 @@ Initialize p2ViewPagodaApp class
 
 \item{\code{name}}{string App name (needs to be altered only if adding more than one app to the server using the 'server' parameter) (default="pathway overdispersion")}
 
-\item{\code{trim}}{numeric Trim quantity used for Winsorization for visualization (default=1.1/nrow(p2$counts) whereby the 'counts' from the Pagoda2 object is the gene count matrix, normalized on total counts (default=NULL)}
+\item{\code{trim}}{numeric Trim quantity used for Winsorization for visualization (default=1.1/nrow(p2$counts) whereby the 'counts' from the 'Pagoda2' object is the gene count matrix, normalized on total counts (default=NULL)}
 
 \item{\code{embedding}}{Embedding information (default=NULL)}
 
-\item{\code{type}}{Either 'counts' or a name of a 'reduction' in the pagoda2 object}
+\item{\code{type}}{Either 'counts' or a name of a 'reduction' in the 'pagoda2' object}
 
 \item{\code{veloinfo}}{Velocity information (default=NULL)}
 }
@@ -133,7 +133,7 @@ Call Rook application. Using client-side ExtJS framework and Inchlib HTML5 canva
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-modified PAGODA1 app
+modified 'PAGODA1' app
 }
 }
 \if{html}{\out{<hr>}}

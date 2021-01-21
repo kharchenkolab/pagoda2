@@ -74,7 +74,7 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
 #' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
 #' @return list of a pagoda2 object and go.env
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' cm <- p2data::sample_BM1
 #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 #' counts <- counts[rowSums(counts)>=10,]

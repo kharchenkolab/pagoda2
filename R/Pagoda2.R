@@ -80,31 +80,30 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
     #' @examples 
-    #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
     #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
-    #' }
     #' 
-    #' @return new 'Pagoda2' object 
+    #' @return new Pagoda2 object 
     initialize=function(x, modelType='plain', ## batchNorm='glm',
                         n.cores=parallel::detectCores(logical=FALSE), verbose=TRUE,
                         min.cells.per.gene=0, trim=round(min.cells.per.gene/2), 
                         min.transcripts.per.cell=10,
                         lib.sizes=NULL, log.scale=TRUE, keep.genes=NULL) {
 
+      if (!requireNamespace("p2data", quietly = TRUE)) {
+        stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+      }
+      
       self$n.cores <- n.cores
       self$misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
       self$modelType = modelType
 
-      if (!requireNamespace("p2data", quietly = TRUE)) {
-        stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
-      }
       ##if (!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
       ##  super$initialize(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores)
       ##} else {
@@ -305,7 +304,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -446,7 +445,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object   
+    #' ## Generate Pagoda2 object   
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -572,7 +571,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -659,7 +658,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -836,7 +835,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -907,7 +906,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -970,7 +969,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1253,7 +1252,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1344,7 +1343,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1493,7 +1492,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1581,7 +1580,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1625,7 +1624,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1664,7 +1663,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=15)
@@ -1780,7 +1779,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -2461,7 +2460,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)

@@ -1,7 +1,3 @@
-## Filename: pagoda2WebApp.R
-## Author: Nikolas Barkas
-## Date: Jan - Mar 2017
-## Description: The rook server for pagoda2
 
 #' @import Rook
 #' @importFrom urltools url_decode
@@ -10,18 +6,18 @@
 NULL
 
 
-#' pagoda2WebApp class to create pagoda2 web applications via a Rook server
+#' pagoda2WebApp class to create 'pagoda2' web applications via a Rook server
 #'
 #' @rdname pagoda2WebApp
 #' @exportClass pagoda2WebApp
-#' @field originalP2object Input pagoda2 object 
+#' @field originalP2object Input Pagoda2 object 
 #' @field name string Display name for the application 
 #' @field mat Embedding
-#' @field cellmetadata Metadata associated with pagoda2 object 
-#' @field mainDendrogram Dendrogram from hclust() of all cells in the pagoda2 object 
-#' @field geneSets Gene sets in the pagoda2 object 
+#' @field cellmetadata Metadata associated with Pagoda2 object 
+#' @field mainDendrogram Dendrogram from hclust() of all cells in the Pagoda2 object 
+#' @field geneSets Gene sets in the Pagoda2 object 
 #' @field rookRoot Rook server root directory 
-#' @field appmetadata Pagoda2 web application metadata 
+#' @field appmetadata pagoda2 web application metadata 
 #' @export 
 pagoda2WebApp <- setRefClass(
   'pagoda2WebApp',
@@ -46,7 +42,7 @@ pagoda2WebApp <- setRefClass(
     ## @param pagoda2obj Pagoda2 object
     ## @param appName string Display name for the app (default="DefaultPagoda2Name")
     ## @param dendGroups factor defining the groups of cells to use for the dendrogram
-    ## @param geneSets Gene sets in the pagoda2 object 
+    ## @param geneSets Gene sets in the Pagoda2 object 
     ## @param metadata Pagoda2 cell metadata 
     ## @param appmetadata Pagoda2 web application metadata (default=NULL)
     ##
@@ -63,7 +59,7 @@ pagoda2WebApp <- setRefClass(
       ## should be both `"Pagoda2" "R6"`
       '%ni%' <- Negate('%in%')
       if (all(class(pagoda2obj) %ni% "Pagoda2")) {   
-        stop("The provided object 'pagoda2obj' is not a pagoda2 object")
+        stop("The provided object 'pagoda2obj' is not a Pagoda2 object")
       }
       
       ## Keep the original pagoda 2 object
@@ -71,7 +67,7 @@ pagoda2WebApp <- setRefClass(
       
       ## Check that the dendGroups we are getting is what it should be
       if (length(dendGroups) != nrow(pagoda2obj$counts)) {
-        stop("The provided dendGroups has a different number of cells than the pagoda2 object")
+        stop("The provided dendGroups has a different number of cells than the Pagoda2 object")
       }
       
       ## Keep the name for later (consistent) use
