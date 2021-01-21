@@ -73,15 +73,6 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
 #' @param p2 the pagoda2 object 
 #' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
 #' @return list of a pagoda2 object and go.env
-#' @examples
-#' \donttest{
-#' cm <- p2data::sample_BM1
-#' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
-#' counts <- counts[rowSums(counts)>=10,]
-#' rownames(counts) <- make.unique(rownames(counts))
-#' r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=1)
-#' extendedP2proc(r, organism = 'hs')
-#' }
 #' 
 #' @export 
 extendedP2proc <- function(p2, organism = 'hs') {
