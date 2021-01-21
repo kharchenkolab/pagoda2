@@ -1,6 +1,3 @@
-#' @importFrom fastcluster hclust
-NULL
-
 ## Functions from 'PAGODA1', 'SCDE' 
 ## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 
@@ -162,8 +159,8 @@ pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.metho
     }
   }
 
-  y <- fastcluster::hclust(cc, method = cluster.method)
-  ##y <- stats::hclust(cc, method = cluster.method)
+  y <- fastcluster::hclust(distance, method = cluster.method)
+  ##y <- stats::hclust(distance, method = cluster.method)
 
   ct <- cutree(y, h = distance.threshold)
   ctf <- factor(ct, levels = sort(unique(ct)))

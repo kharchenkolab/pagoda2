@@ -140,7 +140,7 @@ pagoda2WebApp$methods(
       colnames(ld) <- rownames(ld) <- colnames(lvec)
       
       #hcGroup is a hclust object of whatever cell groupings we provided above
-      hcGroups <- hclust(as.dist(ld), method = 'ward.D')
+      hcGroups <- stats::hclust(as.dist(ld), method = 'ward.D')
       
       if(orderDend){
         hcGroups <- dendsort::dendsort(hcGroups)
@@ -177,7 +177,7 @@ pagoda2WebApp$methods(
               } else {
                 
                 celsel <- names(cl0)[cl0 == x]
-                celsel[hclust(as.dist(1-WGCNA::cor(t(originalP2object$reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
+                celsel[stats::hclust(as.dist(1-WGCNA::cor(t(originalP2object$reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
               }
               
             } else if(innerOrder == "graphbased") {
@@ -187,7 +187,7 @@ pagoda2WebApp$methods(
               } else {
                 celsel <- names(cl0)[cl0==x]
                 sgraph <- igraph::induced_subgraph(r$graphs$PCA,(celsel))
-                celsel[hclust(as.dist(1-WGCNA::cor(t(igraph::layout.auto(sgraph,dim=3)))))$order]
+                celsel[stats::hclust(as.dist(1-WGCNA::cor(t(igraph::layout.auto(sgraph,dim=3)))))$order]
               }
               
             } else if(innerOrder == "knn") {

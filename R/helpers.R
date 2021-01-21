@@ -6,7 +6,7 @@
 #' @importFrom graphics abline axis hist layout lcm legend mtext par points polygon
 #' @importFrom grDevices adjustcolor col2rgb colorRampPalette colors dev.size rainbow
 #' @importFrom methods as new
-#' @importFrom stats aggregate as.dendrogram as.dist cor cutree dendrapply dist hclust is.leaf na.omit order.dendrogram phyper predict pt qnorm qt quantile reorder rnorm sd setNames var
+#' @importFrom stats aggregate as.dendrogram as.dist cor cutree dendrapply dist is.leaf na.omit order.dendrogram phyper predict pt qnorm qt quantile reorder rnorm sd setNames var
 #' @importFrom utils browseURL read.delim
 NULL
 
@@ -42,7 +42,7 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   } else { # use correlation distance in log10 space
     lvec.dist <- 1-cor(t(log10(lvec/pmax(1,Matrix::rowSums(lvec))+1)))
   }
-  d <- as.dendrogram(hclust(as.dist(lvec.dist),method='ward.D'))
+  d <- as.dendrogram(stats::hclust(as.dist(lvec.dist),method='ward.D'))
   # add cell info to the laves
   addinfo <- function(l, env) {
     v <- as.integer(mget("index",envir=env,ifnotfound=0)[[1]])+1;

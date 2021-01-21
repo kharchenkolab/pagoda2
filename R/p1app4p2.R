@@ -106,7 +106,7 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
     tc <- do.call(rbind,tapply(1:nrow(x),groups,function(ii) colMeans(x[ii,,drop=F],na.rm=TRUE)))
   }
   d <- 1-cor(t(tc))
-  hc <- hclust(as.dist(d),method='ward.D')
+  hc <- stats::hclust(as.dist(d),method='ward.D')
 
   # get overall cell clustering
   if(inner.clustering) {
@@ -150,11 +150,11 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
   if(is.null(zlim)) { zlim <- c(-1, 1)*quantile(tamr$xv, p = 0.95) }
 
   if(is.null(row.clustering) || is.null(row.clustering$order)) {
-    row.clustering <- hclust(dist(tamr$xv))
+    row.clustering <- stats::hclust(dist(tamr$xv))
   } else if(class(row.clustering)!="hclust") {
     # make a fake clustering to match the provided order
     or <- row.clustering$order;
-    row.clustering <- hclust(dist(tamr$xv),method='single')
+    row.clustering <- stats::hclust(dist(tamr$xv),method='single')
     names(or) <- as.character(-1*row.clustering$order)
     nmm <- -1*or[as.character(row.clustering$merge)]
     nmm[is.na(nmm)] <- as.character(row.clustering$merge)[is.na(nmm)]
@@ -165,7 +165,7 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
   if(!is.null(embedding)) {
     if(is.null(rownames(embedding))) { stop("provided 2D embedding lacks cell names") }
-    vi <- rownames(embedding) %in% colnames(tamr$xv);
+    vi <- rownames(embedding) %in% colnames(tamr$xv)
     if(!all(vi)) {
       warning("provided 2D embedding contains cells that are not in the tamr")
       embedding <- embedding[vi,];
