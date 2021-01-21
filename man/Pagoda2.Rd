@@ -12,6 +12,7 @@ The class encompasses gene count matrices, providing methods for normalization, 
 ## Method `Pagoda2$new`
 ## ------------------------------------------------
 
+\donttest{ 
 ## Load pre-generated a dataset of 50 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package="pagoda2"))
 ## Perform QC, i.e. filter any cells that
@@ -19,7 +20,7 @@ counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
-
+}
 
 
 ## ------------------------------------------------
@@ -498,14 +499,15 @@ new Pagoda2 object
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{## Load pre-generated a dataset of 50 bone marrow cells as matrix
+\preformatted{\donttest{ 
+## Load pre-generated a dataset of 50 bone marrow cells as matrix
 cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package="pagoda2"))
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
 ## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
-
+}
 
 }
 \if{html}{\out{</div>}}

@@ -79,7 +79,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
-    #' @examples 
+    #' @examples
+    #' \donttest{ 
     #' ## Load pre-generated a dataset of 50 bone marrow cells as matrix
     #' cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package="pagoda2"))
     #' ## Perform QC, i.e. filter any cells that
@@ -88,7 +89,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' rownames(counts) <- make.unique(rownames(counts))
     #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
-    #' 
+    #' }
     #'
     #' @return new Pagoda2 object 
     initialize=function(x, modelType='plain', ## batchNorm='glm',
