@@ -397,7 +397,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       ## }
       if (plot) {
         if (do.par) {
-          par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+          adjvar_par <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+          on.exit(par(adjvar_par))
         }
         suppressWarnings(smoothScatter(log10(exp(1))*df$m, log10(exp(1))*df$v, main='', xlab='log10[ magnitude ]',ylab='log10[ variance ]'))
         vi <- which(is.finite(log10(exp(1))*df$v) & df$nobs>=min.gene.cells)
@@ -2353,7 +2354,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       vdf$ub.stringent <- RMTstat::qWishartMax(score.alpha/nrow(vdf)/2, n.cells, vdf$n, var = basevar, lower.tail = FALSE)
 
       if (plot) {
-        par(mfrow = c(1, 1), mar = c(3.5, 3.5, 1.0, 1.0), mgp = c(2, 0.65, 0))
+        test_pathway_par <- par(mfrow = c(1, 1), mar = c(3.5, 3.5, 1.0, 1.0), mgp = c(2, 0.65, 0))
+        on.exit(par(test_pathway_par))
         un <- sort(unique(vdf$n))
         on <- order(vdf$n, decreasing = FALSE)
         pccol <- colorRampPalette(c("black", "grey70"), space = "Lab")(max(vdf$npc))

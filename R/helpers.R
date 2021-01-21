@@ -375,7 +375,10 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
 #' @export gene.vs.molecule.cell.filter
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {
   if(plot) {
-    if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
+    if(do.par) { 
+      old_pars <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+      on.exit(par(old_pars))
+    }
     hist(log10(colSums(countMatrix)),col='wheat',xlab='log10[ molecules ]',main='')
     # some of the cells are very large .. those can skew the analysis of more subtle populations (too much bias ) .. letting them in here though
 

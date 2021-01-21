@@ -1249,26 +1249,29 @@ my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     ## Graphics `output' -----------------------
 
     op <- par(no.readonly = TRUE)
-    #on.exit(par(op))
+    on.exit(par(op))
     layout(lmat, widths = lwid, heights = lhei, respect = respect)
     ## draw the side bars
     if(!missing(RowSideColors) && !is.null(RowSideColors)) {
-        par(mar = c(margins[1],0, 0,internal.margin))
+        side_bars_par <- par(mar = c(margins[1],0, 0,internal.margin))
+        on.exit(par(side_bars_par))
         image(rbind(1:nr), col = RowSideColors[rowInd], axes = FALSE)
-        if(box) { box(); }
+        if (box) { box() }
     }
     if(!missing(ColSideColors) && !is.null(ColSideColors)) {
-        par(mar = c(internal.margin,0, 0,margins[2]))
+        colsidepar <- par(mar = c(internal.margin,0, 0,margins[2]))
+        on.exit(par(colsidepar))
         if(is.matrix(ColSideColors)) {
           image(t(matrix(1:length(ColSideColors),byrow=TRUE,nrow=nrow(ColSideColors),ncol=ncol(ColSideColors))), col = as.vector(t(ColSideColors[,colInd,drop=FALSE])), axes = FALSE)
           if(box) { box(); }
         } else {
           image(cbind(1:nc), col = ColSideColors[colInd], axes = FALSE)
-          if(box) { box(); }
+          if (box) { box() }
         }
     }
     ## draw the main carpet
-    par(mar = c(margins[1], 0, 0, margins[2]))
+    main_carpet_par <- par(mar = c(margins[1], 0, 0, margins[2]))
+    on.exit(par(main_carpet_par))
     if(!symm || scale != "none")
         x <- t(x)
     if(revC) { # x columns reversed
@@ -1296,12 +1299,14 @@ my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 
     ## the two dendrograms :
     if(doRdend) {
-      par(mar = c(margins[1], 0, 0, 0))
+      rdendpar <- par(mar = c(margins[1], 0, 0, 0))
+      on.exit(par(rdendpar))
       plot(ddr, horiz = TRUE, axes = FALSE, yaxs = "i", leaflab = "none",xaxs="i")
     }
 
     if(doCdend) {
-      par(mar = c(internal.margin, 0, if(!is.null(main)) 1 else 0, margins[2]))
+      cdendpar <- par(mar = c(internal.margin, 0, if(!is.null(main)) 1 else 0, margins[2]))
+      on.exit(par(cdendpar))
       plot(ddc, axes = FALSE, xaxs = "i", leaflab = "none",yaxs="i")
     }
     invisible(list(rowInd = rowInd, colInd = colInd,
