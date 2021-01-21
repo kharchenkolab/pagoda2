@@ -43,7 +43,7 @@ clvlm: a linear model describing dependency of the cluster lambda1 on a Tracy-Wi
 
 \item{plot}{boolean Whether to plot the resulting clustering (default=FALSE)}
 
-\item{cluster.method}{string One of the standard clustering methods to be used (default="complete") Note: fastcluster::hclust is used if available or stats::hclust)}
+\item{cluster.method}{string One of the standard clustering methods to be used (default="complete")}
 
 \item{distance.threshold}{numeric Similarity threshold for grouping interdependent aspects (default=0.01)}
 

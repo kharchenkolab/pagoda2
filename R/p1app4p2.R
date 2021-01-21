@@ -248,11 +248,9 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
   # prepare pathway df
   df <- data.frame(name = vdf$name, npc = vdf$npc, n = vdf$n, score = vdf$oe, z = vdf$z, adj.z = vdf$cz, stringsAsFactors = FALSE)
-  if(is.element("GO.db",installed.packages()[,1])) {
-    df$desc <- unlist(lapply(BiocGenerics::mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
-  } else {
-    df$desc <- ""
-  }
+  
+  df$desc <- unlist(lapply(BiocGenerics::mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
+
   min.z <- -9
   df$z[df$z<min.z] <- min.z
   df$adj.z[df$adj.z<min.z] <- min.z
@@ -331,7 +329,10 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       initialize = function(results, pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", 
         trim = 1.1/nrow(p2$counts), embedding=NULL, type, veloinfo=NULL) {
         if (!requireNamespace("BiocGenerics", quietly = TRUE)) {
-          stop("Package \"BiocGenerics\" needed for this function to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+          stop("Package \"BiocGenerics\" needed for the p2ViewPagodaApp class to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+        }
+        if (!requireNamespace("GO.db", quietly = TRUE)) {
+          stop("Package \"GO.db\" needed for the p2ViewPagodaApp class to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
         }
         ##if (!missing(results) && class(results)=='p2ViewPagodaApp') { # copy constructor
           ##callSuper(results);
@@ -744,11 +745,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
                      #tpi <- tpi[seq(1, min(length(tpi), 15))]
                      npc <- gsub("^#PC(\\d+)#.*", "\\1", names(ii[tpi]))
                      nams <- gsub("^#PC\\d+# ", "", names(ii[tpi]))
-                     if(is.element("GO.db",installed.packages()[,1])) {
-                       tpn <- paste(nams, unlist(lapply(BiocGenerics::mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
-                     } else {
-                       tpn <- nams;
-                     }
+                     tpn <- paste(nams, unlist(lapply(BiocGenerics::mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
 
                      lgt <- data.frame(do.call(rbind, lapply(seq_along(tpn), function(i) c(id = names(ii[tpi[i]]), name = tpn[i], npc = npc[i], od = as.numeric(self$results$matvar[ii[tpi[i]]])/max(self$results$matvar), sign = as.numeric(self$results$matrcmcor[ii[tpi[i]]]), initsel = as.integer(self$results$matvar[ii[tpi[i]]] >= self$results$matvar[ii[tpi[1]]]*0.8)))))
 
@@ -757,7 +754,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
                        fl <- fromJSON(url_decode(req$params()$filter))
                        for( fil in fl) {
                          lgt <- lgt[grep(fil$value, lgt[, fil$property], perl = TRUE, ignore.case = TRUE), ]
-                           }
+                       }
                      }
                      start <- ifelse(is.null(req$params()$start), 1, as.integer(req$params()$start)+1)
                      limit <- ifelse(is.null(req$params()$limit), 100, as.integer(req$params()$limit))
@@ -850,12 +847,8 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
                    '/testenr.json' = { # run an enrichment test
                        selgenes <- fromJSON(url_decode(req$POST()$genes))
                        lgt <- calculate.go.enrichment(selgenes, colnames(self$results$p2$counts), pvalue.cutoff = 0.99, env = renv, over.only = TRUE)$over
-                       lgt <- lgt[is.finite(lgt$Z),];
-                       if(is.element("GO.db",installed.packages()[,1])) {
-                         lgt$nam <- paste(lgt$t, unlist(lapply(BiocGenerics::mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
-                       } else {
-                         lgt$name <- lgt$t
-                       }
+                       lgt <- lgt[is.finite(lgt$Z),]
+                       lgt$nam <- paste(lgt$t, unlist(lapply(BiocGenerics::mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                        lgt <- data.frame(id = paste("#PC1#", lgt$t), name = lgt$nam, o = lgt$o, u = lgt$u, Z = lgt$Z, Za = lgt$Za, fe = lgt$fe, stringsAsFactors = FALSE)
 
                        if(!is.null(req$params()$filter)) {
@@ -926,6 +919,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
 tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), 
   colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, 
   plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
+
   # are these genes or pathways being passed?
   if(!is.null(goenv)) {
     x <- pathways %in% ls(goenv)
@@ -1010,16 +1004,12 @@ tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes
   dd[is.na(dd)] <- 1
   if(is.null(row.order)) {
     if(length(lab) > 2) {
-      if(is.element("fastcluster", installed.packages()[, 1])) {
-        hc <- fastcluster::hclust(dd, method = "ward.D")
-      } else {
-        hc <- stats::hclust(dd, method = "ward.D")
-      }
+      hc <- fastcluster::hclust(dd, method = "ward.D")
       row.order <- hc$order
     } else {
       row.order <- c(seq_along(lab))
       if(length(lab)>1) {
-        hc<-list();
+        hc<-list()
         attributes(hc)<-list(members=length(lab),height=1);
         class(hc)<-"dendrogram";
         hc[[1]] <- list();
@@ -1037,11 +1027,7 @@ tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes
   if(is.null(vhc)) {
     vd <- as.dist(1-cor(as.matrix(d)))
     vd[is.na(vd)] <- 1
-    if(is.element("fastcluster", installed.packages()[, 1])) {
-      vhc <- fastcluster::hclust(vd, method = "ward.D")
-    } else {
-      vhc <- stats::hclust(vd, method = "ward.D")
-    }
+    vhc <- fastcluster::hclust(vd, method = "ward.D")
   }
 
   #if(is.null(zlim)) { zlim <- quantile(d, p = c(0.01, 0.99)) }

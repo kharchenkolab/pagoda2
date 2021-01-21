@@ -7,7 +7,7 @@
 #' @importFrom grDevices adjustcolor col2rgb colorRampPalette colors dev.size rainbow
 #' @importFrom methods as new
 #' @importFrom stats aggregate as.dendrogram as.dist cor cutree dendrapply dist hclust is.leaf na.omit order.dendrogram phyper predict pt qnorm qt quantile reorder rnorm sd setNames var
-#' @importFrom utils browseURL installed.packages read.delim
+#' @importFrom utils browseURL read.delim
 NULL
 
 #' Correct unloading of the library

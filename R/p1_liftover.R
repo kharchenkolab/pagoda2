@@ -1,5 +1,9 @@
+#' @importFrom fastcluster hclust
+NULL
+
 ## Functions from 'PAGODA1', 'SCDE' 
 ## <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+
 
 #' Collapse aspects driven by the same combinations of genes.
 #' (Aspects are some pattern across cells e.g. sequencing depth, 
@@ -24,7 +28,7 @@
     #' varm: standardized lambda1 values for each randomly generated matrix cluster
     #' clvlm: a linear model describing dependency of the cluster lambda1 on a Tracy-Widom lambda1 expectation
 #' @param plot boolean Whether to plot the resulting clustering (default=FALSE)
-#' @param cluster.method string One of the standard clustering methods to be used (default="complete") Note: fastcluster::hclust is used if available or stats::hclust)
+#' @param cluster.method string One of the standard clustering methods to be used (default="complete") 
 #' @param distance.threshold numeric Similarity threshold for grouping interdependent aspects (default=0.01)
 #' @param corr.power numeric Power to which the product of loading and score correlation is raised (default=4)
 #' @param abs boolean Whether to use absolute correlation (default=TRUE)
@@ -44,11 +48,9 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
   cda <- as.dist(1-cda)
   cc <- (1-sqrt((1-pclc)*(1-cda)))^corr.power
 
-  if(is.element("fastcluster", installed.packages()[, 1])) {
-    y <- fastcluster::hclust(cc, method = cluster.method)
-  } else {
-    y <- stats::hclust(cc, method = cluster.method)
-  }
+  y <- fastcluster::hclust(cc, method = cluster.method)
+  ##y <- stats::hclust(cc, method = cluster.method)
+
   ct <- cutree(y, h = distance.threshold)
   ctf <- factor(ct, levels = sort(unique(ct)))
   xvl <- collapse.aspect.clusters(tam$xv, tam$xvw, ct, pick.top = FALSE, scale = TRUE)
@@ -77,7 +79,7 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 #'
 #' @param d matrix of normalized aspect patterns (rows: significant aspects, columns: cells), normally the output $xv in 'tamr', the combined pathways that show similar expression patterns
 #' @param dw corresponding weight matrix to parameter 'd'
-#' @param ct clusters, either output of fastcluster::hclust() or stats::hclust()
+#' @param ct clusters, the output of fastcluster::hclust()
 #' @param scale boolean Whether to scale aspects (default=TRUE)
 #' @param pick.top boolean Whether to pick top aspects (default=FALSE)
 #' @return list of clusters from matrix of normalized aspect patterns and clusters from the corresponding weight matrix
@@ -128,7 +130,7 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #'
 #' @param tamr Combined pathways that show similar expression patterns, output of pagoda.reduce.loading.redundancy()
 #' @param distance.threshold numeric Similarity threshold for grouping interdependent aspects (default=0.2)
-#' @param cluster.method character One of the standard clustering methods to be used (default="complete") (Note: fastcluster::hclust is used if available or stats::hclust)
+#' @param cluster.method character One of the standard clustering methods to be used (default="complete") 
 #' @param distance distance matrix (default=NULL)
 #' @param weighted.correlation boolean Whether to use a weighted correlation in determining the similarity of patterns (default=TRUE)
 #' @param plot boolean Whether to show plot (default=FALSE)
@@ -159,11 +161,9 @@ pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.metho
       }
     }
   }
-  if(is.element("fastcluster", installed.packages()[, 1])) {
-    y <- fastcluster::hclust(distance, method = cluster.method)
-  } else {
-    y <- stats::hclust(distance, method = cluster.method)
-  }
+
+  y <- fastcluster::hclust(cc, method = cluster.method)
+  ##y <- stats::hclust(cc, method = cluster.method)
 
   ct <- cutree(y, h = distance.threshold)
   ctf <- factor(ct, levels = sort(unique(ct)))

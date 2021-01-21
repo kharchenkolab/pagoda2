@@ -39,7 +39,7 @@ p2.generate.dr.go.web <- function(gene.names, n.cores = 1) {
     stop("Package \"org.Dr.eg.db\" needed for this function to work. Please install it.", call. = FALSE)
   }
 
-  p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Dr.eg.db::org.Dr.egALIAS2EG, egGO2ALLEGS = org.Dr.eg.db::org.Dr.egGO2ALLEGS, n.cores = n.cores);
+  p2.generate.go.web(gene.names = gene.names,  egALIAS2EG = org.Dr.eg.db::org.Dr.egALIAS2EG, egGO2ALLEGS = org.Dr.eg.db::org.Dr.egGO2ALLEGS, n.cores = n.cores)
 }
 
 

@@ -79,7 +79,7 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
 #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 #' counts <- counts[rowSums(counts)>=10,]
 #' rownames(counts) <- make.unique(rownames(counts))
-#' r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
+#' r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=1)
 #' extendedP2proc(r, organism = 'hs')
 #' }
 #' 
@@ -570,7 +570,7 @@ p2.toweb.hdea <- function(p2, title="") {
 basicP2web <- function(p2, app.title='Pagoda2', extraWebMetadata=NULL, n.cores=4) {
   message('Calculating hdea...\n')
   hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3, n.cores = n.cores)
-  metadata.forweb <- list();
+  metadata.forweb <- list()
   metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel,displayname='Multilevel')
   metadata.forweb <- c(metadata.forweb, extraWebMetadata)
   genesets <- hierDiffToGenesets(hdea)

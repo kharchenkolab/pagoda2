@@ -25,7 +25,7 @@ cm <- p2data::sample_BM1
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 counts <- counts[rowSums(counts)>=10,]
 rownames(counts) <- make.unique(rownames(counts))
-r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
+r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=1)
 extendedP2proc(r, organism = 'hs')
 }
 

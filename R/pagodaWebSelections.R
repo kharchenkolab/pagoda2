@@ -24,9 +24,9 @@ readPagoda2SelectionFile <- function(filepath) {
 
     fields <- unlist(strsplit(line, split=',', fixed=TRUE))
 
-    name <- make.names(fields[2]);
-    color <- fields[1];
-    cells <- fields[-c(1:2)];
+    name <- make.names(fields[2])
+    color <- fields[1]
+    cells <- fields[-c(1:2)]
     returnList[[name]] <- list(name=fields[2], color = color, cells = cells)
   }
   close(con)

@@ -11,7 +11,7 @@ collapse.aspect.clusters(d, dw, ct, scale = TRUE, pick.top = FALSE)
 
 \item{dw}{corresponding weight matrix to parameter 'd'}
 
-\item{ct}{clusters, either output of fastcluster::hclust() or stats::hclust()}
+\item{ct}{clusters, the output of fastcluster::hclust()}
 
 \item{scale}{boolean Whether to scale aspects (default=TRUE)}
 

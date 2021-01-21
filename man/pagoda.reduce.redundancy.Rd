@@ -23,7 +23,7 @@ pagoda.reduce.redundancy(
 
 \item{distance.threshold}{numeric Similarity threshold for grouping interdependent aspects (default=0.2)}
 
-\item{cluster.method}{character One of the standard clustering methods to be used (default="complete") (Note: fastcluster::hclust is used if available or stats::hclust)}
+\item{cluster.method}{character One of the standard clustering methods to be used (default="complete")}
 
 \item{distance}{distance matrix (default=NULL)}
 
