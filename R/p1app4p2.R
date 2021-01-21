@@ -1097,7 +1097,7 @@ col2hex <- function(col) {
 
 #' @keywords internal
 my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
-          distfun = dist, hclustfun = hclust,
+          distfun = dist, hclustfun = stats::hclust,
           reorderfun = function(d,w) reorder(d,w),
           add.expr, symm = FALSE, revC = identical(Colv, "Rowv"),
           scale = c("none","row", "column"), na.rm=TRUE,
