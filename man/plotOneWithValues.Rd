@@ -2,7 +2,7 @@
 % Please edit documentation in R/cell.scoring.R
 \name{plotOneWithValues}
 \alias{plotOneWithValues}
-\title{Plot the embedding of a 'pagoda2' object with the given values}
+\title{Plot the embedding of a 'Pagoda2' object with the given values}
 \usage{
 plotOneWithValues(
   p2obj,
@@ -13,7 +13,7 @@ plotOneWithValues(
 )
 }
 \arguments{
-\item{p2obj}{the 'pagoda2' object}
+\item{p2obj}{the 'Pagoda2' object}
 
 \item{values}{the values to plot, fed into p2obj$plotEmbedding(colors=values)}
 
@@ -27,5 +27,5 @@ plotOneWithValues(
 NULL, simply updates p2obj$plotEmbedding()
 }
 \description{
-Plot the embedding of a 'pagoda2' object with the given values
+Plot the embedding of a 'Pagoda2' object with the given values
 }

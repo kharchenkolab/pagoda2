@@ -35,10 +35,10 @@ view.aspects <- function(mat, row.clustering = NA, cell.clustering = NA, zlim = 
 }
 
 
-#' Create 'PAGODA1' web application from 'pagoda2' object
+#' Create 'PAGODA1' web application from a 'Pagoda2' object
 #' 'PAGODA1' found here, with 'SCDE': <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 #'
-#' @param p2 'pagoda2' object
+#' @param p2 'Pagoda2' object
 #' @param col.cols Matrix of column colors (default=NULL). Useful for visualizing cell annotations such as batch labels. 
 #' @param row.clustering Row dendrogram (default=NULL)
 #' @param title character Title to use (default="pathway clustering")
@@ -46,10 +46,10 @@ view.aspects <- function(mat, row.clustering = NA, cell.clustering = NA, zlim = 
 #' @param embedding A 2-D embedding of the cells (PCA, tSNE, etc.), passed as a data frame with two columns (two dimensions) and rows corresponding to cells (row names have to match cell names) (default=NULL).
 #' @param inner.clustering boolean Whether to get overall cell clustering (default=TRUE).
 #' @param groups factor describing grouping of different cells. If provided, the cross-fits and the expected expression magnitudes will be determined separately within each group. The factor should have the same length as ncol(counts) (default=NULL).
-#' @param clusterType cluster type (default=NULL). If NULL, takes the latest cluster in the 'pagoda2' object using 'p2$clusters[[type]][[1]]'
-#' @param embeddingType embedding type (default=NULL). If NULL, takes the latest embedding in the 'pagoda2' object using p2$embeddings[[type]][[1]] 
+#' @param clusterType cluster type (default=NULL). If NULL, takes the latest cluster in the 'Pagoda2' object using 'p2$clusters[[type]][[1]]'
+#' @param embeddingType embedding type (default=NULL). If NULL, takes the latest embedding in the 'Pagoda2' object using p2$embeddings[[type]][[1]] 
 #' @param veloinfo cell velocity information, cell velocities (grid and cell) (default=NULL)
-#' @param type character Either 'counts' or a name of a 'reduction' in the 'pagoda2' object (default='PCA')
+#' @param type character Either 'counts' or a name of a 'reduction' in the 'Pagoda2' object (default='PCA')
 #' @param min.group.size integer Minimum group size (default=1)
 #' @param batch.colors colors of the batches, i.e. the factor (corresponding to rows of the model matrix) specifying batch assignment of each cell(default=NULL)
 #' @param n.cores numeric Number of cores (default=10)
@@ -280,7 +280,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       #' @field results Result object returned by \code{scde.expression.difference()} (default=NULL). Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
       results = NULL,
 
-      #' @field type Either 'counts' or a name of a 'reduction' in the 'pagoda2' object 
+      #' @field type Either 'counts' or a name of a 'reduction' in the 'Pagoda2' object 
       type = NULL,
 
       #' @field genes List of genes to display in the Detailed clustering panel (default=list())
@@ -895,7 +895,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
 #' Takes in a list of pathways (or a list of genes), runs weighted PCA, optionally showing the result.
 #'
 #' @param pathways character vector of pathway or gene names
-#' @param p2 'pagoda2' object
+#' @param p2 'Pagoda2' object
 #' @param goenv environment mapping pathways to genes (default=NULL)
 #' @param batch factor (corresponding to rows of the model matrix) specifying batch assignment of each cell, to perform batch correction (default=NULL).
 #' @param n.genes integer Number of genes to show (default=20)
@@ -911,7 +911,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
 #' @param row.order row order (default=NULL). If NULL, uses order from hclust.
 #' @param show.Colv boolean Whether to show cell dendrogram (default=TRUE)
 #' @param plot boolean Whether to plot (default=TRUE)
-#' @param trim numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a 'pagoda2' object.
+#' @param trim numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a 'Pagoda2' object.
 #' @param showPC boolean (default=TRUE)
 #' @param ... parameters to pass to my.heatmap2. Only if plot is TRUE.
 #' @return cell scores along the first principal component of shown genes (returned as invisible)

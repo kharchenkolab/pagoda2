@@ -10,12 +10,12 @@ NULL
 #'
 #' @rdname pagoda2WebApp
 #' @exportClass pagoda2WebApp
-#' @field originalP2object Input Pagoda2 object 
+#' @field originalP2object Input 'Pagoda2' object 
 #' @field name string Display name for the application 
 #' @field mat Embedding
-#' @field cellmetadata Metadata associated with Pagoda2 object 
-#' @field mainDendrogram Dendrogram from hclust() of all cells in the Pagoda2 object 
-#' @field geneSets Gene sets in the Pagoda2 object 
+#' @field cellmetadata Metadata associated with 'Pagoda2' object 
+#' @field mainDendrogram Dendrogram from hclust() of all cells in the 'Pagoda2' object 
+#' @field geneSets Gene sets in the 'Pagoda2' object 
 #' @field rookRoot Rook server root directory 
 #' @field appmetadata pagoda2 web application metadata 
 #' @export 
@@ -39,12 +39,12 @@ pagoda2WebApp <- setRefClass(
     ## @titlepagoda2WebApp initalize
     ## @description Initalize the pagoda2WebApp
     ##
-    ## @param pagoda2obj Pagoda2 object
+    ## @param pagoda2obj 'Pagoda2' object
     ## @param appName string Display name for the app (default="DefaultPagoda2Name")
     ## @param dendGroups factor defining the groups of cells to use for the dendrogram
-    ## @param geneSets Gene sets in the Pagoda2 object 
-    ## @param metadata Pagoda2 cell metadata 
-    ## @param appmetadata Pagoda2 web application metadata (default=NULL)
+    ## @param geneSets Gene sets in the 'Pagoda2' object 
+    ## @param metadata 'Pagoda2' cell metadata 
+    ## @param appmetadata 'Pagoda2' web application metadata (default=NULL)
     ##
     ## @return new pagoda2WebApp object
     initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
@@ -62,7 +62,7 @@ pagoda2WebApp <- setRefClass(
         stop("The provided object 'pagoda2obj' is not a Pagoda2 object")
       }
       
-      ## Keep the original pagoda 2 object
+      ## Keep the original 'Pagoda2' object
       originalP2object <<- pagoda2obj
       
       ## Check that the dendGroups we are getting is what it should be

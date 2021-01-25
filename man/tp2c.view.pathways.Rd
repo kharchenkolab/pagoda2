@@ -32,7 +32,7 @@ tp2c.view.pathways(
 \arguments{
 \item{pathways}{character vector of pathway or gene names}
 
-\item{p2}{'pagoda2' object}
+\item{p2}{'Pagoda2' object}
 
 \item{goenv}{environment mapping pathways to genes (default=NULL)}
 
@@ -64,7 +64,7 @@ tp2c.view.pathways(
 
 \item{plot}{boolean Whether to plot (default=TRUE)}
 
-\item{trim}{numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a 'pagoda2' object.}
+\item{trim}{numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a 'Pagoda2' object.}
 
 \item{showPC}{boolean (default=TRUE)}
 

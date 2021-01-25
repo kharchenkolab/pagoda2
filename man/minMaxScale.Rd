@@ -15,3 +15,8 @@ the scaled values
 \description{
 Scale the designated values between the range of 0 and 1
 }
+\examples{
+example_matrix =  matrix(rep(c(1:5), 3), 5)
+minMaxScale(example_matrix)
+
+}

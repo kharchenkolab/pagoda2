@@ -2,20 +2,20 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{extendedP2proc}
 \alias{extendedP2proc}
-\title{Perform extended pagoda2 processing. 
+\title{Perform extended 'Pagoda2' processing. 
 Generate organism specific GO environment and calculate pathway overdispersion.}
 \usage{
 extendedP2proc(p2, organism = "hs")
 }
 \arguments{
-\item{p2}{the pagoda2 object}
+\item{p2}{the 'Pagoda2' object}
 
 \item{organism}{character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')}
 }
 \value{
-list of a pagoda2 object and go.env
+list of a 'Pagoda2' object and go.env
 }
 \description{
-Perform extended pagoda2 processing. 
+Perform extended 'Pagoda2' processing. 
 Generate organism specific GO environment and calculate pathway overdispersion.
 }

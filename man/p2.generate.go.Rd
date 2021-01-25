@@ -13,7 +13,7 @@ p2.generate.go(
 )
 }
 \arguments{
-\item{r}{pagoda2 object}
+\item{r}{a 'Pagoda2' object}
 
 \item{organism}{the organism (default=NULL). Currently 'hs' (human), 'mm' (mouse) and 'dr' (zebrafish) are supported.}
 

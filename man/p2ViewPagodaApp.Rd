@@ -12,7 +12,7 @@ Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in 'SCDE'
 \describe{
 \item{\code{results}}{Result object returned by \code{scde.expression.difference()} (default=NULL). Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.}
 
-\item{\code{type}}{Either 'counts' or a name of a 'reduction' in the 'pagoda2' object}
+\item{\code{type}}{Either 'counts' or a name of a 'reduction' in the 'Pagoda2' object}
 
 \item{\code{genes}}{List of genes to display in the Detailed clustering panel (default=list())}
 

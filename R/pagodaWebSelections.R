@@ -6,7 +6,7 @@
 #' @importFrom rlang .data 
 NULL 
 
-#' Reads a pagoda2 web app exported cell selection file exported as a list
+#' Reads a 'pagoda2' web app exported cell selection file exported as a list
 #' of list objects that contain the name of the selection, 
 #' the color (as a hex string) and the identifiers of the individual cells
 #'

@@ -6,13 +6,12 @@ library(dplyr)
 library(ggplot2)
 
 ## ----message=FALSE------------------------------------------------------------
-library(drat)
-addRepo("kharchenkolab")
-install.packages("p2data")
+install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
 
 ## ----message=FALSE------------------------------------------------------------
 ## load the dataset
 countMatrix <- p2data::sample_BM1
+## all basic pagoda2 processing with basicP2proc()
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 
@@ -44,7 +43,8 @@ cm[1:3, 1:3]
 str(cm)
 
 ## ---- fig.height=8, fig.width=10----------------------------------------------
-par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+old_par <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+on.exit(par(old_par))
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
 hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 

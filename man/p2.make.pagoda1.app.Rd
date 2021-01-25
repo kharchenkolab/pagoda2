@@ -2,7 +2,7 @@
 % Please edit documentation in R/p1app4p2.R
 \name{p2.make.pagoda1.app}
 \alias{p2.make.pagoda1.app}
-\title{Create 'PAGODA1' web application from 'pagoda2' object
+\title{Create 'PAGODA1' web application from a 'Pagoda2' object
 'PAGODA1' found here, with 'SCDE': <https://www.bioconductor.org/packages/release/bioc/html/scde.html>}
 \usage{
 p2.make.pagoda1.app(
@@ -24,7 +24,7 @@ p2.make.pagoda1.app(
 )
 }
 \arguments{
-\item{p2}{'pagoda2' object}
+\item{p2}{'Pagoda2' object}
 
 \item{col.cols}{Matrix of column colors (default=NULL). Useful for visualizing cell annotations such as batch labels.}
 
@@ -40,13 +40,13 @@ p2.make.pagoda1.app(
 
 \item{groups}{factor describing grouping of different cells. If provided, the cross-fits and the expected expression magnitudes will be determined separately within each group. The factor should have the same length as ncol(counts) (default=NULL).}
 
-\item{clusterType}{cluster type (default=NULL). If NULL, takes the latest cluster in the 'pagoda2' object using 'p2$clusters[[type]][[1]]'}
+\item{clusterType}{cluster type (default=NULL). If NULL, takes the latest cluster in the 'Pagoda2' object using 'p2$clusters[[type]][[1]]'}
 
-\item{embeddingType}{embedding type (default=NULL). If NULL, takes the latest embedding in the 'pagoda2' object using p2$embeddings[[type]][[1]]}
+\item{embeddingType}{embedding type (default=NULL). If NULL, takes the latest embedding in the 'Pagoda2' object using p2$embeddings[[type]][[1]]}
 
 \item{veloinfo}{cell velocity information, cell velocities (grid and cell) (default=NULL)}
 
-\item{type}{character Either 'counts' or a name of a 'reduction' in the 'pagoda2' object (default='PCA')}
+\item{type}{character Either 'counts' or a name of a 'reduction' in the 'Pagoda2' object (default='PCA')}
 
 \item{min.group.size}{integer Minimum group size (default=1)}
 
@@ -58,6 +58,6 @@ p2.make.pagoda1.app(
 'PAGODA1' web application
 }
 \description{
-Create 'PAGODA1' web application from 'pagoda2' object
+Create 'PAGODA1' web application from a 'Pagoda2' object
 'PAGODA1' found here, with 'SCDE': <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 }

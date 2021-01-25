@@ -2,7 +2,7 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{p2.toweb.hdea}
 \alias{p2.toweb.hdea}
-\title{Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression}
+\title{Generate a 'pagoda2' web object from a 'Pagoda2' object using hierarchical differential expression}
 \usage{
 p2.toweb.hdea(p2, title = "")
 }
@@ -12,8 +12,8 @@ p2.toweb.hdea(p2, title = "")
 \item{title}{character Name of the pagoda object (default="")}
 }
 \value{
-a pagoda2 web object
+a 'pagoda2' web object
 }
 \description{
-Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression
+Generate a 'pagoda2' web object from a 'Pagoda2' object using hierarchical differential expression
 }

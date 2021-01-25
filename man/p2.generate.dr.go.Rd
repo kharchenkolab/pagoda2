@@ -7,7 +7,7 @@
 p2.generate.dr.go(r)
 }
 \arguments{
-\item{r}{pagoda2 object}
+\item{r}{a 'Pagoda2' object}
 }
 \value{
 a GO environment object

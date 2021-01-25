@@ -3,7 +3,7 @@
 \name{p2.metadata.from.factor}
 \alias{p2.metadata.from.factor}
 \title{Generate a list metadata structure that can be passed to a
-pagoda2 web object constructor as additional metadata given a named factor}
+'pagoda2' web object constructor as additional metadata given a named factor}
 \usage{
 p2.metadata.from.factor(
   metadata,
@@ -31,9 +31,9 @@ p2.metadata.from.factor(
 \item{pal}{optional vector of colours to use, if provided overrides s,v,start and end parameters (default=NULL)}
 }
 \value{
-list of data, levels, palette to be passed to pagoda2 web object constructor
+list of data, levels, palette to be passed to 'pagoda2' web object constructor
 }
 \description{
 Generate a list metadata structure that can be passed to a
-pagoda2 web object constructor as additional metadata given a named factor
+'pagoda2' web object constructor as additional metadata given a named factor
 }
