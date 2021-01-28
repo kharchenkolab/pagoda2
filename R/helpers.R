@@ -448,7 +448,7 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
 #'
 #' @param path string Location of 10x output
 #' @param version string Version of 10x output to read (default='V3'). Must be one of 'V2' or 'V3'.
-#' @param transcript.id string Transcript identifier to use (default='SYMBOL'). Must be either 'SYMBOL' or 'ENSEMBL'.
+#' @param transcript.id string Transcript identifier to use (default='SYMBOL'). Must be either 'SYMBOL' (e.g. "Sox17") or 'ENSEMBL' (e.g. "ENSMUSG00000025902"). This value is case-sensitive.
 #' @param verbose boolean Whether to return verbose output
 #' @return parsed 10x outputs into a matrix
 #'
@@ -459,36 +459,39 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
     stop("You need to install package 'data.table' to be able to use this function.")
   }
 
+  ## check if path exists
+  if (!dir.exists(path)){
+    stop("Path provided does not exist. The path should be the folder of filtered gene/cell matrix provided by 10x.")
+  }
+
   if (version != 'V2' && version != 'V3'){
     stop('Unknown value for "version", it must be either "V2" or "V3"')
   }
-  if (transcript.id == 'SYMBOL') {
-    transcript.id.col.idx = 2
-  } else if (transcript.id == 'ENSEMBL') {
-    transcript.id.col.idx = 1
-  } else {
-    stop('Unknown transcript identifier "transcript.id", it must be either "SYMBOL" or "ENSEMBL"')
+  if (transcript.id != 'SYMBOL' && transcript.id != 'ENSEMBL') {
+    stop('Unknown transcript identifier "transcript.id", it must be either "SYMBOL" or "ENSEMBL". This input is case-sensitive.')
   }
-  matrixFile <- paste0(path, '/', list.files()[grepl("matrix", list.files())])
-  barcodesFile <- paste0(path, '/', list.files()[grepl("barcodes", list.files())])
+  matrixFile <- paste0(path, '/', list.files(path=path)[grepl("matrix", list.files(path=path))])
+  barcodesFile <- paste0(path, '/', list.files(path=path)[grepl("barcodes", list.files(path=path))])
   if (version == 'V2') {
-    genesFile <- paste0(path, '/', list.files()[grepl("genes", list.files())])
+    genesFile <- paste0(path, '/', list.files(path=path)[grepl("genes", list.files(path=path))])
+    ## double-check version arg provided isn't wrong
+    if (!grepl("genes", genesFile)){
+      stop("Cannot find a 'genes' file. You specified version='V2'---please check if this is correct. Is this actually v3.x? Otherwise, the file cannot be found in the path provided. Please check.")
+    }
   } else if (version == 'V3') {
-    genesFile <- paste0(path, '/', list.files()[grepl("features", list.files())])
-  }
-  if (!file.exists(matrixFile)) { 
-    stop('Matrix file does not exist')  
-  }
-  if (!file.exists(barcodesFile)) { 
-    stop('Barcodes file does not exist') 
-  }
-  if (!file.exists(genesFile)) { 
-    if (version == 'V2') {
-      stop('Genes file does not exist') 
-    } else if (version == 'V3') {
-      stop('Features file does not exist') 
+    genesFile <- paste0(path, '/', list.files(path=path)[grepl("features", list.files(path=path))])
+    ## double-check version arg provided isn't wrong
+    if (!grepl("features", genesFile)){
+      stop("Cannot find a 'features' file. You specified version='V3'---please check if this is correct.  Is this actually v2.x? Otherwise, the file cannot be found in the path provided. Please check.")
     }
   }
+  if (!file.exists(matrixFile)) { 
+    stop('Matrix file does not exist, or cannot be found in the path provided. Please check.')  
+  }
+  if (!file.exists(barcodesFile)) { 
+    stop('Barcodes file does not exist, or cannot be found in the path provided. Please check.') 
+  }
+
   if (verbose) message("Reading in matrix...")
   x <- as(Matrix::readMM(matrixFile), 'dgCMatrix')
   if (verbose) {
@@ -498,11 +501,17 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
       message("Reading in features...")
     }
   }
-  genes <- data.table::fread(genesFile)
-  rownames(x) <- genes[,transcript.id.col.idx]
+  ## still faster to use fread() I think...
+  genes <- data.table::fread(genesFile, header=FALSE, col.names = c("SYMBOL", "ENSEMBL"))
+  ## rownames is a poor design, but the output format was already set
+  if (transcript.id == 'SYMBOL'){
+    rownames(x) <- genes[[2]]
+  } else if (transcript.id == 'ENSEMBL') {
+    rownames(x) <- genes[[1]]
+  }
   if (verbose) message("Reading in barcodes...")
-  barcodes <- data.table::fread(barcodesFile)
-  colnames(x) <- barcodes[,1]
+  barcodes <- data.table::fread(barcodesFile, header=FALSE)
+  colnames(x) <- barcodes[[1]]
   invisible(x)
 }
 
