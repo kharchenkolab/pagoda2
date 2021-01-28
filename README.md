@@ -116,7 +116,6 @@ If you find `pagoda2` useful for your publication, please cite:
 
 ```
 Nikolas Barkas, Viktor Petukhov, Peter Kharchenko and Evan
-Biederstedt (2020). pagoda2: Single Cell Analysis and Differential
-Expression. R package version 1.0.0.
+Biederstedt (2021). pagoda2: Single Cell Analysis and Differential Expression. R package version 1.0.1.
 https://github.com/kharchenkolab/pagoda2
 ```
