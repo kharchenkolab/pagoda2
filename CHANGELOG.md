@@ -6,6 +6,7 @@
 ### Added
 - `read10xMatrix()` was added
 - more detailed roxygen2 docs
+- Use `p2data` and `drat` to install PBMC data for pagoda2 vignettes and examples. This was largely due to the size of the data and CRAN rules. Refer to https://github.com/kharchenkolab/p2data & https://github.com/kharchenkolab/drat
 
 ### Changed
 - The classes `Pagoda2()` and `p2ViewPagodaApp()` are now R6 classes; note `pagoda2WebApp()` is still a reference class as it depends on Rook
