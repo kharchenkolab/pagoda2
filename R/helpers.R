@@ -502,16 +502,16 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
     }
   }
   ## still faster to use fread() I think...
-  genes <- as.data.frame(data.table::fread(genesFile, header=FALSE, col.names = c("SYMBOL", "ENSEMBL")))
+  genes <- data.table::fread(genesFile, header=FALSE, col.names = c("SYMBOL", "ENSEMBL"))
   ## rownames is a poor design, but the output format was already set
   if (transcript.id == 'SYMBOL'){
-    rownames(x) <- genes[, 2]
+    rownames(x) <- genes[[2]]
   } else if (transcript.id == 'ENSEMBL') {
-    rownames(x) <- genes[, 1]
+    rownames(x) <- genes[[1]]
   }
   if (verbose) message("Reading in barcodes...")
-  barcodes <- as.data.frame(data.table::fread(barcodesFile, header=FALSE))
-  colnames(x) <- barcodes[,1]
+  barcodes <- data.table::fread(barcodesFile, header=FALSE)
+  colnames(x) <- barcodes[[1]]
   invisible(x)
 }
 
