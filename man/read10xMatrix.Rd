@@ -13,7 +13,7 @@ read10xMatrix(path, version = "V3", transcript.id = "SYMBOL", verbose = TRUE)
 
 \item{version}{string Version of 10x output to read (default='V3'). Must be one of 'V2' or 'V3'.}
 
-\item{transcript.id}{string Transcript identifier to use (default='SYMBOL'). Must be either 'SYMBOL' or 'ENSEMBL'.}
+\item{transcript.id}{string Transcript identifier to use (default='SYMBOL'). Must be either 'SYMBOL' (e.g. "Sox17") or 'ENSEMBL' (e.g. "ENSMUSG00000025902"). This value is case-sensitive.}
 
 \item{verbose}{boolean Whether to return verbose output}
 }
