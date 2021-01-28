@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.com/kharchenkolab/pagoda2.svg?branch=master)](https://travis-ci.com/github/kharchenkolab/pagoda2)
+[![CRAN status](https://www.r-pkg.org/badges/version/pagoda2)](https://cran.r-project.org/package=pagoda2)
+[![CRAN downloads](https://cranlogs.r-pkg.org/badges/pagoda2)](https://cran.r-project.org/package=pagoda2)
 
 <img src="https://github.com/kharchenkolab/pagoda2/blob/devel/inst/pagoda_logo.png" align="right" height="140">
 
@@ -36,6 +38,14 @@ Several methods within this package were developed based on the originals implem
 
 ## Installation 
 
+
+To install the stable version from CRAN, use:
+
+```r
+install.packages('pagoda2')
+```
+
+
 To install the latest version of `pagoda2`, use:
 
 ```r
@@ -43,7 +53,7 @@ install.packages('devtools')
 devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
 ```
 
-The package `pagoda2` depends on data in a data package (`p2data`) that is available through a `drat` repository on GitHub. To use the `pagoda2` package, you will need to install `p2data`. There are two equally valid options to install this package:
+Please note that the package `pagoda2` depends on data in a data package (`p2data`) that is available through a `drat` repository on GitHub. To use the `pagoda2` package, you will need to install `p2data`. There are two equally valid options to install this package:
 
 A) Users could install `p2data` by adding the `drat` archive to the list of repositories your system will query when adding and updating R packages. Once you do this, you can install `p2data` with `install.packages()`, using the command:
 
@@ -96,7 +106,7 @@ brew update
 brew install curl openssl wget
 ```
 
-As of version 0.1.3, `pagoda2` should sucessfully install on Mac OS. However, if there are issues, please refer to the following wiki page for further instructions on installing `pagoda2` with Mac OS: [Installing `pagoda2` for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
+As of version 0.1.3, `pagoda2` should sucessfully install on Mac OS. Furthermore, we encourage Mac OS users to install the package via the binaries on CRAN. However, if there are issues, please refer to the following wiki page for further instructions on installing `pagoda2` with Mac OS: [Installing `pagoda2` for Mac OS](https://github.com/kharchenkolab/pagoda2/wiki/Installing-Pagoda2-for-Mac-OS)
 
 
 
@@ -116,7 +126,7 @@ If you find `pagoda2` useful for your publication, please cite:
 
 ```
 Nikolas Barkas, Viktor Petukhov, Peter Kharchenko and Evan
-Biederstedt (2020). pagoda2: Single Cell Analysis and Differential
+Biederstedt (2021). pagoda2: Single Cell Analysis and Differential
 Expression. R package version 1.0.0.
 https://github.com/kharchenkolab/pagoda2
 ```

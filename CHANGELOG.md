@@ -1,9 +1,17 @@
 ## Upcoming
 
+## [1.0.0] - 2020-01-28
+- The package was edited extensively to upload to CRAN
+
 ### Added
+- `read10xMatrix()` was added
+- more detailed roxygen2 docs
 
 ### Changed
+- The classes `Pagoda2()` and `p2ViewPagodaApp()` are now R6 classes; note `pagoda2WebApp()` is still a reference class as it depends on Rook
+- Vignettes revised
 - revise `message()` spacing for `verbose` statements
+- various changes for CRAN, e.g. `par()`, removing calls to `installed.packages()`, etc.
 
 ## [0.1.4] - 2020-10-05
 
