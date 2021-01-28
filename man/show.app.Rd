@@ -2,12 +2,12 @@
 % Please edit documentation in R/helpers.R
 \name{show.app}
 \alias{show.app}
-\title{Directly open the pagoda2 web application and view the 'p2web' application object from our R session}
+\title{Directly open the 'pagoda2' web application and view the 'p2web' application object from our R session}
 \usage{
 show.app(app, name, port, ip, browse = TRUE, server = NULL)
 }
 \arguments{
-\item{app}{pagoda2 application object}
+\item{app}{'pagoda2' application object}
 
 \item{name}{character Name of the application to view}
 
@@ -23,5 +23,5 @@ show.app(app, name, port, ip, browse = TRUE, server = NULL)
 application within browser
 }
 \description{
-Directly open the pagoda2 web application and view the 'p2web' application object from our R session
+Directly open the 'pagoda2' web application and view the 'p2web' application object from our R session
 }

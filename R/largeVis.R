@@ -1,11 +1,11 @@
-## largeVis moveover routine
+## 'largeVis' moveover routine
 ## copied from https://github.com/elbamos/largeVis
 
 #' @importFrom stats runif
 NULL
 
 #' Rescale the weights in an edge matrix to match a given perplexity.
-#' From largeVis, <https://github.com/elbamos/largeVis>
+#' From 'largeVis', <https://github.com/elbamos/largeVis>
 #'
 #' @param x An edgematrix, either an `edgematrix` object or a sparse matrix.
 #' @param threads numeric The maximum number of threads to spawn (default=NULL). Determined automatically if NULL (default=NULL)
@@ -150,7 +150,7 @@ projectKNNs <- function(wij, # symmetric sparse matrix
 }
 
 #' Calculate the default number of batches for a given number of vertices and edges.
-#' The formula used is the one used by the \code{LargeVis} reference implementation.  This is substantially less than the recommendation \eqn{E * 10000} in the original paper.
+#' The formula used is the one used by the 'largeVis' reference implementation.  This is substantially less than the recommendation \eqn{E * 10000} in the original paper.
 #'
 #' @param N Number of vertices
 #' @param E Number of edges (default = 150*N/2)

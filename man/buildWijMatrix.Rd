@@ -3,7 +3,7 @@
 \name{buildWijMatrix}
 \alias{buildWijMatrix}
 \title{Rescale the weights in an edge matrix to match a given perplexity.
-From largeVis, <https://github.com/elbamos/largeVis>}
+From 'largeVis', <https://github.com/elbamos/largeVis>}
 \usage{
 buildWijMatrix(x, threads = NULL, perplexity = 50)
 }
@@ -24,5 +24,5 @@ A \code{list} with the following components: \describe{
 }
 \description{
 Rescale the weights in an edge matrix to match a given perplexity.
-From largeVis, <https://github.com/elbamos/largeVis>
+From 'largeVis', <https://github.com/elbamos/largeVis>
 }

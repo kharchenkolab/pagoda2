@@ -69,9 +69,9 @@ score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ..
     return(ret.vals)
 }
 
-#' Plot the embedding of a pagoda2 object with the given values
+#' Plot the embedding of a 'Pagoda2' object with the given values
 #' 
-#' @param p2obj the pagoda2 object
+#' @param p2obj the 'Pagoda2' object
 #' @param values the values to plot, fed into p2obj$plotEmbedding(colors=values)
 #' @param title character Title for the plot (default="")
 #' @param type character Type reduction on which the embedding is based on (default="PCA")
@@ -148,6 +148,10 @@ score.cells.nb0 <- function(data, signature) {
 #' 
 #' @param x values to scale
 #' @return the scaled values
+#' @examples
+#' example_matrix =  matrix(rep(c(1:5), 3), 5)
+#' minMaxScale(example_matrix)
+#'
 #' @export
 minMaxScale <- function(x) { 
     (x - min(x)) / (max(x) - min(x)) 

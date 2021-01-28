@@ -12,13 +12,13 @@ The class encompasses gene count matrices, providing methods for normalization, 
 ## Method `Pagoda2$new`
 ## ------------------------------------------------
 
-\donttest{
-## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+\donttest{ 
+## Load pre-generated a dataset of 50 bone marrow cells as matrix
+cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package="pagoda2"))
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 }
 
@@ -29,11 +29,11 @@ p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -46,11 +46,11 @@ p2_object$adjustVariance(plot=TRUE, gam.k=10)
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object   
+## Generate Pagoda2 object   
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -65,11 +65,11 @@ p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -88,11 +88,11 @@ p2_object$getKnnClusters(method=infomap.community, type='counts')
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -118,11 +118,11 @@ hdea <- p2_object$getHierarchicalDiffExpressionAspects(type='PCA',
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -139,11 +139,11 @@ p2_object$makeGeneKnnGraph(nPcs=50, k=20, center=TRUE)
  
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -163,11 +163,11 @@ p2_object$getDensityClusters(type='PCA')
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -190,11 +190,11 @@ p2_object$getDifferentialGenes(type='PCA',verbose=TRUE,clusterType='multilevel')
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -215,11 +215,11 @@ lib.sizes <- p2_object$getRefinedLibSizes(type="PCA")
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -245,11 +245,11 @@ p2_object$plotGeneHeatmap(genes=rownames(de)[1:15],
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -274,11 +274,11 @@ p2_object$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.clu
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -302,11 +302,11 @@ odGenes <- p2_object$getOdGenes(use.unadjusted.pvals=FALSE)
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -320,11 +320,11 @@ p2_object$getNormalizedExpressionMatrix()
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=15)
@@ -339,11 +339,11 @@ p2_object$calculatePcaReduction(nPcs=50, n.odgenes=2e3)
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -367,11 +367,11 @@ p2_object$expandOdGenes(type='PCA')
 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -495,17 +495,17 @@ Initialize Pagoda2 class
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-new 'Pagoda2' object
+new Pagoda2 object
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
-\preformatted{\donttest{
-## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+\preformatted{\donttest{ 
+## Load pre-generated a dataset of 50 bone marrow cells as matrix
+cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package="pagoda2"))
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 }
 
@@ -623,11 +623,11 @@ residual matrix with adjusted variance
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -697,11 +697,11 @@ kNN graph, stored in self$graphs
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object   
+## Generate Pagoda2 object   
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -762,11 +762,11 @@ the community structure calculated from 'method'
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -846,11 +846,11 @@ hierarchical clustering
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -918,11 +918,11 @@ graph with gene similarity
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -984,11 +984,11 @@ density-based clusters
 \preformatted{ 
 \donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1061,11 +1061,11 @@ List with each element of the list corresponding to a cell group in the provided
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1179,11 +1179,11 @@ recalculated library sizes
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1241,7 +1241,7 @@ Plot heatmap for a given set of genes
 
 \item{\code{gradient.range.quantile}}{numeric Trimming quantile (default=0.95)}
 
-\item{\code{cluster.genes}}{boolean Whether to cluster genes within each cluster using hclust() (default=FALSE)}
+\item{\code{cluster.genes}}{boolean Whether to cluster genes within each cluster using stats::hclust() (default=FALSE)}
 
 \item{\code{inner.clustering}}{boolean Whether to cluster cells within each cluster (default=FALSE)}
 
@@ -1270,11 +1270,11 @@ plot of gene heatmap
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1345,11 +1345,11 @@ plot of the embedding
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1404,11 +1404,11 @@ vector of overdispersed genes
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1456,11 +1456,11 @@ cell by gene matrix
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1534,11 +1534,11 @@ Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=15)
@@ -1620,11 +1620,11 @@ List of overdispersed genes
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance
 p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1877,11 +1877,11 @@ embedding stored in self$embedding
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{\donttest{
 ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+cm <- p2data::sample_BM1
 ## Perform QC, i.e. filter any cells that
 counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
 rownames(counts) <- make.unique(rownames(counts))
-## Generate pagoda2 object 
+## Generate Pagoda2 object 
 p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
 ## Normalize gene expression variance 
 p2_object$adjustVariance(plot=TRUE, gam.k=10)

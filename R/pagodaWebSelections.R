@@ -6,7 +6,7 @@
 #' @importFrom rlang .data 
 NULL 
 
-#' Reads a pagoda2 web app exported cell selection file exported as a list
+#' Reads a 'pagoda2' web app exported cell selection file exported as a list
 #' of list objects that contain the name of the selection, 
 #' the color (as a hex string) and the identifiers of the individual cells
 #'
@@ -24,9 +24,9 @@ readPagoda2SelectionFile <- function(filepath) {
 
     fields <- unlist(strsplit(line, split=',', fixed=TRUE))
 
-    name <- make.names(fields[2]);
-    color <- fields[1];
-    cells <- fields[-c(1:2)];
+    name <- make.names(fields[2])
+    color <- fields[1]
+    cells <- fields[-c(1:2)]
     returnList[[name]] <- list(name=fields[2], color = color, cells = cells)
   }
   close(con)

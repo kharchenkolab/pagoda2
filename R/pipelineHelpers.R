@@ -1,6 +1,6 @@
-### A Collection of functions for quick analysis of single cell data with pagoda2
+### A Collection of functions for quick analysis of single cell data with 'pagoda2'
 
-#' Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
+#' Perform basic 'pagoda2' processing, i.e. adjust variance, calculate pca reduction,
 #' make knn graph, identify clusters with multilevel, and generate
 #' largeVis and tSNE embeddings.
 #' 
@@ -18,19 +18,23 @@
 #' @param get.largevis boolean Whether to caluclate largeVis embedding (default=TRUE)
 #' @param get.tsne boolean Whether to calculate tSNE embedding (default=TRUE) 
 #' @param make.geneknn boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE) 
-#' @return a new pagoda2 object
+#' @return a new 'Pagoda2' object
 #' @examples
 #' \donttest{
 #' ## load count matrix
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' ## perform basic p2 processing
 #' p2 <- basicP2proc(cm)
 #' }
+#' 
 #' @export 
 basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity=50, 
   log.scale=TRUE, trim=10, keep.genes=NULL, min.cells.per.gene=0, min.transcripts.per.cell=100, 
   get.largevis=TRUE, get.tsne=TRUE, make.geneknn=TRUE) {
 
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   rownames(cd) <- make.unique(rownames(cd))
   ## Basic Processing
   p2 <- Pagoda2$new(cd, n.cores = n.cores, keep.genes = keep.genes, trim=trim, log.scale=log.scale, min.cells.per.gene=min.cells.per.gene, min.transcripts.per.cell=min.transcripts.per.cell)
@@ -63,23 +67,20 @@ basicP2proc <- function(cd, n.cores=1, n.odgenes=3e3, nPcs=100, k=30, perplexity
   invisible(p2)
 }
 
-#' Perform extended pagoda2 processing. 
+#' Perform extended 'Pagoda2' processing. 
 #' Generate organism specific GO environment and calculate pathway overdispersion.
 #' 
-#' @param p2 the pagoda2 object 
+#' @param p2 the 'Pagoda2' object 
 #' @param organism character Organisms hs (Homo Sapiens), mm (M. Musculus, mouse) or dr (D. Rerio, zebrafish) (default='hs')
-#' @return list of a pagoda2 object and go.env
-#' @examples
-#' \dontrun{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
-#' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
-#' counts <- counts[rowSums(counts)>=10,]
-#' rownames(counts) <- make.unique(rownames(counts))
-#' r <- Pagoda2$new(counts,log.scale=TRUE, n.cores=2)
-#' extendedP2proc(r, organism = 'hs')
-#' }
+#' @return list of a 'Pagoda2' object and go.env
+#' 
 #' @export 
 extendedP2proc <- function(p2, organism = 'hs') {
+
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
+
   if (organism == 'hs') {
     go.env <- p2.generate.human.go(p2)
   } else if (organism == 'mm') {
@@ -101,12 +102,12 @@ extendedP2proc <- function(p2, organism = 'hs') {
   invisible(list(p2 = p2, go.env = go.env))
 }
 
-#' Converts a list of factors into pagoda2 metadata optionally
-#' filtering down to the cells present in the provided pagoda2 app.
+#' Converts a list of factors into 'pagoda2' metadata optionally
+#' filtering down to the cells present in the provided 'pagoda2' app.
 #' 
 #' @param factor.list list of factors named by the cell identifier
-#' @param p2 pagoda2 app to filter the factors by, optional (default=NULL)
-#' @return pagoda2 web metadata object
+#' @param p2 'pagoda2' app to filter the factors by, optional (default=NULL)
+#' @return 'pagoda2' web metadata object
 #' @export 
 factorListToMetadata <- function(factor.list, p2=NULL) {
   if(! class(p2) %in% c('Pagoda2', 'NULL')) {
@@ -138,17 +139,17 @@ factorListToMetadata <- function(factor.list, p2=NULL) {
 
 
 
-#' Generate a pagoda2 web object
+#' Generate a 'pagoda2' web object
 #' 
-#' @param p2 pagoda2 object
-#' @param additionalMetadata pagoda2 web metadata object (default=NULL)
+#' @param p2 a 'Pagoda2' object
+#' @param additionalMetadata 'pagoda2' web metadata object (default=NULL)
 #' @param title character string Title for the web app (default='Pagoda2')
 #' @param make.go.sets boolean Whether GO sets should be made (default=TRUE)
 #' @param make.de.sets boolean Whether differential expression sets should be made (default=TRUE)
 #' @param go.env the GO environment used for the overdispersion analysis (default=NULL)
 #' @param make.gene.graph logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app
-#' @param appmetadata pagoda2 web application metadata (default=NULL)
-#' @return a pagoda2 web application
+#' @param appmetadata 'pagoda2' web application metadata (default=NULL)
+#' @return a 'pagoda2' web application
 #' @export 
 webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
                       make.go.sets=TRUE, make.de.sets=TRUE, go.env=NULL,
@@ -194,7 +195,7 @@ webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
 
 #' Generate a GO environment for the organism specified
 #' 
-#' @param r pagoda2 object
+#' @param r a 'Pagoda2' object
 #' @param organism the organism (default=NULL). Currently 'hs' (human), 'mm' (mouse) and 'dr' (zebrafish) are supported.
 #' @param go2all.egs mappings between a given GO identifier and all of the Entrez Gene identifiers 
 #'     annotated at that GO term or to one of its child nodes in the GO ontology (default=NULL)
@@ -202,12 +203,18 @@ webP2proc <- function(p2, additionalMetadata=NULL, title='Pagoda2',
 #' @param min.env.length numeric Minimum environment length (default=5)
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.go(p2, organism='hs')
 #' }
+#' 
 #' @export 
 p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, min.env.length=5) {
+  
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
+
   if (is.null(organism) && (is.null(go2all.egs) || is.null(eg.alias2eg))) {
     stop('Either organism or go2all.egs and eg.alias2eg must be specified');
   }
@@ -256,53 +263,65 @@ p2.generate.go <- function(r, organism=NULL, go2all.egs=NULL, eg.alias2eg=NULL, 
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' 
-#' @param r pagoda2 object
+#' @param r a 'Pagoda2' object
 #' @return a GO environment object
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.dr.go(p2)
 #' }
+#' 
 #' @export
 p2.generate.dr.go <- function(r) {
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   p2.generate.go(r, "dr")
 }
 
 
 #' Generate a GO environment for human for overdispersion analysis for the the back end
 #' 
-#' @param r pagoda2 object
+#' @param r a 'Pagoda2' object
 #' @return a GO environment object
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.human.go(p2)
 #' }
+#' 
 #' @export
 p2.generate.human.go <- function(r) {
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   p2.generate.go(r, "hs")
 }
 
 #' Generate a GO environment for mouse for overdispersion analysis for the the back end
 #' 
-#' @param r pagoda2 object
+#' @param r a 'Pagoda2' object
 #' @return a GO environment object
 #' @examples
 #' \donttest{
-#' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+#' cm <- p2data::sample_BM1
 #' p2 <- basicP2proc(cm)
 #' p2.generate.mouse.go(p2)
 #' }
+#' 
 #' @export 
 p2.generate.mouse.go <- function(r) {
+  if (!requireNamespace("p2data", quietly = TRUE)) {
+    stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+  }
   p2.generate.go(r, "mm")
 }
 
 
 #' Generate a list metadata structure that can be passed to a
-#' pagoda2 web object constructor as additional metadata given a named factor
+#' 'pagoda2' web object constructor as additional metadata given a named factor
 #' 
 #' @param metadata named factor with metadata for individual cells, names must correspond to cells
 #' @param displayname character Name to display for the metadata (default=NULL)
@@ -311,7 +330,7 @@ p2.generate.mouse.go <- function(r) {
 #' @param start numeric Starting value (default=0)
 #' @param end numeric Ending value (default=NULL)
 #' @param pal optional vector of colours to use, if provided overrides s,v,start and end parameters (default=NULL)
-#' @return list of data, levels, palette to be passed to pagoda2 web object constructor
+#' @return list of data, levels, palette to be passed to 'pagoda2' web object constructor
 #' @export 
 p2.metadata.from.factor <- function(metadata, displayname=NULL, s=1, v=1, start=0, end=NULL, pal=NULL) {
   # Check input
@@ -375,12 +394,12 @@ p2.metadata.from.factor <- function(metadata, displayname=NULL, s=1, v=1, start=
 }
 
 
-#' Generate a Rook Server app from a pagoda2 object. 
-#' This generates a pagoda2 web object from a pagoda2 object by automating steps that most
-#' users will want to run. This function is a wrapper about the pagoda2 web constructor. 
+#' Generate a Rook Server app from a 'Pagoda2' object. 
+#' This generates a 'pagoda2' web object from a 'Pagoda2' object by automating steps that most
+#' users will want to run. This function is a wrapper about the 'pagoda2' web constructor. 
 #' (Advanced users may wish to use that constructor directly.)
 #'
-#' @param r pagoda2 object
+#' @param r a 'Pagoda2' object
 #' @param dendrogramCellGroups a named factor of cell groups, used to generate the main dendrogram, limits zoom in
 #' @param additionalMetadata a list of metadata other than depth, batch and cluster that are automatically added (default=list())
 #' @param geneSets a list of genesets to show
@@ -390,8 +409,8 @@ p2.metadata.from.factor <- function(metadata, displayname=NULL, s=1, v=1, start=
 #' @param appname character Application name (default="Pagoda2 Application")
 #' @param innerOrder Ordering of cells inside the clusters provided in dendrogramCellGroups (default=NULL). This should be one of "odPCA", "reductdist", "graphbased", "knn". Defaults to NULL
 #' @param orderDend boolean Whether to order dendrogram (default=FALSE)
-#' @param appmetadata pagoda2 web application metadata (default=NULL)
-#' @return a pagoda2 web object that presents a Rook compatible interface
+#' @param appmetadata a 'pagoda2' web application metadata (default=NULL)
+#' @return a 'pagoda2' web object that presents a Rook compatible interface
 #' @export 
 make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), geneSets, show.depth = TRUE,
                         show.batch = TRUE, show.clusters = TRUE, appname = "Pagoda2 Application",
@@ -469,7 +488,7 @@ make.p2.app <- function(r, dendrogramCellGroups, additionalMetadata = list(), ge
 #' @param pagObj pagoda object
 #' @param groups named factor to do the de by
 #' @param prefix chararcter Prefix to assign to genesets generated (default="de_")
-#' @return a pagoda2 web object
+#' @return a 'pagoda2' web object
 #' @export 
 get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 
@@ -494,7 +513,7 @@ get.de.geneset <- function(pagObj, groups, prefix = 'de_') {
 }
 
 #' Converts the output of hierarchical differential expression aspects
-#' into genesets that can be loaded into a pagoda2 web app to retrive the genes
+#' into genesets that can be loaded into a 'pagoda2' web app to retrive the genes
 #' that make the geneset interactively
 #' 
 #' @param output output of getHierarchicalDiffExpressionAspects
@@ -510,11 +529,11 @@ hierDiffToGenesets <- function(output) {
   })
 }
 
-#' Generate a pagoda2 web object from a pagoda2 object using hierarchical differential expression
+#' Generate a 'pagoda2' web object from a 'Pagoda2' object using hierarchical differential expression
 #' 
 #' @param p2 p2 object
 #' @param title character Name of the pagoda object (default="")
-#' @return a pagoda2 web object
+#' @return a 'pagoda2' web object
 #' @export p2.toweb.hdea
 p2.toweb.hdea <- function(p2, title="") {
   hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3)
@@ -531,18 +550,18 @@ p2.toweb.hdea <- function(p2, title="") {
 }
 
 
-#' Generate a pagoda2 web application from a pagoda2 object
+#' Generate a 'pagoda2' web application from a 'Pagoda2' object
 #'
-#' @param p2 pagoda2 application object
+#' @param p2 a 'Pagoda2' object
 #' @param app.title name of application as displayed in the browser title (default='Pagoda2')
 #' @param extraWebMetadata additional metadata generated by p2.metadata.from.fractor (default=NULL)
 #' @param n.cores numeric Number of cores to use for differential expression calculation (default=4)
-#' @return a pagoda2 web object
+#' @return a 'pagoda2' web object
 #' @export 
 basicP2web <- function(p2, app.title='Pagoda2', extraWebMetadata=NULL, n.cores=4) {
   message('Calculating hdea...\n')
   hdea <- p2$getHierarchicalDiffExpressionAspects(type='PCA',clusterName='multilevel',z.threshold=3, n.cores = n.cores)
-  metadata.forweb <- list();
+  metadata.forweb <- list()
   metadata.forweb$multilevel <- p2.metadata.from.factor(p2$clusters$PCA$multilevel,displayname='Multilevel')
   metadata.forweb <- c(metadata.forweb, extraWebMetadata)
   genesets <- hierDiffToGenesets(hdea)

@@ -4,28 +4,28 @@
 \name{pagoda2WebApp-class}
 \alias{pagoda2WebApp-class}
 \alias{pagoda2WebApp}
-\title{pagoda2WebApp class to create pagoda2 web applications via a Rook server}
+\title{pagoda2WebApp class to create 'pagoda2' web applications via a Rook server}
 \description{
-pagoda2WebApp class to create pagoda2 web applications via a Rook server
+pagoda2WebApp class to create 'pagoda2' web applications via a Rook server
 }
 \section{Fields}{
 
 \describe{
-\item{\code{originalP2object}}{Input pagoda2 object}
+\item{\code{originalP2object}}{Input 'Pagoda2' object}
 
 \item{\code{name}}{string Display name for the application}
 
 \item{\code{mat}}{Embedding}
 
-\item{\code{cellmetadata}}{Metadata associated with pagoda2 object}
+\item{\code{cellmetadata}}{Metadata associated with 'Pagoda2' object}
 
-\item{\code{mainDendrogram}}{Dendrogram from hclust() of all cells in the pagoda2 object}
+\item{\code{mainDendrogram}}{Dendrogram from hclust() of all cells in the 'Pagoda2' object}
 
-\item{\code{geneSets}}{Gene sets in the pagoda2 object}
+\item{\code{geneSets}}{Gene sets in the 'Pagoda2' object}
 
 \item{\code{rookRoot}}{Rook server root directory}
 
-\item{\code{appmetadata}}{Pagoda2 web application metadata}
+\item{\code{appmetadata}}{pagoda2 web application metadata}
 }}
 
 

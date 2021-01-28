@@ -1,28 +1,23 @@
-## Filename: pagoda2WebApp.R
-## Author: Nikolas Barkas
-## Date: Jan - Mar 2017
-## Description: The rook server for pagoda2
 
 #' @import Rook
 #' @importFrom urltools url_decode
 #' @importFrom rjson fromJSON toJSON
 #' @importFrom dendsort dendsort
-#' @import base64enc
 NULL
 
 
-#' pagoda2WebApp class to create pagoda2 web applications via a Rook server
+#' pagoda2WebApp class to create 'pagoda2' web applications via a Rook server
 #'
 #' @rdname pagoda2WebApp
 #' @exportClass pagoda2WebApp
-#' @field originalP2object Input pagoda2 object 
+#' @field originalP2object Input 'Pagoda2' object 
 #' @field name string Display name for the application 
 #' @field mat Embedding
-#' @field cellmetadata Metadata associated with pagoda2 object 
-#' @field mainDendrogram Dendrogram from hclust() of all cells in the pagoda2 object 
-#' @field geneSets Gene sets in the pagoda2 object 
+#' @field cellmetadata Metadata associated with 'Pagoda2' object 
+#' @field mainDendrogram Dendrogram from hclust() of all cells in the 'Pagoda2' object 
+#' @field geneSets Gene sets in the 'Pagoda2' object 
 #' @field rookRoot Rook server root directory 
-#' @field appmetadata Pagoda2 web application metadata 
+#' @field appmetadata pagoda2 web application metadata 
 #' @export 
 pagoda2WebApp <- setRefClass(
   'pagoda2WebApp',
@@ -44,31 +39,35 @@ pagoda2WebApp <- setRefClass(
     ## @titlepagoda2WebApp initalize
     ## @description Initalize the pagoda2WebApp
     ##
-    ## @param pagoda2obj Pagoda2 object
+    ## @param pagoda2obj 'Pagoda2' object
     ## @param appName string Display name for the app (default="DefaultPagoda2Name")
     ## @param dendGroups factor defining the groups of cells to use for the dendrogram
-    ## @param geneSets Gene sets in the pagoda2 object 
-    ## @param metadata Pagoda2 cell metadata 
-    ## @param appmetadata Pagoda2 web application metadata (default=NULL)
+    ## @param geneSets Gene sets in the 'Pagoda2' object 
+    ## @param metadata 'Pagoda2' cell metadata 
+    ## @param appmetadata 'Pagoda2' web application metadata (default=NULL)
     ##
     ## @return new pagoda2WebApp object
     initialize = function(pagoda2obj, appName = "DefaultPagoda2Name", dendGroups,
                           verbose = 0, debug, geneSets, metadata=metadata,
                           innerOrder=NULL,orderDend=FALSE,appmetadata = NULL) {
 
+      if (!requireNamespace("base64enc", quietly = TRUE)) {
+        stop("Package \"base64enc\" needed for the pagoda2WebApp class to work. Please install in with install.packages('base64enc').", call. = FALSE)
+      }
+
       ## Check that the object we are getting is what it should be
       ## should be both `"Pagoda2" "R6"`
       '%ni%' <- Negate('%in%')
       if (all(class(pagoda2obj) %ni% "Pagoda2")) {   
-        stop("The provided object 'pagoda2obj' is not a pagoda2 object")
+        stop("The provided object 'pagoda2obj' is not a Pagoda2 object")
       }
       
-      ## Keep the original pagoda 2 object
+      ## Keep the original 'Pagoda2' object
       originalP2object <<- pagoda2obj
       
       ## Check that the dendGroups we are getting is what it should be
       if (length(dendGroups) != nrow(pagoda2obj$counts)) {
-        stop("The provided dendGroups has a different number of cells than the pagoda2 object")
+        stop("The provided dendGroups has a different number of cells than the Pagoda2 object")
       }
       
       ## Keep the name for later (consistent) use
@@ -141,7 +140,7 @@ pagoda2WebApp$methods(
       colnames(ld) <- rownames(ld) <- colnames(lvec)
       
       #hcGroup is a hclust object of whatever cell groupings we provided above
-      hcGroups <- hclust(as.dist(ld), method = 'ward.D')
+      hcGroups <- stats::hclust(as.dist(ld), method = 'ward.D')
       
       if(orderDend){
         hcGroups <- dendsort::dendsort(hcGroups)
@@ -178,7 +177,7 @@ pagoda2WebApp$methods(
               } else {
                 
                 celsel <- names(cl0)[cl0 == x]
-                celsel[hclust(as.dist(1-WGCNA::cor(t(originalP2object$reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
+                celsel[stats::hclust(as.dist(1-WGCNA::cor(t(originalP2object$reductions$PCA[celsel,]))))$order] # Hierarchical clustering of cell-cell correlation of the PCA reduced gene-expressions
               }
               
             } else if(innerOrder == "graphbased") {
@@ -188,7 +187,7 @@ pagoda2WebApp$methods(
               } else {
                 celsel <- names(cl0)[cl0==x]
                 sgraph <- igraph::induced_subgraph(r$graphs$PCA,(celsel))
-                celsel[hclust(as.dist(1-WGCNA::cor(t(igraph::layout.auto(sgraph,dim=3)))))$order]
+                celsel[stats::hclust(as.dist(1-WGCNA::cor(t(igraph::layout.auto(sgraph,dim=3)))))$order]
               }
               
             } else if(innerOrder == "knn") {
@@ -246,7 +245,7 @@ pagoda2WebApp$methods(
       rawConn <- rawConnection(raw(0), "wb")
       writeBin(v, rawConn)
       xCompress <- memCompress(rawConnectionValue(rawConn), 'gzip')
-      xSend <- base64encode(xCompress)
+      xSend <- base64enc::base64encode(xCompress)
       close(rawConn)
       
       xSend
@@ -265,7 +264,7 @@ pagoda2WebApp$methods(
       rawConn <- rawConnection(raw(0), "wb")
       writeBin(v, rawConn)
       xCompress <- memCompress(rawConnectionValue(rawConn),'gzip')
-      xSend <- base64encode(xCompress)
+      xSend <- base64enc::base64encode(xCompress)
       close(rawConn)
       
       xSend

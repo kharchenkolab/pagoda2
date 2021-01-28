@@ -2,7 +2,7 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{webP2proc}
 \alias{webP2proc}
-\title{Generate a pagoda2 web object}
+\title{Generate a 'pagoda2' web object}
 \usage{
 webP2proc(
   p2,
@@ -16,9 +16,9 @@ webP2proc(
 )
 }
 \arguments{
-\item{p2}{pagoda2 object}
+\item{p2}{a 'Pagoda2' object}
 
-\item{additionalMetadata}{pagoda2 web metadata object (default=NULL)}
+\item{additionalMetadata}{'pagoda2' web metadata object (default=NULL)}
 
 \item{title}{character string Title for the web app (default='Pagoda2')}
 
@@ -30,11 +30,11 @@ webP2proc(
 
 \item{make.gene.graph}{logical specifying if the gene graph should be make, if FALSE the find similar genes functionality will be disabled on the web app}
 
-\item{appmetadata}{pagoda2 web application metadata (default=NULL)}
+\item{appmetadata}{'pagoda2' web application metadata (default=NULL)}
 }
 \value{
-a pagoda2 web application
+a 'pagoda2' web application
 }
 \description{
-Generate a pagoda2 web object
+Generate a 'pagoda2' web object
 }

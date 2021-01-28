@@ -2,20 +2,20 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{factorListToMetadata}
 \alias{factorListToMetadata}
-\title{Converts a list of factors into pagoda2 metadata optionally
-filtering down to the cells present in the provided pagoda2 app.}
+\title{Converts a list of factors into 'pagoda2' metadata optionally
+filtering down to the cells present in the provided 'pagoda2' app.}
 \usage{
 factorListToMetadata(factor.list, p2 = NULL)
 }
 \arguments{
 \item{factor.list}{list of factors named by the cell identifier}
 
-\item{p2}{pagoda2 app to filter the factors by, optional (default=NULL)}
+\item{p2}{'pagoda2' app to filter the factors by, optional (default=NULL)}
 }
 \value{
-pagoda2 web metadata object
+'pagoda2' web metadata object
 }
 \description{
-Converts a list of factors into pagoda2 metadata optionally
-filtering down to the cells present in the provided pagoda2 app.
+Converts a list of factors into 'pagoda2' metadata optionally
+filtering down to the cells present in the provided 'pagoda2' app.
 }

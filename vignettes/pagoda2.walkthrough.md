@@ -6,12 +6,12 @@ Pagoda2 performs basic tasks such as cell size normalization/corrections and res
 
 We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`. We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail and motivate the steps involved in quality control/processing. Finally we will generate an interactive web application in order to explore the dataset.
 
-
 # I. Fast Processing and Exploration with Pagoda2
 
 This is the rapid walkthrough of pagoda2, showing how the package allows users to quickly process their datasets and load them into an interactive frontend application.
 
 ## Preliminary: Loading the libraries
+
 
 ```r
 library(Matrix)
@@ -21,11 +21,18 @@ library(dplyr)
 library(ggplot2)
 ```
 
-We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix:
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data` (See the README of pagoda2 for installation details).
 
 
 ```r
-countMatrix <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
+```
+
+The following command load the dataset of 3000 bone marrow cells as a sparse matrix:
+
+
+```r
+countMatrix <- p2data::sample_BM1
 ```
 
 Note that many users will wish to read in their own data from the outputs of the 10x preprocessing pipeline [CellRanger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/output/matrices), i.e. the gzipped tsv files of matrices, features, and barcodes. For this, we have provided the function `read10xMatrix()`. 
@@ -34,6 +41,9 @@ Next we feed this input into the function `basicP2proc()`, which performs all ba
 
 
 ```r
+## load the dataset
+countMatrix <- p2data::sample_BM1
+## all basic pagoda2 processing with basicP2proc()
 p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 ```
@@ -82,7 +92,7 @@ library(ggplot2)
 For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 
 ```r
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 dim(cm)
 ```
 
@@ -133,12 +143,18 @@ str(cm)
 In order to catch outliers, we can begin with a fairly basic procedure of looking at the dependency between the number of molecules measured per cell and the number of genes per cell. Let's plot the distribution of molecules per cell and molecules per gene for this dataset in log10 scale:
 
 ```r
-par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+old_par <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+on.exit(par(old_par))
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
-hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 ```
 
 ![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+
+```r
+hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
+```
+
+![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-2.png)
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the default QC function `gene.vs.molecule.cell.filter()` to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
 
@@ -351,11 +367,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 20 levels "1","2","3","4",..: 4 1 1 7 7 1 2 3 2 8 ...
+##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 7 10 10 11 11 10 5 3 5 8 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 9 10 10 1 1 10 5 3 5 7 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 10 7 10 4 ...
+##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 9 5 9 4 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -381,7 +397,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 20 clusters ...
+## running differential expression with 21 clusters ...
 ```
 
 ```
@@ -467,18 +483,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.8   :List of 2
+##  $ 12.20.vs.18.19:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.8"
-##   .. ..$ shortdescription: chr "14.vs.8"
-##   ..$ genes     : chr [1:490] "VIM" "HLA-A" "RPS4X" "AIF1" ...
-##  $ 18.vs.8.14:List of 2
+##   .. ..$ genesetname     : chr "12.20.vs.18.19"
+##   .. ..$ shortdescription: chr "12.20.vs.18.19"
+##   ..$ genes     : chr [1:38] "MALAT1" "MT-CO1" "MT-CO2" "MT-CYB" ...
+##  $ 15.vs.16      :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "18.vs.8.14"
-##   .. ..$ shortdescription: chr "18.vs.8.14"
-##   ..$ genes     : chr [1:28] "PF4" "TMSB4X" "FERMT3" "PPBP" ...
+##   .. ..$ genesetname     : chr "15.vs.16"
+##   .. ..$ shortdescription: chr "15.vs.16"
+##   ..$ genes     : chr [1:157] "TSC22D3" "SSR4" "CD79A" "KLF2" ...
 ```
 
 To add GO Terms as genesets, run the following

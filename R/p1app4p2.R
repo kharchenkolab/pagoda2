@@ -35,10 +35,10 @@ view.aspects <- function(mat, row.clustering = NA, cell.clustering = NA, zlim = 
 }
 
 
-#' Create pagoda1 web application from pagoda2 object
-#' Pagoda1 found here: <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
+#' Create 'PAGODA1' web application from a 'Pagoda2' object
+#' 'PAGODA1' found here, with 'SCDE': <https://www.bioconductor.org/packages/release/bioc/html/scde.html>
 #'
-#' @param p2 pagoda2 object
+#' @param p2 'Pagoda2' object
 #' @param col.cols Matrix of column colors (default=NULL). Useful for visualizing cell annotations such as batch labels. 
 #' @param row.clustering Row dendrogram (default=NULL)
 #' @param title character Title to use (default="pathway clustering")
@@ -46,14 +46,14 @@ view.aspects <- function(mat, row.clustering = NA, cell.clustering = NA, zlim = 
 #' @param embedding A 2-D embedding of the cells (PCA, tSNE, etc.), passed as a data frame with two columns (two dimensions) and rows corresponding to cells (row names have to match cell names) (default=NULL).
 #' @param inner.clustering boolean Whether to get overall cell clustering (default=TRUE).
 #' @param groups factor describing grouping of different cells. If provided, the cross-fits and the expected expression magnitudes will be determined separately within each group. The factor should have the same length as ncol(counts) (default=NULL).
-#' @param clusterType cluster type (default=NULL). If NULL, takes the latest cluster in the pagoda2 object using 'p2$clusters[[type]][[1]]'
-#' @param embeddingType embedding type (default=NULL). If NULL, takes the latest embedding in the pagoda2 object using p2$embeddings[[type]][[1]] 
+#' @param clusterType cluster type (default=NULL). If NULL, takes the latest cluster in the 'Pagoda2' object using 'p2$clusters[[type]][[1]]'
+#' @param embeddingType embedding type (default=NULL). If NULL, takes the latest embedding in the 'Pagoda2' object using p2$embeddings[[type]][[1]] 
 #' @param veloinfo cell velocity information, cell velocities (grid and cell) (default=NULL)
-#' @param type character Either 'counts' or a name of a 'reduction' in the pagoda2 object (default='PCA')
+#' @param type character Either 'counts' or a name of a 'reduction' in the 'Pagoda2' object (default='PCA')
 #' @param min.group.size integer Minimum group size (default=1)
 #' @param batch.colors colors of the batches, i.e. the factor (corresponding to rows of the model matrix) specifying batch assignment of each cell(default=NULL)
 #' @param n.cores numeric Number of cores (default=10)
-#' @return pagoda1 web application
+#' @return 'PAGODA1' web application
 #' @export 
 p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = "pathway clustering", 
   zlim = NULL, embedding=NULL, inner.clustering=TRUE, groups=NULL, clusterType=NULL,
@@ -106,7 +106,7 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
     tc <- do.call(rbind,tapply(1:nrow(x),groups,function(ii) colMeans(x[ii,,drop=F],na.rm=TRUE)))
   }
   d <- 1-cor(t(tc))
-  hc <- hclust(as.dist(d),method='ward.D')
+  hc <- stats::hclust(as.dist(d),method='ward.D')
 
   # get overall cell clustering
   if(inner.clustering) {
@@ -150,11 +150,11 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
   if(is.null(zlim)) { zlim <- c(-1, 1)*quantile(tamr$xv, p = 0.95) }
 
   if(is.null(row.clustering) || is.null(row.clustering$order)) {
-    row.clustering <- hclust(dist(tamr$xv))
+    row.clustering <- stats::hclust(dist(tamr$xv))
   } else if(class(row.clustering)!="hclust") {
     # make a fake clustering to match the provided order
     or <- row.clustering$order;
-    row.clustering <- hclust(dist(tamr$xv),method='single')
+    row.clustering <- stats::hclust(dist(tamr$xv),method='single')
     names(or) <- as.character(-1*row.clustering$order)
     nmm <- -1*or[as.character(row.clustering$merge)]
     nmm[is.na(nmm)] <- as.character(row.clustering$merge)[is.na(nmm)]
@@ -165,7 +165,7 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
   if(!is.null(embedding)) {
     if(is.null(rownames(embedding))) { stop("provided 2D embedding lacks cell names") }
-    vi <- rownames(embedding) %in% colnames(tamr$xv);
+    vi <- rownames(embedding) %in% colnames(tamr$xv)
     if(!all(vi)) {
       warning("provided 2D embedding contains cells that are not in the tamr")
       embedding <- embedding[vi,];
@@ -248,11 +248,9 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
   # prepare pathway df
   df <- data.frame(name = vdf$name, npc = vdf$npc, n = vdf$n, score = vdf$oe, z = vdf$z, adj.z = vdf$cz, stringsAsFactors = FALSE)
-  if(is.element("GO.db",installed.packages()[,1])) {
-    df$desc <- unlist(lapply(BiocGenerics::mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
-  } else {
-    df$desc <- ""
-  }
+  
+  df$desc <- unlist(lapply(BiocGenerics::mget(df$name,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } ))
+
   min.z <- -9
   df$z[df$z<min.z] <- min.z
   df$adj.z[df$adj.z<min.z] <- min.z
@@ -267,8 +265,8 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
 
 #' @title p2ViewPagodaApp R6 class
-#' @description Modified PAGODA1 app (from scde) for browsing pagoda2 results. 
-#' Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in scde
+#' @description Modified 'PAGODA1' app (from 'SCDE') for browsing 'pagoda2' results. 
+#' Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in 'SCDE'
 #'
 #' @export p2ViewPagodaApp 
 p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
@@ -282,7 +280,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       #' @field results Result object returned by \code{scde.expression.difference()} (default=NULL). Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
       results = NULL,
 
-      #' @field type Either 'counts' or a name of a 'reduction' in the pagoda2 object 
+      #' @field type Either 'counts' or a name of a 'reduction' in the 'Pagoda2' object 
       type = NULL,
 
       #' @field genes List of genes to display in the Detailed clustering panel (default=list())
@@ -322,16 +320,19 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       #' @param goenv Environment mapping pathways to genes (default=NULL)
       #' @param batch Any batch or other known confounders to be included in the visualization as a column color track (default=NULL)
       #' @param name string App name (needs to be altered only if adding more than one app to the server using the 'server' parameter) (default="pathway overdispersion")
-      #' @param trim numeric Trim quantity used for Winsorization for visualization (default=1.1/nrow(p2$counts) whereby the 'counts' from the Pagoda2 object is the gene count matrix, normalized on total counts (default=NULL)
+      #' @param trim numeric Trim quantity used for Winsorization for visualization (default=1.1/nrow(p2$counts) whereby the 'counts' from the 'Pagoda2' object is the gene count matrix, normalized on total counts (default=NULL)
       #' @param embedding Embedding information (default=NULL)
-      #' @param type Either 'counts' or a name of a 'reduction' in the pagoda2 object 
+      #' @param type Either 'counts' or a name of a 'reduction' in the 'pagoda2' object 
       #' @param veloinfo Velocity information (default=NULL)
       #' 
       #' @return new 'p2ViewPagodaApp' object 
       initialize = function(results, pathways, genes, goenv, batch = NULL, name = "pathway overdispersion", 
         trim = 1.1/nrow(p2$counts), embedding=NULL, type, veloinfo=NULL) {
         if (!requireNamespace("BiocGenerics", quietly = TRUE)) {
-          stop("Package \"BiocGenerics\" needed for this function to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+          stop("Package \"BiocGenerics\" needed for the p2ViewPagodaApp class to work. Please install it with `BiocManager::install('BiocGenerics')`.", call. = FALSE)
+        }
+        if (!requireNamespace("GO.db", quietly = TRUE)) {
+          stop("Package \"GO.db\" needed for the p2ViewPagodaApp class to work. Please install it with `BiocManager::install('GO.db')`.", call. = FALSE)
         }
         ##if (!missing(results) && class(results)=='p2ViewPagodaApp') { # copy constructor
           ##callSuper(results);
@@ -407,7 +408,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
       #'
       #' @param env The environment argument is a true R environment object which the application is free to modify. Please see the Rook documentation for more details.
       #' 
-      #' @return modified PAGODA1 app
+      #' @return modified 'PAGODA1' app
       call = function(env){
             path <- env[['PATH_INFO']]
             req <- Request$new(env)
@@ -744,11 +745,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
                      #tpi <- tpi[seq(1, min(length(tpi), 15))]
                      npc <- gsub("^#PC(\\d+)#.*", "\\1", names(ii[tpi]))
                      nams <- gsub("^#PC\\d+# ", "", names(ii[tpi]))
-                     if(is.element("GO.db",installed.packages()[,1])) {
-                       tpn <- paste(nams, unlist(lapply(BiocGenerics::mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
-                     } else {
-                       tpn <- nams;
-                     }
+                     tpn <- paste(nams, unlist(lapply(BiocGenerics::mget(nams,GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
 
                      lgt <- data.frame(do.call(rbind, lapply(seq_along(tpn), function(i) c(id = names(ii[tpi[i]]), name = tpn[i], npc = npc[i], od = as.numeric(self$results$matvar[ii[tpi[i]]])/max(self$results$matvar), sign = as.numeric(self$results$matrcmcor[ii[tpi[i]]]), initsel = as.integer(self$results$matvar[ii[tpi[i]]] >= self$results$matvar[ii[tpi[1]]]*0.8)))))
 
@@ -757,7 +754,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
                        fl <- fromJSON(url_decode(req$params()$filter))
                        for( fil in fl) {
                          lgt <- lgt[grep(fil$value, lgt[, fil$property], perl = TRUE, ignore.case = TRUE), ]
-                           }
+                       }
                      }
                      start <- ifelse(is.null(req$params()$start), 1, as.integer(req$params()$start)+1)
                      limit <- ifelse(is.null(req$params()$limit), 100, as.integer(req$params()$limit))
@@ -850,12 +847,8 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
                    '/testenr.json' = { # run an enrichment test
                        selgenes <- fromJSON(url_decode(req$POST()$genes))
                        lgt <- calculate.go.enrichment(selgenes, colnames(self$results$p2$counts), pvalue.cutoff = 0.99, env = renv, over.only = TRUE)$over
-                       lgt <- lgt[is.finite(lgt$Z),];
-                       if(is.element("GO.db",installed.packages()[,1])) {
-                         lgt$nam <- paste(lgt$t, unlist(lapply(BiocGenerics::mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
-                       } else {
-                         lgt$name <- lgt$t
-                       }
+                       lgt <- lgt[is.finite(lgt$Z),]
+                       lgt$nam <- paste(lgt$t, unlist(lapply(BiocGenerics::mget(as.character(lgt$t),GO.db::GOTERM,ifnotfound=NA),function(x) if(typeof(x)=="S4") { return(x@Term) }else { return("") } )),sep=" ")
                        lgt <- data.frame(id = paste("#PC1#", lgt$t), name = lgt$nam, o = lgt$o, u = lgt$u, Z = lgt$Z, Za = lgt$Za, fe = lgt$fe, stringsAsFactors = FALSE)
 
                        if(!is.null(req$params()$filter)) {
@@ -898,11 +891,11 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
 )
 
 #' View pathway or gene-weighted PCA
-#' Pagoda2 version of the function pagoda.show.pathways()
+#' 'Pagoda2' version of the function pagoda.show.pathways()
 #' Takes in a list of pathways (or a list of genes), runs weighted PCA, optionally showing the result.
 #'
 #' @param pathways character vector of pathway or gene names
-#' @param p2 pagoda2 object
+#' @param p2 'Pagoda2' object
 #' @param goenv environment mapping pathways to genes (default=NULL)
 #' @param batch factor (corresponding to rows of the model matrix) specifying batch assignment of each cell, to perform batch correction (default=NULL).
 #' @param n.genes integer Number of genes to show (default=20)
@@ -918,7 +911,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
 #' @param row.order row order (default=NULL). If NULL, uses order from hclust.
 #' @param show.Colv boolean Whether to show cell dendrogram (default=TRUE)
 #' @param plot boolean Whether to plot (default=TRUE)
-#' @param trim numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a pagoda2 object.
+#' @param trim numeric Winsorization trim that should be applied (default=1.1/nrow(p2$counts)). Note that p2 is a 'Pagoda2' object.
 #' @param showPC boolean (default=TRUE)
 #' @param ... parameters to pass to my.heatmap2. Only if plot is TRUE.
 #' @return cell scores along the first principal component of shown genes (returned as invisible)
@@ -926,6 +919,7 @@ p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
 tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes = 20, two.sided = TRUE, n.pc = rep(1, length(pathways)), 
   colcols = NULL, zlim = NULL, labRow = NA, vhc = NULL, cexCol = 1, cexRow = 1, nstarts = 50, row.order = NULL, show.Colv = TRUE, 
   plot = TRUE, trim = 1.1/nrow(p2$counts), showPC = TRUE,  ...) {
+
   # are these genes or pathways being passed?
   if(!is.null(goenv)) {
     x <- pathways %in% ls(goenv)
@@ -1010,16 +1004,12 @@ tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes
   dd[is.na(dd)] <- 1
   if(is.null(row.order)) {
     if(length(lab) > 2) {
-      if(is.element("fastcluster", installed.packages()[, 1])) {
-        hc <- fastcluster::hclust(dd, method = "ward.D")
-      } else {
-        hc <- stats::hclust(dd, method = "ward.D")
-      }
+      hc <- fastcluster::hclust(dd, method = "ward.D")
       row.order <- hc$order
     } else {
       row.order <- c(seq_along(lab))
       if(length(lab)>1) {
-        hc<-list();
+        hc<-list()
         attributes(hc)<-list(members=length(lab),height=1);
         class(hc)<-"dendrogram";
         hc[[1]] <- list();
@@ -1037,11 +1027,7 @@ tp2c.view.pathways <- function(pathways, p2, goenv = NULL, batch = NULL, n.genes
   if(is.null(vhc)) {
     vd <- as.dist(1-cor(as.matrix(d)))
     vd[is.na(vd)] <- 1
-    if(is.element("fastcluster", installed.packages()[, 1])) {
-      vhc <- fastcluster::hclust(vd, method = "ward.D")
-    } else {
-      vhc <- stats::hclust(vd, method = "ward.D")
-    }
+    vhc <- fastcluster::hclust(vd, method = "ward.D")
   }
 
   #if(is.null(zlim)) { zlim <- quantile(d, p = c(0.01, 0.99)) }
@@ -1111,7 +1097,7 @@ col2hex <- function(col) {
 
 #' @keywords internal
 my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
-          distfun = dist, hclustfun = hclust,
+          distfun = dist, hclustfun = stats::hclust,
           reorderfun = function(d,w) reorder(d,w),
           add.expr, symm = FALSE, revC = identical(Colv, "Rowv"),
           scale = c("none","row", "column"), na.rm=TRUE,
@@ -1263,26 +1249,29 @@ my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     ## Graphics `output' -----------------------
 
     op <- par(no.readonly = TRUE)
-    #on.exit(par(op))
+    on.exit(par(op))
     layout(lmat, widths = lwid, heights = lhei, respect = respect)
     ## draw the side bars
     if(!missing(RowSideColors) && !is.null(RowSideColors)) {
-        par(mar = c(margins[1],0, 0,internal.margin))
+        side_bars_par <- par(mar = c(margins[1],0, 0,internal.margin))
+        on.exit(par(side_bars_par))
         image(rbind(1:nr), col = RowSideColors[rowInd], axes = FALSE)
-        if(box) { box(); }
+        if (box) { box() }
     }
     if(!missing(ColSideColors) && !is.null(ColSideColors)) {
-        par(mar = c(internal.margin,0, 0,margins[2]))
+        colsidepar <- par(mar = c(internal.margin,0, 0,margins[2]))
+        on.exit(par(colsidepar))
         if(is.matrix(ColSideColors)) {
           image(t(matrix(1:length(ColSideColors),byrow=TRUE,nrow=nrow(ColSideColors),ncol=ncol(ColSideColors))), col = as.vector(t(ColSideColors[,colInd,drop=FALSE])), axes = FALSE)
           if(box) { box(); }
         } else {
           image(cbind(1:nc), col = ColSideColors[colInd], axes = FALSE)
-          if(box) { box(); }
+          if (box) { box() }
         }
     }
     ## draw the main carpet
-    par(mar = c(margins[1], 0, 0, margins[2]))
+    main_carpet_par <- par(mar = c(margins[1], 0, 0, margins[2]))
+    on.exit(par(main_carpet_par))
     if(!symm || scale != "none")
         x <- t(x)
     if(revC) { # x columns reversed
@@ -1310,12 +1299,14 @@ my.heatmap2 <- function(x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 
     ## the two dendrograms :
     if(doRdend) {
-      par(mar = c(margins[1], 0, 0, 0))
+      rdendpar <- par(mar = c(margins[1], 0, 0, 0))
+      on.exit(par(rdendpar))
       plot(ddr, horiz = TRUE, axes = FALSE, yaxs = "i", leaflab = "none",xaxs="i")
     }
 
     if(doCdend) {
-      par(mar = c(internal.margin, 0, if(!is.null(main)) 1 else 0, margins[2]))
+      cdendpar <- par(mar = c(internal.margin, 0, if(!is.null(main)) 1 else 0, margins[2]))
+      on.exit(par(cdendpar))
       plot(ddc, axes = FALSE, xaxs = "i", leaflab = "none",yaxs="i")
     }
     invisible(list(rowInd = rowInd, colInd = colInd,

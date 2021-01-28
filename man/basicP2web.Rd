@@ -2,12 +2,12 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{basicP2web}
 \alias{basicP2web}
-\title{Generate a pagoda2 web application from a pagoda2 object}
+\title{Generate a 'pagoda2' web application from a 'Pagoda2' object}
 \usage{
 basicP2web(p2, app.title = "Pagoda2", extraWebMetadata = NULL, n.cores = 4)
 }
 \arguments{
-\item{p2}{pagoda2 application object}
+\item{p2}{a 'Pagoda2' object}
 
 \item{app.title}{name of application as displayed in the browser title (default='Pagoda2')}
 
@@ -16,8 +16,8 @@ basicP2web(p2, app.title = "Pagoda2", extraWebMetadata = NULL, n.cores = 4)
 \item{n.cores}{numeric Number of cores to use for differential expression calculation (default=4)}
 }
 \value{
-a pagoda2 web object
+a 'pagoda2' web object
 }
 \description{
-Generate a pagoda2 web application from a pagoda2 object
+Generate a 'pagoda2' web application from a 'Pagoda2' object
 }

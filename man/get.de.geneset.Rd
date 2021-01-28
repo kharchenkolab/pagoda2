@@ -15,7 +15,7 @@ get.de.geneset(pagObj, groups, prefix = "de_")
 \item{prefix}{chararcter Prefix to assign to genesets generated (default="de_")}
 }
 \value{
-a pagoda2 web object
+a 'pagoda2' web object
 }
 \description{
 Generate differential expression genesets for the web app given a cell grouping by

@@ -1,14 +1,13 @@
 #' @import Rook
 #' @import R.utils
-#' @import data.table
 #' @import Matrix
 #' @importFrom parallel mclapply
 #' @importFrom irlba irlba
 #' @importFrom graphics abline axis hist layout lcm legend mtext par points polygon
 #' @importFrom grDevices adjustcolor col2rgb colorRampPalette colors dev.size rainbow
 #' @importFrom methods as new
-#' @importFrom stats aggregate as.dendrogram as.dist cor cutree dendrapply dist hclust is.leaf na.omit order.dendrogram phyper predict pt qnorm qt quantile reorder rnorm sd setNames var
-#' @importFrom utils browseURL installed.packages read.delim
+#' @importFrom stats aggregate as.dendrogram as.dist cor cutree dendrapply dist is.leaf na.omit order.dendrogram phyper predict pt qnorm qt quantile reorder rnorm sd setNames var
+#' @importFrom utils browseURL read.delim
 NULL
 
 #' Correct unloading of the library
@@ -43,7 +42,7 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
   } else { # use correlation distance in log10 space
     lvec.dist <- 1-cor(t(log10(lvec/pmax(1,Matrix::rowSums(lvec))+1)))
   }
-  d <- as.dendrogram(hclust(as.dist(lvec.dist),method='ward.D'))
+  d <- as.dendrogram(stats::hclust(as.dist(lvec.dist),method='ward.D'))
   # add cell info to the laves
   addinfo <- function(l, env) {
     v <- as.integer(mget("index",envir=env,ifnotfound=0)[[1]])+1;
@@ -62,7 +61,7 @@ multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
 }
 
 #' Quick utility to check if given character vector is colors
-#' Thanks to Stackoverflow user Josh O'Brien: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
+#' Thanks to Stackoverflow: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 #'
 #' @param x character vector to check
 #' @return boolean whether character vector is colors
@@ -129,9 +128,9 @@ cldend2array <- function(d, cells=NULL) {
 sn <- function(x) { names(x) <- x; return(x); }
 
 
-#' Directly open the pagoda2 web application and view the 'p2web' application object from our R session
+#' Directly open the 'pagoda2' web application and view the 'p2web' application object from our R session
 #' 
-#' @param app pagoda2 application object
+#' @param app 'pagoda2' application object
 #' @param name character Name of the application to view
 #' @param port numeric Port number
 #' @param ip numeric IP address
@@ -376,7 +375,10 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
 #' @export gene.vs.molecule.cell.filter
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {
   if(plot) {
-    if(do.par) { par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0);}
+    if(do.par) { 
+      old_pars <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+      on.exit(par(old_pars))
+    }
     hist(log10(colSums(countMatrix)),col='wheat',xlab='log10[ molecules ]',main='')
     # some of the cells are very large .. those can skew the analysis of more subtle populations (too much bias ) .. letting them in here though
 
@@ -452,6 +454,11 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
 #'
 #' @export 
 read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=TRUE) {
+
+  if (!requireNamespace("data.table", quietly=TRUE)){
+    stop("You need to install package 'data.table' to be able to use this function.")
+  }
+
   if (version != 'V2' && version != 'V3'){
     stop('Unknown value for "version", it must be either "V2" or "V3"')
   }
@@ -491,10 +498,10 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
       message("Reading in features...")
     }
   }
-  genes <- fread(genesFile)
+  genes <- data.table::fread(genesFile)
   rownames(x) <- genes[,transcript.id.col.idx]
   if (verbose) message("Reading in barcodes...")
-  barcodes <- fread(barcodesFile)
+  barcodes <- data.table::fread(barcodesFile)
   colnames(x) <- barcodes[,1]
   invisible(x)
 }

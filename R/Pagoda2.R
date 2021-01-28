@@ -1,7 +1,7 @@
 #' @useDynLib pagoda2
 #' @import MASS
 #' @import Matrix
-#' @importFrom Rcpp evalCpp
+#' @importFrom Rcpp evalCpp sourceCpp
 #' @import Rook
 #' @import igraph
 #' @import sccore
@@ -9,11 +9,11 @@
 #' @import RMTstat 
 #' @importFrom irlba irlba
 #' @importFrom parallel mclapply
-#' @importFrom Rcpp sourceCpp
 #' @importFrom magrittr %>%
 #' @importFrom mgcv gam
 #' @importFrom N2R Knn
 #' @importFrom Rtsne Rtsne
+#' @import drat
 NULL
 
 
@@ -79,25 +79,29 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
-    #' @examples 
-    #' \donttest{
-    #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' @examples
+    #' \donttest{ 
+    #' ## Load pre-generated a dataset of 50 bone marrow cells as matrix
+    #' cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package="pagoda2"))
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' }
-    #' 
-    #' @return new 'Pagoda2' object 
+    #'
+    #' @return new Pagoda2 object 
     initialize=function(x, modelType='plain', ## batchNorm='glm',
                         n.cores=parallel::detectCores(logical=FALSE), verbose=TRUE,
                         min.cells.per.gene=0, trim=round(min.cells.per.gene/2), 
                         min.transcripts.per.cell=10,
                         lib.sizes=NULL, log.scale=TRUE, keep.genes=NULL) {
 
+      if (!requireNamespace("p2data", quietly = TRUE)) {
+        stop("Package \"p2data\" needed for the Pagoda2 class to work. This can be installed via a drat repository, using \"install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')\". Please read the details provided within the README at https://github.com/kharchenkolab/pagoda2.", call. = FALSE)
+      }
+      
       self$n.cores <- n.cores
       self$misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
       self$modelType = modelType
@@ -297,12 +301,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -395,7 +399,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       ## }
       if (plot) {
         if (do.par) {
-          par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+          adjvar_par <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
+          on.exit(par(adjvar_par))
         }
         suppressWarnings(smoothScatter(log10(exp(1))*df$m, log10(exp(1))*df$v, main='', xlab='log10[ magnitude ]',ylab='log10[ variance ]'))
         vi <- which(is.finite(log10(exp(1))*df$v) & df$nobs>=min.gene.cells)
@@ -438,12 +443,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=300)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object   
+    #' ## Generate Pagoda2 object   
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -564,12 +569,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=900)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -651,12 +656,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=400)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -744,7 +749,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("Unknown distance",dist,"requested")
       }
 
-      dd <- as.dendrogram(hclust(d, method=method))
+      dd <- as.dendrogram(stats::hclust(d, method=method))
 
       # walk down the dendrogram to generate diff. expression on every split
       diffcontrasts <- function(l,env) {
@@ -828,12 +833,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1)
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -899,12 +904,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples  
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix 
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -962,12 +967,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1203,7 +1208,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # cluster cell types by averages
       rowfac <- factor(rep(names(x),unlist(lapply(x,length))),levels=names(x))
       if (inner.clustering) {
-        clclo <- hclust(as.dist(1-cor(do.call(cbind,tapply(1:nrow(em),rowfac,function(ii) Matrix::colMeans(em[ii,,drop=FALSE]))))),method='complete')$order
+        clclo <- stats::hclust(as.dist(1-cor(do.call(cbind,tapply(1:nrow(em),rowfac,function(ii) Matrix::colMeans(em[ii,,drop=FALSE]))))),method='complete')$order
       } else {
         clclo <- 1:length(levels(rowfac))
       }
@@ -1211,7 +1216,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (inner.clustering) {
         # cluster genes within each cluster
         clgo <- tapply(1:nrow(em),rowfac,function(ii) {
-          ii[hclust(as.dist(1-cor(t(em[ii,]))),method='complete')$order]
+          ii[stats::hclust(as.dist(1-cor(t(em[ii,]))),method='complete')$order]
         })
       } else {
         clgo <- tapply(1:nrow(em),rowfac,I)
@@ -1220,7 +1225,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
           if (length(ii)>3) {
-            ii[hclust(as.dist(1-cor(em[,ii,drop=FALSE])),method='complete')$order]
+            ii[stats::hclust(as.dist(1-cor(em[,ii,drop=FALSE])),method='complete')$order]
           } else {
             ii
           }
@@ -1245,12 +1250,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1323,7 +1328,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' 
     #' @param genes character vector Gene names
     #' @param gradient.range.quantile numeric Trimming quantile (default=0.95)
-    #' @param cluster.genes boolean Whether to cluster genes within each cluster using hclust() (default=FALSE)
+    #' @param cluster.genes boolean Whether to cluster genes within each cluster using stats::hclust() (default=FALSE)
     #' @param inner.clustering boolean Whether to cluster cells within each cluster (default=FALSE)
     #' @param gradientPalette palette of colors to use (default=NULL). If NULL, uses 'colorRampPalette(c('gray90','red'), space = "Lab")(1024)'
     #' @param v numeric The “value” to be used to complete the HSV color descriptions (default=0.7). Equivalent to the 'v' parameter in grDevices::rainbow().
@@ -1336,12 +1341,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1428,7 +1433,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (cluster.genes) {
         # cluster genes within each cluster
-        clgo <- hclust(as.dist(1-cor(t(em))), method='complete')$order
+        clgo <- stats::hclust(as.dist(1-cor(t(em))), method='complete')$order
       } else {
         clgo <- 1:nrow(em)
       }
@@ -1437,7 +1442,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
           if (length(ii)>3) {
-            ii[hclust(as.dist(1-cor(em[,ii,drop=FALSE])), method='single')$order]
+            ii[stats::hclust(as.dist(1-cor(em[,ii,drop=FALSE])), method='single')$order]
           } else {
             ii
           }
@@ -1485,12 +1490,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1573,12 +1578,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1617,12 +1622,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1656,12 +1661,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples 
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=600)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts, log.scale=FALSE, min.cells.per.gene=30, n.cores=1)
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=15)
@@ -1772,12 +1777,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)
@@ -1863,7 +1868,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         tc <- colSumByFac(z,as.integer(rowFac))[-1,,drop=FALSE]
         rownames(tc) <- levels(groups)
         d <- 1-cor(t(log10(tc/pmax(1,Matrix::rowSums(tc))*1e3+1)))
-        hc <- hclust(as.dist(d),method='average',members=unlist(tapply(groups,groups,length)))
+        hc <- stats::hclust(as.dist(d),method='average',members=unlist(tapply(groups,groups,length)))
 
         dlab <- function(l) {
           if (is.leaf(l)) {
@@ -1985,7 +1990,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         ## #tc <- rbind("total"=Matrix::colSums(tc),tc)
         ## #d <- jsDist(t(((tc/pmax(1,Matrix::rowSums(tc)))))); rownames(d) <- colnames(d) <- rownames(tc)
         ## d <- 1-cor(t(tc))
-        ## hc <- hclust(as.dist(d),method='ward.D')
+        ## hc <- stats::hclust(as.dist(d),method='ward.D')
 
         # use raw counts to derive clustering
         z <- self$misc$rawCounts
@@ -1995,7 +2000,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         tc <- colSumByFac(z,as.integer(rowFac))[-1,,drop=FALSE]
         rownames(tc) <- levels(groups)
         d <- 1-cor(t(log10(tc/pmax(1,Matrix::rowSums(tc))*1e3+1)))
-        hc <- hclust(as.dist(d),method='average',members=unlist(tapply(groups,groups,length)))
+        hc <- stats::hclust(as.dist(d),method='average',members=unlist(tapply(groups,groups,length)))
 
 
         dlab <- function(l) {
@@ -2351,7 +2356,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       vdf$ub.stringent <- RMTstat::qWishartMax(score.alpha/nrow(vdf)/2, n.cells, vdf$n, var = basevar, lower.tail = FALSE)
 
       if (plot) {
-        par(mfrow = c(1, 1), mar = c(3.5, 3.5, 1.0, 1.0), mgp = c(2, 0.65, 0))
+        test_pathway_par <- par(mfrow = c(1, 1), mar = c(3.5, 3.5, 1.0, 1.0), mgp = c(2, 0.65, 0))
+        on.exit(par(test_pathway_par))
         un <- sort(unique(vdf$n))
         on <- order(vdf$n, decreasing = FALSE)
         pccol <- colorRampPalette(c("black", "grey70"), space = "Lab")(max(vdf$npc))
@@ -2453,12 +2459,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @examples
     #' \donttest{
     #' ## Load pre-generated a dataset of 3000 bone marrow cells as matrix
-    #' cm <- readRDS(file.path(find.package('pagoda2'),'extdata','sample_BM1.rds'))
+    #' cm <- p2data::sample_BM1
     #' ## Perform QC, i.e. filter any cells that
     #  ##  don't fit the expected detected gene vs molecule count relationship
     #' counts <- gene.vs.molecule.cell.filter(cm,min.cell.size=500)
     #' rownames(counts) <- make.unique(rownames(counts))
-    #' ## Generate pagoda2 object 
+    #' ## Generate Pagoda2 object 
     #' p2_object <- Pagoda2$new(counts,log.scale=TRUE, min.cells.per.gene=10, n.cores=1) 
     #' ## Normalize gene expression variance 
     #' p2_object$adjustVariance(plot=TRUE, gam.k=10)

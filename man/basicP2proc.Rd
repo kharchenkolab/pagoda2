@@ -2,7 +2,7 @@
 % Please edit documentation in R/pipelineHelpers.R
 \name{basicP2proc}
 \alias{basicP2proc}
-\title{Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
+\title{Perform basic 'pagoda2' processing, i.e. adjust variance, calculate pca reduction,
 make knn graph, identify clusters with multilevel, and generate
 largeVis and tSNE embeddings.}
 \usage{
@@ -53,18 +53,19 @@ basicP2proc(
 \item{make.geneknn}{boolean Whether pre-calculate gene kNN (for gene search) (default=TRUE)}
 }
 \value{
-a new pagoda2 object
+a new 'Pagoda2' object
 }
 \description{
-Perform basic pagoda2 processing, i.e. adjust variance, calculate pca reduction,
+Perform basic 'pagoda2' processing, i.e. adjust variance, calculate pca reduction,
 make knn graph, identify clusters with multilevel, and generate
 largeVis and tSNE embeddings.
 }
 \examples{
 \donttest{
 ## load count matrix
-cm <- readRDS(system.file("extdata", "sample_BM1.rds", package="pagoda2"))
+cm <- p2data::sample_BM1
 ## perform basic p2 processing
 p2 <- basicP2proc(cm)
 }
+
 }
