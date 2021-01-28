@@ -4,7 +4,7 @@
 
 <img src="https://github.com/kharchenkolab/pagoda2/blob/devel/inst/pagoda_logo.png" align="right" height="140">
 
-# Pagoda2
+# pagoda2
 
 - [Tutorials](#tutorials)
 - [Web Demo of Application](#web-demo-of-application)
@@ -13,7 +13,7 @@
   * [Installing with Mac OS](#installing-with-mac-os)
   * [Pagoda2 via Docker](#pagoda2-via-docker)
 
-## Pagoda2: Rapid Processing and Interactive Analysis of Large Datasets
+## pagoda2: Rapid Processing and Interactive Analysis of Large Datasets
 
 Pagoda2 is an R package for analyzing and interactively exploring large-scale single-cell RNA-seq datasets. The methods were optimized to rapidly process modern scRNAseq datasets, which are both large (approximately 1e6 cells or greater) and sparse. The package provides methods for quality control, filtering, clustering, visualization, differential expression, cross-cutting aspects/states, and geneset/pathway overdispersion analysis. The companion frontend application allows users to figure out which gene expression patterns give rise to different subpopulations within the data. The application allows users to inspect the gene expression patterns of subpopulations through annotated gene sets and pathways, including Gene Ontology (GO) categories. Users may also highlight certain clusters and perform differential expression from their browsers via the frontend application. 
 
