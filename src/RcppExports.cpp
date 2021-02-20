@@ -8,7 +8,6 @@
 
 using namespace Rcpp;
 
-
 // WriteListToBinary
 void WriteListToBinary(List expL, std::string outfile, bool verbose);
 RcppExport SEXP _pagoda2_WriteListToBinary(SEXP expLSEXP, SEXP outfileSEXP, SEXP verboseSEXP) {

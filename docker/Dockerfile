@@ -3,8 +3,9 @@ FROM rocker/tidyverse:4.0.1
 LABEL authors="Viktor Petukhov <viktor.s.petuhov@ya.ru>, Evan Biederstedt <evan.biederstedt@gmail.com>" \
     version.image="1.0.0" \
     version.pagoda2="1.0.0" \
+    version.image="1.0.1" \
+    version.pagoda2="1.0.1" \
     description="tidyverse image R 4.0.1 to run pagoda2 with Rstudio"
-
 
 ## Cairo dependencies
 RUN apt-get update && apt-get install libxt-dev mesa-common-dev -y
