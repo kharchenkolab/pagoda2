@@ -1,8 +1,12 @@
 ## Upcoming
 
 ### Added
-
 - Returned copy constructor
+
+### Changed
+- Fixed `read10xMatrix()` function
+- Updated Dockerfile
+- Fixed 'batch' param in Pagoda2 constructor
 
 ## [1.0.0] - 2020-01-28
 - The package was edited extensively to upload to CRAN
