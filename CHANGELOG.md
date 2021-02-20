@@ -1,5 +1,9 @@
 ## Upcoming
 
+### Added
+
+- Returned copy constructor
+
 ## [1.0.0] - 2020-01-28
 - The package was edited extensively to upload to CRAN
 
