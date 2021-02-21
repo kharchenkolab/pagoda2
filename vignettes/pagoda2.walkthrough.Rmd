@@ -9,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# Overview
+## Overview
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
 
@@ -17,11 +17,11 @@ Pagoda2 performs basic tasks such as cell size normalization/corrections and res
 
 We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`. We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail and motivate the steps involved in quality control/processing. Finally we will generate an interactive web application in order to explore the dataset.
 
-# I. Fast Processing and Exploration with Pagoda2
+## I. Fast Processing and Exploration with Pagoda2
 
 This is the rapid walkthrough of pagoda2, showing how the package allows users to quickly process their datasets and load them into an interactive frontend application.
 
-## Preliminary: Loading the libraries
+### Preliminary: Loading the libraries
 
 ```{r message=FALSE}
 library(Matrix)
@@ -72,12 +72,12 @@ We can now quickly view the results via the interactive web application. First w
 And that's it! You will now be able to interact with the processed dataset via the web browser. The more in-depth demo regarding the web application can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
-# II. In-Depth Processing and Analysis 
+## II. In-Depth Processing and Analysis 
 
 We now will re-run and explain each step within `basicP2proc()`, starting from the beginning:
 
 
-## Preliminary: Loading the libraries
+### Preliminary: Loading the libraries
 ```{r message=FALSE}
 library(Matrix)
 library(igraph)
@@ -86,7 +86,7 @@ library(dplyr)
 library(ggplot2)
 ```
 
-## Part 1: Loading and QC'ing the dataset
+### Part 1: Loading and QC'ing the dataset
 
 For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 ```{r}
@@ -132,7 +132,7 @@ dim(counts)
 ```
 
 
-## Part 2: Analysing Data with Pagoda2
+### Part 2: Analysing Data with Pagoda2
 
 We see that we now have 12k genes and 2998 cells. We are now ready to analyze our data with Pagoda2. Remember: all of the following steps can be done with just two functions automatically (see above) but for the purposes of this tutorial we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
 
@@ -287,7 +287,7 @@ Finally, please do not forget to save your pagoda2 object as an rds object:
 
 This is very important for future reproducibility, as well as any collaborations you may have.
 
-## Part 3: Generate Frontend Application
+### Part 3: Generate Frontend Application
 
 Next we will generate a web app that will allow us to browse the dataset interactively. (Note that all these steps can be performed with the `basicP2web()` function, as described above in the first section.)
 
@@ -371,13 +371,13 @@ This app will now be viewable as long as our R session is running. However we al
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
-## View Conos Object in Pagoda2 Frontend Application
+### View Conos Object in Pagoda2 Frontend Application
 
 Users may also interactively explore [Conos](https://github.com/kharchenkolab/conos) objects with the Pagoda2 application.
 
-After constructing the Conos object `con` as shown in the Conos [walkthrough](https://github.com/kharchenkolab/conos/blob/master/vignettes/walkthrough.md), users can save to a serialized `*.bin` file and upload into the pagoda application with the `p2app4conos()` function, using `p2app4conos(conos=con)`. Please see Conos for more details.
+After constructing the Conos object `con` as shown in the Conos [walkthrough](https://github.com/kharchenkolab/conos/blob/master/doc/walkthrough.md), users can save to a serialized `*.bin` file and upload into the pagoda application with the `p2app4conos()` function, using `p2app4conos(conos=con)`. Please see Conos for more details.
 
-## More Details
+### More Details
 
 For the more in-depth demo regarding how to use the web application to analyze datasets, please check [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
