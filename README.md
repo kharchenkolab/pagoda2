@@ -39,7 +39,7 @@ Several methods within this package were developed based on the originals implem
 ## Installation 
 
 
-To install the stable version from CRAN, use:
+To install the stable version from [CRAN](https://cran.r-project.org/web/packages/pagoda2/index.html), use:
 
 ```r
 install.packages('pagoda2')
