@@ -1,4 +1,6 @@
-# Overview
+# Pagoda2 Walkthrough
+
+## Overview
 
 This walkthrough will guide you through the analysis of single-cell RNA-seq with pagoda2.
 
@@ -6,11 +8,11 @@ Pagoda2 performs basic tasks such as cell size normalization/corrections and res
 
 We will begin by showing the quickest way to process data with pagoda2, using the function `basicP2proc()`. We will then systematically re-run this analysis step-by-step, beginning with loading the dataset and performing QC. This will more thoroughly detail and motivate the steps involved in quality control/processing. Finally we will generate an interactive web application in order to explore the dataset.
 
-# I. Fast Processing and Exploration with Pagoda2
+## I. Fast Processing and Exploration with Pagoda2
 
 This is the rapid walkthrough of pagoda2, showing how the package allows users to quickly process their datasets and load them into an interactive frontend application.
 
-## Preliminary: Loading the libraries
+### Preliminary: Loading the libraries
 
 
 ```r
@@ -72,12 +74,12 @@ We can now quickly view the results via the interactive web application. First w
 And that's it! You will now be able to interact with the processed dataset via the web browser. The more in-depth demo regarding the web application can be found [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
 
-# II. In-Depth Processing and Analysis 
+## II. In-Depth Processing and Analysis 
 
 We now will re-run and explain each step within `basicP2proc()`, starting from the beginning:
 
 
-## Preliminary: Loading the libraries
+### Preliminary: Loading the libraries
 
 ```r
 library(Matrix)
@@ -87,7 +89,7 @@ library(dplyr)
 library(ggplot2)
 ```
 
-## Part 1: Loading and QC'ing the dataset
+### Part 1: Loading and QC'ing the dataset
 
 For the purposes of this walkthrough, we have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly. The following command load the data as a sparse matrix and checks its size:
 
@@ -148,13 +150,13 @@ on.exit(par(old_par))
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+![plot of chunk unnamed-chunk-9](figure_pagoda2/unnamed-chunk-9-1.png)
 
 ```r
 hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-2.png)
+![plot of chunk unnamed-chunk-9](figure_pagoda2/unnamed-chunk-9-2.png)
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the default QC function `gene.vs.molecule.cell.filter()` to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
 
@@ -162,7 +164,7 @@ This dataset has already been filtered for low quality cells, so we don't see an
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+![plot of chunk unnamed-chunk-10](figure_pagoda2/unnamed-chunk-10-1.png)
 
 Next thing we want to do is to find lowly expressed genes and remove them from the dataset. (Subsequent pagoda2 steps will do this automatically for extremely lowly expressed genes anyway, but for the purpose of this tutorial, we demonstrate this.)
 
@@ -172,7 +174,7 @@ hist(log10(rowSums(counts)+1), main='Molecules per gene', xlab='molecules (log10
 abline(v=1, lty=2, col=2)
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
+![plot of chunk unnamed-chunk-11](figure_pagoda2/unnamed-chunk-11-1.png)
 
 Let's filter out counts less than 10 and check the size of the resulting matrix:
 
@@ -187,7 +189,7 @@ dim(counts)
 ```
 
 
-## Part 2: Analysing Data with Pagoda2
+### Part 2: Analysing Data with Pagoda2
 
 We see that we now have 12k genes and 2998 cells. We are now ready to analyze our data with Pagoda2. Remember: all of the following steps can be done with just two functions automatically (see above) but for the purposes of this tutorial we will go over them step by step to understand what we are doing in more detail. Doing these steps manually also allows us to tune parameters.
 
@@ -256,7 +258,7 @@ r$adjustVariance(plot=TRUE, gam.k=10)
 ## done.
 ```
 
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
+![plot of chunk unnamed-chunk-14](figure_pagoda2/unnamed-chunk-14-1.png)
 
 Now that the variance of the gene expression is on a comparable scale, there are many alternative ways of proceeding with the downstream analysis. Below we’ll use the simplest default scenario, whereby we first reduce the dataset dimensions by running PCA, and then move into the k-nearest neighbor (KNN) graph space for clustering and visualization calculations. 
 
@@ -319,7 +321,7 @@ We now visualize the data:
 r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (largeVis)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
+![plot of chunk unnamed-chunk-19](figure_pagoda2/unnamed-chunk-19-1.png)
 
 We next can constructr and plot a tSNE embedding. (This can take some time to complete.)
 
@@ -328,7 +330,7 @@ r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
 r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
+![plot of chunk unnamed-chunk-20](figure_pagoda2/unnamed-chunk-20-1.png)
 
 Note that we are overlay the expresssion of specific marker genes on this embedding to identify clusters. For instance, subsetting by `"HBB"` will identify heme cells:
 
@@ -338,7 +340,7 @@ gene <-"HBB"
 r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
+![plot of chunk unnamed-chunk-21](figure_pagoda2/unnamed-chunk-21-1.png)
 
 Similarly, subsetting by the marker gene `"LYZ"` should show us CD14+ Monocytes:
 
@@ -348,7 +350,7 @@ gene <-"LYZ"
 r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
+![plot of chunk unnamed-chunk-22](figure_pagoda2/unnamed-chunk-22-1.png)
 
 Pagoda2 allows us to generate multiple alternative clusterings. Here we will construct multilevel and walktrap clusterings (along with the infomap clusterings generated above):
 
@@ -387,7 +389,7 @@ plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', 
 gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 
-![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+![plot of chunk unnamed-chunk-25](figure_pagoda2/unnamed-chunk-25-1.png)
 
 We can then perform differential expression between these clusters:
 
@@ -417,7 +419,7 @@ de <- r$diffgenes$PCA[[1]][['2']]
 r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 ```
 
-![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
+![plot of chunk unnamed-chunk-27](figure_pagoda2/unnamed-chunk-27-1.png)
 
 Let's further investigate the marker gene `"CD74"` as shown above, with `plotEmbedding()`:
 
@@ -427,7 +429,7 @@ gene <-"CD74"
 r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, legend.title=gene)
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-28](figure_pagoda2/unnamed-chunk-28-1.png)
 
 At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1 in [scde](https://hms-dbmi.github.io/scde/)) or investigate hierarchical differential expression. The following two code snippetss will run overdispersion analysis (although we don't run the second in this tutorial, as it takes too long to complete). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells---for this reason we prefer hierarchical differential expression. 
 
@@ -470,7 +472,7 @@ Finally, please do not forget to save your pagoda2 object as an rds object:
 
 This is very important for future reproducibility, as well as any collaborations you may have.
 
-## Part 3: Generate Frontend Application
+### Part 3: Generate Frontend Application
 
 Next we will generate a web app that will allow us to browse the dataset interactively. (Note that all these steps can be performed with the `basicP2web()` function, as described above in the first section.)
 
@@ -593,13 +595,13 @@ This app will now be viewable as long as our R session is running. However we al
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
-## View Conos Object in Pagoda2 Frontend Application
+### View Conos Object in Pagoda2 Frontend Application
 
 Users may also interactively explore [Conos](https://github.com/kharchenkolab/conos) objects with the Pagoda2 application.
 
-After constructing the Conos object `con` as shown in the Conos [walkthrough](https://github.com/kharchenkolab/conos/blob/master/vignettes/walkthrough.md), users can save to a serialized `*.bin` file and upload into the pagoda application with the `p2app4conos()` function, using `p2app4conos(conos=con)`. Please see Conos for more details.
+After constructing the Conos object `con` as shown in the Conos [walkthrough](https://github.com/kharchenkolab/conos/blob/master/doc/walkthrough.md), users can save to a serialized `*.bin` file and upload into the pagoda application with the `p2app4conos()` function, using `p2app4conos(conos=con)`. Please see Conos for more details.
 
-## More Details
+### More Details
 
 For the more in-depth demo regarding how to use the web application to analyze datasets, please check [here](https://www.youtube.com/watch?v=xzpG1ZYE4Og).
 
