@@ -112,7 +112,7 @@ As of version 0.1.3, `pagoda2` should sucessfully install on Mac OS. Furthermore
 
 ### Pagoda2 via Docker 
 
-If you are having trouble setting up `pagoda2` on your system, an alternative approach to work with `pagoda2` is via a Docker container. To use the Docker container, first [install docker](https://docs.docker.com/install/) on your platform and then run the `pagoda2` image with the following command in the shell:
+If you are having trouble setting up `pagoda2` on your system, an alternative approach to work with `pagoda2` is via a Docker container. To use the Docker container, first [install docker](https://docs.docker.com/get-docker/) on your platform and then run the `pagoda2` image with the following command in the shell:
 
 ```
 docker run -p 8787:8787 pkharchenkolab/pagoda2:latest
