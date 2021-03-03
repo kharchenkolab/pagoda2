@@ -1,5 +1,11 @@
 ## Upcoming
 
+## [1.0.2] - 2020-03-03
+
+### Changed
+
+- Revised vignettes figures for the HTML tutorial
+
 ## [1.0.1] - 2020-02-25
 
 ### Added
