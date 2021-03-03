@@ -337,7 +337,8 @@ Note that we are overlay the expresssion of specific marker genes on this embedd
 
 ```r
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, 
+    font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-21](figure_pagoda2/unnamed-chunk-21-1.png)
@@ -347,7 +348,8 @@ Similarly, subsetting by the marker gene `"LYZ"` should show us CD14+ Monocytes:
 
 ```r
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, 
+    font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
 ![plot of chunk unnamed-chunk-22](figure_pagoda2/unnamed-chunk-22-1.png)
@@ -369,11 +371,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 20 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 9 10 10 1 1 10 5 3 5 7 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 8 10 10 2 2 10 4 1 4 7 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 6 6 8 9 5 9 4 ...
+##   ..$ walktrap  : Factor w/ 13 levels "1","2","3","4",..: 1 8 8 7 7 8 10 3 10 2 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -399,7 +401,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 21 clusters ...
+## running differential expression with 20 clusters ...
 ```
 
 ```
@@ -426,7 +428,8 @@ Let's further investigate the marker gene `"CD74"` as shown above, with `plotEmb
 
 ```r
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, legend.title=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, 
+    font.size=3, alpha=0.3, title=gene, legend.title=gene)
 ```
 
 ![plot of chunk unnamed-chunk-28](figure_pagoda2/unnamed-chunk-28-1.png)
@@ -490,12 +493,12 @@ str(genesets[1:2])
 ##   .. ..$ locked          : logi TRUE
 ##   .. ..$ genesetname     : chr "12.20.vs.18.19"
 ##   .. ..$ shortdescription: chr "12.20.vs.18.19"
-##   ..$ genes     : chr [1:38] "MALAT1" "MT-CO1" "MT-CO2" "MT-CYB" ...
-##  $ 15.vs.16      :List of 2
+##   ..$ genes     : chr [1:36] "MALAT1" "MT-CO1" "MT-CO2" "MT-CYB" ...
+##  $ 15.vs.17      :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "15.vs.16"
-##   .. ..$ shortdescription: chr "15.vs.16"
+##   .. ..$ genesetname     : chr "15.vs.17"
+##   .. ..$ shortdescription: chr "15.vs.17"
 ##   ..$ genes     : chr [1:157] "TSC22D3" "SSR4" "CD79A" "KLF2" ...
 ```
 

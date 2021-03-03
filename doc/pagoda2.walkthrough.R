@@ -42,16 +42,16 @@ cm[1:3, 1:3]
 ## -----------------------------------------------------------------------------
 str(cm)
 
-## ---- fig.height=8, fig.width=10----------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 old_par <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
 on.exit(par(old_par))
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
 hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 
-## ---- fig.height=8, fig.width=10----------------------------------------------
+## ---- fig.height=6, fig.width=8-----------------------------------------------
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 hist(log10(rowSums(counts)+1), main='Molecules per gene', xlab='molecules (log10)', col='cornsilk')
 abline(v=1, lty=2, col=2)
 
@@ -63,7 +63,7 @@ dim(counts)
 rownames(counts) <- make.unique(rownames(counts))
 r <- Pagoda2$new(counts, log.scale=TRUE, n.cores=1)
 
-## ---- fig.height=8, fig.width=10----------------------------------------------
+## ---- fig.height=6, fig.width=8-----------------------------------------------
 r$adjustVariance(plot=TRUE, gam.k=10)
 
 ## -----------------------------------------------------------------------------
@@ -79,20 +79,22 @@ r$getKnnClusters(method=infomap.community, type='PCA')
 M <- 30
 r$getEmbedding(type='PCA', embeddingType = 'largeVis', M=M, perplexity=30, gamma=1/M)
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (largeVis)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
 r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 gene <-"HBB"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, 
+    font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 gene <-"LYZ"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, 
+    font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 
 ## -----------------------------------------------------------------------------
 r$getKnnClusters(method=multilevel.community, type='PCA', name='multilevel')
@@ -101,7 +103,7 @@ r$getKnnClusters(method=walktrap.community, type='PCA', name='walktrap')
 ## -----------------------------------------------------------------------------
 str(r$clusters)
 
-## ---- fig.height=8, fig.width=12----------------------------------------------
+## ---- fig.height=6, fig.width=10----------------------------------------------
 plt1 = r$plotEmbedding(type='PCA', embeddingType='tSNE', groups=r$clusters$PCA$community, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='infomap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 plt2 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='multilevel', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='multlevel clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='walktrap clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
@@ -110,13 +112,14 @@ gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ## -----------------------------------------------------------------------------
 r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 de <- r$diffgenes$PCA[[1]][['2']]
 r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 
-## -----------------------------------------------------------------------------
+## ---- fig.height=6, fig.width=6-----------------------------------------------
 gene <-"CD74"
-r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, font.size=3, alpha=0.3, title=gene, legend.title=gene)
+r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffle.colors=FALSE, 
+    font.size=3, alpha=0.3, title=gene, legend.title=gene)
 
 ## -----------------------------------------------------------------------------
 suppressMessages(library(org.Hs.eg.db))
