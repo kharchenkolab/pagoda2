@@ -18,48 +18,6 @@ NULL
   library.dynam.unload("pagoda2", libpath)
 }
 
-#' Translate multilevel segmentation into a dendrogram, with the lowest level of the dendrogram listing the cells
-#'
-#' @param cl clusters
-#' @param counts matrix of counts
-#' @param deep boolean (default=FALSE)
-#' @param dist character vector Distance metric (default='cor')
-#' @return cell dendrogram
-#' @keywords internal
-multi2dend <- function(cl, counts, deep=FALSE, dist='cor') {
-  if (deep) {
-    clf <- as.integer(cl$memberships[1,]) # take the lowest level
-  } else {
-    clf <- as.integer(membership(cl))
-  }
-  names(clf) <- names(membership(cl))
-  clf.size <- unlist(tapply(clf,factor(clf,levels=seq(1,max(clf))),length))
-  rowFac <- rep(NA, nrow(counts));
-  rowFac[match(names(clf),rownames(counts))] <- clf
-  lvec <- colSumByFac(counts,rowFac)[-1,,drop=FALSE]
-  if(dist=='JS') {
-    lvec.dist <- jsDist(t(lvec/pmax(1,Matrix::rowSums(lvec))))
-  } else { # use correlation distance in log10 space
-    lvec.dist <- 1-cor(t(log10(lvec/pmax(1,Matrix::rowSums(lvec))+1)))
-  }
-  d <- as.dendrogram(stats::hclust(as.dist(lvec.dist),method='ward.D'))
-  # add cell info to the laves
-  addinfo <- function(l, env) {
-    v <- as.integer(mget("index",envir=env,ifnotfound=0)[[1]])+1;
-    attr(l,'nodeId') <- v
-    assign("index",v,envir=env)
-    attr(l,'nCells') <- sum(clf.size[as.integer(unlist(l))])
-    if(is.leaf(l)) {
-      attr(l,'cells') <- names(clf)[clf==attr(l,'label')]
-    }
-    attr(l,'root') <- FALSE
-    return(l);
-  }
-  d <- dendrapply(d,addinfo,env=environment())
-  attr(d,'root') <- TRUE
-  return(d)
-}
-
 #' Quick utility to check if given character vector is colors
 #' Thanks to Stackoverflow: http://stackoverflow.com/questions/13289009/check-if-character-string-is-a-valid-color-representation
 #'
@@ -77,7 +35,7 @@ areColors <- function(x) {
 #' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
 #' @return list, as returned by lapply
 #' @keywords internal
-papply <- function(..., n.cores=parallel::detectCores(), mc.preschedule=FALSE) {
+papply <- function(..., n.cores=parallel::detectCores(), mc.preschedule=FALSE) { # TODO: replace it with sccore::plapply
   if(n.cores>1) {
     if(requireNamespace("parallel", quietly = TRUE)) {
       return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule))
