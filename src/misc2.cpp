@@ -88,7 +88,7 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel, int ncores=1) {
     
     double m=sum(ly)/nrows;
     meanV[g]=m;
-    ly-=m; 
+    ly-=m;
     // ly%=ly; 
     *copyly%=ly; // we need to avoid warning which checks whether assignment operation survives self-assignment.
     ly = *copyly;
@@ -224,30 +224,6 @@ int inplaceWinsorizeSparseCols(SEXP sY,const int n, int ncores=1) {
   }
   return(1);
 }
-
-
-// JS distance metric (sqrt(JS div)) between the columns of a dense matrix m
-// returns vectorized version of the lower triangle (as R dist oject)
-// [[Rcpp::export]]
-arma::mat jsDist(const arma::mat& m, int ncores=1) {
-  //arma::vec d(m.n_cols*(m.n_cols-1)/2);
-  arma::mat d(m.n_cols,m.n_cols,arma::fill::zeros);
-//#pragma omp parallel for num_threads(ncores) shared(d)
-  for(int i=0;i<(m.n_cols-1);i++) {
-    arma::vec li=log(m.col(i));
-    for(int j=i+1;j<m.n_cols;j++) {
-      arma::vec lj=log(m.col(j));
-      arma::vec ji=m.col(j)+m.col(i);
-      ji=m.col(j)%lj + m.col(i)%li - ji%(log(ji)-log(2.0)); 
-      double v=arma::accu(ji.elem(arma::find_finite(ji))); 
-      //d[m.n_cols*i - i*(i-1)/2 + j-i]=sqrt(v/2.0);
-      d(j,i)=d(i,j)=v;
-    }
-  }
-
-  return(d);
-}
-
 
 
 // helper function to get 10x sparse matrix rows into an increasing order

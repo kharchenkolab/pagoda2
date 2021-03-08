@@ -463,6 +463,7 @@ Initialize Pagoda2 class
   min.cells.per.gene = 0,
   trim = round(min.cells.per.gene/2),
   min.transcripts.per.cell = 10,
+  batch = NULL,
   lib.sizes = NULL,
   log.scale = TRUE,
   keep.genes = NULL
