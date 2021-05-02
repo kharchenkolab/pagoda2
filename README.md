@@ -53,32 +53,6 @@ install.packages('devtools')
 devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
 ```
 
-Please note that the package `pagoda2` depends on data in a data package (`p2data`) that is available through a `drat` repository on GitHub. To use the `pagoda2` package, you will need to install `p2data`. There are two equally valid options to install this package:
-
-A) Users could install `p2data` by adding the `drat` archive to the list of repositories your system will query when adding and updating R packages. Once you do this, you can install `p2data` with `install.packages()`, using the command:
-
-```r
-library(drat)
-addRepo("kharchenkolab")
-install.packages("p2data")
-```
-
-The following command is also a valid approach:
-
-```r
-install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
-```
-
-Please see the [drat documentation](https://dirk.eddelbuettel.com/code/drat.html) for more comprehensive explanations and vignettes.
-
-
-B) Another way to install the package `p2data` is to use `devtools::install_github()`:
-
-```r
-library(devtools)
-install_github("kharchenkolab/p2data")
-```
-
 
 ### Installing Linux dependencies
 

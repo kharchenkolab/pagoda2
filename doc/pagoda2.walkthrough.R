@@ -12,7 +12,7 @@ install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='
 ## load the dataset
 countMatrix <- p2data::sample_BM1
 ## all basic pagoda2 processing with basicP2proc()
-p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
+p2.processed <- basicP2proc(countMatrix, n.cores=1, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 
 ## -----------------------------------------------------------------------------

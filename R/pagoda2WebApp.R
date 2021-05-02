@@ -136,7 +136,7 @@ pagoda2WebApp$methods(
       lvec <- t(lvec/pmax(1,rowSums(lvec)))
       colnames(lvec) <- which(table(cl0)>0)
       rownames(lvec) <- colnames(r$misc[['rawCounts']])
-      ld <- jsDist(lvec)
+      ld <- sccore::jsDist(lvec)
       colnames(ld) <- rownames(ld) <- colnames(lvec)
       
       #hcGroup is a hclust object of whatever cell groupings we provided above

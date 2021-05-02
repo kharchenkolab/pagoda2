@@ -1,13 +1,4 @@
----
-title: "Pagoda2 Walkthrough"
-output: 
-  rmarkdown::html_vignette:
-    toc: true
-vignette: >
-  %\VignetteIndexEntry{"Pagoda2 Walkthrough"}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
+# Pagoda2 Walkthrough
 
 ## Overview
 
@@ -32,16 +23,34 @@ library(dplyr)
 library(ggplot2)
 ```
 
-We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data`, which is available through a `drat` repository on GitHub. Note that the size of the 'p2data' package is approximately 6 MB. This package may be installed as follows:
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data`, which is available through a `drat` repository on GitHub. There are two equally valid options to install this package:
 
+A) Users could install `p2data` by adding the `drat` archive to the list of repositories your system will query when adding and updating R packages. Once you do this, you can install `p2data` with `install.packages()`, using the command:
+
+```r
+library(drat)
+addRepo("kharchenkolab")
+install.packages("p2data")
+```
+
+The following command is also a valid approach:
 
 ```r
 install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
 ```
 
-(Please see the [drat documentation](https://dirk.eddelbuettel.com/code/drat.html) for more comprehensive explanations and vignettes regarding `drat` repositories.)
+Please see the [drat documentation](https://dirk.eddelbuettel.com/code/drat.html) for more comprehensive explanations and vignettes.
+
+
+B) Another way to install the package `p2data` is to use `devtools::install_github()`:
+
+```r
+library(devtools)
+install_github("kharchenkolab/p2data")
+```
 
 The following command load the dataset of 3000 bone marrow cells as a sparse matrix:
+
 
 ```r
 countMatrix <- p2data::sample_BM1
@@ -56,7 +65,7 @@ Next we feed this input into the function `basicP2proc()`, which performs all ba
 ## load the dataset
 countMatrix <- p2data::sample_BM1
 ## all basic pagoda2 processing with basicP2proc()
-p2.processed <- basicP2proc(countMatrix, n.cores=1, min.cells.per.gene=10, 
+p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 ```
 
@@ -160,13 +169,13 @@ on.exit(par(old_par))
 hist(log10(colSums(cm)+1), main='molecules per cell', col='cornsilk', xlab='molecules per cell (log10)')
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-1.png)
+![plot of chunk unnamed-chunk-9](figure_pagoda2/unnamed-chunk-9-1.png)
 
 ```r
 hist(log10(rowSums(cm)+1), main='molecules per gene', col='cornsilk', xlab='molecules per gene (log10)')
 ```
 
-![plot of chunk unnamed-chunk-9](figure/unnamed-chunk-9-2.png)
+![plot of chunk unnamed-chunk-9](figure_pagoda2/unnamed-chunk-9-2.png)
 
 This dataset has already been filtered for low quality cells, so we don't see any cells with fewer that 10^3 UMIs. We can still use the default QC function `gene.vs.molecule.cell.filter()` to filter any cells that don't fit the expected detected gene vs molecule count relationship. In this case we filter out only 2 cells.
 
@@ -174,7 +183,7 @@ This dataset has already been filtered for low quality cells, so we don't see an
 counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
 ```
 
-![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+![plot of chunk unnamed-chunk-10](figure_pagoda2/unnamed-chunk-10-1.png)
 
 Next thing we want to do is to find lowly expressed genes and remove them from the dataset. (Subsequent pagoda2 steps will do this automatically for extremely lowly expressed genes anyway, but for the purpose of this tutorial, we demonstrate this.)
 
@@ -184,7 +193,7 @@ hist(log10(rowSums(counts)+1), main='Molecules per gene', xlab='molecules (log10
 abline(v=1, lty=2, col=2)
 ```
 
-![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png)
+![plot of chunk unnamed-chunk-11](figure_pagoda2/unnamed-chunk-11-1.png)
 
 Let's filter out counts less than 10 and check the size of the resulting matrix:
 
@@ -268,7 +277,7 @@ r$adjustVariance(plot=TRUE, gam.k=10)
 ## done.
 ```
 
-![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
+![plot of chunk unnamed-chunk-14](figure_pagoda2/unnamed-chunk-14-1.png)
 
 Now that the variance of the gene expression is on a comparable scale, there are many alternative ways of proceeding with the downstream analysis. Below we’ll use the simplest default scenario, whereby we first reduce the dataset dimensions by running PCA, and then move into the k-nearest neighbor (KNN) graph space for clustering and visualization calculations. 
 
@@ -331,7 +340,7 @@ We now visualize the data:
 r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=50, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (largeVis)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
+![plot of chunk unnamed-chunk-19](figure_pagoda2/unnamed-chunk-19-1.png)
 
 We next can constructr and plot a tSNE embedding. (This can take some time to complete.)
 
@@ -340,7 +349,7 @@ r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
 r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
+![plot of chunk unnamed-chunk-20](figure_pagoda2/unnamed-chunk-20-1.png)
 
 Note that we are overlay the expresssion of specific marker genes on this embedding to identify clusters. For instance, subsetting by `"HBB"` will identify heme cells:
 
@@ -351,7 +360,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
     font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
+![plot of chunk unnamed-chunk-21](figure_pagoda2/unnamed-chunk-21-1.png)
 
 Similarly, subsetting by the marker gene `"LYZ"` should show us CD14+ Monocytes:
 
@@ -362,7 +371,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
     font.size=3, alpha=0.3, title=gene, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
-![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)
+![plot of chunk unnamed-chunk-22](figure_pagoda2/unnamed-chunk-22-1.png)
 
 Pagoda2 allows us to generate multiple alternative clusterings. Here we will construct multilevel and walktrap clusterings (along with the infomap clusterings generated above):
 
@@ -381,11 +390,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 22 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 20 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 10 levels "1","2","3","4",..: 4 10 10 2 2 10 5 3 5 7 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 8 10 10 2 2 10 4 1 4 7 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 3 8 8 7 7 8 9 5 9 4 ...
+##   ..$ walktrap  : Factor w/ 13 levels "1","2","3","4",..: 1 8 8 7 7 8 10 3 10 2 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -401,7 +410,7 @@ plt3 = r$plotEmbedding(type='PCA',embeddingType='tSNE', clusterType='walktrap', 
 gridExtra::grid.arrange(plt1, plt2, plt3, ncol=3)
 ```
 
-![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
+![plot of chunk unnamed-chunk-25](figure_pagoda2/unnamed-chunk-25-1.png)
 
 We can then perform differential expression between these clusters:
 
@@ -411,7 +420,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 22 clusters ...
+## running differential expression with 20 clusters ...
 ```
 
 ```
@@ -431,7 +440,7 @@ de <- r$diffgenes$PCA[[1]][['2']]
 r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 ```
 
-![plot of chunk unnamed-chunk-27](figure/unnamed-chunk-27-1.png)
+![plot of chunk unnamed-chunk-27](figure_pagoda2/unnamed-chunk-27-1.png)
 
 Let's further investigate the marker gene `"CD74"` as shown above, with `plotEmbedding()`:
 
@@ -442,7 +451,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
     font.size=3, alpha=0.3, title=gene, legend.title=gene)
 ```
 
-![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-28](figure_pagoda2/unnamed-chunk-28-1.png)
 
 At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1 in [scde](https://hms-dbmi.github.io/scde/)) or investigate hierarchical differential expression. The following two code snippetss will run overdispersion analysis (although we don't run the second in this tutorial, as it takes too long to complete). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells---for this reason we prefer hierarchical differential expression. 
 
@@ -498,18 +507,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.15:List of 2
+##  $ 12.20.vs.18.19:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.15"
-##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:171] "PRTN3" "ELANE" "MPO" "AZU1" ...
-##  $ 10.vs.3 :List of 2
+##   .. ..$ genesetname     : chr "12.20.vs.18.19"
+##   .. ..$ shortdescription: chr "12.20.vs.18.19"
+##   ..$ genes     : chr [1:36] "MALAT1" "MT-CO1" "MT-CO2" "MT-CYB" ...
+##  $ 15.vs.17      :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "10.vs.3"
-##   .. ..$ shortdescription: chr "10.vs.3"
-##   ..$ genes     : chr [1:113] "H2AFZ" "HMGB1" "LYZ" "STMN1" ...
+##   .. ..$ genesetname     : chr "15.vs.17"
+##   .. ..$ shortdescription: chr "15.vs.17"
+##   ..$ genes     : chr [1:157] "TSC22D3" "SSR4" "CD79A" "KLF2" ...
 ```
 
 To add GO Terms as genesets, run the following

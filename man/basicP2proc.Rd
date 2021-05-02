@@ -60,12 +60,3 @@ Perform basic 'pagoda2' processing, i.e. adjust variance, calculate pca reductio
 make knn graph, identify clusters with multilevel, and generate
 largeVis and tSNE embeddings.
 }
-\examples{
-\donttest{
-## load count matrix
-cm <- p2data::sample_BM1
-## perform basic p2 processing
-p2 <- basicP2proc(cm)
-}
-
-}

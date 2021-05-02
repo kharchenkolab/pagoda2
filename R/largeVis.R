@@ -71,18 +71,6 @@ buildWijMatrix <- function(x, threads = NULL, perplexity = 50) {
 #' is to use the edge weights, consistent with the reference implementation.
 #'
 #' @return A dense [N,D] matrix of the coordinates projecting the w_ij matrix into the lower-dimensional space.
-#' @examples
-#' \donttest{
-#' data(CO2)
-#' CO2$Plant <- as.integer(CO2$Plant)
-#' CO2$Type <- as.integer(CO2$Type)
-#' CO2$Treatment <- as.integer(CO2$Treatment)
-#' co <- scale(as.matrix(CO2))
-#' # Very small datasets often produce a warning regarding the alias table.  This is safely ignored.
-#' suppressWarnings(vis <- largeVis(t(co), K = 20, sgd_batches = 1, threads = 2))
-#' suppressWarnings(coords <- projectKNNs(vis$wij, threads = 2))
-#' plot(t(coords))
-#' }
 #' @export
 projectKNNs <- function(wij, # symmetric sparse matrix
                         dim = 2, # dimension of the projection space
@@ -98,10 +86,14 @@ projectKNNs <- function(wij, # symmetric sparse matrix
                         threads = NULL,
                         verbose = getOption("verbose", TRUE)) {
 
-  if (alpha < 0) stop("alpha < 0 is meaningless")
+  if (alpha < 0) {
+    stop("alpha < 0 is meaningless")
+  }
   N <-  (length(wij@p) - 1)
   js <- rep(0:(N - 1), diff(wij@p))
-  if (any(is.na(js))) stop("NAs in the index vector.")
+  if (any(is.na(js))) {
+    stop("NAs in the index vector")
+  }
   is <- wij@i
 
   ##############################################

@@ -27,11 +27,3 @@ annotated at that GO term or to one of its child nodes in the GO ontology (defau
 \description{
 Generate a GO environment for the organism specified
 }
-\examples{
-\donttest{
-cm <- p2data::sample_BM1
-p2 <- basicP2proc(cm)
-p2.generate.go(p2, organism='hs')
-}
-
-}

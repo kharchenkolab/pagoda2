@@ -1,5 +1,11 @@
 ## Upcoming
 
+## [1.0.3] - 2020-05-01
+
+- Removed `jsDist()` as it's in sccore
+- Removed `multi2dend()` as it's in sccore
+- Removed strong dependency for p2data
+
 ## [1.0.2] - 2020-03-03
 
 ### Changed
