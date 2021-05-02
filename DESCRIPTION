@@ -6,7 +6,6 @@ Description: Analyzing and interactively exploring large-scale single-cell RNA-s
 License: GPL-3 
 Copyright: See the file COPYRIGHTS for various pagoda2 copyright details
 Encoding: UTF-8
-LazyData: true
 Depends: 
     R (>= 3.5.0), Matrix, igraph
 biocViews:
