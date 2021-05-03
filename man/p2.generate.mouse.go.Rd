@@ -15,11 +15,3 @@ a GO environment object
 \description{
 Generate a GO environment for mouse for overdispersion analysis for the the back end
 }
-\examples{
-\donttest{
-cm <- p2data::sample_BM1
-p2 <- basicP2proc(cm)
-p2.generate.mouse.go(p2)
-}
-
-}

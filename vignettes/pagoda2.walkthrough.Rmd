@@ -31,14 +31,15 @@ library(dplyr)
 library(ggplot2)
 ```
 
-We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data` (See the README of pagoda2 for installation details).
+We have pre-generated a dataset of 3000 bone marrow cells that you can load as a matrix directly using the package `p2data`, which is available through a `drat` repository on GitHub. Note that the size of the 'p2data' package is approximately 6 MB. This package may be installed as follows:
 
 ```{r message=FALSE}
 install.packages('p2data', repos='https://kharchenkolab.github.io/drat/', type='source')
 ```
 
-The following command load the dataset of 3000 bone marrow cells as a sparse matrix:
+(Please see the [drat documentation](https://dirk.eddelbuettel.com/code/drat.html) for more comprehensive explanations and vignettes regarding `drat` repositories.)
 
+The following command load the dataset of 3000 bone marrow cells as a sparse matrix:
 
 ```r
 countMatrix <- p2data::sample_BM1
@@ -52,7 +53,7 @@ Next we feed this input into the function `basicP2proc()`, which performs all ba
 ## load the dataset
 countMatrix <- p2data::sample_BM1
 ## all basic pagoda2 processing with basicP2proc()
-p2.processed <- basicP2proc(countMatrix, n.cores=2, min.cells.per.gene=10, 
+p2.processed <- basicP2proc(countMatrix, n.cores=1, min.cells.per.gene=10, 
                     n.odgenes=2e3, get.largevis=FALSE, make.geneknn=FALSE)
 ```
 

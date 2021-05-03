@@ -147,18 +147,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// jsDist
-arma::mat jsDist(const arma::mat& m, int ncores);
-RcppExport SEXP _pagoda2_jsDist(SEXP mSEXP, SEXP ncoresSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::mat& >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
-    rcpp_result_gen = Rcpp::wrap(jsDist(m, ncores));
-    return rcpp_result_gen;
-END_RCPP
-}
 // orderColumnRows
 arma::ivec orderColumnRows(const arma::ivec& p, arma::ivec& i);
 RcppExport SEXP _pagoda2_orderColumnRows(SEXP pSEXP, SEXP iSEXP) {
@@ -306,7 +294,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},
     {"_pagoda2_inplaceColMult", (DL_FUNC) &_pagoda2_inplaceColMult, 4},
     {"_pagoda2_inplaceWinsorizeSparseCols", (DL_FUNC) &_pagoda2_inplaceWinsorizeSparseCols, 3},
-    {"_pagoda2_jsDist", (DL_FUNC) &_pagoda2_jsDist, 2},
     {"_pagoda2_orderColumnRows", (DL_FUNC) &_pagoda2_orderColumnRows, 2},
     {"_pagoda2_smatColVecCorr", (DL_FUNC) &_pagoda2_smatColVecCorr, 3},
     {"_pagoda2_arma_mat_cor", (DL_FUNC) &_pagoda2_arma_mat_cor, 1},
