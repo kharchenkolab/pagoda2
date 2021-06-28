@@ -1,6 +1,15 @@
 ## Upcoming
 
+## [1.0.4] - 2020-06-28
+
+### Changed
+
+- Fix `self$counts <- counts`
+- Fix `Knn()` in `pagoda2WebApp.R`
+
 ## [1.0.3] - 2020-05-01
+
+### Changed
 
 - Removed `jsDist()` as it's in sccore
 - Removed `multi2dend()` as it's in sccore

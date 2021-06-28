@@ -198,7 +198,7 @@ pagoda2WebApp$methods(
               xx <- r$counts[celsel,] %*% irlba::irlba(r$counts[celsel,],nv = nv,nu=0)$v
               colnames(xx) <- paste('PC',seq(ncol(xx)),sep='')
               
-              xn <- n2Knn(as.matrix(xx),k,nThreads=r$n.cores,verbose=0,indexType='L2')
+              xn <- Knn(as.matrix(xx),k,nThreads=r$n.cores,verbose=0,indexType='L2')
               
               xn <- xn[!xn$s==xn$e,]
               xn$r <-  unlist(lapply(diff(c(0,which(diff(xn$s)>0),nrow(xn))),function(x) seq(x,1)))

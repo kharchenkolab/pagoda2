@@ -169,6 +169,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       self$misc$depthScale <- depthScale
 
       if (self$modelType == 'raw') {
+        self$counts <- counts
         return()
       }
 
