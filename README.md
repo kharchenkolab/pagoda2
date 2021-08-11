@@ -11,7 +11,7 @@
 - [Installation](#installation)
   * [Installing Linux Dependencies](#installing-linux-dependencies)
   * [Installing with Mac OS](#installing-with-mac-os)
-  * [Pagoda2 via Docker](#pagoda2-via-docker)
+  * [pagoda2 via Docker](#pagoda2-via-docker)
 
 ## pagoda2: Rapid Processing and Interactive Analysis of Large Datasets
 
@@ -26,7 +26,7 @@ Several methods within this package were developed based on the originals implem
 
 **Basic Walkthrough**
 * [HTML version](https://htmlpreview.github.io/?https://raw.githubusercontent.com/kharchenkolab/pagoda2/master/doc/pagoda2.walkthrough.html) 
-* [Markdown version](https://github.com/kharchenkolab/pagoda2/blob/master/vignettes/pagoda2.walkthrough.md)
+* [Markdown version](https://github.com/kharchenkolab/pagoda2/blob/master/doc/pagoda2.walkthrough.md)
 
 [PCA-based Basic Walkthrough](http://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 
@@ -50,7 +50,7 @@ To install the latest version of `pagoda2`, use:
 
 ```r
 install.packages('devtools')
-devtools::install_github('kharchenkolab/pagoda2', build_vignettes = TRUE)
+devtools::install_github('kharchenkolab/pagoda2')
 ```
 
 
@@ -101,5 +101,5 @@ If you find `pagoda2` useful for your publication, please cite:
 ```
 Nikolas Barkas, Viktor Petukhov, Peter Kharchenko and Evan
 Biederstedt (2021). pagoda2: Single Cell Analysis and Differential
-Expression. R package version 1.0.4.
+Expression. R package version 1.0.5.
 ```

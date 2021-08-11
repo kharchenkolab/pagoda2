@@ -1,5 +1,11 @@
 ## Upcoming
 
+## [1.0.5] - 2020-08-11
+
+### Changed
+
+- Removed the vignettes and dependency on the drat repository at https://github.com/kharchenkolab/p2data
+
 ## [1.0.4] - 2020-06-28
 
 ### Changed
