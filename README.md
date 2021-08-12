@@ -39,7 +39,7 @@ Several methods within this package were developed based on the originals implem
 ## Installation 
 
 
-To install the stable version from CRAN, use:
+To install the stable version from [CRAN](https://CRAN.R-project.org/package=pagoda2), use:
 
 ```r
 install.packages('pagoda2')
@@ -89,10 +89,10 @@ As of version 0.1.3, `pagoda2` should sucessfully install on Mac OS. Furthermore
 If you are having trouble setting up `pagoda2` on your system, an alternative approach to work with `pagoda2` is via a Docker container. To use the Docker container, first [install docker](https://docs.docker.com/get-docker/) on your platform and then run the `pagoda2` image with the following command in the shell:
 
 ```
-docker run -p 8787:8787 pkharchenkolab/pagoda2:latest
+docker run -p 8787:8787 -e PASSWORD=pass pkharchenkolab/pagoda2:latest
 ```
 
-The first time you run this command, it will pull/download several images---please make sure that you have reliable internet access. You can then point your browser to http://localhost:8787/ to access an Rstudio environment with `pagoda2` installed (log in using credentials rstudio/pass). Explore the Docker [--mount option](https://docs.docker.com/storage/volumes/) to allow the Docker image to access your local files.
+The first time you run this command, it will pull/download several images---please make sure that you have reliable internet access. You can then point your browser to http://localhost:8787/ to access an Rstudio environment with `pagoda2` installed (please log in using credentials username=`rstudio`, password=`pass`). Explore the Docker [--mount option](https://docs.docker.com/storage/volumes/) to allow the Docker image to access your local files.
 
 ### Citation
 
