@@ -435,7 +435,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
 
 ![plot of chunk unnamed-chunk-28](figure_pagoda2_walkthrough/unnamed-chunk-28-1.png)
 
-At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1 in [scde](https://hms-dbmi.github.io/scde/)) or investigate hierarchical differential expression. The following two code snippetss will run overdispersion analysis (although we don't run the second in this tutorial, as it takes too long to complete). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells---for this reason we prefer hierarchical differential expression. 
+At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1 in [scde](https://hms-dbmi.github.io/scde/)) or investigate hierarchical differential expression. The following two code snippets will run overdispersion analysis (although we don't run the second in this tutorial, as it takes too long to complete). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells---for this reason we prefer hierarchical differential expression. 
 
 We will need the output of the first of the following two blocks for our web app generation:
 
