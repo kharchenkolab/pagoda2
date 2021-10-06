@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/kharchenkolab/pagoda2.svg?branch=master)](https://travis-ci.com/github/kharchenkolab/pagoda2)
+[![Build Status](https://travis-ci.com/kharchenkolab/pagoda2.svg?branch=main)](https://travis-ci.com/github/kharchenkolab/pagoda2)
 [![CRAN status](https://www.r-pkg.org/badges/version/pagoda2)](https://cran.r-project.org/package=pagoda2)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/pagoda2)](https://cran.r-project.org/package=pagoda2)
 
