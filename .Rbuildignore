@@ -8,3 +8,4 @@ CHANGELOG.md
 ^Meta$
 ^vignettes\*.md$
 ^vignettes\figure$
+^\.circleci$
