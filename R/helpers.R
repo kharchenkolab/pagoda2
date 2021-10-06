@@ -460,7 +460,8 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
     }
   }
   ## still faster to use fread() I think...
-  genes <- data.table::fread(genesFile, header=FALSE, col.names = c("SYMBOL", "ENSEMBL"))
+  genes <- data.table::fread(genesFile, header=FALSE)  
+  ## col.names = c("SYMBOL", "ENSEMBL", "type")
   ## rownames is a poor design, but the output format was already set
   if (transcript.id == 'SYMBOL'){
     rownames(x) <- genes[[2]]
