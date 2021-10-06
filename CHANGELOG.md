@@ -1,5 +1,9 @@
 ## Upcoming
 
+## [1.0.6] - 2020-10-06
+
+- Fixed `read10xMatrix()` to work with new 10x files
+
 ## [1.0.5] - 2020-08-11
 
 ### Changed
