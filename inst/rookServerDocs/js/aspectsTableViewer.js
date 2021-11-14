@@ -98,7 +98,17 @@ aspectsTableViewer.prototype.generateTables = function() {
     ],
     listeners: {
       'selectionchange': genesetSelectionChangeListener
-    }
+    },
+    tbar: [{
+        xtype: 'textfield',
+        flex: 1
+    }, {
+        xtype: 'button',
+        text: 'c'
+    }, {
+        xtype: 'button',
+        text: 'd'
+    }]
   });
 
   var selModel =  Ext.create('Ext.selection.CheckboxModel', {});
@@ -133,16 +143,24 @@ aspectsTableViewer.prototype.generateTables = function() {
       		    var geneSelCntr =  new geneSelectionController();
       		    geneSelCntr.setSelection( selectedGeneNames,'geneTableSelection','geneTableSelection');
 
-      		          			    var heatmapV = new heatmapViewer();
-      			    heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
-      			    heatmapV.drawHeatmap();
+      		    var heatmapV = new heatmapViewer();
+      			  heatmapV.setNamedSelectionToDisplayGenes('auto_geneTableSelection');
+      			  heatmapV.drawHeatmap();
         } // selection change
       }, // listeners
-      tbar: Ext.create('Ext.PagingToolbar', {
-      		displayInfo: true,
-		      prependButtons: true,
-      }) //tbar
+      tbar: [{
+        xtype: 'textfield',
+        flex: 1
+    }, {
+        xtype: 'button',
+        text: 'a'
+    }, {
+        xtype: 'button',
+        text: 'b'
+    }] //tbar
   });
+
+
 
   areaHolder.add([{
     type: 'panel',
