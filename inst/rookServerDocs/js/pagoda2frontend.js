@@ -578,7 +578,7 @@ function generateExtJsLayout() {
         }),
         items : [{
                     id: "video",
-                    html: '<iframe width="640" height="360" src="https://www.youtube.com/watch?v=xzpG1ZYE4Og" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>'
+                    html: '<iframe width="640" height="360" src="https://www.youtube.com/embed/xzpG1ZYE4Og" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>'
                 }]      
         });
 

@@ -324,7 +324,7 @@ r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.siz
 
 ![plot of chunk unnamed-chunk-19](figure_pagoda2_walkthrough/unnamed-chunk-19-1.png)
 
-We next can constructr and plot a tSNE embedding. (This can take some time to complete.)
+We next can construct and plot a tSNE embedding. (This can take some time to complete.)
 
 ```r
 r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
