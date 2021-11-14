@@ -243,12 +243,22 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 
-and visualise the top markers of a specific cluster:
+and visualise the top markers of a specific cluster. In this case, we look at cluster #3:
+
+```{r, fig.height=6, fig.width=6}
+de <- r$diffgenes$PCA[[1]][['3']]
+r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
+```
+
+Similarly, we could explore cluster #2 (or any other cluster in the list):
 
 ```{r, fig.height=6, fig.width=6}
 de <- r$diffgenes$PCA[[1]][['2']]
 r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 ```
+
+Note that the rainbow colors along the x-axis at the top of the plot denote the clusters calculated and plotted previously; in fact, these are the same colors used in the tSNE visualizations shown directly above.
+
 
 Let's further investigate the marker gene `"CD74"` as shown above, with `plotEmbedding()`:
 

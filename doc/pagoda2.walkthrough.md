@@ -1,4 +1,13 @@
-# Pagoda2 Walkthrough
+---
+title: "Pagoda2 Walkthrough"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{"Pagoda2 Walkthrough"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
 ## Overview
 
@@ -372,11 +381,11 @@ str(r$clusters)
 ```
 ## List of 1
 ##  $ PCA:List of 3
-##   ..$ community : Factor w/ 21 levels "1","2","3","4",..: 5 1 1 6 6 1 2 4 2 13 ...
+##   ..$ community : Factor w/ 23 levels "1","2","3","4",..: 1 2 2 3 3 2 4 5 4 6 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 4 8 8 11 11 8 5 2 5 7 ...
+##   ..$ multilevel: Factor w/ 11 levels "1","2","3","4",..: 1 2 2 3 3 2 4 5 4 6 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
-##   ..$ walktrap  : Factor w/ 11 levels "1","2","3","4",..: 5 8 8 6 6 8 9 4 9 3 ...
+##   ..$ walktrap  : Factor w/ 12 levels "1","2","3","4",..: 2 9 9 6 6 9 10 5 10 3 ...
 ##   .. ..- attr(*, "names")= chr [1:2998] "MantonBM1_HiSeq_1-TCTATTGGTCTCTCGT-1" "MantonBM1_HiSeq_1-GAATAAGTCACGCATA-1" "MantonBM1_HiSeq_1-ACACCGGTCTAACTTC-1" "MantonBM1_HiSeq_1-TCATTTGGTACGCTGC-1" ...
 ```
 
@@ -402,7 +411,7 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 ```
-## running differential expression with 21 clusters ...
+## running differential expression with 23 clusters ...
 ```
 
 ```
@@ -414,7 +423,17 @@ r$getDifferentialGenes(type='PCA', verbose=TRUE, clusterType='community')
 ```
 
 
-and visualise the top markers of a specific cluster:
+and visualise the top markers of a specific cluster. In this case, we look at cluster #3:
+
+
+```r
+de <- r$diffgenes$PCA[[1]][['3']]
+r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
+```
+
+![plot of chunk unnamed-chunk-27](figure_pagoda2_walkthrough/unnamed-chunk-27-1.png)
+
+Similarly, we could explore cluster #2 (or any other cluster in the list):
 
 
 ```r
@@ -422,7 +441,10 @@ de <- r$diffgenes$PCA[[1]][['2']]
 r$plotGeneHeatmap(genes=rownames(de)[1:15], groups=r$clusters$PCA[[1]])
 ```
 
-![plot of chunk unnamed-chunk-27](figure_pagoda2_walkthrough/unnamed-chunk-27-1.png)
+![plot of chunk unnamed-chunk-28](figure_pagoda2_walkthrough/unnamed-chunk-28-1.png)
+
+Note that the rainbow colors along the x-axis at the top of the plot denote the clusters calculated and plotted previously; in fact, these are the same colors used in the tSNE visualizations shown directly above.
+
 
 Let's further investigate the marker gene `"CD74"` as shown above, with `plotEmbedding()`:
 
@@ -433,7 +455,7 @@ r$plotEmbedding(type='PCA', embeddingType='tSNE', colors=r$counts[,gene], shuffl
     font.size=3, alpha=0.3, title=gene, legend.title=gene)
 ```
 
-![plot of chunk unnamed-chunk-28](figure_pagoda2_walkthrough/unnamed-chunk-28-1.png)
+![plot of chunk unnamed-chunk-29](figure_pagoda2_walkthrough/unnamed-chunk-29-1.png)
 
 At this point we can perform pathway overdispersion analysis (in the same way we would with pagoda1 in [scde](https://hms-dbmi.github.io/scde/)) or investigate hierarchical differential expression. The following two code snippets will run overdispersion analysis (although we don't run the second in this tutorial, as it takes too long to complete). Overdispersion analysis usually takes too long with the latest datasets composed of +1000's of cells---for this reason we prefer hierarchical differential expression. 
 
@@ -441,6 +463,13 @@ We will need the output of the first of the following two blocks for our web app
 
 ```r
 suppressMessages(library(org.Hs.eg.db))
+```
+
+```
+## Warning: package 'S4Vectors' was built under R version 4.1.1
+```
+
+```r
 # translate gene names to ids
 ids <- unlist(lapply(mget(colnames(r$counts), org.Hs.egALIAS2EG, ifnotfound=NA), function(x) x[1]))
 # reverse map
@@ -489,18 +518,18 @@ str(genesets[1:2])
 
 ```
 ## List of 2
-##  $ 14.vs.15:List of 2
+##  $ 17.vs.7  :List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "14.vs.15"
-##   .. ..$ shortdescription: chr "14.vs.15"
-##   ..$ genes     : chr [1:160] "PRTN3" "ELANE" "MPO" "AZU1" ...
-##  $ 10.vs.3 :List of 2
+##   .. ..$ genesetname     : chr "17.vs.7"
+##   .. ..$ shortdescription: chr "17.vs.7"
+##   ..$ genes     : chr [1:157] "TCF4" "RPL28" "CD74" "RPS24" ...
+##  $ 4.vs.7.17:List of 2
 ##   ..$ properties:List of 3
 ##   .. ..$ locked          : logi TRUE
-##   .. ..$ genesetname     : chr "10.vs.3"
-##   .. ..$ shortdescription: chr "10.vs.3"
-##   ..$ genes     : chr [1:109] "H2AFZ" "HMGB1" "PTMA" "LYZ" ...
+##   .. ..$ genesetname     : chr "4.vs.7.17"
+##   .. ..$ shortdescription: chr "4.vs.7.17"
+##   ..$ genes     : chr [1:313] "RPS27" "BTG1" "RPL18A" "RPLP2" ...
 ```
 
 To add GO Terms as genesets, run the following
