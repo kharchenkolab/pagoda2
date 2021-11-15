@@ -146,6 +146,64 @@ if (gstv.autoShow) {
 		displayInfo: true,
 		prependButtons: true,
 		items: [
+					{
+        xtype: 'button',
+        glyph: 0xf0c7 , //fa-floppy-o
+        tooltip: 'Export Selected',
+        handler: function(){
+          var grid = Ext.getCmp('genesetGenesTable');
+          var csvContent = "data:text/csv;charset=utf-8\n";
+
+          var columns = grid.columnManager.columns;
+          var columnsCount = columns.length;
+          for (var i = 0; i < columnsCount; i++) {
+              if (!columns[i].hidden) {
+                  csvContent += columns[i].text + ",";
+              }
+          }
+          csvContent = csvContent.substring(0, csvContent.length-1);
+          csvContent += "\r";
+
+          for (var j = 0; j<columnsCount; j++) {
+              if(!columns[j].hidden){
+                  console.log(columns[j]);
+              }
+          }
+
+          var rows = grid.store.data.items;
+          var rowsCount = rows.length;
+
+          for (var i = 0; i < rowsCount; i++) {
+              var row = rows[i].data;
+              for (var j = 1; j<columnsCount; j++) {
+                  if (!columns[j].hidden) {
+                      var value = row[columns[j].dataIndex];
+                      csvContent += "\"" + value + "\"" + ",";
+                  }
+              }
+              csvContent = csvContent.substring(0, csvContent.length-1);
+              csvContent += "\r";
+          }
+
+
+          var encodedUri = encodeURI(csvContent);
+          var is_safari = navigator.userAgent.toLowerCase().indexOf('safari/') > -1;
+
+          if(!is_safari){
+              var link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("download", "my_data.csv");
+              document.body.appendChild(link); // Required for FF
+              link.click(); // This will download the data file named "my_data.csv".
+          }else{
+              var link = document.createElement("a");
+              link.setAttribute("href", encodedUri);
+              link.setAttribute("target", "_blank");
+              document.body.appendChild(link); // Required for FF
+              link.click(); // This will download the data file named "my_data.csv".
+          }
+        }
+      },
 		    {
 			emptyText: 'Search...',
 			xtype: 'textfield',
@@ -170,7 +228,7 @@ if (gstv.autoShow) {
 
 
 			} // listeners
-		    } // search textbox
+		    }, // search textbox
 		] // items
 	    }) // tbar
 
