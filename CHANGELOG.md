@@ -1,5 +1,10 @@
 ## Upcoming
 
+## [1.0.7] - 2020-11-14
+
+- Added ability to export data in grids as *csv
+- Small revisions to docs
+
 ## [1.0.6] - 2020-10-06
 
 - Fixed `read10xMatrix()` to work with new 10x files
