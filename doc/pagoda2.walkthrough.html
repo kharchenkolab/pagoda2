@@ -476,7 +476,7 @@ r$getEmbedding(type=&#39;PCA&#39;, embeddingType = &#39;largeVis&#39;, M=M, perp
 
 <p>We next can construct and plot a tSNE embedding. (This can take some time to complete.)</p>
 
-<pre><code class="r">r$getEmbedding(type=&#39;PCA&#39;, embeddingType=&#39;tSNE&#39;, perplexity=50,verbose=FALSE)
+<pre><code class="r">r$getEmbedding(type=&#39;PCA&#39;, embeddingType=&#39;tSNE&#39;, perplexity=50, verbose=FALSE)
 r$plotEmbedding(type=&#39;PCA&#39;, embeddingType=&#39;tSNE&#39;, show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title=&#39;clusters (tSNE)&#39;, plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 </code></pre>
 

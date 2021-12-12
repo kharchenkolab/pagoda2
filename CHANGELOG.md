@@ -1,28 +1,33 @@
 ## Upcoming
 
-## [1.0.7] - 2020-11-14
+## [1.0.8] - 2021 December 12
+
+- Fixed indexing error in writing the *csv files for the p2 app grids (e.g. "Gene sets in Aspect")
+
+
+## [1.0.7] - 2021 November 14
 
 - Added ability to export data in grids as *csv
 - Small revisions to docs
 
-## [1.0.6] - 2020-10-06
+## [1.0.6] - 2021 October 06
 
 - Fixed `read10xMatrix()` to work with new 10x files
 
-## [1.0.5] - 2020-08-11
+## [1.0.5] - 2021 August 11
 
 ### Changed
 
 - Removed the vignettes and dependency on the drat repository at https://github.com/kharchenkolab/p2data
 
-## [1.0.4] - 2020-06-28
+## [1.0.4] - 2021 June 28
 
 ### Changed
 
 - Fix `self$counts <- counts`
 - Fix `Knn()` in `pagoda2WebApp.R`
 
-## [1.0.3] - 2020-05-01
+## [1.0.3] - 2021 May 01
 
 ### Changed
 
@@ -30,13 +35,13 @@
 - Removed `multi2dend()` as it's in sccore
 - Removed strong dependency for p2data
 
-## [1.0.2] - 2020-03-03
+## [1.0.2] - 2021 March 03
 
 ### Changed
 
 - Revised vignettes figures for the HTML tutorial
 
-## [1.0.1] - 2020-02-25
+## [1.0.1] - 2021 February 25
 
 ### Added
 - Returned copy constructor
@@ -46,7 +51,7 @@
 - Updated Dockerfile
 - Fixed 'batch' param in Pagoda2 constructor
 
-## [1.0.0] - 2020-01-28
+## [1.0.0] - 2021 January 28
 - The package was edited extensively to upload to CRAN
 
 ### Added
@@ -60,14 +65,14 @@
 - revise `message()` spacing for `verbose` statements
 - various changes for CRAN, e.g. `par()`, removing calls to `installed.packages()`, etc.
 
-## [0.1.4] - 2020-10-05
+## [0.1.4] - 2020 October 05
 
 ### Added
 - added `p2app4conos()` for rendering Conos to pagoda2 application
 - README edits
 - vignettes edits
 
-## [0.1.3] - 2020-10-02
+## [0.1.3] - 2020 October 02
 
 ### Added
 - Makefile.win, Makevars.win
@@ -76,7 +81,7 @@
 ### Changed
 - Now should (natively) install on Mac OS for all users
 
-## [0.1.2] - 2020-09-24
+## [0.1.2] - 2020 September 24
 
 ### Added
 
@@ -88,7 +93,7 @@
 - Added LICENSE (July 2020)
 - Changed `std::cout` to `Rcpp::Rcout` (July 2020)
 
-## [0.1.1] - 2019-11-26
+## [0.1.1] - 2019 November 26
 
 ### Added
 
@@ -103,7 +108,7 @@
 - Fixed problem with duplicated observations during t-SNE estimation
 - Added option `var.scale` to `calculatePcaReduction`, which allow to disable variance scaling on counts
 
-## [0.1.0] - 2019-04-20
+## [0.1.0] - 2019 April 20
 
 ### Added
 
