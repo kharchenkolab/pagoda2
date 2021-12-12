@@ -108,7 +108,7 @@ aspectsTableViewer.prototype.generateTables = function() {
             tooltip: 'Export Selected',
             handler: function(){
               var grid = Ext.getCmp('genesetsAspectTable');
-              var csvContent = "data:text/csv;charset=utf-8\n";
+              var csvContent = "data:text/csv; charset=utf-8,";
 
               var columns = grid.columnManager.columns;
               var columnsCount = columns.length;
@@ -117,14 +117,8 @@ aspectsTableViewer.prototype.generateTables = function() {
                       csvContent += columns[i].text + ",";
                   }
               }
-              csvContent = csvContent.substring(0, csvContent.length-1);
+              csvContent = csvContent.substring(0, csvContent.length - 1);
               csvContent += "\r";
-
-              for (var j = 0; j<columnsCount; j++) {
-                  if(!columns[j].hidden){
-                      console.log(columns[j]);
-                  }
-              }
 
               var rows = grid.store.data.items;
               var rowsCount = rows.length;
@@ -134,13 +128,12 @@ aspectsTableViewer.prototype.generateTables = function() {
                   for (var j = 0; j<columnsCount; j++) {
                       if (!columns[j].hidden) {
                           var value = row[columns[j].dataIndex];
-                          csvContent += "\"" + value + "\"" + ",";
+                          csvContent += value + ",";
                       }
                   }
-                  csvContent = csvContent.substring(0, csvContent.length-1);
+                  csvContent = csvContent.substring(0, csvContent.length - 1);
                   csvContent += "\r";
               }
-
 
               var encodedUri = encodeURI(csvContent);
               var is_safari = navigator.userAgent.toLowerCase().indexOf('safari/') > -1;
@@ -235,7 +228,7 @@ aspectsTableViewer.prototype.generateTables = function() {
 
           for (var i = 0; i < rowsCount; i++) {
               var row = rows[i].data;
-              for (var j = 0; j<columnsCount; j++) {
+              for (var j = 1; j<columnsCount; j++) {
                   if (!columns[j].hidden) {
                       var value = row[columns[j].dataIndex];
                       csvContent += "\"" + value + "\"" + ",";

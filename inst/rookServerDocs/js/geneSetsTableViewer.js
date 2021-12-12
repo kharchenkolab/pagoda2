@@ -175,7 +175,7 @@ if (gstv.autoShow) {
 
           for (var i = 0; i < rowsCount; i++) {
               var row = rows[i].data;
-              for (var j = 0; j<columnsCount; j++) {
+              for (var j = 1; j<columnsCount; j++) {
                   if (!columns[j].hidden) {
                       var value = row[columns[j].dataIndex];
                       csvContent += "\"" + value + "\"" + ",";

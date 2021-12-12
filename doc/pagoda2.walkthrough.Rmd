@@ -193,7 +193,7 @@ r$plotEmbedding(type='PCA', show.legend=FALSE, mark.groups=TRUE, min.cluster.siz
 
 We next can construct and plot a tSNE embedding. (This can take some time to complete.)
 ```{r, fig.height=6, fig.width=6}
-r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50,verbose=FALSE)
+r$getEmbedding(type='PCA', embeddingType='tSNE', perplexity=50, verbose=FALSE)
 r$plotEmbedding(type='PCA', embeddingType='tSNE', show.legend=FALSE, mark.groups=TRUE, min.cluster.size=1, shuffle.colors=FALSE, font.size=3, alpha=0.3, title='clusters (tSNE)', plot.theme=theme_bw() + theme(plot.title = element_text(hjust = 0.5)))
 ```
 
