@@ -1,5 +1,9 @@
 ## Upcoming
 
+## [1.0.9]
+
+- Fixed r$plotGeneHeatmap() to work with NA/NaN/Inf values
+
 ## [1.0.8] - 2021 December 12
 
 - Fixed indexing error in writing the *csv files for the p2 app grids (e.g. "Gene sets in Aspect")
