@@ -23,8 +23,8 @@ view.aspects <- function(mat, row.clustering = NA, cell.clustering = NA, zlim = 
     rcmvar <- apply(mat, 1, var)
     mat[mat<zlim[1]] <- zlim[1]
     mat[mat > zlim[2]] <- zlim[2]
-    if(class(row.clustering) == "hclust") { row.clustering <- as.dendrogram(row.clustering) }
-    if(class(cell.clustering) == "hclust") { cell.clustering <- as.dendrogram(cell.clustering) }
+    if(inherits(row.clustering, "hclust")) { row.clustering <- as.dendrogram(row.clustering) }
+    if(inherits(cell.clustering, "hclust")) { cell.clustering <- as.dendrogram(cell.clustering) }
     if(show.row.var.colors) {
         if(is.null(row.cols)) {
             icols <- colorRampPalette(c("white", "black"), space = "Lab")(1024)[1023*(rcmvar/max(rcmvar))+1]
@@ -151,7 +151,7 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 
   if(is.null(row.clustering) || is.null(row.clustering$order)) {
     row.clustering <- stats::hclust(dist(tamr$xv))
-  } else if(class(row.clustering)!="hclust") {
+  } else if(!inherits(row.clustering, "hclust")) {
     # make a fake clustering to match the provided order
     or <- row.clustering$order;
     row.clustering <- stats::hclust(dist(tamr$xv),method='single')
