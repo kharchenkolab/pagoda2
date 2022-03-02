@@ -1036,7 +1036,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         ## x <- self$diffgenes[[type]][[1]]
         ## take last generated item
-        x <- self$diffgenes[[type]][length(self$diffgenes[[type]])]
+        x <- self$diffgenes[[type]][[length(self$diffgenes[[type]])]]
         if (is.null(x)) { 
           stop("No differential genes found for data type ",type) 
         }
@@ -1289,10 +1289,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       # cluster cell types by averages
       clclo <- 1:length(levels(cols))
+      # quick function to set distance of NA/Inf/NaN to 1
+      t.fixcor <- function(x) { x[!is.finite(x)]<-1; x }
 
       if (cluster.genes) {
         # cluster genes within each cluster
-        clgo <- stats::hclust(as.dist(1-cor(t(em))), method='complete')$order
+        clgo <- stats::hclust(as.dist(t.fixcor(1-cor(t(em)))), method='complete')$order
       } else {
         clgo <- 1:nrow(em)
       }
@@ -1301,7 +1303,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # cluster cells within each cluster
         clco <- tapply(1:ncol(em),cols,function(ii) {
           if (length(ii)>3) {
-            ii[stats::hclust(as.dist(1-cor(em[,ii,drop=FALSE])), method='single')$order]
+            ii[stats::hclust(as.dist(t.fixcor(1-cor(em[,ii,drop=FALSE]))), method='single')$order]
           } else {
             ii
           }
