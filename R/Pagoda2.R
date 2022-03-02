@@ -1036,7 +1036,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         ## x <- self$diffgenes[[type]][[1]]
         ## take last generated item
-        x <- self$diffgenes[[type]][length(self$diffgenes[[type]])]
+        x <- self$diffgenes[[type]][[length(self$diffgenes[[type]])]]
         if (is.null(x)) { 
           stop("No differential genes found for data type ",type) 
         }
