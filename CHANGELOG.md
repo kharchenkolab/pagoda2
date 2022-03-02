@@ -2,8 +2,8 @@
 
 ## [1.0.9] - 2022 March 1
 
-- Fixed r$plotGeneHeatmap() to work with NA/NaN/Inf values
-- Fixed bug with plotDiffGeneHeatmap(); access list elements
+- Fixed self$plotGeneHeatmap() to work with NA/NaN/Inf values
+- Fixed bug with self$plotDiffGeneHeatmap(); access list elements
 
 ## [1.0.8] - 2021 December 12
 
