@@ -388,6 +388,8 @@ This app will now be viewable as long as our R session is running. However we al
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
+After you have saved the `*.bin` file, upload this file in the future to the pagoda2 application running in your browser. Upload the file there at the prompt "Pagoda2 file selection" and you'll be able to use the pagoda2 app to visualize your data.
+
 ### View Conos Object in Pagoda2 Frontend Application
 
 Users may also interactively explore [Conos](https://github.com/kharchenkolab/conos) objects with the Pagoda2 application.
