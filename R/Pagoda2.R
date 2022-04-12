@@ -900,9 +900,22 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE) {
       # restrict counts to the cells for which non-NA value has been specified in groups
       if (is.null(groups)) {
+        ## # look up the clustering based on a specified type
+        ## if (is.null(clusterType)) {
+        ##  # take the last clustering generated
+        ##  cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
+        ##  if (is.null(cols)) { 
+        ##    stop("Clustering ",clusterType," for type ", type," doesn't exist")
+        ##  }
+        ## } else {
+        ##  cols <- self$clusters[[type]][[clusterType]]
+        ##  if (is.null(cols)) { 
+        ##    stop("Clustering ",clusterType," for type ", type," doesn't exist")
+        ##  }
+        ## }
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
-          # take the last clustering generated
+          # take the 
           cols <- self$clusters[[type]][[length(self$clusters[[type]])]]
           if (is.null(cols)) { 
             stop("Clustering ",clusterType," for type ", type," doesn't exist")
@@ -995,6 +1008,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           papply(function(n) sccore::appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts=cm, append.auc=append.auc), n.cores=self$n.cores)
       }
 
+      print("HERE IS THE TYPE")
+      print(type)
+      print("HERE IS THE name")
+      print(name)
+      print("HERE IS THE DS")
+      saveRDS(ds, "/Users/evanbiederstedt/downloads/ds.rds")
+      print("self$diffgenes")
+      saveRDS(self$diffgenes, "/Users/evanbiederstedt/downloads/diffgenes.rds")     
+      print("DONE!!!!!!QQQQ")
       if (is.null(groups)) {
         if (is.null(clusterType)) {
           # self$diffgenes[[type]][[ names(self$clusters[[type]])[1] ]] <- ds
@@ -1006,8 +1028,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         self$diffgenes[[type]][[name]] <- ds
       }
-
-      invisible(ds)
+      saveRDS(ds, "/Users/evanbiederstedt/downloads/ds2.rds")
+      return(ds)
     },
 
 
