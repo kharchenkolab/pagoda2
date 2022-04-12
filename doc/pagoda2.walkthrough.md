@@ -12,6 +12,9 @@ We will begin by showing the quickest way to process data with pagoda2, using th
 
 This is the rapid walkthrough of pagoda2, showing how the package allows users to quickly process their datasets and load them into an interactive frontend application.
 
+*Note:* The functions in this section assume your data is "ideal". If users run into any errors or bugs in this section, please visit the next section [II. In-Depth Processing and Analysis](https://github.com/kharchenkolab/pagoda2/blob/main/doc/pagoda2.walkthrough.md#ii-in-depth-processing-and-analysis). These functions allow the user to process their data step-by-step. In fact, we would strongly recommend that users rely upon the [In-Depth Processing and Analysis](https://github.com/kharchenkolab/pagoda2/blob/main/doc/pagoda2.walkthrough.md#ii-in-depth-processing-and-analysis) section, as this allows users to fully explore the data and apply appropriate QC if necessary. Never just run functions on your data without understanding them!
+
+
 ### Preliminary: Loading the libraries
 
 
@@ -619,11 +622,14 @@ This app will now be viewable as long as our R session is running. However we al
 ##  p2web$serializeToStaticFast('demo_pbmc.bin', verbose=TRUE)
 ```
 
+After you have saved the `*.bin` file, upload this file in the future to the pagoda2 application running in your browser. Upload the file there at the prompt "Pagoda2 file selection" and you'll be able to use the pagoda2 app to visualize your data.
+
 ### View Conos Object in Pagoda2 Frontend Application
 
 Users may also interactively explore [Conos](https://github.com/kharchenkolab/conos) objects with the Pagoda2 application.
 
 After constructing the Conos object `con` as shown in the Conos [walkthrough](https://github.com/kharchenkolab/conos/blob/main/doc/walkthrough.md), users can save to a serialized `*.bin` file and upload into the pagoda application with the `p2app4conos()` function, using `p2app4conos(conos=con)`. Please see Conos for more details.
+
 
 ### More Details
 
