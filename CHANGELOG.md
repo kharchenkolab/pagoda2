@@ -1,5 +1,8 @@
 ## Upcoming
 
+## [1.0.10] - 2022 April 19
+- Removed debugging lines mistakenly included in the release. Re-versioning.
+
 ## [1.0.9] - 2022 March 2
 
 - Fixed self$plotGeneHeatmap() to work with NA/NaN/Inf values

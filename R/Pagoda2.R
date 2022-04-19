@@ -1008,15 +1008,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           papply(function(n) sccore::appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts=cm, append.auc=append.auc), n.cores=self$n.cores)
       }
 
-      print("HERE IS THE TYPE")
-      print(type)
-      print("HERE IS THE name")
-      print(name)
-      print("HERE IS THE DS")
-      saveRDS(ds, "/Users/evanbiederstedt/downloads/ds.rds")
-      print("self$diffgenes")
-      saveRDS(self$diffgenes, "/Users/evanbiederstedt/downloads/diffgenes.rds")     
-      print("DONE!!!!!!QQQQ")
       if (is.null(groups)) {
         if (is.null(clusterType)) {
           # self$diffgenes[[type]][[ names(self$clusters[[type]])[1] ]] <- ds
@@ -1028,7 +1019,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       } else {
         self$diffgenes[[type]][[name]] <- ds
       }
-      saveRDS(ds, "/Users/evanbiederstedt/downloads/ds2.rds")
       return(ds)
     },
 
