@@ -118,7 +118,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       ##  super$initialize(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose)
       ##if (!missing(x) && is.null(counts)) { # interpret x as a countMatrix
       if ('matrix' %in% class(x)) {
-        x <- as(Matrix(x, sparse=TRUE), "dgCMatrix")
+        if (packageVersion("Matrix") >= '1.4.2'){
+          x <- as(as(as(Matrix(x, sparse=TRUE), "dMatrix"), "generalMatrix"), "CsparseMatrix")
+        } else {
+          x <- as(Matrix(x, sparse=TRUE), "dgCMatrix")
+        }
       }
       if (!('dgCMatrix' %in% class(x))) {
         stop("x is not of class dgCMatrix or matrix")
@@ -831,7 +835,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
       xn <- N2R::Knn(pcas, k, nThreads= n.cores, verbose=verbose)
       diag(xn) <- 0 # Remove self edges
-      xn <- as(xn,'dgTMatrix') # will drop 0s
+      if (packageVersion("Matrix") >= '1.4.2'){
+        xn <- as(xn,'TsparseMatrix') # will drop 0s
+      } else {
+        xn <- as(xn,'dgTMatrix') # will drop 0s
+      }
       # Turn into a dataframe, convert from correlation distance into weight
       df <- data.frame('from'=rownames(pcas)[xn@i+1],'to'=rownames(pcas)[xn@j+1],'w'=pmax(1-xn@x,0),stringsAsFactors=FALSE)
 
@@ -1527,7 +1535,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # adjust for centering!
       if (center) {
         pcs$center <- cm
-        pcas <- as.matrix(t(as(t(x %*% pcs$v), "dgeMatrix") - t(cm %*% pcs$v)))
+        if (packageVersion("Matrix") >= '1.4.2'){
+          pcas <- as(as(as(t(x %*% pcs$v), "dMatrix"), "generalMatrix"), "ddenseMatrix")
+        } else {
+          pcas <- as.matrix(t(as(t(x %*% pcs$v), "dgeMatrix") - t(cm %*% pcs$v)))
+        }
       } else {
         pcas <- as.matrix(x %*% pcs$v)
       }
@@ -1537,7 +1549,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # # control for sequencing depth
       # if(is.null(batch)) {
       #   mx <- model.matrix(x ~ d,data=data.frame(x=1,d=depth))
-      # } else {
+virtual      # } else {
       #   mx <- model.matrix(x ~ d*b,data=data.frame(x=1,d=depth,b=batch))
       # }
       # # TODO: how to get rid of residual depth effects in the PCA-based clustering?

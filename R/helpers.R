@@ -281,12 +281,22 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
     # read all count files (*_unique.counts) under a given path
     #cat("loading data from ",matrixPath, " ");
     fn <- paste(matrixPath,'matrix.mtx',sep='/')
-    if(file.exists(fn)) {
-      x <- as(readMM(fn),'dgCMatrix') # convert to the required sparse matrix representation
-    } else if(file.exists(paste(fn,'gz',sep='.'))) {
-      x <- as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))),'dgCMatrix') # convert to the required sparse matrix representation
-    } else {
-      stop(paste('cant open',fn))
+    if (packageVersion("Matrix") >= '1.4.2'){
+      if(file.exists(fn)) {
+        x <- as(as(as(readMM(fn), "dMatrix"), "generalMatrix"), "CsparseMatrix") # convert to the required sparse matrix representation
+      } else if(file.exists(paste(fn,'gz',sep='.'))) {
+        x <- as(as(as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))), "dMatrix"), "generalMatrix"), "CsparseMatrix") # convert to the required sparse matrix representation
+      } else {
+        stop(paste('cannot open',fn))
+      }
+    else {
+      if(file.exists(fn)) {
+        x <- as(readMM(fn),'dgCMatrix') # convert to the required sparse matrix representation
+      } else if(file.exists(paste(fn,'gz',sep='.'))) {
+        x <- as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))),'dgCMatrix') # convert to the required sparse matrix representation
+      } else {
+        stop(paste('cant open',fn))
+      }
     }
     if (version == 'V2') {
       fn <- paste(matrixPath,'genes.tsv',sep='/')
@@ -384,7 +394,11 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
     stop("You need to install package 'uwot' to be able to use UMAP embedding.")
   }
 
-  adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("dgTMatrix")
+  if (packageVersion("Matrix") >= '1.4.2'){
+    adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("TsparseMatrix")
+  } else {
+    adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("dgTMatrix")
+  }
   vals.per.col <- split(setNames(adj.mat@x, adj.mat@i + 1), adj.mat@j + 1)
   k.min <- sapply(vals.per.col, length) %>% min()
   k <- if (is.null(k)) k.min else min(k, k.min)
@@ -451,7 +465,11 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
   }
 
   if (verbose) message("Reading in matrix...")
-  x <- as(Matrix::readMM(matrixFile), 'dgCMatrix')
+  if (packageVersion("Matrix") >= '1.4.2'){
+    x <- as(as(as(Matrix::readMM(matrixFile), "dMatrix"), "generalMatrix"), "CsparseMatrix")
+  } else {
+    x <- as(Matrix::readMM(matrixFile), 'dgCMatrix')
+  }
   if (verbose) {
     if (version == 'V2') {
       message("Reading in genes...")
