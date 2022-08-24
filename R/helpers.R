@@ -289,7 +289,7 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
       } else {
         stop(paste('cannot open',fn))
       }
-    else {
+    } else {
       if(file.exists(fn)) {
         x <- as(readMM(fn),'dgCMatrix') # convert to the required sparse matrix representation
       } else if(file.exists(paste(fn,'gz',sep='.'))) {
