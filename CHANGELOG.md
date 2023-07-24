@@ -1,5 +1,7 @@
 ## Upcoming
 
+- Minor bug fix for plotEmbedding, [issue 139](https://github.com/kharchenkolab/pagoda2/issues/139)
+
 ## [1.0.10] - 2022 April 19
 - Removed debugging lines mistakenly included in the release. Re-versioning.
 
