@@ -1,5 +1,6 @@
 ## Upcoming
 
+## [1.0.11] - 2023 June 25
 - Minor bug fix for plotEmbedding, [issue 139](https://github.com/kharchenkolab/pagoda2/issues/139)
 
 ## [1.0.10] - 2022 April 19
