@@ -1383,7 +1383,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (is.null(embeddingType)){
         ## take the most recently generated embedding
-        emb <- self$embeddings[[type]][length(self$embeddings[[type]])]
+        emb <- self$embeddings[[type]][[length(self$embeddings[[type]])]]
       } else{
         ## check embeddingType exists
         if (is.null(self$embeddings[[type]][[embeddingType]])){

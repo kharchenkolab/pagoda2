@@ -99,7 +99,7 @@ The first time you run this command, it will pull/download several images---plea
 If you find `pagoda2` useful for your publication, please cite:
 
 ```
-Nikolas Barkas, Viktor Petukhov, Peter Kharchenko and Evan
-Biederstedt (2021). pagoda2: Single Cell Analysis and Differential
-Expression. R package version 1.0.10.
+Nikolas Barkas, Viktor Petukhov, Peter Kharchenko, Simon Steiger, 
+Rasmus Rydbirk, and Evan Biederstedt (2021). pagoda2: Single Cell 
+Analysis and Differential Expression. R package version 1.0.11.
 ```

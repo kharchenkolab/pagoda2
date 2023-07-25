@@ -1,7 +1,7 @@
 Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
-Version: 1.0.10
-Authors@R: c(person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Simon", "Steiger", email = "simon.steiger@gmail.com", role = "ctb"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
+Version: 1.0.11
+Authors@R: c(person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Simon", "Steiger", email = "simon.steiger@gmail.com", role = "ctb"), person("Rasmus", "Rydbirk", email = "rrydbirk@bmb.sdu.dk", role = "ctb"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
 Description: Analyzing and interactively exploring large-scale single-cell RNA-seq datasets. 'pagoda2' primarily performs normalization and differential gene expression analysis, with an interactive application for exploring single-cell RNA-seq datasets. It performs basic tasks such as cell size normalization, gene variance normalization, and can be used to identify subpopulations and run differential expression within individual samples. 'pagoda2' was written to rapidly process modern large-scale scRNAseq datasets of approximately 1e6 cells. The companion web application allows users to explore which gene expression patterns form the different subpopulations within your data. The package also serves as the primary method for preprocessing data for conos, <https://github.com/kharchenkolab/conos>. This package interacts with data available through the 'p2data' package, which is available in a 'drat' repository. To access this data package, see the instructions at <https://github.com/kharchenkolab/pagoda2>. The size of the 'p2data' package is approximately 6 MB.
 License: GPL-3 
 Copyright: See the file COPYRIGHTS for various pagoda2 copyright details
@@ -65,5 +65,5 @@ URL: https://github.com/kharchenkolab/pagoda2
 BugReports: https://github.com/kharchenkolab/pagoda2/issues
 NeedsCompilation: yes
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
-Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Simon Steiger [ctb], Evan Biederstedt [cre, aut]
+Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Simon Steiger [ctb], Rasmus Rydbirk [ctb], Evan Biederstedt [cre, aut]
 Maintainer: Evan Biederstedt <evan.biederstedt@gmail.com>
