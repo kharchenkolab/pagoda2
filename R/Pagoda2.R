@@ -831,7 +831,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
       xn <- N2R::Knn(pcas, k, nThreads= n.cores, verbose=verbose)
       diag(xn) <- 0 # Remove self edges
-      xn <- as(xn,'dgTMatrix') # will drop 0s
+      xn <- as(xn,"TsparseMatrix") # will drop 0s
       # Turn into a dataframe, convert from correlation distance into weight
       df <- data.frame('from'=rownames(pcas)[xn@i+1],'to'=rownames(pcas)[xn@j+1],'w'=pmax(1-xn@x,0),stringsAsFactors=FALSE)
 
