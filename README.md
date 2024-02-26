@@ -33,7 +33,7 @@ Several methods within this package were developed based on the originals implem
 
 ## Web Demo of Application
 
-[10X PBMC Dataset](https://tinyurl.com/demopagoda2)
+[10X PBMC Dataset](https://www.youtube.com/watch?v=xzpG1ZYE4Og)
 
 
 ## Installation 
