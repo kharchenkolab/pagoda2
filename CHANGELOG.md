@@ -1,5 +1,9 @@
 ## Upcoming
 
+## [1.0.12] - 2024 February 26
+- Makevars fixes
+- Updated README URL to YouTube tutorial for CRAN
+
 ## [1.0.11] - 2023 June 25
 - Minor bug fix for plotEmbedding, [issue 139](https://github.com/kharchenkolab/pagoda2/issues/139)
 - Remove C++11 flags
