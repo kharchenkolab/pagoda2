@@ -98,33 +98,33 @@ Simon Steiger
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{Pagoda2$new()}}
-\item \href{#method-setCountMatrix}{\code{Pagoda2$setCountMatrix()}}
-\item \href{#method-adjustVariance}{\code{Pagoda2$adjustVariance()}}
-\item \href{#method-makeKnnGraph}{\code{Pagoda2$makeKnnGraph()}}
-\item \href{#method-getKnnClusters}{\code{Pagoda2$getKnnClusters()}}
-\item \href{#method-geneKnnbyPCA}{\code{Pagoda2$geneKnnbyPCA()}}
-\item \href{#method-getHierarchicalDiffExpressionAspects}{\code{Pagoda2$getHierarchicalDiffExpressionAspects()}}
-\item \href{#method-makeGeneKnnGraph}{\code{Pagoda2$makeGeneKnnGraph()}}
-\item \href{#method-getDensityClusters}{\code{Pagoda2$getDensityClusters()}}
-\item \href{#method-getDifferentialGenes}{\code{Pagoda2$getDifferentialGenes()}}
-\item \href{#method-plotDiffGeneHeatmap}{\code{Pagoda2$plotDiffGeneHeatmap()}}
-\item \href{#method-getRefinedLibSizes}{\code{Pagoda2$getRefinedLibSizes()}}
-\item \href{#method-plotGeneHeatmap}{\code{Pagoda2$plotGeneHeatmap()}}
-\item \href{#method-plotEmbedding}{\code{Pagoda2$plotEmbedding()}}
-\item \href{#method-getOdGenes}{\code{Pagoda2$getOdGenes()}}
-\item \href{#method-getNormalizedExpressionMatrix}{\code{Pagoda2$getNormalizedExpressionMatrix()}}
-\item \href{#method-calculatePcaReduction}{\code{Pagoda2$calculatePcaReduction()}}
-\item \href{#method-expandOdGenes}{\code{Pagoda2$expandOdGenes()}}
-\item \href{#method-localPcaKnn}{\code{Pagoda2$localPcaKnn()}}
-\item \href{#method-testPathwayOverdispersion}{\code{Pagoda2$testPathwayOverdispersion()}}
-\item \href{#method-getEmbedding}{\code{Pagoda2$getEmbedding()}}
-\item \href{#method-clone}{\code{Pagoda2$clone()}}
+\item \href{#method-Pagoda2-new}{\code{Pagoda2$new()}}
+\item \href{#method-Pagoda2-setCountMatrix}{\code{Pagoda2$setCountMatrix()}}
+\item \href{#method-Pagoda2-adjustVariance}{\code{Pagoda2$adjustVariance()}}
+\item \href{#method-Pagoda2-makeKnnGraph}{\code{Pagoda2$makeKnnGraph()}}
+\item \href{#method-Pagoda2-getKnnClusters}{\code{Pagoda2$getKnnClusters()}}
+\item \href{#method-Pagoda2-geneKnnbyPCA}{\code{Pagoda2$geneKnnbyPCA()}}
+\item \href{#method-Pagoda2-getHierarchicalDiffExpressionAspects}{\code{Pagoda2$getHierarchicalDiffExpressionAspects()}}
+\item \href{#method-Pagoda2-makeGeneKnnGraph}{\code{Pagoda2$makeGeneKnnGraph()}}
+\item \href{#method-Pagoda2-getDensityClusters}{\code{Pagoda2$getDensityClusters()}}
+\item \href{#method-Pagoda2-getDifferentialGenes}{\code{Pagoda2$getDifferentialGenes()}}
+\item \href{#method-Pagoda2-plotDiffGeneHeatmap}{\code{Pagoda2$plotDiffGeneHeatmap()}}
+\item \href{#method-Pagoda2-getRefinedLibSizes}{\code{Pagoda2$getRefinedLibSizes()}}
+\item \href{#method-Pagoda2-plotGeneHeatmap}{\code{Pagoda2$plotGeneHeatmap()}}
+\item \href{#method-Pagoda2-plotEmbedding}{\code{Pagoda2$plotEmbedding()}}
+\item \href{#method-Pagoda2-getOdGenes}{\code{Pagoda2$getOdGenes()}}
+\item \href{#method-Pagoda2-getNormalizedExpressionMatrix}{\code{Pagoda2$getNormalizedExpressionMatrix()}}
+\item \href{#method-Pagoda2-calculatePcaReduction}{\code{Pagoda2$calculatePcaReduction()}}
+\item \href{#method-Pagoda2-expandOdGenes}{\code{Pagoda2$expandOdGenes()}}
+\item \href{#method-Pagoda2-localPcaKnn}{\code{Pagoda2$localPcaKnn()}}
+\item \href{#method-Pagoda2-testPathwayOverdispersion}{\code{Pagoda2$testPathwayOverdispersion()}}
+\item \href{#method-Pagoda2-getEmbedding}{\code{Pagoda2$getEmbedding()}}
+\item \href{#method-Pagoda2-clone}{\code{Pagoda2$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-Pagoda2-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-new}{}}}
 \subsection{Method \code{new()}}{
 Initialize Pagoda2 class
 \subsection{Usage}{
@@ -192,8 +192,8 @@ p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setCountMatrix"></a>}}
-\if{latex}{\out{\hypertarget{method-setCountMatrix}{}}}
+\if{html}{\out{<a id="method-Pagoda2-setCountMatrix"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-setCountMatrix}{}}}
 \subsection{Method \code{setCountMatrix()}}{
 Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
 \subsection{Usage}{
@@ -238,8 +238,8 @@ normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-adjustVariance"></a>}}
-\if{latex}{\out{\hypertarget{method-adjustVariance}{}}}
+\if{html}{\out{<a id="method-Pagoda2-adjustVariance"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-adjustVariance}{}}}
 \subsection{Method \code{adjustVariance()}}{
 Adjust variance of the residual matrix, determine overdispersed sites
 This is done to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis.
@@ -316,8 +316,8 @@ p2_object$adjustVariance(plot=TRUE, gam.k=10)
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-makeKnnGraph"></a>}}
-\if{latex}{\out{\hypertarget{method-makeKnnGraph}{}}}
+\if{html}{\out{<a id="method-Pagoda2-makeKnnGraph"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-makeKnnGraph}{}}}
 \subsection{Method \code{makeKnnGraph()}}{
 Create k-nearest neighbor graph
 \subsection{Usage}{
@@ -392,8 +392,8 @@ p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getKnnClusters"></a>}}
-\if{latex}{\out{\hypertarget{method-getKnnClusters}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getKnnClusters"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getKnnClusters}{}}}
 \subsection{Method \code{getKnnClusters()}}{
 Calculate clusters based on the kNN graph
 \subsection{Usage}{
@@ -436,8 +436,8 @@ the community structure calculated from 'method'
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-geneKnnbyPCA"></a>}}
-\if{latex}{\out{\hypertarget{method-geneKnnbyPCA}{}}}
+\if{html}{\out{<a id="method-Pagoda2-geneKnnbyPCA"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-geneKnnbyPCA}{}}}
 \subsection{Method \code{geneKnnbyPCA()}}{
 Deprecated function. Use makeGeneKnnGraph() instead.
 \subsection{Usage}{
@@ -446,8 +446,8 @@ Deprecated function. Use makeGeneKnnGraph() instead.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getHierarchicalDiffExpressionAspects"></a>}}
-\if{latex}{\out{\hypertarget{method-getHierarchicalDiffExpressionAspects}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getHierarchicalDiffExpressionAspects"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getHierarchicalDiffExpressionAspects}{}}}
 \subsection{Method \code{getHierarchicalDiffExpressionAspects()}}{
 Take a given clustering and generate a hierarchical clustering
 \subsection{Usage}{
@@ -495,8 +495,8 @@ hierarchical clustering
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-makeGeneKnnGraph"></a>}}
-\if{latex}{\out{\hypertarget{method-makeGeneKnnGraph}{}}}
+\if{html}{\out{<a id="method-Pagoda2-makeGeneKnnGraph"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-makeGeneKnnGraph}{}}}
 \subsection{Method \code{makeGeneKnnGraph()}}{
 Calculates gene Knn network for gene similarity
 \subsection{Usage}{
@@ -535,8 +535,8 @@ graph with gene similarity
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getDensityClusters"></a>}}
-\if{latex}{\out{\hypertarget{method-getDensityClusters}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getDensityClusters"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getDensityClusters}{}}}
 \subsection{Method \code{getDensityClusters()}}{
 Calculate density-based clusters
 \subsection{Usage}{
@@ -578,8 +578,8 @@ density-based clusters
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getDifferentialGenes"></a>}}
-\if{latex}{\out{\hypertarget{method-getDifferentialGenes}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getDifferentialGenes"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getDifferentialGenes}{}}}
 \subsection{Method \code{getDifferentialGenes()}}{
 Determine differentially expressed genes, comparing each group against all others using Wilcoxon rank sum test
 \subsection{Usage}{
@@ -629,8 +629,8 @@ List with each element of the list corresponding to a cell group in the provided
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-plotDiffGeneHeatmap"></a>}}
-\if{latex}{\out{\hypertarget{method-plotDiffGeneHeatmap}{}}}
+\if{html}{\out{<a id="method-Pagoda2-plotDiffGeneHeatmap"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-plotDiffGeneHeatmap}{}}}
 \subsection{Method \code{plotDiffGeneHeatmap()}}{
 Plot heatmap of DE results
 \subsection{Usage}{
@@ -687,8 +687,8 @@ heatmap of DE results
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getRefinedLibSizes"></a>}}
-\if{latex}{\out{\hypertarget{method-getRefinedLibSizes}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getRefinedLibSizes"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getRefinedLibSizes}{}}}
 \subsection{Method \code{getRefinedLibSizes()}}{
 Recalculate library sizes using robust regression within clusters
 \subsection{Usage}{
@@ -718,8 +718,8 @@ recalculated library sizes
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-plotGeneHeatmap"></a>}}
-\if{latex}{\out{\hypertarget{method-plotGeneHeatmap}{}}}
+\if{html}{\out{<a id="method-Pagoda2-plotGeneHeatmap"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-plotGeneHeatmap}{}}}
 \subsection{Method \code{plotGeneHeatmap()}}{
 Plot heatmap for a given set of genes
 \subsection{Usage}{
@@ -782,8 +782,8 @@ plot of gene heatmap
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-plotEmbedding"></a>}}
-\if{latex}{\out{\hypertarget{method-plotEmbedding}{}}}
+\if{html}{\out{<a id="method-Pagoda2-plotEmbedding"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-plotEmbedding}{}}}
 \subsection{Method \code{plotEmbedding()}}{
 Show embedding
 \subsection{Usage}{
@@ -825,8 +825,8 @@ plot of the embedding
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getOdGenes"></a>}}
-\if{latex}{\out{\hypertarget{method-getOdGenes}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getOdGenes"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getOdGenes}{}}}
 \subsection{Method \code{getOdGenes()}}{
 Get overdispersed genes
 \subsection{Usage}{
@@ -853,8 +853,8 @@ vector of overdispersed genes
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getNormalizedExpressionMatrix"></a>}}
-\if{latex}{\out{\hypertarget{method-getNormalizedExpressionMatrix}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getNormalizedExpressionMatrix"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getNormalizedExpressionMatrix}{}}}
 \subsection{Method \code{getNormalizedExpressionMatrix()}}{
 Return variance-normalized matrix for specified genes or a number of OD genes
 \subsection{Usage}{
@@ -875,8 +875,8 @@ cell by gene matrix
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-calculatePcaReduction"></a>}}
-\if{latex}{\out{\hypertarget{method-calculatePcaReduction}{}}}
+\if{html}{\out{<a id="method-Pagoda2-calculatePcaReduction"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-calculatePcaReduction}{}}}
 \subsection{Method \code{calculatePcaReduction()}}{
 Calculate PCA reduction of the data
 \subsection{Usage}{
@@ -933,8 +933,8 @@ Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-expandOdGenes"></a>}}
-\if{latex}{\out{\hypertarget{method-expandOdGenes}{}}}
+\if{html}{\out{<a id="method-Pagoda2-expandOdGenes"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-expandOdGenes}{}}}
 \subsection{Method \code{expandOdGenes()}}{
 Reset overdispersed genes 'odgenes' to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
     and a set of recursively determined odgenes based on a given group (or a cluster info)
@@ -998,8 +998,8 @@ List of overdispersed genes
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-localPcaKnn"></a>}}
-\if{latex}{\out{\hypertarget{method-localPcaKnn}{}}}
+\if{html}{\out{<a id="method-Pagoda2-localPcaKnn"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-localPcaKnn}{}}}
 \subsection{Method \code{localPcaKnn()}}{
 local PCA implementation
 \subsection{Usage}{
@@ -1080,8 +1080,8 @@ localPcaKnn return here
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-testPathwayOverdispersion"></a>}}
-\if{latex}{\out{\hypertarget{method-testPathwayOverdispersion}{}}}
+\if{html}{\out{<a id="method-Pagoda2-testPathwayOverdispersion"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-testPathwayOverdispersion}{}}}
 \subsection{Method \code{testPathwayOverdispersion()}}{
 Test pathway overdispersion
 Note: this is a compressed version of the PAGODA1 approach in SCDE <https://hms-dbmi.github.io/scde/>
@@ -1160,8 +1160,8 @@ pathway output
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getEmbedding"></a>}}
-\if{latex}{\out{\hypertarget{method-getEmbedding}{}}}
+\if{html}{\out{<a id="method-Pagoda2-getEmbedding"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getEmbedding}{}}}
 \subsection{Method \code{getEmbedding()}}{
 Return embedding
 \subsection{Usage}{
@@ -1225,8 +1225,8 @@ embedding stored in self$embedding
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-Pagoda2-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{

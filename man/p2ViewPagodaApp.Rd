@@ -37,15 +37,15 @@ Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in 'SCDE'
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{p2ViewPagodaApp$new()}}
-\item \href{#method-getgenecldata}{\code{p2ViewPagodaApp$getgenecldata()}}
-\item \href{#method-call}{\code{p2ViewPagodaApp$call()}}
-\item \href{#method-clone}{\code{p2ViewPagodaApp$clone()}}
+\item \href{#method-p2ViewPagodaApp -new}{\code{p2ViewPagodaApp$new()}}
+\item \href{#method-p2ViewPagodaApp -getgenecldata}{\code{p2ViewPagodaApp$getgenecldata()}}
+\item \href{#method-p2ViewPagodaApp -call}{\code{p2ViewPagodaApp$call()}}
+\item \href{#method-p2ViewPagodaApp -clone}{\code{p2ViewPagodaApp$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-p2ViewPagodaApp -new"></a>}}
+\if{latex}{\out{\hypertarget{method-p2ViewPagodaApp -new}{}}}
 \subsection{Method \code{new()}}{
 Initialize p2ViewPagodaApp class
 \subsection{Usage}{
@@ -93,8 +93,8 @@ new 'p2ViewPagodaApp' object
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-getgenecldata"></a>}}
-\if{latex}{\out{\hypertarget{method-getgenecldata}{}}}
+\if{html}{\out{<a id="method-p2ViewPagodaApp -getgenecldata"></a>}}
+\if{latex}{\out{\hypertarget{method-p2ViewPagodaApp -getgenecldata}{}}}
 \subsection{Method \code{getgenecldata()}}{
 Helper function to get the heatmap data for a given set of genes
 \subsection{Usage}{
@@ -117,8 +117,8 @@ heatmap data for a given set of genes
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-call"></a>}}
-\if{latex}{\out{\hypertarget{method-call}{}}}
+\if{html}{\out{<a id="method-p2ViewPagodaApp -call"></a>}}
+\if{latex}{\out{\hypertarget{method-p2ViewPagodaApp -call}{}}}
 \subsection{Method \code{call()}}{
 Call Rook application. Using client-side ExtJS framework and Inchlib HTML5 canvas libraries to create the graphical user interface for PAGODA
 \subsection{Usage}{
@@ -137,8 +137,8 @@ modified 'PAGODA1' app
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-p2ViewPagodaApp -clone"></a>}}
+\if{latex}{\out{\hypertarget{method-p2ViewPagodaApp -clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{
