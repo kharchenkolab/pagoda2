@@ -1,5 +1,8 @@
 ## Upcoming
 
+## [1.0.13] - 2025 August 18
+- Fixing issues reported by CRAN associated with HTML Tidy
+
 ## [1.0.12] - 2024 February 26
 - Makevars fixes
 - Updated README URL to YouTube tutorial for CRAN

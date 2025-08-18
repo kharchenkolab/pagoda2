@@ -269,15 +269,8 @@ p2.make.pagoda1.app <- function(p2, col.cols=NULL, row.clustering=NULL, title = 
 #' Refer to 'ViewPagodaAppOld' and 'make.pagoda.app()' in 'SCDE'
 #'
 #' @export p2ViewPagodaApp
-p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp ", lock_objects=FALSE,
-    ### Old: fields = c('results', 'tam', 'genes', 'pathways', 'goenv', 'renv', 
-    ###  'name', 'trim', 'batch','embedding','type','veloinfo'),
-    ### tam? 
-    ### field tam Combined pathways that are driven by the same gene sets
-    ###
-
+p2ViewPagodaApp <- R6::R6Class("p2ViewPagodaApp", lock_objects=FALSE,
     public = list(
-
       #' @field results Result object returned by \code{scde.expression.difference()} (default=NULL). Note to browse group posterior levels, use \code{return.posteriors = TRUE} in the \code{scde.expression.difference()} call.
       results = NULL,
 
