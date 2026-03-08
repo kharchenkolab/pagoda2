@@ -1,5 +1,8 @@
 ## Upcoming
 
+## [1.0.14] - 2026 March 8
+- Removed the 'Rcpp:::LdFlags()' from the Makevars files
+
 ## [1.0.13] - 2025 August 18
 - Fixing issues reported by CRAN associated with HTML Tidy
 
