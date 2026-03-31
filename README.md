@@ -1,4 +1,4 @@
-[![<kharchenkolab>](https://circleci.com/gh/kharchenkolab/pagoda2.svg?style=svg)](https://app.circleci.com/pipelines/github/kharchenkolab/pagoda2)
+s[![<kharchenkolab>](https://circleci.com/gh/kharchenkolab/pagoda2.svg?style=svg)](https://app.circleci.com/pipelines/github/kharchenkolab/pagoda2)
 [![CRAN status](https://www.r-pkg.org/badges/version/pagoda2)](https://cran.r-project.org/package=pagoda2)
 [![CRAN downloads](https://cranlogs.r-pkg.org/badges/pagoda2)](https://cran.r-project.org/package=pagoda2)
 
@@ -101,5 +101,5 @@ If you find `pagoda2` useful for your publication, please cite:
 ```
 Nikolas Barkas, Viktor Petukhov, Peter Kharchenko, Simon Steiger, 
 Rasmus Rydbirk, and Evan Biederstedt (2021). pagoda2: Single Cell 
-Analysis and Differential Expression. R package version 1.0.14.
+Analysis and Differential Expression. R package version 1.0.15.
 ```

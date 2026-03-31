@@ -1,4 +1,7 @@
-## Upcoming
+# Changelog
+
+## [1.0.15] - 2026 March 31
+- Same as 1.0.15, unarchive on CRAN (due to N2R issues, now fixed)
 
 ## [1.0.14] - 2026 March 8
 - Removed the 'Rcpp:::LdFlags()' from the Makevars files
