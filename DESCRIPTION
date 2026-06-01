@@ -42,6 +42,7 @@ Suggests:
     BiocGenerics, 
     BiocParallel,
     colorRamps, 
+    ComplexHeatmap,
     data.table,
     dbscan, 
     dplyr,

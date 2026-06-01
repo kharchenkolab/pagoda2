@@ -130,11 +130,47 @@ test_that("runMarkers records grouping provenance", {
 
   markers <- p2$runMarkers(name = "leiden", append.specificity.metrics = FALSE)
   marker.meta <- attr(markers, "pagoda2.marker")
+  marker.result <- p2$getMarkerResult("leiden")
 
   expect_true("leiden" %in% names(p2$diffgenes$counts))
+  expect_true("leiden" %in% names(p2$markerResults$counts))
+  expect_identical(marker.result$schema, "pagoda2.marker.v1")
+  expect_identical(marker.result$tables, markers)
   expect_identical(marker.meta$grouping, "leiden")
   expect_identical(marker.meta$group.levels, c("0", "1"))
   expect_identical(p2$history$markers$leiden$grouping, "leiden")
+})
+
+test_that("marker plotting methods resolve marker schema and grouping", {
+  testthat::skip_if_not_installed("ggplot2")
+
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
+
+  expect_s3_class(
+    p2$plotMarkerDotPlot(n.genes.per.group = 2, z.threshold = NULL, highest.only = FALSE),
+    "ggplot"
+  )
+})
+
+test_that("ComplexHeatmap marker heatmap returns details without drawing", {
+  testthat::skip_if_not_installed("ComplexHeatmap")
+
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
+
+  details <- p2$plotMarkerHeatmap(
+    n.genes.per.group = 2,
+    z.threshold = NULL,
+    highest.only = FALSE,
+    return.details = TRUE
+  )
+
+  expect_s4_class(details$heatmap, "Heatmap")
+  expect_equal(ncol(details$matrix), nrow(p2$counts))
+  expect_true(all(details$genes %in% colnames(p2$counts)))
 })
 
 test_that("result discovery and selector resolvers use canonical defaults", {

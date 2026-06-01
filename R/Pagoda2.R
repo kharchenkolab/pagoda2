@@ -137,6 +137,91 @@ NULL
   stats::setNames(as.factor(x), names(x))
 }
 
+.pagoda2_marker_result <- function(name, type, grouping, groups, tables, params) {
+  nonmissing.groups <- groups[!is.na(groups)]
+  result <- list(
+    schema = "pagoda2.marker.v1",
+    name = name,
+    type = type,
+    grouping = grouping,
+    levels = levels(groups),
+    cells = names(nonmissing.groups),
+    n.cells = as.integer(table(nonmissing.groups)),
+    params = params,
+    tables = tables,
+    created.by = "runMarkers",
+    created = Sys.time()
+  )
+  class(result) <- c("pagoda2_marker_result", "list")
+  result
+}
+
+.pagoda2_marker_metadata <- function(result) {
+  result$tables <- NULL
+  result
+}
+
+.pagoda2_order_marker_table <- function(d, ordering = c("-AUC", "-Z", "-Precision", "-Specificity", "-M")) {
+  if (nrow(d) == 0) {
+    return(d)
+  }
+  for (ord in ordering) {
+    decreasing <- startsWith(ord, "-")
+    column <- sub("^-", "", ord)
+    if (column %in% colnames(d)) {
+      return(d[order(d[[column]], decreasing = decreasing, na.last = NA), , drop = FALSE])
+    }
+  }
+  d
+}
+
+.pagoda2_select_marker_genes <- function(tables, n.genes.per.group = 5, genes = NULL,
+                                         z.threshold = NULL, highest.only = TRUE,
+                                         ordering = c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
+                                         remove.duplicates = TRUE) {
+  if (!is.null(genes)) {
+    genes <- unique(as.character(genes))
+    return(list(genes = genes, groups = stats::setNames(rep("selected", length(genes)), genes)))
+  }
+  if (is.null(tables) || length(tables) == 0) {
+    stop("Marker result does not contain marker tables")
+  }
+  selected <- lapply(names(tables), function(group) {
+    d <- tables[[group]]
+    if (is.null(d) || nrow(d) == 0) {
+      return(character())
+    }
+    if (!is.null(z.threshold) && "Z" %in% colnames(d)) {
+      d <- d[d$Z >= z.threshold, , drop = FALSE]
+    }
+    if (highest.only && "highest" %in% colnames(d)) {
+      d <- d[d$highest %in% TRUE, , drop = FALSE]
+    }
+    d <- .pagoda2_order_marker_table(d, ordering = ordering)
+    if (!is.null(n.genes.per.group)) {
+      d <- utils::head(d, n.genes.per.group)
+    }
+    if ("Gene" %in% colnames(d)) {
+      as.character(d$Gene)
+    } else {
+      rownames(d)
+    }
+  })
+  names(selected) <- names(tables)
+  selected <- selected[lengths(selected) > 0]
+  genes <- unlist(selected, use.names = FALSE)
+  gene.groups <- rep(names(selected), lengths(selected))
+  if (remove.duplicates && length(genes) > 0) {
+    keep <- !duplicated(genes)
+    genes <- genes[keep]
+    gene.groups <- gene.groups[keep]
+  }
+  if (length(genes) == 0) {
+    stop("No marker genes passed the requested filters")
+  }
+  list(genes = genes, groups = stats::setNames(gene.groups, genes))
+}
+
 
 #' @title Pagoda2 R6 class
 #' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
@@ -181,6 +266,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @field diffgenes Lists of differentially expressed genes (default=list())
     diffgenes = list(),
+
+    #' @field markerResults Structured marker result registry keyed by matrix type and result name.
+    markerResults = list(),
 
     #' @field n.cores number of cores (default=1)
     n.cores = 1,
@@ -806,7 +894,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    listMarkers=function() {
 	      types <- names(self$diffgenes)
 	      if (length(types) == 0) {
-	        return(data.frame(type = character(), name = character(), n.groups = integer(), grouping = character(), stringsAsFactors = FALSE))
+	        return(data.frame(type = character(), name = character(), n.groups = integer(), grouping = character(), schema = character(), stringsAsFactors = FALSE))
 	      }
 	      rows <- do.call(rbind, lapply(types, function(type) {
 	        markers <- names(self$diffgenes[[type]])
@@ -821,11 +909,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	            meta <- attr(x, "pagoda2.marker")
 	            if (is.null(meta$grouping)) NA_character_ else meta$grouping
 	          }, character(1)),
+	          schema = vapply(self$diffgenes[[type]][markers], function(x) {
+	            meta <- attr(x, "pagoda2.marker")
+	            if (is.null(meta$schema)) "legacy" else meta$schema
+	          }, character(1)),
 	          stringsAsFactors = FALSE
 	        )
 	      }))
 	      if (is.null(rows)) {
-	        return(data.frame(type = character(), name = character(), n.groups = integer(), grouping = character(), stringsAsFactors = FALSE))
+	        return(data.frame(type = character(), name = character(), n.groups = integer(), grouping = character(), schema = character(), stringsAsFactors = FALSE))
 	      }
 	      rownames(rows) <- NULL
 	      rows
@@ -929,7 +1021,30 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        stop("Unknown marker result `", markers, "`. Available markers: ", paste(available, collapse = ", "))
 	      }
 	      value <- self$diffgenes[[type]][[markers]]
-	      list(type = type, name = markers, value = value, metadata = attr(value, "pagoda2.marker"))
+	      result <- NULL
+	      if (!is.null(self$markerResults[[type]]) && !is.null(self$markerResults[[type]][[markers]])) {
+	        result <- self$markerResults[[type]][[markers]]
+	      }
+	      metadata <- attr(value, "pagoda2.marker")
+	      if (is.null(result) && !is.null(metadata)) {
+	        result <- metadata
+	        result$tables <- value
+	        class(result) <- c("pagoda2_marker_result", "list")
+	      }
+	      list(type = type, name = markers, value = value, tables = value, result = result, metadata = metadata)
+	    },
+
+	    #' @description Get a structured marker result.
+	    #'
+	    #' @param markers Marker result name. NULL uses defaultGrouping.
+	    #' @param type Marker result namespace.
+	    #' @return Structured marker result with tables and provenance.
+	    getMarkerResult=function(markers=NULL, type='counts') {
+	      resolved <- self$resolveMarkers(markers = markers, type = type)
+	      if (is.null(resolved$result)) {
+	        stop("Marker result `", resolved$name, "` does not have pagoda2.1 marker metadata")
+	      }
+	      resolved$result
 	    },
 
 	    #' @description Create a cell annotation by mapping one grouping to another.
@@ -1991,21 +2106,30 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        append.auc = append.auc,
 	        .legacy.warn = FALSE
 	      )
-	      meta <- list(
-	        grouping = resolved.grouping,
-	        group.levels = levels(cols),
-	        cell.names = names(cols)[!is.na(cols)],
-	        params = list(
-	          z.threshold = z.threshold,
-	          upregulated.only = upregulated.only,
-	          append.specificity.metrics = append.specificity.metrics,
-	          append.auc = append.auc
-	        ),
-	        created.by = "runMarkers",
-	        created = Sys.time()
+	      params <- list(
+	        z.threshold = z.threshold,
+	        upregulated.only = upregulated.only,
+	        append.specificity.metrics = append.specificity.metrics,
+	        append.auc = append.auc
 	      )
+	      result <- .pagoda2_marker_result(
+	        name = name,
+	        type = type,
+	        grouping = resolved.grouping,
+	        groups = cols,
+	        tables = ds,
+	        params = params
+	      )
+	      meta <- .pagoda2_marker_metadata(result)
+	      meta$group.levels <- meta$levels
+	      meta$cell.names <- meta$cells
 	      attr(ds, "pagoda2.marker") <- meta
+	      result$tables <- ds
 	      self$diffgenes[[type]][[name]] <- ds
+	      if (is.null(self$markerResults[[type]])) {
+	        self$markerResults[[type]] <- list()
+	      }
+	      self$markerResults[[type]][[name]] <- result
 	      if (is.null(self$history$markers)) {
 	        self$history$markers <- list()
 	      }
@@ -2364,15 +2488,221 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      self$plotGeneHeatmap(genes = genes, type = type, groups = resolved.groups, ..., .legacy.warn = FALSE)
 	    },
 
+	    #' @description Plot marker expression as a grouped dot plot.
+	    #'
+	    #' @param markers Marker result name. NULL uses defaultGrouping.
+	    #' @param type Marker result namespace.
+	    #' @param genes Optional explicit genes to plot. NULL selects top marker genes.
+	    #' @param grouping Optional grouping column. NULL uses marker provenance when available, then defaultGrouping.
+	    #' @param groups Optional direct grouping vector.
+	    #' @param n.genes.per.group Number of marker genes to select per group when genes is NULL.
+	    #' @param z.threshold Optional marker Z threshold used during selection.
+	    #' @param highest.only Whether to keep genes marked as highest in their group.
+	    #' @param ordering Marker table ordering preference.
+	    #' @param remove.duplicates Whether to keep only the first selected occurrence of each gene.
+	    #' @param count.matrix Optional cell-by-gene matrix. Defaults to self$counts.
+	    #' @param n.cores Number of cores passed to sccore::dotPlot().
+	    #' @param ... Arguments passed to sccore::dotPlot().
+	    #' @return ggplot object.
+	    plotMarkerDotPlot=function(markers=NULL, type='counts', genes=NULL, grouping=NULL, groups=NULL,
+	                               n.genes.per.group=5, z.threshold=NULL, highest.only=TRUE,
+	                               ordering=c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
+	                               remove.duplicates=TRUE, count.matrix=NULL, n.cores=self$n.cores, ...) {
+	      resolved <- self$resolveMarkers(markers = markers, type = type)
+	      selected <- .pagoda2_select_marker_genes(
+	        resolved$tables,
+	        n.genes.per.group = n.genes.per.group,
+	        genes = genes,
+	        z.threshold = z.threshold,
+	        highest.only = highest.only,
+	        ordering = ordering,
+	        remove.duplicates = remove.duplicates
+	      )
+	      if (is.null(count.matrix)) {
+	        count.matrix <- self$counts
+	      }
+	      if (is.null(rownames(count.matrix)) || is.null(colnames(count.matrix))) {
+	        stop("`count.matrix` must have cell row names and gene column names")
+	      }
+	      missing.genes <- setdiff(selected$genes, colnames(count.matrix))
+	      if (length(missing.genes) > 0) {
+	        warning("Omitting marker genes absent from count matrix: ", paste(missing.genes, collapse = ", "))
+	      }
+	      selected.genes <- intersect(selected$genes, colnames(count.matrix))
+	      if (length(selected.genes) == 0) {
+	        stop("No selected marker genes are present in count matrix")
+	      }
+	      if (is.null(grouping) && is.null(groups) && !is.null(resolved$result$grouping)) {
+	        grouping <- resolved$result$grouping
+	      }
+	      resolved.groups <- self$resolveGrouping(
+	        grouping = grouping,
+	        groups = groups,
+	        cells = rownames(count.matrix),
+	        allow.missing = TRUE
+	      )
+	      sccore::dotPlot(
+	        markers = selected.genes,
+	        count.matrix = count.matrix,
+	        cell.groups = resolved.groups,
+	        n.cores = n.cores,
+	        gene.order = selected.genes,
+	        ...
+	      )
+	    },
+
 		    #' @description Plot marker heatmap using the pagoda2.1 API name.
 	    #'
 	    #' @param markers Marker result name. NULL uses defaultGrouping.
 	    #' @param type Marker result namespace.
-	    #' @param ... Arguments passed to plotDiffGeneHeatmap().
-	    #' @return Heatmap side effect from plotDiffGeneHeatmap().
-	    plotMarkerHeatmap=function(markers=NULL, type='counts', ...) {
-	      markers <- self$resolveMarkers(markers = markers, type = type)$name
-	      self$plotDiffGeneHeatmap(type = type, clusterType = markers, ..., .legacy.warn = FALSE)
+	    #' @param engine Heatmap engine: complex for ComplexHeatmap or legacy for plotDiffGeneHeatmap().
+	    #' @param genes Optional explicit genes to plot. NULL selects top marker genes.
+	    #' @param grouping Optional grouping column. NULL uses marker provenance when available, then defaultGrouping.
+	    #' @param groups Optional direct grouping vector.
+	    #' @param n.genes.per.group Number of marker genes to select per group when genes is NULL.
+	    #' @param z.threshold Optional marker Z threshold used during selection.
+	    #' @param highest.only Whether to keep genes marked as highest in their group.
+	    #' @param ordering Marker table ordering preference.
+	    #' @param remove.duplicates Whether to keep only the first selected occurrence of each gene.
+	    #' @param expression.quantile Quantile used to trim each gene before 0-1 scaling.
+	    #' @param pal Color palette for expression heatmap.
+	    #' @param show.gene.groups Whether to show marker-origin groups as a row annotation.
+	    #' @param show.group.legend Whether to show group legends.
+	    #' @param show_heatmap_legend Whether to show expression heatmap legend.
+	    #' @param border Whether to draw annotation/heatmap borders.
+	    #' @param row.label.font.size Gene label font size.
+	    #' @param max.cells Maximum cells per group to show.
+	    #' @param use.raster Whether ComplexHeatmap should rasterize the expression layer.
+	    #' @param raster.by.magick Whether ComplexHeatmap should use magick for rasterization.
+	    #' @param return.details Whether to return internals along with the heatmap object.
+	    #' @param ... Arguments passed to ComplexHeatmap::Heatmap() or the legacy heatmap.
+	    #' @return ComplexHeatmap object, details list, or legacy heatmap side effect.
+	    plotMarkerHeatmap=function(markers=NULL, type='counts', engine=c("complex", "legacy"),
+	                               genes=NULL, grouping=NULL, groups=NULL, n.genes.per.group=5,
+	                               z.threshold=2, highest.only=TRUE,
+	                               ordering=c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
+	                               remove.duplicates=TRUE, expression.quantile=0.99,
+	                               pal=colorRampPalette(c('dodgerblue1','grey95','indianred1'))(1024),
+	                               show.gene.groups=TRUE, show.group.legend=TRUE,
+	                               show_heatmap_legend=FALSE, border=TRUE,
+	                               row.label.font.size=10, max.cells=Inf,
+	                               use.raster=TRUE, raster.by.magick=FALSE,
+	                               return.details=FALSE, ...) {
+	      engine <- match.arg(engine)
+	      resolved <- self$resolveMarkers(markers = markers, type = type)
+	      if (engine == "legacy") {
+	        legacy.groups <- groups
+	        if (is.null(legacy.groups) && !is.null(grouping)) {
+	          legacy.groups <- self$resolveGrouping(grouping = grouping, allow.missing = TRUE)
+	        }
+	        return(self$plotDiffGeneHeatmap(type = type, clusterType = resolved$name, groups = legacy.groups, ..., .legacy.warn = FALSE))
+	      }
+	      if (!requireNamespace("ComplexHeatmap", quietly = TRUE) || utils::packageVersion("ComplexHeatmap") < "2.4") {
+	        stop("ComplexHeatmap >= 2.4 is required for `engine = \"complex\"`; use `engine = \"legacy\"` or install ComplexHeatmap.")
+	      }
+	      selected <- .pagoda2_select_marker_genes(
+	        resolved$tables,
+	        n.genes.per.group = n.genes.per.group,
+	        genes = genes,
+	        z.threshold = z.threshold,
+	        highest.only = highest.only,
+	        ordering = ordering,
+	        remove.duplicates = remove.duplicates
+	      )
+	      selected.genes <- selected$genes
+	      missing.genes <- setdiff(selected.genes, colnames(self$counts))
+	      if (length(missing.genes) > 0) {
+	        warning("Omitting marker genes absent from count matrix: ", paste(missing.genes, collapse = ", "))
+	      }
+	      selected.genes <- intersect(selected.genes, colnames(self$counts))
+	      if (length(selected.genes) == 0) {
+	        stop("No selected marker genes are present in count matrix")
+	      }
+	      if (is.null(grouping) && is.null(groups) && !is.null(resolved$result$grouping)) {
+	        grouping <- resolved$result$grouping
+	      }
+	      resolved.groups <- self$resolveGrouping(grouping = grouping, groups = groups, allow.missing = TRUE)
+	      cells <- intersect(names(resolved.groups)[!is.na(resolved.groups)], rownames(self$counts))
+	      if (length(cells) == 0) {
+	        stop("No cells with non-missing groups are present in counts")
+	      }
+	      resolved.groups <- droplevels(resolved.groups[cells])
+	      if (is.finite(max.cells)) {
+	        sampled <- unlist(tapply(names(resolved.groups), resolved.groups, function(ii) {
+	          if (length(ii) > max.cells) sample(ii, max.cells) else ii
+	        }), use.names = FALSE)
+	        cells <- cells[cells %in% sampled]
+	        resolved.groups <- droplevels(resolved.groups[cells])
+	      }
+	      cells <- cells[order(resolved.groups[cells])]
+	      resolved.groups <- droplevels(resolved.groups[cells])
+
+	      x <- as.matrix(t(self$counts[cells, selected.genes, drop = FALSE]))
+	      x <- t(vapply(seq_len(nrow(x)), function(i) {
+	        xp <- x[i, ]
+	        if (expression.quantile < 1) {
+	          qs <- as.numeric(stats::quantile(xp, c(1 - expression.quantile, expression.quantile)))
+	          if (diff(qs) == 0) {
+	            qs <- range(xp)
+	          }
+	          xp[xp < qs[1]] <- qs[1]
+	          xp[xp > qs[2]] <- qs[2]
+	        }
+	        xp <- xp - min(xp)
+	        if (max(xp) > 0) {
+	          xp <- xp / max(xp)
+	        }
+	        xp
+	      }, numeric(ncol(x))))
+	      dimnames(x) <- list(selected.genes, cells)
+	      x <- x[selected.genes, cells, drop = FALSE]
+
+	      group.colors <- stats::setNames(grDevices::rainbow(length(levels(resolved.groups))), levels(resolved.groups))
+	      column.annotation <- data.frame(group = resolved.groups[colnames(x)], row.names = colnames(x))
+	      column.colors <- list(group = group.colors)
+	      top.annotation <- ComplexHeatmap::HeatmapAnnotation(
+	        df = column.annotation,
+	        col = column.colors,
+	        border = border,
+	        show_legend = show.group.legend
+	      )
+
+	      row.annotation <- NULL
+	      row.groups <- selected$groups[rownames(x)]
+	      if (show.gene.groups && !is.null(row.groups)) {
+	        row.groups <- factor(row.groups, levels = unique(row.groups))
+	        row.colors <- stats::setNames(grDevices::rainbow(length(levels(row.groups))), levels(row.groups))
+	        row.annotation <- ComplexHeatmap::HeatmapAnnotation(
+	          df = data.frame(marker_group = row.groups, row.names = rownames(x)),
+	          which = "row",
+	          col = list(marker_group = row.colors),
+	          border = border,
+	          show_annotation_name = FALSE,
+	          show_legend = show.group.legend
+	        )
+	      }
+
+	      ht <- ComplexHeatmap::Heatmap(
+	        x,
+	        name = "expression",
+	        col = pal,
+	        cluster_rows = FALSE,
+	        cluster_columns = FALSE,
+	        show_row_names = TRUE,
+	        show_column_names = FALSE,
+	        top_annotation = top.annotation,
+	        left_annotation = row.annotation,
+	        border = border,
+	        show_heatmap_legend = show_heatmap_legend,
+	        row_names_gp = grid::gpar(fontsize = row.label.font.size),
+	        use_raster = use.raster,
+	        raster_by_magick = raster.by.magick,
+	        ...
+	      )
+	      if (return.details) {
+	        return(list(heatmap = ht, matrix = x, groups = resolved.groups, genes = selected.genes, gene.groups = row.groups))
+	      }
+	      ht
 	    },
 
     #' @description Show embedding
