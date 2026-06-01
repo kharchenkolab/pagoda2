@@ -182,6 +182,28 @@ test_that("legacy counts slot is not materialized by default", {
   expect_error(p2$counts <- p2$getExpressionBlock(), "cannot be assigned")
 })
 
+test_that("expression block handles long character cell and gene names", {
+  cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package = "pagoda2"))
+  rownames(cm) <- make.unique(rownames(cm))
+  p2 <- Pagoda2$new(
+    cm,
+    verbose = FALSE,
+    n.cores = 1,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = TRUE,
+    trim = 0
+  )
+  cells <- rownames(p2$getRawCounts())[1:5]
+  genes <- colnames(p2$getRawCounts())[1:7]
+
+  block <- p2$getExpressionBlock(cells = cells, genes = genes)
+
+  expect_identical(rownames(block), cells)
+  expect_identical(colnames(block), genes)
+  expect_identical(dim(block), c(length(cells), length(genes)))
+})
+
 test_that("view variance path accepts logical cell selections", {
   p2 <- Pagoda2$new(
     make_view_matrix(),

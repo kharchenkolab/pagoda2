@@ -183,6 +183,57 @@ test_that("ComplexHeatmap marker heatmap returns details without drawing", {
   expect_true(all(details$genes %in% colnames(p2$getRawCounts())))
 })
 
+test_that("ComplexHeatmap marker heatmap supports real plot controls", {
+  testthat::skip_if_not_installed("ComplexHeatmap")
+
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$setCellMeta(
+    "condition",
+    c(c1 = "ctrl", c2 = "ctrl", c3 = "stim", c4 = "stim"),
+    overwrite = TRUE
+  )
+  p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
+
+  details <- p2$plotMarkerHeatmap(
+    n.genes.per.group = 2,
+    z.threshold = NULL,
+    highest.only = FALSE,
+    additional.genes = "g5",
+    column.metadata = "condition",
+    labeled.gene.subset = 1,
+    split = TRUE,
+    split.gap = 0.5,
+    averaging.window = 2,
+    max.cells = 2,
+    return.details = TRUE
+  )
+
+  expect_true(any(details$genes == "g5"))
+  expect_true("condition" %in% colnames(details$column.annotation))
+  expect_equal(ncol(details$matrix), 4)
+  pdf(file = tempfile(fileext = ".pdf"))
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_silent(ComplexHeatmap::draw(details$heatmap))
+})
+
+test_that("legacy marker heatmap engine resolves new marker grouping provenance", {
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
+
+  pdf(file = tempfile(fileext = ".pdf"))
+  on.exit(grDevices::dev.off(), add = TRUE)
+  expect_silent(
+    p2$plotMarkerHeatmap(
+      markers = "leiden",
+      engine = "legacy",
+      z.score = NULL,
+      n.genes = 2
+    )
+  )
+})
+
 test_that("ComplexHeatmap marker heatmap warns on large dense plot requests", {
   testthat::skip_if_not_installed("ComplexHeatmap")
 
