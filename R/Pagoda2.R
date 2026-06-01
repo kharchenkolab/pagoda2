@@ -64,6 +64,9 @@ NULL
 }
 
 .pagoda2_has_explicit_rownames <- function(x) {
+  if (is.data.frame(x)) {
+    return(.row_names_info(x, type = 1L) >= 0L)
+  }
   rn <- attr(x, "row.names")
   !(length(rn) == 2 && is.na(rn[1]) && rn[2] < 0)
 }
@@ -86,6 +89,86 @@ NULL
     rownames(metadata) <- target
   }
   metadata
+}
+
+.pagoda2_expand_metadata_rows <- function(metadata, rows) {
+  metadata <- as.data.frame(metadata, stringsAsFactors = FALSE, optional = TRUE)
+  rows <- unique(as.character(rows))
+  if (length(rows) == 0) {
+    return(metadata[FALSE, , drop = FALSE])
+  }
+  if (ncol(metadata) == 0) {
+    return(data.frame(row.names = rows))
+  }
+  missing <- setdiff(rows, rownames(metadata))
+  if (length(missing) > 0) {
+    metadata[missing, colnames(metadata)] <- NA
+  }
+  metadata[rows, , drop = FALSE]
+}
+
+.pagoda2_prepare_metadata <- function(metadata, target, axis = "cell") {
+  if (is.null(target)) {
+    stop("Cannot set ", axis, " metadata before count matrix names are available")
+  }
+  metadata <- as.data.frame(metadata, stringsAsFactors = FALSE, optional = TRUE)
+  if (.pagoda2_has_explicit_rownames(metadata)) {
+    rn <- rownames(metadata)
+    if (any(is.na(rn) | rn == "")) {
+      stop("Missing ", axis, " names are not allowed in metadata")
+    }
+    if (any(duplicated(rn))) {
+      stop("Duplicate ", axis, " names are not allowed in metadata")
+    }
+  } else {
+    if (nrow(metadata) != length(target)) {
+      stop("Unnamed ", axis, " metadata must have one row per ", axis)
+    }
+    rownames(metadata) <- target
+  }
+  metadata
+}
+
+.pagoda2_store_metadata <- function(existing, metadata, target, axis = "cell", overwrite = TRUE) {
+  incoming <- .pagoda2_prepare_metadata(metadata, target = target, axis = axis)
+  if (is.null(existing)) {
+    existing <- data.frame(row.names = target)
+  }
+  existing <- as.data.frame(existing, stringsAsFactors = FALSE, optional = TRUE)
+  overlap <- intersect(colnames(incoming), colnames(existing))
+  if (!overwrite && length(overlap) > 0) {
+    axis.label <- paste0(toupper(substr(axis, 1, 1)), substring(axis, 2))
+    stop(axis.label, " metadata column(s) already exist: ", paste(overlap, collapse = ", "))
+  }
+  rows <- unique(c(rownames(existing), rownames(incoming)))
+  existing <- .pagoda2_expand_metadata_rows(existing, rows)
+  incoming <- .pagoda2_expand_metadata_rows(incoming, rows)
+  for (n in colnames(incoming)) {
+    existing[[n]] <- incoming[[n]]
+  }
+  existing
+}
+
+.pagoda2_vector_metadata <- function(name, value, target, axis = "cell") {
+  if (is.null(target)) {
+    stop("Cannot set ", axis, " metadata before count matrix names are available")
+  }
+  if (!is.character(name) || length(name) != 1 || is.na(name) || name == "") {
+    stop("Metadata column name must be a single non-empty string")
+  }
+  if (is.null(names(value)) || all(is.na(names(value))) || all(names(value) == "")) {
+    if (length(value) != length(target)) {
+      stop("Unnamed ", axis, " metadata `", name, "` must have length ", length(target))
+    }
+    names(value) <- target
+  } else if (any(duplicated(names(value)))) {
+    stop("Duplicate names are not allowed in ", axis, " metadata `", name, "`")
+  } else if (any(is.na(names(value)) | names(value) == "")) {
+    stop("Missing names are not allowed in ", axis, " metadata `", name, "`")
+  }
+  out <- data.frame(value, row.names = names(value), stringsAsFactors = FALSE)
+  colnames(out) <- name
+  out
 }
 
 .pagoda2_align_vector <- function(x, target, what = "values") {
@@ -359,7 +442,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      ##}
 	    },
 
-	    #' @description Align cellMeta and geneMeta rownames to the current count matrix.
+	    #' @description Initialize cellMeta and geneMeta when missing.
 	    #'
 	    #' @return Invisibly returns self.
 	    syncMetadata=function() {
@@ -368,15 +451,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      cells <- rownames(self$counts)
 	      genes <- colnames(self$counts)
-	      if (is.null(self$cellMeta) || nrow(self$cellMeta) == 0) {
+	      if (is.null(self$cellMeta) || (nrow(self$cellMeta) == 0 && ncol(self$cellMeta) == 0)) {
 	        self$cellMeta <- data.frame(row.names = cells)
-	      } else {
-	        self$cellMeta <- .pagoda2_align_metadata(self$cellMeta, cells, axis = "cell")
 	      }
-	      if (is.null(self$geneMeta) || nrow(self$geneMeta) == 0) {
+	      if (is.null(self$geneMeta) || (nrow(self$geneMeta) == 0 && ncol(self$geneMeta) == 0)) {
 	        self$geneMeta <- data.frame(row.names = genes)
-	      } else {
-	        self$geneMeta <- .pagoda2_align_metadata(self$geneMeta, genes, axis = "gene")
 	      }
 	      invisible(self)
 	    },
@@ -394,32 +473,31 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      self$syncMetadata()
 	      if (is.character(metadata) && length(metadata) == 1 && !is.null(value)) {
-	        if (!overwrite && metadata %in% colnames(self$cellMeta)) {
-	          stop("Cell metadata column `", metadata, "` already exists")
-	        }
-	        self$cellMeta[[metadata]] <- .pagoda2_align_vector(value, cells, what = paste0("cell metadata `", metadata, "`"))
+	        metadata <- .pagoda2_vector_metadata(metadata, value, target = cells, axis = "cell")
 	      } else {
 	        if (!is.null(value)) {
 	          stop("`value` can only be supplied when `metadata` is a single column name")
 	        }
-	        metadata <- .pagoda2_align_metadata(metadata, cells, axis = "cell")
-	        overlap <- intersect(colnames(metadata), colnames(self$cellMeta))
-	        if (!overwrite && length(overlap) > 0) {
-	          stop("Cell metadata column(s) already exist: ", paste(overlap, collapse = ", "))
-	        }
-	        for (n in colnames(metadata)) {
-	          self$cellMeta[[n]] <- metadata[[n]]
-	        }
 	      }
+	      self$cellMeta <- .pagoda2_store_metadata(self$cellMeta, metadata, target = cells, axis = "cell", overwrite = overwrite)
 	      invisible(self)
 	    },
 
 	    #' @description Get cell-axis metadata.
 	    #'
 	    #' @param columns Optional metadata columns to return.
+	    #' @param resolved Whether to resolve metadata onto the current cells.
+	    #' @param cells Optional cell names to resolve onto when resolved=TRUE.
+	    #' @param allow.missing Whether missing cells are allowed when resolved=TRUE.
 	    #' @return data.frame of cell metadata.
-	    getCellMeta=function(columns=NULL) {
+	    getCellMeta=function(columns=NULL, resolved=FALSE, cells=NULL, allow.missing=TRUE) {
 	      self$syncMetadata()
+	      if (isTRUE(resolved)) {
+	        return(self$resolveCellMeta(columns = columns, cells = cells, allow.missing = allow.missing))
+	      }
+	      if (!is.null(cells)) {
+	        stop("`cells` can only be supplied when `resolved = TRUE`")
+	      }
 	      if (is.null(columns)) {
 	        return(self$cellMeta)
 	      }
@@ -443,32 +521,31 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      self$syncMetadata()
 	      if (is.character(metadata) && length(metadata) == 1 && !is.null(value)) {
-	        if (!overwrite && metadata %in% colnames(self$geneMeta)) {
-	          stop("Gene metadata column `", metadata, "` already exists")
-	        }
-	        self$geneMeta[[metadata]] <- .pagoda2_align_vector(value, genes, what = paste0("gene metadata `", metadata, "`"))
+	        metadata <- .pagoda2_vector_metadata(metadata, value, target = genes, axis = "gene")
 	      } else {
 	        if (!is.null(value)) {
 	          stop("`value` can only be supplied when `metadata` is a single column name")
 	        }
-	        metadata <- .pagoda2_align_metadata(metadata, genes, axis = "gene")
-	        overlap <- intersect(colnames(metadata), colnames(self$geneMeta))
-	        if (!overwrite && length(overlap) > 0) {
-	          stop("Gene metadata column(s) already exist: ", paste(overlap, collapse = ", "))
-	        }
-	        for (n in colnames(metadata)) {
-	          self$geneMeta[[n]] <- metadata[[n]]
-	        }
 	      }
+	      self$geneMeta <- .pagoda2_store_metadata(self$geneMeta, metadata, target = genes, axis = "gene", overwrite = overwrite)
 	      invisible(self)
 	    },
 
 	    #' @description Get gene-axis metadata.
 	    #'
 	    #' @param columns Optional metadata columns to return.
+	    #' @param resolved Whether to resolve metadata onto the current genes.
+	    #' @param genes Optional gene names to resolve onto when resolved=TRUE.
+	    #' @param allow.missing Whether missing genes are allowed when resolved=TRUE.
 	    #' @return data.frame of gene metadata.
-	    getGeneMeta=function(columns=NULL) {
+	    getGeneMeta=function(columns=NULL, resolved=FALSE, genes=NULL, allow.missing=TRUE) {
 	      self$syncMetadata()
+	      if (isTRUE(resolved)) {
+	        return(self$resolveGeneMeta(columns = columns, genes = genes, allow.missing = allow.missing))
+	      }
+	      if (!is.null(genes)) {
+	        stop("`genes` can only be supplied when `resolved = TRUE`")
+	      }
 	      if (is.null(columns)) {
 	        return(self$geneMeta)
 	      }
@@ -477,6 +554,62 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        stop("Unknown gene metadata column(s): ", paste(missing, collapse = ", "))
 	      }
 	      self$geneMeta[, columns, drop = FALSE]
+	    },
+
+	    #' @description Resolve cell-axis metadata onto specified cells.
+	    #'
+	    #' @param columns Optional metadata columns to return.
+	    #' @param cells Optional cell names. NULL uses current count matrix cells.
+	    #' @param allow.missing Whether missing cells are allowed.
+	    #' @return data.frame aligned to cells.
+	    resolveCellMeta=function(columns=NULL, cells=NULL, allow.missing=TRUE) {
+	      self$syncMetadata()
+	      if (is.null(cells)) {
+	        cells <- rownames(self$counts)
+	      }
+	      metadata <- self$cellMeta
+	      if (!is.null(columns)) {
+	        missing <- setdiff(columns, colnames(metadata))
+	        if (length(missing) > 0) {
+	          stop("Unknown cell metadata column(s): ", paste(missing, collapse = ", "))
+	        }
+	        metadata <- metadata[, columns, drop = FALSE]
+	      }
+	      missing.rows <- setdiff(cells, rownames(metadata))
+	      resolved <- .pagoda2_align_metadata(metadata, cells, axis = "cell")
+	      missing.values <- if (ncol(resolved) == 0) FALSE else !stats::complete.cases(resolved)
+	      if (!allow.missing && (length(missing.rows) > 0 || any(missing.values))) {
+	        stop("Cell metadata is missing values for ", sum(missing.values), " cell(s)")
+	      }
+	      resolved
+	    },
+
+	    #' @description Resolve gene-axis metadata onto specified genes.
+	    #'
+	    #' @param columns Optional metadata columns to return.
+	    #' @param genes Optional gene names. NULL uses current count matrix genes.
+	    #' @param allow.missing Whether missing genes are allowed.
+	    #' @return data.frame aligned to genes.
+	    resolveGeneMeta=function(columns=NULL, genes=NULL, allow.missing=TRUE) {
+	      self$syncMetadata()
+	      if (is.null(genes)) {
+	        genes <- colnames(self$counts)
+	      }
+	      metadata <- self$geneMeta
+	      if (!is.null(columns)) {
+	        missing <- setdiff(columns, colnames(metadata))
+	        if (length(missing) > 0) {
+	          stop("Unknown gene metadata column(s): ", paste(missing, collapse = ", "))
+	        }
+	        metadata <- metadata[, columns, drop = FALSE]
+	      }
+	      missing.rows <- setdiff(genes, rownames(metadata))
+	      resolved <- .pagoda2_align_metadata(metadata, genes, axis = "gene")
+	      missing.values <- if (ncol(resolved) == 0) FALSE else !stats::complete.cases(resolved)
+	      if (!allow.missing && (length(missing.rows) > 0 || any(missing.values))) {
+	        stop("Gene metadata is missing values for ", sum(missing.values), " gene(s)")
+	      }
+	      resolved
 	    },
 
 	    #' @description Store a discrete cell grouping as a cellMeta column.
@@ -521,7 +654,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      if (!grouping %in% colnames(self$cellMeta)) {
 	        stop("Unknown cell metadata column `", grouping, "`")
 	      }
-	      .pagoda2_as_grouping(self$cellMeta[[grouping]], name = grouping)
+	      self$resolveGrouping(grouping = grouping, allow.missing = TRUE)
 	      self$defaultGrouping <- grouping
 	      invisible(self)
 	    },
@@ -805,7 +938,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          stringsAsFactors = FALSE
 	        ))
 	      }
-	      keep <- vapply(self$cellMeta, .pagoda2_is_discrete_grouping, logical(1))
+	      resolved <- self$resolveCellMeta(columns = cols)
+	      keep <- vapply(resolved, .pagoda2_is_discrete_grouping, logical(1))
 	      cols <- cols[keep]
 	      if (length(cols) == 0) {
 	        return(data.frame(
@@ -819,9 +953,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      data.frame(
 	        name = cols,
-	        class = vapply(self$cellMeta[cols], function(x) class(x)[1], character(1)),
-	        n.groups = vapply(self$cellMeta[cols], function(x) length(unique(x[!is.na(x)])), integer(1)),
-	        n.missing = vapply(self$cellMeta[cols], function(x) sum(is.na(x)), integer(1)),
+	        class = vapply(resolved[cols], function(x) class(x)[1], character(1)),
+	        n.groups = vapply(resolved[cols], function(x) length(unique(x[!is.na(x)])), integer(1)),
+	        n.missing = vapply(resolved[cols], function(x) sum(is.na(x)), integer(1)),
 	        is.default = cols == self$defaultGrouping,
 	        stringsAsFactors = FALSE
 	      )

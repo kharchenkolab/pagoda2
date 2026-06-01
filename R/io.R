@@ -764,8 +764,8 @@
   }
   cells <- rownames(export.x)
   genes <- colnames(export.x)
-  cell.meta <- .pagoda2_export_axis_metadata(p2$cellMeta, cells, axis = "cell")
-  gene.meta <- .pagoda2_export_axis_metadata(p2$geneMeta, genes, axis = "gene")
+  cell.meta <- .pagoda2_export_axis_metadata(p2$resolveCellMeta(cells = cells), cells, axis = "cell")
+  gene.meta <- .pagoda2_export_axis_metadata(p2$resolveGeneMeta(genes = genes), genes, axis = "gene")
   h5 <- .pagoda2_h5_open(path, mode = "w")
   on.exit(h5$close_all())
   .pagoda2_h5_write_encoding(h5, "anndata", "0.1.0")
@@ -1194,8 +1194,8 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
     raw.counts <- p2$counts
   }
   counts <- Matrix::t(raw.counts)
-  gene.meta <- p2$getGeneMeta()
-  cell.meta <- p2$getCellMeta()
+  gene.meta <- p2$resolveGeneMeta(genes = rownames(counts))
+  cell.meta <- p2$resolveCellMeta(cells = colnames(counts))
   if (format == "list") {
     return(list(
       counts = counts,

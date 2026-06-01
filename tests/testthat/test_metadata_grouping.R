@@ -33,17 +33,22 @@ test_that("cellMeta and geneMeta are initialized from count matrix axes", {
   expect_equal(ncol(p2$geneMeta), 0)
 })
 
-test_that("metadata setters align named inputs and preserve missing rows", {
+test_that("metadata setters preserve flexible named inputs and resolvers align them", {
   p2 <- make_test_p2()
 
   p2$setCellMeta("sample", c(c3 = "s2", c1 = "s1", c5 = "extra"))
-  expect_identical(as.character(p2$cellMeta$sample), c("s1", NA, "s2", NA))
+  expect_identical(rownames(p2$getCellMeta()), c("c1", "c2", "c3", "c4", "c5"))
+  expect_identical(as.character(p2$getCellMeta("sample")$sample), c("s1", NA, "s2", NA, "extra"))
+  expect_identical(as.character(p2$resolveCellMeta("sample")$sample), c("s1", NA, "s2", NA))
+  expect_error(p2$resolveCellMeta("sample", allow.missing = FALSE), "missing values")
 
-  gene.info <- data.frame(symbol = c("G2", "G1"), row.names = c("g2", "g1"))
+  gene.info <- data.frame(symbol = c("G2", "G1", "G6"), row.names = c("g2", "g1", "g6"))
   p2$setGeneMeta(gene.info)
-  expect_identical(as.character(p2$geneMeta$symbol), c("G1", "G2", NA, NA, NA))
+  expect_identical(rownames(p2$getGeneMeta()), c("g1", "g2", "g3", "g4", "g5", "g6"))
+  expect_identical(as.character(p2$getGeneMeta("symbol")$symbol), c("G1", "G2", NA, NA, NA, "G6"))
+  expect_identical(as.character(p2$resolveGeneMeta("symbol")$symbol), c("G1", "G2", NA, NA, NA))
 
-  expect_error(p2$setCellMeta("sample", rep("x", 4), overwrite = FALSE), "already exists")
+  expect_error(p2$setCellMeta("sample", rep("x", 4), overwrite = FALSE), "already exist")
 })
 
 test_that("groupings are stored in cellMeta and resolve through defaultGrouping", {
@@ -56,6 +61,11 @@ test_that("groupings are stored in cellMeta and resolve through defaultGrouping"
   expect_identical(as.character(p2$getGrouping()), c("0", "0", "1", "1"))
   expect_true("leiden" %in% p2$listGroupings()$name)
   expect_true(p2$listGroupings()$is.default[p2$listGroupings()$name == "leiden"])
+
+  p2$setCellMeta("external_label", c(c1 = "A", c2 = "A", c5 = "extra"))
+  listed <- p2$listGroupings()
+  expect_equal(listed$n.groups[listed$name == "external_label"], 1L)
+  expect_equal(listed$n.missing[listed$name == "external_label"], 2L)
 })
 
 test_that("grouping resolver handles direct vectors and missing labels", {

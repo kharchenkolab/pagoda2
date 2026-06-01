@@ -468,7 +468,7 @@ test_that("Pagoda2 exports h5ad with exact AnnData axes and sparse counts", {
   expect_identical(dim(t(h5[["obsm"]][["X_umap"]]$read())), c(ncol(cm), 2L))
 })
 
-test_that("h5ad export rejects non-exact AnnData metadata dimensions", {
+test_that("h5ad export resolves flexible AnnData metadata before writing", {
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
     cm,
@@ -479,7 +479,32 @@ test_that("h5ad export rejects non-exact AnnData metadata dimensions", {
     log.scale = FALSE,
     trim = 0
   )
-  p2$cellMeta <- p2$cellMeta[-1, , drop = FALSE]
+  p2$setCellMeta("sample", c(cell3 = "s2", cell1 = "s1", cell4 = "extra"))
+  p2$setGeneMeta(data.frame(symbol = c("B", "A", "extra"), row.names = c("geneB", "geneA", "geneD")))
+  path <- tempfile(fileext = ".h5ad")
+
+  expect_silent(p2$export(path, format = "h5ad"))
+  imported <- readCounts(path, format = "h5ad", return.metadata = TRUE, verbose = FALSE)
+
+  expect_equal(nrow(imported$cellMeta), ncol(cm))
+  expect_equal(nrow(imported$geneMeta), nrow(cm))
+  expect_identical(as.character(imported$cellMeta[c("cell1", "cell3"), "sample"]), c("s1", "s2"))
+  gene.symbol <- stats::setNames(as.character(imported$geneMeta$symbol), imported$geneMeta$gene_id)
+  expect_identical(gene.symbol[c("geneA", "geneB")], c(geneA = "A", geneB = "B"))
+})
+
+test_that("h5ad export rejects unnamed non-axis metadata", {
+  cm <- make_io_matrix()
+  p2 <- Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = FALSE,
+    trim = 0
+  )
+  p2$cellMeta <- data.frame(sample = "s1")
 
   expect_error(p2$export(tempfile(fileext = ".h5ad"), format = "h5ad"), "cell metadata")
 })
