@@ -118,6 +118,73 @@ test_that("Pagoda2 constructor preserves dense input values through sparse coerc
         log.scale = FALSE,
         trim = 0
     ))
+    expect_true(inherits(p2$rawCounts, "dgCMatrix"))
     expect_true(inherits(p2$misc$rawCounts, "dgCMatrix"))
+    expect_equal(as.matrix(t(p2$rawCounts)), cm)
     expect_equal(as.matrix(t(p2$misc$rawCounts)), cm)
+    expect_true(p2$validateMatrices())
+    matrices <- p2$describeMatrices()
+    expect_true(all(c("raw", "analysis") %in% matrices$name))
+    expect_true(matrices$integer.like[matrices$name == "raw"])
+})
+
+test_that("Pagoda2 rawCounts are stored on the current filtered axis", {
+    cm <- as(Matrix::Matrix(
+        c(
+            10, 0, 0, 0,
+            0, 12, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1
+        ),
+        nrow = 4,
+        ncol = 4,
+        sparse = TRUE,
+        dimnames = list(paste0("gene", 1:4), paste0("cell", 1:4))
+    ), "dgCMatrix")
+    batch <- factor(c(cell1 = "a", cell2 = "a", cell3 = "b", cell4 = "b"))
+
+    p2 <- Pagoda2$new(
+        cm,
+        verbose = FALSE,
+        n.cores = 1,
+        batch = batch,
+        min.cells.per.gene = 0,
+        min.transcripts.per.cell = 10,
+        log.scale = FALSE,
+        trim = 0
+    )
+
+    expect_identical(rownames(p2$rawCounts), c("cell1", "cell2"))
+    expect_identical(rownames(p2$counts), rownames(p2$rawCounts))
+    expect_identical(colnames(p2$counts), colnames(p2$rawCounts))
+    expect_identical(names(p2$depth), rownames(p2$rawCounts))
+    expect_identical(names(p2$batch), rownames(p2$rawCounts))
+    expect_equal(as.matrix(Matrix::t(p2$rawCounts)), as.matrix(cm[, c("cell1", "cell2")]))
+    expect_true(p2$validateMatrices())
+})
+
+test_that("validateMatrices catches raw and analysis axis divergence", {
+    cm <- Matrix::Matrix(
+        c(
+            1, 0, 2,
+            0, 3, 0
+        ),
+        nrow = 2,
+        ncol = 3,
+        sparse = TRUE,
+        dimnames = list(c("geneA", "geneB"), c("cell1", "cell2", "cell3"))
+    )
+    p2 <- Pagoda2$new(
+        cm,
+        verbose = FALSE,
+        n.cores = 1,
+        min.cells.per.gene = 0,
+        min.transcripts.per.cell = 0,
+        log.scale = FALSE,
+        trim = 0
+    )
+
+    p2$rawCounts <- p2$rawCounts[-1, , drop = FALSE]
+    expect_false(p2$validateMatrices(stop.on.error = FALSE))
+    expect_error(p2$validateMatrices(), "axes differ")
 })

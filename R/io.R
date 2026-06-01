@@ -747,13 +747,7 @@
     }
     unlink(path)
   }
-  raw.counts <- p2$misc$rawCounts
-  if (is.null(raw.counts)) {
-    raw.counts <- p2$counts
-  }
-  if (is.null(raw.counts)) {
-    stop("Cannot export h5ad without a count matrix")
-  }
+  raw.counts <- p2$getRawCounts()
   export.counts <- as(raw.counts, "CsparseMatrix")
   export.x <- if (identical(x, "normalized") && !is.null(p2$counts)) p2$counts else export.counts
   export.x <- as(export.x, "CsparseMatrix")
@@ -1189,10 +1183,7 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
                       include.normalized = TRUE, include.geneMeta = TRUE,
                       include.embeddings = TRUE, ...) {
   format <- match.arg(format)
-  raw.counts <- p2$misc$rawCounts
-  if (is.null(raw.counts)) {
-    raw.counts <- p2$counts
-  }
+  raw.counts <- p2$getRawCounts()
   counts <- Matrix::t(raw.counts)
   gene.meta <- p2$resolveGeneMeta(genes = rownames(counts))
   cell.meta <- p2$resolveCellMeta(cells = colnames(counts))

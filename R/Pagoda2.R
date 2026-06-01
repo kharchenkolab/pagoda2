@@ -329,6 +329,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @field counts Gene count matrix, normalized on total counts (default=NULL)
     counts = NULL,
 
+    #' @field rawCounts Raw count matrix on the current filtered axis, cell-by-gene.
+    rawCounts = NULL,
+
     #' @field modelType string Model used to normalize count matrices. Only supported values are 'raw', 'plain', and 'linearObs'.
     #'     -- 'plain': Normalize by regressing out on the non-zero observations of each gene (default).
     #'     -- 'raw': Use the raw count matrices, without normalization. The expression matrix taken "as is" without normalization, although log.scale still applies. 
@@ -446,11 +449,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #'
 	    #' @return Invisibly returns self.
 	    syncMetadata=function() {
-	      if (is.null(self$counts)) {
+	      matrix <- if (!is.null(self$counts)) self$counts else self$rawCounts
+	      if (is.null(matrix)) {
 	        return(invisible(self))
 	      }
-	      cells <- rownames(self$counts)
-	      genes <- colnames(self$counts)
+	      cells <- rownames(matrix)
+	      genes <- colnames(matrix)
 	      if (is.null(self$cellMeta) || (nrow(self$cellMeta) == 0 && ncol(self$cellMeta) == 0)) {
 	        self$cellMeta <- data.frame(row.names = cells)
 	      }
@@ -458,6 +462,129 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        self$geneMeta <- data.frame(row.names = genes)
 	      }
 	      invisible(self)
+	    },
+
+	    #' @description Return the canonical raw count matrix.
+	    #'
+	    #' @param cells Optional cells to return.
+	    #' @param genes Optional genes to return.
+	    #' @param orientation Matrix orientation to return.
+	    #' @return Sparse raw count matrix.
+	    getRawCounts=function(cells=NULL, genes=NULL, orientation=c("cell_by_gene", "gene_by_cell")) {
+	      orientation <- match.arg(orientation)
+	      raw <- self$rawCounts
+	      if (is.null(raw)) {
+	        raw <- self$misc[['rawCounts']]
+	      }
+	      if (is.null(raw)) {
+	        stop("Raw counts are not available")
+	      }
+	      if (!is.null(cells)) {
+	        missing <- setdiff(cells, rownames(raw))
+	        if (length(missing) > 0) {
+	          stop("Unknown cell(s): ", paste(missing, collapse = ", "))
+	        }
+	        raw <- raw[cells, , drop = FALSE]
+	      }
+	      if (!is.null(genes)) {
+	        missing <- setdiff(genes, colnames(raw))
+	        if (length(missing) > 0) {
+	          stop("Unknown gene(s): ", paste(missing, collapse = ", "))
+	        }
+	        raw <- raw[, genes, drop = FALSE]
+	      }
+	      raw <- as(raw, "CsparseMatrix")
+	      if (orientation == "gene_by_cell") {
+	        return(Matrix::t(raw))
+	      }
+	      raw
+	    },
+
+	    #' @description Validate current matrix storage invariants.
+	    #'
+	    #' @param stop.on.error Whether to throw on invalid storage.
+	    #' @return Logical TRUE when valid, otherwise FALSE if stop.on.error=FALSE.
+	    validateMatrices=function(stop.on.error=TRUE) {
+	      errors <- character()
+	      raw <- self$rawCounts
+	      if (is.null(raw)) {
+	        raw <- self$misc[['rawCounts']]
+	      }
+	      if (is.null(raw)) {
+	        errors <- c(errors, "rawCounts is missing")
+	      } else {
+	        if (!inherits(raw, "dgCMatrix")) {
+	          errors <- c(errors, "rawCounts must be a dgCMatrix")
+	        }
+	        if (is.null(rownames(raw)) || is.null(colnames(raw))) {
+	          errors <- c(errors, "rawCounts must have cell and gene names")
+	        }
+	        if (!.pagoda2_is_integerish(raw@x)) {
+	          errors <- c(errors, "rawCounts contains non-integer values")
+	        }
+	      }
+	      if (!is.null(self$counts) && !is.null(raw)) {
+	        if (!identical(dim(self$counts), dim(raw)) ||
+	            !identical(rownames(self$counts), rownames(raw)) ||
+	            !identical(colnames(self$counts), colnames(raw))) {
+	          errors <- c(errors, "counts and rawCounts axes differ")
+	        }
+	      }
+	      if (!is.null(self$depth) && !is.null(raw)) {
+	        if (length(self$depth) != nrow(raw) || !identical(names(self$depth), rownames(raw))) {
+	          errors <- c(errors, "depth is not named on the rawCounts cell axis")
+	        }
+	      }
+	      if (!is.null(self$batch) && !is.null(raw)) {
+	        if (length(self$batch) != nrow(raw) || !identical(names(self$batch), rownames(raw))) {
+	          errors <- c(errors, "batch is not named on the rawCounts cell axis")
+	        }
+	      }
+	      if (length(errors) > 0) {
+	        if (stop.on.error) {
+	          stop(paste(errors, collapse = "; "))
+	        }
+	        return(FALSE)
+	      }
+	      TRUE
+	    },
+
+	    #' @description Describe stored expression matrices.
+	    #'
+	    #' @return data.frame with matrix metadata.
+	    describeMatrices=function() {
+	      entries <- list()
+	      add_entry <- function(name, role, matrix) {
+	        if (is.null(matrix)) {
+	          return(NULL)
+	        }
+	        data.frame(
+	          name = name,
+	          role = role,
+	          class = class(matrix)[1],
+	          n.cells = nrow(matrix),
+	          n.genes = ncol(matrix),
+	          nnz = length(matrix@x),
+	          integer.like = .pagoda2_is_integerish(matrix@x),
+	          stringsAsFactors = FALSE
+	        )
+	      }
+	      entries[["raw"]] <- add_entry("raw", "raw_counts", self$rawCounts)
+	      entries[["analysis"]] <- add_entry("analysis", "legacy_normalized", self$counts)
+	      entries <- entries[!vapply(entries, is.null, logical(1))]
+	      if (length(entries) == 0) {
+	        return(data.frame(
+	          name = character(),
+	          role = character(),
+	          class = character(),
+	          n.cells = integer(),
+	          n.genes = integer(),
+	          nnz = integer(),
+	          integer.like = logical(),
+	          stringsAsFactors = FALSE
+	        ))
+	      }
+	      do.call(rbind, entries)
 	    },
 
 	    #' @description Set cell-axis metadata.
@@ -672,6 +799,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param matrix Optional cell-by-gene matrix. Defaults to rawCounts when available, otherwise counts.
 	    #' @return data.frame of QC metrics.
 	    runQC=function(overwrite=FALSE, matrix=NULL) {
+	      if (is.null(matrix)) {
+	        matrix <- self$rawCounts
+	      }
 	      if (is.null(matrix)) {
 	        matrix <- self$misc[['rawCounts']]
 	      }
@@ -1277,22 +1407,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       # Keep genes of sufficient coverage or genes that are in the keep.genes list
       counts <- counts[,diff(counts@p) >= min.cells.per.gene | colnames(counts) %in% keep.genes]
 
-      # Save the filtered count matrix in misc$rawCounts
-      self$misc[['rawCounts']] <- counts
       self$misc$depthScale <- depthScale
-
-	      if (self$modelType == 'raw') {
-	        self$counts <- counts
-	        self$syncMetadata()
-	        return()
-	      }
-
+      colBatch <- NULL
       if (!is.null(self$batch)) {
         if (!all(colnames(countMatrix) %in% names(self$batch))) { 
           stop("The supplied batch vector doesn't contain all the cells in its names attribute")
         }
         colBatch <- as.factor(self$batch[colnames(countMatrix)])
-        self$batch <- colBatch
       }
 
       if (!is.null(lib.sizes)) {
@@ -1308,10 +1429,33 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       cell.filt.mask <- (depth >= min.transcripts.per.cell)
       counts <- counts[cell.filt.mask,]
       depth <- depth[cell.filt.mask]
+      names(depth) <- rownames(counts)
+      if (!is.null(colBatch)) {
+        self$batch <- droplevels(colBatch[cell.filt.mask])
+        names(self$batch) <- rownames(counts)
+      }
+
+      self$rawCounts <- counts
+      self$misc[['rawCounts']] <- self$rawCounts
       
       if (any(depth == 0)) {
         stop("Cells with zero expression over all genes are not allowed")
       }
+
+	      if (self$modelType == 'raw') {
+	        self$counts <- self$rawCounts
+	        if (log.scale) {
+	          self$counts <- self$rawCounts
+	          self$counts@x <- as.numeric(log(self$counts@x + 1))
+	        }
+	        self$depth <- depth
+	        self$syncMetadata()
+	        invisible(self$counts)
+	        return()
+	      }
+
+      counts <- self$rawCounts
+      counts@x <- as.numeric(counts@x)
 
       if (verbose) message(nrow(counts)," cells, ",ncol(counts)," genes; normalizing ... ")
 
