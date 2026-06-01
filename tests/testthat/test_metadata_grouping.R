@@ -163,7 +163,10 @@ test_that("legacy DE method uses defaultGrouping when available", {
   p2 <- make_test_p2()
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
 
-  markers <- p2$getDifferentialGenes(append.specificity.metrics = FALSE)
+  expect_warning(
+    markers <- p2$getDifferentialGenes(append.specificity.metrics = FALSE),
+    "runMarkers"
+  )
 
   expect_true("leiden" %in% names(p2$diffgenes$counts))
   expect_identical(names(markers), c("0", "1"))
@@ -176,7 +179,21 @@ test_that("plotEmbedding resolves defaultGrouping when available", {
   p2$embeddings$PCA$UMAP <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("UMAP", 1:2)))
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
 
-  plot <- p2$plotEmbedding(type = "PCA", embeddingType = "UMAP")
+  expect_silent(plot <- p2$plotEmbedding())
 
   expect_s3_class(plot, "ggplot")
+})
+
+test_that("new wrappers do not emit legacy deprecation warnings", {
+  testthat::skip_if_not_installed("leidenAlg")
+
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  g <- igraph::make_ring(4)
+  igraph::V(g)$name <- rownames(p2$counts)
+  p2$graphs$PCA <- g
+
+  expect_warning(p2$getKnnClusters(type = "PCA", name = "legacy"), "runLeiden")
+  expect_silent(p2$runLeiden(name = "leiden2"))
+  expect_silent(p2$runMarkers(name = "leiden", append.specificity.metrics = FALSE))
 })

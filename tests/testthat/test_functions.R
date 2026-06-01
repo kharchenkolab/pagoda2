@@ -18,7 +18,10 @@ test_that("check cm dims", {
 test_that("check basic qc of counts", {
 	## remove two cells
     cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package="pagoda2"))
-    counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500)
+    expect_warning(
+        counts <- gene.vs.molecule.cell.filter(cm, min.cell.size=500),
+        "p2\\$run"
+    )
     expect_equal(dim(counts)[1], 33694)
     expect_equal(dim(counts)[2], 50)
     ## Filter and check the size of the resulting matrix:
@@ -26,4 +29,3 @@ test_that("check basic qc of counts", {
     expect_equal(dim(counts)[1], 1432)
     expect_equal(dim(counts)[2], 50)
 })
-

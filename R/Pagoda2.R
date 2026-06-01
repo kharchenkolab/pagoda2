@@ -16,6 +16,14 @@
 #' @import drat
 NULL
 
+.pagoda2_deprecated_call <- function(old, new) {
+  warning(
+    "Legacy method `", old, "` is deprecated and will be removed in the next pagoda2 version. ",
+    "Use `", new, "` instead.",
+    call. = FALSE
+  )
+}
+
 .pagoda2_has_explicit_rownames <- function(x) {
   rn <- attr(x, "row.names")
   !(length(rn) == 2 && is.na(rn[1]) && rn[2] < 0)
@@ -910,10 +918,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'}
     #' 
     #' @return residual matrix with adjusted variance
-    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=FALSE, 
-      use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
-      cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = self$n.cores) {
-      #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
+	    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=FALSE, 
+	      use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
+	      cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = self$n.cores,
+	      .legacy.warn=TRUE) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("adjustVariance()", "p2$runVariance(...)")
+	      }
+	      #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if (!is.null(cells)) { # translate cells into a rowSel boolean vector
         if (!(is.logical(cells) && length(cells)==nrow(self$counts))) {
           if (is.character(cells) || is.integer(cells)) {
@@ -1022,10 +1034,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         points(log10(exp(1))*df$m[ods], log10(exp(1))*df$qv[ods], col=2, pch='.')
       }
       if (verbose) message("done.")
-      invisible(df)
-    },
+	      invisible(df)
+	    },
 
-    #' @description Create k-nearest neighbor graph
+	    #' @description Run variance modeling using the pagoda2.1 API name.
+	    #'
+	    #' @param ... Arguments passed to adjustVariance().
+	    #' @return residual matrix with adjusted variance.
+	    runVariance=function(...) {
+	      self$adjustVariance(..., .legacy.warn = FALSE)
+	    },
+
+	    #' @description Create k-nearest neighbor graph
     #' 
     #' @param k integer Number of k clusters for k-NN (default=30)
     #' @param nrand numeric Number of randomizations i.e. the gene sets (of the same size) to be evaluated in parallel with each gene set (default=1e3)
@@ -1054,10 +1074,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' }
     #' 
     #' @return kNN graph, stored in self$graphs
-    makeKnnGraph=function(k=30, nrand=1e3, type='counts', weight.type='1m',
-      odgenes=NULL, n.cores=self$n.cores, distance='cosine', center=TRUE, 
-      x=NULL, p=NULL, var.scale=(type == "counts"), verbose=TRUE) {
-      ## convert "euclidean" to "L2"
+	    makeKnnGraph=function(k=30, nrand=1e3, type='counts', weight.type='1m',
+	      odgenes=NULL, n.cores=self$n.cores, distance='cosine', center=TRUE, 
+	      x=NULL, p=NULL, var.scale=(type == "counts"), verbose=TRUE, .legacy.warn=TRUE) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("makeKnnGraph()", "p2$runGraph(reduction = \"PCA\", ...)")
+	      }
+	      ## convert "euclidean" to "L2"
       if (tolower(distance)=="euclidean"){
         distance <- "L2"
       }
@@ -1150,11 +1173,23 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (is.null(self$misc[['edgeMat']])) { self$misc[['edgeMat']] <- list() }
         self$misc[['edgeMat']][[type]] <- xn
         self$graphs[[type]] <- g
-      }
-      invisible(g)
-    },
+	      }
+	      invisible(g)
+	    },
 
-    #' @description Calculate clusters based on the kNN graph
+	    #' @description Build a kNN graph using the pagoda2.1 API name.
+	    #'
+	    #' @param reduction Reduction or matrix namespace to use.
+	    #' @param ... Arguments passed to makeKnnGraph().
+	    #' @return Invisibly returns the graph.
+	    runGraph=function(reduction=NULL, ...) {
+	      if (is.null(reduction)) {
+	        reduction <- self$defaults$reduction
+	      }
+	      self$makeKnnGraph(type = reduction, ..., .legacy.warn = FALSE)
+	    },
+
+	    #' @description Calculate clusters based on the kNN graph
     #' 
     #' @param method Method to use (default=igraph::multilevel.community). Accepted methods are either 'igraph::infomap.community' or 'igraph::multilevel.community'. 
     #'     If NULL, if the number of vertices of the graph is greater than or equal to 2000, 'igraph::multilevel.community' will be used. Otherwise, 'igraph::infomap.community' will be used.
@@ -1164,11 +1199,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
     #' @param ... Additional parameters to pass to 'method'
     #'
-    #' @return the community structure calculated from 'method'
-    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', 
-      n.cores=self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, ...) {
+	    #' @return the community structure calculated from 'method'
+	    getKnnClusters=function(type='counts',method=igraph::multilevel.community, name='community', 
+	      n.cores=self$n.cores, g=NULL, min.cluster.size=1, persist=TRUE, .legacy.warn=TRUE, ...) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("getKnnClusters()", "p2$runLeiden(...)")
+	      }
 
-      if (is.null(g)) {
+	      if (is.null(g)) {
         if (is.null(self$graphs[[type]])) { 
           stop("Call makeKnnGraph(type='",type,"', ...) first")
         }
@@ -1247,7 +1285,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      } else {
 	        method.name <- deparse(substitute(method))
 	      }
-	      cls <- self$getKnnClusters(type = graph, method = method, name = name, persist = TRUE, ...)
+		      cls <- self$getKnnClusters(type = graph, method = method, name = name, persist = TRUE, .legacy.warn = FALSE, ...)
 	      groups <- self$clusters[[graph]][[name]]
 	      self$setGrouping(name, groups, source = list(method = "runLeiden", graph = graph), setDefault = setDefault, overwrite = TRUE)
 	      community <- NULL
@@ -1540,7 +1578,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'     M - log2 fold change
     #'     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
     #'     fe - fraction of cells in a given group having non-zero expression level of a given gene
-    getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, grouping=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE) {
+    getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, grouping=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE, .legacy.warn=TRUE) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("getDifferentialGenes()", "p2$runMarkers(...)")
+	      }
 	      name.missing <- missing(name)
 	      if (!is.null(grouping) && !is.null(groups)) {
 	        stop("Specify only one of `grouping` or `groups`")
@@ -1707,7 +1748,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        upregulated.only = upregulated.only,
 	        verbose = verbose,
 	        append.specificity.metrics = append.specificity.metrics,
-	        append.auc = append.auc
+	        append.auc = append.auc,
+	        .legacy.warn = FALSE
 	      )
 	      meta <- list(
 	        grouping = resolved.grouping,
@@ -1748,7 +1790,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @return heatmap of DE results
     plotDiffGeneHeatmap=function(type='counts', clusterType=NULL, groups=NULL, n.genes=100, 
       z.score=2, gradient.range.quantile=0.95, inner.clustering=FALSE, gradientPalette=NULL, 
-      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, ... ) {
+      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, .legacy.warn=TRUE, ... ) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("plotDiffGeneHeatmap()", "p2$plotMarkerHeatmap(...)")
+	      }
       if (!is.null(clusterType)) {
         x <- self$diffgenes[[type]][[clusterType]]
         if (is.null(x)) { 
@@ -1945,11 +1990,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param smooth.span (default=max(1,round(nrow(self$counts)/1024)))
     #' @param ... Additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
     #'
-    #' @return plot of gene heatmap
-    plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, 
-      gradient.range.quantile=0.95, cluster.genes=FALSE, inner.clustering=FALSE, gradientPalette=NULL, 
-      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(self$counts)/1024)), ... ) {
-      if (is.null(groups)) {
+	    #' @return plot of gene heatmap
+	    plotGeneHeatmap=function(genes, type='counts', clusterType=NULL, groups=NULL, 
+	      gradient.range.quantile=0.95, cluster.genes=FALSE, inner.clustering=FALSE, gradientPalette=NULL, 
+	      v=0.8, s=1, box=TRUE, drawGroupNames=FALSE, useRaster=TRUE, smooth.span=max(1,round(nrow(self$counts)/1024)),
+	      .legacy.warn=TRUE, ... ) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("plotGeneHeatmap()", "p2$plotHeatmap(...)")
+	      }
+	      if (is.null(groups)) {
         # look up the clustering based on a specified type
         if (is.null(clusterType)) {
           # take last-generated clustering
@@ -2056,8 +2105,35 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         # text(x=labpos,y=-2,labels = levels(col))
         # segments(labpos,-1,clpos,0.5,lwd=0.5)
         # par(xpd=FALSE)
-      }
-    },
+	      }
+	    },
+
+	    #' @description Plot gene heatmap using the pagoda2.1 API name.
+	    #'
+	    #' @param genes Gene names to plot.
+	    #' @param grouping Name of a discrete cellMeta column. NULL uses defaultGrouping.
+	    #' @param groups Direct vector of group labels.
+	    #' @param type Count matrix namespace.
+	    #' @param ... Arguments passed to plotGeneHeatmap().
+	    #' @return Heatmap side effect from plotGeneHeatmap().
+	    plotHeatmap=function(genes, grouping=NULL, groups=NULL, type='counts', ...) {
+	      resolved.groups <- NULL
+	      if (!is.null(grouping) || !is.null(groups) || !is.null(self$defaultGrouping)) {
+	        resolved.groups <- self$resolveGrouping(grouping = grouping, groups = groups, allow.missing = TRUE)
+	      }
+	      self$plotGeneHeatmap(genes = genes, type = type, groups = resolved.groups, ..., .legacy.warn = FALSE)
+	    },
+
+		    #' @description Plot marker heatmap using the pagoda2.1 API name.
+	    #'
+	    #' @param markers Marker result name. NULL uses defaultGrouping.
+	    #' @param type Marker result namespace.
+	    #' @param ... Arguments passed to plotDiffGeneHeatmap().
+	    #' @return Heatmap side effect from plotDiffGeneHeatmap().
+	    plotMarkerHeatmap=function(markers=NULL, type='counts', ...) {
+	      markers <- self$resolveMarkers(markers = markers, type = type)$name
+	      self$plotDiffGeneHeatmap(type = type, clusterType = markers, ..., .legacy.warn = FALSE)
+	    },
 
     #' @description Show embedding
     #' 
@@ -2071,29 +2147,67 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param ... Additional parameters passed to sccore::embeddingPlot()
     #' 
     #' @return plot of the embedding
-    plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL,
-      groups=NULL, grouping=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
+	    plotEmbedding=function(type=NULL, embeddingType=NULL, reduction=NULL, embedding=NULL, clusterType=NULL,
+	      groups=NULL, grouping=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), .legacy.warn=TRUE, ...) {
 
-      if (is.null(type)) {
-        if ('counts' %in% names(self$embeddings)) {
-          type <- 'counts'
-        } else if (length(self$embeddings) > 0) {
-          # type <- names(self$embeddings)[1]
-          ## Use the last-generated embedding
-          type <- names(self$embeddings[length(self$embeddings)])
-        } else {
-          stop("First, generate an embedding")
-        }
+	      if (!is.null(reduction)) {
+	        type <- reduction
+	      }
+	      if (!is.null(embedding)) {
+	        embeddingType <- embedding
+	      }
+	      using.legacy.selector <- (!missing(type) && is.null(reduction)) ||
+	        (!missing(embeddingType) && is.null(embedding)) ||
+	        !is.null(clusterType)
+	      if (.legacy.warn && using.legacy.selector) {
+	        warning(
+	          "Legacy plotEmbedding selectors `type`, `embeddingType`, and `clusterType` are deprecated and will be removed in the next pagoda2 version. ",
+	          "Use `p2$plotEmbedding(reduction = ..., embedding = ..., grouping = ...)` instead.",
+	          call. = FALSE
+	        )
+	      }
+
+	      if (is.null(type)) {
+	        if (!is.null(self$defaults$reduction) && self$defaults$reduction %in% names(self$embeddings)) {
+	          type <- self$defaults$reduction
+	        } else if ('counts' %in% names(self$embeddings)) {
+	          type <- 'counts'
+	        } else if (length(self$embeddings) > 0) {
+	          # type <- names(self$embeddings)[1]
+	          ## Use the last-generated embedding
+	          if (.legacy.warn) {
+	            warning(
+	              "Implicit latest-embedding namespace selection is deprecated and will be removed in the next pagoda2 version. ",
+	              "Use `p2$plotEmbedding(reduction = ..., embedding = ...)` instead.",
+	              call. = FALSE
+	            )
+	          }
+	          type <- names(self$embeddings[length(self$embeddings)])
+	        } else {
+	          stop("First, generate an embedding")
+	        }
       }
 
       if (is.null(self$embeddings[[type]])){
         stop("First, generate embeddings for type ",type)
       }
 
-      if (is.null(embeddingType)){
-        ## take the most recently generated embedding
-        emb <- self$embeddings[[type]][[length(self$embeddings[[type]])]]
-      } else{
+	      if (is.null(embeddingType)){
+	        if (!is.null(self$defaults$embedding) && !is.null(self$embeddings[[type]][[self$defaults$embedding]])) {
+	          embeddingType <- self$defaults$embedding
+	          emb <- self$embeddings[[type]][[embeddingType]]
+	        } else {
+	          ## take the most recently generated embedding
+	          if (.legacy.warn) {
+	            warning(
+	              "Implicit latest embedding selection is deprecated and will be removed in the next pagoda2 version. ",
+	              "Use `p2$plotEmbedding(embedding = ...)` instead.",
+	              call. = FALSE
+	            )
+	          }
+	          emb <- self$embeddings[[type]][[length(self$embeddings[[type]])]]
+	        }
+	      } else{
         ## check embeddingType exists
         if (is.null(self$embeddings[[type]][[embeddingType]])){
           stop("Embedding does not exist for embeddingType ", embeddingType)
@@ -2118,10 +2232,17 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       if (is.null(colors) && is.null(groups)) {
         # look up the clustering based on a specified type
-        if (is.null(clusterType)) {
-          # groups <- self$clusters[[type]][[1]]
-          ## Take last-genereated clustering
-          groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
+	        if (is.null(clusterType)) {
+	          # groups <- self$clusters[[type]][[1]]
+	          ## Take last-genereated clustering
+	          if (.legacy.warn) {
+	            warning(
+	              "Implicit latest clustering selection is deprecated and will be removed in the next pagoda2 version. ",
+	              "Use `p2$plotEmbedding(grouping = ...)` or set `p2$defaultGrouping` instead.",
+	              call. = FALSE
+	            )
+	          }
+	          groups <- self$clusters[[type]][[length(self$clusters[[type]])]]
           if (is.null(groups)) { 
             stop(paste("Please generate clusters for",type,"first"))
           }
@@ -2186,11 +2307,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param var.scale boolean Apply scaling if using raw counts (default=TRUE). If type="counts", var.scale is TRUE by default.
     #' @param ... additional arguments forwarded to irlba::irlba
     #' 
-    #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
-    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, 
-      odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"), ...) {
+	    #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
+	    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, 
+	      odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"),
+	      .legacy.warn=TRUE, ...) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("calculatePcaReduction()", "p2$runPCA(...)")
+	      }
 
-      if (type=='counts') {
+	      if (type=='counts') {
         x <- self$counts
       } else {
         if (!type %in% names(self$reductions)) { 
@@ -2271,10 +2396,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       ## reductions[['ICA']] <- as.matrix( x %*% pcs$v %*% a);
       ## colnames(reductions[['ICA']]) <- paste('IC',seq(ncol(reductions[['ICA']])),sep='');
 
-      invisible(pcas)
-    },
+	      invisible(pcas)
+	    },
 
-    #' @description Reset overdispersed genes 'odgenes' to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
+	    #' @description Calculate PCA using the pagoda2.1 API name.
+	    #'
+	    #' @param ... Arguments passed to calculatePcaReduction().
+	    #' @return Invisible PCA result.
+	    runPCA=function(...) {
+	      self$calculatePcaReduction(..., .legacy.warn = FALSE)
+	    },
+
+	    #' @description Reset overdispersed genes 'odgenes' to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 
     #'     and a set of recursively determined odgenes based on a given group (or a cluster info)
     #' 
     #' @param min.group.size integer Number of minimum cells for filtering out group size (default=30)
@@ -2945,11 +3078,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param n.sgd.cores numeric Number of cores to use (default=n.cores)
     #' @param ...  Additional parameters passed to embedding functions, Rtsne::Rtsne() if 'L2', uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'
     #'
-    #' @return embedding stored in self$embedding
-    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, verbose=TRUE,
-      sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = self$n.cores, n.sgd.cores=n.cores, ... ) {
-      
-      if (dims<1) {
+	    #' @return embedding stored in self$embedding
+	    getEmbedding=function(type='counts', embeddingType='largeVis', name=NULL, dims=2, M=1, gamma=1/M, perplexity=50, verbose=TRUE,
+	      sgd_batches=NULL, diffusion.steps=0, diffusion.power=0.5, distance='pearson', n.cores = self$n.cores, n.sgd.cores=n.cores,
+	      .legacy.warn=TRUE, ... ) {
+	      if (.legacy.warn) {
+	        .pagoda2_deprecated_call("getEmbedding()", "p2$runEmbedding(...) or p2$runUMAP(...)")
+	      }
+	      
+	      if (dims<1) {
         stop("Dimensions parameter 'dims' must be >=1")
       }
       if (type=='counts') {
@@ -3066,8 +3203,35 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop('Unknown embeddingType ',embeddingType,' specified')
       }
 
-      invisible(emb)
-     }
-  )
+	      invisible(emb)
+	     },
+
+	    #' @description Run an embedding using the pagoda2.1 API name.
+	    #'
+	    #' @param reduction Reduction namespace.
+	    #' @param embedding Embedding method/name.
+	    #' @param name Stored embedding name.
+	    #' @param ... Arguments passed to getEmbedding().
+	    #' @return Invisibly returns embedding matrix.
+	    runEmbedding=function(reduction=NULL, embedding=NULL, name=NULL, ...) {
+	      if (is.null(reduction)) {
+	        reduction <- self$defaults$reduction
+	      }
+	      if (is.null(embedding)) {
+	        embedding <- self$defaults$embedding
+	      }
+	      self$getEmbedding(type = reduction, embeddingType = embedding, name = name, ..., .legacy.warn = FALSE)
+	    },
+
+	    #' @description Run UMAP using the pagoda2.1 API name.
+	    #'
+	    #' @param reduction Reduction namespace.
+	    #' @param name Stored embedding name.
+	    #' @param ... Arguments passed to getEmbedding().
+	    #' @return Invisibly returns UMAP matrix.
+	    runUMAP=function(reduction=NULL, name='UMAP', ...) {
+	      self$runEmbedding(reduction = reduction, embedding = "UMAP", name = name, ...)
+	    }
+	  )
 
 )

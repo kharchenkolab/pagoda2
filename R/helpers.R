@@ -331,7 +331,10 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
 #' @param do.par boolean Reset graphical parameters prior to plotting (default=TRUE)
 #' @return a filtered matrix
 #' @export gene.vs.molecule.cell.filter
-gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE) {
+gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE, .legacy.warn=TRUE) {
+  if (.legacy.warn) {
+    .pagoda2_deprecated_call("gene.vs.molecule.cell.filter()", "p2$run(steps = \"qc\")")
+  }
   if(plot) {
     if(do.par) { 
       old_pars <- par(mfrow=c(1,2), mar = c(3.5,3.5,2.0,0.5), mgp = c(2,0.65,0), cex = 1.0)
@@ -473,4 +476,3 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
   colnames(x) <- barcodes[[1]]
   invisible(x)
 }
-
