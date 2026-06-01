@@ -24,6 +24,31 @@ expect_view_matches_counts <- function(p2) {
   expect_true(p2$validateMatrices())
 }
 
+expect_view_summaries_match_materialized <- function(p2) {
+  view <- p2$materializeView("analysis")
+  groups <- factor(c(cell1 = "A", cell2 = "B", cell3 = NA, cell4 = "A", cell5 = "B"))
+  selected.cells <- c("cell1", "cell3", "cell5")
+  row.sel <- rownames(view) %in% selected.cells
+
+  expect_equal(
+    as.data.frame(p2$viewColMeanVar(n.cores = 1)),
+    as.data.frame(pagoda2:::colMeanVarS(view, NULL, 1)),
+    tolerance = 1e-10
+  )
+  expect_equal(
+    as.data.frame(p2$viewColMeanVar(cells = selected.cells, n.cores = 1)),
+    as.data.frame(pagoda2:::colMeanVarS(view, row.sel, 1)),
+    tolerance = 1e-10
+  )
+
+  p2$setGrouping("test_groups", groups, setDefault = TRUE, overwrite = TRUE)
+  expect_equal(
+    unname(p2$viewColSumByFac()),
+    unname(pagoda2:::colSumByFac(view, as.integer(groups[rownames(view)]))),
+    tolerance = 1e-10
+  )
+}
+
 test_that("analysis view materializes plain normalization", {
   p2 <- Pagoda2$new(
     make_view_matrix(),
@@ -36,6 +61,7 @@ test_that("analysis view materializes plain normalization", {
   )
 
   expect_view_matches_counts(p2)
+  expect_view_summaries_match_materialized(p2)
   expect_identical(p2$getMatrixView("analysis")$model, "plain")
 })
 
@@ -51,6 +77,7 @@ test_that("analysis view materializes log-scaled normalization", {
   )
 
   expect_view_matches_counts(p2)
+  expect_view_summaries_match_materialized(p2)
   block <- p2$getExpressionBlock(cells = c("cell1", "cell3"), genes = c("gene1", "gene4"))
   expect_equal(as.matrix(block), as.matrix(p2$counts[c("cell1", "cell3"), c("gene1", "gene4")]), tolerance = 1e-10)
   block.t <- p2$getExpressionBlock(cells = c("cell1", "cell3"), genes = c("gene1", "gene4"), orientation = "gene_by_cell")
@@ -71,6 +98,7 @@ test_that("analysis view materializes batch-adjusted normalization", {
   )
 
   expect_view_matches_counts(p2)
+  expect_view_summaries_match_materialized(p2)
   expect_false(is.null(p2$getMatrixView("analysis")$batchFactors))
 })
 
@@ -86,6 +114,7 @@ test_that("analysis view materializes winsorized normalization", {
   )
 
   expect_view_matches_counts(p2)
+  expect_view_summaries_match_materialized(p2)
   expect_false(is.null(p2$getMatrixView("analysis")$winsorCaps))
 })
 
@@ -102,5 +131,29 @@ test_that("analysis view materializes raw model", {
   )
 
   expect_view_matches_counts(p2)
+  expect_view_summaries_match_materialized(p2)
   expect_equal(as.matrix(p2$getRawCounts(orientation = "gene_by_cell")), as.matrix(make_view_matrix()))
+})
+
+test_that("view variance path accepts logical cell selections", {
+  p2 <- Pagoda2$new(
+    make_view_matrix(),
+    verbose = FALSE,
+    n.cores = 1,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = TRUE,
+    trim = 0
+  )
+
+  expect_no_error(
+    p2$runVariance(
+      cells = c(TRUE, FALSE, TRUE, FALSE, TRUE),
+      plot = FALSE,
+      verbose = FALSE,
+      gam.k = 1,
+      persist = FALSE,
+      min.gene.cells = 0
+    )
+  )
 })

@@ -230,6 +230,87 @@ NULL
   x
 }
 
+.pagoda2_view_kernel_args <- function(raw, view) {
+  if (!view$model %in% c("plain", "raw")) {
+    stop("Matrix view model `", view$model, "` is not supported by sparse view kernels yet")
+  }
+  normalize <- identical(view$model, "plain")
+  depth <- numeric()
+  if (normalize) {
+    depth <- as.numeric(view$depth[rownames(raw)])
+    if (anyNA(depth)) {
+      stop("Matrix view depth is not available for all requested cells")
+    }
+  }
+
+  batch <- integer()
+  batch.factors <- matrix(numeric(), nrow = 0, ncol = 0)
+  if (!is.null(view$batchFactors)) {
+    batch <- as.integer(view$batch[rownames(raw)])
+    if (anyNA(batch)) {
+      stop("Matrix view batch is not available for all requested cells")
+    }
+    batch.factors <- as.matrix(view$batchFactors[colnames(raw), , drop = FALSE])
+  }
+
+  winsor.caps <- numeric()
+  pre.winsor.depth <- numeric()
+  post.winsor.depth <- numeric()
+  if (!is.null(view$winsorCaps)) {
+    winsor.caps <- as.numeric(view$winsorCaps[colnames(raw)])
+    pre.winsor.depth <- as.numeric(view$preWinsorDepth[rownames(raw)])
+    post.winsor.depth <- as.numeric(view$postWinsorDepth[rownames(raw)])
+    if (anyNA(winsor.caps) || anyNA(pre.winsor.depth) || anyNA(post.winsor.depth)) {
+      stop("Matrix view winsorization values are not available for all requested axes")
+    }
+  }
+
+  list(
+    depth = depth,
+    depthScale = view$depthScale,
+    normalize = normalize,
+    log.scale = isTRUE(view$log.scale),
+    batch = batch,
+    batchFactors = batch.factors,
+    winsorCaps = winsor.caps,
+    preWinsorDepth = pre.winsor.depth,
+    postWinsorDepth = post.winsor.depth
+  )
+}
+
+.pagoda2_cell_selection_mask <- function(cells, target, what = "cells") {
+  if (is.null(cells)) {
+    return(NULL)
+  }
+  if (is.logical(cells)) {
+    if (length(cells) != length(target)) {
+      stop("Logical ", what, " selection must have length ", length(target))
+    }
+    if (anyNA(cells)) {
+      stop("Logical ", what, " selection cannot contain NA values")
+    }
+    return(cells)
+  }
+  mask <- rep(FALSE, length(target))
+  names(mask) <- target
+  if (is.character(cells)) {
+    missing <- setdiff(cells, target)
+    if (length(missing) > 0) {
+      stop("Unknown ", what, ": ", paste(missing, collapse = ", "))
+    }
+    mask[cells] <- TRUE
+    return(mask)
+  }
+  if (is.integer(cells) || (is.numeric(cells) && .pagoda2_is_integerish(cells))) {
+    if (any(is.na(cells) | cells < 1 | cells > length(target))) {
+      stop("Integer ", what, " selection is out of bounds")
+    }
+    mask[as.integer(cells)] <- TRUE
+    return(mask)
+  }
+  stop("`", what, "` must be NULL, a logical vector, character names, or integer indices")
+}
+
 .pagoda2_align_vector <- function(x, target, what = "values") {
   if (is.null(target)) {
     stop("Cannot align ", what, " before count matrix names are available")
@@ -601,6 +682,72 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return Sparse matrix for the requested expression block.
 	    getExpressionBlock=function(layer="analysis", cells=NULL, genes=NULL, orientation=c("cell_by_gene", "gene_by_cell")) {
 	      self$materializeView(name = layer, cells = cells, genes = genes, orientation = orientation)
+	    },
+
+	    #' @description Calculate column means and variances for a matrix view without materializing it.
+	    #'
+	    #' @param name Matrix view name.
+	    #' @param cells Optional cells to include.
+	    #' @param n.cores Number of threads for the sparse kernel.
+	    #' @return data.frame with m, v, and nobs columns.
+	    viewColMeanVar=function(name="analysis", cells=NULL, n.cores=self$n.cores) {
+	      raw <- self$getRawCounts()
+	      view <- self$getMatrixView(name)
+	      rowSel <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
+	      args <- .pagoda2_view_kernel_args(raw, view)
+	      colMeanVarView(
+	        raw,
+	        rowSel,
+	        args$depth,
+	        args$depthScale,
+	        args$normalize,
+	        args$log.scale,
+	        args$batch,
+	        args$batchFactors,
+	        args$winsorCaps,
+	        args$preWinsorDepth,
+	        args$postWinsorDepth,
+	        n.cores
+	      )
+	    },
+
+	    #' @description Calculate grouping-stratified column sums for a matrix view without materializing it.
+	    #'
+	    #' @param grouping Name of a discrete cellMeta column. NULL uses defaultGrouping.
+	    #' @param groups Direct vector of group labels. Mutually exclusive with grouping.
+	    #' @param name Matrix view name.
+	    #' @param cells Optional cells to include.
+	    #' @return Matrix with one row for NA values followed by factor levels present in groups.
+	    viewColSumByFac=function(grouping=NULL, groups=NULL, name="analysis", cells=NULL) {
+	      raw <- self$getRawCounts()
+	      selected <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
+	      if (!is.null(selected)) {
+	        raw <- raw[selected, , drop = FALSE]
+	      }
+	      view <- self$getMatrixView(name)
+	      cols <- self$resolveGrouping(
+	        grouping = grouping,
+	        groups = groups,
+	        cells = rownames(raw),
+	        allow.missing = TRUE
+	      )
+	      args <- .pagoda2_view_kernel_args(raw, view)
+	      out <- colSumByFacView(
+	        raw,
+	        as.integer(cols),
+	        args$depth,
+	        args$depthScale,
+	        args$normalize,
+	        args$log.scale,
+	        args$batch,
+	        args$batchFactors,
+	        args$winsorCaps,
+	        args$preWinsorDepth,
+	        args$postWinsorDepth
+	      )
+	      rownames(out) <- c("<NA>", levels(cols)[seq_len(nrow(out) - 1L)])
+	      colnames(out) <- colnames(raw)
+	      out
 	    },
 
 	    #' @description Validate current matrix storage invariants.
@@ -1716,7 +1863,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       if (!is.null(cells)) { # translate cells into a rowSel boolean vector
-        if (!(is.logical(cells) && length(cells)==nrow(self$counts))) {
+        if (is.logical(cells) && length(cells)==nrow(self$counts)) {
+          rowSel <- cells
+        } else {
           if (is.character(cells) || is.integer(cells)) {
             rowSel <- rep(FALSE, nrow(self$counts))
             names(rowSel) <- rownames(self$counts)
@@ -1730,7 +1879,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
 
       if (verbose) message("calculating variance fit ...")
-      df <- colMeanVarS(self$counts, rowSel, n.cores)
+      df <- if (!is.null(self$rawCounts) &&
+                !is.null(self$matrixViews$analysis) &&
+                self$matrixViews$analysis$model %in% c("plain", "raw")) {
+        self$viewColMeanVar(name = "analysis", cells = cells, n.cores = n.cores)
+      } else {
+        colMeanVarS(self$counts, rowSel, n.cores)
+      }
 
       if (use.raw.variance) { # use raw variance estimates without relative adjustments
         rownames(df) <- colnames(self$counts)

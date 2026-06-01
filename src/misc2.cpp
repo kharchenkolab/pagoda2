@@ -40,6 +40,96 @@ int non0LogColLmS(SEXP sY, const arma::mat& X, const arma::vec& ldepth, const in
   return(0);
 }
 
+static void validateViewKernelArgs(const arma::ivec& dims,
+                                   const arma::vec& depth,
+                                   const double depthScale,
+                                   const bool normalize,
+                                   const arma::ivec& batch,
+                                   const arma::mat& batchFactors,
+                                   const arma::vec& winsorCaps,
+                                   const arma::vec& preWinsorDepth,
+                                   const arma::vec& postWinsorDepth) {
+  const int nrows = dims[0];
+  const int ncols = dims[1];
+
+  if (normalize) {
+    if (depth.n_elem != (arma::uword)nrows) {
+      stop("View depth vector must have one value per matrix row");
+    }
+    if (!R_finite(depthScale) || depthScale == 0) {
+      stop("View depthScale must be finite and non-zero");
+    }
+  }
+
+  if (batchFactors.n_elem > 0) {
+    if (!normalize) {
+      stop("Batch factors require a normalized matrix view");
+    }
+    if (batch.n_elem != (arma::uword)nrows) {
+      stop("View batch vector must have one value per matrix row");
+    }
+    if (batchFactors.n_rows != (arma::uword)ncols) {
+      stop("View batch factor matrix must have one row per matrix column");
+    }
+    for (int r = 0; r < nrows; r++) {
+      if (batch[r] == NA_INTEGER || batch[r] < 1 || batch[r] > (int)batchFactors.n_cols) {
+        stop("View batch vector contains invalid factor codes");
+      }
+    }
+  }
+
+  if (winsorCaps.n_elem > 0) {
+    if (!normalize) {
+      stop("Winsor caps require a normalized matrix view");
+    }
+    if (winsorCaps.n_elem != (arma::uword)ncols) {
+      stop("View winsorCaps vector must have one value per matrix column");
+    }
+    if (preWinsorDepth.n_elem != (arma::uword)nrows || postWinsorDepth.n_elem != (arma::uword)nrows) {
+      stop("View winsor depth vectors must have one value per matrix row");
+    }
+  }
+}
+
+static inline double viewKernelValue(double value,
+                                     const int row,
+                                     const int col,
+                                     const arma::vec& depth,
+                                     const double depthScale,
+                                     const bool normalize,
+                                     const bool logScale,
+                                     const arma::ivec& batch,
+                                     const arma::mat& batchFactors,
+                                     const arma::vec& winsorCaps,
+                                     const arma::vec& preWinsorDepth,
+                                     const arma::vec& postWinsorDepth) {
+  if (normalize) {
+    double d = depth[row];
+
+    if (batchFactors.n_elem > 0) {
+      value /= batchFactors(col, batch[row] - 1);
+    }
+
+    if (winsorCaps.n_elem > 0) {
+      const double preDepth = preWinsorDepth[row];
+      value /= preDepth;
+      if (value > winsorCaps[col]) {
+        value = winsorCaps[col];
+      }
+      value *= preDepth;
+      d = postWinsorDepth[row];
+    }
+
+    value /= (d / depthScale);
+  }
+
+  if (logScale) {
+    value = std::log(value + 1.0);
+  }
+
+  return value;
+}
+
 
 // calculate column mean and variance, optionally taking a subset of rows to operate on
 // [[Rcpp::export]]
@@ -97,6 +187,79 @@ Rcpp::DataFrame colMeanVarS(SEXP sY,  SEXP rowSel, int ncores=1) {
   return Rcpp::DataFrame::create(Named("m")=meanV,Named("v")=varV,Named("nobs",nobsV));
 }
 
+// calculate column mean and variance of a sparse view without materializing it
+// [[Rcpp::export]]
+Rcpp::DataFrame colMeanVarView(SEXP sY,
+                               SEXP rowSel,
+                               const arma::vec& depth,
+                               double depthScale,
+                               bool normalize,
+                               bool logScale,
+                               const arma::ivec& batch,
+                               const arma::mat& batchFactors,
+                               const arma::vec& winsorCaps,
+                               const arma::vec& preWinsorDepth,
+                               const arma::vec& postWinsorDepth,
+                               int ncores=1) {
+  S4 mat(sY);
+  const arma::uvec i((unsigned int *)INTEGER(mat.slot("i")), LENGTH(mat.slot("i")), false, true);
+  const arma::ivec dims(INTEGER(mat.slot("Dim")), LENGTH(mat.slot("Dim")), false, true);
+  const arma::ivec p(INTEGER(mat.slot("p")), LENGTH(mat.slot("p")), false, true);
+  const arma::vec Y(REAL(mat.slot("x")), LENGTH(mat.slot("x")), false, true);
+
+  validateViewKernelArgs(dims, depth, depthScale, normalize, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+
+  bool rowSelSpecified=!Rf_isNull(rowSel);
+  const arma::ivec rs=(rowSelSpecified) ? arma::ivec(INTEGER(rowSel),LENGTH(rowSel),false,true) : arma::ivec();
+  if(rowSelSpecified && rs.n_elem != (arma::uword)dims[0]) {
+    stop("rowSel must have one value per matrix row");
+  }
+
+  int ncols=p.size()-1;
+  int nrows=dims[0];
+  if(rowSelSpecified) {
+    nrows=0;
+    for(int j=0;j<rs.size();j++) { if(rs[j] == TRUE) { nrows++; } }
+  }
+  if(nrows == 0) {
+    stop("rowSel does not select any rows");
+  }
+
+  arma::vec meanV(ncols,arma::fill::zeros);
+  arma::vec varV(ncols,arma::fill::zeros);
+  arma::vec nobsV(ncols,arma::fill::zeros);
+
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(ncores) shared(meanV,varV,nobsV)
+#endif
+  for(int g=0;g<ncols;g++) {
+    int p0=p[g]; int p1=p[g+1];
+    if(p1-p0 <1) { continue; }
+
+    double sumV = 0.0;
+    double sumSqV = 0.0;
+    int nvalid = 0;
+
+    for(int j=p0;j<p1;j++) {
+      const int row = i[j];
+      if(!rowSelSpecified || rs[row] == TRUE) {
+        const double v = viewKernelValue(Y[j], row, g, depth, depthScale, normalize, logScale,
+                                         batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+        sumV += v;
+        sumSqV += v * v;
+        nvalid++;
+      }
+    }
+
+    nobsV[g] = nvalid;
+    const double m = sumV / nrows;
+    meanV[g] = m;
+    varV[g] = (sumSqV / nrows) - (m * m);
+  }
+
+  return Rcpp::DataFrame::create(Named("m")=meanV,Named("v")=varV,Named("nobs",nobsV));
+}
+
 
 // calculates factor-stratified sums for each column
 // rowSel is an integer factor; 
@@ -135,6 +298,60 @@ arma::mat colSumByFac(SEXP sY,  SEXP rowSel) {
 	      sumM(0,g)+=Y[j];
       } else if(f>0) {
       	sumM(f,g)+=Y[j];
+      }
+    }
+  }
+  return sumM;
+}
+
+// calculates factor-stratified sums for each column of a sparse view without materializing it
+// [[Rcpp::export]]
+arma::mat colSumByFacView(SEXP sY,
+                          SEXP rowSel,
+                          const arma::vec& depth,
+                          double depthScale,
+                          bool normalize,
+                          bool logScale,
+                          const arma::ivec& batch,
+                          const arma::mat& batchFactors,
+                          const arma::vec& winsorCaps,
+                          const arma::vec& preWinsorDepth,
+                          const arma::vec& postWinsorDepth) {
+  S4 mat(sY);
+  const arma::uvec i((unsigned int *)INTEGER(mat.slot("i")), LENGTH(mat.slot("i")), false, true);
+  const arma::ivec dims(INTEGER(mat.slot("Dim")), LENGTH(mat.slot("Dim")), false, true);
+  const arma::ivec p(INTEGER(mat.slot("p")), LENGTH(mat.slot("p")), false, true);
+  const arma::vec Y(REAL(mat.slot("x")), LENGTH(mat.slot("x")), false, true);
+
+  validateViewKernelArgs(dims, depth, depthScale, normalize, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+
+  const arma::ivec rs=arma::ivec(INTEGER(rowSel),LENGTH(rowSel),false,true);
+  if(rs.n_elem != (arma::uword)dims[0]) {
+    stop("rowSel must have one value per matrix row");
+  }
+
+  int ncols=p.size()-1;
+  int nlevels=0;
+  for(int j=0;j<rs.size();j++) {
+    if(rs[j]!=NA_INTEGER) {
+      if(rs[j]>nlevels) { nlevels=rs[j]; }
+    }
+  }
+  if(nlevels==0) { stop("colSumByFacView(): supplied factor doesn't have any levels!"); }
+  arma::mat sumM(nlevels+1,ncols,arma::fill::zeros);
+
+  for(int g=0;g<ncols;g++) {
+    int p0=p[g]; int p1=p[g+1];
+    if(p1-p0 <1) { continue; }
+    for(int j=p0;j<p1;j++) {
+      int row=i[j];
+      int f=rs[row];
+      if(f==NA_INTEGER) {
+        sumM(0,g)+=viewKernelValue(Y[j], row, g, depth, depthScale, normalize, logScale,
+                                   batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+      } else if(f>0) {
+        sumM(f,g)+=viewKernelValue(Y[j], row, g, depth, depthScale, normalize, logScale,
+                                   batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
       }
     }
   }
