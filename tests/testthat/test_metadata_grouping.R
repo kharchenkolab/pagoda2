@@ -122,7 +122,7 @@ test_that("runLeiden stores labels in legacy clusters and cellMeta", {
 
   p2 <- make_test_p2()
   g <- igraph::make_ring(4)
-  igraph::V(g)$name <- rownames(p2$counts)
+  igraph::V(g)$name <- rownames(p2$getRawCounts())
   p2$graphs$PCA <- g
 
   p2$runLeiden(name = "leiden", resolution = 1)
@@ -179,8 +179,8 @@ test_that("ComplexHeatmap marker heatmap returns details without drawing", {
   )
 
   expect_s4_class(details$heatmap, "Heatmap")
-  expect_equal(ncol(details$matrix), nrow(p2$counts))
-  expect_true(all(details$genes %in% colnames(p2$counts)))
+  expect_equal(ncol(details$matrix), nrow(p2$getRawCounts()))
+  expect_true(all(details$genes %in% colnames(p2$getRawCounts())))
 })
 
 test_that("ComplexHeatmap marker heatmap warns on large dense plot requests", {
@@ -204,10 +204,10 @@ test_that("ComplexHeatmap marker heatmap warns on large dense plot requests", {
 
 test_that("result discovery and selector resolvers use canonical defaults", {
   p2 <- make_test_p2()
-  p2$reductions$PCA <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("PC", 1:2)))
-  p2$embeddings$PCA$UMAP <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("UMAP", 1:2)))
+  p2$reductions$PCA <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$getRawCounts()), paste0("PC", 1:2)))
+  p2$embeddings$PCA$UMAP <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$getRawCounts()), paste0("UMAP", 1:2)))
   g <- igraph::make_ring(4)
-  igraph::V(g)$name <- rownames(p2$counts)
+  igraph::V(g)$name <- rownames(p2$getRawCounts())
   p2$graphs$PCA <- g
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
   p2$runMarkers(name = "leiden", append.specificity.metrics = FALSE)
@@ -241,7 +241,7 @@ test_that("plotEmbedding resolves defaultGrouping when available", {
   testthat::skip_if_not_installed("ggplot2")
 
   p2 <- make_test_p2()
-  p2$embeddings$PCA$UMAP <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("UMAP", 1:2)))
+  p2$embeddings$PCA$UMAP <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$getRawCounts()), paste0("UMAP", 1:2)))
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
 
   expect_silent(plot <- p2$plotEmbedding())
@@ -255,7 +255,7 @@ test_that("new wrappers do not emit legacy deprecation warnings", {
   p2 <- make_test_p2()
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
   g <- igraph::make_ring(4)
-  igraph::V(g)$name <- rownames(p2$counts)
+  igraph::V(g)$name <- rownames(p2$getRawCounts())
   p2$graphs$PCA <- g
 
   expect_warning(p2$getKnnClusters(type = "PCA", name = "legacy"), "runLeiden")

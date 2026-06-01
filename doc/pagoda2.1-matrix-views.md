@@ -11,8 +11,8 @@ normalized analysis matrices from lightweight view recipes.
 - `p2$matrixViews$analysis`: recipe for the normalized analysis matrix. The
   current recipe records model type, depth, depth scale, log scaling,
   batch-correction factors, and winsorization caps/depths when used.
-- `p2$counts`: legacy normalized matrix. It is still populated for backwards
-  compatibility, but current workflow-facing methods should not require it.
+- `p2$counts`: removed legacy normalized matrix slot. Accessing or assigning it
+  errors with guidance to use view accessors instead.
 - `p2$misc$rawCounts`: legacy alias to `p2$rawCounts`.
 
 The preferred accessors are:
@@ -41,16 +41,8 @@ p2$plotMarkerDotPlot(markers = "leiden")
 p2$plotMarkerHeatmap(markers = "leiden")
 ```
 
-The tested workflow-facing path also supports removing the legacy normalized
-matrix after construction:
-
-```r
-p2$counts <- NULL
-p2$run(skip = "markers", profile = "pipeline", plots = "none")
-```
-
-This is not yet the default storage mode because some specialized legacy
-methods still read `self$counts` directly.
+The workflow-facing path uses matrix views by default; no full normalized
+matrix is retained after construction.
 
 ## Import And Export
 
@@ -70,13 +62,9 @@ analysis view when requested.
 
 ## Current Limitations
 
-The following specialized legacy paths still need a view-aware pass before
-`p2$counts` can be removed by default:
+The `linearObs` normalization model is not supported without a stored
+normalized matrix yet. It now fails early rather than creating a view that
+cannot be materialized.
 
-- hierarchical differential-expression aspect helpers
-- local PCA/kNN helpers
-- pathway overdispersion helpers
-- some gene graph and app-specific code paths
-
-Until those are audited, keep tests that explicitly set `p2$counts <- NULL`
-focused on the canonical single-dataset workflow and plotting/export paths.
+The p2app export path is postponed while the app layer is refactored for matrix
+views.

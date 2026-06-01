@@ -54,21 +54,21 @@ committing.
 - Prefer `getExpressionBlock()` for selected materialization.
 - Prefer `viewColMeanVar()` and `viewColSumByFac()` for streaming summaries.
 - Avoid storing full duplicate raw and normalized matrices in new code paths.
-- If a method still needs `p2$counts`, document why or route it through a view.
+- If a method still needs normalized expression, route it through a matrix view.
 
 Run the GSM5746259 benchmark when changing core workflow or plotting
 performance:
 
 ```sh
 Rscript tests/perf/benchmark_gsm5746259.R
-P21_BENCH_DROP_COUNTS=true Rscript tests/perf/benchmark_gsm5746259.R
 ```
 
 ## Matrix Semantics
 
 - `p2$rawCounts`: canonical filtered raw count matrix, cell by gene.
 - `p2$matrixViews$analysis`: normalized analysis view recipe.
-- `p2$counts`: legacy normalized matrix; do not require it in new workflow code.
+- `p2$counts`: removed legacy normalized matrix slot; use
+  `p2$getExpressionBlock()` for normalized expression.
 - h5ad export writes normalized analysis values to `X` and raw counts to
   `layers/counts`.
 

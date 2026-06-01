@@ -230,6 +230,22 @@ NULL
   x
 }
 
+.pagoda2_counts_removed_message <- function(action = c("access", "assign")) {
+  action <- match.arg(action)
+  if (identical(action, "assign")) {
+    return(paste0(
+      "`$counts` is no longer a stored Pagoda2 matrix and cannot be assigned. ",
+      "Construct a new object from raw counts, then use `p2$getRawCounts()` for raw values ",
+      "or `p2$getExpressionBlock()` to materialize the normalized analysis view."
+    ))
+  }
+  paste0(
+    "`$counts` is no longer a stored Pagoda2 matrix. ",
+    "Use `p2$getRawCounts()` for raw values, `p2$getExpressionBlock()` for normalized analysis values, ",
+    "or `p2$materializeView(\"analysis\")` for explicit view materialization."
+  )
+}
+
 .pagoda2_view_kernel_args <- function(raw, view) {
   if (!view$model %in% c("plain", "raw")) {
     stop("Matrix view model `", view$model, "` is not supported by sparse view kernels yet")
@@ -316,9 +332,6 @@ NULL
   matrix <- p2$rawCounts
   if (is.null(matrix)) {
     matrix <- p2$misc[['rawCounts']]
-  }
-  if (is.null(matrix)) {
-    matrix <- p2$counts
   }
   if (is.null(matrix)) {
     stop("Cannot determine ", axis, " names before counts are initialized")
@@ -497,16 +510,13 @@ NULL
 #' @export Pagoda2
 Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
   public = list(
-    #' @field counts Gene count matrix, normalized on total counts (default=NULL)
-    counts = NULL,
-
     #' @field rawCounts Raw count matrix on the current filtered axis, cell-by-gene.
     rawCounts = NULL,
 
-    #' @field modelType string Model used to normalize count matrices. Only supported values are 'raw', 'plain', and 'linearObs'.
+    #' @field modelType string Model used to normalize count matrices. Supported values are 'raw' and 'plain'.
     #'     -- 'plain': Normalize by regressing out on the non-zero observations of each gene (default).
     #'     -- 'raw': Use the raw count matrices, without normalization. The expression matrix taken "as is" without normalization, although log.scale still applies. 
-    #'     -- 'linearObs': Fit a linear model of pooled counts across all genes against depth. This approach isn't recommened, as the depth dependency is not completely normalized out.
+    #'     -- 'linearObs': Currently unavailable under matrix-view storage.
     modelType = NULL,
 
     #' @field clusters Results of clustering (default=list())
@@ -566,7 +576,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @description Initialize Pagoda2 class
     #'
     #' @param x input count matrix
-    #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
+    #' @param modelType Model used to normalize count matrices (default='plain'). Supported values are 'raw' and 'plain'; 'linearObs' is currently unavailable under matrix-view storage.
     #' @examples
     #' \donttest{ 
     #' ## Load pre-generated a dataset of 50 bone marrow cells as matrix
@@ -587,7 +597,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
                         lib.sizes=NULL, log.scale=TRUE, keep.genes=NULL) {
 
       if ('Pagoda2' %in% class(x)) { # copy constructor
-        for (n in ls(x)) {
+        for (n in setdiff(ls(x), "counts")) {
           if (!is.function(get(n, x))) assign(n, get(n, x), self)
         }
 
@@ -623,7 +633,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #'
 	    #' @return Invisibly returns self.
 	    syncMetadata=function() {
-	      matrix <- if (!is.null(self$counts)) self$counts else self$rawCounts
+	      matrix <- self$rawCounts
+	      if (is.null(matrix)) {
+	        matrix <- self$misc[['rawCounts']]
+	      }
 	      if (is.null(matrix)) {
 	        return(invisible(self))
 	      }
@@ -815,13 +828,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          errors <- c(errors, "rawCounts contains non-integer values")
 	        }
 	      }
-	      if (!is.null(self$counts) && !is.null(raw)) {
-	        if (!identical(dim(self$counts), dim(raw)) ||
-	            !identical(rownames(self$counts), rownames(raw)) ||
-	            !identical(colnames(self$counts), colnames(raw))) {
-	          errors <- c(errors, "counts and rawCounts axes differ")
-	        }
-	      }
 	      if (!is.null(self$depth) && !is.null(raw)) {
 	        if (length(self$depth) != nrow(raw) || !identical(names(self$depth), rownames(raw))) {
 	          errors <- c(errors, "depth is not named on the rawCounts cell axis")
@@ -830,6 +836,33 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      if (!is.null(self$batch) && !is.null(raw)) {
 	        if (length(self$batch) != nrow(raw) || !identical(names(self$batch), rownames(raw))) {
 	          errors <- c(errors, "batch is not named on the rawCounts cell axis")
+	        }
+	      }
+	      view <- self$matrixViews$analysis
+	      if (!is.null(view) && !is.null(raw)) {
+	        if (!is.null(view$depth) &&
+	            (length(view$depth) != nrow(raw) || !identical(names(view$depth), rownames(raw)))) {
+	          errors <- c(errors, "analysis view depth is not named on the rawCounts cell axis")
+	        }
+	        if (!is.null(view$batch) &&
+	            (length(view$batch) != nrow(raw) || !identical(names(view$batch), rownames(raw)))) {
+	          errors <- c(errors, "analysis view batch is not named on the rawCounts cell axis")
+	        }
+	        if (!is.null(view$batchFactors) &&
+	            !identical(rownames(view$batchFactors), colnames(raw))) {
+	          errors <- c(errors, "analysis view batch factors are not named on the rawCounts gene axis")
+	        }
+	        if (!is.null(view$winsorCaps) &&
+	            !identical(names(view$winsorCaps), colnames(raw))) {
+	          errors <- c(errors, "analysis view winsorization caps are not named on the rawCounts gene axis")
+	        }
+	        if (!is.null(view$preWinsorDepth) &&
+	            (length(view$preWinsorDepth) != nrow(raw) || !identical(names(view$preWinsorDepth), rownames(raw)))) {
+	          errors <- c(errors, "analysis view pre-winsor depth is not named on the rawCounts cell axis")
+	        }
+	        if (!is.null(view$postWinsorDepth) &&
+	            (length(view$postWinsorDepth) != nrow(raw) || !identical(names(view$postWinsorDepth), rownames(raw)))) {
+	          errors <- c(errors, "analysis view post-winsor depth is not named on the rawCounts cell axis")
 	        }
 	      }
 	      if (length(errors) > 0) {
@@ -861,8 +894,23 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          stringsAsFactors = FALSE
 	        )
 	      }
+	      add_view_entry <- function(name, role, view, raw) {
+	        if (is.null(view) || is.null(raw)) {
+	          return(NULL)
+	        }
+	        data.frame(
+	          name = name,
+	          role = role,
+	          class = paste0(view$model, "_view"),
+	          n.cells = nrow(raw),
+	          n.genes = ncol(raw),
+	          nnz = NA_integer_,
+	          integer.like = NA,
+	          stringsAsFactors = FALSE
+	        )
+	      }
 	      entries[["raw"]] <- add_entry("raw", "raw_counts", self$rawCounts)
-	      entries[["analysis"]] <- add_entry("analysis", "legacy_normalized", self$counts)
+	      entries[["analysis"]] <- add_view_entry("analysis", "analysis_view", self$matrixViews$analysis, self$rawCounts)
 	      entries <- entries[!vapply(entries, is.null, logical(1))]
 	      if (length(entries) == 0) {
 	        return(data.frame(
@@ -1082,7 +1130,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @description Calculate basic cell QC metrics and store them in cellMeta.
 	    #'
 	    #' @param overwrite Whether to overwrite existing QC columns.
-	    #' @param matrix Optional cell-by-gene matrix. Defaults to rawCounts when available, otherwise counts.
+	    #' @param matrix Optional cell-by-gene matrix. Defaults to rawCounts when available.
 	    #' @return data.frame of QC metrics.
 	    runQC=function(overwrite=FALSE, matrix=NULL) {
 	      if (is.null(matrix)) {
@@ -1090,9 +1138,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      if (is.null(matrix)) {
 	        matrix <- self$misc[['rawCounts']]
-	      }
-	      if (is.null(matrix)) {
-	        matrix <- self$counts
 	      }
 	      if (is.null(matrix)) {
 	        stop("Cannot run QC before counts are initialized")
@@ -1511,7 +1556,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param ... App export arguments.
 	    #' @return Invisibly returns path.
 	    exportApp=function(path, ...) {
-	      self$export(path = path, format = "p2app", ...)
+	      stop("p2app export is postponed while the app layer is refactored for matrix views.", call. = FALSE)
 	    },
 
 	    #' @description Resolve a reduction name.
@@ -1743,17 +1788,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
 
 	      if (self$modelType == 'raw') {
-	        self$counts <- self$rawCounts
-	        if (log.scale) {
-	          self$counts <- self$rawCounts
-	          self$counts@x <- as.numeric(log(self$counts@x + 1))
-	        }
 	        self$depth <- depth
 	        self$matrixViews$analysis <- analysis.view
 	        self$syncMetadata()
-	        invisible(self$counts)
+	        invisible(self)
 	        return()
 	      }
+
+      if (self$modelType == 'linearObs') {
+        stop("modelType `linearObs` is not supported without stored `$counts` yet")
+      }
 
       counts <- self$rawCounts
       counts@x <- as.numeric(counts@x)
@@ -1855,11 +1899,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       self$misc[['rescaled.mat']] <- NULL
       if (verbose) message("done.\n")
 
-	      self$counts <- counts
 	      self$depth <- depth
 	      analysis.view$depth <- depth
 	      self$matrixViews$analysis <- analysis.view
 	      self$syncMetadata()
+	      invisible(self)
 	    },
 
     #' @description Adjust variance of the residual matrix, determine overdispersed sites
@@ -1922,7 +1966,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
                 self$matrixViews$analysis$model %in% c("plain", "raw")) {
         self$viewColMeanVar(name = "analysis", cells = cells, n.cores = n.cores)
       } else {
-        colMeanVarS(self$counts, rowSel, n.cores)
+        stop("Variance calculation requires a supported matrix view")
       }
 
       if (use.raw.variance) { # use raw variance estimates without relative adjustments
@@ -2323,7 +2367,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
 
       if (type=='counts') {
-        x <- self$counts
+        x <- self$getExpressionBlock()
       } else {
         x <- self$reductions[[type]]
       }
@@ -2407,9 +2451,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       #dexp <- papply(dc,function(x) getDifferentialGenes(groups=x,z.threshold=z.threshold),n.cores=n.cores)
 
-      x <- self$counts
-      x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'],diff(x@p)) # apply variance scaling
-      x <- t(x)
+      x <- self$getExpressionBlock(scale.variance = TRUE, orientation = "gene_by_cell")
       dexp <- papply(dc,function(g) {
         dg <- self$getDifferentialGenes(groups=g, z.threshold=z.threshold)
         dg <- lapply(dg,function(x) x[x$Z>=z.threshold,])
@@ -2468,7 +2510,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @return graph with gene similarity
     makeGeneKnnGraph = function(nPcs=100, center=TRUE, fastpath=TRUE, maxit=1000, k=30, n.cores=self$n.cores, verbose=TRUE) {
        # Transpose first
-       x <- t(self$counts)
+       x <- self$getExpressionBlock(orientation = "gene_by_cell")
 
       # TODO: factor out gene PCA calculation
       # Do the PCA
@@ -3788,7 +3830,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       return.pca=FALSE, skip.pca=FALSE) {
 
       if (type=='counts') {
-        x <- self$counts
+        x <- self$getExpressionBlock()
       } else {
         if (!type %in% names(self$reductions)) { 
           stop("Reduction ",type,' not found')
@@ -4074,9 +4116,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       nPcs <- 1
       if (type=='counts') {
-        x <- self$counts
-        # apply scaling if using raw counts
-        x@x <- x@x*rep(self$misc[['varinfo']][colnames(x),'gsf'],diff(x@p))
+        x <- self$getExpressionBlock(scale.variance = TRUE)
       } else {
         if (!type %in% names(self$reductions)) { stop("Reduction ",type,' not found')}
         x <- self$reductions[[type]]
@@ -4313,7 +4353,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         stop("Dimensions parameter 'dims' must be >=1")
       }
       if (type=='counts') {
-        x <- self$counts
+        x <- self$getExpressionBlock()
       } else {
         if (!type %in% names(self$reductions)) { 
           stop("Reduction ",type,' not found')
@@ -4455,6 +4495,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    runUMAP=function(reduction=NULL, name='UMAP', ...) {
 	      self$runEmbedding(reduction = reduction, embedding = "UMAP", name = name, ...)
 	    }
-	  )
+	  ),
+
+  active = list(
+    #' @field counts Removed legacy normalized matrix slot.
+    counts = function(value) {
+      if (missing(value)) {
+        stop(.pagoda2_counts_removed_message("access"), call. = FALSE)
+      }
+      stop(.pagoda2_counts_removed_message("assign"), call. = FALSE)
+    }
+  )
 
 )

@@ -23,18 +23,12 @@ P21_GSM5746259_DIR=/path/to/GSM5746259 P21_BENCH_CORES=8 \
   Rscript tests/perf/benchmark_gsm5746259.R
 ```
 
-To exercise the view-backed workflow after construction, run:
-
-```sh
-P21_BENCH_DROP_COUNTS=true Rscript tests/perf/benchmark_gsm5746259.R
-```
-
 Current raw/view observations:
 
 - `p2$rawCounts` is the canonical filtered raw count matrix.
 - `p2$matrixViews$analysis` records the normalized analysis recipe.
-- `p2$counts` is still populated as a legacy normalized matrix, but the
-  canonical workflow-facing path is tested with `p2$counts <- NULL`.
+- `p2$counts` is no longer stored; normalized values are materialized from
+  `p2$getExpressionBlock()` only when needed.
 - h5ad export writes normalized analysis values to `X` and raw counts to
   `layers/counts`.
 - `sccore::dotPlotData()` aggregates marker expression by group with sparse

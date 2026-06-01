@@ -417,7 +417,6 @@ test_that("Pagoda2 as list and RDS export preserve core axes", {
   expect_identical(colnames(out$counts), colnames(cm))
 
   normalized <- Matrix::t(p2$getExpressionBlock())
-  p2$counts <- NULL
   out <- p2$as("list")
   expect_equal(as.matrix(out$normalized), as.matrix(normalized), tolerance = 1e-10)
 
@@ -473,7 +472,7 @@ test_that("Pagoda2 exports h5ad with exact AnnData axes and sparse counts", {
   expect_identical(dim(t(h5[["obsm"]][["X_umap"]]$read())), c(ncol(cm), 2L))
 })
 
-test_that("h5ad export writes normalized X from matrix views without legacy counts", {
+test_that("h5ad export writes normalized X from matrix views", {
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
     cm,
@@ -486,7 +485,6 @@ test_that("h5ad export writes normalized X from matrix views without legacy coun
   )
   expected.x <- p2$getExpressionBlock()
   expected.counts <- p2$getRawCounts()
-  p2$counts <- NULL
   path <- tempfile(fileext = ".h5ad")
 
   expect_silent(p2$export(path, format = "h5ad"))
@@ -500,9 +498,7 @@ test_that("h5ad export writes normalized X from matrix views without legacy coun
   expect_false(all(exported.x@x == exported.counts@x))
 })
 
-test_that("exportApp writes p2app binary through universal export", {
-  testthat::skip_if_not_installed("base64enc")
-
+test_that("exportApp is postponed while app layer is refactored", {
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
     cm,
@@ -519,12 +515,10 @@ test_that("exportApp writes p2app binary through universal export", {
     nrow = 3,
     dimnames = list(colnames(cm), c("UMAP1", "UMAP2"))
   )
-  p2$counts <- NULL
   path <- tempfile(fileext = ".bin")
 
-  expect_silent(p2$exportApp(path, geneSets = list(), verbose = FALSE))
-  expect_true(file.exists(path))
-  expect_gt(file.info(path)$size, 0)
+  expect_error(p2$exportApp(path, geneSets = list(), verbose = FALSE), "postponed")
+  expect_false(file.exists(path))
 })
 
 test_that("h5ad export resolves flexible AnnData metadata before writing", {
@@ -610,7 +604,7 @@ test_that("Pagoda2 as Seurat carries normalized data and feature metadata", {
   seu <- p2$as("seurat")
   data <- get("LayerData", envir = asNamespace("SeuratObject"))(seu, assay = "RNA", layer = "data")
 
-  expect_equal(as.matrix(data), as.matrix(Matrix::t(p2$counts)))
+  expect_equal(as.matrix(data), as.matrix(Matrix::t(p2$getExpressionBlock())))
   expect_true("gene_id" %in% colnames(seu[["RNA"]]@meta.data))
   expect_identical(as.character(seu[["RNA"]]@meta.data$gene_symbol), rownames(cm))
 })

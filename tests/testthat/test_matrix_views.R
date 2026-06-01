@@ -16,11 +16,43 @@ make_view_matrix <- function() {
   as(cm, "dgCMatrix")
 }
 
-expect_view_matches_counts <- function(p2) {
+reference_analysis_matrix <- function(p2) {
+  raw <- as.matrix(p2$getRawCounts())
+  view <- p2$getMatrixView("analysis")
+  x <- raw
+  if (identical(view$model, "raw")) {
+    if (isTRUE(view$log.scale)) {
+      x <- log(x + 1)
+    }
+    return(Matrix::Matrix(x, sparse = TRUE))
+  }
+  stopifnot(identical(view$model, "plain"))
+  if (!is.null(view$batchFactors)) {
+    for (cell in rownames(x)) {
+      x[cell, ] <- x[cell, ] / view$batchFactors[colnames(x), as.character(view$batch[cell])]
+    }
+  }
+  depth <- view$depth[rownames(x)]
+  if (!is.null(view$winsorCaps)) {
+    pre.depth <- view$preWinsorDepth[rownames(x)]
+    x <- x / as.numeric(pre.depth)
+    x <- pmin(x, matrix(view$winsorCaps[colnames(x)], nrow = nrow(x), ncol = ncol(x), byrow = TRUE))
+    x <- x * as.numeric(pre.depth)
+    depth <- view$postWinsorDepth[rownames(x)]
+  }
+  x <- x / as.numeric(depth / view$depthScale)
+  if (isTRUE(view$log.scale)) {
+    x <- log(x + 1)
+  }
+  Matrix::Matrix(x, sparse = TRUE)
+}
+
+expect_view_matches_reference <- function(p2) {
   view <- p2$materializeView("analysis")
-  expect_identical(rownames(view), rownames(p2$counts))
-  expect_identical(colnames(view), colnames(p2$counts))
-  expect_equal(as.matrix(view), as.matrix(p2$counts), tolerance = 1e-10)
+  ref <- reference_analysis_matrix(p2)
+  expect_identical(rownames(view), rownames(ref))
+  expect_identical(colnames(view), colnames(ref))
+  expect_equal(as.matrix(view), as.matrix(ref), tolerance = 1e-10)
   expect_true(p2$validateMatrices())
 }
 
@@ -60,7 +92,7 @@ test_that("analysis view materializes plain normalization", {
     trim = 0
   )
 
-  expect_view_matches_counts(p2)
+  expect_view_matches_reference(p2)
   expect_view_summaries_match_materialized(p2)
   expect_identical(p2$getMatrixView("analysis")$model, "plain")
 })
@@ -76,10 +108,10 @@ test_that("analysis view materializes log-scaled normalization", {
     trim = 0
   )
 
-  expect_view_matches_counts(p2)
+  expect_view_matches_reference(p2)
   expect_view_summaries_match_materialized(p2)
   block <- p2$getExpressionBlock(cells = c("cell1", "cell3"), genes = c("gene1", "gene4"))
-  expect_equal(as.matrix(block), as.matrix(p2$counts[c("cell1", "cell3"), c("gene1", "gene4")]), tolerance = 1e-10)
+  expect_equal(as.matrix(block), as.matrix(reference_analysis_matrix(p2)[c("cell1", "cell3"), c("gene1", "gene4")]), tolerance = 1e-10)
   block.t <- p2$getExpressionBlock(cells = c("cell1", "cell3"), genes = c("gene1", "gene4"), orientation = "gene_by_cell")
   expect_equal(as.matrix(block.t), as.matrix(Matrix::t(block)), tolerance = 1e-10)
 })
@@ -97,7 +129,7 @@ test_that("analysis view materializes batch-adjusted normalization", {
     trim = 0
   )
 
-  expect_view_matches_counts(p2)
+  expect_view_matches_reference(p2)
   expect_view_summaries_match_materialized(p2)
   expect_false(is.null(p2$getMatrixView("analysis")$batchFactors))
 })
@@ -113,7 +145,7 @@ test_that("analysis view materializes winsorized normalization", {
     trim = 1
   )
 
-  expect_view_matches_counts(p2)
+  expect_view_matches_reference(p2)
   expect_view_summaries_match_materialized(p2)
   expect_false(is.null(p2$getMatrixView("analysis")$winsorCaps))
 })
@@ -130,9 +162,24 @@ test_that("analysis view materializes raw model", {
     trim = 0
   )
 
-  expect_view_matches_counts(p2)
+  expect_view_matches_reference(p2)
   expect_view_summaries_match_materialized(p2)
   expect_equal(as.matrix(p2$getRawCounts(orientation = "gene_by_cell")), as.matrix(make_view_matrix()))
+})
+
+test_that("legacy counts slot is not materialized by default", {
+  p2 <- Pagoda2$new(
+    make_view_matrix(),
+    verbose = FALSE,
+    n.cores = 1,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = TRUE,
+    trim = 0
+  )
+
+  expect_error(p2$counts, "no longer a stored Pagoda2 matrix")
+  expect_error(p2$counts <- p2$getExpressionBlock(), "cannot be assigned")
 })
 
 test_that("view variance path accepts logical cell selections", {
@@ -158,7 +205,7 @@ test_that("view variance path accepts logical cell selections", {
   )
 })
 
-test_that("workflow-facing methods use matrix views when legacy counts are absent", {
+test_that("workflow-facing methods use matrix views without a legacy counts slot", {
   groups <- factor(c(cell1 = "A", cell2 = "A", cell3 = "B", cell4 = "B", cell5 = "B"))
 
   p2.ref <- Pagoda2$new(
@@ -189,7 +236,6 @@ test_that("workflow-facing methods use matrix views when legacy counts are absen
     trim = 0
   )
   p2$runVariance(plot = FALSE, verbose = FALSE, gam.k = 1, min.gene.cells = 0)
-  p2$counts <- NULL
 
   p2$setGrouping("test_groups", groups, setDefault = TRUE)
   expect_equal(p2$getGrouping(), groups)

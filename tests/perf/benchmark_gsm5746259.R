@@ -15,7 +15,6 @@ if (!dir.exists(data_dir)) {
 
 n_cores <- as.integer(Sys.getenv("P21_BENCH_CORES", "8"))
 n_cores <- max(1L, min(n_cores, parallel::detectCores(logical = FALSE)))
-drop_counts <- tolower(Sys.getenv("P21_BENCH_DROP_COUNTS", "false")) %in% c("1", "true", "yes")
 
 bench <- data.frame(
   step = character(),
@@ -63,20 +62,14 @@ p2 <- timed("Pagoda2$new", {
     min.transcripts.per.cell = 500,
     verbose = FALSE
   )
-}, size.object = function(x) x$counts)
+}, size.object = function(x) list(rawCounts = x$rawCounts, matrixViews = x$matrixViews))
 
 invisible(timed("p2 matrix storage", {
   p2$describeMatrices()
 }, size.object = function(x) list(
   rawCounts = p2$rawCounts,
-  legacyCounts = p2$counts,
   matrixViews = p2$matrixViews
 )))
-
-if (isTRUE(drop_counts)) {
-  p2$counts <- NULL
-  message("Dropped legacy p2$counts; remaining workflow will use matrix views.")
-}
 
 invisible(timed("p2$run(skip='markers')", {
   p2$run(

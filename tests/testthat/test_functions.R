@@ -155,8 +155,11 @@ test_that("Pagoda2 rawCounts are stored on the current filtered axis", {
     )
 
     expect_identical(rownames(p2$rawCounts), c("cell1", "cell2"))
-    expect_identical(rownames(p2$counts), rownames(p2$rawCounts))
-    expect_identical(colnames(p2$counts), colnames(p2$rawCounts))
+    expr <- p2$getExpressionBlock()
+    expect_identical(rownames(expr), rownames(p2$rawCounts))
+    expect_identical(colnames(expr), colnames(p2$rawCounts))
+    expect_error(p2$counts, "no longer a stored Pagoda2 matrix")
+    expect_error(p2$counts <- expr, "cannot be assigned")
     expect_identical(names(p2$depth), rownames(p2$rawCounts))
     expect_identical(names(p2$batch), rownames(p2$rawCounts))
     expect_equal(as.matrix(Matrix::t(p2$rawCounts)), as.matrix(cm[, c("cell1", "cell2")]))
@@ -186,5 +189,5 @@ test_that("validateMatrices catches raw and analysis axis divergence", {
 
     p2$rawCounts <- p2$rawCounts[-1, , drop = FALSE]
     expect_false(p2$validateMatrices(stop.on.error = FALSE))
-    expect_error(p2$validateMatrices(), "axes differ")
+    expect_error(p2$validateMatrices(), "cell axis")
 })
