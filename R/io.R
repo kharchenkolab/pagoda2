@@ -736,6 +736,17 @@
 }
 
 #' @keywords internal
+.pagoda2_get_normalized_matrix <- function(p2) {
+  if (!is.null(p2$matrixViews$analysis)) {
+    return(p2$getExpressionBlock())
+  }
+  if (!is.null(p2$counts)) {
+    return(p2$counts)
+  }
+  stop("Normalized analysis matrix is not available")
+}
+
+#' @keywords internal
 .pagoda2_export_h5ad <- function(p2, path, x = c("normalized", "counts"),
                                  counts.layer = "counts", include.counts = TRUE,
                                  include.reductions = TRUE, include.embeddings = TRUE,
@@ -749,7 +760,7 @@
   }
   raw.counts <- p2$getRawCounts()
   export.counts <- as(raw.counts, "CsparseMatrix")
-  export.x <- if (identical(x, "normalized") && !is.null(p2$counts)) p2$counts else export.counts
+  export.x <- if (identical(x, "normalized")) .pagoda2_get_normalized_matrix(p2) else export.counts
   export.x <- as(export.x, "CsparseMatrix")
   if (!identical(dim(export.x), dim(export.counts)) ||
       !identical(rownames(export.x), rownames(export.counts)) ||
@@ -1187,10 +1198,15 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
   counts <- Matrix::t(raw.counts)
   gene.meta <- p2$resolveGeneMeta(genes = rownames(counts))
   cell.meta <- p2$resolveCellMeta(cells = colnames(counts))
+  normalized <- if (isTRUE(include.normalized)) {
+    Matrix::t(.pagoda2_get_normalized_matrix(p2))
+  } else {
+    NULL
+  }
   if (format == "list") {
     return(list(
       counts = counts,
-      normalized = Matrix::t(p2$counts),
+      normalized = normalized,
       cellMeta = cell.meta,
       geneMeta = gene.meta,
       reductions = p2$reductions,
@@ -1204,8 +1220,8 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
       stop("Package `SingleCellExperiment` is required for `format = \"sce\"`.")
     }
     assays <- list(counts = counts)
-    if (!is.null(p2$counts)) {
-      assays$logcounts <- Matrix::t(p2$counts)
+    if (!is.null(normalized)) {
+      assays$logcounts <- normalized
     }
     return(SingleCellExperiment::SingleCellExperiment(
       assays = assays,
@@ -1219,8 +1235,8 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
     }
     seurat.ns <- asNamespace("Seurat")
     object <- get("CreateSeuratObject", envir = seurat.ns)(counts = counts, assay = assay, meta.data = cell.meta, ...)
-    if (isTRUE(include.normalized) && !is.null(p2$counts)) {
-      data <- Matrix::t(p2$counts)
+    if (!is.null(normalized)) {
+      data <- normalized
       object <- tryCatch(
         get("SetAssayData", envir = seurat.ns)(object, assay = assay, layer = "data", new.data = data),
         error = function(e) get("SetAssayData", envir = seurat.ns)(object, assay = assay, slot = "data", new.data = data)

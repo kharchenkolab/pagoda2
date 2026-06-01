@@ -416,6 +416,11 @@ test_that("Pagoda2 as list and RDS export preserve core axes", {
   expect_identical(rownames(out$counts), rownames(cm))
   expect_identical(colnames(out$counts), colnames(cm))
 
+  normalized <- Matrix::t(p2$getExpressionBlock())
+  p2$counts <- NULL
+  out <- p2$as("list")
+  expect_equal(as.matrix(out$normalized), as.matrix(normalized), tolerance = 1e-10)
+
   path <- tempfile(fileext = ".rds")
   expect_silent(p2$export(path))
   expect_true(file.exists(path))
@@ -466,6 +471,33 @@ test_that("Pagoda2 exports h5ad with exact AnnData axes and sparse counts", {
   expect_true("counts" %in% names(h5[["layers"]]))
   expect_true(all(c("X_pca", "X_umap") %in% names(h5[["obsm"]])))
   expect_identical(dim(t(h5[["obsm"]][["X_umap"]]$read())), c(ncol(cm), 2L))
+})
+
+test_that("h5ad export writes normalized X from matrix views without legacy counts", {
+  cm <- make_io_matrix()
+  p2 <- Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = TRUE,
+    trim = 0
+  )
+  expected.x <- p2$getExpressionBlock()
+  expected.counts <- p2$getRawCounts()
+  p2$counts <- NULL
+  path <- tempfile(fileext = ".h5ad")
+
+  expect_silent(p2$export(path, format = "h5ad"))
+  h5 <- hdf5r::H5File$new(path, mode = "r")
+  on.exit(h5$close_all())
+  exported.x <- pagoda2:::.pagoda2_h5_read_sparse_or_dense(h5[["X"]])
+  exported.counts <- pagoda2:::.pagoda2_h5_read_sparse_or_dense(h5[["layers"]][["counts"]])
+
+  expect_equal(unname(as.matrix(exported.x)), unname(as.matrix(expected.x)), tolerance = 1e-10)
+  expect_equal(unname(as.matrix(exported.counts)), unname(as.matrix(expected.counts)), tolerance = 1e-10)
+  expect_false(all(exported.x@x == exported.counts@x))
 })
 
 test_that("h5ad export resolves flexible AnnData metadata before writing", {
