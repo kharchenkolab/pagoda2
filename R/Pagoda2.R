@@ -24,6 +24,45 @@ NULL
   )
 }
 
+.pagoda2_workflow_steps <- c("qc", "variance", "pca", "graph", "umap", "leiden", "markers")
+
+.pagoda2_workflow_dependencies <- list(
+  qc = character(),
+  variance = character(),
+  pca = "variance",
+  graph = "pca",
+  umap = "pca",
+  leiden = "graph",
+  markers = "leiden"
+)
+
+.pagoda2_expand_workflow_steps <- function(steps) {
+  out <- character()
+  visit <- function(step) {
+    if (!step %in% .pagoda2_workflow_steps) {
+      stop("Unknown workflow step `", step, "`")
+    }
+    for (dep in .pagoda2_workflow_dependencies[[step]]) {
+      visit(dep)
+    }
+    out <<- unique(c(out, step))
+  }
+  for (step in steps) {
+    visit(step)
+  }
+  out
+}
+
+.pagoda2_step_args <- function(args, defaults = list()) {
+  if (is.null(args)) {
+    args <- list()
+  }
+  if (!is.list(args)) {
+    stop("Step arguments must be supplied as a named list")
+  }
+  utils::modifyList(defaults, args)
+}
+
 .pagoda2_has_explicit_rownames <- function(x) {
   rn <- attr(x, "row.names")
   !(length(rn) == 2 && is.na(rn[1]) && rn[2] < 0)
@@ -404,6 +443,207 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return Default grouping name, or NULL if unset.
 	    getDefaultGrouping=function() {
 	      self$defaultGrouping
+	    },
+
+	    #' @description Calculate basic cell QC metrics and store them in cellMeta.
+	    #'
+	    #' @param overwrite Whether to overwrite existing QC columns.
+	    #' @param matrix Optional cell-by-gene matrix. Defaults to rawCounts when available, otherwise counts.
+	    #' @return data.frame of QC metrics.
+	    runQC=function(overwrite=FALSE, matrix=NULL) {
+	      if (is.null(matrix)) {
+	        matrix <- self$misc[['rawCounts']]
+	      }
+	      if (is.null(matrix)) {
+	        matrix <- self$counts
+	      }
+	      if (is.null(matrix)) {
+	        stop("Cannot run QC before counts are initialized")
+	      }
+	      qc.cols <- c("n_molecules", "n_genes")
+	      if (!overwrite && all(qc.cols %in% colnames(self$cellMeta))) {
+	        return(self$getCellMeta(qc.cols))
+	      }
+	      qc <- data.frame(
+	        n_molecules = as.numeric(Matrix::rowSums(matrix)),
+	        n_genes = as.numeric(Matrix::rowSums(matrix > 0)),
+	        row.names = rownames(matrix)
+	      )
+	      self$setCellMeta(qc, overwrite = TRUE)
+	      qc
+	    },
+
+	    #' @description Run the canonical pagoda2.1 single-dataset workflow.
+	    #'
+	    #' @param steps Optional workflow steps to run.
+	    #' @param skip Optional workflow steps to exclude.
+	    #' @param dependencies Whether to add missing dependencies automatically or error.
+	    #' @param overwrite Whether to recompute existing canonical outputs.
+	    #' @param profile Interaction profile: interactive, pipeline, or report.
+	    #' @param plots Plot behavior: show, none, or collect.
+	    #' @param qc Step-specific argument list for runQC().
+	    #' @param variance Step-specific argument list for runVariance().
+	    #' @param pca Step-specific argument list for runPCA().
+	    #' @param graph Step-specific argument list for runGraph().
+	    #' @param umap Step-specific argument list for runUMAP().
+	    #' @param leiden Step-specific argument list for runLeiden().
+	    #' @param markers Step-specific argument list for runMarkers().
+	    #' @return Invisibly returns self.
+	    run=function(steps=NULL, skip=NULL, dependencies=c("auto", "error"), overwrite=FALSE,
+	                 profile=c("interactive", "pipeline", "report"), plots=NULL,
+	                 qc=list(), variance=list(), pca=list(), graph=list(), umap=list(),
+	                 leiden=list(), markers=list()) {
+	      dependencies <- match.arg(dependencies)
+	      profile <- match.arg(profile)
+	      if (!is.null(steps) && !is.null(skip)) {
+	        stop("Supply only one of `steps` or `skip`")
+	      }
+	      if (!is.null(steps)) {
+	        unknown <- setdiff(steps, .pagoda2_workflow_steps)
+	        if (length(unknown) > 0) {
+	          stop("Unknown workflow step(s): ", paste(unknown, collapse = ", "))
+	        }
+	        requested.steps <- steps
+	      } else {
+	        requested.steps <- .pagoda2_workflow_steps
+	      }
+	      if (!is.null(skip)) {
+	        unknown <- setdiff(skip, .pagoda2_workflow_steps)
+	        if (length(unknown) > 0) {
+	          stop("Unknown workflow step(s): ", paste(unknown, collapse = ", "))
+	        }
+	      }
+	      resolved.steps <- if (dependencies == "auto") {
+	        .pagoda2_expand_workflow_steps(requested.steps)
+	      } else {
+	        requested.steps
+	      }
+	      if (!is.null(skip)) {
+	        resolved.steps <- setdiff(resolved.steps, skip)
+	      }
+	      resolved.steps <- .pagoda2_workflow_steps[.pagoda2_workflow_steps %in% resolved.steps]
+
+	      if (is.null(plots)) {
+	        plots <- switch(profile, interactive = "show", pipeline = "none", report = "collect")
+	      }
+	      if (!plots %in% c("show", "none", "collect")) {
+	        stop("`plots` must be one of show, none, or collect")
+	      }
+	      verbose.default <- switch(profile, interactive = TRUE, pipeline = FALSE, report = TRUE)
+	      show.plots <- identical(plots, "show")
+
+	      if (is.null(self$history$runs)) {
+	        self$history$runs <- list()
+	      }
+	      run.id <- paste0(format(Sys.time(), "%Y%m%d%H%M%S"), "_", length(self$history$runs) + 1)
+	      step.records <- list()
+	      record_step <- function(step, status, params=list(), elapsed=NA_real_, message=NULL) {
+	        step.records[[step]] <<- list(
+	          status = status,
+	          params = params,
+	          elapsed = elapsed,
+	          message = message
+	        )
+	      }
+	      run_step <- function(step, params, expr) {
+	        t0 <- proc.time()[["elapsed"]]
+	        value <- force(expr)
+	        elapsed <- proc.time()[["elapsed"]] - t0
+	        record_step(step, "completed", params = params, elapsed = elapsed)
+	        value
+	      }
+	      skip_step <- function(step, params, reason) {
+	        if (verbose.default) {
+	          message("Skipping ", step, ": ", reason)
+	        }
+	        record_step(step, "skipped", params = params, message = reason)
+	      }
+
+	      if ("qc" %in% resolved.steps) {
+	        args <- .pagoda2_step_args(qc, list(overwrite = overwrite))
+	        if (!overwrite && all(c("n_molecules", "n_genes") %in% colnames(self$cellMeta))) {
+	          skip_step("qc", args, "QC metrics already exist")
+	        } else {
+	          run_step("qc", args, do.call(self$runQC, args))
+	        }
+	      }
+
+	      if ("variance" %in% resolved.steps) {
+	        args <- .pagoda2_step_args(variance, list(plot = show.plots, verbose = verbose.default))
+	        if (!overwrite && !is.null(self$misc[['varinfo']])) {
+	          skip_step("variance", args, "variance model already exists")
+	        } else {
+	          run_step("variance", args, do.call(self$runVariance, args))
+	        }
+	      }
+
+	      if ("pca" %in% resolved.steps) {
+	        pca.name <- if (!is.null(pca$name)) pca$name else self$defaults$reduction
+	        args <- .pagoda2_step_args(pca, list(name = pca.name, verbose = verbose.default))
+	        if (!overwrite && !is.null(self$reductions[[args$name]])) {
+	          skip_step("pca", args, paste0("reduction `", args$name, "` already exists"))
+	        } else {
+	          run_step("pca", args, do.call(self$runPCA, args))
+	        }
+	      }
+
+	      if ("graph" %in% resolved.steps) {
+	        graph.reduction <- if (!is.null(graph$reduction)) graph$reduction else self$defaults$reduction
+	        args <- .pagoda2_step_args(graph, list(reduction = graph.reduction, verbose = verbose.default))
+	        if (!overwrite && !is.null(self$graphs[[args$reduction]])) {
+	          skip_step("graph", args, paste0("graph `", args$reduction, "` already exists"))
+	        } else {
+	          run_step("graph", args, do.call(self$runGraph, args))
+	        }
+	      }
+
+	      if ("umap" %in% resolved.steps) {
+	        umap.reduction <- if (!is.null(umap$reduction)) umap$reduction else self$defaults$reduction
+	        umap.name <- if (!is.null(umap$name)) umap$name else self$defaults$embedding
+	        args <- .pagoda2_step_args(umap, list(reduction = umap.reduction, name = umap.name, verbose = verbose.default))
+	        if (!overwrite && !is.null(self$embeddings[[args$reduction]]) && !is.null(self$embeddings[[args$reduction]][[args$name]])) {
+	          skip_step("umap", args, paste0("embedding `", args$reduction, "/", args$name, "` already exists"))
+	        } else {
+	          run_step("umap", args, do.call(self$runUMAP, args))
+	        }
+	      }
+
+	      if ("leiden" %in% resolved.steps) {
+	        leiden.name <- if (!is.null(leiden$name)) leiden$name else "leiden"
+	        args <- .pagoda2_step_args(leiden, list(name = leiden.name, setDefault = TRUE, overwrite = overwrite))
+	        if (!overwrite && leiden.name %in% colnames(self$cellMeta)) {
+	          skip_step("leiden", args, paste0("grouping `", leiden.name, "` already exists"))
+	        } else {
+	          run_step("leiden", args, do.call(self$runLeiden, args))
+	        }
+	      }
+
+	      if ("markers" %in% resolved.steps) {
+	        marker.name <- if (!is.null(markers$name)) markers$name else self$defaultGrouping
+	        if (is.null(marker.name)) {
+	          stop("Cannot run markers without a defaultGrouping or markers$name")
+	        }
+	        args <- .pagoda2_step_args(markers, list(name = marker.name, verbose = verbose.default))
+	        marker.type <- if (!is.null(args$type)) args$type else "counts"
+	        if (!overwrite && !is.null(self$diffgenes[[marker.type]]) && !is.null(self$diffgenes[[marker.type]][[args$name]])) {
+	          skip_step("markers", args, paste0("marker result `", args$name, "` already exists"))
+	        } else {
+	          run_step("markers", args, do.call(self$runMarkers, args))
+	        }
+	      }
+
+	      self$history$runs[[run.id]] <- list(
+	        started = Sys.time(),
+	        requested.steps = requested.steps,
+	        resolved.steps = resolved.steps,
+	        skip = skip,
+	        dependencies = dependencies,
+	        overwrite = overwrite,
+	        profile = profile,
+	        plots = plots,
+	        steps = step.records
+	      )
+	      invisible(self)
 	    },
 
 	    #' @description Resolve a grouping column or vector into a named factor.
