@@ -61,6 +61,10 @@ Suggests:
     rmarkdown, 
     robustbase, 
     scde,
+    Seurat,
+    SeuratObject,
+    S4Vectors,
+    SingleCellExperiment,
     testthat,
     uwot
 URL: https://github.com/kharchenkolab/pagoda2

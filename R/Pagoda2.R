@@ -936,6 +936,34 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      )
 	    },
 
+	    #' @description Convert a Pagoda2 object to another in-memory representation.
+	    #'
+	    #' @param format Conversion format: list, sce, or seurat.
+	    #' @param ... Format-specific arguments.
+	    #' @return Converted object.
+	    as=function(format=c("list", "sce", "seurat"), ...) {
+	      pagoda2As(self, format = format, ...)
+	    },
+
+	    #' @description Export a Pagoda2 object to disk.
+	    #'
+	    #' @param path Output path.
+	    #' @param format Output format. NULL infers from extension.
+	    #' @param ... Format-specific arguments.
+	    #' @return Invisibly returns path.
+	    export=function(path, format=NULL, ...) {
+	      pagoda2Export(self, path = path, format = format, ...)
+	    },
+
+	    #' @description Export a Pagoda2 web app.
+	    #'
+	    #' @param path Output path.
+	    #' @param ... App export arguments.
+	    #' @return Invisibly returns path.
+	    exportApp=function(path, ...) {
+	      self$export(path = path, format = "p2app", ...)
+	    },
+
 	    #' @description Resolve a reduction name.
 	    #'
 	    #' @param reduction Reduction name. NULL uses defaults$reduction.
