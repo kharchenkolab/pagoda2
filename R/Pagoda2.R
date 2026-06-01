@@ -345,7 +345,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       ##  super$initialize(..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores,verbose=verbose)
       ##if (!missing(x) && is.null(counts)) { # interpret x as a countMatrix
       if ('matrix' %in% class(x)) {
-        x <- as(Matrix(x, sparse=TRUE), "dgCMatrix")
+        x <- as(Matrix(x, sparse=TRUE), "CsparseMatrix")
       }
       if (!('dgCMatrix' %in% class(x))) {
         stop("x is not of class dgCMatrix or matrix")
@@ -2572,6 +2572,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param border Whether to draw annotation/heatmap borders.
 	    #' @param row.label.font.size Gene label font size.
 	    #' @param max.cells Maximum cells per group to show.
+	    #' @param max.dense.entries Warn when selected genes by selected cells exceeds this many entries.
 	    #' @param use.raster Whether ComplexHeatmap should rasterize the expression layer.
 	    #' @param raster.by.magick Whether ComplexHeatmap should use magick for rasterization.
 	    #' @param return.details Whether to return internals along with the heatmap object.
@@ -2586,6 +2587,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	                               show.gene.groups=TRUE, show.group.legend=TRUE,
 	                               show_heatmap_legend=FALSE, border=TRUE,
 	                               row.label.font.size=10, max.cells=Inf,
+	                               max.dense.entries=5e7,
 	                               use.raster=TRUE, raster.by.magick=FALSE,
 	                               return.details=FALSE, ...) {
 	      engine <- match.arg(engine)
@@ -2636,6 +2638,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      cells <- cells[order(resolved.groups[cells])]
 	      resolved.groups <- droplevels(resolved.groups[cells])
+	      dense.entries <- length(selected.genes) * length(cells)
+	      if (is.finite(max.dense.entries) && dense.entries > max.dense.entries) {
+	        warning(
+	          "Marker heatmap will densify ", dense.entries, " expression values for plotting. ",
+	          "Consider reducing `n.genes.per.group`, supplying `genes`, or setting `max.cells`.",
+	          call. = FALSE
+	        )
+	      }
 
 	      x <- as.matrix(t(self$counts[cells, selected.genes, drop = FALSE]))
 	      x <- t(vapply(seq_len(nrow(x)), function(i) {

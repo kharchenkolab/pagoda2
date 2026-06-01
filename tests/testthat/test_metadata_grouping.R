@@ -173,6 +173,25 @@ test_that("ComplexHeatmap marker heatmap returns details without drawing", {
   expect_true(all(details$genes %in% colnames(p2$counts)))
 })
 
+test_that("ComplexHeatmap marker heatmap warns on large dense plot requests", {
+  testthat::skip_if_not_installed("ComplexHeatmap")
+
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
+
+  expect_warning(
+    p2$plotMarkerHeatmap(
+      n.genes.per.group = 2,
+      z.threshold = NULL,
+      highest.only = FALSE,
+      max.dense.entries = 1,
+      return.details = TRUE
+    ),
+    "densify"
+  )
+})
+
 test_that("result discovery and selector resolvers use canonical defaults", {
   p2 <- make_test_p2()
   p2$reductions$PCA <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("PC", 1:2)))

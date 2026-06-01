@@ -282,9 +282,9 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
     #cat("loading data from ",matrixPath, " ");
     fn <- paste(matrixPath,'matrix.mtx',sep='/')
     if(file.exists(fn)) {
-      x <- as(readMM(fn),'dgCMatrix') # convert to the required sparse matrix representation
+      x <- as(readMM(fn), 'CsparseMatrix') # convert to compressed sparse column representation
     } else if(file.exists(paste(fn,'gz',sep='.'))) {
-      x <- as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))),'dgCMatrix') # convert to the required sparse matrix representation
+      x <- as(readMM(gzcon(file(paste(fn,'gz',sep='.'),'rb'))), 'CsparseMatrix') # convert to compressed sparse column representation
     } else {
       stop(paste('cant open',fn))
     }
@@ -454,7 +454,7 @@ read10xMatrix <- function(path, version='V3', transcript.id = 'SYMBOL', verbose=
   }
 
   if (verbose) message("Reading in matrix...")
-  x <- as(Matrix::readMM(matrixFile), 'dgCMatrix')
+  x <- as(Matrix::readMM(matrixFile), 'CsparseMatrix')
   if (verbose) {
     if (version == 'V2') {
       message("Reading in genes...")
