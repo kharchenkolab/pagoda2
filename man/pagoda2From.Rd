@@ -4,6 +4,7 @@
 \alias{pagoda2From10xH5}
 \alias{pagoda2FromAnnData}
 \alias{pagoda2FromH5Seurat}
+\alias{pagoda2FromLoom}
 \alias{readPagoda2}
 \title{Create A Pagoda2 Object From Input}
 \usage{
@@ -16,6 +17,8 @@ pagoda2From10xH5(path, reader.args = list(), ...)
 pagoda2FromAnnData(path, reader.args = list(), ...)
 
 pagoda2FromH5Seurat(path, reader.args = list(), ...)
+
+pagoda2FromLoom(path, reader.args = list(), ...)
 
 readPagoda2(path, format = NULL, reader.args = list(), ...)
 }

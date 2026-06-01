@@ -4,7 +4,7 @@
 \usage{
 readCounts(
   path,
-  format = c("auto", "10x", "10x_h5", "h5ad", "h5seurat"),
+  format = c("auto", "10x", "10x_h5", "h5ad", "h5seurat", "loom"),
   version = c("auto", "V3", "V2"),
   gene.id = c("symbol", "id"),
   feature.type = NULL,
@@ -18,6 +18,7 @@ readCounts(
   sample.pattern = NULL,
   validate.integer = TRUE,
   return.metadata = FALSE,
+  chunk.size = 1000L,
   verbose = TRUE
 )
 }
@@ -25,7 +26,7 @@ readCounts(
 \item{path}{Directory containing a 10x triplet, or a supported count file.}
 
 \item{format}{Input format. \code{auto} detects 10x triplet directories, h5ad,
-h5Seurat, and CellRanger HDF5 files.}
+h5Seurat, CellRanger HDF5, and loom files.}
 
 \item{version}{10x feature file version: \code{auto}, \code{V3}, or \code{V2}.}
 
@@ -37,9 +38,11 @@ h5Seurat, and CellRanger HDF5 files.}
 
 \item{assay}{Optional h5Seurat assay.}
 
-\item{layer}{Optional h5ad layer or h5Seurat layer.}
+\item{layer}{Optional h5ad, h5Seurat, or loom layer.}
 
 \item{use.raw}{Whether h5ad input should read raw/X when no layer is supplied.}
+
+\item{chunk.size}{Row chunk size when reading dense HDF5 matrices such as loom.}
 
 \item{make.unique.genes}{Whether to make duplicated selected gene names unique.}
 
@@ -60,6 +63,6 @@ A gene-by-cell sparse count matrix, or a list when \code{return.metadata} is \co
 }
 \description{
 Read count matrices with explicit format and naming policies. Supported inputs
-include 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData h5ad, and
-h5Seurat files.
+include 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData h5ad,
+h5Seurat, and loom files.
 }

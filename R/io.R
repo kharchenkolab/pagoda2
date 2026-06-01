@@ -36,6 +36,7 @@
     h5ad = "h5ad",
     anndata = "h5ad",
     h5seurat = "h5seurat",
+    loom = "loom",
     stop("Unsupported input format `", format, "`")
   )
 }
@@ -69,6 +70,10 @@
   if (all(c("assays", "cell.names") %in% root.names)) {
     return("h5seurat")
   }
+  if ("matrix" %in% root.names && inherits(h5[["matrix"]], "H5D") &&
+      all(c("row_attrs", "col_attrs") %in% root.names)) {
+    return("loom")
+  }
   for (n in root.names) {
     if (inherits(h5[[n]], "H5Group") && .pagoda2_h5_group_has_sparse(h5[[n]]) && "barcodes" %in% names(h5[[n]])) {
       return("10x_h5")
@@ -91,6 +96,9 @@
   }
   if (identical(ext, "h5seurat")) {
     return("h5seurat")
+  }
+  if (identical(ext, "loom")) {
+    return("loom")
   }
   if (ext %in% c("h5", "hdf5")) {
     return(.pagoda2_detect_h5_format(path))
@@ -485,6 +493,38 @@
 }
 
 #' @keywords internal
+.pagoda2_h5_read_dense_as_sparse <- function(x, chunk.size = 1000L) {
+  dims <- as.integer(x$dims)
+  if (length(dims) != 2) {
+    stop("Expected a two-dimensional HDF5 dataset")
+  }
+  chunk.size <- max(1L, as.integer(chunk.size))
+  i.list <- list()
+  j.list <- list()
+  x.list <- list()
+  block.index <- 0L
+  for (start in seq.int(1L, dims[[1]], by = chunk.size)) {
+    end <- min(start + chunk.size - 1L, dims[[1]])
+    rows <- seq.int(start, end)
+    block <- x[rows, seq_len(dims[[2]]), drop = FALSE]
+    nz <- which(block != 0, arr.ind = TRUE)
+    if (nrow(nz) > 0) {
+      block.index <- block.index + 1L
+      i.list[[block.index]] <- rows[nz[, 1]]
+      j.list[[block.index]] <- nz[, 2]
+      x.list[[block.index]] <- block[nz]
+    }
+  }
+  if (block.index == 0L) {
+    return(as(Matrix::sparseMatrix(i = integer(), j = integer(), x = numeric(), dims = dims), "CsparseMatrix"))
+  }
+  i.out <- unlist(i.list, use.names = FALSE)
+  j.out <- unlist(j.list, use.names = FALSE)
+  x.out <- unlist(x.list, use.names = FALSE)
+  as(Matrix::sparseMatrix(i = i.out, j = j.out, x = x.out, dims = dims), "CsparseMatrix")
+}
+
+#' @keywords internal
 .pagoda2_h5_read_dataframe <- function(group, expected.n = NULL) {
   if (!inherits(group, "H5Group")) {
     stop("Expected an HDF5 group containing dataframe metadata")
@@ -515,6 +555,124 @@
     rownames(out) <- row.names
   }
   out
+}
+
+#' @keywords internal
+.pagoda2_h5_read_attr_dataframe <- function(group, expected.n = NULL) {
+  if (!inherits(group, "H5Group")) {
+    stop("Expected an HDF5 group containing loom attributes")
+  }
+  columns <- names(group)
+  values <- list()
+  lengths <- integer()
+  for (column in columns) {
+    value <- .pagoda2_h5_read_column(group[[column]])
+    value.dim <- dim(value)
+    if (!is.null(value.dim) && length(value.dim) > 1 && all(value.dim > 1)) {
+      next
+    }
+    value <- as.vector(value)
+    if (length(value) > 0) {
+      values[[column]] <- value
+      lengths[[column]] <- length(value)
+    }
+  }
+  if (is.null(expected.n)) {
+    if (length(lengths) == 0) {
+      return(data.frame())
+    }
+    size.table <- sort(table(lengths), decreasing = TRUE)
+    expected.n <- as.integer(names(size.table)[[1]])
+  }
+  out <- values[lengths == expected.n]
+  if (length(out) == 0) {
+    return(data.frame(row.names = as.character(seq_len(expected.n))))
+  }
+  out <- as.data.frame(out, stringsAsFactors = FALSE, optional = TRUE)
+  rownames(out) <- as.character(seq_len(nrow(out)))
+  out
+}
+
+#' @keywords internal
+.pagoda2_match_column <- function(metadata, candidates) {
+  if (is.null(metadata) || ncol(metadata) == 0) {
+    return(NULL)
+  }
+  nms <- colnames(metadata)
+  idx <- match(tolower(candidates), tolower(nms), nomatch = 0L)
+  idx <- idx[idx > 0L]
+  if (length(idx) == 0) {
+    return(NULL)
+  }
+  nms[[idx[[1]]]]
+}
+
+#' @keywords internal
+.pagoda2_read_loom <- function(path, gene.id = c("symbol", "id"), layer = NULL,
+                               make.unique.genes = FALSE, cell.prefix = NULL,
+                               sample.name = NULL, validate.integer = TRUE,
+                               chunk.size = 1000L, verbose = TRUE) {
+  gene.id <- match.arg(gene.id)
+  h5 <- .pagoda2_h5_open(path, mode = "r")
+  on.exit(h5$close_all())
+  if (!all(c("matrix", "row_attrs", "col_attrs") %in% names(h5))) {
+    stop("Loom file must contain /matrix, /row_attrs, and /col_attrs")
+  }
+  matrix.path <- if (is.null(layer) || identical(layer, "matrix")) {
+    "matrix"
+  } else {
+    paste0("layers/", layer)
+  }
+  if (!.pagoda2_h5_exists(h5, matrix.path)) {
+    stop("Loom matrix/layer `", matrix.path, "` not found")
+  }
+  if (verbose) {
+    message("Reading loom matrix from /", matrix.path, ": ", path)
+  }
+  matrix.node <- h5[[matrix.path]]
+  if (!inherits(matrix.node, "H5D")) {
+    stop("Loom matrix/layer `", matrix.path, "` must be a two-dimensional dataset")
+  }
+  raw.counts <- .pagoda2_h5_read_dense_as_sparse(matrix.node, chunk.size = chunk.size)
+  row.meta <- .pagoda2_h5_read_attr_dataframe(h5[["row_attrs"]])
+  col.meta <- .pagoda2_h5_read_attr_dataframe(h5[["col_attrs"]])
+  transposed <- FALSE
+  if ((nrow(row.meta) != nrow(raw.counts) || nrow(col.meta) != ncol(raw.counts)) &&
+      nrow(row.meta) == ncol(raw.counts) && nrow(col.meta) == nrow(raw.counts)) {
+    raw.counts <- Matrix::t(raw.counts)
+    transposed <- TRUE
+  }
+  if (nrow(row.meta) != nrow(raw.counts) || nrow(col.meta) != ncol(raw.counts)) {
+    stop("Loom row_attrs/col_attrs dimensions do not match the selected matrix")
+  }
+  gene.symbol.column <- .pagoda2_match_column(row.meta, c("Gene", "GeneName", "gene_symbol", "gene", "name"))
+  gene.id.column <- .pagoda2_match_column(row.meta, c("Accession", "GeneID", "gene_id", "id", "ensembl_id"))
+  cell.column <- .pagoda2_match_column(col.meta, c("CellID", "CellName", "Barcode", "barcodes", "cell_id", "cell"))
+  cell.names <- if (is.null(cell.column)) as.character(seq_len(ncol(raw.counts))) else as.character(col.meta[[cell.column]])
+  gene.fallback <- if (is.null(gene.symbol.column)) as.character(seq_len(nrow(raw.counts))) else as.character(row.meta[[gene.symbol.column]])
+  if (!is.null(gene.id.column) && !"gene_id" %in% colnames(row.meta)) {
+    row.meta$gene_id <- as.character(row.meta[[gene.id.column]])
+  }
+  if (!is.null(gene.symbol.column) && !"gene_symbol" %in% colnames(row.meta)) {
+    row.meta$gene_symbol <- as.character(row.meta[[gene.symbol.column]])
+  }
+  gene.names <- .pagoda2_select_gene_names(row.meta, fallback = gene.fallback, gene.id = gene.id)
+  if (!is.null(cell.prefix)) {
+    cell.names <- paste(cell.prefix, cell.names, sep = "_")
+  }
+  if (!is.null(sample.name)) {
+    col.meta$sample <- sample.name
+  }
+  .pagoda2_finalize_import(
+    counts = raw.counts,
+    gene.names = gene.names,
+    cell.names = cell.names,
+    gene.meta = row.meta,
+    cell.meta = col.meta,
+    files = list(path = path, format = "loom", layer = matrix.path, transposed = transposed),
+    make.unique.genes = make.unique.genes,
+    validate.integer = validate.integer
+  )
 }
 
 #' @keywords internal
@@ -654,18 +812,19 @@
 #'
 #' Read count matrices with explicit format and naming policies. Supported
 #' inputs include 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData h5ad,
-#' and h5Seurat files.
+#' h5Seurat, and loom files.
 #'
 #' @param path Directory containing a 10x triplet, or a supported count file.
 #' @param format Input format. `auto` detects 10x triplet directories, h5ad,
-#' h5Seurat, and CellRanger HDF5 files.
+#' h5Seurat, CellRanger HDF5, and loom files.
 #' @param version 10x feature file version: `auto`, `V3`, or `V2`.
 #' @param gene.id Which feature column to use as matrix row names: `symbol` or `id`.
 #' @param feature.type Optional 10x V3 feature type to retain.
 #' @param genome Optional CellRanger HDF5 genome group.
 #' @param assay Optional h5Seurat assay.
-#' @param layer Optional h5ad layer or h5Seurat layer.
+#' @param layer Optional h5ad, h5Seurat, or loom layer.
 #' @param use.raw Whether h5ad input should read raw/X when no layer is supplied.
+#' @param chunk.size Row chunk size when reading dense HDF5 matrices such as loom.
 #' @param make.unique.genes Whether to make duplicated selected gene names unique.
 #' @param cell.prefix Optional string to prefix to cell barcodes.
 #' @param sample.name Optional sample name recorded in cell metadata.
@@ -676,13 +835,13 @@
 #'
 #' @return A gene-by-cell sparse count matrix, or a list when return.metadata is TRUE.
 #' @export
-readCounts <- function(path, format = c("auto", "10x", "10x_h5", "h5ad", "h5seurat"),
+readCounts <- function(path, format = c("auto", "10x", "10x_h5", "h5ad", "h5seurat", "loom"),
                        version = c("auto", "V3", "V2"),
                        gene.id = c("symbol", "id"), feature.type = NULL,
                        genome = NULL, assay = NULL, layer = NULL, use.raw = FALSE,
                        make.unique.genes = FALSE, cell.prefix = NULL, sample.name = NULL,
                        sample.pattern = NULL, validate.integer = TRUE,
-                       return.metadata = FALSE, verbose = TRUE) {
+                       return.metadata = FALSE, chunk.size = 1000L, verbose = TRUE) {
   format <- .pagoda2_normalize_format(format)
   version <- match.arg(version)
   gene.id <- match.arg(gene.id)
@@ -733,6 +892,17 @@ readCounts <- function(path, format = c("auto", "10x", "10x_h5", "h5ad", "h5seur
       cell.prefix = cell.prefix,
       sample.name = sample.name,
       validate.integer = validate.integer,
+      verbose = verbose
+    ),
+    loom = .pagoda2_read_loom(
+      path = path,
+      gene.id = gene.id,
+      layer = layer,
+      make.unique.genes = make.unique.genes,
+      cell.prefix = cell.prefix,
+      sample.name = sample.name,
+      validate.integer = validate.integer,
+      chunk.size = chunk.size,
       verbose = verbose
     ),
     stop("Unsupported input format `", format, "`")
@@ -794,6 +964,12 @@ pagoda2FromAnnData <- function(path, reader.args = list(), ...) {
 #' @export
 pagoda2FromH5Seurat <- function(path, reader.args = list(), ...) {
   pagoda2From(path, format = "h5seurat", reader.args = reader.args, ...)
+}
+
+#' @rdname pagoda2From
+#' @export
+pagoda2FromLoom <- function(path, reader.args = list(), ...) {
+  pagoda2From(path, format = "loom", reader.args = reader.args, ...)
 }
 
 #' @rdname pagoda2From

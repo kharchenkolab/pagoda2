@@ -159,6 +159,27 @@ write_h5seurat_file <- function(path, matrix) {
   invisible(path)
 }
 
+write_loom_file <- function(path, matrix, transpose = FALSE) {
+  h5 <- hdf5r::H5File$new(path, mode = "w")
+  on.exit(h5$close_all())
+  h5$create_group("attrs")
+  h5$create_group("row_graphs")
+  h5$create_group("col_graphs")
+  layers <- h5$create_group("layers")
+  row.attrs <- h5$create_group("row_attrs")
+  col.attrs <- h5$create_group("col_attrs")
+  h5[["attrs"]]$create_dataset("LOOM_SPEC_VERSION", robj = "3.0.0")
+
+  stored <- if (transpose) Matrix::t(matrix) else matrix
+  h5$create_dataset("matrix", robj = as.matrix(stored))
+  layers$create_dataset("counts", robj = as.matrix(stored))
+  write_h5_strings(row.attrs, "Gene", rownames(matrix))
+  write_h5_strings(row.attrs, "Accession", paste0("ens", seq_len(nrow(matrix))))
+  write_h5_strings(col.attrs, "CellID", colnames(matrix))
+  write_h5_strings(col.attrs, "sample", rep("sampleA", ncol(matrix)))
+  invisible(path)
+}
+
 make_io_matrix <- function() {
   cm <- Matrix::Matrix(
     c(
@@ -263,6 +284,33 @@ test_that("readCounts autodetects CellRanger HDF5 files", {
   expect_equal(as.matrix(counts), as.matrix(cm))
 })
 
+test_that("readCounts autodetects loom files and reads attributes", {
+  cm <- make_io_matrix()
+  path <- tempfile(fileext = ".loom")
+  write_loom_file(path, cm)
+
+  imported <- readCounts(path, format = "auto", return.metadata = TRUE, verbose = FALSE)
+
+  expect_true(inherits(imported$counts, "dgCMatrix"))
+  expect_identical(rownames(imported$counts), rownames(cm))
+  expect_identical(colnames(imported$counts), colnames(cm))
+  expect_equal(as.matrix(imported$counts), as.matrix(cm))
+  expect_identical(as.character(imported$cellMeta$sample), rep("sampleA", ncol(cm)))
+  expect_true(all(c("Gene", "Accession", "gene_id", "gene_symbol") %in% colnames(imported$geneMeta)))
+})
+
+test_that("readCounts reads loom layers and transposed loom matrices", {
+  cm <- make_io_matrix()[1:2, , drop = FALSE]
+  path <- tempfile(fileext = ".loom")
+  write_loom_file(path, cm, transpose = TRUE)
+
+  counts <- readCounts(path, format = "loom", layer = "counts", chunk.size = 1L, verbose = FALSE)
+
+  expect_identical(rownames(counts), rownames(cm))
+  expect_identical(colnames(counts), colnames(cm))
+  expect_equal(as.matrix(counts), as.matrix(cm))
+})
+
 test_that("readCounts autodetects h5ad files without reticulate", {
   cm <- make_io_matrix()
   path <- tempfile(fileext = ".h5ad")
@@ -328,6 +376,27 @@ test_that("specific Pagoda2 file constructors call fixed format readers", {
 
   expect_true(inherits(p2, "Pagoda2"))
   expect_identical(rownames(p2$cellMeta), colnames(cm))
+  expect_identical(as.character(p2$cellMeta$sample), rep("sampleA", ncol(cm)))
+})
+
+test_that("Pagoda2$fromLoom constructs objects from loom files", {
+  cm <- make_io_matrix()
+  path <- tempfile(fileext = ".loom")
+  write_loom_file(path, cm)
+
+  p2 <- Pagoda2$fromLoom(
+    path,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = FALSE,
+    trim = 0
+  )
+
+  expect_true(inherits(p2, "Pagoda2"))
+  expect_identical(rownames(p2$cellMeta), colnames(cm))
+  expect_identical(rownames(p2$geneMeta), rownames(cm))
   expect_identical(as.character(p2$cellMeta$sample), rep("sampleA", ncol(cm)))
 })
 
