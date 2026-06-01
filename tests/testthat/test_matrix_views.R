@@ -157,3 +157,66 @@ test_that("view variance path accepts logical cell selections", {
     )
   )
 })
+
+test_that("workflow-facing methods use matrix views when legacy counts are absent", {
+  groups <- factor(c(cell1 = "A", cell2 = "A", cell3 = "B", cell4 = "B", cell5 = "B"))
+
+  p2.ref <- Pagoda2$new(
+    make_view_matrix(),
+    verbose = FALSE,
+    n.cores = 1,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = TRUE,
+    trim = 0
+  )
+  p2.ref$runVariance(plot = FALSE, verbose = FALSE, gam.k = 1, min.gene.cells = 0)
+  ref.expr <- p2.ref$getNormalizedExpressionMatrix(genes = c("gene1", "gene3"))
+  ref.de <- p2.ref$getDifferentialGenes(
+    groups = groups,
+    z.threshold = 0,
+    append.specificity.metrics = FALSE,
+    .legacy.warn = FALSE
+  )
+
+  p2 <- Pagoda2$new(
+    make_view_matrix(),
+    verbose = FALSE,
+    n.cores = 1,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = TRUE,
+    trim = 0
+  )
+  p2$runVariance(plot = FALSE, verbose = FALSE, gam.k = 1, min.gene.cells = 0)
+  p2$counts <- NULL
+
+  p2$setGrouping("test_groups", groups, setDefault = TRUE)
+  expect_equal(p2$getGrouping(), groups)
+  expect_equal(
+    as.matrix(p2$getNormalizedExpressionMatrix(genes = c("gene1", "gene3"))),
+    as.matrix(ref.expr),
+    tolerance = 1e-10
+  )
+  expect_no_error(
+    suppressWarnings(
+      p2$calculatePcaReduction(
+        nPcs = 2,
+        use.odgenes = FALSE,
+        odgenes = c("gene1", "gene2", "gene3"),
+        verbose = FALSE,
+        .legacy.warn = FALSE
+      )
+    )
+  )
+  expect_equal(
+    p2$getDifferentialGenes(
+      groups = groups,
+      z.threshold = 0,
+      append.specificity.metrics = FALSE,
+      .legacy.warn = FALSE
+    ),
+    ref.de,
+    tolerance = 1e-10
+  )
+})
