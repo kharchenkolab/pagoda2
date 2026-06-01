@@ -50,6 +50,7 @@ Suggests:
     gridExtra,
     KernSmooth,
     knitr, 
+    leidenAlg,
     org.Dr.eg.db,
     org.Hs.eg.db,
     org.Mm.eg.db,

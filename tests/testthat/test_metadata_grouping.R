@@ -106,3 +106,33 @@ test_that("annotateClusters handles unmapped source levels explicitly", {
   p2$annotateClusters("leiden", "cell_type", c("0" = "T cell"), unmapped = "keep")
   expect_identical(as.character(p2$getGrouping("cell_type")), c("T cell", "T cell", "1", "2"))
 })
+
+test_that("runLeiden stores labels in legacy clusters and cellMeta", {
+  testthat::skip_if_not_installed("leidenAlg")
+
+  p2 <- make_test_p2()
+  g <- igraph::make_ring(4)
+  igraph::V(g)$name <- rownames(p2$counts)
+  p2$graphs$PCA <- g
+
+  p2$runLeiden(name = "leiden", resolution = 1)
+
+  expect_true("leiden" %in% names(p2$clusters$PCA))
+  expect_true("leiden" %in% colnames(p2$cellMeta))
+  expect_identical(p2$getDefaultGrouping(), "leiden")
+  expect_identical(p2$clusterings$leiden$grouping, "leiden")
+  expect_identical(p2$clusterings$leiden$graph, "PCA")
+})
+
+test_that("runMarkers records grouping provenance", {
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+
+  markers <- p2$runMarkers(name = "leiden", append.specificity.metrics = FALSE)
+  marker.meta <- attr(markers, "pagoda2.marker")
+
+  expect_true("leiden" %in% names(p2$diffgenes$counts))
+  expect_identical(marker.meta$grouping, "leiden")
+  expect_identical(marker.meta$group.levels, c("0", "1"))
+  expect_identical(p2$history$markers$leiden$grouping, "leiden")
+})

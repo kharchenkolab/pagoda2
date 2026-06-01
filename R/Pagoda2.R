@@ -1019,6 +1019,59 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       invisible(cls)
     },
 
+	    #' @description Run Leiden clustering and register the labels as a cellMeta grouping.
+	    #'
+	    #' @param reduction Reduction name associated with the graph (default=NULL).
+	    #' @param graph Graph name in self$graphs (default=NULL, uses reduction or defaults$graph).
+	    #' @param name Name of the output grouping (default='leiden').
+	    #' @param setDefault Whether to make the output grouping the default.
+	    #' @param overwrite Whether to overwrite existing output labels/provenance.
+	    #' @param method Clustering function (default=leidenAlg::leiden.community).
+	    #' @param ... Additional arguments passed to the clustering method.
+	    #' @return Invisibly returns the clustering community object.
+	    runLeiden=function(reduction=NULL, graph=NULL, name='leiden', setDefault=TRUE, overwrite=FALSE, method=NULL, ...) {
+	      if (is.null(graph)) {
+	        graph <- reduction
+	      }
+	      if (is.null(graph)) {
+	        graph <- self$defaults$graph
+	      }
+	      if (is.null(graph)) {
+	        graph <- "PCA"
+	      }
+	      if (!overwrite && name %in% colnames(self$cellMeta)) {
+	        stop("Grouping `", name, "` already exists; use overwrite=TRUE")
+	      }
+	      if (!overwrite && !is.null(self$clusters[[graph]][[name]])) {
+	        stop("Clustering `", name, "` already exists for graph `", graph, "`; use overwrite=TRUE")
+	      }
+	      if (is.null(method)) {
+	        if (!requireNamespace("leidenAlg", quietly = TRUE)) {
+	          stop("Package `leidenAlg` is required for runLeiden()")
+	        }
+	        method <- leidenAlg::leiden.community
+	        method.name <- "leidenAlg::leiden.community"
+	      } else {
+	        method.name <- deparse(substitute(method))
+	      }
+	      cls <- self$getKnnClusters(type = graph, method = method, name = name, persist = TRUE, ...)
+	      groups <- self$clusters[[graph]][[name]]
+	      self$setGrouping(name, groups, source = list(method = "runLeiden", graph = graph), setDefault = setDefault, overwrite = TRUE)
+	      community <- NULL
+	      if (!is.null(self$misc[['community']]) && !is.null(self$misc[['community']][[graph]])) {
+	        community <- self$misc[['community']][[graph]][[name]]
+	      }
+	      self$clusterings[[name]] <- list(
+	        grouping = name,
+	        reduction = reduction,
+	        graph = graph,
+	        method = method.name,
+	        community = community,
+	        created = Sys.time()
+	      )
+	      invisible(cls)
+	    },
+
     #' @description Deprecated function. Use makeGeneKnnGraph() instead.
     #' 
     #' @keywords internal
@@ -1418,6 +1471,61 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       }
       return(ds)
     },
+
+	    #' @description Run marker detection for a resolved grouping and record provenance.
+	    #'
+	    #' @param grouping Name of a discrete cellMeta column. NULL uses defaultGrouping.
+	    #' @param groups Direct vector of group labels. Mutually exclusive with grouping.
+	    #' @param name Name of the marker result. Defaults to the grouping name.
+	    #' @param type Count matrix type passed to getDifferentialGenes().
+	    #' @param z.threshold Z-score threshold passed to getDifferentialGenes().
+	    #' @param upregulated.only Whether to keep only upregulated markers.
+	    #' @param verbose Whether to emit progress messages.
+	    #' @param append.specificity.metrics Whether to append specificity metrics.
+	    #' @param append.auc Whether to append AUC to marker tables.
+	    #' @return Marker result list returned by getDifferentialGenes().
+	    runMarkers=function(grouping=NULL, groups=NULL, name=NULL, type='counts', z.threshold=3,
+	                        upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE,
+	                        append.auc=FALSE) {
+	      resolved.grouping <- grouping
+	      if (is.null(resolved.grouping) && is.null(groups)) {
+	        resolved.grouping <- self$defaultGrouping
+	      }
+	      cols <- self$resolveGrouping(grouping = grouping, groups = groups, allow.missing = TRUE)
+	      if (is.null(name)) {
+	        name <- if (!is.null(resolved.grouping)) resolved.grouping else "customGrouping"
+	      }
+	      ds <- self$getDifferentialGenes(
+	        type = type,
+	        groups = cols,
+	        name = name,
+	        z.threshold = z.threshold,
+	        upregulated.only = upregulated.only,
+	        verbose = verbose,
+	        append.specificity.metrics = append.specificity.metrics,
+	        append.auc = append.auc
+	      )
+	      meta <- list(
+	        grouping = resolved.grouping,
+	        group.levels = levels(cols),
+	        cell.names = names(cols)[!is.na(cols)],
+	        params = list(
+	          z.threshold = z.threshold,
+	          upregulated.only = upregulated.only,
+	          append.specificity.metrics = append.specificity.metrics,
+	          append.auc = append.auc
+	        ),
+	        created.by = "runMarkers",
+	        created = Sys.time()
+	      )
+	      attr(ds, "pagoda2.marker") <- meta
+	      self$diffgenes[[type]][[name]] <- ds
+	      if (is.null(self$history$markers)) {
+	        self$history$markers <- list()
+	      }
+	      self$history$markers[[name]] <- meta
+	      ds
+	    },
 
 
     #' @description Plot heatmap of DE results
