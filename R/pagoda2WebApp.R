@@ -872,14 +872,15 @@ pagoda2WebApp$methods(
       
       ## Main Sparse count matrix to save
       t0 <- Sys.time()
-      matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,]
+      matsparseToSave <- originalP2object$counts[mainDendrogram$cellorder,,drop=FALSE]
+      matsparseToSave <- as(matsparseToSave, "CsparseMatrix")
       t1 <- Sys.time()
       if(verbose.timings) 
           message(paste0('Reordered Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
             
       ## Main Sparse count matrix TRANSPOSED for de
       t0 <- Sys.time()
-      matsparseTransposedToSave <- Matrix::t(originalP2object$counts)
+      matsparseTransposedToSave <- as(Matrix::t(originalP2object$counts), "CsparseMatrix")
       t1 <- Sys.time()
       if(verbose.timings) 
           message(paste0('Generated transposed Sparse matrix in: ', as.double(t1-t0,units="secs")," seconds \n"))
@@ -1014,7 +1015,7 @@ pagoda2WebApp$methods(
 
       ## check if elements missing in list
       "%notin%" = Negate("%in%")
-      requiredListElements = c("embedList", "reduceddendrogram", "cellorder","cellmetadata","geneinformation", "embeddingstructure", "aspectInformation", "genesets", "genesetGenes", "appmetadata", "geneknn", "matsparse", "mataspect", "sparseMatrixTransp")
+      requiredListElements = c("embedList", "reduceddendrogram", "cellorder","cellmetadata","geneinformation", "embeddingstructure", "aspectInformation", "genesets", "genesetGenes", "appmetadata", "matsparse", "mataspect", "sparseMatrixTransp")
       if (any(requiredListElements %notin% names(exportList))) {
         missingElements = requiredListElements %notin% names(exportList) ## boolean list
         ## requiredListElements[missingElements] will list the missing list names

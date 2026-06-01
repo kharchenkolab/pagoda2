@@ -819,6 +819,86 @@
 }
 
 #' @keywords internal
+.pagoda2_prepare_p2app_object <- function(p2) {
+  app.p2 <- Pagoda2$new(p2)
+  if (is.null(app.p2$counts)) {
+    app.p2$counts <- app.p2$getExpressionBlock()
+  }
+  if (is.null(app.p2$misc$varinfo)) {
+    varinfo <- app.p2$viewColMeanVar()
+    rownames(varinfo) <- colnames(app.p2$getRawCounts())
+    varinfo$qv <- varinfo$v
+    varinfo$gsf <- 1
+    app.p2$misc$varinfo <- varinfo
+  }
+  if (is.null(app.p2$misc$pathwayOD) || is.null(app.p2$misc$pathwayOD$xv)) {
+    cells <- rownames(app.p2$getRawCounts())
+    app.p2$misc$pathwayOD <- list(
+      xv = Matrix::Matrix(
+        0,
+        nrow = 0,
+        ncol = length(cells),
+        sparse = TRUE,
+        dimnames = list(character(), cells)
+      ),
+      cnam = list()
+    )
+    app.p2$misc$pathwayODInfo <- data.frame(
+      name = character(),
+      n = integer(),
+      cz = numeric(),
+      row.names = character()
+    )
+  }
+  app.p2
+}
+
+#' @keywords internal
+.pagoda2_export_p2app <- function(p2, path, grouping = NULL, groups = NULL,
+                                  geneSets = list(), additionalMetadata = list(),
+                                  appname = "Pagoda2 Application",
+                                  show.depth = TRUE, show.batch = TRUE,
+                                  show.clusters = TRUE, innerOrder = NULL,
+                                  orderDend = FALSE, appmetadata = NULL,
+                                  overwrite = FALSE, verbose = FALSE,
+                                  verbose.timings = FALSE) {
+  if (file.exists(path)) {
+    if (!overwrite) {
+      stop("Output file exists; use `overwrite = TRUE` to replace it: ", path)
+    }
+    unlink(path)
+  }
+  app.p2 <- .pagoda2_prepare_p2app_object(p2)
+  dendrogram.groups <- app.p2$resolveGrouping(
+    grouping = grouping,
+    groups = groups,
+    allow.missing = FALSE
+  )
+  if (is.null(appmetadata)) {
+    appmetadata <- list(apptitle = appname)
+  }
+  app <- make.p2.app(
+    app.p2,
+    dendrogramCellGroups = dendrogram.groups,
+    additionalMetadata = additionalMetadata,
+    geneSets = geneSets,
+    show.depth = show.depth,
+    show.batch = show.batch,
+    show.clusters = show.clusters,
+    appname = appname,
+    innerOrder = innerOrder,
+    orderDend = orderDend,
+    appmetadata = appmetadata
+  )
+  app$serializeToStaticFast(
+    binary.filename = path,
+    verbose = verbose,
+    verbose.timings = verbose.timings
+  )
+  invisible(path)
+}
+
+#' @keywords internal
 .pagoda2_read_loom <- function(path, gene.id = c("symbol", "id"), layer = NULL,
                                make.unique.genes = FALSE, cell.prefix = NULL,
                                sample.name = NULL, validate.integer = TRUE,
@@ -1286,6 +1366,9 @@ pagoda2Export <- function(p2, path, format = NULL, overwrite = FALSE, ...) {
   }
   if (format %in% c("h5ad", "anndata")) {
     return(.pagoda2_export_h5ad(p2, path = path, overwrite = overwrite, ...))
+  }
+  if (format %in% c("p2app", "pagoda2app", "app")) {
+    return(.pagoda2_export_p2app(p2, path = path, overwrite = overwrite, ...))
   }
   stop("Export format `", format, "` is not implemented yet")
 }

@@ -500,6 +500,33 @@ test_that("h5ad export writes normalized X from matrix views without legacy coun
   expect_false(all(exported.x@x == exported.counts@x))
 })
 
+test_that("exportApp writes p2app binary through universal export", {
+  testthat::skip_if_not_installed("base64enc")
+
+  cm <- make_io_matrix()
+  p2 <- Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = TRUE,
+    trim = 0
+  )
+  p2$setGrouping("leiden", c(cell1 = "0", cell2 = "0", cell3 = "1"), setDefault = TRUE)
+  p2$embeddings$PCA$UMAP <- matrix(
+    c(0, 0, 1, 0, 0, 1),
+    nrow = 3,
+    dimnames = list(colnames(cm), c("UMAP1", "UMAP2"))
+  )
+  p2$counts <- NULL
+  path <- tempfile(fileext = ".bin")
+
+  expect_silent(p2$exportApp(path, geneSets = list(), verbose = FALSE))
+  expect_true(file.exists(path))
+  expect_gt(file.info(path)$size, 0)
+})
+
 test_that("h5ad export resolves flexible AnnData metadata before writing", {
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
