@@ -136,3 +136,25 @@ test_that("runMarkers records grouping provenance", {
   expect_identical(marker.meta$group.levels, c("0", "1"))
   expect_identical(p2$history$markers$leiden$grouping, "leiden")
 })
+
+test_that("result discovery and selector resolvers use canonical defaults", {
+  p2 <- make_test_p2()
+  p2$reductions$PCA <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("PC", 1:2)))
+  p2$embeddings$PCA$UMAP <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("UMAP", 1:2)))
+  g <- igraph::make_ring(4)
+  igraph::V(g)$name <- rownames(p2$counts)
+  p2$graphs$PCA <- g
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$runMarkers(name = "leiden", append.specificity.metrics = FALSE)
+
+  expect_identical(p2$resolveReduction(), "PCA")
+  expect_identical(p2$resolveGraph(), "PCA")
+  expect_identical(p2$resolveEmbedding()$embedding, "UMAP")
+  expect_identical(p2$resolveMarkers()$name, "leiden")
+
+  results <- p2$listResults()
+  expect_true("PCA" %in% results$reductions$name)
+  expect_true("PCA" %in% results$graphs$name)
+  expect_true("UMAP" %in% results$embeddings$embedding)
+  expect_true("leiden" %in% results$markers$name)
+})

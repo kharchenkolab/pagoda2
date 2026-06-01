@@ -491,6 +491,199 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      )
 	    },
 
+	    #' @description List stored reductions.
+	    #'
+	    #' @return data.frame with reduction summaries.
+	    listReductions=function() {
+	      nms <- names(self$reductions)
+	      if (length(nms) == 0) {
+	        return(data.frame(name = character(), n.cells = numeric(), n.dims = numeric(), stringsAsFactors = FALSE))
+	      }
+	      data.frame(
+	        name = nms,
+	        n.cells = vapply(self$reductions[nms], nrow, numeric(1)),
+	        n.dims = vapply(self$reductions[nms], ncol, numeric(1)),
+	        stringsAsFactors = FALSE
+	      )
+	    },
+
+	    #' @description List stored graphs.
+	    #'
+	    #' @return data.frame with graph summaries.
+	    listGraphs=function() {
+	      nms <- names(self$graphs)
+	      if (length(nms) == 0) {
+	        return(data.frame(name = character(), n.nodes = numeric(), n.edges = numeric(), weighted = logical(), stringsAsFactors = FALSE))
+	      }
+	      data.frame(
+	        name = nms,
+	        n.nodes = vapply(self$graphs[nms], igraph::vcount, numeric(1)),
+	        n.edges = vapply(self$graphs[nms], igraph::ecount, numeric(1)),
+	        weighted = vapply(self$graphs[nms], igraph::is_weighted, logical(1)),
+	        stringsAsFactors = FALSE
+	      )
+	    },
+
+	    #' @description List stored embeddings.
+	    #'
+	    #' @return data.frame with embedding summaries.
+	    listEmbeddings=function() {
+	      reductions <- names(self$embeddings)
+	      if (length(reductions) == 0) {
+	        return(data.frame(reduction = character(), embedding = character(), n.cells = numeric(), n.dims = numeric(), stringsAsFactors = FALSE))
+	      }
+	      rows <- do.call(rbind, lapply(reductions, function(reduction) {
+	        embeddings <- names(self$embeddings[[reduction]])
+	        if (length(embeddings) == 0) {
+	          return(NULL)
+	        }
+	        data.frame(
+	          reduction = reduction,
+	          embedding = embeddings,
+	          n.cells = vapply(self$embeddings[[reduction]][embeddings], nrow, numeric(1)),
+	          n.dims = vapply(self$embeddings[[reduction]][embeddings], ncol, numeric(1)),
+	          stringsAsFactors = FALSE
+	        )
+	      }))
+	      if (is.null(rows)) {
+	        return(data.frame(reduction = character(), embedding = character(), n.cells = numeric(), n.dims = numeric(), stringsAsFactors = FALSE))
+	      }
+	      rownames(rows) <- NULL
+	      rows
+	    },
+
+	    #' @description List stored marker results.
+	    #'
+	    #' @return data.frame with marker result summaries.
+	    listMarkers=function() {
+	      types <- names(self$diffgenes)
+	      if (length(types) == 0) {
+	        return(data.frame(type = character(), name = character(), n.groups = integer(), grouping = character(), stringsAsFactors = FALSE))
+	      }
+	      rows <- do.call(rbind, lapply(types, function(type) {
+	        markers <- names(self$diffgenes[[type]])
+	        if (length(markers) == 0) {
+	          return(NULL)
+	        }
+	        data.frame(
+	          type = type,
+	          name = markers,
+	          n.groups = vapply(self$diffgenes[[type]][markers], length, integer(1)),
+	          grouping = vapply(self$diffgenes[[type]][markers], function(x) {
+	            meta <- attr(x, "pagoda2.marker")
+	            if (is.null(meta$grouping)) NA_character_ else meta$grouping
+	          }, character(1)),
+	          stringsAsFactors = FALSE
+	        )
+	      }))
+	      if (is.null(rows)) {
+	        return(data.frame(type = character(), name = character(), n.groups = integer(), grouping = character(), stringsAsFactors = FALSE))
+	      }
+	      rownames(rows) <- NULL
+	      rows
+	    },
+
+	    #' @description Summarize stored result namespaces.
+	    #'
+	    #' @return list of result summary data.frames.
+	    listResults=function() {
+	      list(
+	        reductions = self$listReductions(),
+	        graphs = self$listGraphs(),
+	        embeddings = self$listEmbeddings(),
+	        groupings = self$listGroupings(),
+	        markers = self$listMarkers()
+	      )
+	    },
+
+	    #' @description Resolve a reduction name.
+	    #'
+	    #' @param reduction Reduction name. NULL uses defaults$reduction.
+	    #' @return Reduction name.
+	    resolveReduction=function(reduction=NULL) {
+	      if (is.null(reduction)) {
+	        reduction <- self$defaults$reduction
+	      }
+	      if (!is.character(reduction) || length(reduction) != 1) {
+	        stop("`reduction` must be a single reduction name")
+	      }
+	      if (is.null(self$reductions[[reduction]])) {
+	        stop("Unknown reduction `", reduction, "`. Available reductions: ", paste(names(self$reductions), collapse = ", "))
+	      }
+	      reduction
+	    },
+
+	    #' @description Resolve a graph name.
+	    #'
+	    #' @param graph Graph name. NULL uses reduction or defaults$graph.
+	    #' @param reduction Optional reduction name to use as graph default.
+	    #' @return Graph name.
+	    resolveGraph=function(graph=NULL, reduction=NULL) {
+	      if (is.null(graph)) {
+	        graph <- reduction
+	      }
+	      if (is.null(graph)) {
+	        graph <- self$defaults$graph
+	      }
+	      if (!is.character(graph) || length(graph) != 1) {
+	        stop("`graph` must be a single graph name")
+	      }
+	      if (is.null(self$graphs[[graph]])) {
+	        stop("Unknown graph `", graph, "`. Available graphs: ", paste(names(self$graphs), collapse = ", "))
+	      }
+	      graph
+	    },
+
+	    #' @description Resolve an embedding selector.
+	    #'
+	    #' @param reduction Reduction namespace. NULL uses defaults$reduction.
+	    #' @param embedding Embedding name. NULL uses defaults$embedding.
+	    #' @return list with reduction, embedding, and value.
+	    resolveEmbedding=function(reduction=NULL, embedding=NULL) {
+	      if (is.null(reduction)) {
+	        reduction <- self$defaults$reduction
+	      }
+	      if (is.null(embedding)) {
+	        embedding <- self$defaults$embedding
+	      }
+	      if (!is.character(reduction) || length(reduction) != 1) {
+	        stop("`reduction` must be a single embedding namespace")
+	      }
+	      if (!is.character(embedding) || length(embedding) != 1) {
+	        stop("`embedding` must be a single embedding name")
+	      }
+	      if (is.null(self$embeddings[[reduction]]) || is.null(self$embeddings[[reduction]][[embedding]])) {
+	        available <- self$listEmbeddings()
+	        available.text <- if (nrow(available) == 0) "" else paste(paste(available$reduction, available$embedding, sep = "/"), collapse = ", ")
+	        stop("Unknown embedding `", reduction, "/", embedding, "`. Available embeddings: ", available.text)
+	      }
+	      list(reduction = reduction, embedding = embedding, value = self$embeddings[[reduction]][[embedding]])
+	    },
+
+	    #' @description Resolve a marker result.
+	    #'
+	    #' @param markers Marker result name. NULL uses defaultGrouping.
+	    #' @param type Marker result namespace.
+	    #' @return list with type, name, value, and metadata.
+	    resolveMarkers=function(markers=NULL, type='counts') {
+	      if (is.null(markers)) {
+	        markers <- self$defaultGrouping
+	      }
+	      if (is.null(markers)) {
+	        stop("No marker result supplied and no defaultGrouping is set")
+	      }
+	      if (!is.character(markers) || length(markers) != 1) {
+	        stop("`markers` must be a single marker result name")
+	      }
+	      if (is.null(self$diffgenes[[type]]) || is.null(self$diffgenes[[type]][[markers]])) {
+	        available <- self$listMarkers()
+	        available <- available$name[available$type == type]
+	        stop("Unknown marker result `", markers, "`. Available markers: ", paste(available, collapse = ", "))
+	      }
+	      value <- self$diffgenes[[type]][[markers]]
+	      list(type = type, name = markers, value = value, metadata = attr(value, "pagoda2.marker"))
+	    },
+
 	    #' @description Create a cell annotation by mapping one grouping to another.
 	    #'
 	    #' @param from Source grouping name.
