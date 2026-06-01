@@ -16,6 +16,80 @@
 #' @import drat
 NULL
 
+.pagoda2_has_explicit_rownames <- function(x) {
+  rn <- attr(x, "row.names")
+  !(length(rn) == 2 && is.na(rn[1]) && rn[2] < 0)
+}
+
+.pagoda2_align_metadata <- function(metadata, target, axis = "cell") {
+  if (is.null(target)) {
+    stop("Cannot set ", axis, " metadata before count matrix names are available")
+  }
+  metadata <- as.data.frame(metadata, stringsAsFactors = FALSE)
+  if (.pagoda2_has_explicit_rownames(metadata)) {
+    if (any(duplicated(rownames(metadata)))) {
+      stop("Duplicate ", axis, " names are not allowed in metadata")
+    }
+    metadata <- metadata[match(target, rownames(metadata)), , drop = FALSE]
+    rownames(metadata) <- target
+  } else {
+    if (nrow(metadata) != length(target)) {
+      stop("Unnamed ", axis, " metadata must have one row per ", axis)
+    }
+    rownames(metadata) <- target
+  }
+  metadata
+}
+
+.pagoda2_align_vector <- function(x, target, what = "values") {
+  if (is.null(target)) {
+    stop("Cannot align ", what, " before count matrix names are available")
+  }
+  if (is.null(names(x)) || all(is.na(names(x))) || all(names(x) == "")) {
+    if (length(x) != length(target)) {
+      stop("Unnamed ", what, " must have length ", length(target))
+    }
+    names(x) <- target
+    return(x)
+  }
+  if (any(duplicated(names(x)))) {
+    stop("Duplicate names are not allowed in ", what)
+  }
+  idx <- match(target, names(x))
+  out <- x[rep(NA_integer_, length(target))]
+  matched <- !is.na(idx)
+  out[matched] <- x[idx[matched]]
+  names(out) <- target
+  out
+}
+
+.pagoda2_is_integerish <- function(x) {
+  is.numeric(x) && all(is.na(x) | abs(x - round(x)) < sqrt(.Machine$double.eps))
+}
+
+.pagoda2_is_discrete_grouping <- function(x) {
+  if (is.factor(x) || is.character(x) || is.logical(x)) {
+    return(TRUE)
+  }
+  if (is.integer(x) || .pagoda2_is_integerish(x)) {
+    n <- sum(!is.na(x))
+    n.levels <- length(unique(x[!is.na(x)]))
+    max.levels <- max(20L, min(1000L, floor(n * 0.2)))
+    return(n.levels > 0 && n.levels < n && n.levels <= max.levels)
+  }
+  FALSE
+}
+
+.pagoda2_as_grouping <- function(x, name = "grouping") {
+  if (!.pagoda2_is_discrete_grouping(x)) {
+    stop("`", name, "` does not look like a discrete cell grouping")
+  }
+  if (is.factor(x)) {
+    return(droplevels(x))
+  }
+  stats::setNames(as.factor(x), names(x))
+}
+
 
 #' @title Pagoda2 R6 class
 #' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
@@ -73,10 +147,28 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @field genegraphs Slot to store graphical representations in gene space (i.e. gene kNN graphs) (default=list())
     genegraphs = list(),
 
-    #' @field depth Number of molecules measured per cell (default=NULL)
-    depth = NULL,
+	    #' @field depth Number of molecules measured per cell (default=NULL)
+	    depth = NULL,
 
-    #' @description Initialize Pagoda2 class
+	    #' @field cellMeta Data frame with cell-axis metadata, rownames are cell IDs.
+	    cellMeta = data.frame(row.names = character()),
+
+	    #' @field geneMeta Data frame with gene-axis metadata, rownames are gene IDs.
+	    geneMeta = data.frame(row.names = character()),
+
+	    #' @field defaults Canonical names for default reductions, graphs, and embeddings.
+	    defaults = list(reduction = "PCA", graph = "PCA", embedding = "UMAP"),
+
+	    #' @field defaultGrouping Name of the default grouping column in cellMeta.
+	    defaultGrouping = NULL,
+
+	    #' @field clusterings Clustering provenance keyed by grouping name.
+	    clusterings = list(),
+
+	    #' @field history Workflow and result provenance.
+	    history = list(),
+
+	    #' @description Initialize Pagoda2 class
     #'
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Only supported values are 'raw', 'plain', and 'linearObs'.
@@ -126,13 +218,316 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #if(any(x@x < 0)) {
       #  stop("x contains negative values")
       #}
-      self$setCountMatrix(x, min.cells.per.gene=min.cells.per.gene, trim=trim, 
-                     min.transcripts.per.cell=min.transcripts.per.cell, lib.sizes=lib.sizes,
-                     log.scale=log.scale, keep.genes=keep.genes, verbose=verbose)
-      ##}
-    },
+	      self$setCountMatrix(x, min.cells.per.gene=min.cells.per.gene, trim=trim, 
+	                     min.transcripts.per.cell=min.transcripts.per.cell, lib.sizes=lib.sizes,
+	                     log.scale=log.scale, keep.genes=keep.genes, verbose=verbose)
+	      ##}
+	    },
 
-    #' @description Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
+	    #' @description Align cellMeta and geneMeta rownames to the current count matrix.
+	    #'
+	    #' @return Invisibly returns self.
+	    syncMetadata=function() {
+	      if (is.null(self$counts)) {
+	        return(invisible(self))
+	      }
+	      cells <- rownames(self$counts)
+	      genes <- colnames(self$counts)
+	      if (is.null(self$cellMeta) || nrow(self$cellMeta) == 0) {
+	        self$cellMeta <- data.frame(row.names = cells)
+	      } else {
+	        self$cellMeta <- .pagoda2_align_metadata(self$cellMeta, cells, axis = "cell")
+	      }
+	      if (is.null(self$geneMeta) || nrow(self$geneMeta) == 0) {
+	        self$geneMeta <- data.frame(row.names = genes)
+	      } else {
+	        self$geneMeta <- .pagoda2_align_metadata(self$geneMeta, genes, axis = "gene")
+	      }
+	      invisible(self)
+	    },
+
+	    #' @description Set cell-axis metadata.
+	    #'
+	    #' @param metadata data.frame-like metadata or a single column name.
+	    #' @param value vector of values when metadata is a column name.
+	    #' @param overwrite Whether to overwrite existing columns.
+	    #' @return Invisibly returns self.
+	    setCellMeta=function(metadata, value=NULL, overwrite=TRUE) {
+	      cells <- rownames(self$counts)
+	      if (is.null(cells)) {
+	        stop("Cannot set cell metadata before counts are initialized")
+	      }
+	      self$syncMetadata()
+	      if (is.character(metadata) && length(metadata) == 1 && !is.null(value)) {
+	        if (!overwrite && metadata %in% colnames(self$cellMeta)) {
+	          stop("Cell metadata column `", metadata, "` already exists")
+	        }
+	        self$cellMeta[[metadata]] <- .pagoda2_align_vector(value, cells, what = paste0("cell metadata `", metadata, "`"))
+	      } else {
+	        if (!is.null(value)) {
+	          stop("`value` can only be supplied when `metadata` is a single column name")
+	        }
+	        metadata <- .pagoda2_align_metadata(metadata, cells, axis = "cell")
+	        overlap <- intersect(colnames(metadata), colnames(self$cellMeta))
+	        if (!overwrite && length(overlap) > 0) {
+	          stop("Cell metadata column(s) already exist: ", paste(overlap, collapse = ", "))
+	        }
+	        for (n in colnames(metadata)) {
+	          self$cellMeta[[n]] <- metadata[[n]]
+	        }
+	      }
+	      invisible(self)
+	    },
+
+	    #' @description Get cell-axis metadata.
+	    #'
+	    #' @param columns Optional metadata columns to return.
+	    #' @return data.frame of cell metadata.
+	    getCellMeta=function(columns=NULL) {
+	      self$syncMetadata()
+	      if (is.null(columns)) {
+	        return(self$cellMeta)
+	      }
+	      missing <- setdiff(columns, colnames(self$cellMeta))
+	      if (length(missing) > 0) {
+	        stop("Unknown cell metadata column(s): ", paste(missing, collapse = ", "))
+	      }
+	      self$cellMeta[, columns, drop = FALSE]
+	    },
+
+	    #' @description Set gene-axis metadata.
+	    #'
+	    #' @param metadata data.frame-like metadata or a single column name.
+	    #' @param value vector of values when metadata is a column name.
+	    #' @param overwrite Whether to overwrite existing columns.
+	    #' @return Invisibly returns self.
+	    setGeneMeta=function(metadata, value=NULL, overwrite=TRUE) {
+	      genes <- colnames(self$counts)
+	      if (is.null(genes)) {
+	        stop("Cannot set gene metadata before counts are initialized")
+	      }
+	      self$syncMetadata()
+	      if (is.character(metadata) && length(metadata) == 1 && !is.null(value)) {
+	        if (!overwrite && metadata %in% colnames(self$geneMeta)) {
+	          stop("Gene metadata column `", metadata, "` already exists")
+	        }
+	        self$geneMeta[[metadata]] <- .pagoda2_align_vector(value, genes, what = paste0("gene metadata `", metadata, "`"))
+	      } else {
+	        if (!is.null(value)) {
+	          stop("`value` can only be supplied when `metadata` is a single column name")
+	        }
+	        metadata <- .pagoda2_align_metadata(metadata, genes, axis = "gene")
+	        overlap <- intersect(colnames(metadata), colnames(self$geneMeta))
+	        if (!overwrite && length(overlap) > 0) {
+	          stop("Gene metadata column(s) already exist: ", paste(overlap, collapse = ", "))
+	        }
+	        for (n in colnames(metadata)) {
+	          self$geneMeta[[n]] <- metadata[[n]]
+	        }
+	      }
+	      invisible(self)
+	    },
+
+	    #' @description Get gene-axis metadata.
+	    #'
+	    #' @param columns Optional metadata columns to return.
+	    #' @return data.frame of gene metadata.
+	    getGeneMeta=function(columns=NULL) {
+	      self$syncMetadata()
+	      if (is.null(columns)) {
+	        return(self$geneMeta)
+	      }
+	      missing <- setdiff(columns, colnames(self$geneMeta))
+	      if (length(missing) > 0) {
+	        stop("Unknown gene metadata column(s): ", paste(missing, collapse = ", "))
+	      }
+	      self$geneMeta[, columns, drop = FALSE]
+	    },
+
+	    #' @description Store a discrete cell grouping as a cellMeta column.
+	    #'
+	    #' @param name Name of the grouping column.
+	    #' @param groups Vector or factor of cell group labels.
+	    #' @param source Optional source/provenance label.
+	    #' @param setDefault Whether to make this the default grouping.
+	    #' @param overwrite Whether to overwrite an existing grouping.
+	    #' @return Invisibly returns self.
+	    setGrouping=function(name, groups, source=NULL, setDefault=FALSE, overwrite=FALSE) {
+	      if (!is.character(name) || length(name) != 1 || is.na(name) || name == "") {
+	        stop("`name` must be a single non-empty string")
+	      }
+	      cells <- rownames(self$counts)
+	      groups <- .pagoda2_align_vector(groups, cells, what = paste0("grouping `", name, "`"))
+	      groups <- .pagoda2_as_grouping(groups, name = name)
+	      self$setCellMeta(name, groups, overwrite = overwrite)
+	      if (is.null(self$history$groupings)) {
+	        self$history$groupings <- list()
+	      }
+	      self$history$groupings[[name]] <- list(
+	        source = source,
+	        created = Sys.time(),
+	        n.groups = length(levels(groups))
+	      )
+	      if (setDefault) {
+	        self$setDefaultGrouping(name)
+	      }
+	      invisible(self)
+	    },
+
+	    #' @description Set the default grouping used when grouping is omitted.
+	    #'
+	    #' @param grouping Name of a discrete cellMeta column.
+	    #' @return Invisibly returns self.
+	    setDefaultGrouping=function(grouping) {
+	      self$syncMetadata()
+	      if (!is.character(grouping) || length(grouping) != 1 || is.na(grouping) || grouping == "") {
+	        stop("`grouping` must be a single non-empty string")
+	      }
+	      if (!grouping %in% colnames(self$cellMeta)) {
+	        stop("Unknown cell metadata column `", grouping, "`")
+	      }
+	      .pagoda2_as_grouping(self$cellMeta[[grouping]], name = grouping)
+	      self$defaultGrouping <- grouping
+	      invisible(self)
+	    },
+
+	    #' @description Get the current default grouping name.
+	    #'
+	    #' @return Default grouping name, or NULL if unset.
+	    getDefaultGrouping=function() {
+	      self$defaultGrouping
+	    },
+
+	    #' @description Resolve a grouping column or vector into a named factor.
+	    #'
+	    #' @param grouping Name of a discrete cellMeta column. NULL uses defaultGrouping.
+	    #' @param groups Direct vector of group labels. Mutually exclusive with grouping.
+	    #' @param cells Optional cell names to resolve onto.
+	    #' @param allow.missing Whether missing labels are allowed.
+	    #' @return Named factor aligned to cells.
+	    resolveGrouping=function(grouping=NULL, groups=NULL, cells=NULL, allow.missing=TRUE) {
+	      self$syncMetadata()
+	      if (!is.null(grouping) && !is.null(groups)) {
+	        stop("Specify only one of `grouping` or `groups`")
+	      }
+	      if (is.null(cells)) {
+	        cells <- rownames(self$counts)
+	      }
+	      if (is.null(groups)) {
+	        if (is.null(grouping)) {
+	          grouping <- self$defaultGrouping
+	        }
+	        if (is.null(grouping)) {
+	          stop("No defaultGrouping is set and no grouping was supplied")
+	        }
+	        if (!is.character(grouping) || length(grouping) != 1) {
+	          stop("`grouping` must be a single cell metadata column name")
+	        }
+	        if (!grouping %in% colnames(self$cellMeta)) {
+	          stop("Unknown grouping `", grouping, "`. Available groupings: ", paste(self$listGroupings()$name, collapse = ", "))
+	        }
+	        values <- self$cellMeta[[grouping]]
+	        names(values) <- rownames(self$cellMeta)
+	      } else if (is.character(groups) && length(groups) == 1 && is.null(names(groups)) && groups %in% colnames(self$cellMeta)) {
+	        values <- self$cellMeta[[groups]]
+	        names(values) <- rownames(self$cellMeta)
+	      } else {
+	        values <- groups
+	      }
+	      values <- .pagoda2_align_vector(values, cells, what = "groups")
+	      if (!allow.missing && any(is.na(values))) {
+	        stop("Grouping is missing values for ", sum(is.na(values)), " cell(s)")
+	      }
+	      grouping.name <- if (is.null(grouping)) "groups" else grouping
+	      .pagoda2_as_grouping(values, name = grouping.name)
+	    },
+
+	    #' @description Get a grouping aligned to cells.
+	    #'
+	    #' @param grouping Name of a discrete cellMeta column. NULL uses defaultGrouping.
+	    #' @param groups Direct vector of group labels. Mutually exclusive with grouping.
+	    #' @param cells Optional cell names to resolve onto.
+	    #' @param allow.missing Whether missing labels are allowed.
+	    #' @return Named factor aligned to cells.
+	    getGrouping=function(grouping=NULL, groups=NULL, cells=NULL, allow.missing=TRUE) {
+	      self$resolveGrouping(grouping = grouping, groups = groups, cells = cells, allow.missing = allow.missing)
+	    },
+
+	    #' @description List discrete cellMeta columns that can be used as groupings.
+	    #'
+	    #' @return data.frame with grouping summaries.
+	    listGroupings=function() {
+	      self$syncMetadata()
+	      cols <- colnames(self$cellMeta)
+	      if (length(cols) == 0) {
+	        return(data.frame(
+	          name = character(),
+	          class = character(),
+	          n.groups = integer(),
+	          n.missing = integer(),
+	          is.default = logical(),
+	          stringsAsFactors = FALSE
+	        ))
+	      }
+	      keep <- vapply(self$cellMeta, .pagoda2_is_discrete_grouping, logical(1))
+	      cols <- cols[keep]
+	      if (length(cols) == 0) {
+	        return(data.frame(
+	          name = character(),
+	          class = character(),
+	          n.groups = integer(),
+	          n.missing = integer(),
+	          is.default = logical(),
+	          stringsAsFactors = FALSE
+	        ))
+	      }
+	      data.frame(
+	        name = cols,
+	        class = vapply(self$cellMeta[cols], function(x) class(x)[1], character(1)),
+	        n.groups = vapply(self$cellMeta[cols], function(x) length(unique(x[!is.na(x)])), integer(1)),
+	        n.missing = vapply(self$cellMeta[cols], function(x) sum(is.na(x)), integer(1)),
+	        is.default = cols == self$defaultGrouping,
+	        stringsAsFactors = FALSE
+	      )
+	    },
+
+	    #' @description Create a cell annotation by mapping one grouping to another.
+	    #'
+	    #' @param from Source grouping name.
+	    #' @param to Output grouping name.
+	    #' @param map Named vector mapping source levels to annotation labels.
+	    #' @param unmapped How to handle unmapped source levels: NA, "keep", or "error".
+	    #' @param setDefault Whether to make the output grouping the default.
+	    #' @param overwrite Whether to overwrite an existing output grouping.
+	    #' @return Invisibly returns self.
+	    annotateClusters=function(from, to, map, unmapped=NA, setDefault=TRUE, overwrite=FALSE) {
+	      source.groups <- self$getGrouping(grouping = from)
+	      if (is.null(names(map)) || any(names(map) == "")) {
+	        stop("`map` must be a named vector")
+	      }
+	      source.levels <- levels(source.groups)
+	      unknown <- setdiff(names(map), source.levels)
+	      if (length(unknown) > 0) {
+	        stop("Mapping contains unknown source level(s): ", paste(unknown, collapse = ", "))
+	      }
+	      source.values <- as.character(source.groups)
+	      target.values <- unname(as.character(map[source.values]))
+	      missing.map <- is.na(target.values) & !is.na(source.values)
+	      if (any(missing.map)) {
+	        if (identical(unmapped, "error")) {
+	          stop("No annotation provided for source level(s): ", paste(sort(unique(source.values[missing.map])), collapse = ", "))
+	        } else if (identical(unmapped, "keep")) {
+	          target.values[missing.map] <- source.values[missing.map]
+	        } else if (!(length(unmapped) == 1 && is.na(unmapped))) {
+	          stop("`unmapped` must be NA, \"keep\", or \"error\"")
+	        }
+	      }
+	      names(target.values) <- names(source.groups)
+	      self$setGrouping(to, target.values, source = list(method = "annotateClusters", from = from), setDefault = setDefault, overwrite = overwrite)
+	      invisible(self)
+	    },
+
+	    #' @description Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
     #'
     #' @param countMatrix input count matrix 
     #' @param depthScale numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale).
@@ -168,10 +563,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       self$misc[['rawCounts']] <- counts
       self$misc$depthScale <- depthScale
 
-      if (self$modelType == 'raw') {
-        self$counts <- counts
-        return()
-      }
+	      if (self$modelType == 'raw') {
+	        self$counts <- counts
+	        self$syncMetadata()
+	        return()
+	      }
 
       if (!is.null(self$batch)) {
         if (!all(colnames(countMatrix) %in% names(self$batch))) { 
@@ -288,9 +684,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       self$misc[['rescaled.mat']] <- NULL
       if (verbose) message("done.\n")
 
-      self$counts <- counts
-      self$depth <- depth
-    },
+	      self$counts <- counts
+	      self$depth <- depth
+	      self$syncMetadata()
+	    },
 
     #' @description Adjust variance of the residual matrix, determine overdispersed sites
     #' This is done to normalize the extent to which genes with (very) different expression magnitudes will contribute to the downstream anlaysis.
