@@ -608,6 +608,212 @@
 }
 
 #' @keywords internal
+.pagoda2_h5_write_scalar_attr <- function(x, name, value) {
+  if (is.character(value)) {
+    x$create_attr(
+      name,
+      robj = as.character(value)[[1]],
+      dtype = hdf5r::h5types$H5T_STRING$new(size = Inf),
+      space = hdf5r::H5S$new("scalar")
+    )
+  } else {
+    x$create_attr(name, robj = value, space = hdf5r::H5S$new("scalar"))
+  }
+  invisible(x)
+}
+
+#' @keywords internal
+.pagoda2_h5_write_encoding <- function(x, type, version) {
+  .pagoda2_h5_write_scalar_attr(x, "encoding-type", type)
+  .pagoda2_h5_write_scalar_attr(x, "encoding-version", version)
+  invisible(x)
+}
+
+#' @keywords internal
+.pagoda2_h5_write_string_array <- function(group, name, values) {
+  dataset <- group$create_dataset(
+    name,
+    robj = as.character(values),
+    dtype = hdf5r::h5types$H5T_STRING$new(size = Inf)
+  )
+  .pagoda2_h5_write_encoding(dataset, "string-array", "0.2.0")
+}
+
+#' @keywords internal
+.pagoda2_h5_write_array <- function(group, name, values) {
+  dataset <- group$create_dataset(name, robj = values)
+  .pagoda2_h5_write_encoding(dataset, "array", "0.2.0")
+}
+
+#' @keywords internal
+.pagoda2_h5_write_dataframe <- function(group, metadata, index, axis) {
+  if (is.null(metadata) || (nrow(metadata) == 0 && ncol(metadata) == 0)) {
+    metadata <- data.frame(row.names = index)
+  }
+  metadata <- as.data.frame(metadata, stringsAsFactors = FALSE, optional = TRUE)
+  if (nrow(metadata) != length(index)) {
+    stop("AnnData ", axis, " metadata has ", nrow(metadata), " rows but the matrix axis has ", length(index))
+  }
+  if (is.null(rownames(metadata)) || !identical(rownames(metadata), index)) {
+    stop("AnnData ", axis, " metadata rownames must exactly match the matrix axis")
+  }
+  if ("_index" %in% colnames(metadata)) {
+    stop("AnnData ", axis, " metadata column `_index` is reserved")
+  }
+  .pagoda2_h5_write_scalar_attr(group, "_index", "_index")
+  group$create_attr("column-order", as.character(colnames(metadata)))
+  .pagoda2_h5_write_encoding(group, "dataframe", "0.2.0")
+  .pagoda2_h5_write_string_array(group, "_index", index)
+  for (column in colnames(metadata)) {
+    value <- metadata[[column]]
+    if (is.list(value) && !is.factor(value)) {
+      stop("AnnData ", axis, " metadata column `", column, "` has unsupported list values")
+    }
+    if (is.factor(value)) {
+      .pagoda2_h5_write_string_array(group, column, as.character(value))
+    } else if (is.character(value)) {
+      .pagoda2_h5_write_string_array(group, column, value)
+    } else if (is.logical(value)) {
+      if (any(is.na(value))) {
+        .pagoda2_h5_write_string_array(group, column, as.character(value))
+      } else {
+        .pagoda2_h5_write_array(group, column, value)
+      }
+    } else if (is.integer(value) && any(is.na(value))) {
+      .pagoda2_h5_write_array(group, column, as.numeric(value))
+    } else if (is.numeric(value) || is.integer(value)) {
+      .pagoda2_h5_write_array(group, column, value)
+    } else {
+      .pagoda2_h5_write_string_array(group, column, as.character(value))
+    }
+  }
+  invisible(group)
+}
+
+#' @keywords internal
+.pagoda2_h5_write_sparse_csr <- function(group, matrix) {
+  matrix <- as(matrix, "RsparseMatrix")
+  group$create_dataset("data", robj = matrix@x)
+  group$create_dataset("indices", robj = as.integer(matrix@j))
+  group$create_dataset("indptr", robj = as.integer(matrix@p))
+  group$create_attr("shape", as.integer(dim(matrix)))
+  .pagoda2_h5_write_encoding(group, "csr_matrix", "0.1.0")
+  invisible(group)
+}
+
+#' @keywords internal
+.pagoda2_h5_write_obsm_matrix <- function(group, name, matrix, cells) {
+  if (is.null(rownames(matrix)) || !all(cells %in% rownames(matrix))) {
+    stop("AnnData obsm matrix `", name, "` is not named for all cells")
+  }
+  matrix <- as.matrix(matrix[cells, , drop = FALSE])
+  dataset <- group$create_dataset(name, robj = t(matrix))
+  .pagoda2_h5_write_encoding(dataset, "array", "0.2.0")
+  invisible(dataset)
+}
+
+#' @keywords internal
+.pagoda2_export_axis_metadata <- function(metadata, names, axis) {
+  if (is.null(metadata) || (nrow(metadata) == 0 && ncol(metadata) == 0)) {
+    return(data.frame(row.names = names))
+  }
+  metadata <- as.data.frame(metadata, stringsAsFactors = FALSE, optional = TRUE)
+  if (nrow(metadata) != length(names)) {
+    stop("AnnData ", axis, " metadata must have exactly ", length(names), " rows")
+  }
+  if (is.null(rownames(metadata)) || !identical(rownames(metadata), names)) {
+    stop("AnnData ", axis, " metadata rownames must exactly match the matrix axis")
+  }
+  metadata
+}
+
+#' @keywords internal
+.pagoda2_h5ad_key <- function(...) {
+  key <- paste(..., sep = "_")
+  key <- tolower(gsub("[^A-Za-z0-9]+", "_", key))
+  key <- gsub("^_+|_+$", "", key)
+  paste0("X_", key)
+}
+
+#' @keywords internal
+.pagoda2_export_h5ad <- function(p2, path, x = c("normalized", "counts"),
+                                 counts.layer = "counts", include.counts = TRUE,
+                                 include.reductions = TRUE, include.embeddings = TRUE,
+                                 overwrite = FALSE) {
+  x <- match.arg(x)
+  if (file.exists(path)) {
+    if (!overwrite) {
+      stop("Output file exists; use `overwrite = TRUE` to replace it: ", path)
+    }
+    unlink(path)
+  }
+  raw.counts <- p2$misc$rawCounts
+  if (is.null(raw.counts)) {
+    raw.counts <- p2$counts
+  }
+  if (is.null(raw.counts)) {
+    stop("Cannot export h5ad without a count matrix")
+  }
+  export.counts <- as(raw.counts, "CsparseMatrix")
+  export.x <- if (identical(x, "normalized") && !is.null(p2$counts)) p2$counts else export.counts
+  export.x <- as(export.x, "CsparseMatrix")
+  if (!identical(dim(export.x), dim(export.counts)) ||
+      !identical(rownames(export.x), rownames(export.counts)) ||
+      !identical(colnames(export.x), colnames(export.counts))) {
+    stop("AnnData X and counts layer must have identical cell and gene axes")
+  }
+  cells <- rownames(export.x)
+  genes <- colnames(export.x)
+  cell.meta <- .pagoda2_export_axis_metadata(p2$cellMeta, cells, axis = "cell")
+  gene.meta <- .pagoda2_export_axis_metadata(p2$geneMeta, genes, axis = "gene")
+  h5 <- .pagoda2_h5_open(path, mode = "w")
+  on.exit(h5$close_all())
+  .pagoda2_h5_write_encoding(h5, "anndata", "0.1.0")
+  .pagoda2_h5_write_sparse_csr(h5$create_group("X"), export.x)
+  layers <- h5$create_group("layers")
+  .pagoda2_h5_write_encoding(layers, "dict", "0.1.0")
+  if (isTRUE(include.counts) && !is.null(counts.layer)) {
+    .pagoda2_h5_write_sparse_csr(layers$create_group(counts.layer), export.counts)
+  }
+  .pagoda2_h5_write_dataframe(h5$create_group("obs"), cell.meta, cells, axis = "cell")
+  .pagoda2_h5_write_dataframe(h5$create_group("var"), gene.meta, genes, axis = "gene")
+  obsm <- h5$create_group("obsm")
+  .pagoda2_h5_write_encoding(obsm, "dict", "0.1.0")
+  used.keys <- character()
+  if (isTRUE(include.reductions)) {
+    for (reduction in names(p2$reductions)) {
+      key <- .pagoda2_h5ad_key(reduction)
+      if (!key %in% used.keys) {
+        .pagoda2_h5_write_obsm_matrix(obsm, key, p2$reductions[[reduction]], cells)
+        used.keys <- c(used.keys, key)
+      }
+    }
+  }
+  if (isTRUE(include.embeddings)) {
+    embedding.names <- unlist(lapply(p2$embeddings, names), use.names = FALSE)
+    duplicated.embeddings <- embedding.names[duplicated(embedding.names)]
+    for (reduction in names(p2$embeddings)) {
+      for (embedding in names(p2$embeddings[[reduction]])) {
+        key <- if (embedding %in% duplicated.embeddings) {
+          .pagoda2_h5ad_key(reduction, embedding)
+        } else {
+          .pagoda2_h5ad_key(embedding)
+        }
+        if (!key %in% used.keys) {
+          .pagoda2_h5_write_obsm_matrix(obsm, key, p2$embeddings[[reduction]][[embedding]], cells)
+          used.keys <- c(used.keys, key)
+        }
+      }
+    }
+  }
+  for (group.name in c("varm", "obsp", "varp", "uns")) {
+    group <- h5$create_group(group.name)
+    .pagoda2_h5_write_encoding(group, "dict", "0.1.0")
+  }
+  invisible(path)
+}
+
+#' @keywords internal
 .pagoda2_read_loom <- function(path, gene.id = c("symbol", "id"), layer = NULL,
                                make.unique.genes = FALSE, cell.prefix = NULL,
                                sample.name = NULL, validate.integer = TRUE,
@@ -979,7 +1185,9 @@ readPagoda2 <- function(path, format = NULL, reader.args = list(), ...) {
 }
 
 #' @keywords internal
-pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA", ...) {
+pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
+                      include.normalized = TRUE, include.geneMeta = TRUE,
+                      include.embeddings = TRUE, ...) {
   format <- match.arg(format)
   raw.counts <- p2$misc$rawCounts
   if (is.null(raw.counts)) {
@@ -1020,19 +1228,37 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA", ..
     }
     seurat.ns <- asNamespace("Seurat")
     object <- get("CreateSeuratObject", envir = seurat.ns)(counts = counts, assay = assay, meta.data = cell.meta, ...)
-    for (reduction in names(p2$embeddings)) {
-      for (embedding in names(p2$embeddings[[reduction]])) {
-        coordinates <- p2$embeddings[[reduction]][[embedding]]
-        if (is.null(rownames(coordinates)) || !all(rownames(cell.meta) %in% rownames(coordinates))) {
-          stop("Embedding `", embedding, "` under reduction `", reduction, "` is not named for all cells")
+    if (isTRUE(include.normalized) && !is.null(p2$counts)) {
+      data <- Matrix::t(p2$counts)
+      object <- tryCatch(
+        get("SetAssayData", envir = seurat.ns)(object, assay = assay, layer = "data", new.data = data),
+        error = function(e) get("SetAssayData", envir = seurat.ns)(object, assay = assay, slot = "data", new.data = data)
+      )
+    }
+    if (isTRUE(include.geneMeta) && ncol(gene.meta) > 0) {
+      if (!all(rownames(object) %in% rownames(gene.meta))) {
+        stop("Gene metadata is not named for all Seurat features")
+      }
+      object[[assay]] <- get("AddMetaData", envir = seurat.ns)(
+        object = object[[assay]],
+        metadata = gene.meta[rownames(object), , drop = FALSE]
+      )
+    }
+    if (isTRUE(include.embeddings)) {
+      for (reduction in names(p2$embeddings)) {
+        for (embedding in names(p2$embeddings[[reduction]])) {
+          coordinates <- p2$embeddings[[reduction]][[embedding]]
+          if (is.null(rownames(coordinates)) || !all(rownames(cell.meta) %in% rownames(coordinates))) {
+            stop("Embedding `", embedding, "` under reduction `", reduction, "` is not named for all cells")
+          }
+          key <- paste0(gsub("[^A-Za-z0-9]", "", toupper(embedding)), "_")
+          name <- tolower(paste(reduction, embedding, sep = "_"))
+          object[[name]] <- get("CreateDimReducObject", envir = seurat.ns)(
+            embeddings = coordinates[rownames(cell.meta), , drop = FALSE],
+            key = key,
+            assay = assay
+          )
         }
-        key <- paste0(gsub("[^A-Za-z0-9]", "", toupper(embedding)), "_")
-        name <- tolower(paste(reduction, embedding, sep = "_"))
-        object[[name]] <- get("CreateDimReducObject", envir = seurat.ns)(
-          embeddings = coordinates[rownames(cell.meta), , drop = FALSE],
-          key = key,
-          assay = assay
-        )
       }
     }
     return(object)
@@ -1041,14 +1267,18 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA", ..
 }
 
 #' @keywords internal
-pagoda2Export <- function(p2, path, format = NULL, ...) {
+pagoda2Export <- function(p2, path, format = NULL, overwrite = FALSE, ...) {
   if (is.null(format)) {
     ext <- tolower(tools::file_ext(path))
     format <- if (identical(ext, "rds")) "rds" else ext
   }
+  format <- tolower(format)
   if (format == "rds") {
     saveRDS(p2, file = path, ...)
     return(invisible(path))
+  }
+  if (format %in% c("h5ad", "anndata")) {
+    return(.pagoda2_export_h5ad(p2, path = path, overwrite = overwrite, ...))
   }
   stop("Export format `", format, "` is not implemented yet")
 }

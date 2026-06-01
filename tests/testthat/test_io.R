@@ -422,6 +422,68 @@ test_that("Pagoda2 as list and RDS export preserve core axes", {
   expect_true(inherits(readRDS(path), "Pagoda2"))
 })
 
+test_that("Pagoda2 exports h5ad with exact AnnData axes and sparse counts", {
+  cm <- make_io_matrix()
+  p2 <- Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = FALSE,
+    trim = 0
+  )
+  p2$setCellMeta("sample", c(cell1 = "s1", cell2 = "s1", cell3 = "s2"))
+  p2$setGrouping("leiden", c(cell1 = "0", cell2 = "0", cell3 = "1"), setDefault = TRUE)
+  p2$setGeneMeta(data.frame(
+    gene_id = paste0("ens", seq_len(nrow(cm))),
+    gene_symbol = rownames(cm),
+    row.names = rownames(cm)
+  ))
+  p2$reductions$PCA <- matrix(
+    seq_len(6),
+    nrow = 3,
+    dimnames = list(colnames(cm), paste0("PC", 1:2))
+  )
+  p2$embeddings$PCA$UMAP <- matrix(
+    seq_len(6) / 10,
+    nrow = 3,
+    dimnames = list(colnames(cm), paste0("UMAP", 1:2))
+  )
+  path <- tempfile(fileext = ".h5ad")
+
+  expect_silent(p2$export(path, format = "h5ad"))
+  imported <- readCounts(path, format = "h5ad", return.metadata = TRUE, verbose = FALSE)
+
+  expect_identical(rownames(imported$counts), rownames(cm))
+  expect_identical(colnames(imported$counts), colnames(cm))
+  expect_equal(as.matrix(imported$counts), as.matrix(cm))
+  expect_identical(as.character(imported$cellMeta$sample), c("s1", "s1", "s2"))
+  expect_identical(as.character(imported$cellMeta$leiden), c("0", "0", "1"))
+  h5 <- hdf5r::H5File$new(path, mode = "r")
+  on.exit(h5$close_all())
+  expect_identical(as.integer(hdf5r::h5attr(h5[["X"]], "shape")), c(ncol(cm), nrow(cm)))
+  expect_true("counts" %in% names(h5[["layers"]]))
+  expect_true(all(c("X_pca", "X_umap") %in% names(h5[["obsm"]])))
+  expect_identical(dim(t(h5[["obsm"]][["X_umap"]]$read())), c(ncol(cm), 2L))
+})
+
+test_that("h5ad export rejects non-exact AnnData metadata dimensions", {
+  cm <- make_io_matrix()
+  p2 <- Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = FALSE,
+    trim = 0
+  )
+  p2$cellMeta <- p2$cellMeta[-1, , drop = FALSE]
+
+  expect_error(p2$export(tempfile(fileext = ".h5ad"), format = "h5ad"), "cell metadata")
+})
+
 test_that("Pagoda2 as Seurat uses gene-by-cell counts when Seurat is available", {
   testthat::skip_if_not_installed("Seurat")
 
@@ -440,6 +502,33 @@ test_that("Pagoda2 as Seurat uses gene-by-cell counts when Seurat is available",
   expect_true(inherits(seu, "Seurat"))
   expect_identical(colnames(seu), colnames(cm))
   expect_identical(rownames(seu), rownames(cm))
+})
+
+test_that("Pagoda2 as Seurat carries normalized data and feature metadata", {
+  testthat::skip_if_not_installed("Seurat")
+
+  cm <- make_io_matrix()
+  p2 <- Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = FALSE,
+    trim = 0
+  )
+  p2$setGeneMeta(data.frame(
+    gene_id = paste0("ens", seq_len(nrow(cm))),
+    gene_symbol = rownames(cm),
+    row.names = rownames(cm)
+  ))
+
+  seu <- p2$as("seurat")
+  data <- get("LayerData", envir = asNamespace("SeuratObject"))(seu, assay = "RNA", layer = "data")
+
+  expect_equal(as.matrix(data), as.matrix(Matrix::t(p2$counts)))
+  expect_true("gene_id" %in% colnames(seu[["RNA"]]@meta.data))
+  expect_identical(as.character(seu[["RNA"]]@meta.data$gene_symbol), rownames(cm))
 })
 
 test_that("Pagoda2 as Seurat carries named embeddings when available", {
