@@ -1540,7 +1540,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'     M - log2 fold change
     #'     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
     #'     fe - fraction of cells in a given group having non-zero expression level of a given gene
-    getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE) {
+    getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, grouping=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE) {
+	      name.missing <- missing(name)
+	      if (!is.null(grouping) && !is.null(groups)) {
+	        stop("Specify only one of `grouping` or `groups`")
+	      }
+	      if (is.null(groups) && (!is.null(grouping) || !is.null(self$defaultGrouping))) {
+	        resolved.grouping <- if (is.null(grouping)) self$defaultGrouping else grouping
+	        groups <- self$resolveGrouping(grouping = grouping, allow.missing = TRUE)
+	        if (name.missing) {
+	          name <- resolved.grouping
+	        }
+	      }
       # restrict counts to the cells for which non-NA value has been specified in groups
       if (is.null(groups)) {
         ## # look up the clustering based on a specified type
@@ -2061,7 +2072,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' 
     #' @return plot of the embedding
     plotEmbedding=function(type=NULL, embeddingType=NULL, clusterType=NULL,
-      groups=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
+      groups=NULL, grouping=NULL, colors=NULL, gene=NULL, plot.theme=ggplot2::theme_bw(), ...) {
 
       if (is.null(type)) {
         if ('counts' %in% names(self$embeddings)) {
@@ -2096,6 +2107,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         }
         colors <- self$counts[,gene]
       }
+
+	      if (!is.null(grouping) && !is.null(clusterType)) {
+	        stop("Specify only one of `grouping` or `clusterType`")
+	      }
+
+	      if (is.null(colors) && (!is.null(grouping) || !is.null(groups) || (is.null(clusterType) && !is.null(self$defaultGrouping)))) {
+	        groups <- self$resolveGrouping(grouping = grouping, groups = groups, cells = rownames(emb), allow.missing = TRUE)
+	      }
 
       if (is.null(colors) && is.null(groups)) {
         # look up the clustering based on a specified type

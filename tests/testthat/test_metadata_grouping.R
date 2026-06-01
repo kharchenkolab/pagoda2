@@ -158,3 +158,25 @@ test_that("result discovery and selector resolvers use canonical defaults", {
   expect_true("UMAP" %in% results$embeddings$embedding)
   expect_true("leiden" %in% results$markers$name)
 })
+
+test_that("legacy DE method uses defaultGrouping when available", {
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+
+  markers <- p2$getDifferentialGenes(append.specificity.metrics = FALSE)
+
+  expect_true("leiden" %in% names(p2$diffgenes$counts))
+  expect_identical(names(markers), c("0", "1"))
+})
+
+test_that("plotEmbedding resolves defaultGrouping when available", {
+  testthat::skip_if_not_installed("ggplot2")
+
+  p2 <- make_test_p2()
+  p2$embeddings$PCA$UMAP <- matrix(seq_len(8), nrow = 4, dimnames = list(rownames(p2$counts), paste0("UMAP", 1:2)))
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+
+  plot <- p2$plotEmbedding(type = "PCA", embeddingType = "UMAP")
+
+  expect_s3_class(plot, "ggplot")
+})
