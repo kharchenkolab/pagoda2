@@ -30,6 +30,10 @@ Several methods within this package were developed based on the originals implem
 
 [PCA-based Basic Walkthrough](https://pklab.med.harvard.edu/peterk/p2/walkthrough.nb.html)
 
+**Pagoda2.1 Development Notes**
+* [Matrix storage and views](doc/pagoda2.1-matrix-views.md)
+* [Agent/developer guide](AGENTS.md)
+
 
 ## Web Demo of Application
 

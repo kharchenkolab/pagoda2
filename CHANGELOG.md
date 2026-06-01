@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+- Add canonical raw count storage and lightweight normalized matrix view recipes.
+- Add sparse view kernels for mean/variance and grouped sums.
+- Route canonical workflow, marker plotting, and normalized exports through
+  matrix views so they can operate without the legacy normalized `counts`
+  matrix in tested paths.
+- Add pagoda2.1 matrix-view and agent/developer documentation.
+
 ## [1.0.15] - 2026 March 31
 - Same as 1.0.15, unarchive on CRAN (due to N2R issues, now fixed)
 

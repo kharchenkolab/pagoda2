@@ -23,15 +23,20 @@ P21_GSM5746259_DIR=/path/to/GSM5746259 P21_BENCH_CORES=8 \
   Rscript tests/perf/benchmark_gsm5746259.R
 ```
 
-Current Phase 4 observations:
+To exercise the view-backed workflow after construction, run:
 
-- The canonical GSM5746259 workflow no longer emits the Matrix deprecation
-  warning from triplet-to-column sparse coercion.
-- The changed 10x reader and dense constructor coercions are covered by tests
-  that compare exact matrix values and dimnames.
-- Legacy `read.10x.matrices()` still prefixes cell names with the dataset name.
-  Keep that behavior until the Phase 5 I/O rewrite, where 10x and other formats
-  should get explicit cell-name and sample-name policies.
+```sh
+P21_BENCH_DROP_COUNTS=true Rscript tests/perf/benchmark_gsm5746259.R
+```
+
+Current raw/view observations:
+
+- `p2$rawCounts` is the canonical filtered raw count matrix.
+- `p2$matrixViews$analysis` records the normalized analysis recipe.
+- `p2$counts` is still populated as a legacy normalized matrix, but the
+  canonical workflow-facing path is tested with `p2$counts <- NULL`.
+- h5ad export writes normalized analysis values to `X` and raw counts to
+  `layers/counts`.
 - `sccore::dotPlotData()` aggregates marker expression by group with sparse
   column sums instead of expanding a per-cell/per-gene long table.
 - `plotMarkerHeatmap()` still densifies for plotting, but only after marker gene
