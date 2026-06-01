@@ -171,6 +171,65 @@ NULL
   out
 }
 
+.pagoda2_sparse_winsor_caps <- function(x, trim) {
+  trim <- as.integer(trim)
+  if (is.na(trim) || trim <= 0) {
+    return(stats::setNames(rep(Inf, ncol(x)), colnames(x)))
+  }
+  caps <- rep(Inf, ncol(x))
+  for (j in seq_len(ncol(x))) {
+    p0 <- x@p[[j]] + 1L
+    p1 <- x@p[[j + 1L]]
+    if (p1 < p0) {
+      next
+    }
+    values <- x@x[p0:p1]
+    values <- values[is.finite(values)]
+    if (length(values) > trim + 1L) {
+      caps[[j]] <- sort(values, decreasing = TRUE)[[trim + 1L]]
+    }
+  }
+  stats::setNames(caps, colnames(x))
+}
+
+.pagoda2_materialize_view <- function(raw, view) {
+  x <- raw
+  x@x <- as.numeric(x@x)
+  if (identical(view$model, "raw")) {
+    if (isTRUE(view$log.scale)) {
+      x@x <- log(x@x + 1)
+    }
+    return(x)
+  }
+  if (!identical(view$model, "plain")) {
+    stop("Matrix view model `", view$model, "` is not supported by the R materializer yet")
+  }
+
+  if (!is.null(view$batchFactors)) {
+    batch <- view$batch[rownames(x)]
+    batch.factors <- view$batchFactors[colnames(x), , drop = FALSE]
+    gene.index <- rep(seq_len(ncol(x)), diff(x@p))
+    batch.index <- as.integer(batch)[x@i + 1L]
+    x@x <- as.numeric(x@x / batch.factors[cbind(gene.index, batch.index)])
+  }
+
+  depth <- view$depth[rownames(x)]
+  if (!is.null(view$winsorCaps)) {
+    pre.depth <- view$preWinsorDepth[rownames(x)]
+    gene.index <- rep(seq_len(ncol(x)), diff(x@p))
+    x@x <- as.numeric(x@x / pre.depth[x@i + 1L])
+    caps <- view$winsorCaps[colnames(x)]
+    x@x <- pmin(x@x, caps[gene.index])
+    x@x <- as.numeric(x@x * pre.depth[x@i + 1L])
+    depth <- view$postWinsorDepth[rownames(x)]
+  }
+  x@x <- as.numeric(x@x / (depth[x@i + 1L] / view$depthScale))
+  if (isTRUE(view$log.scale)) {
+    x@x <- log(x@x + 1)
+  }
+  x
+}
+
 .pagoda2_align_vector <- function(x, target, what = "values") {
   if (is.null(target)) {
     stop("Cannot align ", what, " before count matrix names are available")
@@ -356,6 +415,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @field markerResults Structured marker result registry keyed by matrix type and result name.
     markerResults = list(),
 
+    #' @field matrixViews Lightweight expression matrix view recipes.
+    matrixViews = list(),
+
     #' @field n.cores number of cores (default=1)
     n.cores = 1,
 
@@ -498,6 +560,47 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        return(Matrix::t(raw))
 	      }
 	      raw
+	    },
+
+	    #' @description Return a matrix view recipe.
+	    #'
+	    #' @param name Matrix view name.
+	    #' @return List describing the view recipe.
+	    getMatrixView=function(name="analysis") {
+	      view <- self$matrixViews[[name]]
+	      if (is.null(view)) {
+	        stop("Unknown matrix view `", name, "`")
+	      }
+	      view
+	    },
+
+	    #' @description Materialize a matrix view over selected cells and genes.
+	    #'
+	    #' @param name Matrix view name.
+	    #' @param cells Optional cells to include.
+	    #' @param genes Optional genes to include.
+	    #' @param orientation Matrix orientation to return.
+	    #' @return Sparse matrix for the requested view.
+	    materializeView=function(name="analysis", cells=NULL, genes=NULL, orientation=c("cell_by_gene", "gene_by_cell")) {
+	      orientation <- match.arg(orientation)
+	      view <- self$getMatrixView(name)
+	      raw <- self$getRawCounts(cells = cells, genes = genes)
+	      x <- .pagoda2_materialize_view(raw, view)
+	      if (orientation == "gene_by_cell") {
+	        return(Matrix::t(x))
+	      }
+	      x
+	    },
+
+	    #' @description Alias for materializeView() using expression terminology.
+	    #'
+	    #' @param layer Matrix view name.
+	    #' @param cells Optional cells to include.
+	    #' @param genes Optional genes to include.
+	    #' @param orientation Matrix orientation to return.
+	    #' @return Sparse matrix for the requested expression block.
+	    getExpressionBlock=function(layer="analysis", cells=NULL, genes=NULL, orientation=c("cell_by_gene", "gene_by_cell")) {
+	      self$materializeView(name = layer, cells = cells, genes = genes, orientation = orientation)
 	    },
 
 	    #' @description Validate current matrix storage invariants.
@@ -1437,6 +1540,20 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
       self$rawCounts <- counts
       self$misc[['rawCounts']] <- self$rawCounts
+      analysis.view <- list(
+        name = "analysis",
+        source = "raw",
+        model = self$modelType,
+        depthScale = depthScale,
+        depth = depth,
+        log.scale = log.scale,
+        trim = trim,
+        batch = self$batch,
+        batchFactors = NULL,
+        winsorCaps = NULL,
+        preWinsorDepth = NULL,
+        postWinsorDepth = NULL
+      )
       
       if (any(depth == 0)) {
         stop("Cells with zero expression over all genes are not allowed")
@@ -1449,6 +1566,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          self$counts@x <- as.numeric(log(self$counts@x + 1))
 	        }
 	        self$depth <- depth
+	        self$matrixViews$analysis <- analysis.view
 	        self$syncMetadata()
 	        invisible(self$counts)
 	        return()
@@ -1516,6 +1634,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           tc <- colSumByFac(counts,as.integer(self$batch))[-1,,drop=FALSE]
           tc <- t(log(tc+1)- log(as.numeric(tapply(depth,self$batch,sum))+1))
           bc <- exp(tc-log(gene.av))
+          rownames(bc) <- colnames(counts)
+          colnames(bc) <- levels(self$batch)
+          analysis.view$batch <- self$batch
+          analysis.view$batchFactors <- bc
 
           # adjust every non-0 entry
           count.gene <- rep(1:counts@Dim[2],diff(counts@p))
@@ -1526,6 +1648,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (trim>0) {
           if (verbose) message("Winsorizing ... ")
           counts <- counts/as.numeric(depth)
+          analysis.view$preWinsorDepth <- depth
+          analysis.view$winsorCaps <- .pagoda2_sparse_winsor_caps(counts, trim)
           
           inplaceWinsorizeSparseCols(counts, trim, self$n.cores)
           counts <- counts*as.numeric(depth)
@@ -1533,6 +1657,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           if (is.null(lib.sizes)) {
             depth <- round(Matrix::rowSums(counts))
           }
+          names(depth) <- rownames(counts)
+          analysis.view$postWinsorDepth <- depth
         }
 
         counts <- counts/as.numeric(depth/depthScale)
@@ -1548,6 +1674,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
 	      self$counts <- counts
 	      self$depth <- depth
+	      analysis.view$depth <- depth
+	      self$matrixViews$analysis <- analysis.view
 	      self$syncMetadata()
 	    },
 
