@@ -51,6 +51,114 @@ write_10x_triplet <- function(path, matrix, prefix = "", version = "V3", gzip = 
   invisible(c(matrix = matrix.file, barcodes = barcode.file, features = feature.file))
 }
 
+write_h5_strings <- function(group, name, values) {
+  group$create_dataset(
+    name,
+    robj = as.character(values),
+    dtype = hdf5r::h5types$H5T_STRING$new(size = Inf)
+  )
+}
+
+write_h5_sparse_csc <- function(group, matrix) {
+  matrix <- as(matrix, "CsparseMatrix")
+  group$create_dataset("data", robj = as.numeric(matrix@x))
+  group$create_dataset("indices", robj = as.integer(matrix@i))
+  group$create_dataset("indptr", robj = as.integer(matrix@p))
+  group$create_attr("dims", as.integer(dim(matrix)))
+  invisible(group)
+}
+
+write_h5_sparse_csr <- function(group, matrix) {
+  matrix <- as(matrix, "RsparseMatrix")
+  group$create_dataset("data", robj = as.numeric(matrix@x))
+  group$create_dataset("indices", robj = as.integer(matrix@j))
+  group$create_dataset("indptr", robj = as.integer(matrix@p))
+  group$create_attr("shape", as.integer(dim(matrix)))
+  group$create_attr("encoding-type", "csr_matrix")
+  invisible(group)
+}
+
+write_h5_dataframe <- function(group, index, columns) {
+  write_h5_strings(group, "_index", index)
+  group$create_attr("_index", "_index")
+  column.names <- names(columns)
+  if (is.null(column.names)) {
+    column.names <- character()
+  }
+  if (length(column.names) > 0) {
+    group$create_attr("column-order", column.names)
+  }
+  for (name in names(columns)) {
+    value <- columns[[name]]
+    if (is.numeric(value) || is.integer(value)) {
+      group$create_dataset(name, robj = value)
+    } else {
+      write_h5_strings(group, name, value)
+    }
+  }
+}
+
+write_cellranger_h5 <- function(path, matrix) {
+  h5 <- hdf5r::H5File$new(path, mode = "w")
+  on.exit(h5$close_all())
+  g <- h5$create_group("matrix")
+  matrix <- as(matrix, "CsparseMatrix")
+  g$create_dataset("data", robj = as.numeric(matrix@x))
+  g$create_dataset("indices", robj = as.integer(matrix@i))
+  g$create_dataset("indptr", robj = as.integer(matrix@p))
+  g$create_dataset("shape", robj = as.integer(dim(matrix)))
+  write_h5_strings(g, "barcodes", colnames(matrix))
+  features <- g$create_group("features")
+  write_h5_strings(features, "id", paste0("ens", seq_len(nrow(matrix))))
+  write_h5_strings(features, "name", rownames(matrix))
+  write_h5_strings(features, "feature_type", rep("Gene Expression", nrow(matrix)))
+  invisible(path)
+}
+
+write_h5ad_file <- function(path, matrix) {
+  h5 <- hdf5r::H5File$new(path, mode = "w")
+  on.exit(h5$close_all())
+  write_h5_sparse_csr(h5$create_group("X"), Matrix::t(matrix))
+  layers <- h5$create_group("layers")
+  write_h5_sparse_csr(layers$create_group("counts"), Matrix::t(matrix))
+  write_h5_dataframe(
+    h5$create_group("obs"),
+    index = colnames(matrix),
+    columns = list(sample = rep("sampleA", ncol(matrix)))
+  )
+  write_h5_dataframe(
+    h5$create_group("var"),
+    index = paste0("ens", seq_len(nrow(matrix))),
+    columns = list(
+      gene_id = paste0("ens", seq_len(nrow(matrix))),
+      gene_symbol = rownames(matrix),
+      feature_type = rep("Gene Expression", nrow(matrix))
+    )
+  )
+  invisible(path)
+}
+
+write_h5seurat_file <- function(path, matrix) {
+  h5 <- hdf5r::H5File$new(path, mode = "w")
+  on.exit(h5$close_all())
+  h5$create_attr("active.assay", "RNA")
+  write_h5_strings(h5, "cell.names", colnames(matrix))
+  rna <- h5$create_group("assays")$create_group("RNA")
+  write_h5_strings(rna, "features", rownames(matrix))
+  write_h5_sparse_csc(rna$create_group("counts"), matrix)
+  write_h5_dataframe(
+    h5$create_group("meta.data"),
+    index = colnames(matrix),
+    columns = list(sample = rep("sampleA", ncol(matrix)))
+  )
+  write_h5_dataframe(
+    rna$create_group("meta.data"),
+    index = rownames(matrix),
+    columns = list()
+  )
+  invisible(path)
+}
+
 make_io_matrix <- function() {
   cm <- Matrix::Matrix(
     c(
@@ -143,6 +251,44 @@ test_that("readCounts requires explicit sample selection for multiple triplets",
   expect_equal(as.matrix(counts), as.matrix(cm))
 })
 
+test_that("readCounts autodetects CellRanger HDF5 files", {
+  cm <- make_io_matrix()
+  path <- tempfile(fileext = ".h5")
+  write_cellranger_h5(path, cm)
+
+  counts <- readCounts(path, format = "auto", verbose = FALSE)
+
+  expect_identical(rownames(counts), rownames(cm))
+  expect_identical(colnames(counts), colnames(cm))
+  expect_equal(as.matrix(counts), as.matrix(cm))
+})
+
+test_that("readCounts autodetects h5ad files without reticulate", {
+  cm <- make_io_matrix()
+  path <- tempfile(fileext = ".h5ad")
+  write_h5ad_file(path, cm)
+
+  imported <- readCounts(path, format = "auto", return.metadata = TRUE, verbose = FALSE)
+
+  expect_identical(rownames(imported$counts), rownames(cm))
+  expect_identical(colnames(imported$counts), colnames(cm))
+  expect_equal(as.matrix(imported$counts), as.matrix(cm))
+  expect_identical(as.character(imported$cellMeta$sample), rep("sampleA", ncol(cm)))
+  expect_true(all(c("gene_id", "gene_symbol", "feature_type") %in% colnames(imported$geneMeta)))
+})
+
+test_that("readCounts autodetects h5Seurat files without Seurat", {
+  cm <- make_io_matrix()
+  path <- tempfile(fileext = ".h5Seurat")
+  write_h5seurat_file(path, cm)
+
+  counts <- readCounts(path, format = "auto", verbose = FALSE)
+
+  expect_identical(rownames(counts), rownames(cm))
+  expect_identical(colnames(counts), colnames(cm))
+  expect_equal(as.matrix(counts), as.matrix(cm))
+})
+
 test_that("Pagoda2$from constructs objects from 10x paths and records metadata", {
   cm <- make_io_matrix()
   td <- tempfile("p2_from")
@@ -163,6 +309,26 @@ test_that("Pagoda2$from constructs objects from 10x paths and records metadata",
   expect_identical(rownames(p2$cellMeta), colnames(cm))
   expect_identical(as.character(p2$cellMeta$sample), rep("sampleA", ncol(cm)))
   expect_true(all(c("gene_id", "gene_symbol") %in% colnames(p2$geneMeta)))
+})
+
+test_that("specific Pagoda2 file constructors call fixed format readers", {
+  cm <- make_io_matrix()
+  path <- tempfile(fileext = ".h5ad")
+  write_h5ad_file(path, cm)
+
+  p2 <- Pagoda2$fromAnnData(
+    path,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0,
+    log.scale = FALSE,
+    trim = 0
+  )
+
+  expect_true(inherits(p2, "Pagoda2"))
+  expect_identical(rownames(p2$cellMeta), colnames(cm))
+  expect_identical(as.character(p2$cellMeta$sample), rep("sampleA", ncol(cm)))
 })
 
 test_that("Pagoda2 as list and RDS export preserve core axes", {
@@ -228,5 +394,5 @@ test_that("Pagoda2 as Seurat carries named embeddings when available", {
   seu <- p2$as("seurat")
 
   expect_true("pca_umap" %in% names(seu@reductions))
-  expect_equal(Seurat::Embeddings(seu, "pca_umap"), emb)
+  expect_equal(get("Embeddings", envir = asNamespace("Seurat"))(seu, "pca_umap"), emb)
 })

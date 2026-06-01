@@ -4,10 +4,14 @@
 \usage{
 readCounts(
   path,
-  format = c("auto", "10x"),
+  format = c("auto", "10x", "10x_h5", "h5ad", "h5seurat"),
   version = c("auto", "V3", "V2"),
   gene.id = c("symbol", "id"),
   feature.type = NULL,
+  genome = NULL,
+  assay = NULL,
+  layer = NULL,
+  use.raw = FALSE,
   make.unique.genes = FALSE,
   cell.prefix = NULL,
   sample.name = NULL,
@@ -18,15 +22,24 @@ readCounts(
 )
 }
 \arguments{
-\item{path}{Directory containing a 10x triplet.}
+\item{path}{Directory containing a 10x triplet, or a supported count file.}
 
-\item{format}{Input format. Currently \code{auto} and \code{10x} resolve to the 10x reader.}
+\item{format}{Input format. \code{auto} detects 10x triplet directories, h5ad,
+h5Seurat, and CellRanger HDF5 files.}
 
 \item{version}{10x feature file version: \code{auto}, \code{V3}, or \code{V2}.}
 
 \item{gene.id}{Which feature column to use as matrix row names: \code{symbol} or \code{id}.}
 
 \item{feature.type}{Optional 10x V3 feature type to retain.}
+
+\item{genome}{Optional CellRanger HDF5 genome group.}
+
+\item{assay}{Optional h5Seurat assay.}
+
+\item{layer}{Optional h5ad layer or h5Seurat layer.}
+
+\item{use.raw}{Whether h5ad input should read raw/X when no layer is supplied.}
 
 \item{make.unique.genes}{Whether to make duplicated selected gene names unique.}
 
@@ -46,7 +59,7 @@ readCounts(
 A gene-by-cell sparse count matrix, or a list when \code{return.metadata} is \code{TRUE}.
 }
 \description{
-Read count matrices with explicit format and naming policies. The initial
-implementation supports 10x Matrix Market triplets with canonical or renamed
-GEO-style filenames.
+Read count matrices with explicit format and naming policies. Supported inputs
+include 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData h5ad, and
+h5Seurat files.
 }

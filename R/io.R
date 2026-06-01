@@ -17,6 +17,88 @@
 }
 
 #' @keywords internal
+.pagoda2_normalize_format <- function(format) {
+  if (is.null(format)) {
+    format <- "auto"
+  }
+  if (length(format) > 1) {
+    format <- format[[1]]
+  }
+  format <- tolower(gsub("[.-]", "_", format))
+  switch(
+    format,
+    auto = "auto",
+    `10x` = "10x",
+    `10x_h5` = "10x_h5",
+    `10x_hdf5` = "10x_h5",
+    cellranger_h5 = "10x_h5",
+    cellranger_hdf5 = "10x_h5",
+    h5ad = "h5ad",
+    anndata = "h5ad",
+    h5seurat = "h5seurat",
+    stop("Unsupported input format `", format, "`")
+  )
+}
+
+#' @keywords internal
+.pagoda2_h5_open <- function(path, mode = "r") {
+  if (!requireNamespace("hdf5r", quietly = TRUE)) {
+    stop("Package `hdf5r` is required to read HDF5-based formats.")
+  }
+  hdf5r::H5File$new(filename = path, mode = mode)
+}
+
+#' @keywords internal
+.pagoda2_h5_exists <- function(h5, name) {
+  tryCatch(isTRUE(h5$exists(name = name)), error = function(e) FALSE)
+}
+
+#' @keywords internal
+.pagoda2_h5_group_has_sparse <- function(group) {
+  all(c("data", "indices", "indptr", "shape") %in% names(group))
+}
+
+#' @keywords internal
+.pagoda2_detect_h5_format <- function(path) {
+  h5 <- .pagoda2_h5_open(path, mode = "r")
+  on.exit(h5$close_all())
+  root.names <- names(h5)
+  if ("matrix" %in% root.names && inherits(h5[["matrix"]], "H5Group") && .pagoda2_h5_group_has_sparse(h5[["matrix"]])) {
+    return("10x_h5")
+  }
+  if (all(c("assays", "cell.names") %in% root.names)) {
+    return("h5seurat")
+  }
+  for (n in root.names) {
+    if (inherits(h5[[n]], "H5Group") && .pagoda2_h5_group_has_sparse(h5[[n]]) && "barcodes" %in% names(h5[[n]])) {
+      return("10x_h5")
+    }
+  }
+  stop("Could not identify HDF5 file format for `", path, "`")
+}
+
+#' @keywords internal
+.pagoda2_detect_input_format <- function(path) {
+  if (dir.exists(path)) {
+    return("10x")
+  }
+  if (!file.exists(path)) {
+    stop("Input path does not exist: ", path)
+  }
+  ext <- tolower(tools::file_ext(path))
+  if (identical(ext, "h5ad")) {
+    return("h5ad")
+  }
+  if (identical(ext, "h5seurat")) {
+    return("h5seurat")
+  }
+  if (ext %in% c("h5", "hdf5")) {
+    return(.pagoda2_detect_h5_format(path))
+  }
+  stop("Cannot infer input format from extension `", ext, "`")
+}
+
+#' @keywords internal
 .pagoda2_10x_role <- function(path) {
   b <- basename(path)
   if (grepl("\\.mtx(\\.gz)?$", b, ignore.case = TRUE) && grepl("matrix", b, ignore.case = TRUE)) {
@@ -109,38 +191,96 @@
   valid[[1]]
 }
 
-#' Read Count Matrices
-#'
-#' Read count matrices with explicit format and naming policies. The initial
-#' implementation supports 10x Matrix Market triplets with canonical or renamed
-#' GEO-style filenames.
-#'
-#' @param path Directory containing a 10x triplet.
-#' @param format Input format. Currently `auto` and `10x` resolve to the 10x reader.
-#' @param version 10x feature file version: `auto`, `V3`, or `V2`.
-#' @param gene.id Which feature column to use as matrix row names: `symbol` or `id`.
-#' @param feature.type Optional 10x V3 feature type to retain.
-#' @param make.unique.genes Whether to make duplicated selected gene names unique.
-#' @param cell.prefix Optional string to prefix to cell barcodes.
-#' @param sample.name Optional sample name recorded in cell metadata.
-#' @param sample.pattern Optional regex used to select one triplet from a directory with several renamed triplets.
-#' @param validate.integer Whether to reject non-integer count values.
-#' @param return.metadata Whether to return a list with counts, cellMeta, geneMeta, and files.
-#' @param verbose Whether to report detected files.
-#'
-#' @return A gene-by-cell sparse count matrix, or a list when return.metadata is TRUE.
-#' @export
-readCounts <- function(path, format = c("auto", "10x"), version = c("auto", "V3", "V2"),
-                       gene.id = c("symbol", "id"), feature.type = NULL,
-                       make.unique.genes = FALSE, cell.prefix = NULL, sample.name = NULL,
-                       sample.pattern = NULL, validate.integer = TRUE,
-                       return.metadata = FALSE, verbose = TRUE) {
-  format <- match.arg(format)
+#' @keywords internal
+.pagoda2_read_h5_sparse_csc <- function(group) {
+  data <- as.numeric(group[["data"]][])
+  indices <- as.integer(group[["indices"]][] + 1L)
+  indptr <- as.integer(group[["indptr"]][])
+  dims <- as.integer(group[["shape"]][] )
+  as(Matrix::sparseMatrix(i = indices, p = indptr, x = data, dims = dims), "CsparseMatrix")
+}
+
+#' @keywords internal
+.pagoda2_select_gene_names <- function(gene.meta, fallback, gene.id = c("symbol", "id")) {
+  gene.id <- match.arg(gene.id)
+  fallback <- as.character(fallback)
+  if (gene.id == "id") {
+    for (column in c("gene_id", "id", "ensembl_id")) {
+      if (column %in% colnames(gene.meta)) {
+        return(as.character(gene.meta[[column]]))
+      }
+    }
+    return(fallback)
+  }
+  for (column in c("gene_symbol", "symbol", "name", "gene_name")) {
+    if (column %in% colnames(gene.meta)) {
+      return(as.character(gene.meta[[column]]))
+    }
+  }
+  fallback
+}
+
+#' @keywords internal
+.pagoda2_align_import_metadata <- function(metadata, names, axis) {
+  if (is.null(metadata) || (ncol(metadata) == 0 && nrow(metadata) == 0)) {
+    return(data.frame(row.names = names))
+  }
+  metadata <- as.data.frame(metadata, stringsAsFactors = FALSE)
+  if (nrow(metadata) != length(names)) {
+    stop("Imported ", axis, " metadata has ", nrow(metadata), " rows but expected ", length(names))
+  }
+  if (!is.null(rownames(metadata)) && all(names %in% rownames(metadata))) {
+    metadata <- metadata[names, , drop = FALSE]
+  }
+  rownames(metadata) <- names
+  metadata
+}
+
+#' @keywords internal
+.pagoda2_finalize_import <- function(counts, gene.names, cell.names, gene.meta = NULL, cell.meta = NULL,
+                                     files = list(), make.unique.genes = FALSE,
+                                     validate.integer = TRUE) {
+  counts <- as(counts, "CsparseMatrix")
+  gene.names <- as.character(gene.names)
+  cell.names <- as.character(cell.names)
+  if (nrow(counts) != length(gene.names)) {
+    stop("Gene names have length ", length(gene.names), " but matrix has ", nrow(counts), " rows")
+  }
+  if (ncol(counts) != length(cell.names)) {
+    stop("Cell names have length ", length(cell.names), " but matrix has ", ncol(counts), " columns")
+  }
+  if (validate.integer && any(abs(counts@x - round(counts@x)) > sqrt(.Machine$double.eps))) {
+    stop("Count matrix contains non-integer values")
+  }
+  if (anyDuplicated(gene.names) > 0) {
+    if (make.unique.genes) {
+      gene.names <- make.unique(gene.names)
+    } else {
+      warning("Selected gene names contain duplicates; use `make.unique.genes = TRUE` if constructing a Pagoda2 object.")
+    }
+  }
+  rownames(counts) <- gene.names
+  colnames(counts) <- cell.names
+  if (is.null(gene.meta)) {
+    gene.meta <- data.frame(row.names = make.unique(gene.names))
+  } else {
+    gene.meta <- .pagoda2_align_import_metadata(gene.meta, make.unique(gene.names), axis = "gene")
+  }
+  cell.meta <- .pagoda2_align_import_metadata(cell.meta, cell.names, axis = "cell")
+  attr(counts, "pagoda2.geneMeta") <- gene.meta
+  attr(counts, "pagoda2.cellMeta") <- cell.meta
+  attr(counts, "pagoda2.files") <- files
+  list(counts = counts, cellMeta = cell.meta, geneMeta = gene.meta, files = files)
+}
+
+#' @keywords internal
+.pagoda2_read_10x_dir <- function(path, version = c("auto", "V3", "V2"), gene.id = c("symbol", "id"),
+                                  feature.type = NULL, make.unique.genes = FALSE,
+                                  cell.prefix = NULL, sample.name = NULL,
+                                  sample.pattern = NULL, validate.integer = TRUE,
+                                  verbose = TRUE) {
   version <- match.arg(version)
   gene.id <- match.arg(gene.id)
-  if (!dir.exists(path)) {
-    stop("`path` must be a directory for 10x input")
-  }
   triplet <- .pagoda2_detect_10x_triplet(path, version = version, sample.pattern = sample.pattern)
   if (verbose) {
     message("Reading 10x matrix: ", triplet$matrix)
@@ -154,9 +294,6 @@ readCounts <- function(path, format = c("auto", "10x"), version = c("auto", "V3"
   if (nrow(barcodes) != ncol(counts)) {
     stop("Barcode file has ", nrow(barcodes), " rows but matrix has ", ncol(counts), " columns")
   }
-  if (validate.integer && any(abs(counts@x - round(counts@x)) > sqrt(.Machine$double.eps))) {
-    stop("Count matrix contains non-integer values")
-  }
   gene.meta <- data.frame(
     gene_id = as.character(features[[1]]),
     gene_symbol = if (ncol(features) >= 2) as.character(features[[2]]) else as.character(features[[1]]),
@@ -165,7 +302,7 @@ readCounts <- function(path, format = c("auto", "10x"), version = c("auto", "V3"
   if (triplet$version == "V3" && ncol(features) >= 3) {
     gene.meta$feature_type <- as.character(features[[3]])
   }
-  gene.names <- if (gene.id == "id") gene.meta$gene_id else gene.meta$gene_symbol
+  gene.names <- .pagoda2_select_gene_names(gene.meta, fallback = gene.meta$gene_symbol, gene.id = gene.id)
   if (!is.null(feature.type)) {
     if (!"feature_type" %in% colnames(gene.meta)) {
       stop("`feature.type` was supplied but the feature file does not contain feature types")
@@ -175,37 +312,435 @@ readCounts <- function(path, format = c("auto", "10x"), version = c("auto", "V3"
     gene.meta <- gene.meta[keep, , drop = FALSE]
     gene.names <- gene.names[keep]
   }
-  if (anyDuplicated(gene.names) > 0) {
-    if (make.unique.genes) {
-      gene.names <- make.unique(gene.names)
-    } else {
-      warning("Selected gene names contain duplicates; use `make.unique.genes = TRUE` if constructing a Pagoda2 object.")
-    }
-  }
   cell.names <- as.character(barcodes[[1]])
   if (!is.null(cell.prefix)) {
     cell.names <- paste(cell.prefix, cell.names, sep = "_")
   }
-  rownames(counts) <- gene.names
-  colnames(counts) <- cell.names
-  rownames(gene.meta) <- make.unique(gene.names)
   cell.meta <- data.frame(row.names = cell.names)
   if (!is.null(sample.name)) {
     cell.meta$sample <- sample.name
   }
-  files <- list(
-    matrix = triplet$matrix,
-    barcodes = triplet$barcodes,
-    features = triplet$features,
-    version = triplet$version
+  .pagoda2_finalize_import(
+    counts = counts,
+    gene.names = gene.names,
+    cell.names = cell.names,
+    gene.meta = gene.meta,
+    cell.meta = cell.meta,
+    files = list(matrix = triplet$matrix, barcodes = triplet$barcodes, features = triplet$features, version = triplet$version, format = "10x"),
+    make.unique.genes = make.unique.genes,
+    validate.integer = validate.integer
   )
-  attr(counts, "pagoda2.geneMeta") <- gene.meta
-  attr(counts, "pagoda2.cellMeta") <- cell.meta
-  attr(counts, "pagoda2.files") <- files
-  if (return.metadata) {
-    return(list(counts = counts, cellMeta = cell.meta, geneMeta = gene.meta, files = files))
+}
+
+#' @keywords internal
+.pagoda2_read_10x_h5 <- function(path, gene.id = c("symbol", "id"), feature.type = NULL,
+                                 genome = NULL, make.unique.genes = FALSE,
+                                 cell.prefix = NULL, sample.name = NULL,
+                                 validate.integer = TRUE, verbose = TRUE) {
+  gene.id <- match.arg(gene.id)
+  h5 <- .pagoda2_h5_open(path, mode = "r")
+  on.exit(h5$close_all())
+  root.names <- names(h5)
+  group.name <- NULL
+  if ("matrix" %in% root.names && .pagoda2_h5_group_has_sparse(h5[["matrix"]])) {
+    group.name <- "matrix"
+  } else {
+    candidates <- root.names[vapply(root.names, function(n) {
+      inherits(h5[[n]], "H5Group") && .pagoda2_h5_group_has_sparse(h5[[n]]) && "barcodes" %in% names(h5[[n]])
+    }, logical(1))]
+    if (length(candidates) == 0) {
+      stop("No CellRanger sparse matrix group found in `", path, "`")
+    }
+    if (is.null(genome)) {
+      if (length(candidates) > 1) {
+        stop("Multiple CellRanger genome groups found; supply `genome`. Groups: ", paste(candidates, collapse = ", "))
+      }
+      group.name <- candidates[[1]]
+    } else {
+      if (!genome %in% candidates) {
+        stop("Genome group `", genome, "` not found. Available groups: ", paste(candidates, collapse = ", "))
+      }
+      group.name <- genome
+    }
   }
-  counts
+  if (verbose) {
+    message("Reading CellRanger HDF5 matrix: ", path)
+  }
+  group <- h5[[group.name]]
+  counts <- .pagoda2_read_h5_sparse_csc(group)
+  cell.names <- as.character(group[["barcodes"]][])
+  if ("features" %in% names(group)) {
+    features <- group[["features"]]
+    gene.meta <- data.frame(
+      gene_id = if ("id" %in% names(features)) as.character(features[["id"]][]) else as.character(seq_len(nrow(counts))),
+      gene_symbol = if ("name" %in% names(features)) as.character(features[["name"]][]) else if ("id" %in% names(features)) as.character(features[["id"]][]) else as.character(seq_len(nrow(counts))),
+      stringsAsFactors = FALSE
+    )
+    if ("feature_type" %in% names(features)) {
+      gene.meta$feature_type <- as.character(features[["feature_type"]][])
+    }
+    if ("genome" %in% names(features)) {
+      gene.meta$genome <- as.character(features[["genome"]][])
+    }
+  } else {
+    gene.meta <- data.frame(
+      gene_id = if ("genes" %in% names(group)) as.character(group[["genes"]][]) else as.character(seq_len(nrow(counts))),
+      gene_symbol = if ("gene_names" %in% names(group)) as.character(group[["gene_names"]][]) else if ("genes" %in% names(group)) as.character(group[["genes"]][]) else as.character(seq_len(nrow(counts))),
+      stringsAsFactors = FALSE
+    )
+  }
+  gene.names <- .pagoda2_select_gene_names(gene.meta, fallback = gene.meta$gene_symbol, gene.id = gene.id)
+  if (is.null(feature.type) && "feature_type" %in% colnames(gene.meta)) {
+    types <- unique(gene.meta$feature_type)
+    if (length(types) > 1 && "Gene Expression" %in% types) {
+      feature.type <- "Gene Expression"
+    }
+  }
+  if (!is.null(feature.type)) {
+    if (!"feature_type" %in% colnames(gene.meta)) {
+      stop("`feature.type` was supplied but the HDF5 file does not contain feature types")
+    }
+    keep <- gene.meta$feature_type %in% feature.type
+    counts <- counts[keep, , drop = FALSE]
+    gene.meta <- gene.meta[keep, , drop = FALSE]
+    gene.names <- gene.names[keep]
+  }
+  if (!is.null(cell.prefix)) {
+    cell.names <- paste(cell.prefix, cell.names, sep = "_")
+  }
+  cell.meta <- data.frame(row.names = cell.names)
+  if (!is.null(sample.name)) {
+    cell.meta$sample <- sample.name
+  }
+  .pagoda2_finalize_import(
+    counts = counts,
+    gene.names = gene.names,
+    cell.names = cell.names,
+    gene.meta = gene.meta,
+    cell.meta = cell.meta,
+    files = list(path = path, group = group.name, format = "10x_h5"),
+    make.unique.genes = make.unique.genes,
+    validate.integer = validate.integer
+  )
+}
+
+#' @keywords internal
+.pagoda2_h5_attr <- function(x, name, default = NULL) {
+  if (name %in% hdf5r::h5attr_names(x)) {
+    return(hdf5r::h5attr(x, name))
+  }
+  default
+}
+
+#' @keywords internal
+.pagoda2_h5_read_sparse_or_dense <- function(x, dims = NULL) {
+  if (inherits(x, "H5Group")) {
+    data <- as.numeric(x[["data"]][])
+    indices <- as.integer(x[["indices"]][] + 1L)
+    indptr <- as.integer(x[["indptr"]][])
+    if (is.null(dims)) {
+      dims <- .pagoda2_h5_attr(x, "shape", default = .pagoda2_h5_attr(x, "dims", default = NULL))
+    }
+    dims <- as.integer(dims)
+    encoding <- .pagoda2_h5_attr(x, "encoding-type", default = "csc_matrix")
+    if (identical(encoding, "csr_matrix")) {
+      return(as(Matrix::sparseMatrix(j = indices, p = indptr, x = data, dims = dims, repr = "R"), "CsparseMatrix"))
+    }
+    return(as(Matrix::sparseMatrix(i = indices, p = indptr, x = data, dims = dims, repr = "C"), "CsparseMatrix"))
+  }
+  as(Matrix::Matrix(x[], sparse = TRUE), "CsparseMatrix")
+}
+
+#' @keywords internal
+.pagoda2_h5_read_vector <- function(x) {
+  value <- if (inherits(x, "H5D")) x$read() else x[]
+  if (is.matrix(value) && any(dim(value) == 1)) {
+    value <- as.vector(value)
+  }
+  value
+}
+
+#' @keywords internal
+.pagoda2_h5_read_column <- function(x) {
+  if (inherits(x, "H5Group")) {
+    if (all(c("categories", "codes") %in% names(x))) {
+      categories <- as.character(.pagoda2_h5_read_vector(x[["categories"]]))
+      codes <- as.integer(.pagoda2_h5_read_vector(x[["codes"]]))
+      out <- rep(NA_character_, length(codes))
+      keep <- codes >= 0
+      out[keep] <- categories[codes[keep] + 1L]
+      if (isTRUE(.pagoda2_h5_attr(x, "ordered", default = FALSE))) {
+        return(factor(out, levels = categories, ordered = TRUE))
+      }
+      return(factor(out, levels = categories))
+    }
+    if (all(c("levels", "values") %in% names(x))) {
+      levels <- as.character(.pagoda2_h5_read_vector(x[["levels"]]))
+      values <- as.integer(.pagoda2_h5_read_vector(x[["values"]]))
+      return(factor(levels[values], levels = levels))
+    }
+    return(rep(NA_character_, 0))
+  }
+  .pagoda2_h5_read_vector(x)
+}
+
+#' @keywords internal
+.pagoda2_h5_read_dataframe <- function(group, expected.n = NULL) {
+  if (!inherits(group, "H5Group")) {
+    stop("Expected an HDF5 group containing dataframe metadata")
+  }
+  index.name <- .pagoda2_h5_attr(group, "_index", default = NULL)
+  if (is.null(index.name)) {
+    index.name <- if ("_index" %in% names(group)) "_index" else if ("index" %in% names(group)) "index" else NULL
+  }
+  row.names <- if (!is.null(index.name) && index.name %in% names(group)) {
+    as.character(.pagoda2_h5_read_vector(group[[index.name]]))
+  } else if (!is.null(expected.n)) {
+    as.character(seq_len(expected.n))
+  } else {
+    character()
+  }
+  columns <- .pagoda2_h5_attr(group, "column-order", default = .pagoda2_h5_attr(group, "colnames", default = NULL))
+  if (is.null(columns)) {
+    columns <- setdiff(names(group), c(index.name, "__categories"))
+  }
+  columns <- as.character(columns)
+  if (length(columns) == 0) {
+    return(data.frame(row.names = row.names))
+  }
+  out <- lapply(columns, function(column) .pagoda2_h5_read_column(group[[column]]))
+  names(out) <- columns
+  out <- as.data.frame(out, stringsAsFactors = FALSE, optional = TRUE)
+  if (length(row.names) > 0) {
+    rownames(out) <- row.names
+  }
+  out
+}
+
+#' @keywords internal
+.pagoda2_read_h5ad <- function(path, gene.id = c("symbol", "id"), layer = NULL,
+                               use.raw = FALSE, make.unique.genes = FALSE,
+                               cell.prefix = NULL, sample.name = NULL,
+                               validate.integer = TRUE, verbose = TRUE) {
+  gene.id <- match.arg(gene.id)
+  h5 <- .pagoda2_h5_open(path, mode = "r")
+  on.exit(h5$close_all())
+  source <- "X"
+  feature.source <- "var"
+  if (!is.null(layer)) {
+    source <- paste0("layers/", layer)
+    if (!.pagoda2_h5_exists(h5, source)) {
+      stop("h5ad layer `", layer, "` not found")
+    }
+  } else if (isTRUE(use.raw) && .pagoda2_h5_exists(h5, "raw/X")) {
+    source <- "raw/X"
+    feature.source <- "raw/var"
+  } else if (.pagoda2_h5_exists(h5, "layers/counts")) {
+    source <- "layers/counts"
+  }
+  if (verbose) {
+    message("Reading h5ad matrix from ", source, ": ", path)
+  }
+  counts <- Matrix::t(.pagoda2_h5_read_sparse_or_dense(h5[[source]]))
+  cell.meta <- .pagoda2_h5_read_dataframe(h5[["obs"]], expected.n = ncol(counts))
+  gene.meta <- .pagoda2_h5_read_dataframe(h5[[feature.source]], expected.n = nrow(counts))
+  cell.names <- rownames(cell.meta)
+  gene.fallback <- rownames(gene.meta)
+  if (!"gene_id" %in% colnames(gene.meta)) {
+    gene.meta$gene_id <- gene.fallback
+  }
+  if (!is.null(cell.prefix)) {
+    cell.names <- paste(cell.prefix, cell.names, sep = "_")
+  }
+  if (!is.null(sample.name)) {
+    cell.meta$sample <- sample.name
+  }
+  gene.names <- .pagoda2_select_gene_names(gene.meta, fallback = gene.fallback, gene.id = gene.id)
+  .pagoda2_finalize_import(
+    counts = counts,
+    gene.names = gene.names,
+    cell.names = cell.names,
+    gene.meta = gene.meta,
+    cell.meta = cell.meta,
+    files = list(path = path, format = "h5ad", source = source),
+    make.unique.genes = make.unique.genes,
+    validate.integer = validate.integer
+  )
+}
+
+#' @keywords internal
+.pagoda2_h5seurat_default_assay <- function(h5, assay = NULL) {
+  if (!is.null(assay)) {
+    return(assay)
+  }
+  assay <- .pagoda2_h5_attr(h5, "active.assay", default = NULL)
+  if (!is.null(assay)) {
+    return(as.character(assay))
+  }
+  assays <- names(h5[["assays"]])
+  if (length(assays) == 0) {
+    stop("h5Seurat file contains no assays")
+  }
+  assays[[1]]
+}
+
+#' @keywords internal
+.pagoda2_read_h5seurat <- function(path, assay = NULL, layer = NULL,
+                                   make.unique.genes = FALSE, cell.prefix = NULL,
+                                   sample.name = NULL, validate.integer = TRUE,
+                                   verbose = TRUE) {
+  h5 <- .pagoda2_h5_open(path, mode = "r")
+  on.exit(h5$close_all())
+  assay <- .pagoda2_h5seurat_default_assay(h5, assay = assay)
+  layer <- if (is.null(layer)) "counts" else layer
+  layer.path <- paste0("assays/", assay, "/layers/", layer)
+  if (!.pagoda2_h5_exists(h5, layer.path)) {
+    legacy.path <- paste0("assays/", assay, "/", layer)
+    if (.pagoda2_h5_exists(h5, legacy.path)) {
+      layer.path <- legacy.path
+    } else {
+      stop("h5Seurat layer `", layer, "` not found in assay `", assay, "`")
+    }
+  }
+  if (verbose) {
+    message("Reading h5Seurat layer ", assay, "/", layer, ": ", path)
+  }
+  counts <- .pagoda2_h5_read_sparse_or_dense(h5[[layer.path]])
+  cell.names <- as.character(.pagoda2_h5_read_vector(h5[["cell.names"]]))
+  if (length(cell.names) != ncol(counts)) {
+    cell.names <- as.character(seq_len(ncol(counts)))
+  }
+  feature.path <- paste0("assays/", assay, "/meta.data")
+  if (.pagoda2_h5_exists(h5, feature.path)) {
+    gene.meta <- .pagoda2_h5_read_dataframe(h5[[feature.path]], expected.n = nrow(counts))
+  } else {
+    gene.meta <- data.frame(row.names = as.character(seq_len(nrow(counts))))
+  }
+  features.path <- paste0("assays/", assay, "/features")
+  if (.pagoda2_h5_exists(h5, features.path)) {
+    features <- .pagoda2_h5_read_vector(h5[[features.path]])
+    features <- as.character(features)
+    if (length(features) == nrow(counts) && !anyDuplicated(features)) {
+      rownames(gene.meta) <- features
+    }
+  }
+  if (length(rownames(gene.meta)) != nrow(counts)) {
+    rownames(gene.meta) <- as.character(seq_len(nrow(counts)))
+  }
+  if (.pagoda2_h5_exists(h5, "meta.data")) {
+    cell.meta <- .pagoda2_h5_read_dataframe(h5[["meta.data"]], expected.n = ncol(counts))
+  } else {
+    cell.meta <- data.frame(row.names = cell.names)
+  }
+  if (!is.null(cell.prefix)) {
+    cell.names <- paste(cell.prefix, cell.names, sep = "_")
+  }
+  if (!is.null(sample.name)) {
+    cell.meta$sample <- sample.name
+  }
+  .pagoda2_finalize_import(
+    counts = counts,
+    gene.names = rownames(gene.meta),
+    cell.names = cell.names,
+    gene.meta = gene.meta,
+    cell.meta = cell.meta,
+    files = list(path = path, format = "h5seurat", assay = assay, layer = layer),
+    make.unique.genes = make.unique.genes,
+    validate.integer = validate.integer
+  )
+}
+
+#' Read Count Matrices
+#'
+#' Read count matrices with explicit format and naming policies. Supported
+#' inputs include 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData h5ad,
+#' and h5Seurat files.
+#'
+#' @param path Directory containing a 10x triplet, or a supported count file.
+#' @param format Input format. `auto` detects 10x triplet directories, h5ad,
+#' h5Seurat, and CellRanger HDF5 files.
+#' @param version 10x feature file version: `auto`, `V3`, or `V2`.
+#' @param gene.id Which feature column to use as matrix row names: `symbol` or `id`.
+#' @param feature.type Optional 10x V3 feature type to retain.
+#' @param genome Optional CellRanger HDF5 genome group.
+#' @param assay Optional h5Seurat assay.
+#' @param layer Optional h5ad layer or h5Seurat layer.
+#' @param use.raw Whether h5ad input should read raw/X when no layer is supplied.
+#' @param make.unique.genes Whether to make duplicated selected gene names unique.
+#' @param cell.prefix Optional string to prefix to cell barcodes.
+#' @param sample.name Optional sample name recorded in cell metadata.
+#' @param sample.pattern Optional regex used to select one triplet from a directory with several renamed triplets.
+#' @param validate.integer Whether to reject non-integer count values.
+#' @param return.metadata Whether to return a list with counts, cellMeta, geneMeta, and files.
+#' @param verbose Whether to report detected files.
+#'
+#' @return A gene-by-cell sparse count matrix, or a list when return.metadata is TRUE.
+#' @export
+readCounts <- function(path, format = c("auto", "10x", "10x_h5", "h5ad", "h5seurat"),
+                       version = c("auto", "V3", "V2"),
+                       gene.id = c("symbol", "id"), feature.type = NULL,
+                       genome = NULL, assay = NULL, layer = NULL, use.raw = FALSE,
+                       make.unique.genes = FALSE, cell.prefix = NULL, sample.name = NULL,
+                       sample.pattern = NULL, validate.integer = TRUE,
+                       return.metadata = FALSE, verbose = TRUE) {
+  format <- .pagoda2_normalize_format(format)
+  version <- match.arg(version)
+  gene.id <- match.arg(gene.id)
+  if (format == "auto") {
+    format <- .pagoda2_detect_input_format(path)
+  }
+  imported <- switch(
+    format,
+    `10x` = .pagoda2_read_10x_dir(
+      path = path,
+      version = version,
+      gene.id = gene.id,
+      feature.type = feature.type,
+      make.unique.genes = make.unique.genes,
+      cell.prefix = cell.prefix,
+      sample.name = sample.name,
+      sample.pattern = sample.pattern,
+      validate.integer = validate.integer,
+      verbose = verbose
+    ),
+    `10x_h5` = .pagoda2_read_10x_h5(
+      path = path,
+      gene.id = gene.id,
+      feature.type = feature.type,
+      genome = genome,
+      make.unique.genes = make.unique.genes,
+      cell.prefix = cell.prefix,
+      sample.name = sample.name,
+      validate.integer = validate.integer,
+      verbose = verbose
+    ),
+    h5ad = .pagoda2_read_h5ad(
+      path = path,
+      gene.id = gene.id,
+      layer = layer,
+      use.raw = use.raw,
+      make.unique.genes = make.unique.genes,
+      cell.prefix = cell.prefix,
+      sample.name = sample.name,
+      validate.integer = validate.integer,
+      verbose = verbose
+    ),
+    h5seurat = .pagoda2_read_h5seurat(
+      path = path,
+      assay = assay,
+      layer = layer,
+      make.unique.genes = make.unique.genes,
+      cell.prefix = cell.prefix,
+      sample.name = sample.name,
+      validate.integer = validate.integer,
+      verbose = verbose
+    ),
+    stop("Unsupported input format `", format, "`")
+  )
+  if (return.metadata) {
+    return(imported)
+  }
+  imported$counts
 }
 
 #' Create A Pagoda2 Object From Input
@@ -218,19 +753,53 @@ readCounts <- function(path, format = c("auto", "10x"), version = c("auto", "V3"
 #' @return Pagoda2 object.
 #' @export
 pagoda2From <- function(x, format = NULL, reader.args = list(), ...) {
-  if (is.character(x) && length(x) == 1 && dir.exists(x)) {
+  constructor.args <- list(...)
+  if (is.character(x) && length(x) == 1 && (dir.exists(x) || file.exists(x))) {
     if (is.null(format)) {
       format <- "auto"
     }
+    if ("verbose" %in% names(constructor.args) && is.null(reader.args$verbose)) {
+      reader.args$verbose <- constructor.args$verbose
+    }
     reader.args <- utils::modifyList(list(path = x, format = format, return.metadata = TRUE, make.unique.genes = TRUE), reader.args)
     imported <- do.call(readCounts, reader.args)
-    p2 <- Pagoda2$new(imported$counts, ...)
+    p2 <- do.call(Pagoda2$new, c(list(x = imported$counts), constructor.args))
     p2$setCellMeta(imported$cellMeta)
     p2$setGeneMeta(imported$geneMeta)
     p2$history$input <- list(format = reader.args$format, files = imported$files)
     return(p2)
   }
-  Pagoda2$new(x, ...)
+  do.call(Pagoda2$new, c(list(x = x), constructor.args))
+}
+
+#' @rdname pagoda2From
+#' @export
+pagoda2From10x <- function(path, reader.args = list(), ...) {
+  pagoda2From(path, format = "10x", reader.args = reader.args, ...)
+}
+
+#' @rdname pagoda2From
+#' @export
+pagoda2From10xH5 <- function(path, reader.args = list(), ...) {
+  pagoda2From(path, format = "10x_h5", reader.args = reader.args, ...)
+}
+
+#' @rdname pagoda2From
+#' @export
+pagoda2FromAnnData <- function(path, reader.args = list(), ...) {
+  pagoda2From(path, format = "h5ad", reader.args = reader.args, ...)
+}
+
+#' @rdname pagoda2From
+#' @export
+pagoda2FromH5Seurat <- function(path, reader.args = list(), ...) {
+  pagoda2From(path, format = "h5seurat", reader.args = reader.args, ...)
+}
+
+#' @rdname pagoda2From
+#' @export
+readPagoda2 <- function(path, format = NULL, reader.args = list(), ...) {
+  pagoda2From(path, format = format, reader.args = reader.args, ...)
 }
 
 #' @keywords internal
@@ -273,7 +842,8 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA", ..
     if (!requireNamespace("Seurat", quietly = TRUE)) {
       stop("Package `Seurat` is required for `format = \"seurat\"`.")
     }
-    object <- Seurat::CreateSeuratObject(counts = counts, assay = assay, meta.data = cell.meta, ...)
+    seurat.ns <- asNamespace("Seurat")
+    object <- get("CreateSeuratObject", envir = seurat.ns)(counts = counts, assay = assay, meta.data = cell.meta, ...)
     for (reduction in names(p2$embeddings)) {
       for (embedding in names(p2$embeddings[[reduction]])) {
         coordinates <- p2$embeddings[[reduction]][[embedding]]
@@ -282,7 +852,7 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA", ..
         }
         key <- paste0(gsub("[^A-Za-z0-9]", "", toupper(embedding)), "_")
         name <- tolower(paste(reduction, embedding, sep = "_"))
-        object[[name]] <- Seurat::CreateDimReducObject(
+        object[[name]] <- get("CreateDimReducObject", envir = seurat.ns)(
           embeddings = coordinates[rownames(cell.meta), , drop = FALSE],
           key = key,
           assay = assay
