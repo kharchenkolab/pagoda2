@@ -1,8 +1,13 @@
 # Notebook Rendering
 
 Render GitHub-viewable `.ipynb` notebooks with Quarto, not `rmarkdown::render()`
-plus a custom converter. Quarto emits real notebook code cells for R chunks,
-which avoids GitHub/Jupyter treating `$` and `_` in R code as markdown or math.
+plus a custom converter. Quarto emits real notebook code cells for R chunks.
+
+GitHub's notebook renderer is sensitive to the notebook `language_info`
+metadata. With R syntax metadata, GitHub can render the code input as raw text
+inside a CodeMirror container, which collapses the formatting. The working
+reference pattern is to keep an R kernelspec but set `language_info` to plain
+text. GitHub then wraps code-cell input in a `<pre>` block, preserving layout.
 
 ## Quarto Install
 
@@ -41,7 +46,8 @@ mv pagoda2.1-single-dataset.ipynb doc/pagoda2.1-single-dataset.ipynb
 rm -f doc/data
 ```
 
-Quarto may write Python kernelspec metadata. Reset it to R after rendering:
+Quarto may write Python kernelspec metadata. Reset the kernelspec to R, and set
+the language metadata to plain text for GitHub rendering:
 
 ```sh
 python3 - <<'PY'
@@ -51,17 +57,13 @@ path = "doc/pagoda2.1-single-dataset.ipynb"
 nb = nbf.read(path, as_version=4)
 nb.metadata["kernelspec"] = {"display_name": "R", "language": "R", "name": "ir44"}
 nb.metadata["language_info"] = {
-    "name": "R",
-    "codemirror_mode": "r",
-    "mimetype": "text/x-r-source",
+    "name": "text",
+    "codemirror_mode": "text",
+    "mimetype": "text/plain",
     "file_extension": ".r",
-    "pygments_lexer": "r",
+    "pygments_lexer": "text",
     "version": "4.4.1",
 }
-for cell in nb.cells:
-    if cell.cell_type == "code":
-        cell.metadata.setdefault("vscode", {})["languageId"] = "r"
-        cell.metadata["language"] = "R"
 nbf.write(nb, path)
 PY
 ```
@@ -76,3 +78,29 @@ nb = nbformat.read("doc/pagoda2.1-single-dataset.ipynb", as_version=4)
 nbformat.validate(nb)
 PY
 ```
+
+Check the GitHub-facing notebook structure:
+
+```sh
+python3 - <<'PY'
+import json
+
+with open("doc/pagoda2.1-single-dataset.ipynb") as f:
+    nb = json.load(f)
+
+def source_text(cell):
+    src = cell.get("source", "")
+    return "".join(src) if isinstance(src, list) else src
+
+print("kernelspec:", nb["metadata"].get("kernelspec"))
+print("language_info:", nb["metadata"].get("language_info"))
+print("non-empty executable sources:", sum(
+    cell.get("cell_type") == "code" and bool(source_text(cell).strip())
+    for cell in nb["cells"]
+))
+PY
+```
+
+After pushing, verify GitHub's rendered HTML around the first code block. The
+code should appear inside an inner `highlight hl-text` `<pre>` block, not as raw
+text directly inside `cm-editor`.

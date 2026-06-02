@@ -22,7 +22,7 @@ data_dir <- "data"
 
 data.frame(
   data_dir = data_dir,
-  file = list.files(data_dir)
+  file = list.files(data_dir, pattern = "\\.(mtx|tsv)(\\.gz)?$")
 )
 ```
 
