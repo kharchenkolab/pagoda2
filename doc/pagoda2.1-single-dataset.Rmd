@@ -92,7 +92,7 @@ short progress or summary message.
 The QC plot shows the relationship between molecule counts and detected genes.
 Cells flagged by the default rule are shown in red.
 
-```{r qc-plot, fig.height=5}
+```{r qc-plot, fig.width=10, fig.height=4.5}
 p2$plotQC()
 ```
 
