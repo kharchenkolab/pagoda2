@@ -1,5 +1,3 @@
-#' @import Rook
-#' @import R.utils
 #' @import Matrix
 #' @importFrom parallel mclapply
 #' @importFrom irlba irlba
@@ -7,7 +5,7 @@
 #' @importFrom grDevices adjustcolor col2rgb colorRampPalette colors dev.size rainbow
 #' @importFrom methods as new
 #' @importFrom stats aggregate as.dendrogram as.dist cor cutree dendrapply dist is.leaf na.omit order.dendrogram phyper predict pt qnorm qt quantile reorder rnorm sd setNames var
-#' @importFrom utils browseURL read.delim
+#' @importFrom utils read.delim
 NULL
 
 #' Correct unloading of the library
@@ -85,60 +83,6 @@ cldend2array <- function(d, cells=NULL) {
 #' @keywords internal
 sn <- function(x) { names(x) <- x; return(x); }
 
-
-#' Directly open the 'pagoda2' web application and view the 'p2web' application object from our R session
-#' 
-#' @param app 'pagoda2' application object
-#' @param name character Name of the application to view
-#' @param port numeric Port number
-#' @param ip numeric IP address
-#' @param browse boolean Whether to load the app into an HTML browser (default=TRUE)
-#' @param server server If NULL, will grab server with get.scde.server(port=port, ip=ip) (derfault=NULL)
-#' @return application within browser
-#' @export show.app
-show.app <- function(app, name, port, ip, browse=TRUE, server=NULL) {
-    # replace special characters
-    name <- gsub("[^[:alnum:.]]", "_", name)
-
-    get.scde.server <- function(port,ip) {
-        if(exists("___scde.server", envir = globalenv())) {
-            server <- get("___scde.server", envir = globalenv())
-        } else {
-            server <- Rook::Rhttpd$new()
-            '___scde.server' = server
-            if(!missing(ip)) {
-                if(missing(port)) {
-                    server$start(listen = ip)
-                } else {
-                    server$start(listen = ip, port = port)
-                }
-            } else {
-                if(missing(port)) {
-                    server$start()
-                } else {
-                    server$start(port=port)
-                }
-            }
-        }
-        return(server)
-    }
-
-    if(is.null(server)) {
-        server <- get.scde.server(port=port, ip=ip)
-    }
-    server$add(app = app, name = name)
-    if(is.function(server$listenPort)) {
-        url <- paste("http://", server$listenAddr, ":", server$listenPort(), server$appList[[name]]$path,"/index.html",sep='')
-    } else {
-        url <- paste("http://", server$listenAddr, ":", server$listenPort, server$appList[[name]]$path,"/index.html",sep='')
-    }
-    print(paste("app loaded at: ",url,sep=""))
-    if(browse) {
-        browseURL(url);
-    }
-
-    invisible(server)
-}
 
 # BH P-value adjustment with a log option
 #' @keywords internal
@@ -329,6 +273,7 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
 #' @param alpha numeric Shading of the confidence band (default=0.1)
 #' @param plot boolean Plot the molecule distribution and the gene/molecule dependency fit (default=TRUE)
 #' @param do.par boolean Reset graphical parameters prior to plotting (default=TRUE)
+#' @param .legacy.warn boolean Emit a deprecation warning for direct legacy use (default=TRUE)
 #' @return a filtered matrix
 #' @export gene.vs.molecule.cell.filter
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE, .legacy.warn=TRUE) {

@@ -2,7 +2,6 @@
 #' @import MASS
 #' @import Matrix
 #' @importFrom Rcpp evalCpp sourceCpp
-#' @import Rook
 #' @import igraph
 #' @import sccore
 #' @import R6
@@ -13,7 +12,6 @@
 #' @importFrom mgcv gam
 #' @importFrom N2R Knn
 #' @importFrom Rtsne Rtsne
-#' @import drat
 NULL
 
 .pagoda2_deprecated_call <- function(old, new) {
@@ -3269,16 +3267,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      pagoda2Export(self, path = path, format = format, ...)
 	    },
 
-	    #' @description Export a Pagoda2 web app.
-	    #'
-	    #' @param path Output path.
-	    #' @param ... App export arguments.
-	    #' @return Invisibly returns path.
-	    exportApp=function(path, ...) {
-	      stop("p2app export is postponed while the app layer is refactored for matrix views.", call. = FALSE)
-	    },
-
-	    #' @description Resolve a reduction name.
+		    #' @description Resolve a reduction name.
 	    #'
 	    #' @param reduction Reduction name. NULL uses defaults$reduction.
 	    #' @return Reduction name.

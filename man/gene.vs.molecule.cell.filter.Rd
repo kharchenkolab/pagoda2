@@ -11,7 +11,8 @@ gene.vs.molecule.cell.filter(
   p.level = min(0.001, 1/ncol(countMatrix)),
   alpha = 0.1,
   plot = TRUE,
-  do.par = TRUE
+  do.par = TRUE,
+  .legacy.warn = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ gene.vs.molecule.cell.filter(
 \item{plot}{boolean Plot the molecule distribution and the gene/molecule dependency fit (default=TRUE)}
 
 \item{do.par}{boolean Reset graphical parameters prior to plotting (default=TRUE)}
+
+\item{.legacy.warn}{boolean Emit a deprecation warning for direct legacy use (default=TRUE)}
 }
 \value{
 a filtered matrix

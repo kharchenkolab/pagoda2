@@ -65,6 +65,3 @@ analysis view when requested.
 The `linearObs` normalization model is not supported without a stored
 normalized matrix yet. It now fails early rather than creating a view that
 cannot be materialized.
-
-The p2app export path is postponed while the app layer is refactored for matrix
-views.

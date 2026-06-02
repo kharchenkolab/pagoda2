@@ -816,23 +816,6 @@
 }
 
 #' @keywords internal
-.pagoda2_prepare_p2app_object <- function(p2) {
-  stop("p2app export is postponed while the app layer is refactored for matrix views.", call. = FALSE)
-}
-
-#' @keywords internal
-.pagoda2_export_p2app <- function(p2, path, grouping = NULL, groups = NULL,
-                                  geneSets = list(), additionalMetadata = list(),
-                                  appname = "Pagoda2 Application",
-                                  show.depth = TRUE, show.batch = TRUE,
-                                  show.clusters = TRUE, innerOrder = NULL,
-                                  orderDend = FALSE, appmetadata = NULL,
-                                  overwrite = FALSE, verbose = FALSE,
-                                  verbose.timings = FALSE) {
-  stop("p2app export is postponed while the app layer is refactored for matrix views.", call. = FALSE)
-}
-
-#' @keywords internal
 .pagoda2_read_loom <- function(path, gene.id = c("symbol", "id"), layer = NULL,
                                make.unique.genes = FALSE, cell.prefix = NULL,
                                sample.name = NULL, validate.integer = TRUE,
@@ -1204,6 +1187,14 @@ readPagoda2 <- function(path, format = NULL, reader.args = list(), ...) {
 }
 
 #' @keywords internal
+.pagoda2_load_optional_namespace <- function(package, purpose) {
+  if (!requireNamespace(package, quietly = TRUE)) {
+    stop("Package `", package, "` is required for ", purpose, ".")
+  }
+  asNamespace(package)
+}
+
+#' @keywords internal
 pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
                       include.normalized = TRUE, include.geneMeta = TRUE,
                       include.embeddings = TRUE, ...) {
@@ -1244,10 +1235,7 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
     ))
   }
   if (format == "seurat") {
-    if (!requireNamespace("Seurat", quietly = TRUE)) {
-      stop("Package `Seurat` is required for `format = \"seurat\"`.")
-    }
-    seurat.ns <- asNamespace("Seurat")
+    seurat.ns <- .pagoda2_load_optional_namespace("Seurat", "`format = \"seurat\"`")
     object <- get("CreateSeuratObject", envir = seurat.ns)(counts = counts, assay = assay, meta.data = cell.meta, ...)
     if (!is.null(normalized)) {
       data <- normalized
@@ -1300,9 +1288,6 @@ pagoda2Export <- function(p2, path, format = NULL, overwrite = FALSE, ...) {
   }
   if (format %in% c("h5ad", "anndata")) {
     return(.pagoda2_export_h5ad(p2, path = path, overwrite = overwrite, ...))
-  }
-  if (format %in% c("p2app", "pagoda2app", "app")) {
-    return(.pagoda2_export_p2app(p2, path = path, overwrite = overwrite, ...))
   }
   stop("Export format `", format, "` is not implemented yet")
 }

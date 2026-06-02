@@ -498,29 +498,6 @@ test_that("h5ad export writes normalized X from matrix views", {
   expect_false(all(exported.x@x == exported.counts@x))
 })
 
-test_that("exportApp is postponed while app layer is refactored", {
-  cm <- make_io_matrix()
-  p2 <- Pagoda2$new(
-    cm,
-    n.cores = 1,
-    verbose = FALSE,
-    min.cells.per.gene = 0,
-    min.transcripts.per.cell = 0,
-    log.scale = TRUE,
-    trim = 0
-  )
-  p2$setGrouping("leiden", c(cell1 = "0", cell2 = "0", cell3 = "1"), setDefault = TRUE)
-  p2$embeddings$PCA$UMAP <- matrix(
-    c(0, 0, 1, 0, 0, 1),
-    nrow = 3,
-    dimnames = list(colnames(cm), c("UMAP1", "UMAP2"))
-  )
-  path <- tempfile(fileext = ".bin")
-
-  expect_error(p2$exportApp(path, geneSets = list(), verbose = FALSE), "postponed")
-  expect_false(file.exists(path))
-})
-
 test_that("h5ad export resolves flexible AnnData metadata before writing", {
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
