@@ -1,8 +1,15 @@
 # Notebook Rendering
 
 Render GitHub-viewable `.ipynb` notebooks with Quarto, not `rmarkdown::render()`
-plus a custom converter. Quarto emits real notebook code cells for R chunks,
-which avoids GitHub/Jupyter treating `$` and `_` in R code as markdown or math.
+plus a custom converter.
+
+For this notebook, visible R code is written as fenced markdown code blocks and
+the matching executable R chunks are hidden with `echo: false`. This is
+intentional: GitHub's notebook renderer can display executable R cell input
+through a CodeMirror path that collapses or mis-highlights code, while fenced R
+markdown blocks render through the normal syntax-highlighting path. The notebook
+therefore keeps visible code and executed outputs adjacent, but does not expose
+non-empty executable code-cell sources in the `.ipynb`.
 
 ## Quarto Install
 
@@ -76,3 +83,31 @@ nb = nbformat.read("doc/pagoda2.1-single-dataset.ipynb", as_version=4)
 nbformat.validate(nb)
 PY
 ```
+
+Check the GitHub-facing structure:
+
+```sh
+python3 - <<'PY'
+import json
+
+with open("doc/pagoda2.1-single-dataset.ipynb") as f:
+    nb = json.load(f)
+
+def source_text(cell):
+    src = cell.get("source", "")
+    return "".join(src) if isinstance(src, list) else src
+
+print("metadata:", nb.get("metadata", {}))
+print("visible fenced R blocks:", sum(
+    cell.get("cell_type") == "markdown" and "``` r" in source_text(cell)
+    for cell in nb["cells"]
+))
+print("non-empty executable sources:", sum(
+    cell.get("cell_type") == "code" and bool(source_text(cell).strip())
+    for cell in nb["cells"]
+))
+PY
+```
+
+The expected result is at least one visible fenced R block and zero non-empty
+executable sources.
