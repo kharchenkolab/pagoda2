@@ -17,42 +17,18 @@ The count data are downloaded from that GEO sample page as a 10x-style triplet: 
 
 The folder contains the three files needed for a 10x-style sparse count matrix. The next cell shows the folder name and the files that were downloaded from GEO.
 
-```r
-data_dir <- "data"
-
-data.frame(
-  data_dir = data_dir,
-  file = list.files(data_dir, pattern = "\\.(mtx|tsv)(\\.gz)?$")
-)
-```
-
 ```{r}
-#| echo: false
 data_dir <- "data"
 
 data.frame(
   data_dir = data_dir,
-  file = list.files(data_dir, pattern = "\\.(mtx|tsv)(\\.gz)?$")
+  file = list.files(data_dir)
 )
 ```
 
 Create the pagoda2 object directly from that folder. The reader keeps raw counts in the object and creates a lightweight normalized analysis view for downstream calculations.
 
-```r
-p2 <- suppressMessages(pagoda2::Pagoda2$from10x(data_dir, verbose = FALSE))
-counts <- p2$getRawCounts()
-
-data.frame(
-  cells = nrow(counts),
-  genes = ncol(counts),
-  nonzero_entries = Matrix::nnzero(counts),
-  sparsity = round(1 - Matrix::nnzero(counts) / prod(dim(counts)), 4),
-  integer_like = all(abs(counts@x - round(counts@x)) < 1e-8)
-)
-```
-
 ```{r}
-#| echo: false
 p2 <- suppressMessages(pagoda2::Pagoda2$from10x(data_dir, verbose = FALSE))
 counts <- p2$getRawCounts()
 
@@ -69,22 +45,7 @@ data.frame(
 
 `runQC()` records molecule counts, detected-gene counts, and a gene-versus-molecule QC decision in `p2$cellMeta`. Mitochondrial and ribosomal percentages are included when the gene annotation supports common prefix matching.
 
-```r
-suppressMessages(invisible(p2$runQC(verbose = FALSE)))
-qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
-
-data.frame(
-  cells = nrow(qc),
-  qc_pass = sum(as.logical(qc$qc_pass), na.rm = TRUE),
-  qc_fail = sum(!as.logical(qc$qc_pass), na.rm = TRUE),
-  fail_fraction = round(mean(!as.logical(qc$qc_pass), na.rm = TRUE), 4),
-  median_molecules = median(qc$n_molecules, na.rm = TRUE),
-  median_genes = median(qc$n_genes, na.rm = TRUE)
-)
-```
-
 ```{r}
-#| echo: false
 suppressMessages(invisible(p2$runQC(verbose = FALSE)))
 qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
 
@@ -100,12 +61,7 @@ data.frame(
 
 The main QC plot shows detected genes versus molecule counts. Cells failing the default QC decision are highlighted in red.
 
-```r
-p2$plotQC()
-```
-
 ```{r}
-#| echo: false
 #| fig-width: 10
 #| fig-height: 4.5
 #| fig-dpi: 140
@@ -114,12 +70,7 @@ p2$plotQC()
 
 Composition QC is annotation-dependent. Here the sample has recognizable mitochondrial and ribosomal gene prefixes, so the violin plot is informative.
 
-```r
-p2$plotQCViolin()
-```
-
 ```{r}
-#| echo: false
 #| fig-width: 7.5
 #| fig-height: 4.5
 #| fig-dpi: 140
@@ -130,7 +81,7 @@ p2$plotQCViolin()
 
 The standard run performs filtering, variance modeling, PCA, graph construction, UMAP, Leiden clustering, and marker detection. Results are stored under canonical names so plotting calls can usually omit selectors.
 
-```r
+```{r}
 suppressMessages(invisible(p2$run(plots = "none", verbose = FALSE)))
 
 groups <- p2$getGrouping()
@@ -146,28 +97,6 @@ summary
 ```
 
 ```{r}
-#| echo: false
-suppressMessages(invisible(p2$run(plots = "none", verbose = FALSE)))
-
-groups <- p2$getGrouping()
-summary <- data.frame(
-  cells = nrow(p2$getRawCounts()),
-  raw_genes = ncol(p2$getRawCounts()),
-  analysis_genes = sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
-  od_genes = length(p2$misc$odgenes),
-  default_grouping = p2$getDefaultGrouping(),
-  clusters = length(levels(groups))
-)
-summary
-```
-
-```r
-cluster_sizes <- sort(table(p2$getGrouping()), decreasing = TRUE)
-head(data.frame(cluster = names(cluster_sizes), cells = as.integer(cluster_sizes)), 15)
-```
-
-```{r}
-#| echo: false
 cluster_sizes <- sort(table(p2$getGrouping()), decreasing = TRUE)
 head(data.frame(cluster = names(cluster_sizes), cells = as.integer(cluster_sizes)), 15)
 ```
@@ -176,12 +105,7 @@ head(data.frame(cluster = names(cluster_sizes), cells = as.integer(cluster_sizes
 
 The PCA elbow plot shows percent total variance explained by each PC and cumulatively. Use it to assess whether the default PC range is reasonable before interpreting the graph and embedding.
 
-```r
-p2$plotPCAElbow()
-```
-
 ```{r}
-#| echo: false
 #| fig-width: 7.5
 #| fig-height: 4.2
 #| fig-dpi: 140
@@ -190,17 +114,7 @@ p2$plotPCAElbow()
 
 The UMAP below is colored by the default Leiden clustering. Check for coherent clusters, tiny outlying groups, and possible QC or batch structure before annotating cell types.
 
-```r
-p2$plotEmbedding(
-  mark.groups = TRUE,
-  size = 0.35,
-  alpha = 0.55,
-  title = "GSM5746259 Leiden clusters"
-)
-```
-
 ```{r}
-#| echo: false
 #| fig-width: 7.4
 #| fig-height: 6.2
 #| fig-dpi: 140
@@ -216,29 +130,12 @@ p2$plotEmbedding(
 
 The default run stores marker genes for the default grouping. The dot plot and heatmap use the same marker result and marker-selection logic.
 
-```r
+```{r}
 marker_name <- "leiden"
 marker_name
 ```
 
 ```{r}
-#| echo: false
-marker_name <- "leiden"
-marker_name
-```
-
-```r
-p2$plotMarkerDotPlot(
-  markers = marker_name,
-  n.genes.per.group = 5,
-  selection = "balanced",
-  order.groups = TRUE,
-  dot.scale = 8.5
-) + ggplot2::labs(title = "Leiden marker genes")
-```
-
-```{r}
-#| echo: false
 #| fig-width: 15
 #| fig-height: 10.5
 #| fig-dpi: 140
@@ -253,21 +150,7 @@ p2$plotMarkerDotPlot(
 
 The native marker heatmap avoids a heavy ComplexHeatmap dependency. The top tracks show QC metrics so marker blocks can be inspected together with per-cell quality summaries.
 
-```r
-p2$plotMarkerHeatmap(
-  markers = marker_name,
-  engine = "native",
-  n.genes.per.group = 3,
-  selection = "balanced",
-  column.metadata = c("n_molecules", "n_genes"),
-  row.label.font.size = 9,
-  split = TRUE,
-  show_heatmap_legend = TRUE
-)
-```
-
 ```{r}
-#| echo: false
 #| fig-width: 13.8
 #| fig-height: 9
 #| fig-dpi: 140
