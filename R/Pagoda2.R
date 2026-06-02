@@ -596,6 +596,769 @@ NULL
   stats::setNames(colors, levels)
 }
 
+.pagoda2_continuous_palette <- function(colors = NULL, n = 256) {
+  if (is.null(colors)) {
+    colors <- c("grey95", "steelblue4")
+  }
+  grDevices::colorRampPalette(colors, space = "Lab")(n)
+}
+
+.pagoda2_map_continuous_colors <- function(x, palette, na.color = "grey85") {
+  out <- rep(na.color, length(x))
+  finite <- is.finite(x)
+  if (!any(finite)) {
+    return(out)
+  }
+  rng <- range(x[finite])
+  if (diff(rng) == 0) {
+    out[finite] <- palette[length(palette)]
+    return(out)
+  }
+  idx <- floor((x[finite] - rng[1]) / diff(rng) * (length(palette) - 1L)) + 1L
+  idx <- pmax(1L, pmin(length(palette), idx))
+  out[finite] <- palette[idx]
+  out
+}
+
+.pagoda2_track_color_info <- function(values, name, colors = NULL, s = 0.85, v = 0.8,
+                                      na.color = "grey85") {
+  if (is.numeric(values) && !is.factor(values)) {
+    palette <- .pagoda2_continuous_palette(colors)
+    color.values <- .pagoda2_map_continuous_colors(as.numeric(values), palette, na.color = na.color)
+    names(color.values) <- names(values)
+    finite <- is.finite(values)
+    value.range <- if (any(finite)) range(values[finite]) else c(NA_real_, NA_real_)
+    return(list(
+      colors = color.values,
+      palette = palette,
+      legend = list(type = "continuous", name = name, palette = palette, range = value.range, na.color = na.color)
+    ))
+  }
+
+  if (is.logical(values)) {
+    values <- factor(values, levels = c(FALSE, TRUE), exclude = NULL)
+  } else {
+    values <- as.factor(values)
+  }
+  levels <- levels(droplevels(values))
+  if (is.null(colors)) {
+    colors <- .pagoda2_discrete_palette(levels, s = s, v = v)
+  } else if (is.null(names(colors))) {
+    if (length(colors) < length(levels)) {
+      stop("Color vector for annotation `", name, "` has fewer colors than levels")
+    }
+    colors <- stats::setNames(colors[seq_along(levels)], levels)
+  } else {
+    missing.colors <- setdiff(levels, names(colors))
+    if (length(missing.colors) > 0) {
+      stop("Color vector for annotation `", name, "` is missing color(s) for: ", paste(missing.colors, collapse = ", "))
+    }
+    colors <- colors[levels]
+  }
+  color.values <- colors[as.character(values)]
+  color.values[is.na(color.values)] <- na.color
+  names(color.values) <- names(values)
+  list(
+    colors = color.values,
+    palette = colors,
+    legend = list(type = "discrete", name = name, colors = colors, na.color = na.color)
+  )
+}
+
+.pagoda2_heatmap_annotation_colors <- function(annotation, color.list = list(), s = 0.85, v = 0.8) {
+  if (is.null(color.list)) {
+    color.list <- list()
+  }
+  if (!is.list(color.list)) {
+    stop("Annotation colors must be supplied as a list")
+  }
+  tracks <- list()
+  legends <- list()
+  palettes <- list()
+  for (nm in colnames(annotation)) {
+    values <- annotation[[nm]]
+    names(values) <- rownames(annotation)
+    info <- .pagoda2_track_color_info(values, nm, colors = color.list[[nm]], s = s, v = v)
+    tracks[[nm]] <- info$colors
+    legends[[nm]] <- info$legend
+    if (!is.null(info$palette) && !identical(info$legend$type, "continuous")) {
+      palettes[[nm]] <- info$palette
+    } else if (!is.null(color.list[[nm]])) {
+      palettes[[nm]] <- color.list[[nm]]
+    }
+  }
+  list(tracks = tracks, legends = legends, palettes = palettes)
+}
+
+.pagoda2_safe_hclust_order <- function(x, margin = c("row", "column"), method = "complete") {
+  margin <- match.arg(margin)
+  n <- if (margin == "row") nrow(x) else ncol(x)
+  if (n <= 2L) {
+    return(seq_len(n))
+  }
+  cmat <- suppressWarnings(if (margin == "row") stats::cor(t(x)) else stats::cor(x))
+  d <- 1 - cmat
+  d[!is.finite(d)] <- 1
+  diag(d) <- 0
+  stats::hclust(stats::as.dist(d), method = method)$order
+}
+
+.pagoda2_order_within_groups <- function(x, groups, margin = c("row", "column"),
+                                         max.items = Inf, method = "complete") {
+  margin <- match.arg(margin)
+  groups <- droplevels(as.factor(groups))
+  out <- lapply(levels(groups), function(level) {
+    ii <- which(groups == level)
+    if (length(ii) <= 2L) {
+      return(ii)
+    }
+    if (length(ii) > max.items) {
+      warning(
+        "Skipping ", margin, " clustering for group `", level, "` with ", length(ii),
+        " items; increase `cluster.max.items` to cluster it.",
+        call. = FALSE
+      )
+      return(ii)
+    }
+    block <- if (margin == "row") x[ii, , drop = FALSE] else x[, ii, drop = FALSE]
+    ii[.pagoda2_safe_hclust_order(block, margin = margin, method = method)]
+  })
+  unlist(out, use.names = FALSE)
+}
+
+.pagoda2_normalize_annotation_grobs <- function(annotation.grobs = NULL) {
+  empty <- list(top = list(), right = list(), bottom = list(), left = list())
+  if (is.null(annotation.grobs)) {
+    return(empty)
+  }
+  is.grob <- function(x) inherits(x, "grob") || inherits(x, "gList")
+  if (is.grob(annotation.grobs)) {
+    empty$top <- list(annotation.grobs)
+    return(empty)
+  }
+  if (!is.list(annotation.grobs)) {
+    stop("`annotation.grobs` must be a grid grob or a list of grobs")
+  }
+  known <- intersect(names(annotation.grobs), names(empty))
+  if (length(known) == 0L && all(vapply(annotation.grobs, is.grob, logical(1)))) {
+    empty$top <- annotation.grobs
+    return(empty)
+  }
+  for (nm in known) {
+    value <- annotation.grobs[[nm]]
+    if (is.null(value)) {
+      next
+    }
+    if (is.grob(value)) {
+      value <- list(value)
+    }
+    if (!is.list(value) || !all(vapply(value, is.grob, logical(1)))) {
+      stop("`annotation.grobs$", nm, "` must be a grob or a list of grobs")
+    }
+    empty[[nm]] <- value
+  }
+  empty
+}
+
+.pagoda2_prepare_marker_heatmap <- function(p2, markers = NULL, type = "counts",
+                                            genes = NULL, grouping = NULL, groups = NULL,
+                                            n.genes.per.group = 5, additional.genes = NULL,
+                                            exclude.genes = NULL, z.threshold = 2,
+                                            highest.only = TRUE,
+                                            ordering = c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
+                                            remove.duplicates = TRUE, expression.quantile = 0.99,
+                                            pal = grDevices::colorRampPalette(c("grey95", "firebrick3"), space = "Lab")(1024),
+                                            column.metadata = NULL, column.metadata.colors = NULL,
+                                            show.gene.groups = TRUE, show.group.legend = TRUE,
+                                            show_heatmap_legend = FALSE, border = TRUE,
+                                            row.label.font.size = 10, labeled.gene.subset = NULL,
+                                            group.colors = NULL, gene.group.colors = NULL,
+                                            order.groups = FALSE, split = FALSE, split.gap = 0,
+                                            cell.order = NULL, averaging.window = 0, v = 0.8, s = 1,
+                                            max.cells = Inf, max.dense.entries = 5e7,
+                                            cluster.rows = FALSE, cluster.columns = FALSE,
+                                            cluster.max.items = 2000, cluster.method = "complete",
+                                            annotation.grobs = NULL, legend.max.levels = 18,
+                                            legend.columns = NULL) {
+  resolved <- p2$resolveMarkers(markers = markers, type = type)
+  selected <- .pagoda2_select_marker_genes(
+    resolved$tables,
+    n.genes.per.group = n.genes.per.group,
+    genes = genes,
+    z.threshold = z.threshold,
+    highest.only = highest.only,
+    ordering = ordering,
+    remove.duplicates = remove.duplicates
+  )
+  selected.genes <- selected$genes
+  selected.groups <- unname(selected$groups)
+  if (!is.null(additional.genes)) {
+    additional.genes <- as.character(additional.genes)
+    selected.genes <- c(selected.genes, additional.genes)
+    selected.groups <- c(selected.groups, rep("additional", length(additional.genes)))
+  }
+  if (!is.null(exclude.genes)) {
+    exclude.genes <- as.character(exclude.genes)
+    keep <- !selected.genes %in% exclude.genes
+    selected.genes <- selected.genes[keep]
+    selected.groups <- selected.groups[keep]
+  }
+  available.genes <- .pagoda2_axis_names(p2, "gene")
+  missing.genes <- setdiff(selected.genes, available.genes)
+  if (length(missing.genes) > 0) {
+    warning("Omitting marker genes absent from count matrix: ", paste(missing.genes, collapse = ", "))
+  }
+  keep <- selected.genes %in% available.genes
+  selected.genes <- selected.genes[keep]
+  selected.groups <- selected.groups[keep]
+  if (length(selected.genes) == 0) {
+    stop("No selected marker genes are present in count matrix")
+  }
+
+  if (is.null(grouping) && is.null(groups) && !is.null(resolved$result$grouping)) {
+    grouping <- resolved$result$grouping
+  }
+  resolved.groups <- p2$resolveGrouping(grouping = grouping, groups = groups, allow.missing = TRUE)
+  cells <- intersect(names(resolved.groups)[!is.na(resolved.groups)], .pagoda2_axis_names(p2, "cell"))
+  if (length(cells) == 0) {
+    stop("No cells with non-missing groups are present in counts")
+  }
+  resolved.groups <- droplevels(resolved.groups[cells])
+  if (is.finite(max.cells)) {
+    sampled <- unlist(tapply(names(resolved.groups), resolved.groups, function(ii) {
+      if (length(ii) > max.cells) sample(ii, max.cells) else ii
+    }), use.names = FALSE)
+    cells <- cells[cells %in% sampled]
+    resolved.groups <- droplevels(resolved.groups[cells])
+  }
+  if (!is.null(cell.order)) {
+    if (is.null(names(cell.order))) {
+      cell.order <- as.character(cell.order)
+    } else {
+      cell.order <- names(cell.order)
+    }
+    cells <- cell.order[cell.order %in% cells]
+    if (length(cells) == 0) {
+      stop("`cell.order` does not contain any cells present in the heatmap")
+    }
+  } else {
+    cells <- cells[order(resolved.groups[cells])]
+  }
+  resolved.groups <- droplevels(resolved.groups[cells])
+
+  dense.entries <- length(selected.genes) * length(cells)
+  if (is.finite(max.dense.entries) && dense.entries > max.dense.entries) {
+    warning(
+      "Marker heatmap will densify ", dense.entries, " expression values for plotting. ",
+      "Consider reducing `n.genes.per.group`, supplying `genes`, or setting `max.cells`.",
+      call. = FALSE
+    )
+  }
+
+  x <- as.matrix(t(p2$getExpressionBlock(cells = cells, genes = selected.genes)))
+  dimnames(x) <- list(selected.genes, cells)
+  if (isTRUE(order.groups) && length(levels(resolved.groups)) > 1L) {
+    xc <- do.call(cbind, tapply(seq_len(ncol(x)), resolved.groups[colnames(x)], function(ii) {
+      rowMeans(x[, ii, drop = FALSE])
+    }))
+    group.order <- tryCatch({
+      hc <- stats::hclust(stats::as.dist(2 - stats::cor(xc)), method = "ward.D2")
+      hc$labels[hc$order]
+    }, error = function(e) NULL)
+    if (!is.null(group.order)) {
+      resolved.groups <- factor(resolved.groups, levels = group.order)
+      cells <- colnames(x)[order(resolved.groups[colnames(x)])]
+      x <- x[, cells, drop = FALSE]
+    }
+  }
+  if (averaging.window > 1) {
+    x <- do.call(cbind, tapply(seq_len(ncol(x)), resolved.groups[colnames(x)], function(ii) {
+      .pagoda2_rollmean_matrix_cols(x[, ii, drop = FALSE], averaging.window)
+    }))
+  }
+  x <- .pagoda2_scale_heatmap_rows(x, expression.quantile = expression.quantile)
+  x <- x[, cells[cells %in% colnames(x)], drop = FALSE]
+  resolved.groups <- droplevels(resolved.groups[colnames(x)])
+
+  row.groups <- factor(selected.groups, levels = unique(selected.groups))
+  if (length(row.groups) != nrow(x)) {
+    stop("Internal marker heatmap row grouping mismatch")
+  }
+  names(row.groups) <- rownames(x)
+
+  if (isTRUE(cluster.rows)) {
+    row.order <- .pagoda2_order_within_groups(
+      x,
+      row.groups,
+      margin = "row",
+      max.items = cluster.max.items,
+      method = cluster.method
+    )
+    x <- x[row.order, , drop = FALSE]
+    row.groups <- row.groups[row.order]
+  }
+  if (isTRUE(cluster.columns)) {
+    column.order <- .pagoda2_order_within_groups(
+      x,
+      resolved.groups[colnames(x)],
+      margin = "column",
+      max.items = cluster.max.items,
+      method = cluster.method
+    )
+    x <- x[, column.order, drop = FALSE]
+    resolved.groups <- droplevels(resolved.groups[colnames(x)])
+  }
+
+  column.annotation <- data.frame(group = resolved.groups[colnames(x)], row.names = colnames(x))
+  if (!is.null(column.metadata)) {
+    if (is.character(column.metadata) && all(column.metadata %in% colnames(p2$cellMeta))) {
+      metadata <- p2$resolveCellMeta(columns = column.metadata, cells = colnames(x), allow.missing = TRUE)
+    } else if (is.data.frame(column.metadata)) {
+      metadata <- .pagoda2_align_metadata(column.metadata, colnames(x), axis = "cell")
+    } else if (is.list(column.metadata)) {
+      metadata <- data.frame(lapply(column.metadata, function(value) {
+        .pagoda2_align_vector(value, colnames(x), what = "column metadata")
+      }), check.names = FALSE)
+      rownames(metadata) <- colnames(x)
+    } else {
+      stop("`column.metadata` must be cellMeta column names, a data.frame, or a named list")
+    }
+    column.annotation <- cbind(column.annotation, metadata)
+  }
+  if (is.null(column.metadata.colors)) {
+    column.metadata.colors <- list()
+  }
+  if (!is.list(column.metadata.colors)) {
+    stop("`column.metadata.colors` must be a list in annotation color format")
+  }
+  if (!is.null(group.colors)) {
+    group.colors <- group.colors[levels(resolved.groups)]
+    if (anyNA(group.colors) || is.null(names(group.colors))) {
+      stop("`group.colors` must be a named color vector containing all displayed group levels")
+    }
+    column.metadata.colors$group <- group.colors
+  }
+  if (is.null(column.metadata.colors$group)) {
+    column.metadata.colors$group <- .pagoda2_discrete_palette(levels(resolved.groups), s = s, v = v)
+  } else {
+    missing.colors <- setdiff(levels(resolved.groups), names(column.metadata.colors$group))
+    if (length(missing.colors) > 0) {
+      stop("`column.metadata.colors$group` is missing color(s) for: ", paste(missing.colors, collapse = ", "))
+    }
+    column.metadata.colors$group <- column.metadata.colors$group[levels(resolved.groups)]
+  }
+  annotation.colors <- .pagoda2_heatmap_annotation_colors(
+    column.annotation,
+    color.list = column.metadata.colors,
+    s = s,
+    v = v
+  )
+
+  if (is.null(gene.group.colors)) {
+    gene.group.colors <- annotation.colors$palettes$group[levels(row.groups)]
+    if (anyNA(gene.group.colors) || length(gene.group.colors) != length(levels(row.groups))) {
+      gene.group.colors <- .pagoda2_discrete_palette(levels(row.groups), s = s, v = v)
+    }
+  } else {
+    gene.group.colors <- gene.group.colors[levels(row.groups)]
+    if (anyNA(gene.group.colors) || is.null(names(gene.group.colors))) {
+      stop("`gene.group.colors` must be a named color vector containing all displayed gene group levels")
+    }
+  }
+
+  label.indices <- NULL
+  if (!is.null(labeled.gene.subset)) {
+    if (is.numeric(labeled.gene.subset)) {
+      label.n <- as.integer(labeled.gene.subset[1])
+      by.group <- split(seq_len(nrow(x)), row.groups)
+      label.indices <- unique(unlist(lapply(by.group, utils::head, label.n), use.names = FALSE))
+      labeled.gene.subset <- rownames(x)[label.indices]
+    } else {
+      labeled.gene.subset <- as.character(labeled.gene.subset)
+      label.indices <- which(rownames(x) %in% labeled.gene.subset)
+    }
+  }
+
+  annotation.grobs <- .pagoda2_normalize_annotation_grobs(annotation.grobs)
+  structure(
+    list(
+      type = type,
+      marker.name = resolved$name,
+      marker.result = resolved$result,
+      matrix = x,
+      expression.palette = pal,
+      groups = resolved.groups,
+      genes = rownames(x),
+      gene.groups = row.groups,
+      column.annotation = column.annotation,
+      annotation.colors = annotation.colors,
+      gene.group.colors = gene.group.colors,
+      labeled.gene.subset = labeled.gene.subset,
+      label.indices = label.indices,
+      show.gene.groups = show.gene.groups,
+      show.group.legend = show.group.legend,
+      show_heatmap_legend = show_heatmap_legend,
+      border = border,
+      row.label.font.size = row.label.font.size,
+      split = split,
+      split.gap = split.gap,
+      use.raster = TRUE,
+      annotation.grobs = annotation.grobs,
+      legend.max.levels = legend.max.levels,
+      legend.columns = legend.columns
+    ),
+    class = "pagoda2_marker_heatmap_spec"
+  )
+}
+
+.pagoda2_heatmap_color_matrix <- function(x, palette, na.color = "grey90") {
+  idx <- floor(pmax(0, pmin(1, x)) * (length(palette) - 1L)) + 1L
+  colors <- palette[idx]
+  colors[!is.finite(x)] <- na.color
+  dim(colors) <- dim(x)
+  dimnames(colors) <- dimnames(x)
+  colors
+}
+
+.pagoda2_group_boundaries <- function(x) {
+  if (length(x) == 0L) {
+    return(integer())
+  }
+  boundaries <- cumsum(rle(as.character(x))$lengths)
+  boundaries[boundaries < length(x)]
+}
+
+.pagoda2_draw_native_discrete_legend <- function(legend, max.levels = 18) {
+  colors <- legend$colors
+  n.total <- length(colors)
+  if (n.total == 0L) {
+    return(invisible(NULL))
+  }
+  shown <- utils::head(seq_along(colors), max.levels)
+  n <- length(shown)
+  grid::grid.text(legend$name, x = 0, y = 1, just = c("left", "top"), gp = grid::gpar(fontsize = 9, fontface = "bold"))
+  y0 <- 0.88
+  step <- min(0.08, 0.78 / max(1, n + as.integer(n.total > n)))
+  for (i in seq_len(n)) {
+    y <- y0 - (i - 1L) * step
+    grid::grid.rect(x = 0.04, y = y, width = 0.06, height = step * 0.65, just = c("left", "center"),
+                    gp = grid::gpar(fill = colors[shown[i]], col = NA))
+    grid::grid.text(names(colors)[shown[i]], x = 0.13, y = y, just = c("left", "center"), gp = grid::gpar(fontsize = 8))
+  }
+  if (n.total > n) {
+    grid::grid.text(paste0("+", n.total - n, " more"), x = 0.13, y = y0 - n * step,
+                    just = c("left", "center"), gp = grid::gpar(fontsize = 8, col = "grey30"))
+  }
+  invisible(NULL)
+}
+
+.pagoda2_draw_native_continuous_legend <- function(legend) {
+  grid::grid.text(legend$name, x = 0, y = 1, just = c("left", "top"), gp = grid::gpar(fontsize = 9, fontface = "bold"))
+  pal <- legend$palette
+  grid::grid.raster(matrix(rev(pal), ncol = 1), x = 0.06, y = 0.45, width = 0.08, height = 0.65,
+                    interpolate = FALSE)
+  rng <- legend$range
+  if (all(is.finite(rng))) {
+    grid::grid.text(format(signif(rng[2], 3)), x = 0.18, y = 0.78, just = c("left", "center"), gp = grid::gpar(fontsize = 8))
+    grid::grid.text(format(signif(rng[1], 3)), x = 0.18, y = 0.13, just = c("left", "center"), gp = grid::gpar(fontsize = 8))
+  }
+  invisible(NULL)
+}
+
+.pagoda2_draw_native_legends <- function(spec) {
+  legends <- list()
+  if (isTRUE(spec$show_heatmap_legend)) {
+    legends$expression <- list(
+      type = "continuous",
+      name = "expression",
+      palette = spec$expression.palette,
+      range = c(0, 1)
+    )
+  }
+  if (isTRUE(spec$show.group.legend)) {
+    legends <- c(legends, spec$annotation.colors$legends)
+  }
+  if (length(spec$annotation.grobs$right) == 0L && length(legends) == 0L) {
+    return(invisible(NULL))
+  }
+
+  n.legend <- length(legends)
+  n.grob <- length(spec$annotation.grobs$right)
+  ncol <- spec$legend.columns
+  if (is.null(ncol)) {
+    ncol <- if (n.legend > 4L) 2L else 1L
+  }
+  ncol <- max(1L, as.integer(ncol))
+  nrow.legend <- if (n.legend == 0L) 0L else ceiling(n.legend / ncol)
+  layout.rows <- n.grob + max(1L, nrow.legend)
+  heights <- grid::unit(rep(1, max(1L, nrow.legend)), "null")
+  if (n.grob > 0L) {
+    heights <- grid::unit.c(grid::unit(rep(12, n.grob), "mm"), heights)
+  }
+  grid::pushViewport(grid::viewport(layout = grid::grid.layout(layout.rows, ncol, heights = heights)))
+  if (n.grob > 0L) {
+    for (i in seq_len(n.grob)) {
+      grid::pushViewport(grid::viewport(layout.pos.row = i, layout.pos.col = 1:ncol))
+      grid::grid.draw(spec$annotation.grobs$right[[i]])
+      grid::popViewport()
+    }
+  }
+  if (n.legend > 0L) {
+    for (i in seq_len(n.legend)) {
+      row <- n.grob + ceiling(i / ncol)
+      col <- ((i - 1L) %% ncol) + 1L
+      grid::pushViewport(grid::viewport(layout.pos.row = row, layout.pos.col = col))
+      if (identical(legends[[i]]$type, "continuous")) {
+        .pagoda2_draw_native_continuous_legend(legends[[i]])
+      } else {
+        .pagoda2_draw_native_discrete_legend(legends[[i]], max.levels = spec$legend.max.levels)
+      }
+      grid::popViewport()
+    }
+  }
+  grid::popViewport()
+  invisible(NULL)
+}
+
+.pagoda2_draw_marker_heatmap_native <- function(spec, newpage = TRUE) {
+  if (isTRUE(newpage)) {
+    grid::grid.newpage()
+  }
+  x <- spec$matrix
+  n.rows <- nrow(x)
+  n.cols <- ncol(x)
+  top.tracks <- spec$annotation.colors$tracks
+  n.top.tracks <- length(top.tracks)
+  n.top.grobs <- length(spec$annotation.grobs$top)
+  n.left.grobs <- length(spec$annotation.grobs$left)
+  n.bottom.grobs <- length(spec$annotation.grobs$bottom)
+  legend.count <- length(spec$annotation.colors$legends) + as.integer(spec$show_heatmap_legend)
+  legend.columns <- spec$legend.columns
+  if (is.null(legend.columns)) {
+    legend.columns <- if (legend.count > 4L) 2L else 1L
+  }
+  legend.width <- if (legend.count > 0L || length(spec$annotation.grobs$right) > 0L) {
+    grid::unit(36 * legend.columns, "mm")
+  } else {
+    grid::unit(1, "mm")
+  }
+  label.width <- if (is.null(spec$label.indices) && n.rows > 80L) grid::unit(2, "mm") else grid::unit(35, "mm")
+  custom.left.width <- if (n.left.grobs > 0L) grid::unit(8 * n.left.grobs, "mm") else grid::unit(1, "mm")
+  group.strip.width <- if (isTRUE(spec$show.gene.groups)) grid::unit(5, "mm") else grid::unit(1, "mm")
+  top.height <- grid::unit(5 + 5 * n.top.tracks + 8 * n.top.grobs, "mm")
+  bottom.height <- if (n.bottom.grobs > 0L) grid::unit(8 * n.bottom.grobs, "mm") else grid::unit(1, "mm")
+  layout <- grid::grid.layout(
+    nrow = 4,
+    ncol = 5,
+    heights = grid::unit.c(grid::unit(6, "mm"), top.height, grid::unit(1, "null"), bottom.height),
+    widths = grid::unit.c(custom.left.width, group.strip.width, grid::unit(1, "null"), label.width, legend.width)
+  )
+  grid::pushViewport(grid::viewport(layout = layout))
+
+  # Column group labels.
+  grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = 3))
+  r <- rle(as.character(spec$groups[colnames(x)]))
+  starts <- c(1L, cumsum(r$lengths)[-length(r$lengths)] + 1L)
+  mids <- (starts - 0.5 + r$lengths / 2) / n.cols
+  grid::grid.text(r$values, x = mids, y = 0.5, gp = grid::gpar(fontsize = 11), just = "center")
+  grid::popViewport()
+
+  # Top arbitrary grobs and metadata tracks.
+  if (n.top.tracks > 0L || n.top.grobs > 0L) {
+    top.rows <- n.top.grobs + n.top.tracks
+    top.heights <- NULL
+    if (n.top.grobs > 0L) {
+      top.heights <- grid::unit(rep(8, n.top.grobs), "mm")
+    }
+    if (n.top.tracks > 0L) {
+      track.heights <- grid::unit(rep(5, n.top.tracks), "mm")
+      top.heights <- if (is.null(top.heights)) track.heights else grid::unit.c(top.heights, track.heights)
+    }
+    grid::pushViewport(grid::viewport(layout.pos.row = 2, layout.pos.col = 3,
+                                      layout = grid::grid.layout(top.rows, 1, heights = top.heights)))
+    if (n.top.grobs > 0L) {
+      for (i in seq_len(n.top.grobs)) {
+        grid::pushViewport(grid::viewport(layout.pos.row = i, layout.pos.col = 1))
+        grid::grid.draw(spec$annotation.grobs$top[[i]])
+        grid::popViewport()
+      }
+    }
+    if (n.top.tracks > 0L) {
+      track.names <- names(top.tracks)
+      for (i in seq_len(n.top.tracks)) {
+        row <- n.top.grobs + i
+        grid::pushViewport(grid::viewport(layout.pos.row = row, layout.pos.col = 1))
+        track.raster <- grDevices::as.raster(matrix(top.tracks[[i]][colnames(x)], nrow = 1))
+        grid::grid.raster(track.raster, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
+                          interpolate = FALSE)
+        grid::grid.rect(gp = grid::gpar(fill = NA, col = "grey35", lwd = 0.5))
+        grid::grid.text(track.names[i], x = 1.002, y = 0.5, just = c("left", "center"), gp = grid::gpar(fontsize = 7))
+        grid::popViewport()
+      }
+    }
+    grid::popViewport()
+  }
+
+  # Left custom grobs.
+  if (n.left.grobs > 0L) {
+    grid::pushViewport(grid::viewport(layout.pos.row = 3, layout.pos.col = 1,
+                                      layout = grid::grid.layout(1, n.left.grobs)))
+    for (i in seq_len(n.left.grobs)) {
+      grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = i))
+      grid::grid.draw(spec$annotation.grobs$left[[i]])
+      grid::popViewport()
+    }
+    grid::popViewport()
+  }
+
+  # Row group strip.
+  if (isTRUE(spec$show.gene.groups)) {
+    grid::pushViewport(grid::viewport(layout.pos.row = 3, layout.pos.col = 2))
+    row.colors <- spec$gene.group.colors[as.character(spec$gene.groups)]
+    grid::grid.raster(grDevices::as.raster(matrix(row.colors, ncol = 1)),
+                      width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
+                      interpolate = FALSE)
+    grid::grid.rect(gp = grid::gpar(fill = NA, col = "black", lwd = 0.8))
+    grid::popViewport()
+  }
+
+  # Main heatmap.
+  grid::pushViewport(grid::viewport(layout.pos.row = 3, layout.pos.col = 3))
+  grid::grid.raster(grDevices::as.raster(.pagoda2_heatmap_color_matrix(x, spec$expression.palette)),
+                    width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
+                    interpolate = FALSE)
+  if (isTRUE(spec$split)) {
+    cb <- .pagoda2_group_boundaries(spec$groups[colnames(x)])
+    if (length(cb) > 0L) {
+      grid::grid.segments(x0 = cb / n.cols, x1 = cb / n.cols, y0 = 0, y1 = 1,
+                          gp = grid::gpar(col = "black", lwd = 1))
+    }
+    rb <- .pagoda2_group_boundaries(spec$gene.groups)
+    if (length(rb) > 0L) {
+      grid::grid.segments(x0 = 0, x1 = 1, y0 = 1 - rb / n.rows, y1 = 1 - rb / n.rows,
+                          gp = grid::gpar(col = "black", lwd = 1))
+    }
+  }
+  if (isTRUE(spec$border)) {
+    grid::grid.rect(gp = grid::gpar(fill = NA, col = "black", lwd = 0.8))
+  }
+  grid::popViewport()
+
+  # Row labels.
+  grid::pushViewport(grid::viewport(layout.pos.row = 3, layout.pos.col = 4))
+  label.indices <- spec$label.indices
+  if (is.null(label.indices) && n.rows <= 80L) {
+    label.indices <- seq_len(n.rows)
+  }
+  if (!is.null(label.indices) && length(label.indices) > 0L) {
+    y <- 1 - (label.indices - 0.5) / n.rows
+    grid::grid.segments(x0 = 0, x1 = 0.08, y0 = y, y1 = y, gp = grid::gpar(col = "black", lwd = 0.5))
+    grid::grid.text(rownames(x)[label.indices], x = 0.1, y = y, just = c("left", "center"),
+                    gp = grid::gpar(fontsize = spec$row.label.font.size))
+  }
+  grid::popViewport()
+
+  # Bottom custom grobs.
+  if (n.bottom.grobs > 0L) {
+    grid::pushViewport(grid::viewport(layout.pos.row = 4, layout.pos.col = 3,
+                                      layout = grid::grid.layout(n.bottom.grobs, 1)))
+    for (i in seq_len(n.bottom.grobs)) {
+      grid::pushViewport(grid::viewport(layout.pos.row = i, layout.pos.col = 1))
+      grid::grid.draw(spec$annotation.grobs$bottom[[i]])
+      grid::popViewport()
+    }
+    grid::popViewport()
+  }
+
+  # Legends and right-side custom grobs.
+  grid::pushViewport(grid::viewport(layout.pos.row = 1:4, layout.pos.col = 5))
+  .pagoda2_draw_native_legends(spec)
+  grid::popViewport()
+  grid::popViewport()
+  invisible(spec)
+}
+
+.pagoda2_render_marker_heatmap_complex <- function(spec, use.raster = TRUE, raster.by.magick = FALSE, ...) {
+  if (!requireNamespace("ComplexHeatmap", quietly = TRUE) || utils::packageVersion("ComplexHeatmap") < "2.4") {
+    stop("ComplexHeatmap >= 2.4 is required for `engine = \"complex\"`; use `engine = \"native\"` or install ComplexHeatmap.")
+  }
+  if (sum(lengths(spec$annotation.grobs)) > 0L) {
+    warning("`annotation.grobs` are currently rendered only by `engine = \"native\"`.", call. = FALSE)
+  }
+  x <- spec$matrix
+  top.annotation <- ComplexHeatmap::HeatmapAnnotation(
+    df = spec$column.annotation,
+    col = spec$annotation.colors$palettes,
+    border = spec$border,
+    show_legend = spec$show.group.legend
+  )
+  row.annotation <- NULL
+  if (isTRUE(spec$show.gene.groups) && !is.null(spec$gene.groups)) {
+    row.annotation <- ComplexHeatmap::HeatmapAnnotation(
+      marker_group = spec$gene.groups,
+      which = "row",
+      col = list(marker_group = spec$gene.group.colors),
+      border = spec$border,
+      show_annotation_name = FALSE,
+      show_legend = FALSE
+    )
+  }
+  heatmap.args <- list(
+    matrix = x,
+    name = "expression",
+    col = spec$expression.palette,
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    show_row_names = is.null(spec$labeled.gene.subset),
+    show_column_names = FALSE,
+    top_annotation = top.annotation,
+    left_annotation = row.annotation,
+    border = spec$border,
+    show_heatmap_legend = spec$show_heatmap_legend,
+    row_names_gp = grid::gpar(fontsize = spec$row.label.font.size),
+    use_raster = use.raster,
+    raster_by_magick = raster.by.magick
+  )
+  if (isTRUE(spec$split)) {
+    heatmap.args$column_split <- spec$groups[colnames(x)]
+    heatmap.args$row_split <- if (!is.null(spec$gene.groups)) spec$gene.groups else NULL
+    heatmap.args$column_gap <- grid::unit(spec$split.gap, "mm")
+    heatmap.args$row_gap <- grid::unit(spec$split.gap, "mm")
+  }
+  dots <- list(...)
+  heatmap.args[names(dots)] <- dots
+  ht <- do.call(ComplexHeatmap::Heatmap, heatmap.args)
+  if (!is.null(spec$label.indices) && length(spec$label.indices) > 0L) {
+    ht <- ht + ComplexHeatmap::rowAnnotation(
+      link = ComplexHeatmap::anno_mark(
+        at = spec$label.indices,
+        labels = rownames(x)[spec$label.indices],
+        labels_gp = grid::gpar(fontsize = spec$row.label.font.size)
+      )
+    )
+  }
+  ht
+}
+
+.pagoda2_marker_heatmap_details <- function(spec, heatmap = NULL, engine = NULL) {
+  list(
+    engine = engine,
+    heatmap = heatmap,
+    spec = spec,
+    matrix = spec$matrix,
+    groups = spec$groups,
+    genes = rownames(spec$matrix),
+    gene.groups = spec$gene.groups,
+    column.annotation = spec$column.annotation,
+    row.annotation = spec$gene.groups,
+    labeled.gene.subset = spec$labeled.gene.subset,
+    ha = heatmap,
+    x = spec$matrix,
+    annot = spec$column.annotation,
+    rannot = spec$gene.groups
+  )
+}
+
 
 #' @title Pagoda2 R6 class
 #' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
@@ -3339,7 +4102,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #'
 	    #' @param markers Marker result name. NULL uses defaultGrouping.
 	    #' @param type Marker result namespace.
-	    #' @param engine Heatmap engine: complex for ComplexHeatmap or legacy for plotDiffGeneHeatmap().
+	    #' @param engine Heatmap engine: native for lightweight grid raster, complex for ComplexHeatmap, or legacy for plotDiffGeneHeatmap().
 	    #' @param genes Optional explicit genes to plot. NULL selects top marker genes.
 	    #' @param grouping Optional grouping column. NULL uses marker provenance when available, then defaultGrouping.
 	    #' @param groups Optional direct grouping vector.
@@ -3363,10 +4126,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param group.colors Optional named colors for cell groups.
 	    #' @param gene.group.colors Optional named colors for marker-origin row groups.
 	    #' @param order.groups Whether to cluster group order by shown marker expression.
+	    #' @param cluster.rows Whether to hierarchically cluster genes within marker groups.
+	    #' @param cluster.columns Whether to hierarchically cluster cells within cell groups.
+	    #' @param cluster.max.items Maximum rows/cells to cluster within any one group.
+	    #' @param cluster.method hclust method used for row/column clustering.
 	    #' @param split Whether to split rows and columns by marker/cell group.
 	    #' @param split.gap Split gap in mm when split=TRUE.
 	    #' @param cell.order Optional explicit cell order or ordered cell subset.
 	    #' @param averaging.window Optional left-aligned running mean width within each group.
+	    #' @param annotation.grobs Optional list of grid grobs with top/right/bottom/left entries for the native engine.
+	    #' @param legend.max.levels Maximum discrete levels to show per native legend before truncation.
+	    #' @param legend.columns Optional number of columns for native legend packing.
+	    #' @param native.newpage Whether the native engine should start a new grid page.
 	    #' @param v HSV value used for generated group colors.
 	    #' @param s HSV saturation used for generated group colors.
 	    #' @param max.cells Maximum cells per group to show.
@@ -3376,7 +4147,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param return.details Whether to return internals along with the heatmap object.
 	    #' @param ... Arguments passed to ComplexHeatmap::Heatmap() or the legacy heatmap.
 	    #' @return ComplexHeatmap object, details list, or legacy heatmap side effect.
-	    plotMarkerHeatmap=function(markers=NULL, type='counts', engine=c("complex", "legacy"),
+	    plotMarkerHeatmap=function(markers=NULL, type='counts', engine=c("native", "complex", "legacy"),
 	                               genes=NULL, grouping=NULL, groups=NULL, n.genes.per.group=5,
 	                               additional.genes=NULL, exclude.genes=NULL,
 	                               z.threshold=2, highest.only=TRUE,
@@ -3388,8 +4159,13 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	                               show_heatmap_legend=FALSE, border=TRUE,
 	                               row.label.font.size=10, labeled.gene.subset=NULL,
 	                               group.colors=NULL, gene.group.colors=NULL,
-	                               order.groups=FALSE, split=FALSE, split.gap=0,
-	                               cell.order=NULL, averaging.window=0, v=0.8, s=1,
+	                               order.groups=FALSE, cluster.rows=FALSE, cluster.columns=FALSE,
+	                               cluster.max.items=2000, cluster.method="complete",
+	                               split=FALSE, split.gap=0,
+	                               cell.order=NULL, averaging.window=0,
+	                               annotation.grobs=NULL, legend.max.levels=18,
+	                               legend.columns=NULL, native.newpage=TRUE,
+	                               v=0.8, s=1,
 	                               max.cells=Inf,
 	                               max.dense.entries=5e7,
 	                               use.raster=TRUE, raster.by.magick=FALSE,
@@ -3405,233 +4181,59 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        }
 	        return(self$plotDiffGeneHeatmap(type = type, clusterType = resolved$name, groups = legacy.groups, ..., .legacy.warn = FALSE))
 	      }
-	      if (!requireNamespace("ComplexHeatmap", quietly = TRUE) || utils::packageVersion("ComplexHeatmap") < "2.4") {
-	        stop("ComplexHeatmap >= 2.4 is required for `engine = \"complex\"`; use `engine = \"legacy\"` or install ComplexHeatmap.")
-	      }
-	      selected <- .pagoda2_select_marker_genes(
-	        resolved$tables,
-	        n.genes.per.group = n.genes.per.group,
+	      spec <- .pagoda2_prepare_marker_heatmap(
+	        self,
+	        markers = markers,
+	        type = type,
 	        genes = genes,
+	        grouping = grouping,
+	        groups = groups,
+	        n.genes.per.group = n.genes.per.group,
+	        additional.genes = additional.genes,
+	        exclude.genes = exclude.genes,
 	        z.threshold = z.threshold,
 	        highest.only = highest.only,
 	        ordering = ordering,
-	        remove.duplicates = remove.duplicates
-	      )
-	      selected.genes <- selected$genes
-	      selected.groups <- unname(selected$groups)
-	      if (!is.null(additional.genes)) {
-	        additional.genes <- as.character(additional.genes)
-	        selected.genes <- c(selected.genes, additional.genes)
-	        selected.groups <- c(selected.groups, rep("additional", length(additional.genes)))
-	      }
-	      if (!is.null(exclude.genes)) {
-	        exclude.genes <- as.character(exclude.genes)
-	        keep <- !selected.genes %in% exclude.genes
-	        selected.genes <- selected.genes[keep]
-	        selected.groups <- selected.groups[keep]
-	      }
-	      available.genes <- .pagoda2_axis_names(self, "gene")
-	      missing.genes <- setdiff(selected.genes, available.genes)
-	      if (length(missing.genes) > 0) {
-	        warning("Omitting marker genes absent from count matrix: ", paste(missing.genes, collapse = ", "))
-	      }
-	      keep <- selected.genes %in% available.genes
-	      selected.genes <- selected.genes[keep]
-	      selected.groups <- selected.groups[keep]
-	      if (length(selected.genes) == 0) {
-	        stop("No selected marker genes are present in count matrix")
-	      }
-	      if (is.null(grouping) && is.null(groups) && !is.null(resolved$result$grouping)) {
-	        grouping <- resolved$result$grouping
-	      }
-	      resolved.groups <- self$resolveGrouping(grouping = grouping, groups = groups, allow.missing = TRUE)
-	      cells <- intersect(names(resolved.groups)[!is.na(resolved.groups)], .pagoda2_axis_names(self, "cell"))
-	      if (length(cells) == 0) {
-	        stop("No cells with non-missing groups are present in counts")
-	      }
-	      resolved.groups <- droplevels(resolved.groups[cells])
-	      if (is.finite(max.cells)) {
-	        sampled <- unlist(tapply(names(resolved.groups), resolved.groups, function(ii) {
-	          if (length(ii) > max.cells) sample(ii, max.cells) else ii
-	        }), use.names = FALSE)
-	        cells <- cells[cells %in% sampled]
-	        resolved.groups <- droplevels(resolved.groups[cells])
-	      }
-	      if (!is.null(cell.order)) {
-	        if (is.null(names(cell.order))) {
-	          cell.order <- as.character(cell.order)
-	        } else {
-	          cell.order <- names(cell.order)
-	        }
-	        cells <- cell.order[cell.order %in% cells]
-	        if (length(cells) == 0) {
-	          stop("`cell.order` does not contain any cells present in the heatmap")
-	        }
-	      } else {
-	        cells <- cells[order(resolved.groups[cells])]
-	      }
-	      resolved.groups <- droplevels(resolved.groups[cells])
-	      dense.entries <- length(selected.genes) * length(cells)
-	      if (is.finite(max.dense.entries) && dense.entries > max.dense.entries) {
-	        warning(
-	          "Marker heatmap will densify ", dense.entries, " expression values for plotting. ",
-	          "Consider reducing `n.genes.per.group`, supplying `genes`, or setting `max.cells`.",
-	          call. = FALSE
-	        )
-	      }
-
-	      x <- as.matrix(t(self$getExpressionBlock(cells = cells, genes = selected.genes)))
-	      dimnames(x) <- list(selected.genes, cells)
-	      if (isTRUE(order.groups) && length(levels(resolved.groups)) > 1L) {
-	        xc <- do.call(cbind, tapply(seq_len(ncol(x)), resolved.groups[colnames(x)], function(ii) {
-	          rowMeans(x[, ii, drop = FALSE])
-	        }))
-	        group.order <- tryCatch({
-	          hc <- stats::hclust(stats::as.dist(2 - stats::cor(xc)), method = "ward.D2")
-	          hc$labels[hc$order]
-	        }, error = function(e) NULL)
-	        if (!is.null(group.order)) {
-	          resolved.groups <- factor(resolved.groups, levels = group.order)
-	          cells <- colnames(x)[order(resolved.groups[colnames(x)])]
-	          x <- x[, cells, drop = FALSE]
-	        }
-	      }
-	      if (averaging.window > 1) {
-	        x <- do.call(cbind, tapply(seq_len(ncol(x)), resolved.groups[colnames(x)], function(ii) {
-	          .pagoda2_rollmean_matrix_cols(x[, ii, drop = FALSE], averaging.window)
-	        }))
-	      }
-	      x <- .pagoda2_scale_heatmap_rows(x, expression.quantile = expression.quantile)
-	      x <- x[, cells[cells %in% colnames(x)], drop = FALSE]
-
-	      column.annotation <- data.frame(group = resolved.groups[colnames(x)], row.names = colnames(x))
-	      if (!is.null(column.metadata)) {
-	        if (is.character(column.metadata) && all(column.metadata %in% colnames(self$cellMeta))) {
-	          metadata <- self$resolveCellMeta(columns = column.metadata, cells = colnames(x), allow.missing = TRUE)
-	        } else if (is.data.frame(column.metadata)) {
-	          metadata <- .pagoda2_align_metadata(column.metadata, colnames(x), axis = "cell")
-	        } else if (is.list(column.metadata)) {
-	          metadata <- data.frame(lapply(column.metadata, function(v) {
-	            .pagoda2_align_vector(v, colnames(x), what = "column metadata")
-	          }), check.names = FALSE)
-	          rownames(metadata) <- colnames(x)
-	        } else {
-	          stop("`column.metadata` must be cellMeta column names, a data.frame, or a named list")
-	        }
-	        column.annotation <- cbind(column.annotation, metadata)
-	      }
-	      if (is.null(column.metadata.colors)) {
-	        column.metadata.colors <- list()
-	      }
-	      if (!is.list(column.metadata.colors)) {
-	        stop("`column.metadata.colors` must be a list in ComplexHeatmap annotation color format")
-	      }
-	      if (!is.null(group.colors)) {
-	        group.colors <- group.colors[levels(resolved.groups)]
-	        if (anyNA(group.colors) || is.null(names(group.colors))) {
-	          stop("`group.colors` must be a named color vector containing all displayed group levels")
-	        }
-	        column.metadata.colors$group <- group.colors
-	      }
-	      if (is.null(column.metadata.colors$group)) {
-	        column.metadata.colors$group <- .pagoda2_discrete_palette(levels(resolved.groups), s = s, v = v)
-	      } else {
-	        missing.colors <- setdiff(levels(resolved.groups), names(column.metadata.colors$group))
-	        if (length(missing.colors) > 0) {
-	          stop("`column.metadata.colors$group` is missing color(s) for: ", paste(missing.colors, collapse = ", "))
-	        }
-	        column.metadata.colors$group <- column.metadata.colors$group[levels(resolved.groups)]
-	      }
-	      column.metadata.colors <- column.metadata.colors[names(column.metadata.colors) %in% colnames(column.annotation)]
-	      top.annotation <- ComplexHeatmap::HeatmapAnnotation(
-	        df = column.annotation,
-	        col = column.metadata.colors,
-	        border = border,
-	        show_legend = show.group.legend
-	      )
-
-	      row.annotation <- NULL
-	      row.groups <- stats::setNames(selected.groups, rownames(x))
-	      if (show.gene.groups && !is.null(row.groups)) {
-	        row.groups <- factor(row.groups, levels = unique(row.groups))
-	        if (is.null(gene.group.colors)) {
-	          gene.group.colors <- column.metadata.colors$group[levels(row.groups)]
-	          if (anyNA(gene.group.colors) || length(gene.group.colors) != length(levels(row.groups))) {
-	            gene.group.colors <- .pagoda2_discrete_palette(levels(row.groups), s = s, v = v)
-	          }
-	        } else {
-	          gene.group.colors <- gene.group.colors[levels(row.groups)]
-	          if (anyNA(gene.group.colors) || is.null(names(gene.group.colors))) {
-	            stop("`gene.group.colors` must be a named color vector containing all displayed gene group levels")
-	          }
-	        }
-	        row.annotation <- ComplexHeatmap::HeatmapAnnotation(
-	          marker_group = row.groups,
-	          which = "row",
-	          col = list(marker_group = gene.group.colors),
-	          border = border,
-	          show_annotation_name = FALSE,
-	          show_legend = FALSE
-	        )
-	      }
-
-	      heatmap.args <- list(
-	        matrix = x,
-	        name = "expression",
-	        col = pal,
-	        cluster_rows = FALSE,
-	        cluster_columns = FALSE,
-	        show_row_names = is.null(labeled.gene.subset),
-	        show_column_names = FALSE,
-	        top_annotation = top.annotation,
-	        left_annotation = row.annotation,
-	        border = border,
+	        remove.duplicates = remove.duplicates,
+	        expression.quantile = expression.quantile,
+	        pal = pal,
+	        column.metadata = column.metadata,
+	        column.metadata.colors = column.metadata.colors,
+	        show.gene.groups = show.gene.groups,
+	        show.group.legend = show.group.legend,
 	        show_heatmap_legend = show_heatmap_legend,
-	        row_names_gp = grid::gpar(fontsize = row.label.font.size),
-	        use_raster = use.raster,
-	        raster_by_magick = raster.by.magick
+	        border = border,
+	        row.label.font.size = row.label.font.size,
+	        labeled.gene.subset = labeled.gene.subset,
+	        group.colors = group.colors,
+	        gene.group.colors = gene.group.colors,
+	        order.groups = order.groups,
+	        split = split,
+	        split.gap = split.gap,
+	        cell.order = cell.order,
+	        averaging.window = averaging.window,
+	        v = v,
+	        s = s,
+	        max.cells = max.cells,
+	        max.dense.entries = max.dense.entries,
+	        cluster.rows = cluster.rows,
+	        cluster.columns = cluster.columns,
+	        cluster.max.items = cluster.max.items,
+	        cluster.method = cluster.method,
+	        annotation.grobs = annotation.grobs,
+	        legend.max.levels = legend.max.levels,
+	        legend.columns = legend.columns
 	      )
-	      if (isTRUE(split)) {
-	        heatmap.args$column_split <- resolved.groups[colnames(x)]
-	        heatmap.args$row_split <- if (!is.null(row.groups)) row.groups else NULL
-	        heatmap.args$column_gap <- grid::unit(split.gap, "mm")
-	        heatmap.args$row_gap <- grid::unit(split.gap, "mm")
-	      }
-	      dots <- list(...)
-	      heatmap.args[names(dots)] <- dots
-	      ht <- do.call(ComplexHeatmap::Heatmap, heatmap.args)
-	      if (!is.null(labeled.gene.subset)) {
-	        if (is.numeric(labeled.gene.subset)) {
-	          label.n <- as.integer(labeled.gene.subset[1])
-	          by.group <- split(rownames(x), row.groups)
-	          labeled.gene.subset <- unique(unlist(lapply(by.group, utils::head, label.n), use.names = FALSE))
+	      if (engine == "native") {
+	        .pagoda2_draw_marker_heatmap_native(spec, newpage = native.newpage)
+	        if (return.details) {
+	          return(.pagoda2_marker_heatmap_details(spec, heatmap = NULL, engine = "native"))
 	        }
-	        gene.subset <- which(rownames(x) %in% labeled.gene.subset)
-	        if (length(gene.subset) > 0) {
-	          ht <- ht + ComplexHeatmap::rowAnnotation(
-	            link = ComplexHeatmap::anno_mark(
-	              at = gene.subset,
-	              labels = rownames(x)[gene.subset],
-	              labels_gp = grid::gpar(fontsize = row.label.font.size)
-	            )
-	          )
-	        }
+	        return(invisible(spec))
 	      }
+	      ht <- .pagoda2_render_marker_heatmap_complex(spec, use.raster = use.raster, raster.by.magick = raster.by.magick, ...)
 	      if (return.details) {
-	        return(list(
-	          heatmap = ht,
-	          matrix = x,
-	          groups = resolved.groups,
-	          genes = rownames(x),
-	          gene.groups = row.groups,
-	          column.annotation = column.annotation,
-	          row.annotation = row.groups,
-	          labeled.gene.subset = labeled.gene.subset,
-	          ha = ht,
-	          x = x,
-	          annot = column.annotation,
-	          rannot = row.groups
-	        ))
+	        return(.pagoda2_marker_heatmap_details(spec, heatmap = ht, engine = "complex"))
 	      }
 	      ht
 	    },

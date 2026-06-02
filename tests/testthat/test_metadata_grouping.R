@@ -164,6 +164,51 @@ test_that("marker plotting methods resolve marker schema and grouping", {
   )
 })
 
+test_that("native marker heatmap returns details and draws without ComplexHeatmap", {
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$setCellMeta(
+    data.frame(
+      condition = c("ctrl", "ctrl", "stim", "stim"),
+      score = c(1.2, 0.5, 2.5, 1.8),
+      row.names = paste0("c", 1:4)
+    ),
+    overwrite = TRUE
+  )
+  p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
+
+  pdf(file = tempfile(fileext = ".pdf"))
+  on.exit(grDevices::dev.off(), add = TRUE)
+  details <- p2$plotMarkerHeatmap(
+    n.genes.per.group = 2,
+    z.threshold = NULL,
+    highest.only = FALSE,
+    additional.genes = "g5",
+    column.metadata = c("condition", "score"),
+    labeled.gene.subset = 1,
+    split = TRUE,
+    split.gap = 0.5,
+    averaging.window = 2,
+    cluster.rows = TRUE,
+    cluster.columns = TRUE,
+    annotation.grobs = list(
+      top = list(grid::rectGrob(gp = grid::gpar(fill = "grey90", col = NA))),
+      left = list(grid::rectGrob(gp = grid::gpar(fill = "grey85", col = NA))),
+      bottom = list(grid::rectGrob(gp = grid::gpar(fill = "grey80", col = NA))),
+      right = list(grid::rectGrob(gp = grid::gpar(fill = "grey75", col = NA)))
+    ),
+    legend.columns = 2,
+    return.details = TRUE
+  )
+
+  expect_identical(details$engine, "native")
+  expect_true(any(details$genes == "g5"))
+  expect_true(all(c("condition", "score") %in% colnames(details$column.annotation)))
+  expect_equal(ncol(details$matrix), 4)
+  expect_s3_class(details$spec, "pagoda2_marker_heatmap_spec")
+  expect_equal(lengths(details$spec$annotation.grobs), c(top = 1L, right = 1L, bottom = 1L, left = 1L))
+})
+
 test_that("ComplexHeatmap marker heatmap returns details without drawing", {
   testthat::skip_if_not_installed("ComplexHeatmap")
 
@@ -172,6 +217,7 @@ test_that("ComplexHeatmap marker heatmap returns details without drawing", {
   p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
 
   details <- p2$plotMarkerHeatmap(
+    engine = "complex",
     n.genes.per.group = 2,
     z.threshold = NULL,
     highest.only = FALSE,
@@ -196,6 +242,7 @@ test_that("ComplexHeatmap marker heatmap supports real plot controls", {
   p2$runMarkers(name = "leiden", z.threshold = 0, append.specificity.metrics = FALSE)
 
   details <- p2$plotMarkerHeatmap(
+    engine = "complex",
     n.genes.per.group = 2,
     z.threshold = NULL,
     highest.only = FALSE,
@@ -243,6 +290,7 @@ test_that("ComplexHeatmap marker heatmap warns on large dense plot requests", {
 
   expect_warning(
     p2$plotMarkerHeatmap(
+      engine = "complex",
       n.genes.per.group = 2,
       z.threshold = NULL,
       highest.only = FALSE,
