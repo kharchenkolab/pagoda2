@@ -286,6 +286,57 @@ test_that("native heatmap renderer accepts generic matrix specs", {
   expect_identical(drawn$native.layout$column.labels$angle, 0)
 })
 
+test_that("native heatmap legend shows all discrete levels by default when they fit", {
+  native_heatmap_spec <- getFromNamespace(".pagoda2_native_heatmap_spec", "pagoda2")
+  draw_native_heatmap <- getFromNamespace(".pagoda2_draw_native_heatmap", "pagoda2")
+  x <- matrix(
+    seq_len(28 * 140) / (28 * 140),
+    nrow = 28,
+    dimnames = list(paste0("gene", seq_len(28)), paste0("cell", seq_len(140)))
+  )
+  column.groups <- factor(rep(as.character(seq_len(14)), each = 10), levels = as.character(seq_len(14)))
+  names(column.groups) <- colnames(x)
+  row.groups <- factor(rep(as.character(seq_len(14)), each = 2), levels = as.character(seq_len(14)))
+  names(row.groups) <- rownames(x)
+  column.annotation <- data.frame(
+    group = column.groups,
+    n_molecules = seq(500, 40000, length.out = ncol(x)),
+    n_genes = seq(250, 6500, length.out = ncol(x)),
+    row.names = colnames(x)
+  )
+
+  spec <- native_heatmap_spec(
+    x,
+    column.groups = column.groups,
+    row.groups = row.groups,
+    column.annotation = column.annotation,
+    split = TRUE,
+    show_heatmap_legend = TRUE
+  )
+  capped.spec <- native_heatmap_spec(
+    x,
+    column.groups = column.groups,
+    row.groups = row.groups,
+    column.annotation = column.annotation,
+    split = TRUE,
+    show_heatmap_legend = TRUE,
+    legend.max.levels = 12
+  )
+
+  pdf(file = tempfile(fileext = ".pdf"))
+  on.exit(grDevices::dev.off(), add = TRUE)
+  drawn <- NULL
+  capped <- NULL
+  expect_silent(drawn <- draw_native_heatmap(spec))
+  expect_silent(capped <- draw_native_heatmap(capped.spec))
+
+  expect_equal(drawn$native.layout$legends$entries$group$n.total, 14L)
+  expect_equal(drawn$native.layout$legends$entries$group$n.shown, 14L)
+  expect_false(drawn$native.layout$legends$entries$group$truncated)
+  expect_equal(capped$native.layout$legends$entries$group$n.shown, 12L)
+  expect_true(capped$native.layout$legends$entries$group$truncated)
+})
+
 test_that("native heatmap angles crowded column group labels", {
   native_heatmap_spec <- getFromNamespace(".pagoda2_native_heatmap_spec", "pagoda2")
   draw_native_heatmap <- getFromNamespace(".pagoda2_draw_native_heatmap", "pagoda2")

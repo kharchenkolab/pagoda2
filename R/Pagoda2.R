@@ -792,7 +792,7 @@ NULL
                                             max.cells = Inf, max.dense.entries = 5e7,
                                             cluster.rows = FALSE, cluster.columns = FALSE,
                                             cluster.max.items = 2000, cluster.method = "complete",
-                                            annotation.grobs = NULL, legend.max.levels = 18,
+                                            annotation.grobs = NULL, legend.max.levels = Inf,
                                             legend.columns = NULL) {
   scale_heatmap_rows <- function(x, expression.quantile = 0.99) {
     out <- t(vapply(seq_len(nrow(x)), function(i) {
@@ -4602,7 +4602,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param cell.order Optional explicit cell order or ordered cell subset.
 	    #' @param averaging.window Optional left-aligned running mean width within each group.
 	    #' @param annotation.grobs Optional list of grid grobs with top/right/bottom/left entries for the native engine.
-	    #' @param legend.max.levels Maximum discrete levels to show per native legend before truncation.
+	    #' @param legend.max.levels Maximum discrete levels to show per native legend before truncation. The default, `Inf`, shows all levels unless the allocated legend space cannot fit them.
 	    #' @param legend.columns Optional number of columns for native legend packing.
 	    #' @param native.newpage Whether the native engine should start a new grid page.
 	    #' @param v HSV value used for generated group colors.
@@ -4630,7 +4630,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	                               cluster.max.items=2000, cluster.method="complete",
 	                               split=FALSE, split.gap=0,
 	                               cell.order=NULL, averaging.window=0,
-	                               annotation.grobs=NULL, legend.max.levels=18,
+	                               annotation.grobs=NULL, legend.max.levels=Inf,
 	                               legend.columns=NULL, native.newpage=TRUE,
 	                               v=1, s=1,
 	                               max.cells=Inf,

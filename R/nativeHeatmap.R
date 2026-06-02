@@ -108,7 +108,7 @@
                                          split = FALSE,
                                          split.gap = 0,
                                          annotation.grobs = NULL,
-                                         legend.max.levels = 18,
+                                         legend.max.levels = Inf,
                                          legend.columns = NULL,
                                          s = 1,
                                          v = 1,
@@ -394,6 +394,14 @@
     )
   }
 
+  resolve_legend_max_levels <- function(max.levels, n.total) {
+    if (is.null(max.levels) || length(max.levels) == 0L ||
+        !is.finite(max.levels[1])) {
+      return(n.total)
+    }
+    max(0L, min(n.total, as.integer(max.levels[1])))
+  }
+
   draw_discrete_legend <- function(legend, max.levels = 18,
                                    title.font.size = 10,
                                    label.font.size = 8,
@@ -426,6 +434,7 @@
     if (n.total == 0L) {
       return(invisible(NULL))
     }
+    max.levels <- resolve_legend_max_levels(max.levels, n.total)
     shown <- utils::head(seq_along(colors), max.levels)
     n <- length(shown)
     level.columns <- max(1L, min(as.integer(level.columns), n))
@@ -526,11 +535,24 @@
 
   draw_legends <- function(spec) {
     discrete_legend_height_mm <- function(legend, level.columns, max.levels) {
-      n <- min(length(legend$colors), max.levels)
-      10 + ceiling(n / level.columns) * 4.4 + 5
+      n.total <- length(legend$colors)
+      n <- resolve_legend_max_levels(max.levels, n.total)
+      10 + (ceiling(n / level.columns) + as.integer(n.total > n)) * 4.4 + 5
+    }
+
+    discrete_legend_fit_count <- function(legend, level.columns, available.height.mm, max.levels) {
+      n.total <- length(legend$colors)
+      n.configured <- resolve_legend_max_levels(max.levels, n.total)
+      if (n.configured == 0L ||
+          discrete_legend_height_mm(legend, level.columns, n.configured) <= available.height.mm) {
+        return(n.configured)
+      }
+      max.rows <- max(1L, floor(max(0, available.height.mm - 15) / 4.4))
+      min(n.configured, max(1L, (max.rows - 1L) * level.columns))
     }
 
     discrete_labels_fit_one_column <- function(legend, max.levels, label.font.size = 8) {
+      max.levels <- resolve_legend_max_levels(max.levels, length(legend$colors))
       labels <- names(legend$colors)[utils::head(seq_along(legend$colors), max.levels)]
       if (length(labels) == 0L) {
         return(TRUE)
@@ -544,13 +566,46 @@
 
     legends <- collect_legends(spec)
     if (length(spec$annotation.grobs$right) == 0L && length(legends) == 0L) {
-      return(invisible(NULL))
+      return(invisible(list(columns = 0L, entries = list())))
+    }
+
+    legend_key <- function(legends, i) {
+      nms <- names(legends)
+      if (!is.null(nms) && nzchar(nms[i])) {
+        nms[i]
+      } else {
+        legends[[i]]$name
+      }
+    }
+
+    legend_layout_entry <- function(legend, max.levels = NA_integer_,
+                                    level.columns = NA_integer_) {
+      if (identical(legend$type, "discrete")) {
+        n.total <- length(legend$colors)
+        n.shown <- resolve_legend_max_levels(max.levels, n.total)
+        return(list(
+          type = legend$type,
+          name = legend$name,
+          n.total = n.total,
+          n.shown = n.shown,
+          truncated = n.total > n.shown,
+          level.columns = level.columns
+        ))
+      }
+      list(
+        type = legend$type,
+        name = legend$name,
+        n.total = NA_integer_,
+        n.shown = NA_integer_,
+        truncated = FALSE,
+        level.columns = NA_integer_
+      )
     }
 
     n.grob <- length(spec$annotation.grobs$right)
     ncol <- legend_auto_columns(spec, legends)
     wide.legend <- vapply(legends, function(legend) {
-      identical(legend$type, "discrete") && length(legend$colors) > 6L && ncol > 1L
+      identical(legend$type, "discrete") && length(legend$colors) > 6L
     }, logical(1))
     wide.legends <- legends[wide.legend]
     regular.legends <- legends[!wide.legend]
@@ -564,14 +619,28 @@
     if (n.wide > 0L) {
       wide.layouts <- lapply(wide.legends, function(legend) {
         two.column <- min(2L, ncol)
-        one.height <- discrete_legend_height_mm(legend, 1L, spec$legend.max.levels)
+        one.max.levels <- discrete_legend_fit_count(
+          legend,
+          level.columns = 1L,
+          available.height.mm = max(0, wide.available.mm / n.wide),
+          max.levels = spec$legend.max.levels
+        )
+        one.height <- discrete_legend_height_mm(legend, 1L, one.max.levels)
         one.fits <- ncol > 1L &&
-          discrete_labels_fit_one_column(legend, spec$legend.max.levels) &&
+          one.max.levels == resolve_legend_max_levels(spec$legend.max.levels, length(legend$colors)) &&
+          discrete_labels_fit_one_column(legend, one.max.levels) &&
           one.height <= max(0, wide.available.mm / n.wide)
         level.columns <- if (one.fits) 1L else two.column
+        max.levels <- discrete_legend_fit_count(
+          legend,
+          level.columns = level.columns,
+          available.height.mm = max(0, wide.available.mm / n.wide),
+          max.levels = spec$legend.max.levels
+        )
         list(
           level.columns = level.columns,
-          height.mm = discrete_legend_height_mm(legend, level.columns, spec$legend.max.levels)
+          max.levels = max.levels,
+          height.mm = discrete_legend_height_mm(legend, level.columns, max.levels)
         )
       })
       wide.heights <- vapply(wide.layouts, `[[`, numeric(1), "height.mm")
@@ -581,6 +650,31 @@
     }
     use.bottom.regular <- n.wide > 0L && n.regular > 0L &&
       any(vapply(wide.layouts, function(layout) layout$level.columns == 1L, logical(1)))
+
+    legend.layout <- list(columns = ncol, entries = list())
+    if (n.wide > 0L) {
+      for (i in seq_len(n.wide)) {
+        legend.layout$entries[[legend_key(wide.legends, i)]] <- legend_layout_entry(
+          wide.legends[[i]],
+          max.levels = wide.layouts[[i]]$max.levels,
+          level.columns = wide.layouts[[i]]$level.columns
+        )
+      }
+    }
+    if (n.regular > 0L) {
+      for (i in seq_len(n.regular)) {
+        max.levels <- if (identical(regular.legends[[i]]$type, "discrete")) {
+          spec$legend.max.levels
+        } else {
+          NA_integer_
+        }
+        legend.layout$entries[[legend_key(regular.legends, i)]] <- legend_layout_entry(
+          regular.legends[[i]],
+          max.levels = max.levels,
+          level.columns = NA_integer_
+        )
+      }
+    }
 
     append_heights <- function(heights, new.heights) {
       if (is.null(heights)) {
@@ -622,7 +716,7 @@
         grid::pushViewport(grid::viewport(layout.pos.row = row, layout.pos.col = 1:ncol))
         draw_discrete_legend(
           wide.legends[[i]],
-          max.levels = spec$legend.max.levels,
+          max.levels = wide.layouts[[i]]$max.levels,
           level.columns = wide.layouts[[i]]$level.columns
         )
         grid::popViewport()
@@ -642,7 +736,7 @@
       }
     }
     grid::popViewport()
-    invisible(NULL)
+    invisible(legend.layout)
   }
 
   if (isTRUE(newpage)) {
@@ -924,7 +1018,7 @@
 
   # Legends and right-side custom grobs.
   grid::pushViewport(grid::viewport(layout.pos.row = 2:4, layout.pos.col = 6))
-  draw_legends(spec)
+  legend.layout <- draw_legends(spec)
   grid::popViewport()
   grid::popViewport()
   spec$native.layout <- list(
@@ -936,7 +1030,8 @@
       x = label.x,
       mids = mids,
       row.height.mm = column.label.layout$row.height.mm
-    )
+    ),
+    legends = legend.layout
   )
   invisible(spec)
 }

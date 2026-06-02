@@ -175,7 +175,6 @@ p2$plotMarkerHeatmap(
   n.genes.per.group = 3,
   column.metadata = c("n_molecules", "n_genes"),
   row.label.font.size = 8,
-  legend.max.levels = 12,
   split = TRUE,
   show_heatmap_legend = TRUE
 )
