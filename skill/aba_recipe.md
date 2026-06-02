@@ -104,17 +104,18 @@ p2 <- Pagoda2$fromAnnData(
 Check the count matrix:
 
 ```r
-counts <- p2$getRawCounts()
+raw_dim <- dim(p2$getRawCounts())
+raw_nnz <- Matrix::nnzero(p2$getRawCounts())
 load_summary <- data.frame(
   sample = SAMPLE_ID,
-  cells = nrow(counts),
-  genes = ncol(counts),
-  nonzero = Matrix::nnzero(counts),
-  sparsity = 1 - Matrix::nnzero(counts) / prod(dim(counts)),
-  integer_like = all(abs(counts@x - round(counts@x)) < 1e-8)
+  cells = raw_dim[1],
+  genes = raw_dim[2],
+  nonzero = raw_nnz,
+  sparsity = 1 - raw_nnz / prod(raw_dim),
+  integer_like = all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8)
 )
 print(load_summary)
-stopifnot(inherits(counts, "dgCMatrix"))
+stopifnot(inherits(p2$getRawCounts(), "dgCMatrix"))
 stopifnot(load_summary$integer_like)
 ```
 

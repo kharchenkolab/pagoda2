@@ -30,14 +30,15 @@ Create the pagoda2 object directly from that folder. The reader keeps raw counts
 
 ```{r}
 p2 <- suppressMessages(pagoda2::Pagoda2$from10x(data_dir, verbose = FALSE))
-counts <- p2$getRawCounts()
+raw_dim <- dim(p2$getRawCounts())
+raw_nnz <- Matrix::nnzero(p2$getRawCounts())
 
 data.frame(
-  cells = nrow(counts),
-  genes = ncol(counts),
-  nonzero_entries = Matrix::nnzero(counts),
-  sparsity = round(1 - Matrix::nnzero(counts) / prod(dim(counts)), 4),
-  integer_like = all(abs(counts@x - round(counts@x)) < 1e-8)
+  cells = raw_dim[1],
+  genes = raw_dim[2],
+  nonzero_entries = raw_nnz,
+  sparsity = round(1 - raw_nnz / prod(raw_dim), 4),
+  integer_like = all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8)
 )
 ```
 
