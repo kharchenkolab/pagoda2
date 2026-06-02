@@ -4219,7 +4219,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	                               n.genes.per.group=5, z.threshold=3, highest.only=TRUE,
 	                               ordering=c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
 	                               remove.duplicates=TRUE, count.matrix=NULL, n.cores=self$n.cores,
-	                               cols=c("grey88", "firebrick3"), dot.scale=5,
+	                               cols=c("grey88", "firebrick3"), dot.scale=7,
 	                               scale.by="size", text.angle=45, ...) {
 	      resolved <- self$resolveMarkers(markers = markers, type = type)
 	      selected <- .pagoda2_select_marker_genes(
@@ -4266,7 +4266,14 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        scale.by = scale.by,
 	        text.angle = text.angle,
 	        ...
-	      )
+	      ) +
+	        ggplot2::theme(
+	          axis.text = ggplot2::element_text(size = 10.5),
+	          axis.title = ggplot2::element_text(size = 11.5),
+	          legend.text = ggplot2::element_text(size = 10),
+	          legend.title = ggplot2::element_text(size = 10.5),
+	          plot.title = ggplot2::element_text(size = 13)
+	        )
 	    },
 
 		    #' @description Plot marker heatmap using the pagoda2.1 API name.
