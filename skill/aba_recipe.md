@@ -4,7 +4,7 @@ description: Basic single-sample scRNA-seq QC + clustering + markers recipe with
 when_to_use: Use for any single-sample scRNA-seq count dataset when the user wants pagoda2, an R-based sparse workflow, or flexible I/O across 10x triplets, CellRanger HDF5, AnnData h5ad, h5Seurat, loom, RDS, Seurat, or SingleCellExperiment.
 requires_tools: [run_r]
 capabilities_needed: [pagoda2-devel]
-install_from_github_devel: remotes::install_github("kharchenkolab/pagoda2", ref = "devel")
+install_from_github_devel: remotes::install_github("kharchenkolab/pagoda2", ref = "devel", dependencies = TRUE)
 keywords: [pagoda2, scRNA-seq, QC, UMAP, Leiden, marker genes, dotplot, heatmap, h5ad, 10x, h5Seurat, loom]
 produces: [qc_gene_molecule.png, qc_composition_violin.png, pca_elbow.png, umap_leiden.png, marker_dotplot.png, marker_heatmap_native.png, cluster_markers.csv, pagoda2_processed.rds, pagoda2_processed.h5ad]
 domain: genomics
@@ -29,8 +29,7 @@ Install from GitHub `devel` before use:
 if (!requireNamespace("remotes", quietly = TRUE)) {
   install.packages("remotes", repos = "https://cloud.r-project.org")
 }
-remotes::install_github("kharchenkolab/sccore", ref = "devel")
-remotes::install_github("kharchenkolab/pagoda2", ref = "devel")
+remotes::install_github("kharchenkolab/pagoda2", ref = "devel", dependencies = TRUE)
 ```
 
 Then:
@@ -104,18 +103,19 @@ p2 <- Pagoda2$fromAnnData(
 Check the count matrix:
 
 ```r
+matrix_summary <- p2$describeMatrices()
+raw_summary <- matrix_summary[matrix_summary$name == "raw", , drop = FALSE]
 raw_dim <- dim(p2$getRawCounts())
-raw_nnz <- Matrix::nnzero(p2$getRawCounts())
 load_summary <- data.frame(
   sample = SAMPLE_ID,
   cells = raw_dim[1],
   genes = raw_dim[2],
-  nonzero = raw_nnz,
-  sparsity = 1 - raw_nnz / prod(raw_dim),
-  integer_like = all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8)
+  nonzero = raw_summary$nnz,
+  sparsity = 1 - raw_summary$nnz / prod(raw_dim),
+  integer_like = raw_summary$integer.like
 )
 print(load_summary)
-stopifnot(inherits(p2$getRawCounts(), "dgCMatrix"))
+stopifnot(isTRUE(p2$validateMatrices()))
 stopifnot(load_summary$integer_like)
 ```
 
@@ -242,18 +242,15 @@ markers <- p2$runMarkers(
 Write markers:
 
 ```r
-marker_tables <- p2$markerResults$leiden$markers
-marker_df <- if (is.data.frame(marker_tables)) {
-  marker_tables
-} else {
-  do.call(rbind, lapply(names(marker_tables), function(group) {
-    x <- marker_tables[[group]]
-    if (is.null(x) || !nrow(x)) return(NULL)
-    x$group <- group
-    x
-  }))
-}
-utils::write.csv(marker_df, file.path(WORK_DIR, "cluster_markers.csv"))
+marker_tables <- p2$markerResults$counts$leiden$tables
+marker_df <- do.call(rbind, lapply(names(marker_tables), function(group) {
+  x <- marker_tables[[group]]
+  if (is.null(x) || !nrow(x)) return(NULL)
+  x$group <- group
+  x
+}))
+utils::write.csv(marker_df, file.path(WORK_DIR, "cluster_markers.csv"),
+                 row.names = FALSE)
 ```
 
 Show marker summaries:
