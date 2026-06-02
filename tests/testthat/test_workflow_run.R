@@ -19,6 +19,7 @@ make_workflow_p2 <- function() {
 workflow_args <- function() {
   list(
     profile = "pipeline",
+    qc = list(min.molecules = 0, max.molecules = Inf),
     pca = list(nPcs = 3, use.odgenes = FALSE),
     graph = list(k = 3, nrand = 0),
     umap = list(n_neighbors = 3, n_epochs = 20),
@@ -26,6 +27,65 @@ workflow_args <- function() {
     markers = list(append.specificity.metrics = FALSE)
   )
 }
+
+make_qc_p2 <- function() {
+  values <- matrix(120, nrow = 5, ncol = 6)
+  values[, 6] <- 2
+  cm <- Matrix::Matrix(values, sparse = TRUE)
+  rownames(cm) <- paste0("g", seq_len(nrow(cm)))
+  colnames(cm) <- paste0("c", seq_len(ncol(cm)))
+  Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 0,
+    min.transcripts.per.cell = 0
+  )
+}
+
+test_that("filterCells auto-runs QC and filters by qc_pass", {
+  p2 <- make_qc_p2()
+
+  expect_message(p2$filterCells(min.molecules = 100), "running runQC")
+
+  expect_equal(nrow(p2$getRawCounts()), 5)
+  expect_true("qc_pass" %in% colnames(p2$cellMeta))
+  expect_equal(sum(!p2$cellMeta$qc_pass), 1)
+  expect_s3_class(p2$plotQC(), "ggplot")
+})
+
+test_that("run warns about QC failures without filtering by default", {
+  p2 <- make_qc_p2()
+
+  expect_warning(
+    p2$run(steps = "qc", profile = "pipeline", qc = list(min.molecules = 100)),
+    "did not pass QC"
+  )
+
+  expect_equal(nrow(p2$getRawCounts()), 6)
+})
+
+test_that("run can explicitly filter after QC", {
+  p2 <- make_qc_p2()
+
+  expect_silent(
+    p2$run(steps = "qc", profile = "pipeline", qc = list(min.molecules = 100, filter = TRUE))
+  )
+
+  expect_equal(nrow(p2$getRawCounts()), 5)
+  last.run <- p2$history$runs[[length(p2$history$runs)]]
+  expect_identical(last.run$steps$filter$status, "completed")
+})
+
+test_that("filterCells refuses to invalidate downstream results unless forced", {
+  p2 <- make_qc_p2()
+  p2$reductions$PCA <- matrix(0, nrow = 6, ncol = 2, dimnames = list(rownames(p2$getRawCounts()), c("PC1", "PC2")))
+
+  expect_error(p2$filterCells(min.molecules = 100), "invalidate existing")
+  expect_silent(p2$filterCells(min.molecules = 100, force = TRUE))
+  expect_equal(nrow(p2$getRawCounts()), 5)
+  expect_equal(length(p2$reductions), 0)
+})
 
 test_that("run skip markers creates canonical workflow state without markers", {
   testthat::skip_if_not_installed("uwot")
@@ -38,6 +98,9 @@ test_that("run skip markers creates canonical workflow state without markers", {
 
   expect_true(all(c("n_molecules", "n_genes", "leiden") %in% colnames(p2$cellMeta)))
   expect_true("PCA" %in% names(p2$reductions))
+  expect_true("PCA" %in% names(p2$history$pca))
+  expect_equal(nrow(p2$history$pca$PCA$variance), 3)
+  expect_s3_class(p2$plotPCAElbow(), "ggplot")
   expect_true("PCA" %in% names(p2$graphs))
   expect_true("UMAP" %in% names(p2$embeddings$PCA))
   expect_identical(p2$getDefaultGrouping(), "leiden")

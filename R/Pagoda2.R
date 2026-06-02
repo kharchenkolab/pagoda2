@@ -63,6 +63,105 @@ NULL
   utils::modifyList(defaults, args)
 }
 
+.pagoda2_qc_gene_molecule <- function(matrix, min.molecules = 500, max.molecules = 5e4,
+                                      p.level = NULL) {
+  if (is.null(rownames(matrix))) {
+    stop("QC matrix must have cell names as rownames")
+  }
+  if (is.null(p.level)) {
+    p.level <- min(1e-3, 1 / nrow(matrix))
+  }
+  n.molecules <- as.numeric(Matrix::rowSums(matrix))
+  n.genes <- as.numeric(Matrix::rowSums(matrix > 0))
+  qc <- data.frame(
+    n_molecules = n.molecules,
+    n_genes = n.genes,
+    qc_log_molecules = ifelse(n.molecules > 0, log10(n.molecules), NA_real_),
+    qc_log_genes = ifelse(n.genes > 0, log10(n.genes), NA_real_),
+    qc_gene_molecule_fitted = NA_real_,
+    qc_gene_molecule_lower = NA_real_,
+    qc_gene_molecule_upper = NA_real_,
+    qc_gene_molecule_residual = NA_real_,
+    qc_gene_molecule_z = NA_real_,
+    qc_size_outlier = n.molecules < min.molecules | n.molecules > max.molecules,
+    qc_gene_molecule_outlier = FALSE,
+    qc_pass = TRUE,
+    row.names = rownames(matrix)
+  )
+
+  fit.cells <- which(
+    is.finite(qc$qc_log_molecules) &
+      is.finite(qc$qc_log_genes) &
+      qc$n_molecules >= min.molecules &
+      qc$n_molecules <= max.molecules
+  )
+  fit <- NULL
+  sigma <- NA_real_
+  cutoff <- stats::qnorm(1 - p.level / 2)
+  if (length(fit.cells) >= 4L && is.finite(cutoff)) {
+    df <- qc[fit.cells, c("qc_log_molecules", "qc_log_genes"), drop = FALSE]
+    fit <- tryCatch(
+      MASS::rlm(qc_log_genes ~ qc_log_molecules, data = df),
+      error = function(e) NULL
+    )
+    if (!is.null(fit)) {
+      pred <- as.numeric(stats::predict(fit, newdata = qc))
+      qc$qc_gene_molecule_fitted <- pred
+      residual <- qc$qc_log_genes - pred
+      sigma <- stats::mad(residual[fit.cells], center = 0, constant = 1.4826, na.rm = TRUE)
+      if (!is.finite(sigma) || sigma == 0) {
+        sigma <- stats::sd(residual[fit.cells], na.rm = TRUE)
+      }
+      if (is.finite(sigma) && sigma > 0) {
+        qc$qc_gene_molecule_residual <- residual
+        qc$qc_gene_molecule_z <- residual / sigma
+        qc$qc_gene_molecule_lower <- pred - cutoff * sigma
+        qc$qc_gene_molecule_upper <- pred + cutoff * sigma
+        qc$qc_gene_molecule_outlier <- abs(qc$qc_gene_molecule_z) > cutoff
+        qc$qc_gene_molecule_outlier[!is.finite(qc$qc_gene_molecule_z)] <- FALSE
+      }
+    }
+  }
+  qc$qc_pass <- !qc$qc_size_outlier & !qc$qc_gene_molecule_outlier
+  qc$qc_pass[is.na(qc$qc_pass)] <- FALSE
+  attr(qc, "pagoda2.qc") <- list(
+    method = "gene_molecule",
+    min.molecules = min.molecules,
+    max.molecules = max.molecules,
+    p.level = p.level,
+    fit.available = !is.null(fit) && is.finite(sigma) && sigma > 0
+  )
+  qc
+}
+
+.pagoda2_has_downstream_results <- function(p2) {
+  length(p2$reductions) > 0L ||
+    length(p2$graphs) > 0L ||
+    length(p2$embeddings) > 0L ||
+    length(p2$diffgenes) > 0L ||
+    length(p2$markerResults) > 0L ||
+    length(p2$clusterings) > 0L
+}
+
+.pagoda2_filter_analysis_view_cells <- function(view, cells) {
+  for (nm in c("depth", "batch", "preWinsorDepth", "postWinsorDepth")) {
+    if (!is.null(view[[nm]])) {
+      view[[nm]] <- view[[nm]][cells]
+      if (is.factor(view[[nm]])) {
+        view[[nm]] <- droplevels(view[[nm]])
+      }
+    }
+  }
+  view
+}
+
+.pagoda2_matrix_sumsq <- function(x) {
+  if (inherits(x, "sparseMatrix")) {
+    return(sum(x@x^2))
+  }
+  sum(as.numeric(x)^2)
+}
+
 .pagoda2_has_explicit_rownames <- function(x) {
   if (is.data.frame(x)) {
     return(.row_names_info(x, type = 1L) >= 0L)
@@ -1792,12 +1891,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      self$defaultGrouping
 	    },
 
-	    #' @description Calculate basic cell QC metrics and store them in cellMeta.
+	    #' @description Calculate cell QC metrics and store them in cellMeta.
 	    #'
+	    #' @param method QC method. `gene_molecule` models detected genes versus molecule counts.
 	    #' @param overwrite Whether to overwrite existing QC columns.
 	    #' @param matrix Optional cell-by-gene matrix. Defaults to rawCounts when available.
+	    #' @param min.molecules Minimum molecule count for a passing cell.
+	    #' @param max.molecules Maximum molecule count for a passing cell.
+	    #' @param p.level Two-sided outlier level for gene/molecule trend residuals.
 	    #' @return data.frame of QC metrics.
-	    runQC=function(overwrite=FALSE, matrix=NULL) {
+	    runQC=function(method=c("gene_molecule", "metrics"), overwrite=FALSE, matrix=NULL,
+	                   min.molecules=500, max.molecules=5e4, p.level=NULL) {
+	      method <- match.arg(method)
 	      if (is.null(matrix)) {
 	        matrix <- self$rawCounts
 	      }
@@ -1807,17 +1912,160 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      if (is.null(matrix)) {
 	        stop("Cannot run QC before counts are initialized")
 	      }
-	      qc.cols <- c("n_molecules", "n_genes")
+	      qc.cols <- if (method == "metrics") c("n_molecules", "n_genes") else
+	        c("n_molecules", "n_genes", "qc_pass")
 	      if (!overwrite && all(qc.cols %in% colnames(self$cellMeta))) {
 	        return(self$getCellMeta(qc.cols))
 	      }
-	      qc <- data.frame(
-	        n_molecules = as.numeric(Matrix::rowSums(matrix)),
-	        n_genes = as.numeric(Matrix::rowSums(matrix > 0)),
-	        row.names = rownames(matrix)
-	      )
+	      qc <- if (method == "metrics") {
+	        data.frame(
+	          n_molecules = as.numeric(Matrix::rowSums(matrix)),
+	          n_genes = as.numeric(Matrix::rowSums(matrix > 0)),
+	          row.names = rownames(matrix)
+	        )
+	      } else {
+	        .pagoda2_qc_gene_molecule(
+	          matrix,
+	          min.molecules = min.molecules,
+	          max.molecules = max.molecules,
+	          p.level = p.level
+	        )
+	      }
 	      self$setCellMeta(qc, overwrite = TRUE)
+	      self$history$qc <- attr(qc, "pagoda2.qc")
 	      qc
+	    },
+
+	    #' @description Plot cell QC metrics.
+	    #'
+	    #' @param run.qc Whether to run QC automatically when QC columns are absent.
+	    #' @param ... Arguments passed to runQC() if QC needs to be calculated.
+	    #' @return ggplot object.
+	    plotQC=function(run.qc=TRUE, ...) {
+	      if (!requireNamespace("ggplot2", quietly = TRUE)) {
+	        stop("Package `ggplot2` is required for plotQC()")
+	      }
+	      self$syncMetadata()
+	      if (!all(c("n_molecules", "n_genes", "qc_pass") %in% colnames(self$cellMeta))) {
+	        if (!isTRUE(run.qc)) {
+	          stop("QC metrics are missing; call p2$runQC() first or set run.qc = TRUE")
+	        }
+	        self$runQC(...)
+	      }
+	      qc <- self$resolveCellMeta(
+	        columns = intersect(
+	          c("n_molecules", "n_genes", "qc_pass", "qc_gene_molecule_fitted", "qc_gene_molecule_lower", "qc_gene_molecule_upper"),
+	          colnames(self$cellMeta)
+	        )
+	      )
+	      qc$qc_pass <- as.factor(ifelse(qc$qc_pass, "pass", "filter"))
+	      p <- ggplot2::ggplot(qc, ggplot2::aes(x = n_molecules, y = n_genes)) +
+	        ggplot2::geom_point(ggplot2::aes(color = qc_pass), size = 0.35, alpha = 0.45) +
+	        ggplot2::scale_x_log10() +
+	        ggplot2::scale_y_log10() +
+	        ggplot2::scale_color_manual(values = c(pass = "grey35", filter = "firebrick3"), name = "QC") +
+	        ggplot2::theme_bw() +
+	        ggplot2::labs(x = "Molecules per cell", y = "Detected genes per cell")
+	      if (all(c("qc_gene_molecule_fitted", "qc_gene_molecule_lower", "qc_gene_molecule_upper") %in% colnames(qc)) &&
+	          any(is.finite(qc$qc_gene_molecule_fitted))) {
+	        fit <- qc[is.finite(qc$qc_gene_molecule_fitted) & qc$n_molecules > 0, , drop = FALSE]
+	        fit <- fit[order(fit$n_molecules), , drop = FALSE]
+	        fit$fit <- 10^fit$qc_gene_molecule_fitted
+	        fit$lower <- 10^fit$qc_gene_molecule_lower
+	        fit$upper <- 10^fit$qc_gene_molecule_upper
+	        p <- p +
+	          ggplot2::geom_ribbon(
+	            data = fit,
+	            ggplot2::aes(x = n_molecules, ymin = lower, ymax = upper),
+	            inherit.aes = FALSE,
+	            fill = "firebrick3",
+	            alpha = 0.10
+	          ) +
+	          ggplot2::geom_line(
+	            data = fit,
+	            ggplot2::aes(x = n_molecules, y = fit),
+	            inherit.aes = FALSE,
+	            color = "firebrick3",
+	            linewidth = 0.6
+	          )
+	      }
+	      p
+	    },
+
+	    #' @description Filter cells using QC decisions or an explicit cell subset.
+	    #'
+	    #' @param cells Optional explicit cells to keep. NULL uses `pass.column`.
+	    #' @param pass.column Cell metadata column containing TRUE/FALSE QC decisions.
+	    #' @param run.qc Whether to run QC automatically if `pass.column` is missing.
+	    #' @param force Whether to allow filtering after downstream results exist.
+	    #' @param ... Arguments passed to runQC() when QC needs to be calculated.
+	    #' @return Invisibly returns self.
+	    filterCells=function(cells=NULL, pass.column="qc_pass", run.qc=TRUE, force=FALSE, ...) {
+	      self$syncMetadata()
+	      raw <- self$getRawCounts()
+	      if (is.null(cells)) {
+	        if (!pass.column %in% colnames(self$cellMeta)) {
+	          if (!isTRUE(run.qc)) {
+	            stop("Cell metadata column `", pass.column, "` is missing; call p2$runQC() first or set run.qc = TRUE")
+	          }
+	          message("QC metrics not found; running runQC() with default settings.")
+	          self$runQC(...)
+	        }
+	        qc <- self$resolveCellMeta(pass.column)
+	        keep <- qc[[pass.column]]
+	        keep[is.na(keep)] <- FALSE
+	        cells <- rownames(qc)[as.logical(keep)]
+	      } else {
+	        cells <- rownames(raw)[.pagoda2_axis_selection_index(cells, rownames(raw), what = "cell(s)")]
+	      }
+	      if (length(cells) < 3L) {
+	        stop("Filtering would leave fewer than 3 cells")
+	      }
+	      if (identical(cells, rownames(raw))) {
+	        return(invisible(self))
+	      }
+	      if (.pagoda2_has_downstream_results(self) && !isTRUE(force)) {
+	        stop("Filtering cells would invalidate existing reductions, graphs, embeddings, clusterings, or markers. ",
+	             "Create a fresh object or call filterCells(force = TRUE).")
+	      }
+	      removed <- setdiff(rownames(raw), cells)
+	      old.clusterings <- names(self$clusterings)
+	      self$rawCounts <- raw[cells, , drop = FALSE]
+	      self$misc[['rawCounts']] <- self$rawCounts
+	      if (!is.null(self$depth)) {
+	        self$depth <- self$depth[cells]
+	      }
+	      if (!is.null(self$batch)) {
+	        self$batch <- droplevels(self$batch[cells])
+	      }
+	      if (!is.null(self$matrixViews$analysis)) {
+	        self$matrixViews$analysis <- .pagoda2_filter_analysis_view_cells(self$matrixViews$analysis, cells)
+	      }
+	      self$reductions <- list()
+	      self$graphs <- list()
+	      self$embeddings <- list()
+	      self$diffgenes <- list()
+	      self$markerResults <- list()
+	      self$clusterings <- list()
+	      self$clusters <- list()
+	      self$genegraphs <- list()
+	      self$misc[['varinfo']] <- NULL
+	      self$misc[['odgenes']] <- NULL
+	      self$misc[['rescaled.mat']] <- NULL
+	      if (!is.null(self$defaultGrouping) && self$defaultGrouping %in% old.clusterings) {
+	        self$defaultGrouping <- NULL
+	      }
+	      if (is.null(self$history$filters)) {
+	        self$history$filters <- list()
+	      }
+	      self$history$filters[[length(self$history$filters) + 1L]] <- list(
+	        method = if (is.null(pass.column)) "explicit" else pass.column,
+	        kept = length(cells),
+	        removed = length(removed),
+	        removed.cells = removed,
+	        time = Sys.time()
+	      )
+	      invisible(self)
 	    },
 
 	    #' @description Run the canonical pagoda2.1 single-dataset workflow.
@@ -1908,10 +2156,31 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
 	      if ("qc" %in% resolved.steps) {
 	        args <- .pagoda2_step_args(qc, list(overwrite = overwrite))
-	        if (!overwrite && all(c("n_molecules", "n_genes") %in% colnames(self$cellMeta))) {
+	        filter.after.qc <- isTRUE(args$filter)
+	        args$filter <- NULL
+	        expected.qc.cols <- if (!is.null(args$method) && args$method == "metrics") {
+	          c("n_molecules", "n_genes")
+	        } else {
+	          c("n_molecules", "n_genes", "qc_pass")
+	        }
+	        if (!overwrite && all(expected.qc.cols %in% colnames(self$cellMeta))) {
 	          skip_step("qc", args, "QC metrics already exist")
 	        } else {
 	          run_step("qc", args, do.call(self$runQC, args))
+	        }
+	        if ("qc_pass" %in% colnames(self$cellMeta)) {
+	          qc.meta <- self$resolveCellMeta("qc_pass")
+	          n.fail <- sum(!as.logical(qc.meta$qc_pass), na.rm = TRUE)
+	          if (filter.after.qc) {
+	            run_step("filter", list(pass.column = "qc_pass"), self$filterCells(pass.column = "qc_pass"))
+	          } else if (n.fail > 0L) {
+	            warning(
+	              n.fail, " cell(s) did not pass QC. ",
+	              "Call p2$plotQC() to inspect them and p2$filterCells() to filter, ",
+	              "or run p2$run(qc = list(filter = TRUE)) to filter before analysis.",
+	              call. = FALSE
+	            )
+	          }
 	        }
 	      }
 
@@ -4279,13 +4548,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         nPcs <- min(min(length(cells),ncol(x))-1,nPcs)
         cm <- Matrix::colMeans(x[cells,])
         pcs <- irlba(x[cells,], nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=TRUE, ...)
+        total.variance <- .pagoda2_matrix_sumsq(x[cells, , drop = FALSE]) - length(cells) * sum(cm^2)
       } else {
         nPcs <- min(min(nrow(x),ncol(x))-1,nPcs)
         if (center) {
           cm <- Matrix::colMeans(x)
           pcs <- irlba(x, nv=nPcs, nu=0, center=cm, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=TRUE, ...)
+          total.variance <- .pagoda2_matrix_sumsq(x) - nrow(x) * sum(cm^2)
         } else {
           pcs <- irlba(x, nv=nPcs, nu=0, right_only=FALSE,fastpath=fastpath,maxit=maxit,reorth=TRUE, ...)
+          total.variance <- .pagoda2_matrix_sumsq(x)
         }
       }
       rownames(pcs$v) <- colnames(x)
@@ -4317,6 +4589,29 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #pcas <- scde::winsorize.matrix(pcas,0.1)
       if (verbose) message(' done\n')
       self$reductions[[name]] <- pcas
+      percent.variance <- if (is.finite(total.variance) && total.variance > 0) {
+        100 * pcs$d^2 / total.variance
+      } else {
+        rep(NA_real_, length(pcs$d))
+      }
+      pca.variance <- data.frame(
+        component = seq_along(percent.variance),
+        percent_variance = percent.variance,
+        cumulative_percent_variance = cumsum(percent.variance),
+        stringsAsFactors = FALSE
+      )
+      if (is.null(self$history$pca)) {
+        self$history$pca <- list()
+      }
+      self$history$pca[[name]] <- list(
+        reduction = name,
+        total_variance = total.variance,
+        n.cells = if (is.null(cells)) nrow(x) else length(cells),
+        n.genes = ncol(x),
+        genes = colnames(x),
+        variance = pca.variance,
+        params = list(nPcs = nPcs, type = type, use.odgenes = use.odgenes, center = center)
+      )
       ## nIcs <- nPcs;
       ## a <- ica.R.def(t(pcas),nIcs,tol=1e-3,fun='logcosh',maxit=200,verbose=T,alpha=1,w.init=matrix(rnorm(nIcs*nPcs),nIcs,nPcs))
       ## reductions[['ICA']] <- as.matrix( x %*% pcs$v %*% a);
@@ -4331,6 +4626,45 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return Invisible PCA result.
 	    runPCA=function(...) {
 	      self$calculatePcaReduction(..., .legacy.warn = FALSE)
+	    },
+
+	    #' @description Plot PCA variance explained.
+	    #'
+	    #' @param reduction Reduction name. NULL uses the default reduction.
+	    #' @param max.components Optional maximum number of components to show.
+	    #' @param plot.theme ggplot theme.
+	    #' @return ggplot object.
+	    plotPCAElbow=function(reduction=NULL, max.components=NULL, plot.theme=ggplot2::theme_bw()) {
+	      if (!requireNamespace("ggplot2", quietly = TRUE)) {
+	        stop("Package `ggplot2` is required for plotPCAElbow()")
+	      }
+	      if (is.null(reduction)) {
+	        reduction <- self$defaults$reduction
+	      }
+	      info <- if (!is.null(self$history$pca)) self$history$pca[[reduction]] else NULL
+	      if (is.null(info) || is.null(info$variance)) {
+	        stop("PCA variance information is not available for reduction `", reduction, "`. Re-run p2$runPCA(name = \"", reduction, "\").")
+	      }
+	      df <- info$variance
+	      if (!is.null(max.components)) {
+	        df <- df[df$component <= max.components, , drop = FALSE]
+	      }
+	      plot.df <- rbind(
+	        data.frame(component = df$component, percent = df$percent_variance, curve = "Per component"),
+	        data.frame(component = df$component, percent = df$cumulative_percent_variance, curve = "Cumulative")
+	      )
+	      plot.df$curve <- factor(plot.df$curve, levels = c("Per component", "Cumulative"))
+	      ggplot2::ggplot(plot.df, ggplot2::aes(x = component, y = percent, linetype = curve)) +
+	        ggplot2::geom_line(color = "grey20", linewidth = 0.7) +
+	        ggplot2::geom_point(color = "grey20", size = 1.8) +
+	        ggplot2::scale_linetype_manual(values = c("Per component" = "solid", "Cumulative" = "dashed"), name = NULL) +
+	        ggplot2::theme_bw() +
+	        plot.theme +
+	        ggplot2::labs(
+	          x = "Principal component",
+	          y = "% variance explained",
+	          title = paste0(reduction, " variance explained")
+	        )
 	    },
 
 	    #' @description Reset overdispersed genes 'odgenes' to be a superset of the standard odgene selection (guided by n.odgenes or alpha), 

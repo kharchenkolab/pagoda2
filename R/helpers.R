@@ -333,7 +333,7 @@ read.10x.matrices <- function(matrixPaths, version='V3', n.cores=1, verbose=TRUE
 #' @export gene.vs.molecule.cell.filter
 gene.vs.molecule.cell.filter <- function(countMatrix, min.cell.size=500, max.cell.size=5e4, p.level=min(1e-3,1/ncol(countMatrix)), alpha=0.1, plot=TRUE, do.par=TRUE, .legacy.warn=TRUE) {
   if (.legacy.warn) {
-    .pagoda2_deprecated_call("gene.vs.molecule.cell.filter()", "p2$run(steps = \"qc\")")
+    .pagoda2_deprecated_call("gene.vs.molecule.cell.filter()", "p2$runQC(); p2$plotQC(); p2$filterCells()")
   }
   if(plot) {
     if(do.par) { 
