@@ -16,6 +16,11 @@ readCounts(
   cell.prefix = NULL,
   sample.name = NULL,
   sample.pattern = NULL,
+  matrix.file = NULL,
+  barcodes.file = NULL,
+  features.file = NULL,
+  genes.file = NULL,
+  files = NULL,
   validate.integer = TRUE,
   return.metadata = FALSE,
   chunk.size = 1000L,
@@ -51,6 +56,14 @@ h5Seurat, CellRanger HDF5, and loom files.}
 \item{sample.name}{Optional sample name recorded in cell metadata.}
 
 \item{sample.pattern}{Optional regex used to select one triplet from a directory with several renamed triplets.}
+
+\item{matrix.file, barcodes.file, features.file, genes.file}{Optional explicit
+10x Matrix Market triplet file paths. Relative paths are resolved against
+\code{path}. \code{features.file} is used for V3-style feature files;
+\code{genes.file} is used for V2-style gene files.}
+
+\item{files}{Optional named list with explicit 10x file paths: \code{matrix},
+\code{barcodes}, and either \code{features} or \code{genes}.}
 
 \item{validate.integer}{Whether to reject non-integer count values.}
 

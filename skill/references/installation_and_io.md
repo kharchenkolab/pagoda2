@@ -69,8 +69,41 @@ Pagoda2 can detect standard 10x files and many renamed triplet attachments:
 - barcodes: `barcodes.tsv`, `*.barcodes.tsv.gz`
 - genes/features: `features.tsv`, `genes.tsv`, renamed equivalents
 
-When a directory contains multiple triplets, use `sample.pattern` in
-`reader.args` to select one.
+For arbitrary filenames, specify the triplet explicitly. Relative file paths are
+resolved against the directory passed to `Pagoda2$from()`:
+
+```r
+p2 <- Pagoda2$from(
+  "sample_dir",
+  format = "10x",
+  reader.args = list(
+    files = list(
+      matrix = "custom_matrix_name.mtx.gz",
+      barcodes = "custom_cells.tsv.gz",
+      features = "custom_genes.tsv.gz"
+    )
+  )
+)
+```
+
+Equivalent direct arguments are also supported:
+
+```r
+p2 <- Pagoda2$from(
+  "sample_dir",
+  format = "10x",
+  reader.args = list(
+    matrix.file = "custom_matrix_name.mtx.gz",
+    barcodes.file = "custom_cells.tsv.gz",
+    features.file = "custom_genes.tsv.gz"
+  )
+)
+```
+
+For V2-style 10x annotations, use `genes = ...` in the `files` list or
+`genes.file = ...` with `version = "V2"`. When a directory contains multiple
+detectable triplets and you do not specify files explicitly, use
+`sample.pattern` in `reader.args` to select one.
 
 ## Load Sanity Report
 

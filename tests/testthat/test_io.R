@@ -221,6 +221,62 @@ test_that("readCounts autodetects renamed gzipped GEO-style 10x triplets", {
   expect_equal(as.matrix(counts), as.matrix(cm))
 })
 
+test_that("readCounts accepts explicit 10x triplet filenames", {
+  cm <- make_io_matrix()
+  td <- tempfile("p2_readcounts_explicit")
+  paths <- write_10x_triplet(td, cm, version = "V3")
+  custom <- file.path(td, c("counts_payload.dat", "cells_payload.dat", "genes_payload.dat"))
+  expect_true(all(file.rename(paths, custom)))
+
+  imported <- readCounts(
+    td,
+    format = "10x",
+    matrix.file = basename(custom[1]),
+    barcodes.file = basename(custom[2]),
+    features.file = basename(custom[3]),
+    return.metadata = TRUE,
+    verbose = FALSE
+  )
+
+  expect_true(inherits(imported$counts, "dgCMatrix"))
+  expect_identical(rownames(imported$counts), rownames(cm))
+  expect_identical(colnames(imported$counts), colnames(cm))
+  expect_equal(as.matrix(imported$counts), as.matrix(cm))
+  expect_identical(imported$files$matrix, custom[1])
+  expect_identical(imported$files$barcodes, custom[2])
+  expect_identical(imported$files$features, custom[3])
+})
+
+test_that("Pagoda2 from accepts explicit 10x triplet files through reader args", {
+  cm <- make_io_matrix()
+  td <- tempfile("p2_from_explicit")
+  paths <- write_10x_triplet(td, cm, version = "V2")
+  custom <- file.path(td, c("matrix_payload.dat", "cell_payload.dat", "gene_payload.dat"))
+  expect_true(all(file.rename(paths, custom)))
+
+  p2 <- Pagoda2$from(
+    td,
+    format = "10x",
+    reader.args = list(
+      version = "V2",
+      files = list(
+        matrix = custom[1],
+        barcodes = custom[2],
+        genes = custom[3]
+      ),
+      verbose = FALSE
+    ),
+    verbose = FALSE
+  )
+
+  expect_s3_class(p2, "Pagoda2")
+  expect_equal(as.matrix(p2$getRawCounts(orientation = "gene_by_cell")), as.matrix(cm))
+  expect_identical(p2$history$input$files$matrix, custom[1])
+  expect_identical(p2$history$input$files$barcodes, custom[2])
+  expect_identical(p2$history$input$files$features, custom[3])
+  expect_identical(p2$history$input$files$version, "V2")
+})
+
 test_that("readCounts supports explicit cell prefixes and sample metadata", {
   cm <- make_io_matrix()
   td <- tempfile("p2_readcounts_prefix")

@@ -200,6 +200,85 @@
 }
 
 #' @keywords internal
+.pagoda2_resolve_explicit_10x_file <- function(path, file, role) {
+  if (is.null(file)) {
+    return(NULL)
+  }
+  if (!is.character(file) || length(file) != 1L || !nzchar(file)) {
+    stop("`", role, ".file` must be a single non-empty path")
+  }
+  candidates <- file
+  if (!is.null(path) && dir.exists(path) && !grepl("^(/|~)", file)) {
+    candidates <- c(file.path(path, file), file)
+  }
+  candidates <- path.expand(candidates)
+  found <- candidates[file.exists(candidates)]
+  if (length(found) == 0L) {
+    stop("Explicit 10x ", role, " file does not exist: ", file)
+  }
+  found[[1]]
+}
+
+#' @keywords internal
+.pagoda2_explicit_10x_triplet <- function(path, version = c("auto", "V3", "V2"),
+                                          matrix.file = NULL, barcodes.file = NULL,
+                                          features.file = NULL, genes.file = NULL,
+                                          files = NULL) {
+  version <- match.arg(version)
+  if (!is.null(files)) {
+    if (!is.list(files)) {
+      stop("`files` must be a named list with matrix, barcodes, and features or genes paths")
+    }
+    if (is.null(matrix.file)) {
+      matrix.file <- files$matrix
+    }
+    if (is.null(barcodes.file)) {
+      barcodes.file <- files$barcodes
+    }
+    if (is.null(features.file)) {
+      features.file <- files$features
+    }
+    if (is.null(genes.file)) {
+      genes.file <- files$genes
+    }
+  }
+  has.explicit <- any(!vapply(
+    list(matrix.file, barcodes.file, features.file, genes.file),
+    is.null,
+    logical(1)
+  ))
+  if (!has.explicit) {
+    return(NULL)
+  }
+  matrix.file <- .pagoda2_resolve_explicit_10x_file(path, matrix.file, "matrix")
+  barcodes.file <- .pagoda2_resolve_explicit_10x_file(path, barcodes.file, "barcodes")
+  features.file <- .pagoda2_resolve_explicit_10x_file(path, features.file, "features")
+  genes.file <- .pagoda2_resolve_explicit_10x_file(path, genes.file, "genes")
+  if (is.null(matrix.file) || is.null(barcodes.file)) {
+    stop("Explicit 10x input requires `matrix.file` and `barcodes.file`")
+  }
+  feature.role <- if (version == "V2") {
+    "genes"
+  } else if (version == "V3") {
+    "features"
+  } else if (!is.null(features.file)) {
+    "features"
+  } else {
+    "genes"
+  }
+  feature.file <- if (feature.role == "features") features.file else genes.file
+  if (is.null(feature.file)) {
+    stop("Explicit 10x input requires `", feature.role, ".file` for version `", version, "`")
+  }
+  list(
+    matrix = matrix.file,
+    barcodes = barcodes.file,
+    features = feature.file,
+    version = if (identical(feature.role, "features")) "V3" else "V2"
+  )
+}
+
+#' @keywords internal
 .pagoda2_read_h5_sparse_csc <- function(group) {
   data <- as.numeric(group[["data"]][])
   indices <- as.integer(group[["indices"]][] + 1L)
@@ -285,11 +364,24 @@
 .pagoda2_read_10x_dir <- function(path, version = c("auto", "V3", "V2"), gene.id = c("symbol", "id"),
                                   feature.type = NULL, make.unique.genes = FALSE,
                                   cell.prefix = NULL, sample.name = NULL,
-                                  sample.pattern = NULL, validate.integer = TRUE,
+                                  sample.pattern = NULL, matrix.file = NULL, barcodes.file = NULL,
+                                  features.file = NULL, genes.file = NULL, files = NULL,
+                                  validate.integer = TRUE,
                                   verbose = TRUE) {
   version <- match.arg(version)
   gene.id <- match.arg(gene.id)
-  triplet <- .pagoda2_detect_10x_triplet(path, version = version, sample.pattern = sample.pattern)
+  triplet <- .pagoda2_explicit_10x_triplet(
+    path = path,
+    version = version,
+    matrix.file = matrix.file,
+    barcodes.file = barcodes.file,
+    features.file = features.file,
+    genes.file = genes.file,
+    files = files
+  )
+  if (is.null(triplet)) {
+    triplet <- .pagoda2_detect_10x_triplet(path, version = version, sample.pattern = sample.pattern)
+  }
   if (verbose) {
     message("Reading 10x matrix: ", triplet$matrix)
   }
@@ -1037,6 +1129,12 @@
 #' @param cell.prefix Optional string to prefix to cell barcodes.
 #' @param sample.name Optional sample name recorded in cell metadata.
 #' @param sample.pattern Optional regex used to select one triplet from a directory with several renamed triplets.
+#' @param matrix.file,barcodes.file,features.file,genes.file Optional explicit
+#' 10x Matrix Market triplet file paths. Relative paths are resolved against
+#' `path`. `features.file` is used for V3-style feature files; `genes.file` is
+#' used for V2-style gene files.
+#' @param files Optional named list with explicit 10x file paths: `matrix`,
+#' `barcodes`, and either `features` or `genes`.
 #' @param validate.integer Whether to reject non-integer count values.
 #' @param return.metadata Whether to return a list with counts, cellMeta, geneMeta, and files.
 #' @param verbose Whether to report detected files.
@@ -1048,7 +1146,9 @@ readCounts <- function(path, format = c("auto", "10x", "10x_h5", "h5ad", "h5seur
                        gene.id = c("symbol", "id"), feature.type = NULL,
                        genome = NULL, assay = NULL, layer = NULL, use.raw = FALSE,
                        make.unique.genes = FALSE, cell.prefix = NULL, sample.name = NULL,
-                       sample.pattern = NULL, validate.integer = TRUE,
+                       sample.pattern = NULL, matrix.file = NULL, barcodes.file = NULL,
+                       features.file = NULL, genes.file = NULL, files = NULL,
+                       validate.integer = TRUE,
                        return.metadata = FALSE, chunk.size = 1000L, verbose = TRUE) {
   format <- .pagoda2_normalize_format(format)
   version <- match.arg(version)
@@ -1067,6 +1167,11 @@ readCounts <- function(path, format = c("auto", "10x", "10x_h5", "h5ad", "h5seur
       cell.prefix = cell.prefix,
       sample.name = sample.name,
       sample.pattern = sample.pattern,
+      matrix.file = matrix.file,
+      barcodes.file = barcodes.file,
+      features.file = features.file,
+      genes.file = genes.file,
+      files = files,
       validate.integer = validate.integer,
       verbose = verbose
     ),
