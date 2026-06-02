@@ -396,7 +396,7 @@
 
   resolve_legend_max_levels <- function(max.levels, n.total) {
     if (is.null(max.levels) || length(max.levels) == 0L ||
-        !is.finite(max.levels[1])) {
+      !is.finite(max.levels[1])) {
       return(n.total)
     }
     max(0L, min(n.total, as.integer(max.levels[1])))
@@ -458,19 +458,23 @@
       row <- ((i - 1L) %% level.rows) + 1L
       x0 <- 0.02 + (col - 1L) * column.width
       y <- first.row.y.mm - (row - 1L) * step.mm
-      grid::grid.rect(x = grid::unit(x0, "npc"), y = grid::unit(y, "mm"),
-                      width = grid::unit(3.2, "mm"), height = grid::unit(2.4, "mm"),
-                      just = c("left", "center"),
-                      gp = grid::gpar(fill = colors[shown[i]], col = NA))
+      grid::grid.rect(
+        x = grid::unit(x0, "npc"), y = grid::unit(y, "mm"),
+        width = grid::unit(3.2, "mm"), height = grid::unit(2.4, "mm"),
+        just = c("left", "center"),
+        gp = grid::gpar(fill = colors[shown[i]], col = NA)
+      )
       grid::grid.text(display.labels[i],
-                      x = grid::unit(x0, "npc") + grid::unit(4.4, "mm"),
-                      y = grid::unit(y, "mm"), just = c("left", "center"), gp = label.gp)
+        x = grid::unit(x0, "npc") + grid::unit(4.4, "mm"),
+        y = grid::unit(y, "mm"), just = c("left", "center"), gp = label.gp
+      )
     }
     if (n.total > n) {
       grid::grid.text(paste0("+", n.total - n, " more"),
-                      x = grid::unit(0.02, "npc"),
-                      y = grid::unit(first.row.y.mm - level.rows * step.mm, "mm"),
-                      just = c("left", "center"), gp = grid::gpar(fontsize = label.font.size, col = "grey30"))
+        x = grid::unit(0.02, "npc"),
+        y = grid::unit(first.row.y.mm - level.rows * step.mm, "mm"),
+        just = c("left", "center"), gp = grid::gpar(fontsize = label.font.size, col = "grey30")
+      )
     }
     invisible(NULL)
   }
@@ -487,8 +491,10 @@
       gp = grid::gpar(fontsize = title.font.size, fontface = "bold")
     )
     pal <- legend$palette
-    grid::grid.raster(matrix(rev(pal), ncol = 1), x = 0.22, y = 0.5, width = 0.07, height = 0.72,
-                      interpolate = FALSE)
+    grid::grid.raster(matrix(rev(pal), ncol = 1),
+      x = 0.22, y = 0.5, width = 0.07, height = 0.72,
+      interpolate = FALSE
+    )
     rng <- legend$range
     if (all(is.finite(rng))) {
       grid::grid.text(format(signif(rng[2], 3)), x = 0.33, y = 0.86, just = c("left", "center"), gp = grid::gpar(fontsize = label.font.size))
@@ -544,7 +550,7 @@
       n.total <- length(legend$colors)
       n.configured <- resolve_legend_max_levels(max.levels, n.total)
       if (n.configured == 0L ||
-          discrete_legend_height_mm(legend, level.columns, n.configured) <= available.height.mm) {
+        discrete_legend_height_mm(legend, level.columns, n.configured) <= available.height.mm) {
         return(n.configured)
       }
       max.rows <- max(1L, floor(max(0, available.height.mm - 15) / 4.4))
@@ -822,8 +828,10 @@
   } else {
     1
   }
-  grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = 4:5,
-                                    xscale = c(0, x.max), clip = "off"))
+  grid::pushViewport(grid::viewport(
+    layout.pos.row = 1, layout.pos.col = 4:5,
+    xscale = c(0, x.max), clip = "off"
+  ))
   column.label.layout <- prepare_column_label_layout(
     labels = column.label.rle$values,
     lengths = column.label.rle$lengths,
@@ -859,22 +867,27 @@
     label.y.mm <- leader.anchor.mm
   }
   if (any(shifted)) {
-    grid::grid.segments(x0 = grid::unit(mids[shifted], "native"),
-                        x1 = grid::unit(label.x[shifted], "native"),
-                        y0 = grid::unit(0, "mm"),
-                        y1 = grid::unit(leader.end.mm[shifted], "mm"),
-                        gp = label.leader.gp)
+    grid::grid.segments(
+      x0 = grid::unit(mids[shifted], "native"),
+      x1 = grid::unit(label.x[shifted], "native"),
+      y0 = grid::unit(0, "mm"),
+      y1 = grid::unit(leader.end.mm[shifted], "mm"),
+      gp = label.leader.gp
+    )
   }
   if (column.label.layout$angle == 0) {
-    grid::grid.text(column.label.layout$labels, x = grid::unit(label.x, "native"), y = 0.52,
-                    gp = grid::gpar(fontsize = column.label.layout$font.size), just = "center")
+    grid::grid.text(column.label.layout$labels,
+      x = grid::unit(label.x, "native"), y = 0.52,
+      gp = grid::gpar(fontsize = column.label.layout$font.size), just = "center"
+    )
   } else {
     grid::grid.text(column.label.layout$labels,
-                    x = grid::unit(label.x, "native"),
-                    y = grid::unit(label.y.mm, "mm"),
-                    rot = column.label.layout$angle,
-                    gp = grid::gpar(fontsize = column.label.layout$font.size),
-                    just = c("left", "bottom"))
+      x = grid::unit(label.x, "native"),
+      y = grid::unit(label.y.mm, "mm"),
+      rot = column.label.layout$angle,
+      gp = grid::gpar(fontsize = column.label.layout$font.size),
+      just = c("left", "bottom")
+    )
   }
   grid::popViewport()
 
@@ -889,8 +902,10 @@
       track.heights <- grid::unit(rep(5, n.top.tracks), "mm")
       top.heights <- if (is.null(top.heights)) track.heights else grid::unit.c(top.heights, track.heights)
     }
-    grid::pushViewport(grid::viewport(layout.pos.row = 2, layout.pos.col = 4,
-                                      layout = grid::grid.layout(top.rows, 1, heights = top.heights)))
+    grid::pushViewport(grid::viewport(
+      layout.pos.row = 2, layout.pos.col = 4,
+      layout = grid::grid.layout(top.rows, 1, heights = top.heights)
+    ))
     if (n.top.grobs > 0L) {
       for (i in seq_len(n.top.grobs)) {
         grid::pushViewport(grid::viewport(layout.pos.row = i, layout.pos.col = 1))
@@ -904,12 +919,16 @@
         row <- n.top.grobs + i
         grid::pushViewport(grid::viewport(layout.pos.row = row, layout.pos.col = 1))
         track.raster <- grDevices::as.raster(matrix(top.tracks[[i]][colnames(x)], nrow = 1))
-        grid::grid.raster(track.raster, width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
-                          interpolate = FALSE)
+        grid::grid.raster(track.raster,
+          width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
+          interpolate = FALSE
+        )
         cb <- group_boundaries(spec$groups[colnames(x)])
         if (isTRUE(spec$split) && length(cb) > 0L) {
-          grid::grid.segments(x0 = cb / n.cols, x1 = cb / n.cols, y0 = 0, y1 = 1,
-                              gp = separator.gp)
+          grid::grid.segments(
+            x0 = cb / n.cols, x1 = cb / n.cols, y0 = 0, y1 = 1,
+            gp = separator.gp
+          )
         }
         grid::grid.rect(gp = border.gp)
         grid::grid.text(track.names[i], x = 1.002, y = 0.5, just = c("left", "center"), gp = grid::gpar(fontsize = 7))
@@ -921,8 +940,10 @@
 
   # Left custom grobs.
   if (n.left.grobs > 0L) {
-    grid::pushViewport(grid::viewport(layout.pos.row = 3, layout.pos.col = 1,
-                                      layout = grid::grid.layout(1, n.left.grobs)))
+    grid::pushViewport(grid::viewport(
+      layout.pos.row = 3, layout.pos.col = 1,
+      layout = grid::grid.layout(1, n.left.grobs)
+    ))
     for (i in seq_len(n.left.grobs)) {
       grid::pushViewport(grid::viewport(layout.pos.row = 1, layout.pos.col = i))
       grid::grid.draw(spec$annotation.grobs$left[[i]])
@@ -942,11 +963,15 @@
     label.y <- spread_npc_positions(mids, min.y.gap, lower = 0.01, upper = 0.99)
     shifted <- abs(label.y - mids) > 0.003
     if (any(shifted)) {
-      grid::grid.segments(x0 = 0.99, x1 = 0.96, y0 = mids[shifted], y1 = label.y[shifted],
-                          gp = label.leader.gp)
+      grid::grid.segments(
+        x0 = 0.99, x1 = 0.96, y0 = mids[shifted], y1 = label.y[shifted],
+        gp = label.leader.gp
+      )
     }
-    grid::grid.text(rr$values, x = 0.93, y = label.y, just = c("right", "center"),
-                    gp = grid::gpar(fontsize = row.group.font.size))
+    grid::grid.text(rr$values,
+      x = 0.93, y = label.y, just = c("right", "center"),
+      gp = grid::gpar(fontsize = row.group.font.size)
+    )
     grid::popViewport()
   }
 
@@ -955,12 +980,15 @@
     grid::pushViewport(grid::viewport(layout.pos.row = 3, layout.pos.col = 3))
     row.colors <- row.group.colors[as.character(row.groups)]
     grid::grid.raster(grDevices::as.raster(matrix(row.colors, ncol = 1)),
-                      width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
-                      interpolate = FALSE)
+      width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
+      interpolate = FALSE
+    )
     rb <- group_boundaries(row.groups)
     if (isTRUE(spec$split) && length(rb) > 0L) {
-      grid::grid.segments(x0 = 0, x1 = 1, y0 = 1 - rb / n.rows, y1 = 1 - rb / n.rows,
-                          gp = separator.gp)
+      grid::grid.segments(
+        x0 = 0, x1 = 1, y0 = 1 - rb / n.rows, y1 = 1 - rb / n.rows,
+        gp = separator.gp
+      )
     }
     grid::grid.rect(gp = border.gp)
     grid::popViewport()
@@ -969,18 +997,23 @@
   # Main heatmap.
   grid::pushViewport(grid::viewport(layout.pos.row = 3, layout.pos.col = 4))
   grid::grid.raster(grDevices::as.raster(heatmap_color_matrix(x, spec$expression.palette)),
-                    width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
-                    interpolate = FALSE)
+    width = grid::unit(1, "npc"), height = grid::unit(1, "npc"),
+    interpolate = FALSE
+  )
   if (isTRUE(spec$split)) {
     cb <- group_boundaries(spec$groups[colnames(x)])
     if (length(cb) > 0L) {
-      grid::grid.segments(x0 = cb / n.cols, x1 = cb / n.cols, y0 = 0, y1 = 1,
-                          gp = separator.gp)
+      grid::grid.segments(
+        x0 = cb / n.cols, x1 = cb / n.cols, y0 = 0, y1 = 1,
+        gp = separator.gp
+      )
     }
     rb <- group_boundaries(row.groups)
     if (length(rb) > 0L) {
-      grid::grid.segments(x0 = 0, x1 = 1, y0 = 1 - rb / n.rows, y1 = 1 - rb / n.rows,
-                          gp = separator.gp)
+      grid::grid.segments(
+        x0 = 0, x1 = 1, y0 = 1 - rb / n.rows, y1 = 1 - rb / n.rows,
+        gp = separator.gp
+      )
     }
   }
   if (isTRUE(spec$border)) {
@@ -999,15 +1032,19 @@
     min.gap <- grid::convertHeight(grid::unit(spec$row.label.font.size * 1.25, "pt"), "npc", valueOnly = TRUE)
     y <- spread_npc_positions(row.y, min.gap)
     grid::grid.segments(x0 = 0, x1 = 0.08, y0 = row.y, y1 = y, gp = label.leader.gp)
-    grid::grid.text(rownames(x)[label.indices], x = 0.1, y = y, just = c("left", "center"),
-                    gp = grid::gpar(fontsize = spec$row.label.font.size))
+    grid::grid.text(rownames(x)[label.indices],
+      x = 0.1, y = y, just = c("left", "center"),
+      gp = grid::gpar(fontsize = spec$row.label.font.size)
+    )
   }
   grid::popViewport()
 
   # Bottom custom grobs.
   if (n.bottom.grobs > 0L) {
-    grid::pushViewport(grid::viewport(layout.pos.row = 4, layout.pos.col = 4,
-                                      layout = grid::grid.layout(n.bottom.grobs, 1)))
+    grid::pushViewport(grid::viewport(
+      layout.pos.row = 4, layout.pos.col = 4,
+      layout = grid::grid.layout(n.bottom.grobs, 1)
+    ))
     for (i in seq_len(n.bottom.grobs)) {
       grid::pushViewport(grid::viewport(layout.pos.row = i, layout.pos.col = 1))
       grid::grid.draw(spec$annotation.grobs$bottom[[i]])
