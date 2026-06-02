@@ -79,8 +79,7 @@ The QC step records molecule counts, detected-gene counts, and a default
 gene-versus-molecule pass/fail decision in `p2$cellMeta`.
 
 ```{r qc}
-p2$runQC()
-head(p2$getCellMeta(c("n_molecules", "n_genes", "qc_pass"), resolved = TRUE))
+p2$runQC(verbose = TRUE)
 ```
 
 Most workflow methods are quiet by default. Use `verbose = TRUE` when you want a
@@ -126,7 +125,7 @@ table(p2$getGrouping())
 
 The PCA elbow plot helps show how much of the total PCA-input variance is
 captured by each component. The solid curve shows the percent explained by each
-component; the dashed curve shows the cumulative amount explained.
+component; the gray curve shows the cumulative amount explained.
 
 ```{r pca-elbow, fig.height=4}
 p2$plotPCAElbow()
@@ -151,17 +150,20 @@ p2$plotEmbedding(
 The default run stores marker genes for the default grouping. A dot plot gives a
 compact summary of marker expression by cluster.
 
-```{r marker-dotplot, fig.width=12, fig.height=7}
-p2$plotMarkerDotPlot() +
+```{r marker-dotplot, fig.width=15, fig.height=9}
+p2$plotMarkerDotPlot(n.genes.per.group = 3, dot.scale = 5, text.angle = 60) +
   labs(title = "Leiden marker genes")
 ```
 
 The native marker heatmap uses the same marker result and grouping. Here the
 top annotation tracks show the QC metrics calculated earlier.
 
-```{r marker-heatmap, fig.width=12, fig.height=8}
+```{r marker-heatmap, fig.width=15, fig.height=9}
 p2$plotMarkerHeatmap(
+  n.genes.per.group = 3,
   column.metadata = c("n_molecules", "n_genes"),
+  row.label.font.size = 8,
+  legend.max.levels = 12,
   split = TRUE,
   show_heatmap_legend = TRUE
 )

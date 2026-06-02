@@ -349,8 +349,10 @@
     horizontal.x <- spread_npc_positions(mids, horizontal.gap, lower = 0.01, upper = x.max - 0.015)
     horizontal.shift <- max(abs(horizontal.x - mids), na.rm = TRUE)
     horizontal.span <- if (length(labels) > 1L) (length(labels) - 1L) * horizontal.gap else 0
+    group.widths <- lengths / n.cols
+    labels.fit.groups <- all((extents$width + pad.mm) / heatmap.width.mm <= pmax(group.widths, 0.005))
     use.angled <- length(labels) > 1L && (
-      horizontal.shift > 0.10 || horizontal.span > available * 0.95
+      !labels.fit.groups || horizontal.shift > 0.10 || horizontal.span > available * 0.95
     )
 
     angle <- if (use.angled) 35 else 0

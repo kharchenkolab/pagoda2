@@ -1929,8 +1929,16 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      if (is.null(matrix)) {
 	        stop("Cannot run QC before counts are initialized")
 	      }
-	      qc.cols <- if (method == "metrics") c("n_molecules", "n_genes") else
-	        c("n_molecules", "n_genes", "qc_pass")
+	      qc.cols <- if (method == "metrics") {
+	        c("n_molecules", "n_genes")
+	      } else {
+	        c(
+	          "n_molecules", "n_genes", "qc_log_molecules", "qc_log_genes",
+	          "qc_gene_molecule_fitted", "qc_gene_molecule_lower", "qc_gene_molecule_upper",
+	          "qc_gene_molecule_residual", "qc_gene_molecule_z", "qc_size_outlier",
+	          "qc_gene_molecule_outlier", "qc_pass"
+	        )
+	      }
 	      if (!overwrite && all(qc.cols %in% colnames(self$cellMeta))) {
 	        qc <- self$getCellMeta(qc.cols)
 	        if (isTRUE(verbose)) {
@@ -1978,36 +1986,79 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      qc <- self$resolveCellMeta(
 	        columns = intersect(
-	          c("n_molecules", "n_genes", "qc_pass", "qc_gene_molecule_fitted", "qc_gene_molecule_lower", "qc_gene_molecule_upper"),
+	          c("n_molecules", "n_genes", "qc_log_molecules", "qc_log_genes", "qc_pass", "qc_gene_molecule_fitted", "qc_gene_molecule_lower", "qc_gene_molecule_upper"),
 	          colnames(self$cellMeta)
 	        )
 	      )
+	      if (!"qc_log_molecules" %in% colnames(qc)) {
+	        qc$qc_log_molecules <- ifelse(qc$n_molecules > 0, log10(qc$n_molecules), NA_real_)
+	      }
+	      if (!"qc_log_genes" %in% colnames(qc)) {
+	        qc$qc_log_genes <- ifelse(qc$n_genes > 0, log10(qc$n_genes), NA_real_)
+	      }
 	      qc$qc_pass <- as.factor(ifelse(qc$qc_pass, "pass", "filter"))
-	      p <- ggplot2::ggplot(qc, ggplot2::aes(x = n_molecules, y = n_genes)) +
-	        ggplot2::geom_point(ggplot2::aes(color = qc_pass), size = 0.35, alpha = 0.45) +
-	        ggplot2::scale_x_log10() +
-	        ggplot2::scale_y_log10() +
-	        ggplot2::scale_color_manual(values = c(pass = "grey35", filter = "firebrick3"), name = "QC") +
+	      qc$panel <- factor("Gene/molecule trend", levels = c("Molecule distribution", "Gene/molecule trend"))
+	      hist.qc <- qc[is.finite(qc$n_molecules) & qc$n_molecules > 0, , drop = FALSE]
+	      hist.qc$panel <- factor("Molecule distribution", levels = levels(qc$panel))
+	      p <- ggplot2::ggplot() +
+	        ggplot2::geom_histogram(
+	          data = hist.qc,
+	          ggplot2::aes(x = qc_log_molecules),
+	          bins = 60,
+	          fill = "wheat",
+	          color = "grey45",
+	          linewidth = 0.25
+	        ) +
+	        ggplot2::geom_point(
+	          data = qc,
+	          ggplot2::aes(x = qc_log_molecules, y = qc_log_genes, color = qc_pass),
+	          size = 0.35,
+	          alpha = 0.45
+	        ) +
+	        ggplot2::scale_color_manual(
+	          values = c(pass = "grey35", filter = "firebrick3"),
+	          name = "QC",
+	          guide = ggplot2::guide_legend(override.aes = list(size = 3, alpha = 1))
+	        ) +
+	        ggplot2::facet_wrap(~ panel, nrow = 1, scales = "free_y") +
 	        ggplot2::theme_bw() +
-	        ggplot2::labs(x = "Molecules per cell", y = "Detected genes per cell")
+	        ggplot2::theme(
+	          legend.key.size = grid::unit(4.5, "mm"),
+	          strip.background = ggplot2::element_rect(fill = "grey92", color = "grey55")
+	        ) +
+	        ggplot2::labs(x = "log10 molecules per cell", y = "Count / log10 detected genes")
+	      thresholds <- c(self$history$qc$min.molecules, self$history$qc$max.molecules)
+	      thresholds <- thresholds[is.finite(thresholds) & thresholds > 0]
+	      if (length(thresholds) > 0) {
+	        threshold.df <- expand.grid(
+	          qc_log_molecules = log10(thresholds),
+	          panel = levels(qc$panel),
+	          stringsAsFactors = FALSE
+	        )
+	        threshold.df$panel <- factor(threshold.df$panel, levels = levels(qc$panel))
+	        p <- p + ggplot2::geom_vline(
+	          data = threshold.df,
+	          ggplot2::aes(xintercept = qc_log_molecules),
+	          color = "firebrick3",
+	          linetype = "dashed",
+	          linewidth = 0.45
+	        )
+	      }
 	      if (all(c("qc_gene_molecule_fitted", "qc_gene_molecule_lower", "qc_gene_molecule_upper") %in% colnames(qc)) &&
 	          any(is.finite(qc$qc_gene_molecule_fitted))) {
 	        fit <- qc[is.finite(qc$qc_gene_molecule_fitted) & qc$n_molecules > 0, , drop = FALSE]
 	        fit <- fit[order(fit$n_molecules), , drop = FALSE]
-	        fit$fit <- 10^fit$qc_gene_molecule_fitted
-	        fit$lower <- 10^fit$qc_gene_molecule_lower
-	        fit$upper <- 10^fit$qc_gene_molecule_upper
 	        p <- p +
 	          ggplot2::geom_ribbon(
 	            data = fit,
-	            ggplot2::aes(x = n_molecules, ymin = lower, ymax = upper),
+	            ggplot2::aes(x = qc_log_molecules, ymin = qc_gene_molecule_lower, ymax = qc_gene_molecule_upper),
 	            inherit.aes = FALSE,
 	            fill = "firebrick3",
 	            alpha = 0.10
 	          ) +
 	          ggplot2::geom_line(
 	            data = fit,
-	            ggplot2::aes(x = n_molecules, y = fit),
+	            ggplot2::aes(x = qc_log_molecules, y = qc_gene_molecule_fitted),
 	            inherit.aes = FALSE,
 	            color = "firebrick3",
 	            linewidth = 0.6
@@ -4682,10 +4733,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        data.frame(component = df$component, percent = df$cumulative_percent_variance, curve = "Cumulative")
 	      )
 	      plot.df$curve <- factor(plot.df$curve, levels = c("Per component", "Cumulative"))
-	      ggplot2::ggplot(plot.df, ggplot2::aes(x = component, y = percent, linetype = curve)) +
-	        ggplot2::geom_line(color = "grey20", linewidth = 0.7) +
-	        ggplot2::geom_point(color = "grey20", size = 1.8) +
-	        ggplot2::scale_linetype_manual(values = c("Per component" = "solid", "Cumulative" = "dashed"), name = NULL) +
+	      ggplot2::ggplot(plot.df, ggplot2::aes(x = component, y = percent, color = curve)) +
+	        ggplot2::geom_line(linewidth = 0.7) +
+	        ggplot2::geom_point(size = 1.8) +
+	        ggplot2::scale_color_manual(values = c("Per component" = "grey15", "Cumulative" = "grey60"), name = NULL) +
 	        ggplot2::theme_bw() +
 	        plot.theme +
 	        ggplot2::labs(
