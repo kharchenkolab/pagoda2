@@ -32,8 +32,7 @@ Load reference files only when the task needs more detail:
 ## Repository Scope
 
 This skill lives inside the pagoda2 repository. Treat the repository root as the
-working scope. Sibling directories may exist for development staging, but they
-are not part of the skill or the user-facing recipe.
+working scope. 
 
 ## Core Invariants
 
