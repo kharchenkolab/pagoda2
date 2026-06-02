@@ -6048,10 +6048,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       n.randomizations=5, verbose=FALSE, n.cores=self$n.cores, score.alpha=0.05, plot=FALSE, cells=NULL, adjusted.pvalues=TRUE,
       z.score = qnorm(0.05/2, lower.tail = FALSE), use.oe.scale = FALSE, return.table=FALSE, name='pathwayPCA',
       correlation.distance.threshold=0.2, loading.distance.threshold=0.01, top.aspects=Inf, recalculate.pca=FALSE, save.pca=TRUE) {
-  
-      if (!requireNamespace("scde", quietly=TRUE)){
-        stop("You need to install package 'scde' to be able to use testPathwayOverdispersion().")
-      }
 
       nPcs <- 1
       if (type=='counts') {

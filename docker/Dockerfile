@@ -10,10 +10,10 @@ LABEL authors="Viktor Petukhov <viktor.s.petuhov@ya.ru>, Evan Biederstedt <evan.
 ## Cairo dependencies
 RUN apt-get update && apt-get install libxt-dev mesa-common-dev -y
 
-## Cairo needed for scde
+## Optional Cairo support
 ## RUN R -e "install.packages('Cairo',dependencies=TRUE, repos='http://cran.rstudio.com/')"
 RUN R -e 'chooseCRANmirror(ind=52); install.packages("BiocManager")'
-RUN R -e 'BiocManager::install(c("AnnotationDbi", "BiocGenerics", "GO.db", "pcaMethods", "org.Dr.eg.db", "org.Hs.eg.db", "org.Mm.eg.db", "scde", "BiocParallel"))'
+RUN R -e 'BiocManager::install(c("AnnotationDbi", "BiocGenerics", "GO.db", "pcaMethods", "org.Dr.eg.db", "org.Hs.eg.db", "org.Mm.eg.db", "BiocParallel"))'
 
 
 RUN R -e "install.packages('p2data',dependencies=TRUE, repos='https://kharchenkolab.github.io/drat/', type='source')"
