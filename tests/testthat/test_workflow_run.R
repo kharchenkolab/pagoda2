@@ -39,6 +39,28 @@ make_qc_p2 <- function() {
   )
 }
 
+make_qc_composition_p2 <- function() {
+  values <- matrix(
+    c(
+      10, 0, 5, 1,
+      5, 10, 0, 1,
+      5, 10, 5, 0,
+      0, 0, 0, 8
+    ),
+    nrow = 4,
+    ncol = 4,
+    byrow = TRUE
+  )
+  cm <- Matrix::Matrix(values, sparse = TRUE)
+  rownames(cm) <- c("MT-ND1", "RPS3", "GeneA", "GeneB")
+  colnames(cm) <- paste0("c", seq_len(ncol(cm)))
+  Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE
+  )
+}
+
 make_gene_filter_p2 <- function() {
   values <- matrix(
     c(
@@ -76,6 +98,36 @@ test_that("filterCells auto-runs QC and filters by qc_pass", {
   expect_true("qc_pass" %in% colnames(p2$cellMeta))
   expect_equal(sum(!p2$cellMeta$qc_pass), 1)
   expect_s3_class(p2$plotQC(), "ggplot")
+})
+
+test_that("runQC calculates optional mitochondrial and ribosomal percentages", {
+  p2 <- make_qc_composition_p2()
+
+  qc <- p2$runQC(min.molecules = 0, max.molecules = Inf)
+
+  expect_true(all(c("percent_mito", "percent_ribo") %in% colnames(qc)))
+  expect_equal(qc["c1", "percent_mito"], 50)
+  expect_equal(qc["c1", "percent_ribo"], 25)
+  expect_equal(qc["c2", "percent_mito"], 0)
+  expect_equal(qc["c2", "percent_ribo"], 50)
+  expect_equal(p2$history$qc$composition$mitochondrial$column, "percent_mito")
+  expect_s3_class(p2$plotQCViolin(), "ggplot")
+  expect_s3_class(p2$plotQCViolin(thresholds = c(percent_mito = 25)), "ggplot")
+})
+
+test_that("runQC composition metrics are optional and explicit misses warn", {
+  p2 <- make_qc_p2()
+  qc <- p2$runQC(min.molecules = 0, max.molecules = Inf)
+
+  expect_false("percent_mito" %in% colnames(qc))
+  expect_false("percent_ribo" %in% colnames(qc))
+  expect_error(p2$plotQCViolin(), "No requested QC composition metrics")
+
+  p2 <- make_qc_composition_p2()
+  expect_warning(
+    p2$runQC(overwrite = TRUE, mt.pattern = "^NO_MATCH", infer.qc.genes = FALSE),
+    "No mitochondrial genes matched"
+  )
 })
 
 test_that("run warns about QC failures without filtering by default", {

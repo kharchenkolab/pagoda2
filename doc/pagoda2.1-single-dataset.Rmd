@@ -83,8 +83,10 @@ sets up the default normalized expression view used by downstream methods.
 ## Optional QC Inspection
 
 The QC step records molecule counts, detected-gene counts, and a default
-gene-versus-molecule pass/fail decision in `p2$cellMeta`. This inspection step
-is optional: `p2$run()` will call it if the metrics are missing.
+gene-versus-molecule pass/fail decision in `p2$cellMeta`. If common
+mitochondrial or ribosomal gene prefixes are present, it also records optional
+composition metrics. This inspection step is optional: `p2$run()` will call it
+if the metrics are missing.
 
 ```{r qc}
 p2$runQC(verbose = TRUE)
@@ -98,6 +100,14 @@ Cells flagged by the default rule are shown in red.
 
 ```{r qc-plot, fig.width=10, fig.height=4.5}
 p2$plotQC()
+```
+
+Mitochondrial and ribosomal percentages are gene-annotation dependent. When
+automatic prefix matching is not appropriate, pass explicit gene sets or regular
+expressions to `runQC()`.
+
+```{r qc-composition, fig.width=7, fig.height=4.5}
+p2$plotQCViolin()
 ```
 
 `filterData()` is the standard pre-analysis filter. It removes cells that fail

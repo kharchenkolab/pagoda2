@@ -162,6 +162,68 @@ NULL
   msg
 }
 
+.pagoda2_resolve_qc_gene_set <- function(gene.names, genes = NULL, pattern = NULL,
+                                         auto.patterns = character(), kind = "QC",
+                                         infer = TRUE, verbose = FALSE) {
+  gene.names <- as.character(gene.names)
+  if (!is.null(genes)) {
+    matched <- intersect(as.character(genes), gene.names)
+    if (length(matched) == 0) {
+      warning("No ", kind, " genes from the supplied gene set were found in the count matrix", call. = FALSE)
+    }
+    return(list(genes = matched, source = "genes", pattern = NA_character_))
+  }
+  if (!is.null(pattern)) {
+    matched <- grep(pattern, gene.names, value = TRUE)
+    if (length(matched) == 0) {
+      warning("No ", kind, " genes matched pattern `", pattern, "`", call. = FALSE)
+    }
+    return(list(genes = matched, source = "pattern", pattern = pattern))
+  }
+  if (isTRUE(infer)) {
+    for (p in auto.patterns) {
+      matched <- grep(p, gene.names, value = TRUE)
+      if (length(matched) > 0) {
+        return(list(genes = matched, source = "auto", pattern = p))
+      }
+    }
+  }
+  list(genes = character(), source = "none", pattern = NA_character_)
+}
+
+.pagoda2_qc_percent_from_genes <- function(matrix, genes) {
+  if (length(genes) == 0) {
+    return(rep(NA_real_, nrow(matrix)))
+  }
+  idx <- match(genes, colnames(matrix))
+  idx <- idx[!is.na(idx)]
+  total <- as.numeric(Matrix::rowSums(matrix))
+  selected <- as.numeric(Matrix::rowSums(matrix[, idx, drop = FALSE]))
+  percent <- rep(NA_real_, length(total))
+  keep <- is.finite(total) & total > 0
+  percent[keep] <- 100 * selected[keep] / total[keep]
+  percent
+}
+
+.pagoda2_qc_gene_set_summary <- function(gene.sets) {
+  gene.sets <- gene.sets[!vapply(gene.sets, is.null, logical(1))]
+  gene.sets <- gene.sets[vapply(gene.sets, function(x) length(x$genes) > 0, logical(1))]
+  if (length(gene.sets) == 0) {
+    return(NULL)
+  }
+  parts <- vapply(gene.sets, function(x) {
+    source <- switch(
+      x$source,
+      auto = paste0("auto pattern `", x$pattern, "`"),
+      pattern = paste0("pattern `", x$pattern, "`"),
+      genes = "supplied gene set",
+      x$source
+    )
+    paste0(x$column, ": ", length(x$genes), " genes (", source, ")")
+  }, character(1))
+  paste0("QC composition: ", paste(parts, collapse = "; "))
+}
+
 .pagoda2_gene_qc <- function(matrix, min.cells = 5, min.molecules = 0, keep.genes = NULL) {
   if (is.null(colnames(matrix))) {
     stop("Gene QC matrix must have gene names as colnames")
@@ -2185,11 +2247,20 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param max.molecules Maximum molecule count for a passing cell.
 	    #' @param p.level Two-sided outlier level for gene/molecule trend residuals.
 	    #' @param verbose Whether to emit a succinct QC summary.
+	    #' @param mt.genes Optional mitochondrial gene names used to calculate `percent_mito`.
+	    #' @param ribo.genes Optional ribosomal gene names used to calculate `percent_ribo`.
+	    #' @param mt.pattern Optional regular expression for mitochondrial genes.
+	    #' @param ribo.pattern Optional regular expression for ribosomal genes.
+	    #' @param infer.qc.genes Whether to try common mitochondrial/ribosomal gene prefixes when explicit inputs are absent.
 	    #' @return data.frame of QC metrics.
 	    runQC=function(method=c("gene_molecule", "metrics"), overwrite=FALSE, matrix=NULL,
-	                   min.molecules=500, max.molecules=5e4, p.level=NULL, verbose=FALSE) {
+	                   min.molecules=500, max.molecules=5e4, p.level=NULL, verbose=FALSE,
+	                   mt.genes=NULL, ribo.genes=NULL, mt.pattern=NULL, ribo.pattern=NULL,
+	                   infer.qc.genes=TRUE) {
 	      explicit.min.molecules <- !missing(min.molecules)
 	      explicit.max.molecules <- !missing(max.molecules)
+	      explicit.mt <- !missing(mt.genes) || !missing(mt.pattern)
+	      explicit.ribo <- !missing(ribo.genes) || !missing(ribo.pattern)
 	      method <- match.arg(method)
 	      min.molecules <- .pagoda2_filter_default(self, "min.molecules", min.molecules, explicit.min.molecules)
 	      max.molecules <- .pagoda2_filter_default(self, "max.molecules", max.molecules, explicit.max.molecules)
@@ -2212,31 +2283,85 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          "qc_gene_molecule_outlier", "qc_pass"
 	        )
 	      }
-	      if (!overwrite && all(qc.cols %in% colnames(self$cellMeta))) {
+	      base.exists <- !overwrite && all(qc.cols %in% colnames(self$cellMeta))
+	      qc <- NULL
+	      if (base.exists) {
 	        qc <- self$getCellMeta(qc.cols)
-	        if (isTRUE(verbose)) {
-	          message(.pagoda2_qc_summary(qc))
-	        }
-	        return(invisible(qc))
-	      }
-	      qc <- if (method == "metrics") {
-	        data.frame(
-	          n_molecules = as.numeric(Matrix::rowSums(matrix)),
-	          n_genes = as.numeric(Matrix::rowSums(matrix > 0)),
-	          row.names = rownames(matrix)
-	        )
 	      } else {
-	        .pagoda2_qc_gene_molecule(
-	          matrix,
-	          min.molecules = min.molecules,
-	          max.molecules = max.molecules,
-	          p.level = p.level
+	        qc <- if (method == "metrics") {
+	          qc.metrics <- data.frame(
+	            n_molecules = as.numeric(Matrix::rowSums(matrix)),
+	            n_genes = as.numeric(Matrix::rowSums(matrix > 0)),
+	            row.names = rownames(matrix)
+	          )
+	          attr(qc.metrics, "pagoda2.qc") <- list(method = "metrics")
+	          qc.metrics
+	        } else {
+	          .pagoda2_qc_gene_molecule(
+	            matrix,
+	            min.molecules = min.molecules,
+	            max.molecules = max.molecules,
+	            p.level = p.level
+	          )
+	        }
+	      }
+	      gene.sets <- list(
+	        mitochondrial = .pagoda2_resolve_qc_gene_set(
+	          colnames(matrix),
+	          genes = mt.genes,
+	          pattern = mt.pattern,
+	          auto.patterns = c("^MT-", "^mt-", "^Mt-"),
+	          kind = "mitochondrial",
+	          infer = infer.qc.genes,
+	          verbose = verbose
+	        ),
+	        ribosomal = .pagoda2_resolve_qc_gene_set(
+	          colnames(matrix),
+	          genes = ribo.genes,
+	          pattern = ribo.pattern,
+	          auto.patterns = c("^RP[SL]", "^Rp[sl]", "^rp[sl]"),
+	          kind = "ribosomal",
+	          infer = infer.qc.genes,
+	          verbose = verbose
 	        )
+	      )
+	      gene.sets$mitochondrial$column <- "percent_mito"
+	      gene.sets$ribosomal$column <- "percent_ribo"
+	      if ((overwrite || explicit.mt || !"percent_mito" %in% colnames(self$cellMeta)) &&
+	          length(gene.sets$mitochondrial$genes) > 0) {
+	        qc$percent_mito <- .pagoda2_qc_percent_from_genes(matrix, gene.sets$mitochondrial$genes)
+	      }
+	      if ((overwrite || explicit.ribo || !"percent_ribo" %in% colnames(self$cellMeta)) &&
+	          length(gene.sets$ribosomal$genes) > 0) {
+	        qc$percent_ribo <- .pagoda2_qc_percent_from_genes(matrix, gene.sets$ribosomal$genes)
+	      }
+	      if (!"percent_mito" %in% colnames(qc) && "percent_mito" %in% colnames(self$cellMeta)) {
+	        qc$percent_mito <- self$getCellMeta("percent_mito")$percent_mito
+	      }
+	      if (!"percent_ribo" %in% colnames(qc) && "percent_ribo" %in% colnames(self$cellMeta)) {
+	        qc$percent_ribo <- self$getCellMeta("percent_ribo")$percent_ribo
 	      }
 	      self$setCellMeta(qc, overwrite = TRUE)
-	      self$history$qc <- attr(qc, "pagoda2.qc")
+	      history.qc <- attr(qc, "pagoda2.qc")
+	      if (is.null(history.qc)) {
+	        history.qc <- self$history$qc
+	      }
+	      if (is.null(history.qc)) {
+	        history.qc <- list(method = method)
+	      }
+	      matched.sets <- gene.sets[vapply(gene.sets, function(x) length(x$genes) > 0, logical(1))]
+	      if (length(matched.sets) > 0) {
+	        history.qc$composition <- lapply(matched.sets, function(x) {
+	          list(column = x$column, genes = x$genes, source = x$source, pattern = x$pattern)
+	        })
+	      }
+	      self$history$qc <- history.qc
 	      if (isTRUE(verbose)) {
 	        message(.pagoda2_qc_summary(qc))
+	        composition.summary <- .pagoda2_qc_gene_set_summary(gene.sets)
+	        if (!is.null(composition.summary)) {
+	          message(composition.summary)
+	        }
 	      }
 	      invisible(qc)
 	    },
@@ -2338,6 +2463,133 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          )
 	      }
 	      p
+	    },
+
+	    #' @description Plot optional QC composition metrics.
+	    #'
+	    #' @param metrics Cell metadata columns to plot. Defaults to ribosomal and mitochondrial percentages.
+	    #' @param thresholds Optional named numeric vector/list or data.frame with `metric` and `value` columns.
+	    #' @param run.qc Whether to run QC automatically when requested metrics are absent.
+	    #' @param ... Arguments passed to runQC() if `run.qc = TRUE`.
+	    #' @return ggplot object.
+	    plotQCViolin=function(metrics=c("percent_ribo", "percent_mito"), thresholds=NULL, run.qc=FALSE, ...) {
+	      if (!requireNamespace("ggplot2", quietly = TRUE)) {
+	        stop("Package `ggplot2` is required for plotQCViolin()")
+	      }
+	      normalize_thresholds <- function(thresholds, metrics) {
+	        if (is.null(thresholds)) {
+	          return(NULL)
+	        }
+	        if (is.data.frame(thresholds)) {
+	          if (!all(c("metric", "value") %in% colnames(thresholds))) {
+	            stop("Threshold data.frame must contain `metric` and `value` columns")
+	          }
+	          out <- thresholds[, c("metric", "value"), drop = FALSE]
+	        } else {
+	          values <- unlist(thresholds, use.names = TRUE)
+	          if (is.null(names(values)) || any(names(values) == "")) {
+	            if (length(values) != length(metrics)) {
+	              stop("Unnamed thresholds must have one value per requested metric")
+	            }
+	            names(values) <- metrics
+	          }
+	          out <- data.frame(metric = names(values), value = as.numeric(values), stringsAsFactors = FALSE)
+	        }
+	        out <- out[out$metric %in% metrics & is.finite(out$value), , drop = FALSE]
+	        if (nrow(out) == 0) {
+	          return(NULL)
+	        }
+	        out
+	      }
+	      metric_label <- function(x) {
+	        labels <- c(percent_ribo = "Ribosomal", percent_mito = "Mitochondrial")
+	        out <- labels[x]
+	        out[is.na(out)] <- x[is.na(out)]
+	        unname(out)
+	      }
+	      self$syncMetadata()
+	      metrics <- unique(as.character(metrics))
+	      if (length(metrics) == 0) {
+	        stop("`metrics` must contain at least one cell metadata column")
+	      }
+	      available <- intersect(metrics, colnames(self$cellMeta))
+	      if (length(available) == 0 && isTRUE(run.qc)) {
+	        self$runQC(...)
+	        self$syncMetadata()
+	        available <- intersect(metrics, colnames(self$cellMeta))
+	      }
+	      if (length(available) == 0) {
+	        stop("No requested QC composition metrics are available. ",
+	             "Call p2$runQC(mt.genes = ..., ribo.genes = ...) or set run.qc = TRUE.")
+	      }
+	      cols <- available
+	      has.pass <- "qc_pass" %in% colnames(self$cellMeta)
+	      if (has.pass) {
+	        cols <- c(cols, "qc_pass")
+	      }
+	      qc <- self$resolveCellMeta(cols)
+	      pass <- NULL
+	      if (has.pass) {
+	        pass <- factor(ifelse(as.logical(qc$qc_pass), "pass", "filter"), levels = c("pass", "filter"))
+	      }
+	      long <- do.call(rbind, lapply(available, function(metric) {
+	        data.frame(
+	          cell = rownames(qc),
+	          metric = metric,
+	          metric_label = metric_label(metric),
+	          value = as.numeric(qc[[metric]]),
+	          qc_pass = if (has.pass) pass else factor("cells"),
+	          stringsAsFactors = FALSE
+	        )
+	      }))
+	      long <- long[is.finite(long$value), , drop = FALSE]
+	      if (nrow(long) == 0) {
+	        stop("Requested QC composition metrics contain no finite values")
+	      }
+	      long$metric_label <- factor(long$metric_label, levels = metric_label(available))
+	      p <- ggplot2::ggplot(long, ggplot2::aes(x = "", y = value)) +
+	        ggplot2::geom_violin(fill = "grey92", color = "grey45", linewidth = 0.35, width = 0.85, trim = TRUE)
+	      if (has.pass) {
+	        p <- p +
+	          ggplot2::geom_jitter(
+	            ggplot2::aes(color = qc_pass),
+	            width = 0.14,
+	            height = 0,
+	            size = 0.25,
+	            alpha = 0.25
+	          ) +
+	          ggplot2::scale_color_manual(
+	            values = c(pass = "grey35", filter = "firebrick3"),
+	            name = "QC",
+	            guide = ggplot2::guide_legend(override.aes = list(size = 2.5, alpha = 1))
+	          )
+	      } else {
+	        p <- p + ggplot2::geom_jitter(width = 0.14, height = 0, size = 0.25, alpha = 0.25, color = "grey30")
+	      }
+	      threshold.df <- normalize_thresholds(thresholds, available)
+	      if (!is.null(threshold.df)) {
+	        threshold.df$metric_label <- factor(metric_label(threshold.df$metric), levels = levels(long$metric_label))
+	        p <- p + ggplot2::geom_hline(
+	          data = threshold.df,
+	          ggplot2::aes(yintercept = value),
+	          inherit.aes = FALSE,
+	          color = "firebrick3",
+	          linetype = "dashed",
+	          linewidth = 0.45
+	        )
+	      }
+	      p +
+	        ggplot2::facet_wrap(~ metric_label, ncol = 1, strip.position = "left") +
+	        ggplot2::coord_flip() +
+	        ggplot2::theme_bw() +
+	        ggplot2::theme(
+	          axis.text.y = ggplot2::element_blank(),
+	          axis.ticks.y = ggplot2::element_blank(),
+	          strip.background = ggplot2::element_rect(fill = "grey92", color = "grey55"),
+	          strip.placement = "outside",
+	          legend.key.size = grid::unit(4.5, "mm")
+	        ) +
+	        ggplot2::labs(x = NULL, y = "Percent of molecules")
 	    },
 
 	    #' @description Filter cells using QC decisions or an explicit cell subset.
@@ -2457,7 +2709,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      n.genes.before <- ncol(raw)
 	      removed.cells <- character()
 	      explicit.qc <- explicit.min.molecules || explicit.max.molecules ||
-	        any(names(qc.extra) %in% c("method", "matrix", "p.level"))
+	        any(names(qc.extra) %in% c(
+	          "method", "matrix", "p.level", "mt.genes", "ribo.genes",
+	          "mt.pattern", "ribo.pattern", "infer.qc.genes"
+	        ))
 
 	      if (isTRUE(cells)) {
 	        if (isTRUE(overwrite) || explicit.qc || !pass.column %in% colnames(self$cellMeta)) {
