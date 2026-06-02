@@ -163,7 +163,7 @@ test_that("runMarkers records grouping provenance", {
   p2 <- make_test_p2()
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
 
-  markers <- p2$runMarkers(name = "leiden", append.specificity.metrics = FALSE)
+  expect_silent(markers <- p2$runMarkers(name = "leiden"))
   marker.meta <- attr(markers, "pagoda2.marker")
   marker.result <- p2$getMarkerResult("leiden")
 
@@ -174,6 +174,11 @@ test_that("runMarkers records grouping provenance", {
   expect_identical(marker.meta$grouping, "leiden")
   expect_identical(marker.meta$group.levels, c("0", "1"))
   expect_identical(p2$history$markers$leiden$grouping, "leiden")
+  expect_true(marker.result$params$upregulated.only)
+  expect_true(marker.result$params$append.auc)
+
+  markers.with.rows <- suppressMessages(p2$runMarkers(name = "leiden_z0", z.threshold = 0))
+  expect_true("AUC" %in% colnames(markers.with.rows[[1]]))
 })
 
 test_that("marker plotting methods resolve marker schema and grouping", {

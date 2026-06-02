@@ -2318,7 +2318,17 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        if (is.null(marker.name)) {
 	          stop("Cannot run markers without a defaultGrouping or markers$name")
 	        }
-	        args <- .pagoda2_step_args(markers, list(name = marker.name, verbose = verbose.default))
+	        args <- .pagoda2_step_args(
+	          markers,
+	          list(
+	            name = marker.name,
+	            verbose = verbose.default,
+	            z.threshold = 3,
+	            upregulated.only = TRUE,
+	            append.specificity.metrics = TRUE,
+	            append.auc = TRUE
+	          )
+	        )
 	        marker.type <- if (!is.null(args$type)) args$type else "counts"
 	        if (!overwrite && !is.null(self$diffgenes[[marker.type]]) && !is.null(self$diffgenes[[marker.type]][[args$name]])) {
 	          skip_step("markers", args, paste0("marker result `", args$name, "` already exists"))
@@ -3776,8 +3786,8 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param append.auc Whether to append AUC to marker tables.
 	    #' @return Marker result list returned by getDifferentialGenes().
 	    runMarkers=function(grouping=NULL, groups=NULL, name=NULL, type='counts', z.threshold=3,
-	                        upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE,
-	                        append.auc=FALSE) {
+	                        upregulated.only=TRUE, verbose=FALSE, append.specificity.metrics=TRUE,
+	                        append.auc=TRUE) {
 	      resolved.grouping <- grouping
 	      if (is.null(resolved.grouping) && is.null(groups)) {
 	        resolved.grouping <- self$defaultGrouping
@@ -3825,7 +3835,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        self$history$markers <- list()
 	      }
 	      self$history$markers[[name]] <- meta
-	      ds
+	      invisible(ds)
 	    },
 
 
@@ -4199,12 +4209,18 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param remove.duplicates Whether to keep only the first selected occurrence of each gene.
 	    #' @param count.matrix Optional cell-by-gene matrix. Defaults to the selected analysis expression block.
 	    #' @param n.cores Number of cores passed to sccore::dotPlot().
+	    #' @param cols Two-color expression gradient passed to sccore::dotPlot().
+	    #' @param dot.scale Maximum dot size passed to sccore::dotPlot().
+	    #' @param scale.by Dot size scaling mode, `size` or `radius`.
+	    #' @param text.angle X-axis marker label angle.
 	    #' @param ... Arguments passed to sccore::dotPlot().
 	    #' @return ggplot object.
 	    plotMarkerDotPlot=function(markers=NULL, type='counts', genes=NULL, grouping=NULL, groups=NULL,
-	                               n.genes.per.group=5, z.threshold=NULL, highest.only=TRUE,
+	                               n.genes.per.group=5, z.threshold=3, highest.only=TRUE,
 	                               ordering=c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
-	                               remove.duplicates=TRUE, count.matrix=NULL, n.cores=self$n.cores, ...) {
+	                               remove.duplicates=TRUE, count.matrix=NULL, n.cores=self$n.cores,
+	                               cols=c("grey88", "firebrick3"), dot.scale=5,
+	                               scale.by="size", text.angle=45, ...) {
 	      resolved <- self$resolveMarkers(markers = markers, type = type)
 	      selected <- .pagoda2_select_marker_genes(
 	        resolved$tables,
@@ -4245,6 +4261,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        cell.groups = resolved.groups,
 	        n.cores = n.cores,
 	        gene.order = selected.genes,
+	        cols = cols,
+	        dot.scale = dot.scale,
+	        scale.by = scale.by,
+	        text.angle = text.angle,
 	        ...
 	      )
 	    },
@@ -4736,12 +4756,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      ggplot2::ggplot(plot.df, ggplot2::aes(x = component, y = percent, color = curve)) +
 	        ggplot2::geom_line(linewidth = 0.7) +
 	        ggplot2::geom_point(size = 1.8) +
-	        ggplot2::scale_color_manual(values = c("Per component" = "grey15", "Cumulative" = "grey60"), name = NULL) +
+	        ggplot2::scale_color_manual(values = c("Per component" = "grey15", "Cumulative" = "#2c7fb8"), name = NULL) +
 	        ggplot2::theme_bw() +
 	        plot.theme +
 	        ggplot2::labs(
 	          x = "Principal component",
-	          y = "% variance explained",
+	          y = "% total variance explained",
 	          title = paste0(reduction, " variance explained")
 	        )
 	    },

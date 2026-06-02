@@ -125,7 +125,7 @@ table(p2$getGrouping())
 
 The PCA elbow plot helps show how much of the total PCA-input variance is
 captured by each component. The solid curve shows the percent explained by each
-component; the gray curve shows the cumulative amount explained.
+component; the blue curve shows the cumulative amount explained.
 
 ```{r pca-elbow, fig.height=4}
 p2$plotPCAElbow()
@@ -151,7 +151,7 @@ The default run stores marker genes for the default grouping. A dot plot gives a
 compact summary of marker expression by cluster.
 
 ```{r marker-dotplot, fig.width=15, fig.height=9}
-p2$plotMarkerDotPlot(n.genes.per.group = 3, dot.scale = 5, text.angle = 60) +
+p2$plotMarkerDotPlot(n.genes.per.group = 3, text.angle = 60) +
   labs(title = "Leiden marker genes")
 ```
 
