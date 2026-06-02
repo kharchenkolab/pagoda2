@@ -41,7 +41,7 @@ mv pagoda2.1-single-dataset.ipynb doc/pagoda2.1-single-dataset.ipynb
 rm -f doc/data
 ```
 
-Quarto may write Python kernelspec metadata. Reset it to R after rendering. The committed notebook should advertise the public R kernelspec (`name: ir`), even if the local execution kernel is named differently:
+Quarto may write Python kernelspec metadata. Reset it to R after rendering:
 
 ```sh
 python3 - <<'PY'
@@ -49,14 +49,14 @@ import nbformat as nbf
 
 path = "doc/pagoda2.1-single-dataset.ipynb"
 nb = nbf.read(path, as_version=4)
-nb.metadata["kernelspec"] = {"display_name": "R", "language": "R", "name": "ir"}
+nb.metadata["kernelspec"] = {"display_name": "R", "language": "R", "name": "ir44"}
 nb.metadata["language_info"] = {
     "name": "R",
     "codemirror_mode": "r",
     "mimetype": "text/x-r-source",
     "file_extension": ".r",
     "pygments_lexer": "r",
-    "version": "4.4.3",
+    "version": "4.4.1",
 }
 for cell in nb.cells:
     if cell.cell_type == "code":
