@@ -1,163 +1,123 @@
 ---
 title: "Pagoda2.1 Single-Dataset Workflow"
-output:
-  rmarkdown::html_document:
+format:
+  html:
     toc: true
-    toc_float: true
-    toc_depth: 3
-vignette: >
-  %\VignetteIndexEntry{Pagoda2.1 Single-Dataset Workflow}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
+    toc-depth: 3
+    self-contained: true
+  ipynb: default
+jupyter: ir44
 ---
 
-```{r setup, message=FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.width = 7,
-  fig.height = 5,
-  dpi = 96,
-  out.width = "100%",
-  message = FALSE,
-  warning = FALSE
+This notebook shows the current pagoda2.1 single-dataset workflow on a PBMC sample from GEO: [GSM5746259](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5746259).
+
+The count data are downloaded from that GEO sample page as a 10x-style triplet: a sparse matrix file, a cell barcode file, and a gene/feature file. Here those three files are in a local folder named `data`.
+
+## Input Data
+
+The folder contains the three files needed for a 10x-style sparse count matrix. The next cell shows the folder name and the files that were downloaded from GEO.
+
+```{r}
+data_dir <- "data"
+
+data.frame(
+  data_dir = data_dir,
+  file = list.files(data_dir)
 )
-
-library(pagoda2)
-library(ggplot2)
 ```
 
-## Overview
+Create the pagoda2 object directly from that folder. The reader keeps raw counts in the object and creates a lightweight normalized analysis view for downstream calculations.
 
-This vignette shows the standard pagoda2.1 workflow for one single-cell RNA-seq
-dataset. The input is a 10x-style count matrix with genes in rows and cells in
-columns. The output is a processed `Pagoda2` object with QC metrics, PCA, a
-nearest-neighbor graph, UMAP coordinates, Leiden clusters, marker genes, and
-publication-ready summary plots.
-
-Pagoda2.1 is designed so the common path is short:
-
-```r
-p2 <- Pagoda2$from10x(data_dir)
-p2$run()
-p2$plotEmbedding()
-p2$plotMarkerDotPlot()
-p2$plotMarkerHeatmap()
-```
-
-The sections below show the default workflow and the main inspection plots. QC
-can be inspected before the full run, but the default `run()` call will perform
-QC, filter cells, choose analysis genes, and then continue through PCA, graph
-construction, UMAP, Leiden clustering, and markers.
-
-## Data
-
-The example uses the first sample from GSE192391, `GSM5746259`. Set
-`PAGODA2_GSM5746259_10X` if the triplet files are stored somewhere else.
-
-```{r data-path}
-sample_dir <- Sys.getenv("PAGODA2_GSM5746259_10X", unset = "")
-if (!dir.exists(sample_dir)) {
-  candidates <- c(
-    file.path("..", "..", "tests", "data", "GSE192391", "GSM5746259_MGI0369_1_SLAB-145-0"),
-    file.path("..", "tests", "data", "GSE192391", "GSM5746259_MGI0369_1_SLAB-145-0"),
-    file.path("tests", "data", "GSE192391", "GSM5746259_MGI0369_1_SLAB-145-0")
-  )
-  sample_dir <- candidates[dir.exists(candidates)][1]
-}
-stopifnot(dir.exists(sample_dir))
-```
-
-Create the pagoda2 object directly from the sample directory:
-
-```{r read}
-p2 <- Pagoda2$from10x(sample_dir)
-
+```{r}
+p2 <- suppressMessages(pagoda2::Pagoda2$from10x(data_dir, verbose = FALSE))
 counts <- p2$getRawCounts()
-c(cells = nrow(counts), genes = ncol(counts))
+
+data.frame(
+  cells = nrow(counts),
+  genes = ncol(counts),
+  nonzero_entries = Matrix::nnzero(counts),
+  sparsity = round(1 - Matrix::nnzero(counts) / prod(dim(counts)), 4),
+  integer_like = all(abs(counts@x - round(counts@x)) < 1e-8)
+)
 ```
 
-`Pagoda2$from10x()` reads the count triplet, keeps raw counts in the object, and
-sets up the default normalized expression view used by downstream methods.
+## QC
 
-## Optional QC Inspection
+`runQC()` records molecule counts, detected-gene counts, and a gene-versus-molecule QC decision in `p2$cellMeta`. Mitochondrial and ribosomal percentages are included when the gene annotation supports common prefix matching.
 
-The QC step records molecule counts, detected-gene counts, and a default
-gene-versus-molecule pass/fail decision in `p2$cellMeta`. If common
-mitochondrial or ribosomal gene prefixes are present, it also records optional
-composition metrics. This inspection step is optional: `p2$run()` will call it
-if the metrics are missing.
+```{r}
+suppressMessages(invisible(p2$runQC(verbose = FALSE)))
+qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
 
-```{r qc}
-p2$runQC(verbose = TRUE)
+data.frame(
+  cells = nrow(qc),
+  qc_pass = sum(as.logical(qc$qc_pass), na.rm = TRUE),
+  qc_fail = sum(!as.logical(qc$qc_pass), na.rm = TRUE),
+  fail_fraction = round(mean(!as.logical(qc$qc_pass), na.rm = TRUE), 4),
+  median_molecules = median(qc$n_molecules, na.rm = TRUE),
+  median_genes = median(qc$n_genes, na.rm = TRUE)
+)
 ```
 
-Most workflow methods are quiet by default. Use `verbose = TRUE` when you want a
-short progress or summary message.
+The main QC plot shows detected genes versus molecule counts. Cells failing the default QC decision are highlighted in red.
 
-The QC plot shows the relationship between molecule counts and detected genes.
-Cells flagged by the default rule are shown in red.
-
-```{r qc-plot, fig.width=10, fig.height=4.5}
+```{r}
+#| fig-width: 10
+#| fig-height: 4.5
+#| fig-dpi: 140
 p2$plotQC()
 ```
 
-Mitochondrial and ribosomal percentages are gene-annotation dependent. When
-automatic prefix matching is not appropriate, pass explicit gene sets or regular
-expressions to `runQC()`.
+Composition QC is annotation-dependent. Here the sample has recognizable mitochondrial and ribosomal gene prefixes, so the violin plot is informative.
 
-```{r qc-composition, fig.width=7, fig.height=4.5}
+```{r}
+#| fig-width: 7.5
+#| fig-height: 4.5
+#| fig-dpi: 140
 p2$plotQCViolin()
 ```
 
-`filterData()` is the standard pre-analysis filter. It removes cells that fail
-QC and records the analysis gene mask in `p2$geneMeta$analysis_pass`. It does
-not drop raw genes from `p2$getRawCounts()`.
-
 ## Run The Default Workflow
 
-The default run performs filtering, variance modeling, PCA, graph construction,
-UMAP, Leiden clustering, and marker detection. Results are stored under
-canonical names so later plotting calls can usually omit selectors.
+The standard run performs filtering, variance modeling, PCA, graph construction, UMAP, Leiden clustering, and marker detection. Results are stored under canonical names so plotting calls can usually omit selectors.
 
-```{r run}
-p2$run(plots = "none")
-```
+```{r}
+suppressMessages(invisible(p2$run(plots = "none", verbose = FALSE)))
 
-After filtering, the current object keeps the filtered cell axis and the full
-raw gene axis. Downstream analysis uses the analysis gene mask.
-
-```{r post-filter-summary}
-c(
+groups <- p2$getGrouping()
+summary <- data.frame(
   cells = nrow(p2$getRawCounts()),
   raw_genes = ncol(p2$getRawCounts()),
-  analysis_genes = sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass)
+  analysis_genes = sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
+  od_genes = length(p2$misc$odgenes),
+  default_grouping = p2$getDefaultGrouping(),
+  clusters = length(levels(groups))
 )
+summary
 ```
 
-After the run, the default grouping is the Leiden clustering:
-
-```{r groups}
-p2$getDefaultGrouping()
-table(p2$getGrouping())
+```{r}
+cluster_sizes <- sort(table(p2$getGrouping()), decreasing = TRUE)
+head(data.frame(cluster = names(cluster_sizes), cells = as.integer(cluster_sizes)), 15)
 ```
 
-## PCA Elbow Plot
+## PCA And UMAP
 
-The PCA elbow plot helps show how much of the total PCA-input variance is
-captured by each component. The solid curve shows the percent explained by each
-component; the blue curve shows the cumulative amount explained.
+The PCA elbow plot shows percent total variance explained by each PC and cumulatively. Use it to assess whether the default PC range is reasonable before interpreting the graph and embedding.
 
-```{r pca-elbow, fig.height=4}
+```{r}
+#| fig-width: 7.5
+#| fig-height: 4.2
+#| fig-dpi: 140
 p2$plotPCAElbow()
 ```
 
-## UMAP
+The UMAP below is colored by the default Leiden clustering. Check for coherent clusters, tiny outlying groups, and possible QC or batch structure before annotating cell types.
 
-`plotEmbedding()` uses the default PCA reduction, default UMAP embedding, and
-default grouping unless you specify otherwise.
-
-```{r umap, fig.height=6}
+```{r}
+#| fig-width: 7.4
+#| fig-height: 6.2
+#| fig-dpi: 140
 p2$plotEmbedding(
   mark.groups = TRUE,
   size = 0.35,
@@ -168,33 +128,47 @@ p2$plotEmbedding(
 
 ## Marker Genes
 
-The default run stores marker genes for the default grouping. A dot plot gives a
-compact summary of marker expression by cluster.
+The default run stores marker genes for the default grouping. The dot plot and heatmap use the same marker result and marker-selection logic.
 
-```{r marker-dotplot, fig.width=16, fig.height=10}
-p2$plotMarkerDotPlot(n.genes.per.group = 5) +
-  labs(title = "Leiden marker genes")
+```{r}
+marker_name <- "leiden"
+marker_name
 ```
 
-The native marker heatmap uses the same marker result and grouping. Here the
-top annotation tracks show the QC metrics calculated earlier.
+```{r}
+#| fig-width: 15
+#| fig-height: 10.5
+#| fig-dpi: 140
+p2$plotMarkerDotPlot(
+  markers = marker_name,
+  n.genes.per.group = 5,
+  selection = "balanced",
+  order.groups = TRUE,
+  dot.scale = 8.5
+) + ggplot2::labs(title = "Leiden marker genes")
+```
 
-```{r marker-heatmap, fig.width=13.5, fig.height=8.1}
+The native marker heatmap avoids a heavy ComplexHeatmap dependency. The top tracks show QC metrics so marker blocks can be inspected together with per-cell quality summaries.
+
+```{r}
+#| fig-width: 13.8
+#| fig-height: 9
+#| fig-dpi: 140
 p2$plotMarkerHeatmap(
+  markers = marker_name,
   engine = "native",
   n.genes.per.group = 3,
+  selection = "balanced",
   column.metadata = c("n_molecules", "n_genes"),
-  row.label.font.size = 8,
+  row.label.font.size = 9,
   split = TRUE,
   show_heatmap_legend = TRUE
 )
 ```
 
-## What To Do Next
+## Next Steps
 
-For real analyses, the next step is usually biological annotation. You can store
-cluster annotations as another cell metadata column and make it the default
-grouping:
+For real analyses, the next step is usually biological annotation. Store cluster annotations as another cell metadata column and make it the default grouping when appropriate:
 
 ```r
 p2$annotateClusters(
@@ -205,5 +179,4 @@ p2$annotateClusters(
 )
 ```
 
-After that, the same plotting and marker methods will use `cell_type` by default
-unless you request a different grouping.
+After that, the same plotting and marker methods will use `cell_type` by default unless a different grouping is requested.

@@ -39,6 +39,7 @@ The current pagoda2.1 single-dataset workflow vignette is available as a GitHub-
 Development notes:
 
 - [Matrix storage and views](doc/pagoda2.1-matrix-views.md)
+- [Notebook rendering](doc/notebook_rendering.md)
 - [Agent skill and recipe](skill/)
 
 ## Installation
