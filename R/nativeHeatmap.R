@@ -488,6 +488,42 @@
     invisible(NULL)
   }
 
+  collect_legends <- function(spec) {
+    legends <- list()
+    if (isTRUE(spec$show_heatmap_legend)) {
+      legends$expression <- list(
+        type = "continuous",
+        name = "expression",
+        palette = spec$expression.palette,
+        range = c(0, 1)
+      )
+    }
+    if (isTRUE(spec$show.group.legend)) {
+      legends <- c(legends, spec$annotation.colors$legends)
+    }
+    legends
+  }
+
+  legend_auto_columns <- function(spec, legends) {
+    ncol <- spec$legend.columns
+    if (is.null(ncol)) {
+      continuous.count <- sum(vapply(legends, function(legend) identical(legend$type, "continuous"), logical(1)))
+      has.wide.discrete <- any(vapply(legends, function(legend) {
+        identical(legend$type, "discrete") && length(legend$colors) > 6L
+      }, logical(1)))
+      ncol <- if (
+        length(legends) > 4L ||
+          continuous.count >= 3L ||
+          (has.wide.discrete && continuous.count > 0L)
+      ) {
+        2L
+      } else {
+        1L
+      }
+    }
+    max(1L, as.integer(ncol))
+  }
+
   draw_legends <- function(spec) {
     discrete_legend_height_mm <- function(legend, level.columns, max.levels) {
       n <- min(length(legend$colors), max.levels)
@@ -506,28 +542,13 @@
       all(is.finite(widths)) && max(widths, na.rm = TRUE) <= 0.80
     }
 
-    legends <- list()
-    if (isTRUE(spec$show_heatmap_legend)) {
-      legends$expression <- list(
-        type = "continuous",
-        name = "expression",
-        palette = spec$expression.palette,
-        range = c(0, 1)
-      )
-    }
-    if (isTRUE(spec$show.group.legend)) {
-      legends <- c(legends, spec$annotation.colors$legends)
-    }
+    legends <- collect_legends(spec)
     if (length(spec$annotation.grobs$right) == 0L && length(legends) == 0L) {
       return(invisible(NULL))
     }
 
     n.grob <- length(spec$annotation.grobs$right)
-    ncol <- spec$legend.columns
-    if (is.null(ncol)) {
-      ncol <- if (length(legends) > 4L) 2L else 1L
-    }
-    ncol <- max(1L, as.integer(ncol))
+    ncol <- legend_auto_columns(spec, legends)
     wide.legend <- vapply(legends, function(legend) {
       identical(legend$type, "discrete") && length(legend$colors) > 6L && ncol > 1L
     }, logical(1))
@@ -641,13 +662,11 @@
   n.top.grobs <- length(spec$annotation.grobs$top)
   n.left.grobs <- length(spec$annotation.grobs$left)
   n.bottom.grobs <- length(spec$annotation.grobs$bottom)
-  legend.count <- length(spec$annotation.colors$legends) + as.integer(spec$show_heatmap_legend)
-  legend.columns <- spec$legend.columns
-  if (is.null(legend.columns)) {
-    legend.columns <- if (legend.count > 4L) 2L else 1L
-  }
+  legend.entries <- collect_legends(spec)
+  legend.count <- length(legend.entries)
+  legend.columns <- legend_auto_columns(spec, legend.entries)
   legend.width <- if (legend.count > 0L || length(spec$annotation.grobs$right) > 0L) {
-    grid::unit(30 * legend.columns, "mm")
+    grid::unit(if (legend.columns > 1L) 48 else 30, "mm")
   } else {
     grid::unit(1, "mm")
   }

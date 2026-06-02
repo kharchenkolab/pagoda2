@@ -169,7 +169,7 @@ p2$plotMarkerDotPlot(n.genes.per.group = 5) +
 The native marker heatmap uses the same marker result and grouping. Here the
 top annotation tracks show the QC metrics calculated earlier.
 
-```{r marker-heatmap, fig.width=15, fig.height=9}
+```{r marker-heatmap, fig.width=13.5, fig.height=8.1}
 p2$plotMarkerHeatmap(
   engine = "native",
   n.genes.per.group = 3,
