@@ -150,6 +150,18 @@ test_that("run validates step selection and dependency policy", {
   expect_error(p2$run(steps = "markers", dependencies = "error", profile = "pipeline"), "defaultGrouping")
 })
 
+test_that("canonical analysis defaults match pipeline defaults", {
+  p2 <- make_workflow_p2()
+
+  pca.formals <- formals(p2$calculatePcaReduction)
+  graph.formals <- formals(p2$makeKnnGraph)
+
+  expect_equal(eval(pca.formals$nPcs), 50)
+  expect_equal(eval(pca.formals$n.odgenes), 3000)
+  expect_equal(eval(graph.formals$weight.type), "1m")
+  expect_equal(eval(graph.formals$distance), "cosine")
+})
+
 test_that("run skips existing results when overwrite is false", {
   testthat::skip_if_not_installed("uwot")
   testthat::skip_if_not_installed("leidenAlg")

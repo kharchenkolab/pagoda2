@@ -346,7 +346,7 @@ Create k-nearest neighbor graph
 
 \item{\code{type}}{string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.}
 
-\item{\code{weight.type}}{string 'cauchy', 'normal', 'constant', '1m' (default='1m')}
+\item{\code{weight.type}}{string 'none', 'cauchy', 'normal', 'constant', '1m' (default='1m')}
 
 \item{\code{odgenes}}{character vector Overdispersed genes to retrieve (default=NULL)}
 
@@ -881,11 +881,11 @@ cell by gene matrix
 Calculate PCA reduction of the data
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Pagoda2$calculatePcaReduction(
-  nPcs = 20,
+  nPcs = 50,
   type = "counts",
   name = "PCA",
   use.odgenes = TRUE,
-  n.odgenes = NULL,
+  n.odgenes = 3000,
   odgenes = NULL,
   center = TRUE,
   cells = NULL,
@@ -900,7 +900,7 @@ Calculate PCA reduction of the data
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{nPcs}}{numeric Number of principal components (PCs) (default=20)}
+\item{\code{nPcs}}{numeric Number of principal components (PCs) (default=50)}
 
 \item{\code{type}}{string Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')}
 
@@ -908,7 +908,7 @@ Calculate PCA reduction of the data
 
 \item{\code{use.odgenes}}{boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)}
 
-\item{\code{n.odgenes}}{integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.}
+\item{\code{n.odgenes}}{integer Number of top overdispersed genes to use (default=3000).}
 
 \item{\code{odgenes}}{Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL)}
 

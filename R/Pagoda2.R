@@ -3099,7 +3099,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param k integer Number of k clusters for k-NN (default=30)
     #' @param nrand numeric Number of randomizations i.e. the gene sets (of the same size) to be evaluated in parallel with each gene set (default=1e3)
     #' @param type string Data type of the reduction (default='counts'). If type='counts', this will access the raw counts. Otherwise, 'type' must be name of the reductions.
-    #' @param weight.type string 'cauchy', 'normal', 'constant', '1m' (default='1m')
+    #' @param weight.type string 'none', 'cauchy', 'normal', 'constant', '1m' (default='1m')
     #' @param odgenes character vector Overdispersed genes to retrieve (default=NULL)
     #' @param distance string Distance metric used: 'cosine', 'L2', 'L1', 'cauchy', 'euclidean' (default='cosine')
     #' @param center boolean Whether to use centering when distance='cosine' (default=TRUE). The parameter is ignored otherwise.
@@ -4588,10 +4588,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 
     #' @description Calculate PCA reduction of the data
     #' 
-    #' @param nPcs numeric Number of principal components (PCs) (default=20)
+    #' @param nPcs numeric Number of principal components (PCs) (default=50)
     #' @param type string Dataset view to reduce (counts by default, but can specify a name of an existing reduction) (default='counts')
     #' @param name string Name for the PCA reduction to be created (default='PCA')
     #' @param use.odgenes boolean Whether pre-calculated set of overdispersed genes should be used (default=TRUE)
+    #' @param n.odgenes integer Number of top overdispersed genes to use (default=3000).
     #' @param odgenes Explicitly specify a set of overdispersed genes to use for the reduction (default=NULL)
     #' @param center boolean Whether data should be centered prior to PCA (default=TRUE)
     #' @param cells optional subset of cells on which PCA should be run (default=NULL)
@@ -4601,7 +4602,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @param ... additional arguments forwarded to irlba::irlba
     #' 
 	    #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
-	    calculatePcaReduction=function(nPcs=20, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=NULL, 
+	    calculatePcaReduction=function(nPcs=50, type='counts', name='PCA', use.odgenes=TRUE, n.odgenes=3000,
 	      odgenes=NULL, center=TRUE, cells=NULL, fastpath=TRUE, maxit=100, verbose=TRUE, var.scale=(type == "counts"),
 	      .legacy.warn=TRUE, ...) {
 	      if (.legacy.warn) {

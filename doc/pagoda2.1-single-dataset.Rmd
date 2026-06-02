@@ -1,8 +1,10 @@
 ---
 title: "Pagoda2.1 Single-Dataset Workflow"
 output:
-  rmarkdown::html_vignette:
+  rmarkdown::html_document:
     toc: true
+    toc_float: true
+    toc_depth: 3
 vignette: >
   %\VignetteIndexEntry{Pagoda2.1 Single-Dataset Workflow}
   %\VignetteEngine{knitr::rmarkdown}
@@ -15,6 +17,8 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 7,
   fig.height = 5,
+  dpi = 96,
+  out.width = "100%",
   message = FALSE,
   warning = FALSE
 )
@@ -150,8 +154,8 @@ p2$plotEmbedding(
 The default run stores marker genes for the default grouping. A dot plot gives a
 compact summary of marker expression by cluster.
 
-```{r marker-dotplot, fig.width=15, fig.height=9}
-p2$plotMarkerDotPlot(n.genes.per.group = 3, text.angle = 60) +
+```{r marker-dotplot, fig.width=16, fig.height=10}
+p2$plotMarkerDotPlot(n.genes.per.group = 5) +
   labs(title = "Leiden marker genes")
 ```
 
