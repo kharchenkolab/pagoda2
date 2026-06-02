@@ -128,12 +128,12 @@ test_that("Pagoda2 constructor preserves dense input values through sparse coerc
     expect_true(matrices$integer.like[matrices$name == "raw"])
 })
 
-test_that("Pagoda2 rawCounts are stored on the current filtered axis", {
+test_that("Pagoda2 rawCounts preserve constructor axes until filterData", {
     cm <- as(Matrix::Matrix(
         c(
             10, 0, 0, 0,
             0, 12, 0, 0,
-            0, 0, 1, 0,
+            0, 0, 11, 0,
             0, 0, 0, 1
         ),
         nrow = 4,
@@ -154,7 +154,12 @@ test_that("Pagoda2 rawCounts are stored on the current filtered axis", {
         trim = 0
     )
 
-    expect_identical(rownames(p2$rawCounts), c("cell1", "cell2"))
+    expect_identical(rownames(p2$rawCounts), paste0("cell", 1:4))
+    expect_equal(as.matrix(Matrix::t(p2$rawCounts)), as.matrix(cm))
+    expect_equal(p2$defaults$filter$min.molecules, 10)
+    p2$filterData(genes = FALSE)
+
+    expect_identical(rownames(p2$rawCounts), c("cell1", "cell2", "cell3"))
     expr <- p2$getExpressionBlock()
     expect_identical(rownames(expr), rownames(p2$rawCounts))
     expect_identical(colnames(expr), colnames(p2$rawCounts))
@@ -162,7 +167,7 @@ test_that("Pagoda2 rawCounts are stored on the current filtered axis", {
     expect_error(p2$counts <- expr, "cannot be assigned")
     expect_identical(names(p2$depth), rownames(p2$rawCounts))
     expect_identical(names(p2$batch), rownames(p2$rawCounts))
-    expect_equal(as.matrix(Matrix::t(p2$rawCounts)), as.matrix(cm[, c("cell1", "cell2")]))
+    expect_equal(as.matrix(Matrix::t(p2$rawCounts)), as.matrix(cm[, c("cell1", "cell2", "cell3")]))
     expect_true(p2$validateMatrices())
 })
 

@@ -39,13 +39,16 @@ Pagoda2.1 is designed so the common path is short:
 
 ```r
 p2 <- Pagoda2$from10x(data_dir)
-p2$runQC()
-p2$plotQC()
-p2$filterCells()
 p2$run()
+p2$plotEmbedding()
+p2$plotMarkerDotPlot()
+p2$plotMarkerHeatmap()
 ```
 
-The sections below run those steps and explain what each one adds to the object.
+The sections below show the default workflow and the main inspection plots. QC
+can be inspected before the full run, but the default `run()` call will perform
+QC, filter cells, choose analysis genes, and then continue through PCA, graph
+construction, UMAP, Leiden clustering, and markers.
 
 ## Data
 
@@ -77,10 +80,11 @@ c(cells = nrow(counts), genes = ncol(counts))
 `Pagoda2$from10x()` reads the count triplet, keeps raw counts in the object, and
 sets up the default normalized expression view used by downstream methods.
 
-## Quality Control
+## Optional QC Inspection
 
 The QC step records molecule counts, detected-gene counts, and a default
-gene-versus-molecule pass/fail decision in `p2$cellMeta`.
+gene-versus-molecule pass/fail decision in `p2$cellMeta`. This inspection step
+is optional: `p2$run()` will call it if the metrics are missing.
 
 ```{r qc}
 p2$runQC(verbose = TRUE)
@@ -96,26 +100,29 @@ Cells flagged by the default rule are shown in red.
 p2$plotQC()
 ```
 
-Filter the current object to cells that pass QC:
-
-```{r qc-filter}
-p2$filterCells()
-
-c(cells = nrow(p2$getRawCounts()), genes = ncol(p2$getRawCounts()))
-```
-
-If you skip `runQC()`, `filterCells()` will run QC first. If you skip both and
-call `p2$run()`, pagoda2 will calculate QC metrics and warn if cells appear to
-need filtering, but it will not remove cells unless you ask explicitly.
+`filterData()` is the standard pre-analysis filter. It removes cells that fail
+QC and records the analysis gene mask in `p2$geneMeta$analysis_pass`. It does
+not drop raw genes from `p2$getRawCounts()`.
 
 ## Run The Default Workflow
 
-The default run performs variance modeling, PCA, graph construction, UMAP,
-Leiden clustering, and marker detection. Results are stored under canonical
-names so later plotting calls can usually omit selectors.
+The default run performs filtering, variance modeling, PCA, graph construction,
+UMAP, Leiden clustering, and marker detection. Results are stored under
+canonical names so later plotting calls can usually omit selectors.
 
 ```{r run}
 p2$run(plots = "none")
+```
+
+After filtering, the current object keeps the filtered cell axis and the full
+raw gene axis. Downstream analysis uses the analysis gene mask.
+
+```{r post-filter-summary}
+c(
+  cells = nrow(p2$getRawCounts()),
+  raw_genes = ncol(p2$getRawCounts()),
+  analysis_genes = sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass)
+)
 ```
 
 After the run, the default grouping is the Leiden clustering:
@@ -164,6 +171,7 @@ top annotation tracks show the QC metrics calculated earlier.
 
 ```{r marker-heatmap, fig.width=15, fig.height=9}
 p2$plotMarkerHeatmap(
+  engine = "native",
   n.genes.per.group = 3,
   column.metadata = c("n_molecules", "n_genes"),
   row.label.font.size = 8,

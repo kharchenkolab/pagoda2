@@ -10,9 +10,7 @@ make_workflow_p2 <- function() {
   Pagoda2$new(
     cm,
     n.cores = 1,
-    verbose = FALSE,
-    min.cells.per.gene = 0,
-    min.transcripts.per.cell = 0
+    verbose = FALSE
   )
 }
 
@@ -37,9 +35,29 @@ make_qc_p2 <- function() {
   Pagoda2$new(
     cm,
     n.cores = 1,
-    verbose = FALSE,
-    min.cells.per.gene = 0,
-    min.transcripts.per.cell = 0
+    verbose = FALSE
+  )
+}
+
+make_gene_filter_p2 <- function() {
+  values <- matrix(
+    c(
+      5, 5, 5, 5, 5,
+      1, 0, 0, 0, 0,
+      0, 2, 0, 0, 0,
+      3, 3, 3, 0, 0
+    ),
+    nrow = 4,
+    ncol = 5,
+    byrow = TRUE
+  )
+  cm <- Matrix::Matrix(values, sparse = TRUE)
+  rownames(cm) <- paste0("g", seq_len(nrow(cm)))
+  colnames(cm) <- paste0("c", seq_len(ncol(cm)))
+  Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE
   )
 }
 
@@ -98,6 +116,66 @@ test_that("run can explicitly filter after QC", {
   expect_identical(last.run$steps$filter$status, "completed")
 })
 
+test_that("filterData sets analysis gene mask without dropping raw genes", {
+  p2 <- make_gene_filter_p2()
+
+  expect_silent(
+    p2$filterData(cells = FALSE, genes = TRUE, min.cells.per.gene = 2)
+  )
+
+  expect_equal(ncol(p2$getRawCounts()), 4)
+  expect_true(all(c("n_cells_detected", "n_molecules", "analysis_pass") %in% colnames(p2$geneMeta)))
+  expect_identical(
+    as.logical(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
+    c(TRUE, FALSE, FALSE, TRUE)
+  )
+  expect_equal(.subset2(p2$history$filterData[[1]]$genes, "analysis.pass"), 2L)
+})
+
+test_that("legacy constructor filter arguments are deferred to QC and filtering", {
+  values <- matrix(
+    c(
+      120, 120, 120, 120, 2,
+      1, 0, 0, 0, 0,
+      1, 1, 0, 0, 0,
+      1, 1, 1, 0, 0
+    ),
+    nrow = 4,
+    ncol = 5,
+    byrow = TRUE
+  )
+  cm <- Matrix::Matrix(values, sparse = TRUE)
+  rownames(cm) <- paste0("g", seq_len(nrow(cm)))
+  colnames(cm) <- paste0("c", seq_len(ncol(cm)))
+
+  p2 <- Pagoda2$new(
+    cm,
+    n.cores = 1,
+    verbose = FALSE,
+    min.cells.per.gene = 3,
+    min.transcripts.per.cell = 100,
+    keep.genes = "g2"
+  )
+
+  expect_equal(unname(dim(p2$getRawCounts())), c(5, 4))
+  expect_equal(p2$defaults$filter$min.molecules, 100)
+  expect_equal(p2$defaults$filter$min.cells.per.gene, 3)
+  expect_equal(p2$defaults$filter$keep.genes, "g2")
+
+  p2$runQC()
+  expect_identical(as.logical(p2$resolveCellMeta("qc_pass")$qc_pass), c(TRUE, TRUE, TRUE, TRUE, FALSE))
+
+  p2$runQC(overwrite = TRUE, min.molecules = 0)
+  expect_true(all(as.logical(p2$resolveCellMeta("qc_pass")$qc_pass)))
+
+  p2$filterData(cells = FALSE)
+  expect_identical(
+    as.logical(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
+    c(TRUE, TRUE, FALSE, TRUE)
+  )
+  expect_equal(unname(dim(p2$getRawCounts())), c(5, 4))
+})
+
 test_that("filterCells refuses to invalidate downstream results unless forced", {
   p2 <- make_qc_p2()
   p2$reductions$PCA <- matrix(0, nrow = 6, ncol = 2, dimnames = list(rownames(p2$getRawCounts()), c("PC1", "PC2")))
@@ -118,6 +196,8 @@ test_that("run skip markers creates canonical workflow state without markers", {
   expect_silent(do.call(p2$run, args))
 
   expect_true(all(c("n_molecules", "n_genes", "leiden") %in% colnames(p2$cellMeta)))
+  expect_true("analysis_pass" %in% colnames(p2$geneMeta))
+  expect_true("filter" %in% names(p2$history$runs[[length(p2$history$runs)]]$steps))
   expect_true("PCA" %in% names(p2$reductions))
   expect_true("PCA" %in% names(p2$history$pca))
   expect_equal(nrow(p2$history$pca$PCA$variance), 3)

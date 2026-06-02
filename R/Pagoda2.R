@@ -24,11 +24,12 @@ NULL
   )
 }
 
-.pagoda2_workflow_steps <- c("qc", "variance", "pca", "graph", "umap", "leiden", "markers")
+.pagoda2_workflow_steps <- c("qc", "filter", "variance", "pca", "graph", "umap", "leiden", "markers")
 
 .pagoda2_workflow_dependencies <- list(
   qc = character(),
-  variance = character(),
+  filter = "qc",
+  variance = "filter",
   pca = "variance",
   graph = "pca",
   umap = "pca",
@@ -61,6 +62,17 @@ NULL
     stop("Step arguments must be supplied as a named list")
   }
   utils::modifyList(defaults, args)
+}
+
+.pagoda2_filter_default <- function(p2, name, value, explicit = FALSE) {
+  if (isTRUE(explicit)) {
+    return(value)
+  }
+  defaults <- p2$defaults$filter
+  if (is.null(defaults) || !name %in% names(defaults)) {
+    return(value)
+  }
+  defaults[[name]]
 }
 
 .pagoda2_qc_gene_molecule <- function(matrix, min.molecules = 500, max.molecules = 5e4,
@@ -148,6 +160,75 @@ NULL
     msg <- paste0(msg, "; ", n.fail, " failed (", signif(100 * n.fail / n.cells, 3), "%)")
   }
   msg
+}
+
+.pagoda2_gene_qc <- function(matrix, min.cells = 5, min.molecules = 0, keep.genes = NULL) {
+  if (is.null(colnames(matrix))) {
+    stop("Gene QC matrix must have gene names as colnames")
+  }
+  n.cells.detected <- as.numeric(diff(matrix@p))
+  n.molecules <- as.numeric(Matrix::colSums(matrix))
+  analysis.pass <- n.cells.detected >= min.cells & n.molecules >= min.molecules
+  if (!is.null(keep.genes)) {
+    analysis.pass <- analysis.pass | colnames(matrix) %in% keep.genes
+  }
+  qc <- data.frame(
+    n_cells_detected = n.cells.detected,
+    n_molecules = n.molecules,
+    analysis_pass = analysis.pass,
+    row.names = colnames(matrix)
+  )
+  attr(qc, "pagoda2.gene.qc") <- list(
+    min.cells = min.cells,
+    min.molecules = min.molecules,
+    keep.genes = keep.genes
+  )
+  qc
+}
+
+.pagoda2_gene_qc_summary <- function(qc) {
+  n.genes <- nrow(qc)
+  n.pass <- if ("analysis_pass" %in% colnames(qc)) sum(as.logical(qc$analysis_pass), na.rm = TRUE) else NA_integer_
+  detected.q <- stats::quantile(qc$n_cells_detected, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+  molecule.q <- stats::quantile(qc$n_molecules, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+  msg <- paste0(
+    "Gene QC: ", n.genes, " genes; detected-cell median ", signif(detected.q[2], 4),
+    " [IQR ", signif(detected.q[1], 4), "-", signif(detected.q[3], 4), "]; molecules median ",
+    signif(molecule.q[2], 4), " [IQR ", signif(molecule.q[1], 4), "-", signif(molecule.q[3], 4), "]"
+  )
+  if (is.finite(n.pass)) {
+    msg <- paste0(msg, "; ", n.pass, " analysis genes (", signif(100 * n.pass / n.genes, 3), "%)")
+  }
+  msg
+}
+
+.pagoda2_analysis_genes <- function(p2, allow.empty = FALSE) {
+  genes <- .pagoda2_axis_names(p2, "gene")
+  if (is.null(p2$geneMeta) || !"analysis_pass" %in% colnames(p2$geneMeta)) {
+    return(genes)
+  }
+  meta <- p2$resolveGeneMeta("analysis_pass")
+  pass <- as.logical(meta$analysis_pass)
+  pass[is.na(pass)] <- FALSE
+  selected <- rownames(meta)[pass]
+  if (length(selected) == 0L && !isTRUE(allow.empty)) {
+    stop("No genes pass the current analysis gene mask")
+  }
+  selected
+}
+
+.pagoda2_filter_data_complete <- function(p2, pass.column = "qc_pass", gene.pass.column = "analysis_pass") {
+  p2$syncMetadata()
+  if (!pass.column %in% colnames(p2$cellMeta)) {
+    return(FALSE)
+  }
+  cell.pass <- p2$resolveCellMeta(pass.column)
+  keep <- as.logical(cell.pass[[pass.column]])
+  keep[is.na(keep)] <- FALSE
+  if (!all(keep)) {
+    return(FALSE)
+  }
+  gene.pass.column %in% colnames(p2$geneMeta)
 }
 
 .pagoda2_has_downstream_results <- function(p2) {
@@ -1167,9 +1248,9 @@ NULL
 #' @param batch fctor Batch factor for the dataset (default=NULL)
 #' @param lib.sizes character vector of library sizes (default=NULL)
 #' @param log.scale boolean If TRUE, scale counts by log() (default=TRUE)
-#' @param min.cells.per.gene integer Minimum number of cells per gene, used to subset counts for coverage (default=0)
-#' @param min.transcripts.per.cell integer Minimum number of transcripts per cells, used to subset counts for coverage (default=10)
-#' @param keep.genes list of genes to keep in count matrix after filtering out by coverage but before normalization (default=NULL)
+#' @param min.cells.per.gene integer Legacy deferred default for the minimum detected cells required by filterData() analysis gene masking (default=0)
+#' @param min.transcripts.per.cell integer Legacy deferred default for the minimum molecule count used by runQC()/filterData() (default=10)
+#' @param keep.genes list of genes to keep in the filterData() analysis gene mask regardless of coverage (default=NULL)
 #' @param trim numeric Parameter used for winsorizing count data (default=round(min.cells.per.gene/2)). If value>0, will winsorize counts in normalized space in the hopes of getting a more stable depth estimates. If value<=0, ignored.
 #' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
 #' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
@@ -1232,7 +1313,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @field palettes Factor color maps keyed by metadata axis and column name.
 	    palettes = list(cellMeta = list(), geneMeta = list()),
 
-	    #' @field defaults Canonical names for default reductions, graphs, and embeddings.
+	    #' @field defaults Canonical names and deferred workflow defaults.
 	    defaults = list(reduction = "PCA", graph = "PCA", embedding = "UMAP"),
 
 	    #' @field defaultGrouping Name of the default grouping column in cellMeta.
@@ -1279,6 +1360,27 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       self$batch <- batch
       self$misc <-list(lib.sizes=lib.sizes, log.scale=log.scale, model.type=modelType, trim=trim)
       self$modelType <- modelType
+      self$defaults <- utils::modifyList(
+        list(reduction = "PCA", graph = "PCA", embedding = "UMAP"),
+        self$defaults
+      )
+      deferred.filter <- list()
+      if (!missing(min.transcripts.per.cell)) {
+        deferred.filter$min.molecules <- min.transcripts.per.cell
+      }
+      if (!missing(min.cells.per.gene)) {
+        deferred.filter$min.cells.per.gene <- min.cells.per.gene
+      }
+      if (!missing(keep.genes) && !is.null(keep.genes)) {
+        deferred.filter$keep.genes <- keep.genes
+      }
+      if (length(deferred.filter) > 0L) {
+        current.filter.defaults <- self$defaults$filter
+        if (is.null(current.filter.defaults)) {
+          current.filter.defaults <- list()
+        }
+        self$defaults$filter <- utils::modifyList(current.filter.defaults, deferred.filter)
+      }
 
       ##if (!missing(x) && ('Pagoda2' %in% class(x))) { # copy constructor
       ##  super$initialize(x, ..., modelType=modelType, batchNorm=batchNorm, n.cores=n.cores)
@@ -1294,7 +1396,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       #if(any(x@x < 0)) {
       #  stop("x contains negative values")
       #}
-	      self$setCountMatrix(x, min.cells.per.gene=min.cells.per.gene, trim=trim, 
+	      self$setCountMatrix(x, min.cells.per.gene=min.cells.per.gene, trim=trim,
 	                     min.transcripts.per.cell=min.transcripts.per.cell, lib.sizes=lib.sizes,
 	                     log.scale=log.scale, keep.genes=keep.genes, verbose=verbose)
 	      ##}
@@ -1919,7 +2021,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return data.frame of QC metrics.
 	    runQC=function(method=c("gene_molecule", "metrics"), overwrite=FALSE, matrix=NULL,
 	                   min.molecules=500, max.molecules=5e4, p.level=NULL, verbose=FALSE) {
+	      explicit.min.molecules <- !missing(min.molecules)
+	      explicit.max.molecules <- !missing(max.molecules)
 	      method <- match.arg(method)
+	      min.molecules <- .pagoda2_filter_default(self, "min.molecules", min.molecules, explicit.min.molecules)
+	      max.molecules <- .pagoda2_filter_default(self, "max.molecules", max.molecules, explicit.max.molecules)
 	      if (is.null(matrix)) {
 	        matrix <- self$rawCounts
 	      }
@@ -2146,6 +2252,164 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      invisible(self)
 	    },
 
+	    #' @description Apply the standard data filters before analysis.
+	    #'
+	    #' @param cells Whether to filter cells by `pass.column`, or an explicit cell subset to keep.
+	    #' @param genes Whether to calculate the analysis gene mask, or an explicit gene subset to mark as passing.
+	    #' @param pass.column Cell metadata column containing TRUE/FALSE QC decisions.
+	    #' @param min.molecules Minimum molecule count passed to runQC() when cell QC is missing.
+	    #' @param max.molecules Maximum molecule count passed to runQC() when cell QC is missing.
+	    #' @param min.cells.per.gene Minimum detected cells required for the default analysis gene mask.
+	    #' @param min.molecules.per.gene Minimum total molecules required for the default analysis gene mask.
+	    #' @param keep.genes Genes that should pass the analysis gene mask regardless of coverage.
+	    #' @param force Whether to allow filtering or analysis-mask changes after downstream results exist.
+	    #' @param overwrite Whether to recompute existing QC and analysis-mask columns.
+	    #' @param verbose Whether to emit succinct filtering summaries.
+	    #' @param ... Additional arguments passed to runQC() when cell QC needs to be calculated.
+	    #' @return Invisibly returns self.
+	    filterData=function(cells=TRUE, genes=TRUE, pass.column="qc_pass",
+	                        min.molecules=500, max.molecules=5e4,
+	                        min.cells.per.gene=5, min.molecules.per.gene=0,
+	                        keep.genes=NULL,
+	                        force=FALSE, overwrite=FALSE, verbose=FALSE, ...) {
+	      explicit.min.molecules <- !missing(min.molecules)
+	      explicit.max.molecules <- !missing(max.molecules)
+	      explicit.min.cells.per.gene <- !missing(min.cells.per.gene)
+	      explicit.min.molecules.per.gene <- !missing(min.molecules.per.gene)
+	      explicit.keep.genes <- !missing(keep.genes)
+	      qc.extra <- list(...)
+	      min.molecules <- .pagoda2_filter_default(self, "min.molecules", min.molecules, explicit.min.molecules)
+	      max.molecules <- .pagoda2_filter_default(self, "max.molecules", max.molecules, explicit.max.molecules)
+	      min.cells.per.gene <- .pagoda2_filter_default(self, "min.cells.per.gene", min.cells.per.gene, explicit.min.cells.per.gene)
+	      min.molecules.per.gene <- .pagoda2_filter_default(self, "min.molecules.per.gene", min.molecules.per.gene, explicit.min.molecules.per.gene)
+	      keep.genes <- .pagoda2_filter_default(self, "keep.genes", keep.genes, explicit.keep.genes)
+	      self$syncMetadata()
+	      raw <- self$getRawCounts()
+	      downstream <- .pagoda2_has_downstream_results(self)
+	      n.cells.before <- nrow(raw)
+	      n.genes.before <- ncol(raw)
+	      removed.cells <- character()
+	      explicit.qc <- explicit.min.molecules || explicit.max.molecules ||
+	        any(names(qc.extra) %in% c("method", "matrix", "p.level"))
+
+	      if (isTRUE(cells)) {
+	        if (isTRUE(overwrite) || explicit.qc || !pass.column %in% colnames(self$cellMeta)) {
+	          do.call(
+	            self$runQC,
+	            c(
+	              list(
+	                overwrite = isTRUE(overwrite) || explicit.qc,
+	                min.molecules = min.molecules,
+	                max.molecules = max.molecules,
+	                verbose = verbose
+	              ),
+	              qc.extra
+	            )
+	          )
+	        } else if (isTRUE(verbose)) {
+	          qc <- self$getCellMeta(intersect(c("n_molecules", "n_genes", pass.column), colnames(self$cellMeta)))
+	          message(.pagoda2_qc_summary(qc))
+	        }
+	        qc <- self$resolveCellMeta(pass.column)
+	        keep <- as.logical(qc[[pass.column]])
+	        keep[is.na(keep)] <- FALSE
+	        target.cells <- rownames(qc)[keep]
+	      } else if (identical(cells, FALSE)) {
+	        target.cells <- rownames(raw)
+	      } else {
+	        target.cells <- rownames(raw)[.pagoda2_axis_selection_index(cells, rownames(raw), what = "cell(s)")]
+	      }
+
+	      if (length(target.cells) < 3L) {
+	        stop("Filtering would leave fewer than 3 cells")
+	      }
+	      if (!identical(target.cells, rownames(raw))) {
+	        if (downstream && !isTRUE(force)) {
+	          stop("Filtering cells would invalidate existing downstream results. ",
+	               "Call filterData(force = TRUE) or start from a fresh object.")
+	        }
+	        removed.cells <- setdiff(rownames(raw), target.cells)
+	        self$filterCells(cells = target.cells, force = force, verbose = verbose)
+	        raw <- self$getRawCounts()
+	        downstream <- .pagoda2_has_downstream_results(self)
+	      }
+
+	      gene.qc <- NULL
+	      if (isTRUE(genes)) {
+	        gene.qc <- .pagoda2_gene_qc(
+	          raw,
+	          min.cells = min.cells.per.gene,
+	          min.molecules = min.molecules.per.gene,
+	          keep.genes = keep.genes
+	        )
+	      } else if (identical(genes, FALSE)) {
+	        gene.qc <- NULL
+	      } else {
+	        selected.genes <- colnames(raw)[.pagoda2_axis_selection_index(genes, colnames(raw), what = "gene(s)")]
+	        gene.qc <- .pagoda2_gene_qc(raw, min.cells = 0, min.molecules = 0)
+	        gene.qc$analysis_pass <- rownames(gene.qc) %in% selected.genes
+	        attr(gene.qc, "pagoda2.gene.qc") <- list(
+	          min.cells = NA_real_,
+	          min.molecules = NA_real_,
+	          explicit.genes = selected.genes
+	        )
+	      }
+
+	      if (!is.null(gene.qc)) {
+	        current.pass <- NULL
+	        if ("analysis_pass" %in% colnames(self$geneMeta)) {
+	          current.meta <- self$resolveGeneMeta("analysis_pass")
+	          current.pass <- current.meta$analysis_pass
+	          names(current.pass) <- rownames(current.meta)
+	        }
+	        pass.changed <- isTRUE(overwrite) ||
+	          is.null(current.pass) ||
+	          !identical(unname(as.logical(current.pass[rownames(gene.qc)])), unname(as.logical(gene.qc$analysis_pass)))
+	        if (downstream && pass.changed && !isTRUE(force)) {
+	          stop("Changing the analysis gene mask would invalidate existing downstream results. ",
+	               "Call filterData(force = TRUE) or start from a fresh object.")
+	        }
+	        if (pass.changed || !all(c("n_cells_detected", "n_molecules", "analysis_pass") %in% colnames(self$geneMeta))) {
+	          self$setGeneMeta(gene.qc, overwrite = TRUE)
+	          self$history$gene.qc <- attr(gene.qc, "pagoda2.gene.qc")
+	          self$misc[['varinfo']] <- NULL
+	          self$misc[['odgenes']] <- NULL
+	          self$misc[['rescaled.mat']] <- NULL
+	        }
+	        if (isTRUE(verbose)) {
+	          message(.pagoda2_gene_qc_summary(gene.qc))
+	        }
+	      }
+
+	      if (is.null(self$history$filterData)) {
+	        self$history$filterData <- list()
+	      }
+	      self$history$filterData[[length(self$history$filterData) + 1L]] <- list(
+	        cells = list(
+	          requested = cells,
+	          before = n.cells.before,
+	          after = nrow(self$getRawCounts()),
+	          removed = length(removed.cells),
+	          removed.cells = removed.cells
+	        ),
+	        genes = list(
+	          requested = genes,
+	          before = n.genes.before,
+	          after = ncol(self$getRawCounts()),
+	          analysis.pass = if (is.null(gene.qc)) NA_integer_ else sum(as.logical(gene.qc$analysis_pass), na.rm = TRUE)
+	        ),
+	        parameters = list(
+	          min.molecules = min.molecules,
+	          max.molecules = max.molecules,
+	          min.cells.per.gene = min.cells.per.gene,
+	          min.molecules.per.gene = min.molecules.per.gene,
+	          keep.genes = keep.genes
+	        ),
+	        time = Sys.time()
+	      )
+	      invisible(self)
+	    },
+
 	    #' @description Run the canonical pagoda2.1 single-dataset workflow.
 	    #'
 	    #' @param steps Optional workflow steps to run.
@@ -2156,6 +2420,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param plots Plot behavior: show, none, or collect.
 	    #' @param verbose Whether to emit progress messages.
 	    #' @param qc Step-specific argument list for runQC().
+	    #' @param filter Step-specific argument list for filterData().
 	    #' @param variance Step-specific argument list for runVariance().
 	    #' @param pca Step-specific argument list for runPCA().
 	    #' @param graph Step-specific argument list for runGraph().
@@ -2165,7 +2430,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return Invisibly returns self.
 	    run=function(steps=NULL, skip=NULL, dependencies=c("auto", "error"), overwrite=FALSE,
 	                 profile=c("interactive", "pipeline", "report"), plots=NULL,
-	                 verbose=FALSE, qc=list(), variance=list(), pca=list(), graph=list(), umap=list(),
+	                 verbose=FALSE, qc=list(), filter=list(), variance=list(), pca=list(), graph=list(), umap=list(),
 	                 leiden=list(), markers=list()) {
 	      dependencies <- match.arg(dependencies)
 	      profile <- match.arg(profile)
@@ -2252,14 +2517,23 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          n.fail <- sum(!as.logical(qc.meta$qc_pass), na.rm = TRUE)
 	          if (filter.after.qc) {
 	            run_step("filter", list(pass.column = "qc_pass", verbose = verbose.default), self$filterCells(pass.column = "qc_pass", verbose = verbose.default))
-	          } else if (n.fail > 0L) {
+	          } else if (n.fail > 0L && !"filter" %in% resolved.steps) {
 	            warning(
 	              n.fail, " cell(s) did not pass QC. ",
-	              "Call p2$plotQC() to inspect them and p2$filterCells() to filter, ",
-	              "or run p2$run(qc = list(filter = TRUE)) to filter before analysis.",
+	              "Call p2$plotQC() to inspect them and p2$filterData() before analysis.",
 	              call. = FALSE
 	            )
 	          }
+	        }
+	      }
+
+	      if ("filter" %in% resolved.steps) {
+	        args <- .pagoda2_step_args(filter, list(overwrite = overwrite, verbose = verbose.default))
+	        explicit.filter.args <- setdiff(names(args), c("overwrite", "verbose"))
+	        if (!overwrite && length(explicit.filter.args) == 0L && .pagoda2_filter_data_complete(self)) {
+	          skip_step("filter", args, "current cells pass QC and analysis gene mask already exists")
+	        } else {
+	          run_step("filter", args, do.call(self$filterData, args))
 	        }
 	      }
 
@@ -2729,11 +3003,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      invisible(self)
 	    },
 
-	    #' @description Provide the initial count matrix, and estimate deviance residual matrix (correcting for depth and batch)
+	    #' @description Provide the initial count matrix and set up the normalized analysis view.
     #'
     #' @param countMatrix input count matrix 
     #' @param depthScale numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale).
-    #' @return normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
+	    #' @return normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
     setCountMatrix=function(countMatrix, depthScale=1e3, min.cells.per.gene=0, 
                             trim=round(min.cells.per.gene/2), min.transcripts.per.cell=10, 
                             lib.sizes=NULL, log.scale=FALSE, keep.genes=NULL, verbose=TRUE) {
@@ -2758,9 +3032,6 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       
       counts <- t(countMatrix)
       
-      # Keep genes of sufficient coverage or genes that are in the keep.genes list
-      counts <- counts[,diff(counts@p) >= min.cells.per.gene | colnames(counts) %in% keep.genes]
-
       self$misc$depthScale <- depthScale
       colBatch <- NULL
       if (!is.null(self$batch)) {
@@ -2780,12 +3051,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         depth <- Matrix::colSums(countMatrix)
       }
       
-      cell.filt.mask <- (depth >= min.transcripts.per.cell)
-      counts <- counts[cell.filt.mask,]
-      depth <- depth[cell.filt.mask]
       names(depth) <- rownames(counts)
       if (!is.null(colBatch)) {
-        self$batch <- droplevels(colBatch[cell.filt.mask])
+        self$batch <- droplevels(colBatch)
         names(self$batch) <- rownames(counts)
       }
 
@@ -2959,7 +3227,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #' @return residual matrix with adjusted variance
 	    adjustVariance=function(gam.k=5, alpha=5e-2, plot=FALSE, use.raw.variance=FALSE, 
 	      use.unadjusted.pvals=FALSE, do.par=TRUE, max.adjusted.variance=1e3, min.adjusted.variance=1e-3, 
-	      cells=NULL, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = self$n.cores,
+	      cells=NULL, genes=NULL, use.analysis.genes=TRUE, verbose=TRUE, min.gene.cells=0, persist=is.null(cells), n.cores = self$n.cores,
 	      .legacy.warn=TRUE) {
 	      if (.legacy.warn) {
 	        .pagoda2_deprecated_call("adjustVariance()", "p2$runVariance(...)")
@@ -2967,6 +3235,17 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      #persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
       all.cells <- .pagoda2_axis_names(self, "cell")
       all.genes <- .pagoda2_axis_names(self, "gene")
+      if (is.null(genes) && isTRUE(use.analysis.genes)) {
+        genes <- .pagoda2_analysis_genes(self)
+      }
+      gene.index <- NULL
+      if (!is.null(genes)) {
+        gene.index <- .pagoda2_axis_selection_index(genes, all.genes, what = "gene(s)")
+        all.genes <- all.genes[gene.index]
+        if (length(all.genes) < 2L) {
+          stop("Variance calculation requires at least two genes")
+        }
+      }
       if (!is.null(cells)) { # translate cells into a rowSel boolean vector
         if (is.logical(cells) && length(cells)==length(all.cells)) {
           rowSel <- cells
@@ -2990,6 +3269,9 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         self$viewColMeanVar(name = "analysis", cells = cells, n.cores = n.cores)
       } else {
         stop("Variance calculation requires a supported matrix view")
+      }
+      if (!is.null(gene.index)) {
+        df <- df[gene.index, , drop = FALSE]
       }
 
       if (use.raw.variance) { # use raw variance estimates without relative adjustments
@@ -3634,7 +3916,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
     #'     M - log2 fold change
     #'     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
     #'     fe - fraction of cells in a given group having non-zero expression level of a given gene
-    getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, grouping=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE, .legacy.warn=TRUE) {
+    getDifferentialGenes=function(type='counts', clusterType=NULL, groups=NULL, grouping=NULL, name='customClustering', z.threshold=3, upregulated.only=FALSE, verbose=FALSE, append.specificity.metrics=TRUE, append.auc=FALSE, genes=NULL, use.analysis.genes=TRUE, .legacy.warn=TRUE) {
 	      if (.legacy.warn) {
 	        .pagoda2_deprecated_call("getDifferentialGenes()", "p2$runMarkers(...)")
 	      }
@@ -3689,7 +3971,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
       if (!any(valid.cells)) {
         stop("No cells with non-missing groups are present in counts")
       }
-      cm <- self$getExpressionBlock(cells = all.cells[valid.cells])
+      if (is.null(genes) && type == "counts" && isTRUE(use.analysis.genes)) {
+        genes <- .pagoda2_analysis_genes(self)
+      }
+      cm <- self$getExpressionBlock(cells = all.cells[valid.cells], genes = genes)
       # reorder cols
       cols <- as.factor(cols[match(rownames(cm),names(cols))])
 
@@ -3787,7 +4072,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return Marker result list returned by getDifferentialGenes().
 	    runMarkers=function(grouping=NULL, groups=NULL, name=NULL, type='counts', z.threshold=3,
 	                        upregulated.only=TRUE, verbose=FALSE, append.specificity.metrics=TRUE,
-	                        append.auc=TRUE) {
+	                        append.auc=TRUE, genes=NULL, use.analysis.genes=TRUE) {
 	      resolved.grouping <- grouping
 	      if (is.null(resolved.grouping) && is.null(groups)) {
 	        resolved.grouping <- self$defaultGrouping
@@ -3805,13 +4090,17 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        verbose = verbose,
 	        append.specificity.metrics = append.specificity.metrics,
 	        append.auc = append.auc,
+	        genes = genes,
+	        use.analysis.genes = use.analysis.genes,
 	        .legacy.warn = FALSE
 	      )
 	      params <- list(
 	        z.threshold = z.threshold,
 	        upregulated.only = upregulated.only,
 	        append.specificity.metrics = append.specificity.metrics,
-	        append.auc = append.auc
+	        append.auc = append.auc,
+	        genes = genes,
+	        use.analysis.genes = use.analysis.genes
 	      )
 	      result <- .pagoda2_marker_result(
 	        name = name,
@@ -4576,7 +4865,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
           rownames(self$misc[['varinfo']])[self$misc[['varinfo']]$lpa <= log(alpha)]
         }
       } else { # return top n.odgenes sites
-        rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp, decreasing=FALSE)[1:min(length(.pagoda2_axis_names(self, "gene")),n.odgenes)])]
+        rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp, decreasing=FALSE)[1:min(nrow(self$misc[['varinfo']]),n.odgenes)])]
       }
     },
 
@@ -4628,7 +4917,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
         if (!is.null(n.odgenes)) {
           if (n.odgenes>length(odgenes)) {
             #warning("number of specified odgenes is higher than the number of the statistically significant sites, will take top ",n.odgenes,' sites')
-            odgenes <- rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp,decreasing=FALSE)[1:min(length(.pagoda2_axis_names(self, "gene")),n.odgenes)])]
+            odgenes <- rownames(self$misc[['varinfo']])[(order(self$misc[['varinfo']]$lp,decreasing=FALSE)[1:min(nrow(self$misc[['varinfo']]),n.odgenes)])]
           } else {
             odgenes <- odgenes[1:n.odgenes]
           }
