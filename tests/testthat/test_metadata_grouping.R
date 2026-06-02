@@ -194,6 +194,45 @@ test_that("marker plotting methods resolve marker schema and grouping", {
   )
 })
 
+test_that("marker selection presets are shared and inspectable", {
+  p2 <- make_test_p2()
+  p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
+  p2$diffgenes$counts$manual <- list(
+    "0" = data.frame(
+      Gene = c("g1", "g2", "g3"),
+      Z = c(6, 6, 6),
+      M = c(2.0, 1.2, 0.8),
+      AUC = c(0.99, 0.80, 0.70),
+      Precision = c(0.20, 0.80, 0.95),
+      ExpressionFraction = c(0.90, 0.80, 0.20),
+      highest = TRUE
+    ),
+    "1" = data.frame(
+      Gene = c("g4", "g5", "g2"),
+      Z = c(6, 6, 6),
+      M = c(1.0, 1.8, 0.7),
+      AUC = c(0.70, 0.95, 0.65),
+      Precision = c(0.85, 0.30, 0.90),
+      ExpressionFraction = c(0.85, 0.80, 0.20),
+      highest = TRUE
+    )
+  )
+
+  balanced <- p2$getTopMarkers(markers = "manual", n.genes.per.group = 1, selection = "balanced")
+  auc <- p2$getTopMarkers(markers = "manual", n.genes.per.group = 1, selection = "auc")
+  precision <- p2$getTopMarkers(markers = "manual", n.genes.per.group = 1, selection = "precision")
+  custom <- p2$getTopMarkers(
+    markers = "manual",
+    n.genes.per.group = 1,
+    selection = function(d) -d$M
+  )
+
+  expect_identical(balanced$gene, c("g2", "g4"))
+  expect_identical(auc$gene, c("g1", "g5"))
+  expect_identical(precision$gene, c("g2", "g4"))
+  expect_identical(custom$gene, c("g3", "g2"))
+})
+
 test_that("marker dotplot orders matching groups by marker block by default", {
   testthat::skip_if_not_installed("ggplot2")
 

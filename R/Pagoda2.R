@@ -667,37 +667,183 @@ NULL
   d
 }
 
+.pagoda2_marker_selection_preset <- function(selection) {
+  if (is.null(selection)) {
+    selection <- "balanced"
+  }
+  if (is.function(selection)) {
+    return(list(name = "custom", score = selection, score.name = "score", ordering = c("-score")))
+  }
+  if (is.list(selection)) {
+    if (is.null(selection$name)) {
+      selection$name <- "custom"
+    }
+    if (!is.null(selection$score) && is.null(selection$score.name)) {
+      selection$score.name <- "score"
+    }
+    return(selection)
+  }
+  if (!is.character(selection) || length(selection) != 1L) {
+    stop("`selection` must be a preset name, function, or list")
+  }
+  selection <- match.arg(selection, c("balanced", "auc", "precision", "effect", "custom"))
+  switch(selection,
+    balanced = list(
+      name = "balanced",
+      score.name = "BalancedF1",
+      score = function(d) {
+        if (!all(c("Precision", "ExpressionFraction") %in% colnames(d))) {
+          return(NULL)
+        }
+        p <- d$Precision
+        r <- d$ExpressionFraction
+        ifelse(is.finite(p + r) & (p + r) > 0, 2 * p * r / (p + r), NA_real_)
+      },
+      ordering = c("-BalancedF1", "-AUC", "-M", "-Precision", "-Z")
+    ),
+    auc = list(
+      name = "auc",
+      ordering = c("-AUC", "-Z", "-Precision", "-Specificity", "-M")
+    ),
+    precision = list(
+      name = "precision",
+      min.expression.fraction = 0.45,
+      required.columns = c("Precision", "ExpressionFraction"),
+      ordering = c("-Precision", "-ExpressionFraction", "-AUC", "-M", "-Specificity", "-Z")
+    ),
+    effect = list(
+      name = "effect",
+      ordering = c("-M", "-Z", "-AUC", "-Precision", "-Specificity")
+    ),
+    custom = list(
+      name = "custom",
+      ordering = NULL
+    )
+  )
+}
+
+.pagoda2_filter_marker_table <- function(d, highest.only = TRUE, z.threshold = NULL,
+                                         min.expression.fraction = NULL,
+                                         min.precision = NULL,
+                                         min.specificity = NULL,
+                                         min.auc = NULL,
+                                         min.m = NULL,
+                                         filter = NULL) {
+  apply_min <- function(d, column, value) {
+    if (is.null(value)) {
+      return(d)
+    }
+    if (!column %in% colnames(d)) {
+      stop("Marker selection requires column `", column, "`")
+    }
+    d[is.finite(d[[column]]) & d[[column]] >= value, , drop = FALSE]
+  }
+  if (!is.null(z.threshold) && "Z" %in% colnames(d)) {
+    d <- d[is.finite(d$Z) & d$Z >= z.threshold, , drop = FALSE]
+  }
+  if (highest.only && "highest" %in% colnames(d)) {
+    d <- d[d$highest %in% TRUE, , drop = FALSE]
+  }
+  d <- apply_min(d, "ExpressionFraction", min.expression.fraction)
+  d <- apply_min(d, "Precision", min.precision)
+  d <- apply_min(d, "Specificity", min.specificity)
+  d <- apply_min(d, "AUC", min.auc)
+  d <- apply_min(d, "M", min.m)
+  if (!is.null(filter)) {
+    keep <- filter(d)
+    if (!is.logical(keep) || length(keep) != nrow(d)) {
+      stop("Custom marker selection filter must return one logical value per marker row")
+    }
+    d <- d[keep %in% TRUE, , drop = FALSE]
+  }
+  d
+}
+
+# Shared marker display selection. Plotting methods call this instead of each
+# having their own ranking rules, so dotplots and heatmaps show the same genes
+# for the same `selection` preset.
 .pagoda2_select_marker_genes <- function(tables, n.genes.per.group = 5, genes = NULL,
                                          z.threshold = NULL, highest.only = TRUE,
-                                         ordering = c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
-                                         remove.duplicates = TRUE) {
+                                         ordering = NULL, selection = "balanced",
+                                         min.expression.fraction = NULL,
+                                         min.precision = NULL,
+                                         min.specificity = NULL,
+                                         min.auc = NULL,
+                                         min.m = NULL,
+                                         remove.duplicates = TRUE,
+                                         return.tables = FALSE) {
   if (!is.null(genes)) {
     genes <- unique(as.character(genes))
-    return(list(genes = genes, groups = stats::setNames(rep("selected", length(genes)), genes)))
+    out <- list(
+      genes = genes,
+      groups = stats::setNames(rep("selected", length(genes)), genes),
+      tables = list(selected = data.frame(Gene = genes, stringsAsFactors = FALSE)),
+      selection = "explicit"
+    )
+    return(out)
   }
   if (is.null(tables) || length(tables) == 0) {
     stop("Marker result does not contain marker tables")
+  }
+  preset <- .pagoda2_marker_selection_preset(selection)
+  if (!is.null(preset$required.columns)) {
+    missing.required <- unique(unlist(lapply(tables, function(d) {
+      if (is.null(d) || nrow(d) == 0) {
+        return(character())
+      }
+      setdiff(preset$required.columns, colnames(d))
+    }), use.names = FALSE))
+    if (length(missing.required) > 0) {
+      stop(
+        "Marker selection `", preset$name, "` requires marker table column(s): ",
+        paste(missing.required, collapse = ", "),
+        ". Re-run markers with specificity metrics enabled."
+      )
+    }
+  }
+  if (is.null(ordering)) {
+    ordering <- preset$ordering
+  }
+  if (is.null(ordering)) {
+    ordering <- c("-AUC", "-Z", "-Precision", "-Specificity", "-M")
+  }
+  if (is.null(min.expression.fraction) && !is.null(preset$min.expression.fraction)) {
+    min.expression.fraction <- preset$min.expression.fraction
   }
   selected <- lapply(names(tables), function(group) {
     d <- tables[[group]]
     if (is.null(d) || nrow(d) == 0) {
       return(character())
     }
-    if (!is.null(z.threshold) && "Z" %in% colnames(d)) {
-      d <- d[d$Z >= z.threshold, , drop = FALSE]
+    if (!is.null(preset$score)) {
+      score <- preset$score(d)
+      if (!is.null(score)) {
+        if (!is.numeric(score) || length(score) != nrow(d)) {
+          stop("Custom marker selection score must return one numeric value per marker row")
+        }
+        d[[preset$score.name]] <- score
+      }
     }
-    if (highest.only && "highest" %in% colnames(d)) {
-      d <- d[d$highest %in% TRUE, , drop = FALSE]
-    }
+    d <- .pagoda2_filter_marker_table(
+      d,
+      highest.only = highest.only,
+      z.threshold = z.threshold,
+      min.expression.fraction = min.expression.fraction,
+      min.precision = min.precision,
+      min.specificity = min.specificity,
+      min.auc = min.auc,
+      min.m = min.m,
+      filter = preset$filter
+    )
     d <- .pagoda2_order_marker_table(d, ordering = ordering)
     if (!is.null(n.genes.per.group)) {
       d <- utils::head(d, n.genes.per.group)
     }
-    if ("Gene" %in% colnames(d)) {
-      as.character(d$Gene)
-    } else {
-      rownames(d)
+    if (nrow(d) == 0) {
+      return(character())
     }
+    genes <- if ("Gene" %in% colnames(d)) as.character(d$Gene) else rownames(d)
+    stats::setNames(genes, genes)
   })
   names(selected) <- names(tables)
   selected <- selected[lengths(selected) > 0]
@@ -711,7 +857,17 @@ NULL
   if (length(genes) == 0) {
     stop("No marker genes passed the requested filters")
   }
-  list(genes = genes, groups = stats::setNames(gene.groups, genes))
+  out <- list(
+    genes = genes,
+    groups = stats::setNames(gene.groups, genes),
+    tables = selected,
+    selection = preset$name,
+    ordering = ordering
+  )
+  if (isTRUE(return.tables)) {
+    return(out)
+  }
+  out
 }
 
 .pagoda2_discrete_palette <- function(levels, s = 1, v = 1) {
@@ -779,7 +935,12 @@ NULL
                                             n.genes.per.group = 5, additional.genes = NULL,
                                             exclude.genes = NULL, z.threshold = 2,
                                             highest.only = TRUE,
-                                            ordering = c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
+                                            ordering = NULL, selection = "balanced",
+                                            min.expression.fraction = NULL,
+                                            min.precision = NULL,
+                                            min.specificity = NULL,
+                                            min.auc = NULL,
+                                            min.m = NULL,
                                             remove.duplicates = TRUE, expression.quantile = 0.99,
                                             pal = grDevices::colorRampPalette(c("grey95", "firebrick3"), space = "Lab")(1024),
                                             column.metadata = NULL, column.metadata.colors = NULL,
@@ -904,6 +1065,12 @@ NULL
     z.threshold = z.threshold,
     highest.only = highest.only,
     ordering = ordering,
+    selection = selection,
+    min.expression.fraction = min.expression.fraction,
+    min.precision = min.precision,
+    min.specificity = min.specificity,
+    min.auc = min.auc,
+    min.m = min.m,
     remove.duplicates = remove.duplicates
   )
   selected.genes <- selected$genes
@@ -2967,6 +3134,60 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      resolved$result
 	    },
 
+	    #' @description Select top markers for display using a shared marker selection policy.
+	    #'
+	    #' @param markers Marker result name. NULL uses defaultGrouping.
+	    #' @param type Marker result namespace.
+	    #' @param genes Optional explicit genes to return. NULL selects from marker tables.
+	    #' @param n.genes.per.group Number of marker genes to select per group.
+	    #' @param selection Marker selection preset: "balanced", "auc", "precision", "effect", or a custom function/list.
+	    #' @param z.threshold Optional marker Z threshold.
+	    #' @param highest.only Whether to keep genes marked as highest in their group.
+	    #' @param ordering Optional marker table ordering override such as c("-AUC", "-Z").
+	    #' @param min.expression.fraction Optional minimum target-group expression fraction.
+	    #' @param min.precision Optional minimum marker precision.
+	    #' @param min.specificity Optional minimum marker specificity.
+	    #' @param min.auc Optional minimum AUC.
+	    #' @param min.m Optional minimum effect size M.
+	    #' @param remove.duplicates Whether to keep only the first selected occurrence of each gene.
+	    #' @param as.data.frame Whether to return a data.frame instead of the internal selection list.
+	    #' @return data.frame with group, rank, and gene, or an internal selection list.
+	    getTopMarkers=function(markers=NULL, type='counts', genes=NULL, n.genes.per.group=5,
+	                           selection="balanced", z.threshold=3, highest.only=TRUE,
+	                           ordering=NULL, min.expression.fraction=NULL,
+	                           min.precision=NULL, min.specificity=NULL,
+	                           min.auc=NULL, min.m=NULL,
+	                           remove.duplicates=TRUE, as.data.frame=TRUE) {
+	      resolved <- self$resolveMarkers(markers = markers, type = type)
+	      selected <- .pagoda2_select_marker_genes(
+	        resolved$tables,
+	        n.genes.per.group = n.genes.per.group,
+	        genes = genes,
+	        z.threshold = z.threshold,
+	        highest.only = highest.only,
+	        ordering = ordering,
+	        selection = selection,
+	        min.expression.fraction = min.expression.fraction,
+	        min.precision = min.precision,
+	        min.specificity = min.specificity,
+	        min.auc = min.auc,
+	        min.m = min.m,
+	        remove.duplicates = remove.duplicates,
+	        return.tables = TRUE
+	      )
+	      if (!isTRUE(as.data.frame)) {
+	        return(selected)
+	      }
+	      group <- unname(selected$groups)
+	      data.frame(
+	        group = group,
+	        rank = ave(seq_along(group), group, FUN = seq_along),
+	        gene = selected$genes,
+	        selection = selected$selection,
+	        stringsAsFactors = FALSE
+	      )
+	    },
+
 	    #' @description Create a cell annotation by mapping one grouping to another.
 	    #'
 	    #' @param from Source grouping name.
@@ -4492,9 +4713,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param grouping Optional grouping column. NULL uses marker provenance when available, then defaultGrouping.
 	    #' @param groups Optional direct grouping vector.
 	    #' @param n.genes.per.group Number of marker genes to select per group when genes is NULL.
+	    #' @param selection Marker selection preset: "balanced", "auc", "precision", "effect", or a custom function/list.
 	    #' @param z.threshold Optional marker Z threshold used during selection.
 	    #' @param highest.only Whether to keep genes marked as highest in their group.
-	    #' @param ordering Marker table ordering preference.
+	    #' @param ordering Optional marker table ordering override such as c("-AUC", "-Z").
+	    #' @param min.expression.fraction Optional minimum target-group expression fraction.
+	    #' @param min.precision Optional minimum marker precision.
+	    #' @param min.specificity Optional minimum marker specificity.
+	    #' @param min.auc Optional minimum AUC.
+	    #' @param min.m Optional minimum effect size M.
 	    #' @param remove.duplicates Whether to keep only the first selected occurrence of each gene.
 	    #' @param count.matrix Optional cell-by-gene matrix. Defaults to the selected analysis expression block.
 	    #' @param n.cores Number of cores passed to sccore::dotPlot().
@@ -4508,7 +4735,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return ggplot object.
 	    plotMarkerDotPlot=function(markers=NULL, type='counts', genes=NULL, grouping=NULL, groups=NULL,
 	                               n.genes.per.group=5, z.threshold=3, highest.only=TRUE,
-	                               ordering=c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
+	                               ordering=NULL, selection="balanced",
+	                               min.expression.fraction=NULL,
+	                               min.precision=NULL, min.specificity=NULL,
+	                               min.auc=NULL, min.m=NULL,
 	                               remove.duplicates=TRUE, count.matrix=NULL, n.cores=self$n.cores,
 	                               cols=c("grey88", "firebrick3"), dot.scale=7,
 	                               scale.by="size", text.angle=45, order.groups=TRUE,
@@ -4553,6 +4783,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        z.threshold = z.threshold,
 	        highest.only = highest.only,
 	        ordering = ordering,
+	        selection = selection,
+	        min.expression.fraction = min.expression.fraction,
+	        min.precision = min.precision,
+	        min.specificity = min.specificity,
+	        min.auc = min.auc,
+	        min.m = min.m,
 	        remove.duplicates = remove.duplicates
 	      )
 	      available.genes <- if (is.null(count.matrix)) .pagoda2_axis_names(self, "gene") else colnames(count.matrix)
@@ -4618,9 +4854,15 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param n.genes.per.group Number of marker genes to select per group when genes is NULL.
 	    #' @param additional.genes Optional extra genes to append to the heatmap.
 	    #' @param exclude.genes Optional genes to exclude after marker selection.
+	    #' @param selection Marker selection preset: "balanced", "auc", "precision", "effect", or a custom function/list.
 	    #' @param z.threshold Optional marker Z threshold used during selection.
 	    #' @param highest.only Whether to keep genes marked as highest in their group.
-	    #' @param ordering Marker table ordering preference.
+	    #' @param ordering Optional marker table ordering override such as c("-AUC", "-Z").
+	    #' @param min.expression.fraction Optional minimum target-group expression fraction.
+	    #' @param min.precision Optional minimum marker precision.
+	    #' @param min.specificity Optional minimum marker specificity.
+	    #' @param min.auc Optional minimum AUC.
+	    #' @param min.m Optional minimum effect size M.
 	    #' @param remove.duplicates Whether to keep only the first selected occurrence of each gene.
 	    #' @param expression.quantile Quantile used to trim each gene before 0-1 scaling.
 	    #' @param pal Color palette for expression heatmap.
@@ -4660,7 +4902,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	                               genes=NULL, grouping=NULL, groups=NULL, n.genes.per.group=5,
 	                               additional.genes=NULL, exclude.genes=NULL,
 	                               z.threshold=2, highest.only=TRUE,
-	                               ordering=c("-AUC", "-Z", "-Precision", "-Specificity", "-M"),
+	                               ordering=NULL, selection="balanced",
+	                               min.expression.fraction=NULL,
+	                               min.precision=NULL, min.specificity=NULL,
+	                               min.auc=NULL, min.m=NULL,
 	                               remove.duplicates=TRUE, expression.quantile=0.99,
 	                               pal=colorRampPalette(c('grey95','firebrick3'), space = "Lab")(1024),
 	                               column.metadata=NULL, column.metadata.colors=NULL,
@@ -4703,6 +4948,12 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	        z.threshold = z.threshold,
 	        highest.only = highest.only,
 	        ordering = ordering,
+	        selection = selection,
+	        min.expression.fraction = min.expression.fraction,
+	        min.precision = min.precision,
+	        min.specificity = min.specificity,
+	        min.auc = min.auc,
+	        min.m = min.m,
 	        remove.duplicates = remove.duplicates,
 	        expression.quantile = expression.quantile,
 	        pal = pal,
