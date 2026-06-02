@@ -194,6 +194,47 @@ test_that("marker plotting methods resolve marker schema and grouping", {
   )
 })
 
+test_that("marker dotplot orders matching groups by marker block by default", {
+  testthat::skip_if_not_installed("ggplot2")
+
+  p2 <- make_test_p2()
+  p2$setGrouping(
+    "leiden",
+    factor(c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), levels = c("1", "0")),
+    setDefault = TRUE
+  )
+  p2$diffgenes$counts$manual <- list(
+    "0" = data.frame(Gene = c("g1", "g3"), Z = c(5, 4), AUC = c(0.9, 0.8), highest = TRUE),
+    "1" = data.frame(Gene = c("g2", "g4"), Z = c(5, 4), AUC = c(0.9, 0.8), highest = TRUE)
+  )
+
+  p <- p2$plotMarkerDotPlot(
+    markers = "manual",
+    n.genes.per.group = 2,
+    z.threshold = NULL,
+    highest.only = FALSE
+  )
+  p.unordered <- p2$plotMarkerDotPlot(
+    markers = "manual",
+    n.genes.per.group = 2,
+    z.threshold = NULL,
+    highest.only = FALSE,
+    order.groups = FALSE
+  )
+  p.explicit <- p2$plotMarkerDotPlot(
+    markers = "manual",
+    n.genes.per.group = 2,
+    z.threshold = NULL,
+    highest.only = FALSE,
+    group.order = c("1", "0")
+  )
+
+  expect_identical(levels(p$data$gene), c("g1", "g3", "g2", "g4"))
+  expect_identical(levels(p$data$cluster), c("1", "0"))
+  expect_identical(levels(p.unordered$data$cluster), c("0", "1"))
+  expect_identical(levels(p.explicit$data$cluster), c("0", "1"))
+})
+
 test_that("native marker heatmap returns details and draws without ComplexHeatmap", {
   p2 <- make_test_p2()
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
