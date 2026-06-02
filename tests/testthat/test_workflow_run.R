@@ -46,7 +46,13 @@ make_qc_p2 <- function() {
 test_that("filterCells auto-runs QC and filters by qc_pass", {
   p2 <- make_qc_p2()
 
-  expect_message(p2$filterCells(min.molecules = 100), "running runQC")
+  expect_silent(out <- capture.output(qc <- p2$runQC(min.molecules = 100)))
+  expect_equal(out, character(0))
+  expect_s3_class(qc, "data.frame")
+  expect_message(p2$runQC(overwrite = TRUE, min.molecules = 100, verbose = TRUE), "QC: 6 cells")
+
+  p2 <- make_qc_p2()
+  expect_silent(p2$filterCells(min.molecules = 100))
 
   expect_equal(nrow(p2$getRawCounts()), 5)
   expect_true("qc_pass" %in% colnames(p2$cellMeta))
@@ -63,6 +69,21 @@ test_that("run warns about QC failures without filtering by default", {
   )
 
   expect_equal(nrow(p2$getRawCounts()), 6)
+})
+
+test_that("run is quiet by default and verbose on request", {
+  p2 <- make_workflow_p2()
+
+  expect_silent(out <- capture.output(
+    p2$run(steps = "qc", qc = list(min.molecules = 0, max.molecules = Inf))
+  ))
+  expect_equal(out, character(0))
+
+  p2 <- make_workflow_p2()
+  expect_message(
+    p2$run(steps = "qc", qc = list(min.molecules = 0, max.molecules = Inf), verbose = TRUE),
+    "QC: 8 cells"
+  )
 })
 
 test_that("run can explicitly filter after QC", {

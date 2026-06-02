@@ -83,6 +83,9 @@ p2$runQC()
 head(p2$getCellMeta(c("n_molecules", "n_genes", "qc_pass"), resolved = TRUE))
 ```
 
+Most workflow methods are quiet by default. Use `verbose = TRUE` when you want a
+short progress or summary message.
+
 The QC plot shows the relationship between molecule counts and detected genes.
 Cells flagged by the default rule are shown in red.
 

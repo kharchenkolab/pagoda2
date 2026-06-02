@@ -134,6 +134,22 @@ NULL
   qc
 }
 
+.pagoda2_qc_summary <- function(qc) {
+  n.cells <- nrow(qc)
+  n.fail <- if ("qc_pass" %in% colnames(qc)) sum(!as.logical(qc$qc_pass), na.rm = TRUE) else NA_integer_
+  molecule.q <- stats::quantile(qc$n_molecules, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+  gene.q <- stats::quantile(qc$n_genes, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+  msg <- paste0(
+    "QC: ", n.cells, " cells; molecules median ", signif(molecule.q[2], 4),
+    " [IQR ", signif(molecule.q[1], 4), "-", signif(molecule.q[3], 4), "]; genes median ",
+    signif(gene.q[2], 4), " [IQR ", signif(gene.q[1], 4), "-", signif(gene.q[3], 4), "]"
+  )
+  if (is.finite(n.fail)) {
+    msg <- paste0(msg, "; ", n.fail, " failed (", signif(100 * n.fail / n.cells, 3), "%)")
+  }
+  msg
+}
+
 .pagoda2_has_downstream_results <- function(p2) {
   length(p2$reductions) > 0L ||
     length(p2$graphs) > 0L ||
@@ -1899,9 +1915,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param min.molecules Minimum molecule count for a passing cell.
 	    #' @param max.molecules Maximum molecule count for a passing cell.
 	    #' @param p.level Two-sided outlier level for gene/molecule trend residuals.
+	    #' @param verbose Whether to emit a succinct QC summary.
 	    #' @return data.frame of QC metrics.
 	    runQC=function(method=c("gene_molecule", "metrics"), overwrite=FALSE, matrix=NULL,
-	                   min.molecules=500, max.molecules=5e4, p.level=NULL) {
+	                   min.molecules=500, max.molecules=5e4, p.level=NULL, verbose=FALSE) {
 	      method <- match.arg(method)
 	      if (is.null(matrix)) {
 	        matrix <- self$rawCounts
@@ -1915,7 +1932,11 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      qc.cols <- if (method == "metrics") c("n_molecules", "n_genes") else
 	        c("n_molecules", "n_genes", "qc_pass")
 	      if (!overwrite && all(qc.cols %in% colnames(self$cellMeta))) {
-	        return(self$getCellMeta(qc.cols))
+	        qc <- self$getCellMeta(qc.cols)
+	        if (isTRUE(verbose)) {
+	          message(.pagoda2_qc_summary(qc))
+	        }
+	        return(invisible(qc))
 	      }
 	      qc <- if (method == "metrics") {
 	        data.frame(
@@ -1933,7 +1954,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 	      self$setCellMeta(qc, overwrite = TRUE)
 	      self$history$qc <- attr(qc, "pagoda2.qc")
-	      qc
+	      if (isTRUE(verbose)) {
+	        message(.pagoda2_qc_summary(qc))
+	      }
+	      invisible(qc)
 	    },
 
 	    #' @description Plot cell QC metrics.
@@ -1998,9 +2022,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param pass.column Cell metadata column containing TRUE/FALSE QC decisions.
 	    #' @param run.qc Whether to run QC automatically if `pass.column` is missing.
 	    #' @param force Whether to allow filtering after downstream results exist.
+	    #' @param verbose Whether to emit progress messages.
 	    #' @param ... Arguments passed to runQC() when QC needs to be calculated.
 	    #' @return Invisibly returns self.
-	    filterCells=function(cells=NULL, pass.column="qc_pass", run.qc=TRUE, force=FALSE, ...) {
+	    filterCells=function(cells=NULL, pass.column="qc_pass", run.qc=TRUE, force=FALSE, verbose=FALSE, ...) {
 	      self$syncMetadata()
 	      raw <- self$getRawCounts()
 	      if (is.null(cells)) {
@@ -2008,8 +2033,10 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          if (!isTRUE(run.qc)) {
 	            stop("Cell metadata column `", pass.column, "` is missing; call p2$runQC() first or set run.qc = TRUE")
 	          }
-	          message("QC metrics not found; running runQC() with default settings.")
-	          self$runQC(...)
+	          if (isTRUE(verbose)) {
+	            message("QC metrics not found; running runQC() with default settings.")
+	          }
+	          self$runQC(verbose = verbose, ...)
 	        }
 	        qc <- self$resolveCellMeta(pass.column)
 	        keep <- qc[[pass.column]]
@@ -2076,6 +2103,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @param overwrite Whether to recompute existing canonical outputs.
 	    #' @param profile Interaction profile: interactive, pipeline, or report.
 	    #' @param plots Plot behavior: show, none, or collect.
+	    #' @param verbose Whether to emit progress messages.
 	    #' @param qc Step-specific argument list for runQC().
 	    #' @param variance Step-specific argument list for runVariance().
 	    #' @param pca Step-specific argument list for runPCA().
@@ -2086,7 +2114,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	    #' @return Invisibly returns self.
 	    run=function(steps=NULL, skip=NULL, dependencies=c("auto", "error"), overwrite=FALSE,
 	                 profile=c("interactive", "pipeline", "report"), plots=NULL,
-	                 qc=list(), variance=list(), pca=list(), graph=list(), umap=list(),
+	                 verbose=FALSE, qc=list(), variance=list(), pca=list(), graph=list(), umap=list(),
 	                 leiden=list(), markers=list()) {
 	      dependencies <- match.arg(dependencies)
 	      profile <- match.arg(profile)
@@ -2124,7 +2152,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      if (!plots %in% c("show", "none", "collect")) {
 	        stop("`plots` must be one of show, none, or collect")
 	      }
-	      verbose.default <- switch(profile, interactive = TRUE, pipeline = FALSE, report = TRUE)
+	      verbose.default <- isTRUE(verbose)
 	      show.plots <- identical(plots, "show")
 
 	      if (is.null(self$history$runs)) {
@@ -2155,7 +2183,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	      }
 
 	      if ("qc" %in% resolved.steps) {
-	        args <- .pagoda2_step_args(qc, list(overwrite = overwrite))
+	        args <- .pagoda2_step_args(qc, list(overwrite = overwrite, verbose = verbose.default))
 	        filter.after.qc <- isTRUE(args$filter)
 	        args$filter <- NULL
 	        expected.qc.cols <- if (!is.null(args$method) && args$method == "metrics") {
@@ -2172,7 +2200,7 @@ Pagoda2 <- R6::R6Class("Pagoda2", lock_objects=FALSE,
 	          qc.meta <- self$resolveCellMeta("qc_pass")
 	          n.fail <- sum(!as.logical(qc.meta$qc_pass), na.rm = TRUE)
 	          if (filter.after.qc) {
-	            run_step("filter", list(pass.column = "qc_pass"), self$filterCells(pass.column = "qc_pass"))
+	            run_step("filter", list(pass.column = "qc_pass", verbose = verbose.default), self$filterCells(pass.column = "qc_pass", verbose = verbose.default))
 	          } else if (n.fail > 0L) {
 	            warning(
 	              n.fail, " cell(s) did not pass QC. ",
