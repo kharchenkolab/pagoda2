@@ -35,8 +35,10 @@ Use `Pagoda2$from()` when the input is a path and either the format can be
 inferred or you want to pass `format` explicitly:
 
 ```r
-p2 <- Pagoda2$from("/path/to/input", sample.name = "sample_01")
-p2 <- Pagoda2$from("/path/to/input", format = "10x", sample.name = "sample_01")
+p2 <- Pagoda2$from("/path/to/input",
+                   reader.args = list(sample.name = "sample_01"))
+p2 <- Pagoda2$from("/path/to/input", format = "10x",
+                   reader.args = list(sample.name = "sample_01"))
 ```
 
 Use a format-specific constructor when the source format should be obvious in
@@ -51,14 +53,15 @@ p2 <- Pagoda2$fromLoom("/path/to/sample.loom")
 ```
 
 All constructors call `readCounts()` internally, then build an R6 `Pagoda2`
-object. Put reader-specific options in `reader.args`; object construction
-options such as `sample.name`, `n.cores`, or `verbose` are passed outside it:
+object. Put reader options such as `sample.name`, `layer`, `gene.id`, and
+explicit 10x files in `reader.args`. Put object construction options such as
+`n.cores` or `verbose` outside it:
 
 ```r
 p2 <- Pagoda2$fromAnnData(
   "sample.h5ad",
-  reader.args = list(layer = "counts", gene.id = "symbol"),
-  sample.name = "donor_A",
+  reader.args = list(layer = "counts", gene.id = "symbol",
+                     sample.name = "donor_A"),
   n.cores = 8,
   verbose = FALSE
 )
@@ -105,7 +108,8 @@ p2 <- Pagoda2$from("custom_extension.dat", format = "h5ad")
 Use `sample.name` to record sample identity in cell metadata:
 
 ```r
-p2 <- Pagoda2$from("sample_dir", format = "10x", sample.name = "donor_A")
+p2 <- Pagoda2$from("sample_dir", format = "10x",
+                   reader.args = list(sample.name = "donor_A"))
 p2$getCellMeta("sample")
 ```
 
