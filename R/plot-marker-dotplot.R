@@ -9,7 +9,7 @@
                                              remove.duplicates = TRUE, count.matrix = NULL, n.cores = p2$n.cores,
                                              cols = c("grey88", "firebrick3"), dot.scale = 7,
                                              scale.by = "size", text.angle = 45, order.groups = TRUE,
-                                             group.order = NULL, ...) {
+                                             group.order = NULL, plot.theme = NULL, ...) {
   order_dotplot_groups <- function(cell.groups, marker.groups, order.groups = TRUE,
                                    group.order = NULL) {
     cell.groups <- droplevels(cell.groups)
@@ -101,11 +101,11 @@
     text.angle = text.angle,
     ...
   ) +
-    ggplot2::theme(
+    .pagoda2_plot_theme(p2, plot.theme = plot.theme, local.theme = ggplot2::theme(
       axis.text = ggplot2::element_text(size = 10.5),
       axis.title = ggplot2::element_text(size = 11.5),
       legend.text = ggplot2::element_text(size = 10),
       legend.title = ggplot2::element_text(size = 10.5),
       plot.title = ggplot2::element_text(size = 13)
-    )
+    ))
 }

@@ -115,6 +115,39 @@ test_that("runQC calculates optional mitochondrial and ribosomal percentages", {
   expect_s3_class(p2$plotQCViolin(thresholds = c(percent_mito = 25)), "ggplot")
 })
 
+test_that("pagoda2 plot theme resolver supports object, option, and call overrides", {
+  p2 <- make_qc_p2()
+  p2$history$pca <- list(
+    PCA = list(
+      variance = data.frame(
+        component = 1:3,
+        percent_variance = c(20, 10, 5),
+        cumulative_percent_variance = c(20, 30, 35)
+      )
+    )
+  )
+
+  p <- p2$plotPCAElbow()
+  expect_s3_class(p, "ggplot")
+  expect_equal(p$theme$legend.background$fill, ggplot2::alpha("white", 0.75))
+
+  old.theme <- getOption("pagoda2.plot.theme")
+  on.exit(options(pagoda2.plot.theme = old.theme), add = TRUE)
+  options(pagoda2.plot.theme = ggplot2::theme(axis.title = ggplot2::element_text(face = "bold")))
+  p <- p2$plotPCAElbow()
+  expect_equal(p$theme$axis.title$face, "bold")
+
+  p2$setPlotTheme(ggplot2::theme(plot.title = ggplot2::element_text(face = "bold")))
+  p <- p2$plotPCAElbow()
+  expect_equal(p$theme$plot.title$face, "bold")
+
+  p <- p2$plotPCAElbow(plot.theme = ggplot2::theme(plot.title = ggplot2::element_text(face = "italic")))
+  expect_equal(p$theme$plot.title$face, "italic")
+
+  expect_identical(p2$setPlotTheme(), p2)
+  expect_null(p2$defaults$plot.theme)
+})
+
 test_that("runQC composition metrics are optional and explicit misses warn", {
   p2 <- make_qc_p2()
   qc <- p2$runQC(min.molecules = 0, max.molecules = Inf)

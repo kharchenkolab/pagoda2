@@ -303,7 +303,7 @@
   invisible(qc)
 }
 
-.pagoda2_r6_plot_qc <- function(p2, run.qc = TRUE, ...) {
+.pagoda2_r6_plot_qc <- function(p2, run.qc = TRUE, plot.theme = NULL, ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package `ggplot2` is required for plotQC()")
   }
@@ -351,11 +351,10 @@
       guide = ggplot2::guide_legend(override.aes = list(size = 3, alpha = 1))
     ) +
     ggplot2::facet_wrap(~panel, nrow = 1, scales = "free_y") +
-    ggplot2::theme_bw() +
-    ggplot2::theme(
+    .pagoda2_plot_theme(p2, plot.theme = plot.theme, local.theme = ggplot2::theme(
       legend.key.size = grid::unit(4.5, "mm"),
       strip.background = ggplot2::element_rect(fill = "grey92", color = "grey55")
-    ) +
+    )) +
     ggplot2::labs(x = "log10 molecules per cell", y = "Count / log10 detected genes")
   thresholds <- c(p2$history$qc$min.molecules, p2$history$qc$max.molecules)
   thresholds <- thresholds[is.finite(thresholds) & thresholds > 0]
@@ -397,7 +396,7 @@
   p
 }
 
-.pagoda2_r6_plot_qc_violin <- function(p2, metrics = c("percent_ribo", "percent_mito"), thresholds = NULL, run.qc = FALSE, ...) {
+.pagoda2_r6_plot_qc_violin <- function(p2, metrics = c("percent_ribo", "percent_mito"), thresholds = NULL, run.qc = FALSE, plot.theme = NULL, ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package `ggplot2` is required for plotQCViolin()")
   }
@@ -508,13 +507,12 @@
   p +
     ggplot2::facet_wrap(~metric_label, ncol = 1, strip.position = "left") +
     ggplot2::coord_flip() +
-    ggplot2::theme_bw() +
-    ggplot2::theme(
+    .pagoda2_plot_theme(p2, plot.theme = plot.theme, local.theme = ggplot2::theme(
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
       strip.background = ggplot2::element_rect(fill = "grey92", color = "grey55"),
       strip.placement = "outside",
       legend.key.size = grid::unit(4.5, "mm")
-    ) +
+    )) +
     ggplot2::labs(x = NULL, y = "Percent of molecules")
 }

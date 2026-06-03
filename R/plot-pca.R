@@ -1,6 +1,6 @@
 ## PCA plotting implementation for Pagoda2
 
-.pagoda2_r6_plot_pca_elbow <- function(p2, reduction = NULL, max.components = NULL, plot.theme = ggplot2::theme_bw()) {
+.pagoda2_r6_plot_pca_elbow <- function(p2, reduction = NULL, max.components = NULL, plot.theme = NULL) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) {
     stop("Package `ggplot2` is required for plotPCAElbow()")
   }
@@ -24,8 +24,7 @@
     ggplot2::geom_line(linewidth = 0.7) +
     ggplot2::geom_point(size = 1.8) +
     ggplot2::scale_color_manual(values = c("Per component" = "grey15", "Cumulative" = "#2c7fb8"), name = NULL) +
-    ggplot2::theme_bw() +
-    plot.theme +
+    .pagoda2_plot_theme(p2, plot.theme = plot.theme) +
     ggplot2::labs(
       x = "Principal component",
       y = "% total variance explained",

@@ -1,7 +1,7 @@
 ## Embedding plotting implementation for Pagoda2
 
 .pagoda2_r6_plot_embedding <- function(p2, type = NULL, embeddingType = NULL, reduction = NULL, embedding = NULL, clusterType = NULL,
-                                       groups = NULL, grouping = NULL, colors = NULL, gene = NULL, plot.theme = ggplot2::theme_bw(), .legacy.warn = TRUE, ...) {
+                                       groups = NULL, grouping = NULL, colors = NULL, gene = NULL, plot.theme = NULL, .legacy.warn = TRUE, ...) {
   dots <- list(...)
 
   if (!is.null(reduction)) {
@@ -127,6 +127,6 @@
 
   do.call(
     sccore::embeddingPlot,
-    c(list(object = emb, groups = groups, colors = colors, plot.theme = plot.theme), dots)
+    c(list(object = emb, groups = groups, colors = colors, plot.theme = .pagoda2_plot_theme(p2, plot.theme = plot.theme)), dots)
   )
 }

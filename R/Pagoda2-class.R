@@ -379,18 +379,20 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @description Plot cell QC metrics.
     #'
     #' @param run.qc Whether to run QC automatically when QC columns are absent.
+    #' @param plot.theme Optional ggplot theme override.
     #' @param ... Arguments passed to runQC() if QC needs to be calculated.
     #' @return ggplot object.
-    plotQC = function(run.qc = TRUE, ...) .pagoda2_r6_plot_qc(self, run.qc = run.qc, ...),
+    plotQC = function(run.qc = TRUE, plot.theme = NULL, ...) .pagoda2_r6_plot_qc(self, run.qc = run.qc, plot.theme = plot.theme, ...),
 
     #' @description Plot optional QC composition metrics.
     #'
     #' @param metrics Cell metadata columns to plot. Defaults to ribosomal and mitochondrial percentages.
     #' @param thresholds Optional named numeric vector/list or data.frame with `metric` and `value` columns.
     #' @param run.qc Whether to run QC automatically when requested metrics are absent.
+    #' @param plot.theme Optional ggplot theme override.
     #' @param ... Arguments passed to runQC() if `run.qc = TRUE`.
     #' @return ggplot object.
-    plotQCViolin = function(metrics = c("percent_ribo", "percent_mito"), thresholds = NULL, run.qc = FALSE, ...) .pagoda2_r6_plot_qc_violin(self, metrics = metrics, thresholds = thresholds, run.qc = run.qc, ...),
+    plotQCViolin = function(metrics = c("percent_ribo", "percent_mito"), thresholds = NULL, run.qc = FALSE, plot.theme = NULL, ...) .pagoda2_r6_plot_qc_violin(self, metrics = metrics, thresholds = thresholds, run.qc = run.qc, plot.theme = plot.theme, ...),
 
     #' @description Filter cells using QC decisions or an explicit cell subset.
     #'
@@ -1878,9 +1880,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param text.angle X-axis marker label angle.
     #' @param order.groups Whether to order plotted groups by marker-origin group when the levels match.
     #' @param group.order Optional explicit plotted group order.
+    #' @param plot.theme Optional ggplot theme override.
     #' @param ... Arguments passed to sccore::dotPlot().
     #' @return ggplot object.
-    plotMarkerDotPlot = function(markers = NULL, type = "counts", genes = NULL, grouping = NULL, groups = NULL, n.genes.per.group = 5, z.threshold = 3, highest.only = TRUE, ordering = NULL, selection = "balanced", min.expression.fraction = NULL, min.precision = NULL, min.specificity = NULL, min.auc = NULL, min.m = NULL, remove.duplicates = TRUE, count.matrix = NULL, n.cores = self$n.cores, cols = c("grey88", "firebrick3"), dot.scale = 7, scale.by = "size", text.angle = 45, order.groups = TRUE, group.order = NULL, ...) .pagoda2_r6_plot_marker_dot_plot(self, markers = markers, type = type, genes = genes, grouping = grouping, groups = groups, n.genes.per.group = n.genes.per.group, z.threshold = z.threshold, highest.only = highest.only, ordering = ordering, selection = selection, min.expression.fraction = min.expression.fraction, min.precision = min.precision, min.specificity = min.specificity, min.auc = min.auc, min.m = min.m, remove.duplicates = remove.duplicates, count.matrix = count.matrix, n.cores = n.cores, cols = cols, dot.scale = dot.scale, scale.by = scale.by, text.angle = text.angle, order.groups = order.groups, group.order = group.order, ...),
+    plotMarkerDotPlot = function(markers = NULL, type = "counts", genes = NULL, grouping = NULL, groups = NULL, n.genes.per.group = 5, z.threshold = 3, highest.only = TRUE, ordering = NULL, selection = "balanced", min.expression.fraction = NULL, min.precision = NULL, min.specificity = NULL, min.auc = NULL, min.m = NULL, remove.duplicates = TRUE, count.matrix = NULL, n.cores = self$n.cores, cols = c("grey88", "firebrick3"), dot.scale = 7, scale.by = "size", text.angle = 45, order.groups = TRUE, group.order = NULL, plot.theme = NULL, ...) .pagoda2_r6_plot_marker_dot_plot(self, markers = markers, type = type, genes = genes, grouping = grouping, groups = groups, n.genes.per.group = n.genes.per.group, z.threshold = z.threshold, highest.only = highest.only, ordering = ordering, selection = selection, min.expression.fraction = min.expression.fraction, min.precision = min.precision, min.specificity = min.specificity, min.auc = min.auc, min.m = min.m, remove.duplicates = remove.duplicates, count.matrix = count.matrix, n.cores = n.cores, cols = cols, dot.scale = dot.scale, scale.by = scale.by, text.angle = text.angle, order.groups = order.groups, group.order = group.order, plot.theme = plot.theme, ...),
 
     #' @description Plot marker heatmap using the pagoda2.1 API name.
     #'
@@ -1947,13 +1950,13 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param groups factor named with cell names specifying the clusters of cells (default=NULL)
     #' @param colors character vector List of gene names (default=NULL)
     #' @param gene (default=NULL)
-    #' @param plot.theme (default=ggplot2::theme_bw())
+    #' @param plot.theme Optional ggplot theme override.
     #' @param ... Additional parameters passed to sccore::embeddingPlot()
     #'
     #' @return plot of the embedding
     plotEmbedding = function(type = NULL, embeddingType = NULL, reduction = NULL, embedding = NULL,
                              clusterType = NULL, groups = NULL, grouping = NULL, colors = NULL,
-                             gene = NULL, plot.theme = ggplot2::theme_bw(), .legacy.warn = TRUE, ...) {
+                             gene = NULL, plot.theme = NULL, .legacy.warn = TRUE, ...) {
       args <- list(
         reduction = reduction,
         embedding = embedding,
@@ -2150,9 +2153,15 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @param reduction Reduction name. NULL uses the default reduction.
     #' @param max.components Optional maximum number of components to show.
-    #' @param plot.theme ggplot theme.
+    #' @param plot.theme Optional ggplot theme override.
     #' @return ggplot object.
-    plotPCAElbow = function(reduction = NULL, max.components = NULL, plot.theme = ggplot2::theme_bw()) .pagoda2_r6_plot_pca_elbow(self, reduction = reduction, max.components = max.components, plot.theme = plot.theme),
+    plotPCAElbow = function(reduction = NULL, max.components = NULL, plot.theme = NULL) .pagoda2_r6_plot_pca_elbow(self, reduction = reduction, max.components = max.components, plot.theme = plot.theme),
+
+    #' @description Set or clear the object-level ggplot theme used by pagoda2 plot methods.
+    #'
+    #' @param plot.theme ggplot theme object or function returning one. NULL clears the object-level theme.
+    #' @return Invisibly returns self.
+    setPlotTheme = function(plot.theme = NULL) .pagoda2_r6_set_plot_theme(self, plot.theme = plot.theme),
 
     #' @description Reset overdispersed genes 'odgenes' to be a superset of the standard odgene selection (guided by n.odgenes or alpha),
     #'     and a set of recursively determined odgenes based on a given group (or a cluster info)
