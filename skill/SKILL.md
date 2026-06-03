@@ -8,40 +8,36 @@ capabilities_needed: [R, pagoda2-devel]
 keywords: [pagoda2, pagoda2.1, scrna-seq, single cell RNA-seq, QC, filtering, PCA, UMAP, Leiden, markers, dotplot, heatmap, h5ad, h5Seurat, loom, 10x, CellRanger]
 produces: [qc_gene_molecule.png, qc_composition_violin.png, pca_elbow.png, umap_leiden.png, marker_dotplot.png, marker_heatmap_native.png, cluster_markers.csv, pagoda2_processed.rds, pagoda2_processed.h5ad]
 domain: genomics
-source: "Pagoda2.1 devel workflow based on doc/pagoda2.1-single-dataset.Rmd."
+source: "Pagoda2.1 devel workflow based on doc/pagoda2.1-single-dataset.Rmd and source-verified pagoda2.1 methods."
 ---
 
 # scRNA-seq single-sample QC + clustering with pagoda2.1
 
-Run a pagoda2.1 analysis for one raw count dataset: load counts, sanity-check
-the matrix, run QC, filter, calculate variance/PCA/graph/UMAP/Leiden, detect
-markers, show dotplot and native heatmap, then save/export the object.
+Run one pagoda2.1 single-dataset analysis: load raw counts, check the count
+layer, run QC, filter, calculate variance/PCA/graph/UMAP/Leiden, detect
+markers, draw dotplot and native heatmap, optionally annotate clusters, then
+save a native RDS and h5ad export.
 
-The standard example follows the current pagoda2.1 vignette: a PBMC GEO sample
-(`GSM5746259`) stored as a 10x-style triplet in a local folder named `data`.
-For other inputs, keep the same workflow and change only the loading block.
-Pagoda2.1 can read 10x Matrix Market triplets, CellRanger HDF5, AnnData h5ad,
-h5Seurat, and loom, and can write native RDS plus h5ad.
+The workflow mirrors the current pagoda2.1 single-dataset vignette, but this
+skill is written as an ABA recipe rather than an Rmd script. Code blocks show
+API call shapes with literal path placeholders; the agent substitutes the real
+input path and sample ID from its runtime context.
 
 ## Bundled references - load on demand
 
 This SKILL.md is self-contained for the standard workflow. Load references only
 when the task needs a variant or deeper parameter detail:
 
-- `references/installation_and_io.md` - installation, `Pagoda2$from()`,
-  `from10x()`, explicit renamed 10x triplets, h5ad/h5Seurat/loom readers, and
-  count-layer sanity checks.
+- `references/installation_and_io.md` - install, reader routing, explicit
+  renamed 10x triplets, h5ad/h5Seurat/loom readers, and count-layer checks.
 - `references/qc_and_filtering.md` - `runQC()`, `plotQC()`,
-  `plotQCViolin()`, `filterData()`, MT/ribo gene handling, and filter
-  reporting.
-- `references/matrix_and_metadata_model.md` - raw count storage, normalized
-  views, matrix orientation, flexible/resolved metadata, groupings, annotation,
-  and color handling.
+  `plotQCViolin()`, `filterData()`, MT/ribo gene handling, and filter reports.
+- `references/matrix_and_metadata_model.md` - raw counts, normalized views,
+  orientation, flexible/resolved metadata, groupings, annotations, and colors.
 - `references/workflow_and_clustering.md` - `run()`, staged workflow variants,
   OD genes, PCA, graph diagnostics, UMAP, Leiden, and result registries.
 - `references/markers_and_plots.md` - `runMarkers()`, marker selection
-  presets, `getTopMarkers()`, dotplots, native marker heatmaps, and annotation
-  discipline.
+  presets, `getTopMarkers()`, dotplots, native heatmaps, and annotation.
 - `references/export_and_interop.md` - RDS, h5ad export, metadata alignment,
   optional `as("list")`, `as("sce")`, `as("seurat")`, and round-trip checks.
 
@@ -60,7 +56,7 @@ if (!requireNamespace("ggplot2", quietly = TRUE)) {
   install.packages("ggplot2")
 }
 if (!requireNamespace("hdf5r", quietly = TRUE)) {
-  install.packages("hdf5r")  # needed for h5ad, h5Seurat, loom, and 10x HDF5
+  install.packages("hdf5r")
 }
 if (!requireNamespace("pagoda2", quietly = TRUE) ||
     utils::packageVersion("pagoda2") < "1.1.1") {
@@ -72,8 +68,8 @@ library(pagoda2)
 library(ggplot2)
 ```
 
-Do not run the package test suite as part of analysis or installation. Run
-tests only when editing pagoda2 source code.
+Do not run the pagoda2 package test suite as part of analysis or installation.
+Run tests only when editing pagoda2 source code.
 
 ## Decisions to surface up front
 
@@ -91,7 +87,7 @@ Tell the user these are the analysis-defining decisions:
    sizes, and marker coherence.
 5. **Marker selection** - default marker plots use `selection = "balanced"`,
    upregulated markers, AUC, and specificity metrics. Change selection only
-   when the plot is too diffuse or too strict.
+   when markers are too diffuse or too strict.
 
 Show the user these figures as the analysis proceeds:
 
@@ -106,46 +102,28 @@ Show the user these figures as the analysis proceeds:
 
 ## Step 1 - Load and sanity-check counts
 
-Load a raw count matrix into a pagoda2 object, verify dimensions and
-integer-like counts, and report the files used.
+Load raw counts into a `Pagoda2` object. `Pagoda2$from10x()` returns an R6
+object whose raw counts are stored as a sparse `dgCMatrix` with cells as rows
+and genes as columns.
 
-### Vignette 10x triplet folder
+### Standard 10x triplet directory
 
-Use this block when the working directory has a `data` folder containing one
-10x-style triplet, as in the current pagoda2.1 vignette.
+Use this when the input directory contains one complete 10x-style Matrix Market
+triplet.
 
 ```r
-WORK_DIR <- getwd()
-DATA_DIR <- file.path(WORK_DIR, "data")
-SAMPLE_ID <- "GSM5746259"
-
-input_files <- data.frame(
-  data_dir = DATA_DIR,
-  file = list.files(DATA_DIR, pattern = "\\.(mtx|tsv)(\\.gz)?$")
-)
-print(input_files)
-stopifnot(nrow(input_files) >= 3)
-
+# sample.name, sample.pattern, layer, and explicit triplet filenames are
+# readCounts() options, so they MUST go inside reader.args = list(...).
 p2 <- Pagoda2$from10x(
-  DATA_DIR,
-  reader.args = list(sample.name = SAMPLE_ID),
+  "/path/to/sample_directory",
+  reader.args = list(sample.name = "GSM5746259"),
   verbose = FALSE
 )
 
-matrix_summary <- p2$describeMatrices()
-raw_summary <- matrix_summary[matrix_summary$name == "raw", , drop = FALSE]
-raw_dim <- dim(p2$getRawCounts())
-load_summary <- data.frame(
-  sample = SAMPLE_ID,
-  cells = raw_dim[1],
-  genes = raw_dim[2],
-  nonzero_entries = raw_summary$nnz,
-  sparsity = round(1 - raw_summary$nnz / prod(raw_dim), 4),
-  integer_like = raw_summary$integer.like
-)
-print(load_summary)
-stopifnot(isTRUE(p2$validateMatrices()))
-stopifnot(isTRUE(load_summary$integer_like))
+raw <- p2$getRawCounts()
+stopifnot(inherits(raw, "dgCMatrix"))
+stopifnot(all(abs(raw@x - round(raw@x)) < 1e-8))
+cat(sprintf("Loaded %d cells x %d genes\n", nrow(raw), ncol(raw)))
 ```
 
 ### Renamed GEO/SRA triplet files
@@ -154,19 +132,16 @@ Use explicit files when a download has arbitrary filenames. Do not symlink or
 rename files just to mimic CellRanger output.
 
 ```r
-WORK_DIR <- getwd()
-DATA_DIR <- file.path(WORK_DIR, "data")
-SAMPLE_ID <- "GSM5746259"
-
-p2 <- Pagoda2$from(
-  DATA_DIR,
-  format = "10x",
+# The directory path is still the first argument; the three filenames are
+# readCounts() options and must be nested inside reader.args = list(...).
+p2 <- Pagoda2$from10x(
+  "/path/to/geo_triplet_directory",
   reader.args = list(
-    sample.name = SAMPLE_ID,
+    sample.name = "GSM5746259",
     files = list(
-      matrix = "GSM5746259_custom_matrix.mtx.gz",
-      barcodes = "GSM5746259_custom_barcodes.tsv.gz",
-      features = "GSM5746259_custom_features.tsv.gz"
+      matrix = "GSM5746259_MGI0369_1_SLAB-145-0.matrix.mtx.gz",
+      barcodes = "GSM5746259_MGI0369_1_SLAB-145-0.barcodes.tsv.gz",
+      features = "GSM5746259_MGI0369_1_SLAB-145-0.features.tsv.gz"
     )
   ),
   verbose = FALSE
@@ -175,26 +150,38 @@ p2 <- Pagoda2$from(
 
 ### Other supported formats
 
-Use the specific constructor when the format is known:
+Use the constructor matching the input shape. Count-layer choices go inside
+`reader.args`.
 
 ```r
 p2 <- Pagoda2$from10xH5(
-  "filtered_feature_bc_matrix.h5",
-  reader.args = list(sample.name = SAMPLE_ID)
+  "/path/to/filtered_feature_bc_matrix.h5",
+  reader.args = list(sample.name = "sample_01"),
+  verbose = FALSE
 )
-p2 <- Pagoda2$fromAnnData("sample.h5ad",
-                          reader.args = list(layer = "counts",
-                                             sample.name = SAMPLE_ID))
-p2 <- Pagoda2$fromH5Seurat("sample.h5seurat",
-                           reader.args = list(assay = "RNA", layer = "counts",
-                                              sample.name = SAMPLE_ID))
-p2 <- Pagoda2$fromLoom("sample.loom",
-                       reader.args = list(layer = "counts",
-                                          sample.name = SAMPLE_ID))
+
+p2 <- Pagoda2$fromAnnData(
+  "/path/to/sample.h5ad",
+  reader.args = list(layer = "counts", sample.name = "sample_01"),
+  verbose = FALSE
+)
+
+p2 <- Pagoda2$fromH5Seurat(
+  "/path/to/sample.h5seurat",
+  reader.args = list(assay = "RNA", layer = "counts",
+                     sample.name = "sample_01"),
+  verbose = FALSE
+)
+
+p2 <- Pagoda2$fromLoom(
+  "/path/to/sample.loom",
+  reader.args = list(layer = "counts", sample.name = "sample_01"),
+  verbose = FALSE
+)
 ```
 
-**Assess and report:** input format, sample ID, exact files/layer used, cells,
-genes, sparsity, and whether raw counts are integer-like. If counts are not
+**Assess and report:** input format, sample ID, exact files or layer used,
+cells, genes, and whether raw counts are integer-like. If counts are not
 integer-like, stop and choose the correct raw count layer.
 
 For reader options and edge cases, read `references/installation_and_io.md`.
@@ -203,37 +190,36 @@ For reader options and edge cases, read `references/installation_and_io.md`.
 
 ## Step 2 - Run QC and save QC figures
 
-Compute cell-level QC metrics, show the main gene/molecule plot, and show
-composition violin plots when MT/ribo metrics are available.
+Compute cell QC metrics, save the gene/molecule QC figure, and save
+composition violins when MT/ribo metrics are available.
 
 ```r
 invisible(p2$runQC(verbose = TRUE))
 
 qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
-qc_summary <- data.frame(
-  cells = nrow(qc),
-  qc_pass = sum(as.logical(qc$qc_pass), na.rm = TRUE),
-  qc_fail = sum(!as.logical(qc$qc_pass), na.rm = TRUE),
-  fail_fraction = round(mean(!as.logical(qc$qc_pass), na.rm = TRUE), 4),
-  median_molecules = median(qc$n_molecules, na.rm = TRUE),
-  median_genes = median(qc$n_genes, na.rm = TRUE)
-)
-print(qc_summary)
+cat(sprintf(
+  "QC: %d cells; %d pass, %d fail; median molecules %.0f; median genes %.0f\n",
+  nrow(qc),
+  sum(as.logical(qc$qc_pass), na.rm = TRUE),
+  sum(!as.logical(qc$qc_pass), na.rm = TRUE),
+  median(qc$n_molecules, na.rm = TRUE),
+  median(qc$n_genes, na.rm = TRUE)
+))
 
 p_qc <- p2$plotQC()
-ggsave(file.path(WORK_DIR, "qc_gene_molecule.png"), p_qc,
+ggsave("qc_gene_molecule.png", p_qc,
        width = 10, height = 4.5, units = "in", dpi = 120, bg = "white")
 ```
 
 Composition QC is annotation-dependent. Save the violin plot only if at least
-one requested composition metric exists:
+one requested composition metric exists.
 
 ```r
 qc_metrics <- intersect(c("percent_ribo", "percent_mito"),
                         colnames(p2$getCellMeta()))
 if (length(qc_metrics) > 0) {
   p_comp <- p2$plotQCViolin(metrics = qc_metrics)
-  ggsave(file.path(WORK_DIR, "qc_composition_violin.png"), p_comp,
+  ggsave("qc_composition_violin.png", p_comp,
          width = 7.5, height = 4.5, units = "in", dpi = 120, bg = "white")
 }
 ```
@@ -253,33 +239,34 @@ Run filtering, variance modeling, PCA, graph construction, UMAP, Leiden, and
 marker detection with pagoda2 defaults.
 
 ```r
+# Step-specific args belong in the matching list: pca = list(...),
+# graph = list(...), leiden = list(...), markers = list(...).
+# For example, n.odgenes is a PCA-step arg, not a variance-step arg.
 invisible(p2$run(plots = "none", verbose = TRUE))
 
 groups <- p2$getGrouping()
-workflow_summary <- data.frame(
-  cells = nrow(p2$getRawCounts()),
-  raw_genes = ncol(p2$getRawCounts()),
-  analysis_genes = sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
-  od_genes = length(p2$misc$odgenes),
-  default_grouping = p2$getDefaultGrouping(),
-  clusters = length(levels(groups))
-)
-print(workflow_summary)
+cat(sprintf(
+  "Workflow: %d cells, %d raw genes, %d analysis genes, %d OD genes, %d clusters\n",
+  nrow(p2$getRawCounts()),
+  ncol(p2$getRawCounts()),
+  sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
+  length(p2$misc$odgenes),
+  length(levels(groups))
+))
 
 cluster_sizes <- sort(table(groups), decreasing = TRUE)
-cluster_size_table <- data.frame(
-  cluster = names(cluster_sizes),
-  cells = as.integer(cluster_sizes),
-  row.names = NULL
-)
-print(utils::head(cluster_size_table, 15))
+print(utils::head(data.frame(cluster = names(cluster_sizes),
+                             cells = as.integer(cluster_sizes)), 15))
 ```
 
-To skip marker detection for speed, use this variant and run markers later:
+To skip marker detection for speed, use `skip = "markers"` and run markers
+later.
 
 ```r
 p2$run(skip = "markers", plots = "none", verbose = TRUE)
-p2$runMarkers(grouping = p2$getDefaultGrouping(), name = p2$getDefaultGrouping(),
+
+marker_name <- p2$getDefaultGrouping()
+p2$runMarkers(grouping = marker_name, name = marker_name,
               upregulated.only = TRUE, append.auc = TRUE,
               append.specificity.metrics = TRUE, verbose = TRUE)
 ```
@@ -298,21 +285,22 @@ For workflow variants and graph diagnostics, read
 Save the PCA elbow plot and UMAP colored by the default Leiden grouping.
 
 ```r
+# Use p2$plotPCAElbow(); do not derive PCA variance from internal slots.
 p_elbow <- p2$plotPCAElbow()
-ggsave(file.path(WORK_DIR, "pca_elbow.png"), p_elbow,
+ggsave("pca_elbow.png", p_elbow,
        width = 7.5, height = 4.2, units = "in", dpi = 120, bg = "white")
 
 p_umap <- p2$plotEmbedding(
   mark.groups = TRUE,
   size = 0.35,
   alpha = 0.55,
-  title = paste(SAMPLE_ID, "Leiden clusters")
+  title = "GSM5746259 Leiden clusters"
 )
-ggsave(file.path(WORK_DIR, "umap_leiden.png"), p_umap,
+ggsave("umap_leiden.png", p_umap,
        width = 7.4, height = 6.2, units = "in", dpi = 120, bg = "white")
 ```
 
-Overlay additional groupings or QC metrics only when they exist:
+Overlay additional groupings or QC metrics only when they exist.
 
 ```r
 if ("sample" %in% colnames(p2$getCellMeta())) {
@@ -334,14 +322,12 @@ For PCA/graph/UMAP details, read `references/workflow_and_clustering.md`.
 
 ## Step 5 - Plot markers and write marker table
 
-Use the marker result from the default grouping. Dotplot and heatmap should use
-the same marker-selection logic.
+Use the marker result from the default grouping. Dotplot and heatmap share
+marker-selection logic.
 
 ```r
 marker_name <- p2$getDefaultGrouping()
-if (is.null(marker_name)) {
-  marker_name <- "leiden"
-}
+if (is.null(marker_name)) marker_name <- "leiden"
 if (!marker_name %in% p2$listMarkers()$name) {
   p2$runMarkers(grouping = marker_name, name = marker_name,
                 upregulated.only = TRUE, append.auc = TRUE,
@@ -355,14 +341,14 @@ p_dot <- p2$plotMarkerDotPlot(
   order.groups = TRUE,
   dot.scale = 8.5
 ) + ggplot2::labs(title = "Leiden marker genes")
-ggsave(file.path(WORK_DIR, "marker_dotplot.png"), p_dot,
+ggsave("marker_dotplot.png", p_dot,
        width = 15, height = 10.5, units = "in", dpi = 120, bg = "white")
 ```
 
-Save the native marker heatmap:
+Save the native marker heatmap.
 
 ```r
-png(file.path(WORK_DIR, "marker_heatmap_native.png"),
+png("marker_heatmap_native.png",
     width = 13.8, height = 9, units = "in", res = 120, bg = "white")
 p2$plotMarkerHeatmap(
   markers = marker_name,
@@ -378,7 +364,7 @@ p2$plotMarkerHeatmap(
 dev.off()
 ```
 
-Write the marker table:
+Write the marker table.
 
 ```r
 marker_result <- p2$getMarkerResult(marker_name)
@@ -389,14 +375,11 @@ marker_df <- do.call(rbind, lapply(names(marker_tables), function(group) {
   x$group <- group
   x
 }))
-utils::write.csv(marker_df, file.path(WORK_DIR, "cluster_markers.csv"),
-                 row.names = FALSE)
+utils::write.csv(marker_df, "cluster_markers.csv", row.names = FALSE)
 
-top_marker_summary <- p2$getTopMarkers(
-  markers = marker_name,
-  n.genes.per.group = 5,
-  selection = "balanced"
-)
+top_marker_summary <- p2$getTopMarkers(markers = marker_name,
+                                       n.genes.per.group = 5,
+                                       selection = "balanced")
 print(utils::head(top_marker_summary, 20))
 ```
 
@@ -413,23 +396,20 @@ For marker selection presets and plot variants, read
 ## Step 6 - Annotate when evidence is sufficient
 
 Store biological annotations as cell metadata groupings. Many-to-one mappings
-from clusters to cell types are normal.
+from clusters to cell types are normal. Build the map from marker review, not
+from literal example values.
 
 ```r
-cluster_to_type <- c(
-  "1" = "T cells",
-  "2" = "monocytes"
-)
+# REPLACE this empty map with cluster-to-cell-type assignments derived from
+# Step 5 marker review. Map only clusters with confident evidence.
+cell_type_map <- c()
 
-p2$annotateClusters(
-  from = "leiden",
-  to = "cell_type",
-  map = cluster_to_type,
-  unmapped = "keep",
-  setDefault = TRUE
-)
-
-p2$plotEmbedding(grouping = "cell_type", mark.groups = TRUE)
+if (length(cell_type_map) > 0) {
+  p2$annotateClusters(from = "leiden", to = "cell_type",
+                      map = cell_type_map, unmapped = "keep",
+                      setDefault = TRUE)
+  p2$plotEmbedding(grouping = "cell_type", mark.groups = TRUE)
+}
 ```
 
 Do not annotate from a single marker name. If evidence is incomplete, report
@@ -449,22 +429,11 @@ Save the native pagoda2 object and export h5ad when downstream tools may use
 AnnData/scanpy-compatible objects.
 
 ```r
-saveRDS(p2, file.path(WORK_DIR, "pagoda2_processed.rds"))
+saveRDS(p2, "pagoda2_processed.rds")
 
-p2$export(
-  file.path(WORK_DIR, "pagoda2_processed.h5ad"),
-  format = "h5ad",
-  overwrite = TRUE
-)
+p2$export("pagoda2_processed.h5ad", format = "h5ad", overwrite = TRUE)
 
-export_summary <- data.frame(
-  file = c("pagoda2_processed.rds", "pagoda2_processed.h5ad"),
-  path = file.path(WORK_DIR, c("pagoda2_processed.rds",
-                               "pagoda2_processed.h5ad")),
-  exists = file.exists(file.path(WORK_DIR, c("pagoda2_processed.rds",
-                                             "pagoda2_processed.h5ad")))
-)
-print(export_summary)
+cat("Saved pagoda2_processed.rds and pagoda2_processed.h5ad\n")
 ```
 
 **Assess and report:** native RDS path, h5ad path, exported cell/gene counts,
@@ -478,8 +447,8 @@ For export semantics and optional conversions, read
 
 Summarize:
 
-- input format, sample ID, exact count layer/files, cells, genes, sparsity,
-  and count integer-likeness
+- input format, sample ID, exact count layer/files, cells, genes, and count
+  integer-likeness
 - QC pass/fail counts, fail fraction, median molecules, median genes, and
   whether MT/ribo metrics were available
 - post-filter cells, raw genes retained, analysis genes, OD genes, and default
@@ -488,6 +457,6 @@ Summarize:
 - PCA elbow and UMAP quality observations
 - marker quality, top marker examples, and whether dotplot/heatmap agree
 - annotations stored or annotation uncertainty
-- output figure/table/object paths
+- output figure/table/object filenames
 - caveats: wrong count layer risk, weak markers, QC-driven clusters,
   doublets, batch effects, over-clustering, or under-clustering

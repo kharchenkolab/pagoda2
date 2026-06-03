@@ -338,39 +338,24 @@ p2 <- Pagoda2$fromLoom(
 
 ## Count Sanity Checks
 
-Always report a small load summary:
+After loading, check the loaded object rather than re-checking the directory
+shape. Raw counts should be a sparse cell-by-gene `dgCMatrix` with integer-like
+values:
 
 ```r
-matrix_summary <- p2$describeMatrices()
-print(matrix_summary)
-stopifnot(isTRUE(p2$validateMatrices()))
+raw <- p2$getRawCounts()
+stopifnot(inherits(raw, "dgCMatrix"))
+stopifnot(all(abs(raw@x - round(raw@x)) < 1e-8))
+stopifnot(!anyDuplicated(rownames(raw)))
+stopifnot(!anyDuplicated(colnames(raw)))
+cat(sprintf("Loaded %d cells x %d genes\n", nrow(raw), ncol(raw)))
 ```
 
-For a concise count-layer check:
+If the integer-like check fails, stop and check layer selection before running
+QC. Many h5ad/h5Seurat/loom files put normalized or log-transformed values in
+the default matrix.
 
-```r
-matrix_summary <- p2$describeMatrices()
-raw_summary <- matrix_summary[matrix_summary$name == "raw", , drop = FALSE]
-raw_dim <- dim(p2$getRawCounts())
-load_summary <- data.frame(
-  cells = raw_dim[1],
-  genes = raw_dim[2],
-  nonzero = Matrix::nnzero(p2$getRawCounts()),
-  integer_like = raw_summary$integer.like
-)
-print(load_summary)
-```
-
-If `integer_like` is false, stop and check layer selection before running QC.
-Also check names:
-
-```r
-stopifnot(inherits(p2$getRawCounts(), "dgCMatrix"))
-stopifnot(!anyDuplicated(rownames(p2$getRawCounts())))
-stopifnot(!anyDuplicated(colnames(p2$getRawCounts())))
-```
-
-For a small exploratory report:
+Use `describeMatrices()` only when debugging matrix/view state:
 
 ```r
 p2$describeMatrices()
