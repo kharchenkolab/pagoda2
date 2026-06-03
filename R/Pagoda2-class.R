@@ -453,11 +453,11 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param variance Step-specific argument list for runVariance().
     #' @param pca Step-specific argument list for runPCA().
     #' @param graph Step-specific argument list for runGraph().
-    #' @param umap Step-specific argument list for runUMAP().
+    #' @param embedding Step-specific argument list for runEmbedding().
     #' @param leiden Step-specific argument list for runLeiden().
     #' @param markers Step-specific argument list for runMarkers().
     #' @return Invisibly returns self.
-    run = function(steps = NULL, skip = NULL, dependencies = c("auto", "error"), overwrite = FALSE, profile = c("interactive", "pipeline", "report"), plots = NULL, verbose = FALSE, n.cores = NULL, threads = NULL, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), umap = list(), leiden = list(), markers = list()) .pagoda2_r6_run(self, steps = steps, skip = skip, dependencies = dependencies, overwrite = overwrite, profile = profile, plots = plots, verbose = verbose, n.cores = n.cores, threads = threads, qc = qc, filter = filter, variance = variance, pca = pca, graph = graph, umap = umap, leiden = leiden, markers = markers),
+    run = function(steps = NULL, skip = NULL, dependencies = c("auto", "error"), overwrite = FALSE, profile = c("interactive", "pipeline", "report"), plots = NULL, verbose = FALSE, n.cores = NULL, threads = NULL, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), embedding = list(), leiden = list(), markers = list()) .pagoda2_r6_run(self, steps = steps, skip = skip, dependencies = dependencies, overwrite = overwrite, profile = profile, plots = plots, verbose = verbose, n.cores = n.cores, threads = threads, qc = qc, filter = filter, variance = variance, pca = pca, graph = graph, embedding = embedding, leiden = leiden, markers = markers),
 
     #' @description Set the object-level core budget.
     #'
@@ -2818,16 +2818,16 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'     between \code{0} and \code{1}, the default value will be multiplied by the parameter.
     #' @param diffusion.steps integer Iteration steps to use. If 0, no steps are run. (default=0)
     #' @param diffusion.power numeric Factor to be used when calculating diffusion, (default=0.5)
-    #' @param distance string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')
+    #' @param distance string 'cosine', 'L2', 'euclidean', 'pearson', 'spearman', 'JS' (default='cosine')
     #' @param n.sgd.cores numeric Number of cores to use (default=n.cores)
-    #' @param ...  Additional parameters passed to embedding functions, Rtsne::Rtsne() if 'L2', uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'
+    #' @param ...  Additional parameters passed to embedding functions, Rtsne::Rtsne() for tSNE, uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'
     #'
     #' @return embedding stored in self$embedding
     getEmbedding = function(type = "counts", embeddingType = "largeVis", name = NULL, dims = 2, M = 1, gamma = 1 / M, perplexity = 50, verbose = TRUE,
-                            sgd_batches = NULL, diffusion.steps = 0, diffusion.power = 0.5, distance = "pearson", n.cores = self$n.cores, n.sgd.cores = n.cores,
+                            sgd_batches = NULL, diffusion.steps = 0, diffusion.power = 0.5, distance = "cosine", n.cores = self$n.cores, n.sgd.cores = n.cores,
                             .legacy.warn = TRUE, ...) {
       if (.legacy.warn) {
-        .pagoda2_deprecated_call("getEmbedding()", "p2$runEmbedding(...) or p2$runUMAP(...)")
+        .pagoda2_deprecated_call("getEmbedding()", "p2$runEmbedding(...)")
       }
 
       if (dims < 1) {
@@ -2904,13 +2904,36 @@ Pagoda2 <- R6::R6Class("Pagoda2",
           x[dup.ids, ] <- runif(length(x[dup.ids, ]), -max.vals, max.vals)
         }
 
-        if (distance == "L2") {
+        distance.key <- tolower(distance)
+        if (distance.key %in% c("l2", "euclidean")) {
           if (verbose) message("running tSNE using ", n.cores, " cores:\n")
           emb <- Rtsne::Rtsne(x, perplexity = perplexity, dims = dims, num_threads = n.cores, ...)$Y
         } else {
+          warning(
+            "tSNE with distance='", distance, "' precomputes a dense cell-cell distance matrix. ",
+            "Use distance='L2' for lower memory and runtime.",
+            call. = FALSE
+          )
           if (verbose) message("calculating distance ... ")
-          if (verbose) message("pearson ...")
-          d <- 1 - cor(t(x))
+          x.dense <- as.matrix(x)
+          if (distance.key == "cosine") {
+            if (verbose) message("cosine ...")
+            norms <- sqrt(rowSums(x.dense^2))
+            if (any(norms == 0)) {
+              stop("Cannot calculate cosine tSNE distance for rows with zero norm")
+            }
+            x.norm <- x.dense / norms
+            d <- 1 - tcrossprod(x.norm)
+            d[d < 0] <- 0
+          } else if (distance.key == "pearson") {
+            if (verbose) message("pearson ...")
+            d <- 1 - cor(t(x.dense))
+          } else if (distance.key == "spearman") {
+            if (verbose) message("spearman ...")
+            d <- 1 - cor(t(x.dense), method = "spearman")
+          } else {
+            stop("Unsupported tSNE distance `", distance, "`. Use cosine, L2, euclidean, pearson, or spearman.")
+          }
           if (verbose) message("running tSNE using ", n.cores, " cores:\n")
           emb <- Rtsne::Rtsne(d, is_distance = TRUE, perplexity = perplexity, dims = dims, num_threads = n.cores, ...)$Y
         }
@@ -2930,9 +2953,11 @@ Pagoda2 <- R6::R6Class("Pagoda2",
           stop("You need to install package 'uwot' to be able to use UMAP embedding.")
         }
 
-        distance <- switch(distance,
+        distance <- switch(tolower(distance),
           pearson = "cosine",
-          L2 = "euclidean",
+          l2 = "euclidean",
+          euclidean = "euclidean",
+          cosine = "cosine",
           distance
         )
 
@@ -2956,19 +2981,12 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @description Run an embedding using the pagoda2.1 API name.
     #'
     #' @param reduction Reduction namespace.
-    #' @param embedding Embedding method/name.
+    #' @param method Embedding method. Defaults to UMAP.
     #' @param name Stored embedding name.
+    #' @param distance Distance metric. Defaults to cosine; for tSNE, distance='L2' is lighter because other distances precompute a dense cell-cell distance matrix.
     #' @param ... Arguments passed to getEmbedding().
     #' @return Invisibly returns embedding matrix.
-    runEmbedding = function(reduction = NULL, embedding = NULL, name = NULL, ...) .pagoda2_r6_run_embedding(self, reduction = reduction, embedding = embedding, name = name, ...),
-
-    #' @description Run UMAP using the pagoda2.1 API name.
-    #'
-    #' @param reduction Reduction namespace.
-    #' @param name Stored embedding name.
-    #' @param ... Arguments passed to getEmbedding().
-    #' @return Invisibly returns UMAP matrix.
-    runUMAP = function(reduction = NULL, name = "UMAP", ...) .pagoda2_r6_run_umap(self, reduction = reduction, name = name, ...)
+    runEmbedding = function(reduction = NULL, method = "UMAP", name = NULL, distance = "cosine", ...) .pagoda2_r6_run_embedding(self, reduction = reduction, method = method, name = name, distance = distance, ...)
   ),
   active = list(
     #' @field counts Removed legacy normalized matrix slot.

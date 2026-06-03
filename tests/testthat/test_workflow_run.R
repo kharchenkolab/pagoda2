@@ -20,7 +20,7 @@ workflow_args <- function() {
     qc = list(min.molecules = 0, max.molecules = Inf),
     pca = list(nPcs = 3, use.odgenes = FALSE),
     graph = list(k = 3, nrand = 0),
-    umap = list(n_neighbors = 3, n_epochs = 20),
+    embedding = list(n_neighbors = 3, n_epochs = 20),
     leiden = list(resolution = 1),
     markers = list(append.specificity.metrics = FALSE)
   )
@@ -260,12 +260,42 @@ test_that("run skip markers creates canonical workflow state without markers", {
   expect_equal(length(p2$diffgenes), 0)
 })
 
+test_that("runEmbedding defaults to UMAP and supports cosine tSNE", {
+  p2 <- make_workflow_p2()
+  set.seed(10)
+  p2$reductions$PCA <- matrix(
+    rnorm(nrow(p2$getRawCounts()) * 3),
+    nrow = nrow(p2$getRawCounts()),
+    ncol = 3,
+    dimnames = list(rownames(p2$getRawCounts()), paste0("PC", 1:3))
+  )
+
+  expect_equal(formals(p2$runEmbedding)$method, "UMAP")
+  expect_equal(formals(p2$runEmbedding)$distance, "cosine")
+
+  expect_warning(
+    p2$runEmbedding(
+      reduction = "PCA",
+      method = "tSNE",
+      name = "tSNE_cosine",
+      distance = "cosine",
+      perplexity = 2,
+      max_iter = 250,
+      n.cores = 1,
+      verbose = FALSE
+    ),
+    "dense cell-cell distance"
+  )
+
+  expect_equal(dim(p2$embeddings$PCA$tSNE_cosine), c(nrow(p2$getRawCounts()), 2))
+})
+
 test_that("run auto dependencies can create marker result from fresh object", {
   testthat::skip_if_not_installed("leidenAlg")
 
   p2 <- make_workflow_p2()
   args <- c(list(steps = "markers", dependencies = "auto"), workflow_args())
-  args$umap <- NULL
+  args$embedding <- NULL
 
   expect_silent(do.call(p2$run, args))
 
@@ -306,6 +336,6 @@ test_that("run skips existing results when overwrite is false", {
   last.run <- p2$history$runs[[length(p2$history$runs)]]
   expect_identical(last.run$steps$pca$status, "skipped")
   expect_identical(last.run$steps$graph$status, "skipped")
-  expect_identical(last.run$steps$umap$status, "skipped")
+  expect_identical(last.run$steps$embedding$status, "skipped")
   expect_identical(last.run$steps$leiden$status, "skipped")
 })

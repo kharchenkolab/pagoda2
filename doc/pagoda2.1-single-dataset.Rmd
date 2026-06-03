@@ -80,7 +80,7 @@ p2$plotQCViolin()
 
 ## Run The Default Workflow
 
-The standard run performs filtering, variance modeling, PCA, graph construction, UMAP, Leiden clustering, and marker detection. Results are stored under canonical names so plotting calls can usually omit selectors.
+The standard run performs filtering, variance modeling, PCA, graph construction, default UMAP embedding, Leiden clustering, and marker detection. Results are stored under canonical names so plotting calls can usually omit selectors.
 
 ```{r}
 suppressMessages(invisible(p2$run(plots = "none", verbose = FALSE)))
@@ -102,7 +102,7 @@ cluster_sizes <- sort(table(p2$getGrouping()), decreasing = TRUE)
 head(data.frame(cluster = names(cluster_sizes), cells = as.integer(cluster_sizes)), 15)
 ```
 
-## PCA And UMAP
+## PCA And Default UMAP Embedding
 
 The PCA elbow plot shows percent total variance explained by each PC and cumulatively. Use it to assess whether the default PC range is reasonable before interpreting the graph and embedding.
 
@@ -113,7 +113,7 @@ The PCA elbow plot shows percent total variance explained by each PC and cumulat
 p2$plotPCAElbow()
 ```
 
-The UMAP below is colored by the default Leiden clustering. Check for coherent clusters, tiny outlying groups, and possible QC or batch structure before annotating cell types.
+The default UMAP embedding below is colored by the default Leiden clustering. Check for coherent clusters, tiny outlying groups, and possible QC or batch structure before annotating cell types.
 
 ```{r}
 #| fig-width: 7.4

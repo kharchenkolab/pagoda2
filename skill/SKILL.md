@@ -1,6 +1,6 @@
 ---
 name: pagoda2-scrna-v2
-description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw counts through QC, filtering, PCA, graph/UMAP, Leiden clustering, marker genes, marker plots, optional annotation, and RDS/h5ad export.
+description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw counts through QC, filtering, PCA, graph/default UMAP embedding, Leiden clustering, marker genes, marker plots, optional annotation, and RDS/h5ad export.
 when_to_use: Use for one raw single-cell RNA-seq dataset when the user wants pagoda2.1 analysis, sparse memory-conscious processing, common scRNA-seq I/O, or clean QC/UMAP/marker figures. Use a separate integration recipe for multi-sample integration or cross-dataset label transfer.
 avoid_when: Do not use for multi-sample integration, ATAC/multiome-specific methods, trajectory analysis, or a Seurat/scanpy-native workflow unless the user explicitly asks to convert pagoda2 outputs.
 requires_tools: [run_r]
@@ -14,9 +14,10 @@ source: "Pagoda2.1 devel workflow based on doc/pagoda2.1-single-dataset.Rmd and 
 # scRNA-seq single-dataset analysis with pagoda2.1
 
 Run one pagoda2.1 analysis: load raw counts, verify that the count layer is
-integer-like, run QC, filter, calculate variance/PCA/graph/UMAP/Leiden,
-detect markers, draw dotplot and native marker heatmap, optionally annotate
-clusters, then save a native RDS and an AnnData-compatible h5ad file.
+integer-like, run QC, filter, calculate variance/PCA/graph/default UMAP
+embedding/Leiden, detect markers, draw dotplot and native marker heatmap,
+optionally annotate clusters, then save a native RDS and an AnnData-compatible
+h5ad file.
 
 Pagoda2.1 can read 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData
 h5ad, h5Seurat, and loom without requiring SeuratDisk, reticulate, scanpy, or
@@ -33,7 +34,8 @@ when the task needs a variant or deeper parameter detail:
 - `references/qc_and_filtering.md` - QC metrics, MT/ribo handling,
   `filterData()`, analysis-gene masks, and reporting thresholds.
 - `references/workflow_and_clustering.md` - `run()` semantics, thread
-  controls, OD genes, PCA, graph diagnostics, UMAP, and Leiden resolution.
+  controls, OD genes, PCA, graph diagnostics, embeddings, and Leiden
+  resolution.
 - `references/markers_and_plots.md` - marker calculation, marker selection
   presets, dotplots, native heatmaps, and annotation from marker evidence.
 - `references/matrix_and_metadata_model.md` - raw counts versus normalized
@@ -239,12 +241,12 @@ For QC parameters and MT/ribo handling, read
 
 ## Step 3 - Run the default workflow
 
-Run filtering, variance modeling, PCA, graph construction, UMAP, Leiden, and
-marker detection with pagoda2 defaults.
+Run filtering, variance modeling, PCA, graph construction, default UMAP
+embedding, Leiden, and marker detection with pagoda2 defaults.
 
 ```r
 # Step-specific arguments belong in the matching list: pca = list(...),
-# graph = list(...), umap = list(...), leiden = list(...), markers = list(...).
+# graph = list(...), embedding = list(...), leiden = list(...), markers = list(...).
 # Example: n.odgenes is a PCA-step argument, not a variance-step argument.
 invisible(p2$run(plots = "none", verbose = TRUE))
 
@@ -297,7 +299,7 @@ p2$runMarkers(
 genes, default grouping, number of Leiden clusters, cluster sizes, and any
 warning that QC-filtered cells were present before filtering.
 
-For workflow variants, thread controls, and graph diagnostics, read
+For workflow variants, thread controls, embedding options, and graph diagnostics, read
 `references/workflow_and_clustering.md`.
 
 ---
@@ -338,7 +340,7 @@ if ("percent_mito" %in% colnames(p2$getCellMeta())) {
 cluster coherence, tiny outlying groups, and whether QC/sample metadata
 appears to dominate the embedding.
 
-For PCA, graph, UMAP, and Leiden details, read
+For PCA, graph, embedding, and Leiden details, read
 `references/workflow_and_clustering.md`.
 
 ---

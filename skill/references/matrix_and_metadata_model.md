@@ -13,7 +13,7 @@ p2 <- Pagoda2$from("/path/to/sample_directory",
                    reader.args = list(sample.name = "sample_01"))
 p2$runQC(verbose = TRUE)
 p2$filterData(verbose = TRUE)
-p2$run(steps = c("variance", "pca", "graph", "umap", "leiden"),
+p2$run(steps = c("variance", "pca", "graph", "embedding", "leiden"),
        plots = "none",
        verbose = TRUE)
 ```

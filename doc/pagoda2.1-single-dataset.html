@@ -2210,7 +2210,7 @@ vertical-align: -.125em;
   <li><a href="#input-data" id="toc-input-data" class="nav-link active" data-scroll-target="#input-data">Input Data</a></li>
   <li><a href="#qc" id="toc-qc" class="nav-link" data-scroll-target="#qc">QC</a></li>
   <li><a href="#run-the-default-workflow" id="toc-run-the-default-workflow" class="nav-link" data-scroll-target="#run-the-default-workflow">Run The Default Workflow</a></li>
-  <li><a href="#pca-and-umap" id="toc-pca-and-umap" class="nav-link" data-scroll-target="#pca-and-umap">PCA And UMAP</a></li>
+  <li><a href="#pca-and-umap" id="toc-pca-and-umap" class="nav-link" data-scroll-target="#pca-and-umap">PCA And Default UMAP Embedding</a></li>
   <li><a href="#marker-genes" id="toc-marker-genes" class="nav-link" data-scroll-target="#marker-genes">Marker Genes</a></li>
   <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">Next Steps</a></li>
   </ul>
@@ -2320,7 +2320,7 @@ vertical-align: -.125em;
 </section>
 <section id="run-the-default-workflow" class="level2">
 <h2 class="anchored" data-anchor-id="run-the-default-workflow">Run The Default Workflow</h2>
-<p>The standard run performs filtering, variance modeling, PCA, graph construction, UMAP, Leiden clustering, and marker detection. Results are stored under canonical names so plotting calls can usually omit selectors.</p>
+<p>The standard run performs filtering, variance modeling, PCA, graph construction, default UMAP embedding, Leiden clustering, and marker detection. Results are stored under canonical names so plotting calls can usually omit selectors.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressMessages</span>(<span class="fu">invisible</span>(p2<span class="sc">$</span><span class="fu">run</span>(<span class="at">plots =</span> <span class="st">&quot;none&quot;</span>, <span class="at">verbose =</span> <span class="cn">FALSE</span>)))</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2361,7 +2361,7 @@ vertical-align: -.125em;
 </div>
 </section>
 <section id="pca-and-umap" class="level2">
-<h2 class="anchored" data-anchor-id="pca-and-umap">PCA And UMAP</h2>
+<h2 class="anchored" data-anchor-id="pca-and-umap">PCA And Default UMAP Embedding</h2>
 <p>The PCA elbow plot shows percent total variance explained by each PC and cumulatively. Use it to assess whether the default PC range is reasonable before interpreting the graph and embedding.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>p2<span class="sc">$</span><span class="fu">plotPCAElbow</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>

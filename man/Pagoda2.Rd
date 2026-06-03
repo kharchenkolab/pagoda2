@@ -1177,7 +1177,7 @@ Return embedding
   sgd_batches = NULL,
   diffusion.steps = 0,
   diffusion.power = 0.5,
-  distance = "pearson",
+  distance = "cosine",
   n.cores = self$n.cores,
   n.sgd.cores = n.cores,
   ...
@@ -1210,13 +1210,13 @@ between \code{0} and \code{1}, the default value will be multiplied by the param
 
 \item{\code{diffusion.power}}{numeric Factor to be used when calculating diffusion, (default=0.5)}
 
-\item{\code{distance}}{string 'pearson', 'spearman', 'euclidean', 'L2', 'JS' (default='pearson')}
+\item{\code{distance}}{string 'cosine', 'L2', 'euclidean', 'pearson', 'spearman', 'JS' (default='cosine')}
 
 \item{\code{n.cores}}{numeric Number of cores to use (default=1)}
 
 \item{\code{n.sgd.cores}}{numeric Number of cores to use (default=n.cores)}
 
-\item{\code{...}}{Additional parameters passed to embedding functions, Rtsne::Rtsne() if 'L2', uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'}
+\item{\code{...}}{Additional parameters passed to embedding functions, Rtsne::Rtsne() for tSNE, uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'}
 }
 \if{html}{\out{</div>}}
 }

@@ -25,7 +25,7 @@ test_that("thread policy resolves object, method, and task defaults", {
   expect_equal(policy$r.workers, 6)
 
   expect_equal(p2$getThreads(method = "papply", n.cores = 20, tasks = 3)$r.workers, 3)
-  expect_equal(p2$getThreads(method = "runUMAP", threads = list(total = 6, sgd = 1))$sgd, 1)
+  expect_equal(p2$getThreads(method = "runEmbedding", threads = list(total = 6, sgd = 1))$sgd, 1)
   expect_error(p2$getThreads(method = "runGraph", threads = list(sgd = 1)), "not supported")
 })
 
@@ -39,7 +39,7 @@ test_that("setCores and setThreads update object-level policy", {
   p2$setThreads(native = 2, sgd = 1)
   expect_equal(p2$n.cores, 5)
   expect_equal(p2$getThreads(method = "runGraph")$native, 2)
-  expect_equal(p2$getThreads(method = "runUMAP")$sgd, 1)
+  expect_equal(p2$getThreads(method = "runEmbedding")$sgd, 1)
 })
 
 test_that("run merges top-level budget with step-specific thread roles", {
@@ -67,11 +67,15 @@ test_that("run merges top-level budget with step-specific thread roles", {
 test_that("new embedding API uses threads role instead of n.sgd.cores", {
   p2 <- make_thread_p2(n.cores = 1)
 
+  expect_equal(formals(p2$runEmbedding)$method, "UMAP")
+  expect_equal(formals(p2$runEmbedding)$distance, "cosine")
+  expect_false("runUMAP" %in% names(p2))
+
   expect_error(
-    p2$runUMAP(n.sgd.cores = 1),
+    p2$runEmbedding(n.sgd.cores = 1),
     "threads = list\\(sgd = \\.\\.\\.\\)"
   )
-  expect_equal(p2$getThreads(method = "runUMAP", threads = list(total = 3, sgd = 1))$sgd, 1)
+  expect_equal(p2$getThreads(method = "runEmbedding", threads = list(total = 3, sgd = 1))$sgd, 1)
 })
 
 test_that("runLeiden reports that pagoda2 thread controls do not apply", {

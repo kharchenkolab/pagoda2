@@ -1,7 +1,7 @@
 # Workflow And Clustering
 
 This reference covers the single-dataset processing thread after import:
-filtering, variance modeling, PCA, graph construction, UMAP, Leiden
+filtering, variance modeling, PCA, graph construction, embeddings, Leiden
 clustering, thread control, and result inspection.
 
 ## Default Workflow
@@ -9,7 +9,7 @@ clustering, thread control, and result inspection.
 The default workflow is:
 
 ```text
-qc -> filter -> variance -> pca -> graph -> umap -> leiden -> markers
+qc -> filter -> variance -> pca -> graph -> embedding -> leiden -> markers
 ```
 
 Run it with defaults unless the user has a reason to override:
@@ -28,7 +28,7 @@ Run a staged subset:
 
 ```r
 invisible(p2$run(
-  steps = c("variance", "pca", "graph", "umap", "leiden"),
+  steps = c("variance", "pca", "graph", "embedding", "leiden"),
   plots = "none",
   verbose = TRUE
 ))
@@ -47,6 +47,7 @@ p2$run(
   verbose = TRUE,
   pca = list(nPcs = 50, n.odgenes = 3000),
   graph = list(k = 30, distance = "cosine", weight.type = "1m"),
+  embedding = list(method = "UMAP", distance = "cosine"),
   leiden = list(resolution = 1)
 )
 ```
@@ -60,14 +61,14 @@ Use `n.cores` for the simple total core budget:
 
 ```r
 p2$run(plots = "none", verbose = TRUE, n.cores = 10)
-p2$runUMAP(n.cores = 10)
+p2$runEmbedding(n.cores = 10)
 p2$runMarkers(n.cores = 10)
 ```
 
 Use `threads` only for advanced role-specific control:
 
 ```r
-p2$runUMAP(threads = list(total = 10, sgd = 1))
+p2$runEmbedding(threads = list(total = 10, sgd = 1))
 p2$runMarkers(threads = list(total = 10, r.workers = 6))
 p2$runPCA(threads = list(total = 10, blas = 4))
 ```
@@ -85,7 +86,7 @@ Set object defaults when all later calls should share the same policy:
 ```r
 p2$setCores(10)
 p2$setThreads(total = 10, sgd = 1)
-p2$describeThreads(method = "runUMAP")
+p2$describeThreads(method = "runEmbedding")
 ```
 
 Environment or option-level controls are useful for a whole session:
@@ -169,12 +170,13 @@ if (igraph::is_weighted(graph)) {
 Report graph settings when they differ from defaults or when diagnosing
 embedding/clustering differences.
 
-## UMAP
+## Embeddings
 
-Run UMAP through `run()` or directly:
+`runEmbedding()` is the generic embedding API. It defaults to UMAP with cosine
+distance:
 
 ```r
-p2$runUMAP(reduction = "PCA", name = "UMAP")
+p2$runEmbedding(reduction = "PCA", method = "UMAP", name = "UMAP")
 p_umap <- p2$plotEmbedding(grouping = "leiden",
                            mark.groups = TRUE,
                            size = 0.35,
@@ -200,6 +202,28 @@ p2$plotEmbedding(colors = stats::setNames(mito$percent_mito, rownames(mito)))
 
 Assess cluster coherence, outlying islands, and whether QC or sample metadata
 dominates the embedding.
+
+Generate tSNE through the same API:
+
+```r
+p2$runEmbedding(reduction = "PCA",
+                method = "tSNE",
+                name = "tSNE",
+                distance = "cosine",
+                perplexity = 50)
+p2$plotEmbedding(embedding = "tSNE", grouping = "leiden")
+```
+
+For tSNE, `distance = "cosine"` precomputes a dense cell-cell distance matrix.
+Use `distance = "L2"` when memory or runtime matters more than cosine geometry:
+
+```r
+p2$runEmbedding(reduction = "PCA",
+                method = "tSNE",
+                name = "tSNE_L2",
+                distance = "L2",
+                perplexity = 50)
+```
 
 ## Leiden Clustering
 
@@ -247,7 +271,7 @@ Use `overwrite = TRUE` only when intentionally replacing a result:
 
 ```r
 p2$run(
-  steps = c("pca", "graph", "umap", "leiden"),
+  steps = c("pca", "graph", "embedding", "leiden"),
   overwrite = TRUE,
   pca = list(nPcs = 40),
   plots = "none",
@@ -255,7 +279,7 @@ p2$run(
 )
 ```
 
-Changing filtering after downstream results invalidates PCA, graph, UMAP,
+Changing filtering after downstream results invalidates PCA, graph, embeddings,
 Leiden, and markers. Use a fresh object when possible. If forced filtering is
 necessary, rerun downstream steps after `filterData(force = TRUE)`.
 

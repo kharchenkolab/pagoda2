@@ -85,7 +85,7 @@ invisible(timed("p2$run(skip='markers')", {
       weight.type = "none",
       distance = "cosine"
     ),
-    umap = list(
+    embedding = list(
       threads = list(sgd = 1),
       min_dist = 0.25,
       n_neighbors = 30,

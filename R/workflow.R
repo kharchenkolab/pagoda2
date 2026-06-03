@@ -9,7 +9,7 @@
   )
 }
 
-.pagoda2_workflow_steps <- c("qc", "filter", "variance", "pca", "graph", "umap", "leiden", "markers")
+.pagoda2_workflow_steps <- c("qc", "filter", "variance", "pca", "graph", "embedding", "leiden", "markers")
 
 .pagoda2_workflow_dependencies <- list(
   qc = character(),
@@ -17,7 +17,7 @@
   variance = "filter",
   pca = "variance",
   graph = "pca",
-  umap = "pca",
+  embedding = "pca",
   leiden = "graph",
   markers = "leiden"
 )
@@ -63,7 +63,7 @@
 
 .pagoda2_r6_run <- function(p2, steps = NULL, skip = NULL, dependencies = c("auto", "error"), overwrite = FALSE,
                             profile = c("interactive", "pipeline", "report"), plots = NULL,
-                            verbose = FALSE, n.cores = NULL, threads = NULL, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), umap = list(),
+                            verbose = FALSE, n.cores = NULL, threads = NULL, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), embedding = list(),
                             leiden = list(), markers = list()) {
   dependencies <- match.arg(dependencies)
   profile <- match.arg(profile)
@@ -222,15 +222,16 @@
     }
   }
 
-  if ("umap" %in% resolved.steps) {
-    umap.reduction <- if (!is.null(umap$reduction)) umap$reduction else p2$defaults$reduction
-    umap.name <- if (!is.null(umap$name)) umap$name else p2$defaults$embedding
-    args <- .pagoda2_step_args(umap, list(reduction = umap.reduction, name = umap.name, verbose = verbose.default))
-    args <- add_run_threads(args, "umap")
+  if ("embedding" %in% resolved.steps) {
+    embedding.reduction <- if (!is.null(embedding$reduction)) embedding$reduction else p2$defaults$reduction
+    embedding.method <- if (!is.null(embedding$method)) embedding$method else p2$defaults$embedding
+    embedding.name <- if (!is.null(embedding$name)) embedding$name else embedding.method
+    args <- .pagoda2_step_args(embedding, list(reduction = embedding.reduction, method = embedding.method, name = embedding.name, verbose = verbose.default))
+    args <- add_run_threads(args, "embedding")
     if (!overwrite && !is.null(p2$embeddings[[args$reduction]]) && !is.null(p2$embeddings[[args$reduction]][[args$name]])) {
-      skip_step("umap", args, paste0("embedding `", args$reduction, "/", args$name, "` already exists"))
+      skip_step("embedding", args, paste0("embedding `", args$reduction, "/", args$name, "` already exists"))
     } else {
-      run_step("umap", args, do.call(p2$runUMAP, args))
+      run_step("embedding", args, do.call(p2$runEmbedding, args))
     }
   }
 
@@ -347,26 +348,26 @@
   .pagoda2_with_blas_threads(tp$blas, p2$calculatePcaReduction(..., .legacy.warn = FALSE))
 }
 
-.pagoda2_r6_run_embedding <- function(p2, reduction = NULL, embedding = NULL, name = NULL, n.cores = NULL, threads = NULL, ...) {
+.pagoda2_r6_run_embedding <- function(p2, reduction = NULL, method = "UMAP", name = NULL, distance = "cosine", n.cores = NULL, threads = NULL, ...) {
   if (is.null(reduction)) {
     reduction <- p2$defaults$reduction
   }
-  if (is.null(embedding)) {
-    embedding <- p2$defaults$embedding
+  if (is.null(method)) {
+    method <- p2$defaults$embedding
+  }
+  if (is.null(name)) {
+    name <- method
   }
   args <- list(...)
   if ("n.sgd.cores" %in% names(args)) {
     stop("Use `threads = list(sgd = ...)` instead of `n.sgd.cores` in the pagoda2.1 embedding API")
   }
-  method <- if (embedding %in% c("UMAP", "UMAP_graph")) "umap" else "embedding"
-  tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = method)
+  is.umap <- method %in% c("UMAP", "UMAP_graph")
+  tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "embedding")
   args$n.cores <- tp$native
-  if (embedding %in% c("UMAP", "UMAP_graph")) {
+  args$distance <- distance
+  if (is.umap) {
     args$n.sgd.cores <- tp$sgd
   }
-  do.call(p2$getEmbedding, c(list(type = reduction, embeddingType = embedding, name = name, .legacy.warn = FALSE), args))
-}
-
-.pagoda2_r6_run_umap <- function(p2, reduction = NULL, name = "UMAP", n.cores = NULL, threads = NULL, ...) {
-  p2$runEmbedding(reduction = reduction, embedding = "UMAP", name = name, n.cores = n.cores, threads = threads, ...)
+  do.call(p2$getEmbedding, c(list(type = reduction, embeddingType = method, name = name, .legacy.warn = FALSE), args))
 }
