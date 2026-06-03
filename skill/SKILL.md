@@ -93,7 +93,9 @@ Tell the user these are the analysis-defining decisions:
 4. **Graph and clustering** - the default graph uses cosine distance and
    Leiden clustering. Assess cluster sizes, UMAP coherence, and marker quality.
 5. **Compute footprint** - by default pagoda2 uses a capped thread policy.
-   If the user asks to limit resources, use `n.cores` or `threads`.
+   If the user asks to limit resources, use `n.cores` or `threads`. For
+   tSNE, omitted `distance` resolves to `L2`; forcing cosine is allowed but
+   precomputes a dense cell-cell distance matrix.
 6. **Marker interpretation** - default marker plots favor upregulated,
    group-specific markers with AUC/specificity metrics. Do not annotate cell
    types until marker evidence supports it.

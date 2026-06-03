@@ -256,11 +256,12 @@ test_that("run skip markers creates canonical workflow state without markers", {
   expect_s3_class(p2$plotPCAElbow(), "ggplot")
   expect_true("PCA" %in% names(p2$graphs))
   expect_true("UMAP" %in% names(p2$embeddings$PCA))
+  expect_equal(p2$history$runs[[length(p2$history$runs)]]$steps$embedding$params$distance, "cosine")
   expect_identical(p2$getDefaultGrouping(), "leiden")
   expect_equal(length(p2$diffgenes), 0)
 })
 
-test_that("runEmbedding defaults to UMAP and supports cosine tSNE", {
+test_that("runEmbedding resolves method-specific distance defaults", {
   p2 <- make_workflow_p2()
   set.seed(10)
   p2$reductions$PCA <- matrix(
@@ -271,7 +272,24 @@ test_that("runEmbedding defaults to UMAP and supports cosine tSNE", {
   )
 
   expect_equal(formals(p2$runEmbedding)$method, "UMAP")
-  expect_equal(formals(p2$runEmbedding)$distance, "cosine")
+  expect_null(formals(p2$runEmbedding)$distance)
+
+  expect_equal(pagoda2:::.pagoda2_embedding_default_distance("UMAP"), "cosine")
+  expect_equal(pagoda2:::.pagoda2_embedding_default_distance("largeVis"), "cosine")
+  expect_equal(pagoda2:::.pagoda2_embedding_default_distance("tSNE"), "L2")
+
+  expect_silent(
+    p2$runEmbedding(
+      reduction = "PCA",
+      method = "tSNE",
+      name = "tSNE_default",
+      perplexity = 2,
+      max_iter = 250,
+      n.cores = 1,
+      verbose = FALSE
+    )
+  )
+  expect_equal(dim(p2$embeddings$PCA$tSNE_default), c(nrow(p2$getRawCounts()), 2))
 
   expect_warning(
     p2$runEmbedding(

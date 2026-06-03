@@ -2983,10 +2983,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param reduction Reduction namespace.
     #' @param method Embedding method. Defaults to UMAP.
     #' @param name Stored embedding name.
-    #' @param distance Distance metric. Defaults to cosine; for tSNE, distance='L2' is lighter because other distances precompute a dense cell-cell distance matrix.
+    #' @param distance Distance metric. NULL uses the method default: L2 for tSNE, cosine for other embeddings.
     #' @param ... Arguments passed to getEmbedding().
     #' @return Invisibly returns embedding matrix.
-    runEmbedding = function(reduction = NULL, method = "UMAP", name = NULL, distance = "cosine", ...) .pagoda2_r6_run_embedding(self, reduction = reduction, method = method, name = name, distance = distance, ...)
+    runEmbedding = function(reduction = NULL, method = "UMAP", name = NULL, distance = NULL, ...) .pagoda2_r6_run_embedding(self, reduction = reduction, method = method, name = name, distance = distance, ...)
   ),
   active = list(
     #' @field counts Removed legacy normalized matrix slot.

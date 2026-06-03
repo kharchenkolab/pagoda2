@@ -47,7 +47,7 @@ p2$run(
   verbose = TRUE,
   pca = list(nPcs = 50, n.odgenes = 3000),
   graph = list(k = 30, distance = "cosine", weight.type = "1m"),
-  embedding = list(method = "UMAP", distance = "cosine"),
+  embedding = list(method = "UMAP"),
   leiden = list(resolution = 1)
 )
 ```
@@ -172,8 +172,9 @@ embedding/clustering differences.
 
 ## Embeddings
 
-`runEmbedding()` is the generic embedding API. It defaults to UMAP with cosine
-distance:
+`runEmbedding()` is the generic embedding API. When `distance = NULL`, it uses
+method defaults: cosine for UMAP, UMAP_graph, largeVis, and FR; L2 for tSNE.
+The default method is UMAP:
 
 ```r
 p2$runEmbedding(reduction = "PCA", method = "UMAP", name = "UMAP")
@@ -209,19 +210,18 @@ Generate tSNE through the same API:
 p2$runEmbedding(reduction = "PCA",
                 method = "tSNE",
                 name = "tSNE",
-                distance = "cosine",
                 perplexity = 50)
 p2$plotEmbedding(embedding = "tSNE", grouping = "leiden")
 ```
 
-For tSNE, `distance = "cosine"` precomputes a dense cell-cell distance matrix.
-Use `distance = "L2"` when memory or runtime matters more than cosine geometry:
+This uses `distance = "L2"` by default. To force cosine tSNE, pass it
+explicitly and expect a dense cell-cell distance matrix:
 
 ```r
 p2$runEmbedding(reduction = "PCA",
                 method = "tSNE",
-                name = "tSNE_L2",
-                distance = "L2",
+                name = "tSNE_cosine",
+                distance = "cosine",
                 perplexity = 50)
 ```
 

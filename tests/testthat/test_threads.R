@@ -68,7 +68,7 @@ test_that("new embedding API uses threads role instead of n.sgd.cores", {
   p2 <- make_thread_p2(n.cores = 1)
 
   expect_equal(formals(p2$runEmbedding)$method, "UMAP")
-  expect_equal(formals(p2$runEmbedding)$distance, "cosine")
+  expect_null(formals(p2$runEmbedding)$distance)
   expect_false("runUMAP" %in% names(p2))
 
   expect_error(

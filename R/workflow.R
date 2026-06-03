@@ -227,6 +227,9 @@
     embedding.method <- if (!is.null(embedding$method)) embedding$method else p2$defaults$embedding
     embedding.name <- if (!is.null(embedding$name)) embedding$name else embedding.method
     args <- .pagoda2_step_args(embedding, list(reduction = embedding.reduction, method = embedding.method, name = embedding.name, verbose = verbose.default))
+    if (is.null(args$distance)) {
+      args$distance <- .pagoda2_embedding_default_distance(args$method)
+    }
     args <- add_run_threads(args, "embedding")
     if (!overwrite && !is.null(p2$embeddings[[args$reduction]]) && !is.null(p2$embeddings[[args$reduction]][[args$name]])) {
       skip_step("embedding", args, paste0("embedding `", args$reduction, "/", args$name, "` already exists"))
@@ -348,7 +351,14 @@
   .pagoda2_with_blas_threads(tp$blas, p2$calculatePcaReduction(..., .legacy.warn = FALSE))
 }
 
-.pagoda2_r6_run_embedding <- function(p2, reduction = NULL, method = "UMAP", name = NULL, distance = "cosine", n.cores = NULL, threads = NULL, ...) {
+.pagoda2_embedding_default_distance <- function(method) {
+  if (identical(method, "tSNE")) {
+    return("L2")
+  }
+  "cosine"
+}
+
+.pagoda2_r6_run_embedding <- function(p2, reduction = NULL, method = "UMAP", name = NULL, distance = NULL, n.cores = NULL, threads = NULL, ...) {
   if (is.null(reduction)) {
     reduction <- p2$defaults$reduction
   }
@@ -357,6 +367,9 @@
   }
   if (is.null(name)) {
     name <- method
+  }
+  if (is.null(distance)) {
+    distance <- .pagoda2_embedding_default_distance(method)
   }
   args <- list(...)
   if ("n.sgd.cores" %in% names(args)) {
