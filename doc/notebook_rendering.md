@@ -27,12 +27,15 @@ tar -xzf "quarto-${version}-linux-amd64.tar.gz" -C "$HOME/.local"
 
 ## Render The Workflow Notebook
 
-The single-dataset notebook expects the GSM5746259 10x triplet files in a
+The single-dataset notebook expects only the GSM5746259 10x triplet files in a
 folder named `data` next to the Rmd during execution. For local rendering, use a
-temporary symlink or copy:
+temporary folder with symlinks or copies of the three sample files:
 
 ```sh
-ln -sfn ../../tests/data/GSE192391/GSM5746259_MGI0369_1_SLAB-145-0 doc/data
+mkdir -p doc/data
+ln -s /path/to/GSM5746259_MGI0369_1_SLAB-145-0.barcodes.tsv.gz doc/data/
+ln -s /path/to/GSM5746259_MGI0369_1_SLAB-145-0.features.tsv.gz doc/data/
+ln -s /path/to/GSM5746259_MGI0369_1_SLAB-145-0.matrix.mtx.gz doc/data/
 
 PATH="$HOME/.local/quarto-1.9.38/bin:$PATH" \
 XDG_CACHE_HOME=/tmp/quarto-xdg \
@@ -43,7 +46,7 @@ quarto render doc/pagoda2.1-single-dataset.Rmd \
   --execute
 
 mv pagoda2.1-single-dataset.ipynb doc/pagoda2.1-single-dataset.ipynb
-rm -f doc/data
+rm -rf doc/data
 ```
 
 Quarto may write Python kernelspec metadata. Reset the kernelspec to R, and set

@@ -102,6 +102,17 @@ cluster_sizes <- sort(table(p2$getGrouping()), decreasing = TRUE)
 head(data.frame(cluster = names(cluster_sizes), cells = as.integer(cluster_sizes)), 15)
 ```
 
+## Variance Model QC
+
+`runVariance()` models the mean-variance relationship and selects overdispersed genes for PCA. The diagnostic plot checks the fitted trend and the adjusted variance distribution after normalization. Overdispersed genes are highlighted in red.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 4.8
+#| fig-dpi: 140
+p2$plotVarianceQC()
+```
+
 ## PCA And Default UMAP Embedding
 
 The PCA elbow plot shows percent total variance explained by each PC and cumulatively. Use it to assess whether the default PC range is reasonable before interpreting the graph and embedding.

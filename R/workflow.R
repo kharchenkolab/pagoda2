@@ -122,7 +122,6 @@
     stop("`plots` must be one of show, none, or collect")
   }
   verbose.default <- isTRUE(verbose)
-  show.plots <- identical(plots, "show")
 
   if (is.null(p2$history$runs)) {
     p2$history$runs <- list()
@@ -191,7 +190,7 @@
   }
 
   if ("variance" %in% resolved.steps) {
-    args <- .pagoda2_step_args(variance, list(plot = show.plots, verbose = verbose.default))
+    args <- .pagoda2_step_args(variance, list(plot = FALSE, verbose = verbose.default))
     args <- add_run_threads(args, "variance")
     if (!overwrite && !is.null(p2$misc[["varinfo"]])) {
       skip_step("variance", args, "variance model already exists")

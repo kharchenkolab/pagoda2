@@ -709,9 +709,26 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         df <- df[gene.index, , drop = FALSE]
       }
 
+      variance.history <- list(
+        method = if (use.raw.variance) "raw" else NA_character_,
+        value.scale = if (use.raw.variance) "raw" else "log",
+        gam.k = gam.k,
+        alpha = alpha,
+        use.raw.variance = use.raw.variance,
+        use.unadjusted.pvals = use.unadjusted.pvals,
+        max.adjusted.variance = max.adjusted.variance,
+        min.adjusted.variance = min.adjusted.variance,
+        min.gene.cells = min.gene.cells,
+        n.genes = nrow(df),
+        n.fit.genes = NA_integer_,
+        n.odgenes = NA_integer_,
+        fit_curve = NULL
+      )
+
       if (use.raw.variance) { # use raw variance estimates without relative adjustments
         rownames(df) <- all.genes
         vi <- which(is.finite(df$v) & df$nobs >= min.gene.cells)
+        variance.history$n.fit.genes <- length(vi)
         df$lp <- df$lpa <- log(df$v)
         df$qv <- df$v
         df$gsf <- 1 # no rescaling of variance
@@ -722,6 +739,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         if (persist) {
           self$misc[["odgenes"]] <- rownames(df)[ods]
         }
+        variance.history$n.odgenes <- length(ods)
       } else {
         # gene-relative normalizaton
         df$m <- log(df$m)
@@ -731,12 +749,23 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         if (length(vi) < gam.k * 1.5) {
           gam.k <- 1
         } # too few genes
+        variance.history$gam.k <- gam.k
+        variance.history$n.fit.genes <- length(vi)
         if (gam.k < 2) {
           if (verbose) message(" using lm ")
           m <- lm(v ~ m, data = df[vi, ])
+          variance.history$method <- "lm"
         } else {
           if (verbose) message(" using gam ")
           m <- mgcv::gam(as.formula(paste0("v ~ s(m, k = ", gam.k, ")")), data = df[vi, ])
+          variance.history$method <- "gam"
+        }
+        if (length(vi) > 1L && diff(range(df$m[vi], finite = TRUE)) > 0) {
+          fit.grid <- seq(min(df$m[vi], na.rm = TRUE), max(df$m[vi], na.rm = TRUE), length.out = 300)
+          variance.history$fit_curve <- data.frame(
+            log10_magnitude = log10(exp(1)) * fit.grid,
+            log10_variance = log10(exp(1)) * as.numeric(predict(m, newdata = data.frame(m = fit.grid)))
+          )
         }
         df$res <- -Inf
         df$res[vi] <- resid(m, type = "response")
@@ -755,6 +784,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         if (persist) {
           self$misc[["odgenes"]] <- rownames(df)[ods]
         }
+        variance.history$n.odgenes <- length(ods)
         if (verbose) message(length(ods), " overdispersed genes ... ", length(ods))
 
         df$gsf <- geneScaleFactors <- sqrt(pmax(min.adjusted.variance, pmin(max.adjusted.variance, df$qv)) / exp(df$v))
@@ -764,6 +794,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       if (persist) {
         if (verbose) message("persisting ... ")
         self$misc[["varinfo"]] <- df
+        self$history$variance <- variance.history
       }
 
       # rescale mat variance
@@ -779,27 +810,22 @@ Pagoda2 <- R6::R6Class("Pagoda2",
           adjvar_par <- par(mfrow = c(1, 2), mar = c(3.5, 3.5, 2.0, 0.5), mgp = c(2, 0.65, 0), cex = 1.0)
           on.exit(par(adjvar_par))
         }
-        suppressWarnings(smoothScatter(log10(exp(1)) * df$m, log10(exp(1)) * df$v, main = "", xlab = "log10[ magnitude ]", ylab = "log10[ variance ]"))
-        vi <- which(is.finite(log10(exp(1)) * df$v) & df$nobs >= min.gene.cells)
-        grid <- seq(min(log10(exp(1)) * df$m[vi]), max(log10(exp(1)) * df$m[vi]), length.out = 1000)
-        ## re-calculate m
-        if (gam.k < 2) {
-          if (verbose) message(" using lm ")
-          m <- lm(v ~ m, data = log10(exp(1)) * df[vi, ])
-        } else {
-          if (verbose) message(" using gam ")
-          m <- mgcv::gam(as.formula(paste0("v ~ s(m, k = ", gam.k, ")")), data = log10(exp(1)) * df[vi, ])
+        plot.m <- if (use.raw.variance) log10(df$m) else log10(exp(1)) * df$m
+        plot.v <- if (use.raw.variance) log10(df$v) else log10(exp(1)) * df$v
+        suppressWarnings(smoothScatter(plot.m, plot.v, main = "", xlab = "log10[ magnitude ]", ylab = "log10[ variance ]"))
+        vi <- which(is.finite(plot.v) & df$nobs >= min.gene.cells)
+        if (!is.null(variance.history$fit_curve)) {
+          lines(variance.history$fit_curve$log10_magnitude, variance.history$fit_curve$log10_variance, col = "blue")
         }
-        lines(grid, predict(m, newdata = data.frame(m = grid)), col = "blue")
         if (length(ods) > 0) {
-          points(log10(exp(1)) * df$m[ods], log10(exp(1)) * df$v[ods], pch = ".", col = 2, cex = 1)
+          points(plot.m[ods], plot.v[ods], pch = ".", col = 2, cex = 1)
         }
-        suppressWarnings(smoothScatter(log10(exp(1)) * df$m[vi], log10(exp(1)) * df$qv[vi], xlab = "log10[ magnitude ]", ylab = "", main = "adjusted"))
-        abline(h = 1, lty = 2, col = 8)
+        suppressWarnings(smoothScatter(plot.m[vi], log10(df$qv[vi]), xlab = "log10[ magnitude ]", ylab = "", main = "adjusted"))
+        abline(h = 0, lty = 2, col = 8)
         if (is.finite(max.adjusted.variance)) {
-          abline(h = max.adjusted.variance, lty = 2, col = 1)
+          abline(h = log10(max.adjusted.variance), lty = 2, col = 1)
         }
-        points(log10(exp(1)) * df$m[ods], log10(exp(1)) * df$qv[ods], col = 2, pch = ".")
+        points(plot.m[ods], log10(df$qv[ods]), col = 2, pch = ".")
       }
       if (verbose) message("done.")
       invisible(df)
@@ -810,6 +836,14 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param ... Arguments passed to adjustVariance().
     #' @return residual matrix with adjusted variance.
     runVariance = function(...) .pagoda2_r6_run_variance(self, ...),
+
+    #' @description Plot variance-model diagnostics from runVariance().
+    #'
+    #' @param run.variance Whether to run variance modeling if no persisted result is available.
+    #' @param plot.theme Optional ggplot theme override.
+    #' @param ... Arguments passed to runVariance() if `run.variance = TRUE`.
+    #' @return ggplot object.
+    plotVarianceQC = function(run.variance = FALSE, plot.theme = NULL, ...) .pagoda2_r6_plot_variance_qc(self, run.variance = run.variance, plot.theme = plot.theme, ...),
 
     #' @description Create k-nearest neighbor graph
     #'

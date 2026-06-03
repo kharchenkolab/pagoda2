@@ -115,6 +115,19 @@ test_that("runQC calculates optional mitochondrial and ribosomal percentages", {
   expect_s3_class(p2$plotQCViolin(thresholds = c(percent_mito = 25)), "ggplot")
 })
 
+test_that("runVariance stores diagnostics and plotVarianceQC renders them", {
+  p2 <- make_workflow_p2()
+
+  expect_error(p2$plotVarianceQC(), "runVariance")
+  expect_s3_class(p2$plotVarianceQC(run.variance = TRUE, verbose = FALSE, gam.k = 1, min.gene.cells = 0), "ggplot")
+  expect_s3_class(p2$plotVarianceQC(), "ggplot")
+  expect_true(is.data.frame(p2$misc$varinfo))
+  expect_true(is.list(p2$history$variance))
+  expect_identical(p2$history$variance$method, "lm")
+  expect_true(is.data.frame(p2$history$variance$fit_curve))
+  expect_true(all(c("log10_magnitude", "log10_variance") %in% colnames(p2$history$variance$fit_curve)))
+})
+
 test_that("pagoda2 plot theme resolver supports object, option, and call overrides", {
   p2 <- make_qc_p2()
   p2$history$pca <- list(
