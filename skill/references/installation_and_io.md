@@ -163,6 +163,14 @@ A 10x triplet has:
 - a feature/gene file, usually `features.tsv`, `features.tsv.gz`, `genes.tsv`,
   or `genes.tsv.gz`
 
+Vignette-style local folder with one downloaded triplet:
+
+```r
+p2 <- Pagoda2$from10x("data", verbose = FALSE)
+cat(sprintf("Loaded %d cells x %d genes\n",
+            nrow(p2$getRawCounts()), ncol(p2$getRawCounts())))
+```
+
 Standard CellRanger directory:
 
 ```r
@@ -344,6 +352,10 @@ For all HDF5 formats, stop if the chosen matrix is not integer-like:
 ```r
 stopifnot(all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8))
 ```
+
+If the check fails, the object may have been built from normalized expression
+instead of counts. Reload from the count layer rather than trying to repair the
+matrix after import.
 
 ## Import Report
 

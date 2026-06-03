@@ -215,7 +215,7 @@ p2$setGrouping("external_annotation", external_labels, setDefault = TRUE)
 
 ## Factor Colors
 
-Use pagoda2/sccore color resolution rather than ad hoc palettes. The same
+Use pagoda2's factor-color resolution rather than ad hoc palettes. The same
 factor should look consistent across embeddings, dotplots, heatmaps, and
 metadata tracks:
 

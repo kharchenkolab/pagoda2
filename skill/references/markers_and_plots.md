@@ -44,6 +44,16 @@ Defaults should favor upregulated markers. AUC and specificity metrics support
 clean marker ranking, so keep them on unless a very large dataset makes marker
 calculation too slow.
 
+After the default `p2$run()` call, markers are usually already available for
+the default grouping. Check before recomputing:
+
+```r
+marker_name <- p2$getDefaultGrouping()
+if (!marker_name %in% p2$listMarkers()$name) {
+  p2$runMarkers(name = marker_name, verbose = TRUE)
+}
+```
+
 ## Marker Result Access
 
 List marker results:
@@ -153,6 +163,16 @@ p2$plotMarkerDotPlot(
 
 If labels or dots collide, first increase figure width/height. Do not shrink
 the dot scale until the figure has enough space.
+
+For beginner-facing output, save the dotplot as a wide figure. The defaults
+are tuned for readability, but marker labels and large dots need physical
+space:
+
+```r
+ggplot2::ggsave("marker_dotplot.png", p_dot,
+                width = 15.5, height = 10.5, units = "in", dpi = 120,
+                bg = "white")
+```
 
 Assess:
 

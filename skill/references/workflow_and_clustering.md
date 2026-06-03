@@ -117,7 +117,7 @@ Inspect the gene counts:
 ```r
 cat(sprintf("%d analysis genes; %d OD genes\n",
             sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
-            length(p2$misc$odgenes)))
+            length(p2$getOdGenes())))
 ```
 
 If the OD gene count is unexpectedly low, check that input loading did not
@@ -172,7 +172,8 @@ embedding/clustering differences.
 
 ## Embeddings
 
-`runEmbedding()` is the generic embedding API. When `distance = NULL`, it uses
+`runEmbedding()` is the generic embedding API. Do not use method-specific
+embedding wrappers in new pagoda2.1 workflows. When `distance = NULL`, it uses
 method defaults: cosine for UMAP, UMAP_graph, largeVis, and FR; L2 for tSNE.
 The default method is UMAP:
 
@@ -202,7 +203,8 @@ p2$plotEmbedding(colors = stats::setNames(mito$percent_mito, rownames(mito)))
 ```
 
 Assess cluster coherence, outlying islands, and whether QC or sample metadata
-dominates the embedding.
+dominates the embedding. If a method is not specified, report that the default
+UMAP embedding was used.
 
 Generate tSNE through the same API:
 
@@ -214,8 +216,9 @@ p2$runEmbedding(reduction = "PCA",
 p2$plotEmbedding(embedding = "tSNE", grouping = "leiden")
 ```
 
-This uses `distance = "L2"` by default. To force cosine tSNE, pass it
-explicitly and expect a dense cell-cell distance matrix:
+This uses `distance = "L2"` by default. Use the L2 default unless the user has
+a specific reason to compare with a cosine-distance tSNE. To force cosine
+tSNE, pass it explicitly and expect a dense cell-cell distance matrix:
 
 ```r
 p2$runEmbedding(reduction = "PCA",
@@ -291,7 +294,7 @@ Report:
 - analysis gene count and OD gene count
 - PCs used and elbow-plot interpretation
 - graph settings and graph diagnostics if checked
-- UMAP embedding name and grouping shown
+- embedding method/name, resolved distance when relevant, and grouping shown
 - Leiden cluster count and cluster sizes
 - thread controls if non-default
 - rerun or overwrite decisions

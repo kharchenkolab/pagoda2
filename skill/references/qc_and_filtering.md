@@ -20,6 +20,10 @@ p2$filterData(verbose = TRUE)
 gene-versus-molecule decision. `filterData()` removes cells failing QC and
 records a gene-level `analysis_pass` mask.
 
+Keep `runQC(verbose = TRUE)` for agent-facing analyses because it prints a
+succinct QC summary without flooding the session with per-cell output. Use
+`verbose = FALSE` in notebooks when the next cell prints a clean summary table.
+
 If the user skips `runQC()` and calls `filterData()`, pagoda2 can run QC as a
 dependency:
 
@@ -136,6 +140,10 @@ ggplot2::ggsave("qc_gene_molecule.png", p_qc,
                 width = 10, height = 4.5, units = "in", dpi = 120,
                 bg = "white")
 ```
+
+`plotQC()` can calculate missing QC metrics automatically, but standard
+workflows should call `runQC()` first so the agent can report pass/fail counts
+before plotting.
 
 Composition violin plot, only when those columns exist:
 

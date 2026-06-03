@@ -1,6 +1,6 @@
 ---
 name: pagoda2-scrna-v2
-description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw counts through QC, filtering, PCA, graph/default UMAP embedding, Leiden clustering, marker genes, marker plots, optional annotation, and RDS/h5ad export.
+description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw counts through QC, filtering, PCA, graph construction, embedding (UMAP by default), Leiden clustering, marker genes, marker plots, optional annotation, and RDS/h5ad export.
 when_to_use: Use for one raw single-cell RNA-seq dataset when the user wants pagoda2.1 analysis, sparse memory-conscious processing, common scRNA-seq I/O, or clean QC/UMAP/marker figures. Use a separate integration recipe for multi-sample integration or cross-dataset label transfer.
 avoid_when: Do not use for multi-sample integration, ATAC/multiome-specific methods, trajectory analysis, or a Seurat/scanpy-native workflow unless the user explicitly asks to convert pagoda2 outputs.
 requires_tools: [run_r]
@@ -14,10 +14,11 @@ source: "Pagoda2.1 devel workflow based on doc/pagoda2.1-single-dataset.Rmd and 
 # scRNA-seq single-dataset analysis with pagoda2.1
 
 Run one pagoda2.1 analysis: load raw counts, verify that the count layer is
-integer-like, run QC, filter, calculate variance/PCA/graph/default UMAP
-embedding/Leiden, detect markers, draw dotplot and native marker heatmap,
-optionally annotate clusters, then save a native RDS and an AnnData-compatible
-h5ad file.
+integer-like, run QC, filter, calculate variance/PCA/graph/embedding/Leiden,
+detect markers, draw dotplot and native marker heatmap, optionally annotate
+clusters, then save a native RDS and an AnnData-compatible h5ad file. The
+standard workflow creates a UMAP embedding by default; other embeddings use
+the same `p2$runEmbedding()` API.
 
 Pagoda2.1 can read 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData
 h5ad, h5Seurat, and loom without requiring SeuratDisk, reticulate, scanpy, or
@@ -90,12 +91,14 @@ Tell the user these are the analysis-defining decisions:
    because gene naming varies by organism and annotation.
 3. **Analysis genes and PCs** - pagoda2 keeps raw genes but uses an
    `analysis_pass` gene mask, overdispersed genes, and 50 PCs by default.
-4. **Graph and clustering** - the default graph uses cosine distance and
-   Leiden clustering. Assess cluster sizes, UMAP coherence, and marker quality.
+4. **Graph, embedding, and clustering** - the default graph uses cosine
+   distance, the default embedding is UMAP, and clustering uses Leiden. Assess
+   cluster sizes, embedding coherence, and marker quality.
 5. **Compute footprint** - by default pagoda2 uses a capped thread policy.
-   If the user asks to limit resources, use `n.cores` or `threads`. For
-   tSNE, omitted `distance` resolves to `L2`; forcing cosine is allowed but
-   precomputes a dense cell-cell distance matrix.
+   If the user asks to limit resources, use `n.cores` or `threads`. Embedding
+   distances are method-aware: UMAP, UMAP_graph, largeVis, and FR default to
+   cosine; tSNE defaults to L2 because cosine tSNE requires a dense cell-cell
+   distance matrix.
 6. **Marker interpretation** - default marker plots favor upregulated,
    group-specific markers with AUC/specificity metrics. Do not annotate cell
    types until marker evidence supports it.
@@ -258,7 +261,7 @@ cat(sprintf(
   nrow(p2$getRawCounts()),
   ncol(p2$getRawCounts()),
   sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
-  length(p2$misc$odgenes),
+  length(p2$getOdGenes()),
   length(levels(groups))
 ))
 
@@ -306,9 +309,10 @@ For workflow variants, thread controls, embedding options, and graph diagnostics
 
 ---
 
-## Step 4 - Inspect PCA and UMAP
+## Step 4 - Inspect PCA and the default embedding
 
-Save the PCA elbow plot and UMAP colored by the default Leiden grouping.
+Save the PCA elbow plot and the default UMAP colored by the default Leiden
+grouping.
 
 ```r
 # Use p2$plotPCAElbow(); do NOT derive PCA variance manually from internals.
@@ -341,6 +345,18 @@ if ("percent_mito" %in% colnames(p2$getCellMeta())) {
 **Assess and report:** PCA elbow shape, whether 50 PCs looks reasonable, UMAP
 cluster coherence, tiny outlying groups, and whether QC/sample metadata
 appears to dominate the embedding.
+
+Generate alternate embeddings through `runEmbedding()` only when the user asks
+for them or when UMAP quality is questionable.
+
+```r
+p2$runEmbedding(method = "tSNE", name = "tSNE", perplexity = 50)
+p2$plotEmbedding(embedding = "tSNE", grouping = p2$getDefaultGrouping())
+```
+
+This tSNE call uses the method-aware default `distance = "L2"`. If the user
+explicitly requests cosine tSNE, pass `distance = "cosine"` and warn that it
+materializes a dense cell-cell distance matrix.
 
 For PCA, graph, embedding, and Leiden details, read
 `references/workflow_and_clustering.md`.
@@ -495,7 +511,7 @@ Summarize:
 - post-filter cells, raw genes retained, analysis genes, OD genes, and default
   grouping
 - Leiden cluster count and largest/smallest cluster sizes
-- PCA elbow and UMAP quality observations
+- PCA elbow and default UMAP embedding quality observations
 - marker quality, top marker examples, and whether dotplot/heatmap agree
 - annotations stored or annotation uncertainty
 - output figure/table/object filenames

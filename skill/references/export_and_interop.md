@@ -47,6 +47,9 @@ p2$export("pagoda2_counts_x.h5ad",
 For most scanpy-oriented interchange, keep normalized `X` plus
 `layers/counts`.
 
+Pagoda2 writes h5ad directly; do not require scanpy, reticulate, Seurat, or
+SeuratDisk just to export this format.
+
 ## Metadata Alignment On Export
 
 Pagoda2 metadata can be flexible internally. Foreign formats require exact
