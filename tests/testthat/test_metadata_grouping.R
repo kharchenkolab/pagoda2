@@ -513,7 +513,8 @@ test_that("ComplexHeatmap marker heatmap supports real plot controls", {
   expect_equal(ncol(details$matrix), 4)
   pdf(file = tempfile(fileext = ".pdf"))
   on.exit(grDevices::dev.off(), add = TRUE)
-  expect_silent(ComplexHeatmap::draw(details$heatmap))
+  draw_heatmap <- getExportedValue("ComplexHeatmap", "draw")
+  expect_silent(draw_heatmap(details$heatmap))
 })
 
 test_that("legacy marker heatmap engine resolves new marker grouping provenance", {

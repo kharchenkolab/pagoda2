@@ -34,7 +34,6 @@ Suggests:
     AnnotationDbi, 
     BiocGenerics, 
     BiocParallel,
-    ComplexHeatmap,
     data.table,
     dbscan, 
     dplyr,
@@ -53,6 +52,9 @@ Suggests:
     SingleCellExperiment,
     testthat,
     uwot
+Enhances:
+    ComplexHeatmap,
+    RhpcBLASctl
 URL: https://github.com/kharchenkolab/pagoda2
 BugReports: https://github.com/kharchenkolab/pagoda2/issues
 NeedsCompilation: yes

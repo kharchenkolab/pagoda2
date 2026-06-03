@@ -402,11 +402,15 @@
   if (!requireNamespace("ComplexHeatmap", quietly = TRUE) || utils::packageVersion("ComplexHeatmap") < "2.4") {
     stop("ComplexHeatmap >= 2.4 is required for `engine = \"complex\"`; use `engine = \"native\"` or install ComplexHeatmap.")
   }
+  HeatmapAnnotation <- getExportedValue("ComplexHeatmap", "HeatmapAnnotation")
+  Heatmap <- getExportedValue("ComplexHeatmap", "Heatmap")
+  rowAnnotation <- getExportedValue("ComplexHeatmap", "rowAnnotation")
+  anno_mark <- getExportedValue("ComplexHeatmap", "anno_mark")
   if (sum(lengths(spec$annotation.grobs)) > 0L) {
     warning("`annotation.grobs` are currently rendered only by `engine = \"native\"`.", call. = FALSE)
   }
   x <- spec$matrix
-  top.annotation <- ComplexHeatmap::HeatmapAnnotation(
+  top.annotation <- HeatmapAnnotation(
     df = spec$column.annotation,
     col = spec$annotation.colors$palettes,
     border = spec$border,
@@ -414,7 +418,7 @@
   )
   row.annotation <- NULL
   if (isTRUE(spec$show.gene.groups) && !is.null(spec$gene.groups)) {
-    row.annotation <- ComplexHeatmap::HeatmapAnnotation(
+    row.annotation <- HeatmapAnnotation(
       marker_group = spec$gene.groups,
       which = "row",
       col = list(marker_group = spec$gene.group.colors),
@@ -447,10 +451,10 @@
   }
   dots <- list(...)
   heatmap.args[names(dots)] <- dots
-  ht <- do.call(ComplexHeatmap::Heatmap, heatmap.args)
+  ht <- do.call(Heatmap, heatmap.args)
   if (!is.null(spec$label.indices) && length(spec$label.indices) > 0L) {
-    ht <- ht + ComplexHeatmap::rowAnnotation(
-      link = ComplexHeatmap::anno_mark(
+    ht <- ht + rowAnnotation(
+      link = anno_mark(
         at = spec$label.indices,
         labels = rownames(x)[spec$label.indices],
         labels_gp = grid::gpar(fontsize = spec$row.label.font.size)

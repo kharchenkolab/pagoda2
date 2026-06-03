@@ -232,11 +232,14 @@ details <- p2$plotMarkerHeatmap(
 names(details)
 ```
 
-## Complex And Legacy Engines
+## Optional And Legacy Engines
 
-`engine = "complex"` uses `ComplexHeatmap` when installed. It is useful for
-specialized annotation layouts, but it is a heavy optional dependency and
-should not be required for standard ABA analysis.
+Use `engine = "native"` for standard analyses. It replaces the previous
+heavy-optional heatmap path for routine marker displays.
+
+`engine = "complex"` remains available only as an explicit optional backend.
+It requires `ComplexHeatmap` at call time and should not be installed or
+recommended just to run the standard workflow.
 
 `engine = "legacy"` exists for comparison with older pagoda2 behavior. Do not
 use it as the default in new analyses.

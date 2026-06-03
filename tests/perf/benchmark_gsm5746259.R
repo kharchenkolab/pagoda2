@@ -121,16 +121,14 @@ invisible(timed("p2$plotMarkerDotPlot", {
   )
 }, size.object = function(x) ggplot2::ggplot_build(x)$data))
 
-if (requireNamespace("ComplexHeatmap", quietly = TRUE)) {
-  invisible(timed("p2$plotMarkerHeatmap", {
-    p2$plotMarkerHeatmap(
-      markers = "leiden",
-      n.genes.per.group = 5,
-      z.threshold = 3,
-      highest.only = TRUE,
-      return.details = TRUE
-    )
-  }, size.object = function(x) x$matrix))
-}
+invisible(timed("p2$plotMarkerHeatmap", {
+  p2$plotMarkerHeatmap(
+    markers = "leiden",
+    n.genes.per.group = 5,
+    z.threshold = 3,
+    highest.only = TRUE,
+    return.details = TRUE
+  )
+}, size.object = function(x) x$matrix))
 
 print(bench)

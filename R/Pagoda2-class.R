@@ -1886,7 +1886,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @param markers Marker result name. NULL uses defaultGrouping.
     #' @param type Marker result namespace.
-    #' @param engine Heatmap engine: native for lightweight grid raster, complex for ComplexHeatmap, or legacy for plotDiffGeneHeatmap().
+    #' @param engine Heatmap engine: native for lightweight grid raster (default), complex for the optional ComplexHeatmap backend, or legacy for plotDiffGeneHeatmap().
     #' @param genes Optional explicit genes to plot. NULL selects top marker genes.
     #' @param grouping Optional grouping column. NULL uses marker provenance when available, then defaultGrouping.
     #' @param groups Optional direct grouping vector.
@@ -1906,7 +1906,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param expression.quantile Quantile used to trim each gene before 0-1 scaling.
     #' @param pal Color palette for expression heatmap.
     #' @param column.metadata Optional cell metadata columns, data.frame, or named list to show as top annotations.
-    #' @param column.metadata.colors Optional ComplexHeatmap annotation color list.
+    #' @param column.metadata.colors Optional annotation color list.
     #' @param show.gene.groups Whether to show marker-origin groups as a row annotation.
     #' @param show.group.legend Whether to show group legends.
     #' @param show_heatmap_legend Whether to show expression heatmap legend.
@@ -1932,11 +1932,11 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param s HSV saturation used for generated group colors.
     #' @param max.cells Maximum cells per group to show.
     #' @param max.dense.entries Warn when selected genes by selected cells exceeds this many entries.
-    #' @param use.raster Whether ComplexHeatmap should rasterize the expression layer.
-    #' @param raster.by.magick Whether ComplexHeatmap should use magick for rasterization.
+    #' @param use.raster Whether the selected heatmap engine should rasterize the expression layer when supported.
+    #' @param raster.by.magick Whether the optional ComplexHeatmap backend should use magick for rasterization.
     #' @param return.details Whether to return internals along with the heatmap object.
-    #' @param ... Arguments passed to ComplexHeatmap::Heatmap() or the legacy heatmap.
-    #' @return ComplexHeatmap object, details list, or legacy heatmap side effect.
+    #' @param ... Arguments passed to the selected heatmap engine.
+    #' @return Native grid drawing side effect, optional backend object, details list, or legacy heatmap side effect.
     plotMarkerHeatmap = function(markers = NULL, type = "counts", engine = c("native", "complex", "legacy"), genes = NULL, grouping = NULL, groups = NULL, n.genes.per.group = 5, additional.genes = NULL, exclude.genes = NULL, z.threshold = 2, highest.only = TRUE, ordering = NULL, selection = "balanced", min.expression.fraction = NULL, min.precision = NULL, min.specificity = NULL, min.auc = NULL, min.m = NULL, remove.duplicates = TRUE, expression.quantile = 0.99, pal = colorRampPalette(c("grey95", "firebrick3"), space = "Lab")(1024), column.metadata = NULL, column.metadata.colors = NULL, show.gene.groups = TRUE, show.group.legend = TRUE, show_heatmap_legend = FALSE, border = TRUE, row.label.font.size = 10, labeled.gene.subset = NULL, group.colors = NULL, gene.group.colors = NULL, order.groups = FALSE, cluster.rows = FALSE, cluster.columns = FALSE, cluster.max.items = 2000, cluster.method = "complete", split = FALSE, split.gap = 0, cell.order = NULL, averaging.window = 0, annotation.grobs = NULL, legend.max.levels = Inf, legend.columns = NULL, native.newpage = TRUE, v = 1, s = 1, max.cells = Inf, max.dense.entries = 5e+07, use.raster = TRUE, raster.by.magick = FALSE, return.details = FALSE, ...) .pagoda2_r6_plot_marker_heatmap(self, markers = markers, type = type, engine = engine, genes = genes, grouping = grouping, groups = groups, n.genes.per.group = n.genes.per.group, additional.genes = additional.genes, exclude.genes = exclude.genes, z.threshold = z.threshold, highest.only = highest.only, ordering = ordering, selection = selection, min.expression.fraction = min.expression.fraction, min.precision = min.precision, min.specificity = min.specificity, min.auc = min.auc, min.m = min.m, remove.duplicates = remove.duplicates, expression.quantile = expression.quantile, pal = pal, column.metadata = column.metadata, column.metadata.colors = column.metadata.colors, show.gene.groups = show.gene.groups, show.group.legend = show.group.legend, show_heatmap_legend = show_heatmap_legend, border = border, row.label.font.size = row.label.font.size, labeled.gene.subset = labeled.gene.subset, group.colors = group.colors, gene.group.colors = gene.group.colors, order.groups = order.groups, cluster.rows = cluster.rows, cluster.columns = cluster.columns, cluster.max.items = cluster.max.items, cluster.method = cluster.method, split = split, split.gap = split.gap, cell.order = cell.order, averaging.window = averaging.window, annotation.grobs = annotation.grobs, legend.max.levels = legend.max.levels, legend.columns = legend.columns, native.newpage = native.newpage, v = v, s = s, max.cells = max.cells, max.dense.entries = max.dense.entries, use.raster = use.raster, raster.by.magick = raster.by.magick, return.details = return.details, ...),
 
     #' @description Show embedding
