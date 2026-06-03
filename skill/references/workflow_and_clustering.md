@@ -1,142 +1,173 @@
 # Workflow And Clustering
 
-This page covers the single-dataset processing thread after data import:
-variance modeling, PCA, graph construction, UMAP, Leiden clustering, and result
-inspection.
+This reference covers the single-dataset processing thread after import:
+filtering, variance modeling, PCA, graph construction, UMAP, Leiden
+clustering, thread control, and result inspection.
 
-## Default Workflow Shape
+## Default Workflow
 
-The full default workflow is:
+The default workflow is:
 
 ```text
 qc -> filter -> variance -> pca -> graph -> umap -> leiden -> markers
 ```
 
-For beginner-facing notebooks, make this explicit but avoid forcing the user to
-specify every default:
+Run it with defaults unless the user has a reason to override:
 
 ```r
-p2$run(verbose = TRUE, plots = "none")
+invisible(p2$run(plots = "none", verbose = TRUE))
 ```
 
-To skip marker genes:
+Skip marker genes when the user wants clustering first:
 
 ```r
-p2$run(skip = "markers", verbose = TRUE, plots = "none")
+invisible(p2$run(skip = "markers", plots = "none", verbose = TRUE))
 ```
 
-To run through clustering first and calculate markers later:
+Run a staged subset:
 
 ```r
-p2$run(
+invisible(p2$run(
   steps = c("variance", "pca", "graph", "umap", "leiden"),
   plots = "none",
   verbose = TRUE
-)
+))
 ```
 
-With `dependencies = "auto"` (the default), earlier required steps are included
-and skipped if already complete. For example, after `runQC()` and
-`filterData()`, the staged call above will not recompute them unless
-`overwrite = TRUE` or explicit parameters require it.
+With `dependencies = "auto"`, required earlier steps are included and existing
+results are reused unless `overwrite = TRUE`.
 
-## Profiles And Plots
+## Step-Specific Arguments
 
-`run()` supports lightweight plotting modes:
-
-```r
-p2$run(profile = "interactive")       # default plot behavior for interactive use
-p2$run(profile = "pipeline", plots = "none")
-p2$run(profile = "report", plots = "collect")
-```
-
-For agent workflows, prefer `plots = "none"` during computation and call plot
-methods explicitly so each figure can be saved, shown, and assessed.
-
-## Step Arguments
-
-Pass step-specific arguments as lists. Good defaults should handle most
-datasets, but these are common overrides:
+Pass step overrides in the matching list:
 
 ```r
 p2$run(
-  steps = c("variance", "pca", "graph", "umap", "leiden"),
+  plots = "none",
+  verbose = TRUE,
   pca = list(nPcs = 50, n.odgenes = 3000),
   graph = list(k = 30, distance = "cosine", weight.type = "1m"),
   leiden = list(resolution = 1)
 )
 ```
 
-When reporting results, mention only non-default parameters unless the user
-asked for a full provenance table.
+Do not route PCA arguments into `variance`. For example, `n.odgenes` belongs
+to the PCA step in current pagoda2.1.
 
-## Overdispersed Genes
+## Thread Control
 
-Variance modeling identifies overdispersed genes for PCA. Usually call it
-through `run()`, but a staged script can call:
+Use `n.cores` for the simple total core budget:
+
+```r
+p2$run(plots = "none", verbose = TRUE, n.cores = 10)
+p2$runUMAP(n.cores = 10)
+p2$runMarkers(n.cores = 10)
+```
+
+Use `threads` only for advanced role-specific control:
+
+```r
+p2$runUMAP(threads = list(total = 10, sgd = 1))
+p2$runMarkers(threads = list(total = 10, r.workers = 6))
+p2$runPCA(threads = list(total = 10, blas = 4))
+```
+
+Supported roles:
+
+- `total`: user budget for the method
+- `r.workers`: forked R workers, used by marker-style parallel loops
+- `native`: C++/OpenMP/N2R-style native workers
+- `sgd`: UMAP stochastic-gradient workers
+- `blas`: BLAS/LAPACK threads where controllable
+
+Set object defaults when all later calls should share the same policy:
+
+```r
+p2$setCores(10)
+p2$setThreads(total = 10, sgd = 1)
+p2$describeThreads(method = "runUMAP")
+```
+
+Environment or option-level controls are useful for a whole session:
+
+```r
+options(pagoda2.threads = list(total = 10, sgd = 1))
+options(pagoda2.n.cores = 10)
+```
+
+Use one of `n.cores` or `threads`, not both, in the same call.
+
+## Variance And OD Genes
+
+Run variance modeling through `run()` or directly:
 
 ```r
 p2$runVariance(verbose = TRUE)
 ```
 
-Inspect gene counts:
-
-```r
-od_gene_count <- length(p2$misc$odgenes)
-analysis_gene_count <- sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass)
-data.frame(analysis_gene_count, od_gene_count)
-```
-
-Unexpectedly low analysis or OD gene counts can indicate that import filtered
-genes too early, gene names were duplicated, or `filterData()` thresholds were
-too strict.
-
-## PCA
-
-Run PCA through `run()` or directly:
+PCA selects overdispersed genes by default:
 
 ```r
 p2$runPCA(nPcs = 50, n.odgenes = 3000, verbose = TRUE)
 ```
 
-Show the elbow plot:
+Inspect the gene counts:
+
+```r
+cat(sprintf("%d analysis genes; %d OD genes\n",
+            sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
+            length(p2$misc$odgenes)))
+```
+
+If the OD gene count is unexpectedly low, check that input loading did not
+filter genes early and that `filterData()` thresholds are not too strict.
+
+## PCA Assessment
+
+Save the built-in elbow plot:
 
 ```r
 p_elbow <- p2$plotPCAElbow()
 ggplot2::ggsave("pca_elbow.png", p_elbow,
-                width = 7, height = 4, units = "in", dpi = 120,
+                width = 7.5, height = 4.2, units = "in", dpi = 120,
                 bg = "white")
 ```
 
 Assess:
 
-- whether per-PC variance drops smoothly
-- whether the cumulative curve supports the chosen PC range
-- whether 50 PCs is clearly excessive or insufficient
-- whether there is a very sharp first-PC effect that should be checked against
-  QC or batch metadata
+- percent total variance explained by early PCs
+- cumulative variance curve shape
+- whether 50 PCs is too many or too few
+- whether the first PCs may reflect QC, batch, or library-size effects
+
+Use `plotPCAElbow()` rather than deriving PCA variance manually from internal
+slots.
 
 ## Graph Construction
 
-Build the graph through `run()` or directly:
+Run graph construction through `run()` or directly:
 
 ```r
-p2$runGraph(reduction = "PCA", k = 30, distance = "cosine", weight.type = "1m")
+p2$runGraph(reduction = "PCA",
+            k = 30,
+            distance = "cosine",
+            weight.type = "1m")
 p2$listGraphs()
 ```
 
-The default graph namespace is normally the reduction name, such as `PCA`.
-Check graph size and weighted degree if embeddings or clusters look unusual:
+If UMAP shapes look compressed, fragmented, or different from a comparison
+workflow, inspect graph degree and weighted degree:
 
 ```r
-p2$listGraphs()
 graph <- p2$graphs$PCA
 summary(igraph::degree(graph))
-if (igraph::is_weighted(graph)) summary(igraph::strength(graph))
+if (igraph::is_weighted(graph)) {
+  summary(igraph::strength(graph))
+}
 ```
 
-Use this diagnostic when comparing old and new workflows, or when UMAP shapes
-look compressed or fragmented.
+Report graph settings when they differ from defaults or when diagnosing
+embedding/clustering differences.
 
 ## UMAP
 
@@ -144,27 +175,31 @@ Run UMAP through `run()` or directly:
 
 ```r
 p2$runUMAP(reduction = "PCA", name = "UMAP")
-p_umap <- p2$plotEmbedding(grouping = "leiden", mark.groups = TRUE)
-```
-
-Save with enough room for labels:
-
-```r
+p_umap <- p2$plotEmbedding(grouping = "leiden",
+                           mark.groups = TRUE,
+                           size = 0.35,
+                           alpha = 0.55)
 ggplot2::ggsave("umap_leiden.png", p_umap,
-                width = 7, height = 6, units = "in", dpi = 120,
+                width = 7.4, height = 6.2, units = "in", dpi = 120,
                 bg = "white")
 ```
 
-Overlay relevant metadata when available:
+Overlay metadata when relevant:
 
 ```r
 p2$plotEmbedding(grouping = "sample")
 p2$plotEmbedding(grouping = "batch")
-p2$plotEmbedding(grouping = "percent_mito")
 ```
 
-Assess whether clusters are spatially coherent, whether QC metrics dominate the
-embedding, and whether tiny islands are likely low-quality cells or doublets.
+For numeric metadata, pass a named vector as colors:
+
+```r
+mito <- p2$resolveCellMeta("percent_mito")
+p2$plotEmbedding(colors = stats::setNames(mito$percent_mito, rownames(mito)))
+```
+
+Assess cluster coherence, outlying islands, and whether QC or sample metadata
+dominates the embedding.
 
 ## Leiden Clustering
 
@@ -173,19 +208,18 @@ Run Leiden through `run()` or directly:
 ```r
 p2$runLeiden(name = "leiden", setDefault = TRUE)
 sort(table(p2$getGrouping("leiden")), decreasing = TRUE)
-p2$listGroupings()
 ```
 
-`runLeiden()` stores clusters as a `cellMeta` grouping and usually sets
-`defaultGrouping` to that column. Marker methods and plotting methods can then
-use the default grouping:
+The Leiden result is stored as a cell metadata grouping. `setDefault = TRUE`
+sets the default grouping pointer, which marker and plotting methods use when
+`grouping` is omitted:
 
 ```r
 p2$getDefaultGrouping()
-p2$runMarkers(name = "leiden")
+p2$runMarkers(name = p2$getDefaultGrouping())
 ```
 
-Use `name` when creating alternative clustering results:
+Create alternative clusterings with different names:
 
 ```r
 p2$runLeiden(name = "leiden_r15", resolution = 1.5, setDefault = FALSE)
@@ -194,7 +228,7 @@ p2$plotEmbedding(grouping = "leiden_r15")
 
 ## Result Registry
 
-Use result listing helpers instead of manually searching object slots:
+Use listing helpers for agent state tracking:
 
 ```r
 p2$listReductions()
@@ -205,33 +239,35 @@ p2$listMarkers()
 p2$listResults()
 ```
 
-These are useful for agent state tracking and for explaining what has already
-been computed.
+These help avoid guessing where a result lives inside the R6 object.
 
 ## Re-Running Steps
 
-Use `overwrite = TRUE` when intentionally replacing an existing result:
+Use `overwrite = TRUE` only when intentionally replacing a result:
 
 ```r
 p2$run(
   steps = c("pca", "graph", "umap", "leiden"),
   overwrite = TRUE,
-  pca = list(nPcs = 40)
+  pca = list(nPcs = 40),
+  plots = "none",
+  verbose = TRUE
 )
 ```
 
-Filtering after downstream results invalidates them. If a QC or filtering
-decision changes after PCA/graph/UMAP/Leiden/markers, restart from a fresh
-object or call filtering with `force = TRUE`, then rerun downstream steps.
+Changing filtering after downstream results invalidates PCA, graph, UMAP,
+Leiden, and markers. Use a fresh object when possible. If forced filtering is
+necessary, rerun downstream steps after `filterData(force = TRUE)`.
 
 ## Reporting Checklist
 
 Report:
 
+- cells and genes after filtering
 - analysis gene count and OD gene count
-- PCs used and any notable elbow behavior
-- graph settings if non-default
+- PCs used and elbow-plot interpretation
+- graph settings and graph diagnostics if checked
 - UMAP embedding name and grouping shown
 - Leiden cluster count and cluster sizes
-- small clusters, outlier islands, or QC/batch dominated regions
-- any rerun/overwrite decisions
+- thread controls if non-default
+- rerun or overwrite decisions

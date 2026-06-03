@@ -1,113 +1,134 @@
 # QC And Filtering
 
-Use QC to decide which cells should enter downstream analysis and which genes
-should be eligible for variance modeling. Pagoda2 keeps raw genes available;
-gene filtering creates an analysis mask rather than deleting every low-coverage
-gene from the raw matrix.
+This reference covers cell QC, gene eligibility, and how the standard
+`filterData()` gate prepares a single dataset for variance modeling and PCA.
 
 ## Recommended Pattern
 
-For most single-sample datasets:
+For routine single-sample analysis:
 
 ```r
-p2$runQC(verbose = TRUE)
+invisible(p2$runQC(verbose = TRUE))
 p_qc <- p2$plotQC()
+ggplot2::ggsave("qc_gene_molecule.png", p_qc,
+                width = 10, height = 4.5, units = "in", dpi = 120,
+                bg = "white")
 p2$filterData(verbose = TRUE)
 ```
 
-This creates cell metrics, shows the gene-versus-molecule decision, removes
-cells failing `qc_pass`, and records a gene `analysis_pass` mask.
+`runQC()` records metrics and a `qc_pass` flag. `plotQC()` shows the
+gene-versus-molecule decision. `filterData()` removes cells failing QC and
+records a gene-level `analysis_pass` mask.
 
-If the user calls `filterCells()` or `filterData()` before `runQC()`, those
-methods can run QC automatically:
+If the user skips `runQC()` and calls `filterData()`, pagoda2 can run QC as a
+dependency:
 
 ```r
 p2$filterData(verbose = TRUE)
 ```
 
-Use this shorthand for routine work, but still show `plotQC()` before or
-immediately after filtering so the user sees what happened.
+Still save or show `plotQC()` before interpreting the downstream analysis.
 
-## What `runQC()` Records
+## Cell Metrics Created By `runQC()`
 
-`p2$runQC()` records cell-level metrics in `p2$cellMeta`:
+Standard call:
 
 ```r
-p2$runQC(verbose = TRUE)
-p2$getCellMeta(c("n_molecules", "n_genes", "qc_pass"))
+p2$runQC(method = "gene_molecule", verbose = TRUE)
 ```
 
-Typical columns include:
+Common cell metadata columns:
 
 - `n_molecules`: total molecules per cell
 - `n_genes`: detected genes per cell
 - `qc_gene_molecule_residual`: residual from the gene/molecule trend
-- `qc_gene_molecule_outlier`: trend outlier flag
+- `qc_gene_molecule_outlier`: gene/molecule trend outlier flag
 - `qc_size_outlier`: low-depth or high-depth flag
 - `qc_pass`: final QC pass/fail flag
-- `percent_mito` and `percent_ribo`, when matching genes are found
+- `percent_mito`: mitochondrial percentage, when matching genes are found
+- `percent_ribo`: ribosomal percentage, when matching genes are found
 
-Use `method = "metrics"` only when you want counts and detected-gene metrics
-without the full gene/molecule filter:
+Inspect aligned metrics with `resolveCellMeta()`:
+
+```r
+qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
+cat(sprintf("%d of %d cells pass QC\n",
+            sum(as.logical(qc$qc_pass), na.rm = TRUE), nrow(qc)))
+```
+
+Use metrics-only mode when the task needs counts/detected genes without the
+gene-versus-molecule outlier model:
 
 ```r
 p2$runQC(method = "metrics", verbose = TRUE)
 ```
 
-## QC Defaults And Overrides
+## Thresholds And Defaults
 
-The default molecule thresholds are intentionally reasonable rather than
-requiring users to specify them for every dataset:
+Defaults are chosen so most users do not need to specify them. Override only
+when the QC plot or the biological context argues for it:
 
 ```r
-p2$runQC(min.molecules = 500, max.molecules = 5e4)
+p2$runQC(min.molecules = 500, max.molecules = 50000, verbose = TRUE)
 ```
 
-Constructor legacy filter arguments are treated as defaults and can be
-overridden at QC/filter time. If a dataset needs a different lower cutoff, set
-it where QC is run:
+If a constructor captured legacy filter defaults, those become defaults for
+the first QC/filtering decision. Explicit values in `runQC()` or
+`filterData()` take precedence:
 
 ```r
-p2$runQC(min.molecules = 1000, verbose = TRUE)
+p2$runQC(min.molecules = 1000, max.molecules = 60000, verbose = TRUE)
 p2$filterData(verbose = TRUE)
 ```
 
-or in one step:
+Equivalent one-step gate:
 
 ```r
-p2$filterData(min.molecules = 1000, verbose = TRUE)
+p2$filterData(min.molecules = 1000, max.molecules = 60000, verbose = TRUE)
 ```
 
-## MT And Ribo Metrics
+## Mitochondrial And Ribosomal Metrics
 
-Mitochondrial and ribosomal percentages are optional because gene naming varies
-by organism and annotation source. Pagoda2 can infer common human and mouse
-patterns, but agents should report whether the match worked.
-
-Human-style symbols:
+MT/ribo metrics are optional because gene naming differs by organism and
+annotation. Let pagoda2 infer common names first:
 
 ```r
-p2$runQC(overwrite = TRUE, mt.pattern = "^MT-", ribo.pattern = "^RP[SL]")
+p2$runQC(infer.qc.genes = TRUE, verbose = TRUE)
+```
+
+Use explicit patterns when species and gene-name style are known:
+
+```r
+p2$runQC(overwrite = TRUE,
+         mt.pattern = "^MT-",
+         ribo.pattern = "^RP[SL]",
+         verbose = TRUE)
 ```
 
 Mouse-style symbols:
 
 ```r
-p2$runQC(overwrite = TRUE, mt.pattern = "^mt-", ribo.pattern = "^Rp[sl]")
+p2$runQC(overwrite = TRUE,
+         mt.pattern = "^mt-",
+         ribo.pattern = "^Rp[sl]",
+         verbose = TRUE)
 ```
 
-Explicit gene sets are safest when annotations are nonstandard:
+Use explicit gene sets when annotation is nonstandard:
 
 ```r
-p2$runQC(overwrite = TRUE, mt.genes = mt_genes, ribo.genes = ribo_genes)
+p2$runQC(overwrite = TRUE,
+         mt.genes = c("MT-ND1", "MT-ND2", "MT-CO1"),
+         ribo.genes = c("RPL3", "RPL4", "RPS3"),
+         verbose = TRUE)
 ```
 
-If MT/ribo detection fails, do not invent a composition interpretation. Report
-that those metrics could not be assessed from the available gene annotation.
+Do not invent MT/ribo interpretation when matching genes are absent. Report
+that the metric could not be assessed from the available gene names.
 
 ## QC Figures
 
-Main gene/molecule QC:
+Gene/molecule QC:
 
 ```r
 p_qc <- p2$plotQC()
@@ -116,84 +137,90 @@ ggplot2::ggsave("qc_gene_molecule.png", p_qc,
                 bg = "white")
 ```
 
-`plotQC()` includes the molecule histogram panel, the gene/molecule panel, and
-the threshold/fit overlays when available.
-
-Composition violin plot, only when metrics exist:
+Composition violin plot, only when those columns exist:
 
 ```r
-p_comp <- p2$plotQCViolin(
-  metrics = c("percent_ribo", "percent_mito"),
-  thresholds = c(percent_mito = 20)
-)
-ggplot2::ggsave("qc_composition_violin.png", p_comp,
-                width = 7, height = 4.5, units = "in", dpi = 120,
-                bg = "white")
+composition_metrics <- intersect(c("percent_ribo", "percent_mito"),
+                                 colnames(p2$getCellMeta()))
+if (length(composition_metrics) > 0) {
+  p_comp <- p2$plotQCViolin(metrics = composition_metrics,
+                            thresholds = c(percent_mito = 20))
+  ggplot2::ggsave("qc_composition_violin.png", p_comp,
+                  width = 7.5, height = 4.5, units = "in", dpi = 120,
+                  bg = "white")
+}
 ```
 
-Thresholds shown on violin plots are visual guides unless the analysis code
-explicitly uses them for filtering.
+Thresholds drawn on violin plots are visual guides unless the analysis
+explicitly uses those values in filtering.
 
 ## Cell Filtering
 
-Use `filterData()` as the standard pre-analysis gate:
+Standard gate:
 
 ```r
-p2$filterData(verbose = TRUE)
+p2$filterData(cells = TRUE,
+              genes = TRUE,
+              pass.column = "qc_pass",
+              min.cells.per.gene = 5,
+              verbose = TRUE)
 ```
 
-Use `filterCells()` for a cell-only operation:
+Cell-only gate:
 
 ```r
-p2$filterCells(verbose = TRUE)
+p2$filterCells(pass.column = "qc_pass", verbose = TRUE)
 ```
 
-Use explicit cells only when the user has decided on a custom selection:
+Custom cell list:
 
 ```r
-keep_cells <- rownames(p2$getRawCounts())[p2$getRawCounts()[, "MALAT1"] > 0]
-p2$filterCells(cells = keep_cells, force = TRUE)
+p2$filterCells(cells = c("AAACCCAAGAAACACT-1", "AAACCCAAGAAACCAT-1"),
+               force = TRUE,
+               verbose = TRUE)
 ```
 
-Filtering after reductions, graphs, embeddings, clusterings, or markers would
-invalidate downstream results. Pagoda2 errors unless `force = TRUE`; when using
-`force = TRUE`, rerun downstream steps.
+Use `force = TRUE` only when the user knowingly invalidates existing PCA,
+graphs, embeddings, clusterings, or markers. After forced filtering, rerun all
+downstream steps.
 
 ## Gene Analysis Mask
 
-`filterData()` computes gene coverage after cell filtering and stores a gene
-mask:
+`filterData()` does not delete every low-coverage gene from the raw count
+matrix. It records which genes are eligible for analysis:
 
 ```r
-p2$filterData(min.cells.per.gene = 5, verbose = TRUE)
-gene_qc <- p2$resolveGeneMeta(c("n_cells_detected", "n_molecules", "analysis_pass"))
-sum(gene_qc$analysis_pass)
+p2$filterData(min.cells.per.gene = 5,
+              min.molecules.per.gene = 0,
+              verbose = TRUE)
+gene_qc <- p2$resolveGeneMeta(c("n_cells_detected", "n_molecules",
+                                "analysis_pass"))
+cat(sprintf("%d genes pass the analysis mask\n",
+            sum(gene_qc$analysis_pass, na.rm = TRUE)))
 ```
 
-Raw genes remain in the raw count matrix. Downstream analysis methods use the
-`analysis_pass` mask and overdispersed genes to avoid letting very sparse genes
-drive PCA.
-
-Use explicit genes when a curated panel must be retained:
+Keep a curated panel eligible even if coverage is low:
 
 ```r
 p2$filterData(keep.genes = c("CD3D", "MS4A1", "LYZ"), verbose = TRUE)
 ```
 
-## Reporting Checklist
+Downstream PCA and marker code should use analysis genes by default. Raw genes
+remain retrievable for targeted expression checks and export.
 
-Report these points to the user:
+## QC Interpretation
 
-- initial cell and gene counts
-- fraction of cells failing QC
-- whether failures are low-depth, high-depth, gene/molecule outliers, high MT,
-  high ribosomal content, or another pattern
-- whether failed cells look like a quality tail or a possible biological
-  population
-- cells removed by filtering
+Report:
+
+- starting cell and gene counts
+- cells passing and failing QC
+- low-depth, high-depth, and gene/molecule outlier patterns
+- whether MT/ribo metrics were detected and whether they look extreme
+- whether failures look like a quality tail or a coherent biological group
+- cells retained after filtering
 - raw genes retained
-- genes passing the analysis mask
+- genes passing `analysis_pass`
 
-If more than roughly 20 percent of cells fail, or the failed cells form a
-coherent biological-looking population, pause and discuss thresholds before
-continuing.
+Pause before downstream analysis if more than roughly 20 percent of cells fail,
+if high-MT/high-ribo cells form a coherent cluster-like population, or if the
+QC thresholds are visibly cutting through the center of the distribution.

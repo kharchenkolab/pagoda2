@@ -1,18 +1,31 @@
 # Installation And I/O
 
-This reference explains how to install pagoda2.1 and how to load count data.
-The main rule is: load raw integer-like counts, preserve cell and gene names,
-and pass explicit file or layer arguments whenever guessing would be ambiguous.
+This reference covers installation and input loading for pagoda2.1. The core
+rule is simple: load raw integer-like counts, state exactly which file or layer
+was used, and route reader-specific arguments through `reader.args`.
 
 ## Install From GitHub Devel
 
-The pagoda2.1 workflow assumes the GitHub `devel` branch:
+Pagoda2.1 is currently a development branch. Install from GitHub `devel`:
 
 ```r
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
 if (!requireNamespace("remotes", quietly = TRUE)) {
-  install.packages("remotes", repos = "https://cloud.r-project.org")
+  install.packages("remotes")
 }
-remotes::install_github("kharchenkolab/pagoda2", ref = "devel", dependencies = TRUE)
+if (!requireNamespace("hdf5r", quietly = TRUE)) {
+  install.packages("hdf5r")
+}
+if (!requireNamespace("data.table", quietly = TRUE)) {
+  install.packages("data.table")
+}
+if (!requireNamespace("R.utils", quietly = TRUE)) {
+  install.packages("R.utils")
+}
+
+remotes::install_github("kharchenkolab/pagoda2", ref = "devel",
+                        dependencies = TRUE, upgrade = "never")
 ```
 
 For local development inside a pagoda2 checkout:
@@ -21,358 +34,328 @@ For local development inside a pagoda2 checkout:
 R CMD INSTALL --no-byte-compile .
 ```
 
-Do not run the package test suite as part of user installation. Run focused
-tests only when editing package code.
+Do not run the package test suite during user analysis or routine installation.
+Run focused tests only when editing pagoda2 source.
 
-Pagoda2.1 reads h5ad, h5Seurat, CellRanger HDF5, and loom with lean internal
-readers. Do not install Seurat, SeuratDisk, reticulate, scanpy, or loomR just
-to read those formats. Seurat and SingleCellExperiment are optional only for
-in-memory conversion targets.
+## Constructor Pattern
 
-## Constructor Overview
-
-Use `Pagoda2$from()` when the input is a path and either the format can be
-inferred or you want to pass `format` explicitly:
+Use `Pagoda2$from()` when the input path should be auto-detected or when the
+format is passed explicitly:
 
 ```r
-p2 <- Pagoda2$from("/path/to/input",
-                   reader.args = list(sample.name = "sample_01"))
-p2 <- Pagoda2$from("/path/to/input", format = "10x",
-                   reader.args = list(sample.name = "sample_01"))
-```
-
-Use a format-specific constructor when the source format should be obvious in
-the analysis script:
-
-```r
-p2 <- Pagoda2$from10x("/path/to/10x_triplet_dir")
-p2 <- Pagoda2$from10xH5("/path/to/filtered_feature_bc_matrix.h5")
-p2 <- Pagoda2$fromAnnData("/path/to/sample.h5ad")
-p2 <- Pagoda2$fromH5Seurat("/path/to/sample.h5seurat")
-p2 <- Pagoda2$fromLoom("/path/to/sample.loom")
-```
-
-All constructors call `readCounts()` internally, then build an R6 `Pagoda2`
-object. Put reader options such as `sample.name`, `layer`, `gene.id`, and
-explicit 10x files in `reader.args`. Put object construction options such as
-`n.cores` or `verbose` outside it:
-
-```r
-p2 <- Pagoda2$fromAnnData(
-  "sample.h5ad",
-  reader.args = list(layer = "counts", gene.id = "symbol",
-                     sample.name = "donor_A"),
-  n.cores = 8,
+p2 <- Pagoda2$from(
+  "/path/to/input",
+  format = "auto",
+  reader.args = list(sample.name = "sample_01"),
   verbose = FALSE
 )
 ```
 
-Use `readCounts()` directly only when you want a sparse count matrix or want to
-inspect imported metadata before constructing an object:
+Use a specific constructor when that makes the script clearer:
 
 ```r
-counts <- readCounts("sample.h5ad", format = "h5ad", layer = "counts")
-imported <- readCounts(
-  "sample.h5ad",
-  format = "h5ad",
-  layer = "counts",
-  return.metadata = TRUE
+p2 <- Pagoda2$from10x("/path/to/10x_triplet_directory",
+                      reader.args = list(sample.name = "sample_01"),
+                      verbose = FALSE)
+p2 <- Pagoda2$from10xH5("/path/to/filtered_feature_bc_matrix.h5",
+                        reader.args = list(sample.name = "sample_01"),
+                        verbose = FALSE)
+p2 <- Pagoda2$fromAnnData("/path/to/sample.h5ad",
+                          reader.args = list(layer = "counts",
+                                             sample.name = "sample_01"),
+                          verbose = FALSE)
+p2 <- Pagoda2$fromH5Seurat("/path/to/sample.h5seurat",
+                           reader.args = list(assay = "RNA", layer = "counts",
+                                              sample.name = "sample_01"),
+                           verbose = FALSE)
+p2 <- Pagoda2$fromLoom("/path/to/sample.loom",
+                       reader.args = list(layer = "counts",
+                                          sample.name = "sample_01"),
+                       verbose = FALSE)
+```
+
+Routing matters:
+
+- `sample.name`, `sample.pattern`, `matrix.file`, `barcodes.file`,
+  `features.file`, `genes.file`, `files`, `layer`, `assay`, `gene.id`,
+  `feature.type`, and `cell.prefix` are reader arguments. Put them in
+  `reader.args = list(...)`.
+- `n.cores`, `threads`, and `verbose` are constructor/runtime arguments. Put
+  them at top level.
+
+Example with both:
+
+```r
+p2 <- Pagoda2$fromAnnData(
+  "/path/to/sample.h5ad",
+  reader.args = list(layer = "counts", gene.id = "symbol",
+                     sample.name = "donor_A"),
+  threads = list(total = 8, sgd = 1),
+  verbose = FALSE
 )
+```
+
+## Direct Reader Use
+
+Use `readCounts()` directly when a downstream function needs only a sparse
+matrix or when imported metadata should be inspected before constructing a
+pagoda2 object:
+
+```r
+stopifnot(inherits(readCounts("/path/to/sample.h5ad",
+                              format = "h5ad",
+                              layer = "counts"), "dgCMatrix"))
+
+imported <- readCounts("/path/to/sample.h5ad",
+                       format = "h5ad",
+                       layer = "counts",
+                       return.metadata = TRUE)
 str(imported$cellMeta)
 str(imported$geneMeta)
 ```
 
-Important orientation rule: `readCounts()` returns a gene-by-cell sparse matrix.
-`Pagoda2$from()` stores raw counts internally as cell-by-gene.
+Important orientation difference:
 
-## Choosing Formats
+- `readCounts()` returns a gene-by-cell sparse count matrix.
+- `Pagoda2$from*()` stores raw counts as cell-by-gene in the object.
 
-Autodetection is convenient for routine paths:
+## Format Autodetection
 
-```r
-p2 <- Pagoda2$from("filtered_feature_bc_matrix")
-p2 <- Pagoda2$from("sample.h5ad")
-p2 <- Pagoda2$from("sample.h5seurat")
-p2 <- Pagoda2$from("sample.loom")
-```
-
-Explicit `format` is safer when an extension is nonstandard or a directory
-contains multiple candidate files:
+Autodetection handles common cases:
 
 ```r
-p2 <- Pagoda2$from("matrix_files", format = "10x")
-p2 <- Pagoda2$from("cellranger_output.h5", format = "10x_h5")
-p2 <- Pagoda2$from("custom_extension.dat", format = "h5ad")
+p2 <- Pagoda2$from("/path/to/filtered_feature_bc_matrix",
+                   reader.args = list(sample.name = "sample_01"))
+p2 <- Pagoda2$from("/path/to/sample.h5ad",
+                   reader.args = list(layer = "counts",
+                                      sample.name = "sample_01"))
+p2 <- Pagoda2$from("/path/to/sample.h5seurat",
+                   reader.args = list(assay = "RNA", layer = "counts",
+                                      sample.name = "sample_01"))
+p2 <- Pagoda2$from("/path/to/sample.loom",
+                   reader.args = list(layer = "counts",
+                                      sample.name = "sample_01"))
 ```
 
-Use `sample.name` to record sample identity in cell metadata:
+Use explicit `format` when the extension is unusual, when a `.h5` file could be
+CellRanger HDF5 or another HDF5 layout, or when an input directory contains
+multiple candidate triplets:
 
 ```r
-p2 <- Pagoda2$from("sample_dir", format = "10x",
-                   reader.args = list(sample.name = "donor_A"))
-p2$getCellMeta("sample")
+p2 <- Pagoda2$from("/path/to/matrix_files", format = "10x",
+                   reader.args = list(sample.name = "sample_01"))
+p2 <- Pagoda2$from("/path/to/cellranger_output.h5", format = "10x_h5",
+                   reader.args = list(sample.name = "sample_01"))
+p2 <- Pagoda2$from("/path/to/custom_extension.dat", format = "h5ad",
+                   reader.args = list(layer = "counts",
+                                      sample.name = "sample_01"))
 ```
 
-Use `cell.prefix` when later combining samples would otherwise create duplicate
-barcodes:
-
-```r
-p2 <- Pagoda2$from10x(
-  "sample_dir",
-  reader.args = list(cell.prefix = "donor_A")
-)
-```
+Supported format names include `auto`, `10x`, `10x_h5`, `h5ad`, `h5seurat`,
+and `loom`.
 
 ## 10x Matrix Market Triplets
 
-A 10x triplet has three files:
+A 10x triplet has:
 
-- a Matrix Market sparse count matrix, usually `matrix.mtx` or `matrix.mtx.gz`
+- a Matrix Market sparse matrix, usually `matrix.mtx` or `matrix.mtx.gz`
 - a barcode file, usually `barcodes.tsv` or `barcodes.tsv.gz`
 - a feature/gene file, usually `features.tsv`, `features.tsv.gz`, `genes.tsv`,
   or `genes.tsv.gz`
 
-Standard directory:
-
-```r
-p2 <- Pagoda2$from10x("filtered_feature_bc_matrix")
-```
-
-V3 feature files usually have gene id, gene symbol, and feature type columns.
-V2 gene files usually have two columns. Let pagoda2 infer this with
-`version = "auto"` or specify:
-
-```r
-p2_v3 <- Pagoda2$from10x("dir", reader.args = list(version = "V3"))
-p2_v2 <- Pagoda2$from10x("dir", reader.args = list(version = "V2"))
-```
-
-Choose gene row names with `gene.id`:
-
-```r
-p2_symbol <- Pagoda2$from10x("dir", reader.args = list(gene.id = "symbol"))
-p2_id <- Pagoda2$from10x("dir", reader.args = list(gene.id = "id"))
-```
-
-For multi-feature 10x V3 files, restrict to gene expression:
+Standard CellRanger directory:
 
 ```r
 p2 <- Pagoda2$from10x(
-  "dir",
-  reader.args = list(feature.type = "Gene Expression")
+  "/path/to/filtered_feature_bc_matrix",
+  reader.args = list(sample.name = "sample_01"),
+  verbose = FALSE
 )
 ```
 
-If selected gene names are duplicated, prefer stable IDs or make names unique
-and report the choice:
+10x V3 feature files usually have gene id, symbol, and feature type columns.
+10x V2 gene files usually have two columns. Let pagoda2 infer this by default
+or specify it when needed:
 
 ```r
-p2 <- Pagoda2$from10x("dir", reader.args = list(gene.id = "id"))
-p2 <- Pagoda2$from10x("dir", reader.args = list(make.unique.genes = TRUE))
+p2 <- Pagoda2$from10x("/path/to/10x_v3",
+                      reader.args = list(version = "V3",
+                                         sample.name = "sample_01"))
+p2 <- Pagoda2$from10x("/path/to/10x_v2",
+                      reader.args = list(version = "V2",
+                                         sample.name = "sample_01"))
+```
+
+Choose gene row names explicitly if symbols are duplicated or unstable:
+
+```r
+p2 <- Pagoda2$from10x("/path/to/10x_directory",
+                      reader.args = list(gene.id = "symbol",
+                                         sample.name = "sample_01"))
+p2 <- Pagoda2$from10x("/path/to/10x_directory",
+                      reader.args = list(gene.id = "id",
+                                         sample.name = "sample_01"))
+```
+
+For multi-feature 10x files, restrict to RNA:
+
+```r
+p2 <- Pagoda2$from10x(
+  "/path/to/filtered_feature_bc_matrix",
+  reader.args = list(feature.type = "Gene Expression",
+                     sample.name = "sample_01")
+)
+```
+
+Use `cell.prefix` if later sample combination would otherwise duplicate
+barcodes:
+
+```r
+p2 <- Pagoda2$from10x(
+  "/path/to/filtered_feature_bc_matrix",
+  reader.args = list(cell.prefix = "donor_A",
+                     sample.name = "donor_A")
+)
 ```
 
 ## Explicit 10x Triplet Files
 
-When filenames are arbitrary, specify the three files. This is the clearest
-approach for GEO/SRA/web attachments whose names no longer follow 10x
-conventions.
-
-Relative paths are resolved against the directory passed to `Pagoda2$from()`:
+Use explicit triplet filenames when GEO/SRA/web attachments have custom names.
+This is usually clearer than relying on patterns, symlinks, or renaming.
+Relative file names are resolved against the directory passed as `path`.
 
 ```r
-p2 <- Pagoda2$from(
-  "sample_dir",
-  format = "10x",
+p2 <- Pagoda2$from10x(
+  "/path/to/geo_triplet_directory",
   reader.args = list(
+    sample.name = "GSM5746259",
     files = list(
-      matrix = "GSM5746259_custom_matrix.mtx.gz",
-      barcodes = "GSM5746259_custom_cells.tsv.gz",
-      features = "GSM5746259_custom_genes.tsv.gz"
+      matrix = "GSM5746259_MGI0369_1_SLAB-145-0.matrix.mtx.gz",
+      barcodes = "GSM5746259_MGI0369_1_SLAB-145-0.barcodes.tsv.gz",
+      features = "GSM5746259_MGI0369_1_SLAB-145-0.features.tsv.gz"
     )
-  )
+  ),
+  verbose = FALSE
 )
 ```
 
-The equivalent direct-argument form is useful when constructing `reader.args`
-programmatically:
+Equivalent explicit-argument form:
 
 ```r
 p2 <- Pagoda2$from(
-  "sample_dir",
+  "/path/to/geo_triplet_directory",
   format = "10x",
   reader.args = list(
-    matrix.file = "GSM5746259_custom_matrix.mtx.gz",
-    barcodes.file = "GSM5746259_custom_cells.tsv.gz",
-    features.file = "GSM5746259_custom_genes.tsv.gz"
-  )
+    sample.name = "GSM5746259",
+    matrix.file = "GSM5746259_MGI0369_1_SLAB-145-0.matrix.mtx.gz",
+    barcodes.file = "GSM5746259_MGI0369_1_SLAB-145-0.barcodes.tsv.gz",
+    features.file = "GSM5746259_MGI0369_1_SLAB-145-0.features.tsv.gz"
+  ),
+  verbose = FALSE
 )
 ```
 
-For 10x V2-style `genes.tsv` files:
+For V2-style gene files:
 
 ```r
-p2 <- Pagoda2$from(
-  "sample_dir",
-  format = "10x",
+p2 <- Pagoda2$from10x(
+  "/path/to/geo_triplet_directory",
   reader.args = list(
     version = "V2",
+    sample.name = "sample_01",
     files = list(
       matrix = "counts.mtx.gz",
       barcodes = "cells.tsv.gz",
       genes = "genes.tsv.gz"
     )
-  )
+  ),
+  verbose = FALSE
 )
 ```
 
-Absolute paths are accepted:
-
-```r
-p2 <- Pagoda2$from(
-  ".",
-  format = "10x",
-  reader.args = list(
-    matrix.file = "/data/sample/counts.anyname",
-    barcodes.file = "/data/sample/cell_names.anyname",
-    features.file = "/data/sample/gene_names.anyname"
-  )
-)
-```
-
-If a directory contains several detectable triplets and explicit files are not
-available, use `sample.pattern`:
+If the target triplet is known, explicit files are preferred. If a directory
+contains multiple detectable triplets and explicit files are not yet known,
+use `sample.pattern` as a fallback:
 
 ```r
 p2 <- Pagoda2$from10x(
-  "geo_raw_dir",
-  reader.args = list(sample.pattern = "GSM5746259")
+  "/path/to/geo_raw_directory",
+  reader.args = list(sample.pattern = "GSM5746259",
+                     sample.name = "GSM5746259"),
+  verbose = FALSE
 )
 ```
 
-Prefer explicit files over `sample.pattern` when the target triplet is already
-known.
+## HDF5-Based Readers
 
-## CellRanger HDF5
-
-CellRanger HDF5 files are read with:
-
-```r
-p2 <- Pagoda2$from10xH5("filtered_feature_bc_matrix.h5")
-```
-
-Common options:
+CellRanger HDF5:
 
 ```r
 p2 <- Pagoda2$from10xH5(
-  "filtered_feature_bc_matrix.h5",
-  reader.args = list(
-    genome = "GRCh38",
-    feature.type = "Gene Expression",
-    gene.id = "symbol"
-  )
+  "/path/to/filtered_feature_bc_matrix.h5",
+  reader.args = list(feature.type = "Gene Expression",
+                     genome = NULL,
+                     sample.name = "sample_01"),
+  verbose = FALSE
 )
 ```
 
-Use `genome` only when the HDF5 file has multiple genome groups. Use
-`feature.type` for feature-barcode matrices with RNA plus antibody or CRISPR
-features.
-
-## AnnData h5ad
-
-AnnData may store raw counts in `X`, in `raw/X`, or in a named layer. Do not
-assume `X` is raw counts.
-
-Preferred when a counts layer exists:
+AnnData h5ad:
 
 ```r
 p2 <- Pagoda2$fromAnnData(
-  "sample.h5ad",
-  reader.args = list(layer = "counts", gene.id = "symbol")
+  "/path/to/sample.h5ad",
+  reader.args = list(layer = "counts",
+                     use.raw = FALSE,
+                     sample.name = "sample_01"),
+  verbose = FALSE
 )
 ```
 
-Use `use.raw = TRUE` only when `raw/X` is the intended raw count matrix:
+Use `layer = NULL` to read `X` only when `X` is known to be raw counts.
+Use `use.raw = TRUE` only when the h5ad `raw` group contains the intended raw
+count matrix.
 
-```r
-p2 <- Pagoda2$fromAnnData(
-  "sample.h5ad",
-  reader.args = list(use.raw = TRUE, gene.id = "symbol")
-)
-```
-
-If neither `layer` nor `use.raw` is supplied, the reader uses `X`. Verify
-integer-likeness after loading; many scanpy workflows store normalized or log
-values in `X`.
-
-## h5Seurat
-
-Pagoda2 reads h5Seurat directly without requiring the Seurat package:
+h5Seurat:
 
 ```r
 p2 <- Pagoda2$fromH5Seurat(
-  "sample.h5seurat",
-  reader.args = list(assay = "RNA", layer = "counts")
+  "/path/to/sample.h5seurat",
+  reader.args = list(assay = "RNA",
+                     layer = "counts",
+                     sample.name = "sample_01"),
+  verbose = FALSE
 )
 ```
 
-Use `assay` when the file has multiple assays. Use `layer = "counts"` whenever
-possible; do not load normalized `data` as raw counts.
-
-## Loom
-
-Loom files may store matrices in the root `matrix` dataset or in named layers:
-
-```r
-p2 <- Pagoda2$fromLoom("sample.loom")
-p2 <- Pagoda2$fromLoom("sample.loom", reader.args = list(layer = "counts"))
-```
-
-Dense loom matrices can be large. Tune `chunk.size` to trade memory and speed:
+loom:
 
 ```r
 p2 <- Pagoda2$fromLoom(
-  "sample.loom",
-  reader.args = list(layer = "counts", chunk.size = 2000L)
+  "/path/to/sample.loom",
+  reader.args = list(layer = "counts",
+                     sample.name = "sample_01"),
+  verbose = FALSE
 )
 ```
 
-## Count Sanity Checks
-
-After loading, check the loaded object rather than re-checking the directory
-shape. Raw counts should be a sparse cell-by-gene `dgCMatrix` with integer-like
-values:
+For all HDF5 formats, stop if the chosen matrix is not integer-like:
 
 ```r
-raw <- p2$getRawCounts()
-stopifnot(inherits(raw, "dgCMatrix"))
-stopifnot(all(abs(raw@x - round(raw@x)) < 1e-8))
-stopifnot(!anyDuplicated(rownames(raw)))
-stopifnot(!anyDuplicated(colnames(raw)))
-cat(sprintf("Loaded %d cells x %d genes\n", nrow(raw), ncol(raw)))
+stopifnot(all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8))
 ```
 
-If the integer-like check fails, stop and check layer selection before running
-QC. Many h5ad/h5Seurat/loom files put normalized or log-transformed values in
-the default matrix.
+## Import Report
 
-Use `describeMatrices()` only when debugging matrix/view state:
+Report these items after loading:
 
-```r
-p2$describeMatrices()
-head(p2$getCellMeta())
-head(p2$getGeneMeta())
-```
+- constructor and format used
+- sample name recorded in metadata
+- exact 10x triplet filenames or HDF5 layer/assay used
+- dimensions as cells by genes from `dim(p2$getRawCounts())`
+- raw count class, usually `dgCMatrix`
+- whether nonzero entries are integer-like
+- any gene-name decision, such as symbol versus stable ID or unique-name repair
 
-## Troubleshooting I/O
-
-Use these checks when loading fails:
-
-- `Input path does not exist`: check the path visible to the R process.
-- `No complete 10x triplet`: use explicit `files` or check that the directory
-  has exactly one matrix/barcode/feature set.
-- `Count matrix contains non-integer values`: a normalized/log layer was likely
-  selected.
-- duplicate selected gene names: use `gene.id = "id"` or
-  `make.unique.genes = TRUE`, then report the choice.
-- h5ad/h5Seurat/loom layer confusion: inspect available layers externally or
-  with HDF5 tools, then pass the intended raw count layer explicitly.
+If the integer-like check fails, do not continue with QC. Choose the raw count
+layer or ask the user which layer contains counts.

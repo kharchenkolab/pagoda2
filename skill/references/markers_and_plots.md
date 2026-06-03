@@ -1,7 +1,7 @@
 # Markers And Plots
 
-This page covers marker gene calculation and the main marker visualizations:
-dotplots and native marker heatmaps.
+This reference covers marker calculation, marker selection, dotplots, native
+marker heatmaps, and cautious cluster annotation.
 
 ## Marker Calculation
 
@@ -18,57 +18,61 @@ p2$runMarkers(
 )
 ```
 
-If `grouping` is omitted, methods use `defaultGrouping` when available:
+If `grouping` is omitted, pagoda2 uses `defaultGrouping` when available:
 
 ```r
-p2$getDefaultGrouping()
-p2$runMarkers(name = "leiden")
+p2$runMarkers(name = p2$getDefaultGrouping(),
+              upregulated.only = TRUE,
+              append.auc = TRUE,
+              append.specificity.metrics = TRUE,
+              verbose = TRUE)
 ```
 
-Use an explicit grouping for external labels:
+Use external or annotation groupings explicitly:
 
 ```r
 p2$setGrouping("external_annotation", external_labels, setDefault = FALSE)
-p2$runMarkers(grouping = "external_annotation", name = "external_annotation")
+p2$runMarkers(grouping = "external_annotation",
+              name = "external_annotation",
+              upregulated.only = TRUE,
+              append.auc = TRUE,
+              append.specificity.metrics = TRUE,
+              verbose = TRUE)
 ```
 
-Default marker analysis should favor upregulated markers. AUC and specificity
-metrics are useful for ranking crisp marker genes, so keep
-`append.auc = TRUE` and `append.specificity.metrics = TRUE` unless there is a
-performance reason to skip them.
+Defaults should favor upregulated markers. AUC and specificity metrics support
+clean marker ranking, so keep them on unless a very large dataset makes marker
+calculation too slow.
 
 ## Marker Result Access
 
-List stored marker results:
+List marker results:
 
 ```r
 p2$listMarkers()
 ```
 
-Get the full marker result metadata:
+Get the stored result:
 
 ```r
 marker_result <- p2$getMarkerResult("leiden")
 names(marker_result)
 ```
 
-Get selected top markers as a compact table:
+Get compact top markers:
 
 ```r
-top_markers <- p2$getTopMarkers(
-  markers = "leiden",
-  n.genes.per.group = 5,
-  selection = "balanced"
-)
-head(top_markers)
+p2$getTopMarkers(markers = "leiden",
+                 n.genes.per.group = 5,
+                 selection = "balanced")
 ```
 
-Write a full marker table when the user needs a persistent entity:
+Write a full marker table:
 
 ```r
-marker_tables <- p2$markerResults$counts$leiden$tables
-marker_df <- do.call(rbind, lapply(names(marker_tables), function(group) {
-  x <- marker_tables[[group]]
+marker_result <- p2$getMarkerResult("leiden")
+marker_df <- do.call(rbind, lapply(names(marker_result$tables), function(group) {
+  x <- marker_result$tables[[group]]
   if (is.null(x) || !nrow(x)) return(NULL)
   x$group <- group
   x
@@ -76,21 +80,20 @@ marker_df <- do.call(rbind, lapply(names(marker_tables), function(group) {
 utils::write.csv(marker_df, "cluster_markers.csv", row.names = FALSE)
 ```
 
-Some older objects may store marker tables under older slots. Prefer
-`listMarkers()`, `getMarkerResult()`, and `getTopMarkers()` when available.
+Prefer `listMarkers()`, `getMarkerResult()`, and `getTopMarkers()` over manual
+slot walking.
 
 ## Marker Selection Presets
 
-Modern marker plots share marker selection logic. The main `selection` options
-are:
+Dotplot and heatmap use the same marker-selection logic:
 
-- `balanced`: default; balances precision and expression fraction, then uses
-  AUC/effect statistics as tie breakers
-- `auc`: ranks by AUC, then Z and specificity metrics
-- `precision`: favors markers that are highly specific to the target group and
-  applies a default minimum expression fraction
-- `effect`: ranks by effect size
-- a custom function/list for advanced cases
+- `balanced`: default; balances precision and expression fraction, with AUC,
+  effect size, and specificity as tie breakers
+- `auc`: emphasizes classifier-like separation
+- `precision`: emphasizes group-specific markers with a default minimum
+  expression-fraction requirement
+- `effect`: emphasizes expression effect size
+- custom function/list: advanced ranking
 
 Examples:
 
@@ -98,9 +101,10 @@ Examples:
 p2$getTopMarkers("leiden", selection = "balanced", n.genes.per.group = 5)
 p2$getTopMarkers("leiden", selection = "auc", n.genes.per.group = 5)
 p2$getTopMarkers("leiden", selection = "precision", n.genes.per.group = 5)
+p2$getTopMarkers("leiden", selection = "effect", n.genes.per.group = 5)
 ```
 
-Common filters:
+Common specificity filters:
 
 ```r
 p2$getTopMarkers(
@@ -113,13 +117,12 @@ p2$getTopMarkers(
 ```
 
 `highest.only = TRUE` keeps markers whose expression is highest in the target
-group. This is usually desirable for clean marker displays. Set it to `FALSE`
-only when broad or shared markers are scientifically important.
+group. Keep it on for ordinary marker displays; turn it off only when shared
+or broad markers are specifically desired.
 
 ## Dotplot
 
-Dotplots summarize selected markers with color for mean expression and point
-size for expression fraction:
+Dotplots use color for mean expression and point size for expression fraction:
 
 ```r
 p_dot <- p2$plotMarkerDotPlot(
@@ -127,76 +130,77 @@ p_dot <- p2$plotMarkerDotPlot(
   n.genes.per.group = 5,
   selection = "balanced",
   order.groups = TRUE,
-  dot.scale = 7
+  dot.scale = 8.5
 )
-```
-
-`order.groups = TRUE` orders the y-axis using the groups represented by the
-selected markers, which often makes marker blocks follow a rough diagonal.
-Override with `group.order` when a biological order is known:
-
-```r
-p2$plotMarkerDotPlot(
-  markers = "leiden",
-  group.order = c("T cells", "B cells", "monocytes", "NK cells")
-)
-```
-
-Figure sizing matters. If labels or dots collide, increase width/height before
-changing marker selection:
-
-```r
 ggplot2::ggsave("marker_dotplot.png", p_dot,
-                width = 16, height = 10, units = "in", dpi = 120,
+                width = 15.5, height = 10.5, units = "in", dpi = 120,
                 bg = "white")
 ```
 
+`order.groups = TRUE` orders the y-axis based on the plotted values, not on
+external biology. Use `group.order` when the desired order is known. Derive
+the vector from the current plotted groups or an approved biological ordering:
+
+```r
+# REPLACE with the group order supported by the current analysis.
+known_group_order <- c()
+
+p2$plotMarkerDotPlot(
+  markers = "leiden",
+  group.order = known_group_order
+)
+```
+
+If labels or dots collide, first increase figure width/height. Do not shrink
+the dot scale until the figure has enough space.
+
 Assess:
 
-- whether each group has high-expression, high-fraction marker genes
+- whether each group has high-expression, high-fraction markers
 - whether markers are specific or broadly expressed
-- whether groups are ordered coherently
-- whether selected markers are dominated by QC, stress, ribosomal,
-  mitochondrial, or cell-cycle genes
+- whether the ordering improves readability
+- whether stress, cell-cycle, MT, or ribosomal genes dominate
 
 ## Native Marker Heatmap
 
-The native engine is the default for this recipe. It avoids a heavy optional
-heatmap dependency and supports group labels, row labels, metadata tracks,
-legends, and rasterization:
+Use the native engine by default:
 
 ```r
 png("marker_heatmap_native.png",
-    width = 13.5, height = 8.1, units = "in", res = 120, bg = "white")
+    width = 13.8, height = 9, units = "in", res = 120, bg = "white")
 p2$plotMarkerHeatmap(
   markers = "leiden",
   engine = "native",
   n.genes.per.group = 3,
   selection = "balanced",
-  column.metadata = intersect(
-    c("n_molecules", "n_genes", "percent_mito", "percent_ribo"),
-    colnames(p2$getCellMeta())
-  ),
+  column.metadata = intersect(c("n_molecules", "n_genes",
+                                "percent_mito", "percent_ribo"),
+                              colnames(p2$getCellMeta())),
+  row.label.font.size = 9,
   split = TRUE,
   show_heatmap_legend = TRUE
 )
 dev.off()
 ```
 
-For large datasets, avoid densifying too much expression data:
+For large datasets, cap cells and keep rasterization on:
 
 ```r
+png("marker_heatmap_native.png",
+    width = 13.8, height = 9, units = "in", res = 120, bg = "white")
 p2$plotMarkerHeatmap(
   markers = "leiden",
   engine = "native",
   n.genes.per.group = 3,
   max.cells = 500,
-  use.raster = TRUE
+  use.raster = TRUE,
+  split = TRUE,
+  show_heatmap_legend = TRUE
 )
+dev.off()
 ```
 
-Use `return.details = TRUE` when debugging marker selection, group order, or
-metadata tracks:
+Use `return.details = TRUE` only for debugging or method development:
 
 ```r
 details <- p2$plotMarkerHeatmap(
@@ -210,16 +214,17 @@ names(details)
 
 ## Complex And Legacy Engines
 
-`engine = "complex"` is optional when `ComplexHeatmap` is installed. Use it
-only when the user needs its specific annotation features. `engine = "legacy"`
-exists for comparison with older pagoda2 behavior and should not be the default
-in new workflows.
+`engine = "complex"` uses `ComplexHeatmap` when installed. It is useful for
+specialized annotation layouts, but it is a heavy optional dependency and
+should not be required for standard ABA analysis.
 
-## Plotting Custom Gene Lists
+`engine = "legacy"` exists for comparison with older pagoda2 behavior. Do not
+use it as the default in new analyses.
 
-Use explicit `genes` when the user supplies a list or when marker ranking is
-not the goal. Current marker plot methods still need a marker result name for
-context, so pass `markers` explicitly:
+## Explicit Gene Lists
+
+Use `genes` when the user supplies a panel or when marker ranking is not the
+goal:
 
 ```r
 p2$plotMarkerDotPlot(
@@ -227,29 +232,53 @@ p2$plotMarkerDotPlot(
   genes = c("CD3D", "MS4A1", "LYZ"),
   grouping = "leiden"
 )
+```
+
+```r
+png("marker_heatmap_native.png",
+    width = 10, height = 7, units = "in", res = 120, bg = "white")
 p2$plotMarkerHeatmap(
   markers = "leiden",
   genes = c("CD3D", "MS4A1", "LYZ"),
-  grouping = "leiden"
+  grouping = "leiden",
+  engine = "native"
 )
+dev.off()
 ```
 
-For additional genes on top of selected markers:
+Add genes to selected markers with:
 
 ```r
 p2$plotMarkerHeatmap(
   markers = "leiden",
-  additional.genes = c("MALAT1", "PPBP")
+  additional.genes = c("MALAT1", "PPBP"),
+  engine = "native"
 )
 ```
 
 ## Annotation Discipline
 
-Do not annotate clusters from a single marker name. Present marker evidence,
-possible cell types, and uncertainty. If the user approves or the marker
-evidence is clear, store annotations as groupings:
+Do not annotate clusters from a single marker name. Build a cluster-to-label
+map from marker review and leave uncertain clusters unmapped:
 
 ```r
-p2$annotateClusters(from = "leiden", to = "cell_type", map = cluster_to_type)
-p2$plotEmbedding(grouping = "cell_type", mark.groups = TRUE)
+# REPLACE with labels supported by marker review.
+cluster_to_type <- c()
+
+if (length(cluster_to_type) > 0) {
+  p2$annotateClusters(from = "leiden",
+                      to = "cell_type",
+                      map = cluster_to_type,
+                      unmapped = "keep",
+                      setDefault = TRUE)
+  p2$plotEmbedding(grouping = "cell_type", mark.groups = TRUE)
+}
 ```
+
+Many-to-one mappings are normal: several Leiden clusters may map to one cell
+type. External annotations that do not map cleanly to clusters should be
+stored directly with `setGrouping()` and kept separate from cluster-derived
+annotation.
+
+Report marker evidence, confidence, unresolved clusters, and any disagreement
+between marker-derived labels and external labels.
