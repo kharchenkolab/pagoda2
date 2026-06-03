@@ -24,9 +24,29 @@ if (!requireNamespace("R.utils", quietly = TRUE)) {
   install.packages("R.utils")
 }
 
-remotes::install_github("kharchenkolab/pagoda2", ref = "devel",
-                        dependencies = TRUE, upgrade = "never")
+needs_pagoda2 <- !requireNamespace("pagoda2", quietly = TRUE)
+if (!needs_pagoda2) {
+  needs_pagoda2 <- !identical(
+    get("Pagoda2", envir = asNamespace("pagoda2"))$public_fields$apiVersion,
+    "2.1"
+  )
+}
+if (needs_pagoda2) {
+  remotes::install_github("kharchenkolab/pagoda2", ref = "devel",
+                          dependencies = TRUE, upgrade = "never")
+}
 ```
+
+After loading, verify the object layout:
+
+```r
+library(pagoda2)
+stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
+```
+
+If this check fails, reinstall from GitHub `devel` before using methods such
+as `getRawCounts()`, `getExpressionBlock()`, `filterData()`, `runEmbedding()`,
+and native marker heatmaps in this recipe.
 
 For local development inside a pagoda2 checkout:
 
@@ -49,6 +69,7 @@ p2 <- Pagoda2$from(
   reader.args = list(sample.name = "sample_01"),
   verbose = FALSE
 )
+stopifnot(identical(p2$apiVersion, "2.1"))
 ```
 
 Use a specific constructor when that makes the script clearer:
@@ -83,6 +104,11 @@ Routing matters:
 - `n.cores`, `threads`, and `verbose` are constructor/runtime arguments. Put
   them at top level.
 
+This distinction is source-verified: `Pagoda2$from10x(path, reader.args,
+...)` routes `reader.args` to `readCounts()`, then passes remaining top-level
+arguments to `Pagoda2$new()`. Passing `sample.name`, `layer`, or
+`matrix.file` at top level does not configure the reader.
+
 Example with both:
 
 ```r
@@ -102,14 +128,12 @@ matrix or when imported metadata should be inspected before constructing a
 pagoda2 object:
 
 ```r
-stopifnot(inherits(readCounts("/path/to/sample.h5ad",
-                              format = "h5ad",
-                              layer = "counts"), "dgCMatrix"))
-
 imported <- readCounts("/path/to/sample.h5ad",
                        format = "h5ad",
                        layer = "counts",
                        return.metadata = TRUE)
+stopifnot(inherits(imported$counts, "dgCMatrix"))
+stopifnot(all(abs(imported$counts@x - round(imported$counts@x)) < 1e-8))
 str(imported$cellMeta)
 str(imported$geneMeta)
 ```

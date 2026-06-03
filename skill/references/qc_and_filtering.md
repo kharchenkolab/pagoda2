@@ -8,7 +8,7 @@ This reference covers cell QC, gene eligibility, and how the standard
 For routine single-sample analysis:
 
 ```r
-invisible(p2$runQC(verbose = TRUE))
+p2$runQC(verbose = TRUE)
 p_qc <- p2$plotQC()
 ggplot2::ggsave("qc_gene_molecule.png", p_qc,
                 width = 10, height = 4.5, units = "in", dpi = 120,
@@ -19,6 +19,10 @@ p2$filterData(verbose = TRUE)
 `runQC()` records metrics and a `qc_pass` flag. `plotQC()` shows the
 gene-versus-molecule decision. `filterData()` removes cells failing QC and
 records a gene-level `analysis_pass` mask.
+
+These calls mutate the R6 object in place. `runQC()` writes columns into
+`p2$cellMeta`; `filterData()` updates the raw-count cell axis and writes gene
+eligibility into `p2$geneMeta`. Do not expect a returned filtered matrix.
 
 Keep `runQC(verbose = TRUE)` for agent-facing analyses because it prints a
 succinct QC summary without flooding the session with per-cell output. Use

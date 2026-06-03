@@ -13,12 +13,12 @@ source: "Pagoda2.1 devel workflow based on doc/pagoda2.1-single-dataset.Rmd and 
 
 # scRNA-seq single-dataset analysis with pagoda2.1
 
-Run one pagoda2.1 analysis: load raw counts, verify that the count layer is
-integer-like, run QC, filter, calculate variance/PCA/graph/embedding/Leiden,
-detect markers, draw dotplot and native marker heatmap, optionally annotate
-clusters, then save a native RDS and an AnnData-compatible h5ad file. The
-standard workflow creates a UMAP embedding by default; other embeddings use
-the same `p2$runEmbedding()` API.
+Run one pagoda2.1 analysis: load raw integer count data, verify the object is
+the pagoda2.1 API layout, run QC, filter, calculate
+variance/PCA/graph/embedding/Leiden, detect markers, draw dotplot and native
+marker heatmap, optionally annotate clusters, then save a native RDS and an
+AnnData-compatible h5ad file. The standard workflow creates a UMAP embedding
+by default; other embeddings use the same `p2$runEmbedding()` API.
 
 Pagoda2.1 can read 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData
 h5ad, h5Seurat, and loom without requiring SeuratDisk, reticulate, scanpy, or
@@ -67,14 +67,22 @@ if (!requireNamespace("data.table", quietly = TRUE)) {
 if (!requireNamespace("R.utils", quietly = TRUE)) {
   install.packages("R.utils")
 }
-if (!requireNamespace("pagoda2", quietly = TRUE) ||
-    utils::packageVersion("pagoda2") < "1.1.1") {
+needs_pagoda2 <- !requireNamespace("pagoda2", quietly = TRUE)
+if (!needs_pagoda2) {
+  needs_pagoda2 <- !identical(
+    get("Pagoda2", envir = asNamespace("pagoda2"))$public_fields$apiVersion,
+    "2.1"
+  )
+}
+if (needs_pagoda2) {
   remotes::install_github("kharchenkolab/pagoda2", ref = "devel",
                           dependencies = TRUE, upgrade = "never")
 }
 
 library(pagoda2)
 library(ggplot2)
+
+stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
 ```
 
 Do not run the pagoda2 package test suite as part of user analysis or
@@ -134,6 +142,7 @@ p2 <- Pagoda2$from10x(
   verbose = FALSE
 )
 
+stopifnot(identical(p2$apiVersion, "2.1"))
 stopifnot(inherits(p2$getRawCounts(), "dgCMatrix"))
 stopifnot(all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8))
 cat(sprintf("Loaded %d cells x %d genes\n",
@@ -192,9 +201,9 @@ p2 <- Pagoda2$fromLoom(
 )
 ```
 
-**Assess and report:** input format, sample ID, exact files or layer used,
-cells, genes, and whether raw counts are integer-like. If counts are not
-integer-like, stop and choose the correct raw count layer.
+**Assess and report:** input format, sample ID, `p2$apiVersion`, exact files
+or layer used, cells, genes, and whether raw counts are integer-like. If
+counts are not integer-like, stop and choose the correct raw count layer.
 
 For reader options and edge cases, read `references/installation_and_io.md`.
 
@@ -206,7 +215,7 @@ Compute cell QC metrics, show the gene/molecule decision, and save
 composition violins when MT/ribo metrics are available.
 
 ```r
-invisible(p2$runQC(verbose = TRUE))
+p2$runQC(verbose = TRUE)
 
 qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
 cat(sprintf(
@@ -253,7 +262,7 @@ embedding, Leiden, and marker detection with pagoda2 defaults.
 # Step-specific arguments belong in the matching list: pca = list(...),
 # graph = list(...), embedding = list(...), leiden = list(...), markers = list(...).
 # Example: n.odgenes is a PCA-step argument, not a variance-step argument.
-invisible(p2$run(plots = "none", verbose = TRUE))
+p2$run(plots = "none", verbose = TRUE)
 
 groups <- p2$getGrouping()
 cat(sprintf(
@@ -347,7 +356,8 @@ cluster coherence, tiny outlying groups, and whether QC/sample metadata
 appears to dominate the embedding.
 
 Generate alternate embeddings through `runEmbedding()` only when the user asks
-for them or when UMAP quality is questionable.
+for them or when UMAP quality is questionable. Use `runEmbedding()` for all
+embedding methods; do not call legacy method-specific wrappers in new analyses.
 
 ```r
 p2$runEmbedding(method = "tSNE", name = "tSNE", perplexity = 50)

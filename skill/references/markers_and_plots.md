@@ -44,6 +44,11 @@ Defaults should favor upregulated markers. AUC and specificity metrics support
 clean marker ranking, so keep them on unless a very large dataset makes marker
 calculation too slow.
 
+`runMarkers()` mutates the object in place. It stores the marker result under
+the requested `name`; plotting and table helpers should read that named result
+with `listMarkers()`, `getMarkerResult()`, or `getTopMarkers()` rather than
+walking internal slots.
+
 After the default `p2$run()` call, markers are usually already available for
 the default grouping. Check before recomputing:
 
@@ -104,6 +109,11 @@ Dotplot and heatmap use the same marker-selection logic:
   expression-fraction requirement
 - `effect`: emphasizes expression effect size
 - custom function/list: advanced ranking
+
+Pick `balanced` for first-pass biological review. Pick `precision` when the
+dotplot is cluttered with broadly expressed genes. Pick `auc` when the user
+cares about classifier-like separation. Pick `effect` only when large
+expression differences are the priority and some broad markers are acceptable.
 
 Examples:
 

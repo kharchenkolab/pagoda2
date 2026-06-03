@@ -10,11 +10,12 @@ Save pagoda2 objects with standard R serialization:
 ```r
 saveRDS(p2, "pagoda2_processed.rds")
 p2 <- readRDS("pagoda2_processed.rds")
+stopifnot(identical(p2$apiVersion, "2.1"))
 ```
 
 Use RDS for pagoda2-native continuation because it preserves raw counts,
 matrix views, metadata, reductions, graphs, embeddings, groupings, markers,
-thread settings, and history.
+thread settings, history, and `apiVersion`.
 
 `p2$export("file.rds")` can also write RDS, but `saveRDS()` is the clearest
 R-native command.
@@ -71,6 +72,11 @@ cat(sprintf("%d cells have missing manual labels\n",
 
 This is better than dropping a useful metadata column just because it does not
 cover every cell internally.
+
+AnnData does allow missing values in `obs`/`var`, but dimensions must match
+exactly. Therefore the export rule is: resolve by names first, keep missing
+values where names do not map, and fail only when the matrix axes themselves
+are inconsistent.
 
 ## In-Memory Conversion
 

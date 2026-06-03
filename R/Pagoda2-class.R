@@ -19,6 +19,9 @@ NULL
 Pagoda2 <- R6::R6Class("Pagoda2",
   lock_objects = FALSE,
   public = list(
+    #' @field apiVersion Public API version implemented by this object layout.
+    apiVersion = "2.1",
+
     #' @field rawCounts Raw count matrix on the current filtered axis, cell-by-gene.
     rawCounts = NULL,
 

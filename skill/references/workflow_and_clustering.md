@@ -15,27 +15,33 @@ qc -> filter -> variance -> pca -> graph -> embedding -> leiden -> markers
 Run it with defaults unless the user has a reason to override:
 
 ```r
-invisible(p2$run(plots = "none", verbose = TRUE))
+p2$run(plots = "none", verbose = TRUE)
 ```
 
 Skip marker genes when the user wants clustering first:
 
 ```r
-invisible(p2$run(skip = "markers", plots = "none", verbose = TRUE))
+p2$run(skip = "markers", plots = "none", verbose = TRUE)
 ```
 
 Run a staged subset:
 
 ```r
-invisible(p2$run(
+p2$run(
   steps = c("variance", "pca", "graph", "embedding", "leiden"),
   plots = "none",
   verbose = TRUE
-))
+)
 ```
 
 With `dependencies = "auto"`, required earlier steps are included and existing
 results are reused unless `overwrite = TRUE`.
+
+`p2$run()` mutates the object in place and stores results in the object
+registries: QC/gene masks in metadata, variance state in `p2$misc`,
+reductions in `p2$reductions`, graphs in `p2$graphs`, embeddings in
+`p2$embeddings`, Leiden groupings in `p2$cellMeta`, and markers in the marker
+registry. Use listing helpers below instead of guessing internal paths.
 
 ## Step-Specific Arguments
 

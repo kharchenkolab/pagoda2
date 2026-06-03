@@ -11,6 +11,7 @@ when reading, processing, plotting, and exporting data.
 p2 <- Pagoda2$from("/path/to/sample_directory",
                    format = "10x",
                    reader.args = list(sample.name = "sample_01"))
+stopifnot(identical(p2$apiVersion, "2.1"))
 p2$runQC(verbose = TRUE)
 p2$filterData(verbose = TRUE)
 p2$run(steps = c("variance", "pca", "graph", "embedding", "leiden"),
@@ -20,6 +21,15 @@ p2$run(steps = c("variance", "pca", "graph", "embedding", "leiden"),
 
 Do not invent S3/S4 wrappers in a recipe unless a conversion method explicitly
 returns that class.
+
+For a class-level check before constructing or loading data:
+
+```r
+stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
+```
+
+External packages should prefer `p2$apiVersion` plus public accessors such as
+`getRawCounts()` and `getExpressionBlock()` over probing internal fields.
 
 ## Matrix Orientation
 
