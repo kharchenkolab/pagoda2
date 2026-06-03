@@ -53,8 +53,8 @@ orderColumnRows <- function(p, i) {
     .Call('_pagoda2_orderColumnRows', PACKAGE = 'pagoda2', p, i)
 }
 
-smatColVecCorr <- function(sY, sv, parallel = TRUE) {
-    .Call('_pagoda2_smatColVecCorr', PACKAGE = 'pagoda2', sY, sv, parallel)
+smatColVecCorr <- function(sY, sv, ncores = 1L) {
+    .Call('_pagoda2_smatColVecCorr', PACKAGE = 'pagoda2', sY, sv, ncores)
 }
 
 arma_mat_cor <- function(m) {

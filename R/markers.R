@@ -245,12 +245,19 @@
 
 .pagoda2_r6_run_markers <- function(p2, grouping = NULL, groups = NULL, name = NULL, type = "counts", z.threshold = 3,
                                     upregulated.only = TRUE, verbose = FALSE, append.specificity.metrics = TRUE,
-                                    append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE) {
+                                    append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE, n.cores = NULL, threads = NULL) {
   resolved.grouping <- grouping
   if (is.null(resolved.grouping) && is.null(groups)) {
     resolved.grouping <- p2$defaultGrouping
   }
   cols <- p2$resolveGrouping(grouping = grouping, groups = groups, allow.missing = TRUE)
+  tp <- .pagoda2_resolve_threads(
+    p2,
+    n.cores = n.cores,
+    threads = threads,
+    method = "markers",
+    tasks = length(levels(droplevels(as.factor(cols[!is.na(cols)]))))
+  )
   if (is.null(name)) {
     name <- if (!is.null(resolved.grouping)) resolved.grouping else "customGrouping"
   }
@@ -265,6 +272,7 @@
     append.auc = append.auc,
     genes = genes,
     use.analysis.genes = use.analysis.genes,
+    n.cores = tp$r.workers,
     .legacy.warn = FALSE
   )
   params <- list(
@@ -273,7 +281,8 @@
     append.specificity.metrics = append.specificity.metrics,
     append.auc = append.auc,
     genes = genes,
-    use.analysis.genes = use.analysis.genes
+    use.analysis.genes = use.analysis.genes,
+    threads = tp
   )
   result <- .pagoda2_marker_result(
     name = name,

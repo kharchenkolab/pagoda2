@@ -207,15 +207,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // smatColVecCorr
-arma::vec smatColVecCorr(SEXP sY, SEXP sv, bool parallel);
-RcppExport SEXP _pagoda2_smatColVecCorr(SEXP sYSEXP, SEXP svSEXP, SEXP parallelSEXP) {
+arma::vec smatColVecCorr(SEXP sY, SEXP sv, int ncores);
+RcppExport SEXP _pagoda2_smatColVecCorr(SEXP sYSEXP, SEXP svSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type sY(sYSEXP);
     Rcpp::traits::input_parameter< SEXP >::type sv(svSEXP);
-    Rcpp::traits::input_parameter< bool >::type parallel(parallelSEXP);
-    rcpp_result_gen = Rcpp::wrap(smatColVecCorr(sY, sv, parallel));
+    Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
+    rcpp_result_gen = Rcpp::wrap(smatColVecCorr(sY, sv, ncores));
     return rcpp_result_gen;
 END_RCPP
 }

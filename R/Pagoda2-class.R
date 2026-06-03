@@ -52,6 +52,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @field n.cores number of cores (default=1)
     n.cores = 1,
 
+    #' @field threadPolicy Object-level thread policy.
+    threadPolicy = list(),
+
     #' @field misc list with additional info (default=list())
     misc = list(),
 
@@ -103,7 +106,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @return new Pagoda2 object
     initialize = function(x, modelType = "plain", ## batchNorm='glm',
-                          n.cores = parallel::detectCores(logical = FALSE), verbose = TRUE,
+                          n.cores = NULL, threads = NULL, verbose = TRUE,
                           min.cells.per.gene = 0, trim = round(min.cells.per.gene / 2),
                           min.transcripts.per.cell = 10, batch = NULL,
                           lib.sizes = NULL, log.scale = TRUE, keep.genes = NULL) {
@@ -115,7 +118,15 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         return()
       }
 
-      self$n.cores <- n.cores
+      init.threads <- .pagoda2_resolve_threads(n.cores = n.cores, threads = threads, method = "constructor")
+      self$threadPolicy <- .pagoda2_normalize_threads(threads)
+      if (!is.null(n.cores)) {
+        self$threadPolicy$total <- .pagoda2_normalize_thread_value(n.cores, "n.cores")
+      }
+      if (length(self$threadPolicy) == 0L || is.null(self$threadPolicy$total)) {
+        self$threadPolicy$total <- init.threads$total
+      }
+      self$n.cores <- init.threads$total
       self$batch <- batch
       self$misc <- list(lib.sizes = lib.sizes, log.scale = log.scale, model.type = modelType, trim = trim)
       self$modelType <- modelType
@@ -207,7 +218,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param cells Optional cells to include.
     #' @param n.cores Number of threads for the sparse kernel.
     #' @return data.frame with m, v, and nobs columns.
-    viewColMeanVar = function(name = "analysis", cells = NULL, n.cores = self$n.cores) .pagoda2_r6_view_col_mean_var(self, name = name, cells = cells, n.cores = n.cores),
+    viewColMeanVar = function(name = "analysis", cells = NULL, n.cores = NULL, threads = NULL) .pagoda2_r6_view_col_mean_var(self, name = name, cells = cells, n.cores = n.cores, threads = threads),
 
     #' @description Calculate grouping-stratified column sums for a matrix view without materializing it.
     #'
@@ -446,7 +457,40 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param leiden Step-specific argument list for runLeiden().
     #' @param markers Step-specific argument list for runMarkers().
     #' @return Invisibly returns self.
-    run = function(steps = NULL, skip = NULL, dependencies = c("auto", "error"), overwrite = FALSE, profile = c("interactive", "pipeline", "report"), plots = NULL, verbose = FALSE, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), umap = list(), leiden = list(), markers = list()) .pagoda2_r6_run(self, steps = steps, skip = skip, dependencies = dependencies, overwrite = overwrite, profile = profile, plots = plots, verbose = verbose, qc = qc, filter = filter, variance = variance, pca = pca, graph = graph, umap = umap, leiden = leiden, markers = markers),
+    run = function(steps = NULL, skip = NULL, dependencies = c("auto", "error"), overwrite = FALSE, profile = c("interactive", "pipeline", "report"), plots = NULL, verbose = FALSE, n.cores = NULL, threads = NULL, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), umap = list(), leiden = list(), markers = list()) .pagoda2_r6_run(self, steps = steps, skip = skip, dependencies = dependencies, overwrite = overwrite, profile = profile, plots = plots, verbose = verbose, n.cores = n.cores, threads = threads, qc = qc, filter = filter, variance = variance, pca = pca, graph = graph, umap = umap, leiden = leiden, markers = markers),
+
+    #' @description Set the object-level core budget.
+    #'
+    #' @param n.cores Positive integer total core budget.
+    #' @return Invisibly returns self.
+    setCores = function(n.cores) .pagoda2_set_threads(self, total = n.cores),
+
+    #' @description Set object-level thread policy.
+    #'
+    #' @param total Total core budget.
+    #' @param r.workers Maximum forked R workers.
+    #' @param native Native/OpenMP/N2R thread budget.
+    #' @param sgd UMAP SGD thread budget.
+    #' @param blas BLAS thread budget where controllable.
+    #' @param threads Optional named thread policy list.
+    #' @param ... Additional aliases such as native.threads or sgd.threads.
+    #' @return Invisibly returns self.
+    setThreads = function(total = NULL, r.workers = NULL, native = NULL, sgd = NULL, blas = NULL, threads = NULL, ...) .pagoda2_set_threads(self, total = total, r.workers = r.workers, native = native, sgd = sgd, blas = blas, threads = threads, ...),
+
+    #' @description Resolve effective thread policy.
+    #'
+    #' @param method Optional method name for role validation/defaulting.
+    #' @param n.cores Optional one-call total core budget.
+    #' @param threads Optional one-call thread policy.
+    #' @param tasks Optional task count for R worker capping.
+    #' @return Named list with total, r.workers, native, sgd, and blas values.
+    getThreads = function(method = NULL, n.cores = NULL, threads = NULL, tasks = NULL) .pagoda2_get_threads(self, method = method, n.cores = n.cores, threads = threads, tasks = tasks),
+
+    #' @description Print and return effective thread policy.
+    #'
+    #' @inheritParams getThreads
+    #' @return Invisibly returns resolved thread policy.
+    describeThreads = function(method = NULL, n.cores = NULL, threads = NULL, tasks = NULL) .pagoda2_describe_threads(self, method = method, n.cores = n.cores, threads = threads, tasks = tasks),
 
     #' @description Resolve a grouping column or vector into a named factor.
     #'
@@ -1002,7 +1046,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param method Clustering function (default=leidenAlg::leiden.community).
     #' @param ... Additional arguments passed to the clustering method.
     #' @return Invisibly returns the clustering community object.
-    runLeiden = function(reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, ...) .pagoda2_r6_run_leiden(self, reduction = reduction, graph = graph, name = name, setDefault = setDefault, overwrite = overwrite, method = method, ...),
+    runLeiden = function(reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, n.cores = NULL, threads = NULL, ...) .pagoda2_r6_run_leiden(self, reduction = reduction, graph = graph, name = name, setDefault = setDefault, overwrite = overwrite, method = method, n.cores = n.cores, threads = threads, ...),
 
     #' @description Deprecated function. Use makeGeneKnnGraph() instead.
     #'
@@ -1286,7 +1330,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'     M - log2 fold change
     #'     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
     #'     fe - fraction of cells in a given group having non-zero expression level of a given gene
-    getDifferentialGenes = function(type = "counts", clusterType = NULL, groups = NULL, grouping = NULL, name = "customClustering", z.threshold = 3, upregulated.only = FALSE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = FALSE, genes = NULL, use.analysis.genes = TRUE, .legacy.warn = TRUE) {
+    getDifferentialGenes = function(type = "counts", clusterType = NULL, groups = NULL, grouping = NULL, name = "customClustering", z.threshold = 3, upregulated.only = FALSE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = FALSE, genes = NULL, use.analysis.genes = TRUE, n.cores = self$n.cores, .legacy.warn = TRUE) {
       if (.legacy.warn) {
         .pagoda2_deprecated_call("getDifferentialGenes()", "p2$runMarkers(...)")
       }
@@ -1412,7 +1456,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       if (append.specificity.metrics) {
         ds <- names(ds) %>%
           setNames(., .) %>%
-          papply(function(n) sccore::appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts = cm, append.auc = append.auc), n.cores = self$n.cores)
+          papply(function(n) sccore::appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts = cm, append.auc = append.auc), n.cores = n.cores)
       }
 
       if (is.null(groups)) {
@@ -1441,7 +1485,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param append.specificity.metrics Whether to append specificity metrics.
     #' @param append.auc Whether to append AUC to marker tables.
     #' @return Marker result list returned by getDifferentialGenes().
-    runMarkers = function(grouping = NULL, groups = NULL, name = NULL, type = "counts", z.threshold = 3, upregulated.only = TRUE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE) .pagoda2_r6_run_markers(self, grouping = grouping, groups = groups, name = name, type = type, z.threshold = z.threshold, upregulated.only = upregulated.only, verbose = verbose, append.specificity.metrics = append.specificity.metrics, append.auc = append.auc, genes = genes, use.analysis.genes = use.analysis.genes),
+    runMarkers = function(grouping = NULL, groups = NULL, name = NULL, type = "counts", z.threshold = 3, upregulated.only = TRUE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE, n.cores = NULL, threads = NULL) .pagoda2_r6_run_markers(self, grouping = grouping, groups = groups, name = name, type = type, z.threshold = z.threshold, upregulated.only = upregulated.only, verbose = verbose, append.specificity.metrics = append.specificity.metrics, append.auc = append.auc, genes = genes, use.analysis.genes = use.analysis.genes, n.cores = n.cores, threads = threads),
 
 
     #' @description Plot heatmap of DE results
@@ -1633,7 +1677,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       ## inplaceWinsorizeSparseCols(x,10);
       ## x <- x*as.numeric(depth);
 
-      x <- mclapply(1:length(levels(groups)), function(j) {
+      x <- papply(seq_len(length(levels(groups))), function(j) {
         ii <- names(groups)[which(groups == j)]
         av <- lvec[, j]
         avi <- which(av > 0)
@@ -1646,7 +1690,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         }))
         names(x) <- ii
         x
-      }, mc.cores = n.cores)
+      }, n.cores = n.cores, mc.preschedule = TRUE)
 
       lib.sizes <- unlist(x)[rownames(self$misc[["rawCounts"]])]
       lib.sizes <- lib.sizes / mean(lib.sizes) * mean(Matrix::rowSums(self$misc[["rawCounts"]]))
@@ -2570,7 +2614,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
         # determine valid pathways
         gsl <- ls(envir = setenv)
-        gsl.ng <- unlist(mclapply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names), mc.cores = n.cores, mc.preschedule = TRUE))
+        gsl.ng <- unlist(papply(sn(gsl), function(go) sum(unique(get(go, envir = setenv)) %in% proper.gene.names), n.cores = n.cores, mc.preschedule = TRUE))
         gsl <- gsl[gsl.ng >= min.pathway.size & gsl.ng <= max.pathway.size]
         names(gsl) <- gsl
 

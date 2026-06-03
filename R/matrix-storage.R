@@ -254,11 +254,12 @@
   x
 }
 
-.pagoda2_r6_view_col_mean_var <- function(p2, name = "analysis", cells = NULL, n.cores = p2$n.cores) {
+.pagoda2_r6_view_col_mean_var <- function(p2, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL) {
   raw <- p2$getRawCounts()
   view <- p2$getMatrixView(name)
   rowSel <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
   args <- .pagoda2_view_kernel_args(raw, view)
+  n.cores <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "variance")$native
   colMeanVarView(
     raw,
     rowSel,
@@ -506,6 +507,7 @@
 
   counts <- p2$rawCounts
   counts@x <- as.numeric(counts@x)
+  native.threads <- .pagoda2_resolve_threads(p2, method = "constructor")$native
 
   if (verbose) message(nrow(counts), " cells, ", ncol(counts), " genes; normalizing ... ")
 
@@ -515,7 +517,7 @@
     # winsorize in normalized space first in hopes of getting a more stable depth estimate
     if (trim > 0) {
       counts <- counts / as.numeric(depth)
-      inplaceWinsorizeSparseCols(counts, trim, p2$n.cores)
+      inplaceWinsorizeSparseCols(counts, trim, native.threads)
       counts <- counts * as.numeric(depth)
       if (is.null(lib.sizes)) {
         depth <- round(Matrix::rowSums(counts))
@@ -547,7 +549,7 @@
     counts@x <- as.numeric(counts@x * exp.x / (depth[counts@i + 1] / depthScale)) # normalize by depth as well
     # perform a another round of trimming
     if (trim > 0) {
-      inplaceWinsorizeSparseCols(counts, trim, p2$n.cores)
+      inplaceWinsorizeSparseCols(counts, trim, native.threads)
     }
 
 
@@ -583,7 +585,7 @@
       analysis.view$preWinsorDepth <- depth
       analysis.view$winsorCaps <- .pagoda2_sparse_winsor_caps(counts, trim)
 
-      inplaceWinsorizeSparseCols(counts, trim, p2$n.cores)
+      inplaceWinsorizeSparseCols(counts, trim, native.threads)
       counts <- counts * as.numeric(depth)
 
       if (is.null(lib.sizes)) {

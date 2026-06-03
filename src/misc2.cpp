@@ -456,7 +456,7 @@ arma::ivec orderColumnRows(const arma::ivec& p,arma::ivec& i) {
 
 // calculate Pearson linear correlation between a given vector (v) and the columns of the sparse matrix (Y)
 // [[Rcpp::export]]
-arma::vec smatColVecCorr(SEXP sY,  SEXP sv, bool parallel=true) {
+arma::vec smatColVecCorr(SEXP sY,  SEXP sv, int ncores=1) {
   // parse out sparse matrix data
   S4 mat(sY);  
   const arma::uvec i(( unsigned int *)INTEGER(mat.slot("i")),LENGTH(mat.slot("i")),false,true); 
@@ -479,7 +479,7 @@ arma::vec smatColVecCorr(SEXP sY,  SEXP sv, bool parallel=true) {
 
   // for each column
 #ifdef _OPENMP
-#pragma omp parallel for shared(r) if(parallel)
+#pragma omp parallel for shared(r) num_threads(ncores) if(ncores > 1)
 #endif
   for(int g=0;g<ncols;g++) {
     int p0=p[g]; int p1=p[g+1]; 

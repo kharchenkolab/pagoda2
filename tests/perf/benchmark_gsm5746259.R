@@ -76,18 +76,17 @@ invisible(timed("p2$run(skip='markers')", {
     skip = "markers",
     profile = "pipeline",
     plots = "none",
-    variance = list(plot = FALSE, gam.k = 10, n.cores = n_cores),
+    n.cores = n_cores,
+    variance = list(plot = FALSE, gam.k = 10),
     pca = list(nPcs = 50, n.odgenes = 3000, maxit = 1000),
     graph = list(
       k = 30,
       center = TRUE,
       weight.type = "none",
-      distance = "cosine",
-      n.cores = n_cores
+      distance = "cosine"
     ),
     umap = list(
-      n.cores = n_cores,
-      n.sgd.cores = 1,
+      threads = list(sgd = 1),
       min_dist = 0.25,
       n_neighbors = 30,
       n_epochs = 500

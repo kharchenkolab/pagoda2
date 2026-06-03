@@ -29,14 +29,18 @@ areColors <- function(x) {
 #' Parallel, optionally verbose lapply. See ?parallel::mclapply for more info.
 #'
 #' @param ... Additional arguments passed to mclapply(), lapply(), or BiocParallel::bplapply()
-#' @param n.cores Number of cores to use (default=parallel::detectCores())
-#' @param mc.preschedule See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
+#' @param n.cores Total core budget. If NULL, uses the pagoda2 thread policy.
+#' @param threads Optional advanced thread policy list.
+#' @param mc.preschedule See ?parallel::mclapply (default=TRUE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.
 #' @return list, as returned by lapply
 #' @keywords internal
-papply <- function(..., n.cores=parallel::detectCores(), mc.preschedule=FALSE) { # TODO: replace it with sccore::plapply
+papply <- function(..., n.cores = NULL, threads = NULL, mc.preschedule = TRUE, mc.allow.recursive = FALSE) { # TODO: replace it with sccore::plapply
+  args <- list(...)
+  tasks <- if (length(args) > 0L) length(args[[1]]) else NULL
+  n.cores <- .pagoda2_resolve_threads(n.cores = n.cores, threads = threads, method = "r", tasks = tasks)$r.workers
   if(n.cores>1) {
     if(requireNamespace("parallel", quietly = TRUE)) {
-      return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule))
+      return(mclapply(...,mc.cores=n.cores,mc.preschedule=mc.preschedule,mc.allow.recursive=mc.allow.recursive))
     } 
     
     if(requireNamespace("BiocParallel", quietly = TRUE)) { 

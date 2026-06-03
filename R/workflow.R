@@ -63,10 +63,26 @@
 
 .pagoda2_r6_run <- function(p2, steps = NULL, skip = NULL, dependencies = c("auto", "error"), overwrite = FALSE,
                             profile = c("interactive", "pipeline", "report"), plots = NULL,
-                            verbose = FALSE, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), umap = list(),
+                            verbose = FALSE, n.cores = NULL, threads = NULL, qc = list(), filter = list(), variance = list(), pca = list(), graph = list(), umap = list(),
                             leiden = list(), markers = list()) {
   dependencies <- match.arg(dependencies)
   profile <- match.arg(profile)
+  run.threads <- NULL
+  if (!is.null(n.cores) || !is.null(threads)) {
+    run.threads <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "run", validate = FALSE)
+  }
+  add_run_threads <- function(args, method) {
+    if (is.null(run.threads) || !is.null(args$n.cores)) {
+      return(args)
+    }
+    run.step.threads <- .pagoda2_thread_subset(run.threads, method)
+    if (!is.null(args$threads)) {
+      args$threads <- utils::modifyList(run.step.threads, .pagoda2_normalize_threads(args$threads))
+      return(args)
+    }
+    args$threads <- run.step.threads
+    args
+  }
   if (!is.null(steps) && !is.null(skip)) {
     stop("Supply only one of `steps` or `skip`")
   }
@@ -176,6 +192,7 @@
 
   if ("variance" %in% resolved.steps) {
     args <- .pagoda2_step_args(variance, list(plot = show.plots, verbose = verbose.default))
+    args <- add_run_threads(args, "variance")
     if (!overwrite && !is.null(p2$misc[["varinfo"]])) {
       skip_step("variance", args, "variance model already exists")
     } else {
@@ -186,6 +203,7 @@
   if ("pca" %in% resolved.steps) {
     pca.name <- if (!is.null(pca$name)) pca$name else p2$defaults$reduction
     args <- .pagoda2_step_args(pca, list(name = pca.name, verbose = verbose.default))
+    args <- add_run_threads(args, "pca")
     if (!overwrite && !is.null(p2$reductions[[args$name]])) {
       skip_step("pca", args, paste0("reduction `", args$name, "` already exists"))
     } else {
@@ -196,6 +214,7 @@
   if ("graph" %in% resolved.steps) {
     graph.reduction <- if (!is.null(graph$reduction)) graph$reduction else p2$defaults$reduction
     args <- .pagoda2_step_args(graph, list(reduction = graph.reduction, verbose = verbose.default))
+    args <- add_run_threads(args, "graph")
     if (!overwrite && !is.null(p2$graphs[[args$reduction]])) {
       skip_step("graph", args, paste0("graph `", args$reduction, "` already exists"))
     } else {
@@ -207,6 +226,7 @@
     umap.reduction <- if (!is.null(umap$reduction)) umap$reduction else p2$defaults$reduction
     umap.name <- if (!is.null(umap$name)) umap$name else p2$defaults$embedding
     args <- .pagoda2_step_args(umap, list(reduction = umap.reduction, name = umap.name, verbose = verbose.default))
+    args <- add_run_threads(args, "umap")
     if (!overwrite && !is.null(p2$embeddings[[args$reduction]]) && !is.null(p2$embeddings[[args$reduction]][[args$name]])) {
       skip_step("umap", args, paste0("embedding `", args$reduction, "/", args$name, "` already exists"))
     } else {
@@ -240,6 +260,7 @@
         append.auc = TRUE
       )
     )
+    args <- add_run_threads(args, "markers")
     marker.type <- if (!is.null(args$type)) args$type else "counts"
     if (!overwrite && !is.null(p2$diffgenes[[marker.type]]) && !is.null(p2$diffgenes[[marker.type]][[args$name]])) {
       skip_step("markers", args, paste0("marker result `", args$name, "` already exists"))
@@ -262,18 +283,23 @@
   invisible(p2)
 }
 
-.pagoda2_r6_run_variance <- function(p2, ...) {
-  p2$adjustVariance(..., .legacy.warn = FALSE)
+.pagoda2_r6_run_variance <- function(p2, n.cores = NULL, threads = NULL, ...) {
+  tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "variance")
+  p2$adjustVariance(..., n.cores = tp$native, .legacy.warn = FALSE)
 }
 
-.pagoda2_r6_run_graph <- function(p2, reduction = NULL, ...) {
+.pagoda2_r6_run_graph <- function(p2, reduction = NULL, n.cores = NULL, threads = NULL, ...) {
   if (is.null(reduction)) {
     reduction <- p2$defaults$reduction
   }
-  p2$makeKnnGraph(type = reduction, ..., .legacy.warn = FALSE)
+  tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "graph")
+  p2$makeKnnGraph(type = reduction, ..., n.cores = tp$native, .legacy.warn = FALSE)
 }
 
-.pagoda2_r6_run_leiden <- function(p2, reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, ...) {
+.pagoda2_r6_run_leiden <- function(p2, reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, n.cores = NULL, threads = NULL, ...) {
+  if (!is.null(n.cores) || !is.null(threads)) {
+    stop("runLeiden() does not currently use pagoda2 thread controls; pass backend-specific method arguments through `...` only if the backend supports them")
+  }
   if (is.null(graph)) {
     graph <- reduction
   }
@@ -316,20 +342,31 @@
   invisible(cls)
 }
 
-.pagoda2_r6_run_pca <- function(p2, ...) {
-  p2$calculatePcaReduction(..., .legacy.warn = FALSE)
+.pagoda2_r6_run_pca <- function(p2, n.cores = NULL, threads = NULL, ...) {
+  tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "pca")
+  .pagoda2_with_blas_threads(tp$blas, p2$calculatePcaReduction(..., .legacy.warn = FALSE))
 }
 
-.pagoda2_r6_run_embedding <- function(p2, reduction = NULL, embedding = NULL, name = NULL, ...) {
+.pagoda2_r6_run_embedding <- function(p2, reduction = NULL, embedding = NULL, name = NULL, n.cores = NULL, threads = NULL, ...) {
   if (is.null(reduction)) {
     reduction <- p2$defaults$reduction
   }
   if (is.null(embedding)) {
     embedding <- p2$defaults$embedding
   }
-  p2$getEmbedding(type = reduction, embeddingType = embedding, name = name, ..., .legacy.warn = FALSE)
+  args <- list(...)
+  if ("n.sgd.cores" %in% names(args)) {
+    stop("Use `threads = list(sgd = ...)` instead of `n.sgd.cores` in the pagoda2.1 embedding API")
+  }
+  method <- if (embedding %in% c("UMAP", "UMAP_graph")) "umap" else "embedding"
+  tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = method)
+  args$n.cores <- tp$native
+  if (embedding %in% c("UMAP", "UMAP_graph")) {
+    args$n.sgd.cores <- tp$sgd
+  }
+  do.call(p2$getEmbedding, c(list(type = reduction, embeddingType = embedding, name = name, .legacy.warn = FALSE), args))
 }
 
-.pagoda2_r6_run_umap <- function(p2, reduction = NULL, name = "UMAP", ...) {
-  p2$runEmbedding(reduction = reduction, embedding = "UMAP", name = name, ...)
+.pagoda2_r6_run_umap <- function(p2, reduction = NULL, name = "UMAP", n.cores = NULL, threads = NULL, ...) {
+  p2$runEmbedding(reduction = reduction, embedding = "UMAP", name = name, n.cores = n.cores, threads = threads, ...)
 }
