@@ -1,72 +1,65 @@
 ---
 name: pagoda2-scrna-v2
-description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw counts through QC, filtering, PCA, graph construction, embedding (UMAP by default), Leiden clustering, marker genes, marker plots, optional annotation, and RDS/h5ad export.
-when_to_use: Use for one raw single-cell RNA-seq dataset when the user wants pagoda2.1 analysis, sparse memory-conscious processing, common scRNA-seq I/O, or clean QC/UMAP/marker figures. Use a separate integration recipe for multi-sample integration or cross-dataset label transfer.
-avoid_when: Do not use for multi-sample integration, ATAC/multiome-specific methods, trajectory analysis, or a Seurat/scanpy-native workflow unless the user explicitly asks to convert pagoda2 outputs.
+description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw count import through QC, filtering, variance QC, PCA, UMAP, Leiden, marker genes, marker plots, optional annotation, and RDS/h5ad export.
+when_to_use: Use for one raw single-cell RNA-seq dataset when the user wants pagoda2.1 analysis, sparse memory-conscious processing, common scRNA-seq file I/O, or clean QC/UMAP/marker figures. Use a separate integration recipe for multi-sample integration or cross-dataset label transfer.
+avoid_when: Do not use for multi-sample integration, ATAC/multiome-specific analysis, trajectory analysis, or a Seurat/scanpy-native workflow unless the user explicitly asks to convert pagoda2 outputs.
 requires_tools: [run_r]
-capabilities_needed: [R, pagoda2-devel, hdf5r, ggplot2]
-keywords: [pagoda2, pagoda2.1, scrna-seq, single cell RNA-seq, QC, filtering, PCA, UMAP, Leiden, markers, dotplot, heatmap, h5ad, h5Seurat, loom, 10x, CellRanger]
-produces: [qc_gene_molecule.png, qc_composition_violin.png, pca_elbow.png, umap_leiden.png, marker_dotplot.png, marker_heatmap_native.png, cluster_markers.csv, pagoda2_processed.rds, pagoda2_processed.h5ad]
+capabilities_needed: [R, pagoda2-devel, ggplot2, hdf5r, data.table, R.utils, uwot, leidenAlg]
+keywords: [pagoda2, pagoda2.1, scRNA-seq, single cell RNA-seq, QC, filtering, variance normalization, overdispersed genes, PCA, UMAP, Leiden, markers, dotplot, heatmap, h5ad, h5Seurat, loom, 10x, CellRanger]
+produces: [qc_gene_molecule.png, qc_composition_violin.png, variance_qc.png, pca_elbow.png, umap_leiden.png, marker_dotplot.png, marker_heatmap_native.png, cluster_markers.csv, pagoda2_processed.rds, pagoda2_processed.h5ad]
 domain: genomics
-source: "Pagoda2.1 devel workflow based on doc/pagoda2.1-single-dataset.Rmd and source-verified pagoda2.1 methods."
+source: "Pagoda2.1 devel workflow based on doc/pagoda2.1-single-dataset.Rmd and source-verified pagoda2.1 R6 methods."
 ---
 
 # scRNA-seq single-dataset analysis with pagoda2.1
 
-Run one pagoda2.1 analysis: load raw integer count data, verify the object is
-the pagoda2.1 API layout, run QC, filter, calculate
-variance/PCA/graph/embedding/Leiden, detect markers, draw dotplot and native
-marker heatmap, optionally annotate clusters, then save a native RDS and an
-AnnData-compatible h5ad file. The standard workflow creates a UMAP embedding
-by default; other embeddings use the same `p2$runEmbedding()` API.
+Run one pagoda2.1 analysis from raw integer counts to QC, filtering, variance
+modeling, PCA, graph construction, default UMAP embedding, Leiden clustering,
+marker detection, marker plots, and export. The recipe is for one dataset or
+one sample. Pagoda2.1 keeps sparse raw counts as the canonical matrix and
+uses lightweight normalized matrix views, so agents should use public
+accessors instead of reaching into legacy matrix slots.
 
-Pagoda2.1 can read 10x Matrix Market triplets, 10x/CellRanger HDF5, AnnData
-h5ad, h5Seurat, and loom without requiring SeuratDisk, reticulate, scanpy, or
-loomR. It can save native RDS, export h5ad, and convert in memory to list,
-SingleCellExperiment, or Seurat when optional packages are installed.
+Pagoda2.1 can read 10x Matrix Market triplets, CellRanger/10x HDF5, AnnData
+h5ad, h5Seurat, and loom. It can save native RDS objects, export h5ad, and
+convert in memory to list, SingleCellExperiment, or Seurat when optional
+packages are installed.
 
 ## Bundled references - load on demand
 
-This recipe is self-contained for the standard workflow. Load a reference only
-when the task needs a variant or deeper parameter detail:
+This SKILL.md is self-contained for the standard workflow. Load a reference
+only when the task needs a variant, parameter detail, or troubleshooting:
 
-- `references/installation_and_io.md` - install, reader routing, supported
-  input shapes, explicit 10x triplets, h5ad/h5Seurat/loom layers.
-- `references/qc_and_filtering.md` - QC metrics, MT/ribo handling,
-  `filterData()`, analysis-gene masks, and reporting thresholds.
-- `references/workflow_and_clustering.md` - `run()` semantics, thread
-  controls, OD genes, PCA, graph diagnostics, embeddings, and Leiden
-  resolution.
-- `references/markers_and_plots.md` - marker calculation, marker selection
-  presets, dotplots, native heatmaps, and annotation from marker evidence.
+- `references/installation_and_io.md` - install, reader routing, auto-detect,
+  explicit renamed 10x triplets, h5ad/h5Seurat/loom layers, and direct
+  `readCounts()` use.
+- `references/qc_and_filtering.md` - `runQC()`, MT/ribo metrics,
+  `plotQC()`, `plotQCViolin()`, `filterData()`, and analysis-gene masks.
+- `references/workflow_and_clustering.md` - `p2$run()` step semantics,
+  variance QC, OD genes, PCA, graph, embedding, Leiden, and thread control.
+- `references/markers_and_plots.md` - `runMarkers()`, marker accessors,
+  marker selection modes, dotplots, native heatmaps, and cluster annotation.
 - `references/matrix_and_metadata_model.md` - raw counts versus normalized
-  views, orientation, metadata resolution, groupings, and factor colors.
+  views, cell/gene metadata resolution, groupings, colors, and object access.
 - `references/export_and_interop.md` - RDS, h5ad export, optional
-  conversions, strict-axis metadata, and round-trip checks.
+  conversions, metadata alignment, and round-trip checks.
 
 ## Install
 
-Install pagoda2 from GitHub `devel` before use. Re-run this block only when
-the runtime lacks pagoda2.1 or when the user asks to refresh the package.
+Install pagoda2 from GitHub `devel` before use. The full workflow also needs
+ggplot2 for plots, data.table/R.utils for gzipped 10x text files, uwot for
+UMAP, and leidenAlg for Leiden clustering.
 
 ```r
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 
-if (!requireNamespace("remotes", quietly = TRUE)) {
-  install.packages("remotes")
+for (pkg in c("remotes", "ggplot2", "hdf5r", "data.table", "R.utils",
+              "uwot", "leidenAlg")) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
 }
-if (!requireNamespace("ggplot2", quietly = TRUE)) {
-  install.packages("ggplot2")
-}
-if (!requireNamespace("hdf5r", quietly = TRUE)) {
-  install.packages("hdf5r")
-}
-if (!requireNamespace("data.table", quietly = TRUE)) {
-  install.packages("data.table")
-}
-if (!requireNamespace("R.utils", quietly = TRUE)) {
-  install.packages("R.utils")
-}
+
 needs_pagoda2 <- !requireNamespace("pagoda2", quietly = TRUE)
 if (!needs_pagoda2) {
   needs_pagoda2 <- !identical(
@@ -85,7 +78,7 @@ library(ggplot2)
 stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
 ```
 
-Do not run the pagoda2 package test suite as part of user analysis or
+Do not run the pagoda2 package test suite as part of user analysis or routine
 installation. Run package tests only when editing pagoda2 source code.
 
 ## Decisions to surface up front
@@ -94,27 +87,23 @@ Tell the user these are the analysis-defining decisions:
 
 1. **Input format and count layer** - use raw integer counts. For h5ad,
    h5Seurat, or loom, choose the count layer explicitly when needed.
-2. **QC filtering** - inspect the gene-versus-molecule QC figure before
-   interpreting clusters. Mitochondrial and ribosomal percentages are optional
-   because gene naming varies by organism and annotation.
-3. **Analysis genes and PCs** - pagoda2 keeps raw genes but uses an
-   `analysis_pass` gene mask, overdispersed genes, and 50 PCs by default.
-4. **Graph, embedding, and clustering** - the default graph uses cosine
-   distance, the default embedding is UMAP, and clustering uses Leiden. Assess
-   cluster sizes, embedding coherence, and marker quality.
-5. **Compute footprint** - by default pagoda2 uses a capped thread policy.
-   If the user asks to limit resources, use `n.cores` or `threads`. Embedding
-   distances are method-aware: UMAP, UMAP_graph, largeVis, and FR default to
-   cosine; tSNE defaults to L2 because cosine tSNE requires a dense cell-cell
-   distance matrix.
-6. **Marker interpretation** - default marker plots favor upregulated,
-   group-specific markers with AUC/specificity metrics. Do not annotate cell
-   types until marker evidence supports it.
+2. **QC filtering** - inspect gene-versus-molecule QC before interpreting
+   clusters. MT/ribo percentages are optional because gene naming varies.
+3. **Analysis gene set and PCs** - pagoda2 records an `analysis_pass` gene
+   mask, selects overdispersed genes, and computes 50 PCs by default.
+4. **Graph, embedding, and clustering** - defaults are cosine graph,
+   UMAP embedding, and Leiden clustering. Check cluster sizes, embedding
+   coherence, and marker quality.
+5. **Compute footprint** - use `n.cores` for a simple total core budget or
+   `threads = list(...)` for advanced role-specific controls.
+6. **Marker interpretation** - marker plots should guide annotation, but do
+   not assign cell types until marker evidence supports the labels.
 
 Show the user these figures as the analysis proceeds:
 
 - `qc_gene_molecule.png`
 - `qc_composition_violin.png`, if MT/ribo metrics exist
+- `variance_qc.png`
 - `pca_elbow.png`
 - `umap_leiden.png`
 - `marker_dotplot.png`
@@ -124,8 +113,8 @@ Show the user these figures as the analysis proceeds:
 
 ## Step 1 - Load and sanity-check counts
 
-Load raw counts into a `Pagoda2` object. `Pagoda2$from*()` constructors call
-`readCounts()` internally, then build the R6 object.
+Load raw counts into a pagoda2.1 object. Constructors call `readCounts()`
+internally, then build the R6 object.
 
 ### Standard 10x triplet directory
 
@@ -133,9 +122,9 @@ Use this when the input directory contains one complete 10x-style Matrix
 Market triplet.
 
 ```r
-# sample.name, sample.pattern, layer, and explicit triplet filenames are
-# readCounts() arguments. They MUST be inside reader.args = list(...).
-# n.cores and threads are Pagoda2$new() arguments, so they stay top-level.
+# sample.name, sample.pattern, layer, assay, gene.id, and explicit triplet
+# filenames are readCounts() arguments. They MUST be inside reader.args.
+# n.cores, threads, and verbose are constructor/runtime arguments.
 p2 <- Pagoda2$from10x(
   "/path/to/sample_directory",
   reader.args = list(sample.name = "GSM5746259"),
@@ -145,14 +134,15 @@ p2 <- Pagoda2$from10x(
 stopifnot(identical(p2$apiVersion, "2.1"))
 stopifnot(inherits(p2$getRawCounts(), "dgCMatrix"))
 stopifnot(all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8))
+
 cat(sprintf("Loaded %d cells x %d genes\n",
             nrow(p2$getRawCounts()), ncol(p2$getRawCounts())))
 ```
 
 ### Variant: renamed GEO/SRA triplet files - use instead of the standard block
 
-Use explicit files when web attachments have arbitrary names. Do not symlink
-or rename files just to mimic CellRanger output.
+Use explicit filenames when web attachments do not have CellRanger names. Do
+not symlink or rename files just to mimic another directory layout.
 
 ```r
 p2 <- Pagoda2$from10x(
@@ -201,9 +191,9 @@ p2 <- Pagoda2$fromLoom(
 )
 ```
 
-**Assess and report:** input format, sample ID, `p2$apiVersion`, exact files
-or layer used, cells, genes, and whether raw counts are integer-like. If
-counts are not integer-like, stop and choose the correct raw count layer.
+**Assess and report:** input format, sample ID, files or layer used, cells,
+genes, and whether raw counts are integer-like. If counts are not integer-like,
+stop and choose the correct raw count layer.
 
 For reader options and edge cases, read `references/installation_and_io.md`.
 
@@ -211,8 +201,8 @@ For reader options and edge cases, read `references/installation_and_io.md`.
 
 ## Step 2 - Run QC and save QC figures
 
-Compute cell QC metrics, show the gene/molecule decision, and save
-composition violins when MT/ribo metrics are available.
+Compute cell QC metrics, show the gene/molecule decision, and save MT/ribo
+composition violins when the metrics are available.
 
 ```r
 p2$runQC(verbose = TRUE)
@@ -232,11 +222,9 @@ ggsave("qc_gene_molecule.png", p_qc,
        width = 10, height = 4.5, units = "in", dpi = 120, bg = "white")
 ```
 
-Save composition QC only when at least one metric exists.
-
 ```r
 composition_metrics <- intersect(c("percent_ribo", "percent_mito"),
-                                 colnames(p2$getCellMeta()))
+                                 colnames(p2$cellMeta))
 if (length(composition_metrics) > 0) {
   p_comp <- p2$plotQCViolin(metrics = composition_metrics)
   ggsave("qc_composition_violin.png", p_comp,
@@ -245,23 +233,20 @@ if (length(composition_metrics) > 0) {
 ```
 
 **Assess and report:** QC pass/fail counts, fail fraction, median molecules,
-median detected genes, whether MT/ribo metrics were detected, and whether
-failed cells look like a quality tail or a coherent biological population.
+median detected genes, whether MT/ribo metrics were found, and whether failed
+cells look like a quality tail or a coherent population worth discussing.
 
-For QC parameters and MT/ribo handling, read
-`references/qc_and_filtering.md`.
+For QC parameters and MT/ribo handling, read `references/qc_and_filtering.md`.
 
 ---
 
-## Step 3 - Run the default workflow
+## Step 3 - Run the default workflow and save core diagnostics
 
-Run filtering, variance modeling, PCA, graph construction, default UMAP
-embedding, Leiden, and marker detection with pagoda2 defaults.
+Run filtering, variance modeling, PCA, graph construction, default UMAP,
+Leiden clustering, and marker detection. `p2$run()` mutates the object in
+place and stores results under canonical names.
 
 ```r
-# Step-specific arguments belong in the matching list: pca = list(...),
-# graph = list(...), embedding = list(...), leiden = list(...), markers = list(...).
-# Example: n.odgenes is a PCA-step argument, not a variance-step argument.
 p2$run(plots = "none", verbose = TRUE)
 
 groups <- p2$getGrouping()
@@ -269,67 +254,27 @@ cat(sprintf(
   "Workflow: %d cells, %d raw genes, %d analysis genes, %d OD genes, %d clusters\n",
   nrow(p2$getRawCounts()),
   ncol(p2$getRawCounts()),
-  sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
+  sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass, na.rm = TRUE),
   length(p2$getOdGenes()),
   length(levels(groups))
 ))
 
-cluster_sizes <- sort(table(groups), decreasing = TRUE)
-print(utils::head(data.frame(cluster = names(cluster_sizes),
-                             cells = as.integer(cluster_sizes)), 15))
+print(head(sort(table(groups), decreasing = TRUE), 15))
 ```
 
-### Variant: limit compute footprint - use instead of the run call above
-
-Use `n.cores` for a simple total core budget. Use `threads` only when the user
-asks for role-specific control.
+Save variance normalization QC, PCA elbow, and UMAP.
 
 ```r
-p2$run(plots = "none", verbose = TRUE, n.cores = 10)
+p_var <- p2$plotVarianceQC()
+ggsave("variance_qc.png", p_var,
+       width = 10, height = 4.8, units = "in", dpi = 120, bg = "white")
 
-p2$run(
-  plots = "none",
-  verbose = TRUE,
-  threads = list(total = 10, sgd = 1)
-)
-```
-
-### Variant: skip marker detection - use instead when markers will be computed later
-
-```r
-p2$run(skip = "markers", plots = "none", verbose = TRUE)
-
-p2$runMarkers(
-  grouping = p2$getDefaultGrouping(),
-  name = p2$getDefaultGrouping(),
-  upregulated.only = TRUE,
-  append.auc = TRUE,
-  append.specificity.metrics = TRUE,
-  verbose = TRUE
-)
-```
-
-**Assess and report:** cells retained, raw genes retained, analysis genes, OD
-genes, default grouping, number of Leiden clusters, cluster sizes, and any
-warning that QC-filtered cells were present before filtering.
-
-For workflow variants, thread controls, embedding options, and graph diagnostics, read
-`references/workflow_and_clustering.md`.
-
----
-
-## Step 4 - Inspect PCA and the default embedding
-
-Save the PCA elbow plot and the default UMAP colored by the default Leiden
-grouping.
-
-```r
-# Use p2$plotPCAElbow(); do NOT derive PCA variance manually from internals.
 p_elbow <- p2$plotPCAElbow()
 ggsave("pca_elbow.png", p_elbow,
        width = 7.5, height = 4.2, units = "in", dpi = 120, bg = "white")
 
 p_umap <- p2$plotEmbedding(
+  grouping = "leiden",
   mark.groups = TRUE,
   size = 0.35,
   alpha = 0.55,
@@ -339,60 +284,44 @@ ggsave("umap_leiden.png", p_umap,
        width = 7.4, height = 6.2, units = "in", dpi = 120, bg = "white")
 ```
 
-Overlay additional groupings or QC metrics only when they exist.
+### Variant: skip marker detection - use instead when clustering is the only immediate goal
 
 ```r
-if ("sample" %in% colnames(p2$getCellMeta())) {
-  p2$plotEmbedding(grouping = "sample")
-}
-if ("percent_mito" %in% colnames(p2$getCellMeta())) {
-  mito <- p2$resolveCellMeta("percent_mito")
-  p2$plotEmbedding(colors = stats::setNames(mito$percent_mito, rownames(mito)))
-}
+p2$run(skip = "markers", plots = "none", verbose = TRUE)
 ```
 
-**Assess and report:** PCA elbow shape, whether 50 PCs looks reasonable, UMAP
-cluster coherence, tiny outlying groups, and whether QC/sample metadata
-appears to dominate the embedding.
-
-Generate alternate embeddings through `runEmbedding()` only when the user asks
-for them or when UMAP quality is questionable. Use `runEmbedding()` for all
-embedding methods; do not call legacy method-specific wrappers in new analyses.
+### Variant: limit compute footprint - use instead when the user gives a core budget
 
 ```r
-p2$runEmbedding(method = "tSNE", name = "tSNE", perplexity = 50)
-p2$plotEmbedding(embedding = "tSNE", grouping = p2$getDefaultGrouping())
+p2$run(plots = "none", verbose = TRUE, n.cores = 10)
 ```
 
-This tSNE call uses the method-aware default `distance = "L2"`. If the user
-explicitly requests cosine tSNE, pass `distance = "cosine"` and warn that it
-materializes a dense cell-cell distance matrix.
+**Assess and report:** cells retained after filtering, analysis genes, OD
+genes, PCA elbow shape, graph/embedding method, Leiden cluster count, largest
+and smallest cluster sizes, and whether UMAP structure is coherent or dominated
+by QC/sample metadata.
 
-For PCA, graph, embedding, and Leiden details, read
+For step overrides and thread controls, read
 `references/workflow_and_clustering.md`.
 
 ---
 
-## Step 5 - Plot markers and write marker table
+## Step 4 - Save marker table, dotplot, and native heatmap
 
-Use the marker result from the default grouping. Dotplot and heatmap share
-marker-selection logic.
+Use the marker result for the default grouping, usually `leiden` after the
+standard run. Default marker settings favor upregulated markers with AUC and
+specificity metrics.
 
 ```r
 marker_name <- p2$getDefaultGrouping()
-if (is.null(marker_name)) {
-  marker_name <- "leiden"
-}
-if (!marker_name %in% p2$listMarkers()$name) {
-  p2$runMarkers(
-    grouping = marker_name,
-    name = marker_name,
-    upregulated.only = TRUE,
-    append.auc = TRUE,
-    append.specificity.metrics = TRUE,
-    verbose = TRUE
-  )
-}
+stopifnot(!is.null(marker_name))
+
+top_markers <- p2$getTopMarkers(
+  markers = marker_name,
+  n.genes.per.group = 10,
+  selection = "balanced"
+)
+utils::write.csv(top_markers, "cluster_markers.csv", row.names = FALSE)
 
 p_dot <- p2$plotMarkerDotPlot(
   markers = marker_name,
@@ -400,12 +329,13 @@ p_dot <- p2$plotMarkerDotPlot(
   selection = "balanced",
   order.groups = TRUE,
   dot.scale = 8.5
-) + ggplot2::labs(title = "Marker genes")
+) + ggplot2::labs(title = paste(marker_name, "marker genes"))
 ggsave("marker_dotplot.png", p_dot,
        width = 15.5, height = 10.5, units = "in", dpi = 120, bg = "white")
 ```
 
-Save the native marker heatmap.
+Use the native heatmap engine by default. It avoids the heavy ComplexHeatmap
+dependency and supports top metadata tracks.
 
 ```r
 png("marker_heatmap_native.png",
@@ -415,8 +345,9 @@ p2$plotMarkerHeatmap(
   engine = "native",
   n.genes.per.group = 3,
   selection = "balanced",
-  column.metadata = intersect(c("n_molecules", "n_genes"),
-                              colnames(p2$getCellMeta())),
+  column.metadata = intersect(c("n_molecules", "n_genes",
+                                "percent_mito", "percent_ribo"),
+                              colnames(p2$cellMeta)),
   row.label.font.size = 9,
   split = TRUE,
   show_heatmap_legend = TRUE
@@ -424,106 +355,73 @@ p2$plotMarkerHeatmap(
 dev.off()
 ```
 
-Write the marker table.
+**Assess and report:** marker result name, marker selection mode, strongest
+markers per cluster, whether markers are cluster-specific, whether broad/QC
+genes dominate, and whether dotplot/heatmap labels are readable.
 
-```r
-marker_result <- p2$getMarkerResult(marker_name)
-marker_tables <- marker_result$tables
-marker_df <- do.call(rbind, lapply(names(marker_tables), function(group) {
-  x <- marker_tables[[group]]
-  if (is.null(x) || !nrow(x)) return(NULL)
-  x$group <- group
-  x
-}))
-utils::write.csv(marker_df, "cluster_markers.csv", row.names = FALSE)
-
-print(utils::head(
-  p2$getTopMarkers(markers = marker_name,
-                   n.genes.per.group = 5,
-                   selection = "balanced"),
-  20
-))
-```
-
-**Assess and report:** whether each cluster has crisp upregulated markers,
-whether markers are broadly expressed in other clusters, whether QC/stress/MT
-or ribosomal genes dominate, and whether the dotplot and heatmap support the
-same interpretation.
-
-For marker selection presets and plot variants, read
+For marker ranking modes and plot variants, read
 `references/markers_and_plots.md`.
 
 ---
 
-## Step 6 - Annotate when evidence is sufficient
+## Step 5 - Optional annotation and export
 
-Store biological annotations as cell metadata groupings. Many-to-one mappings
-from clusters to cell types are normal. Build the map from marker review, not
-from literal example values.
+Annotate clusters only after marker review. Many-to-one cluster-to-cell-type
+maps are expected; unmapped clusters can keep their Leiden label.
 
 ```r
-# REPLACE this empty map with cluster-to-cell-type assignments derived from
-# Step 5 marker review. Map only clusters with confident evidence.
-cell_type_map <- c()
+# REPLACE with assignments derived from the marker review in Step 4.
+cluster_to_type <- c(
+  # "<cluster_id>" = "<cell type>"
+)
 
-if (length(cell_type_map) > 0) {
+if (length(cluster_to_type) > 0) {
   p2$annotateClusters(
-    from = "leiden",
+    from = marker_name,
     to = "cell_type",
-    map = cell_type_map,
+    map = cluster_to_type,
     unmapped = "keep",
-    setDefault = TRUE
+    setDefault = TRUE,
+    overwrite = TRUE
   )
-  p2$plotEmbedding(grouping = "cell_type", mark.groups = TRUE)
 }
 ```
 
-Do not annotate from a single marker name. If evidence is incomplete, report
-candidate labels and leave `leiden` as the default grouping.
-
-**Assess and report:** annotation evidence, unresolved clusters, many-to-one
-cluster merges, and whether external annotations disagree with Leiden
-clusters.
-
-For metadata and grouping semantics, read
-`references/matrix_and_metadata_model.md`.
-
----
-
-## Step 7 - Save and export
-
-Save the native pagoda2 object and export h5ad when downstream tools may use
-AnnData/scanpy-compatible objects.
+Save a native pagoda2 object for continuation and an h5ad file for scanpy or
+AnnData-compatible consumers.
 
 ```r
 saveRDS(p2, "pagoda2_processed.rds")
 
-p2$export("pagoda2_processed.h5ad", format = "h5ad", overwrite = TRUE)
-
-cat("Saved pagoda2_processed.rds and pagoda2_processed.h5ad\n")
+p2$export(
+  "pagoda2_processed.h5ad",
+  format = "h5ad",
+  overwrite = TRUE
+)
 ```
 
-**Assess and report:** native RDS path, h5ad path, exported cell/gene counts,
-whether raw counts and normalized expression are included, and any metadata
-columns with missing resolved values.
+**Assess and report:** whether annotation was added, current default grouping,
+RDS filename, h5ad filename, exported cells and genes, and whether h5ad export
+included raw counts and normalized expression.
 
-For export semantics and optional conversions, read
+For metadata resolution and export semantics, read
+`references/matrix_and_metadata_model.md` and
 `references/export_and_interop.md`.
+
+---
 
 ## Final response checklist
 
-Summarize:
+When the analysis is complete, summarize these items in order:
 
-- input format, sample ID, exact count layer/files, cells, genes, and count
-  integer-likeness
-- QC pass/fail counts, fail fraction, median molecules, median genes, and
-  whether MT/ribo metrics were available
-- post-filter cells, raw genes retained, analysis genes, OD genes, and default
-  grouping
-- Leiden cluster count and largest/smallest cluster sizes
-- PCA elbow and default UMAP embedding quality observations
-- marker quality, top marker examples, and whether dotplot/heatmap agree
-- annotations stored or annotation uncertainty
-- output figure/table/object filenames
-- caveats: wrong count layer risk, weak markers, QC-driven clusters,
-  doublets, batch effects, over-clustering, or under-clustering
+- Input format, sample ID, cells, genes, and integer-count check.
+- QC pass/fail counts and whether MT/ribo metrics were available.
+- Cells retained, analysis genes, OD genes, PCA/UMAP/Leiden settings, and
+  number of clusters.
+- Figures produced: QC, optional composition violin, variance QC, PCA elbow,
+  UMAP, marker dotplot, and native marker heatmap.
+- Marker result name and the top marker evidence used for any annotation.
+- Saved outputs: `cluster_markers.csv`, `pagoda2_processed.rds`, and
+  `pagoda2_processed.h5ad`.
+- Caveats: any non-integer input, missing MT/ribo metrics, suspicious QC
+  structure, weak markers, small clusters, or labels left unannotated.

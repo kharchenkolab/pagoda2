@@ -3,15 +3,17 @@
 This reference explains the pagoda2.1 object model that agents should respect
 when reading, processing, plotting, and exporting data.
 
-## R6 Access Pattern
+## R6 Object Access
 
-`Pagoda2` is an R6 class. Use `$` methods and fields:
+`Pagoda2` is an R6 class. Use `$` fields and methods:
 
 ```r
 p2 <- Pagoda2$from("/path/to/sample_directory",
                    format = "10x",
-                   reader.args = list(sample.name = "sample_01"))
+                   reader.args = list(sample.name = "sample_01"),
+                   verbose = FALSE)
 stopifnot(identical(p2$apiVersion, "2.1"))
+
 p2$runQC(verbose = TRUE)
 p2$filterData(verbose = TRUE)
 p2$run(steps = c("variance", "pca", "graph", "embedding", "leiden"),
@@ -22,13 +24,13 @@ p2$run(steps = c("variance", "pca", "graph", "embedding", "leiden"),
 Do not invent S3/S4 wrappers in a recipe unless a conversion method explicitly
 returns that class.
 
-For a class-level check before constructing or loading data:
+For class-level checks before loading data:
 
 ```r
 stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
 ```
 
-External packages should prefer `p2$apiVersion` plus public accessors such as
+External packages should prefer `p2$apiVersion` and public accessors such as
 `getRawCounts()` and `getExpressionBlock()` over probing internal fields.
 
 ## Matrix Orientation
@@ -37,14 +39,16 @@ Inside pagoda2.1, matrices are cell-by-gene:
 
 ```r
 dim(p2$getRawCounts())        # cells x genes
-dim(p2$getExpressionBlock())  # cells x genes for the requested block
+dim(p2$getExpressionBlock())  # cells x genes
 ```
 
-External readers can differ. `readCounts()` returns gene-by-cell:
+Direct reader output differs:
 
 ```r
-dim(readCounts("/path/to/sample_directory", format = "10x"))
-dim(p2$getRawCounts())
+imported <- readCounts("/path/to/sample_directory",
+                       format = "10x",
+                       return.metadata = TRUE)
+dim(imported$counts)          # genes x cells
 ```
 
 Request gene-by-cell orientation only when a downstream function needs it:
@@ -57,49 +61,47 @@ p2$getExpressionBlock(genes = c("CD3D", "LYZ"),
 
 ## Raw Counts Versus Normalized Views
 
-Pagoda2.1 avoids keeping a full duplicated normalized matrix by default.
+Pagoda2.1 avoids storing a full duplicate normalized matrix by default.
 Instead it stores:
 
 - canonical sparse raw counts in cell-by-gene orientation
 - matrix-view parameters for normalized expression
-- analysis masks and model results needed to materialize blocks quickly
+- QC and analysis masks
+- variance-model results needed to scale expression on demand
 
 Preferred accessors:
 
 ```r
 p2$getRawCounts()
+p2$getRawCounts(cells = c("AAACCCAAGAAACACT-1"),
+                genes = c("CD3D", "LYZ"))
+
 p2$getExpressionBlock(genes = c("CD3D", "LYZ"))
-p2$materializeView(cells = c("AAACCCAAGAAACACT-1"),
-                   genes = c("CD3D", "LYZ"))
+p2$getExpressionBlock(cells = names(p2$getGrouping())[p2$getGrouping() == "0"],
+                      genes = c("CD3D", "IL7R", "LYZ"))
+
 p2$viewColMeanVar()
 p2$viewColSumByFac(grouping = "leiden")
 ```
 
-Avoid materializing full normalized expression for large datasets. Subset cells
-and genes first:
-
-```r
-p2$getExpressionBlock(
-  cells = names(p2$getGrouping("leiden"))[p2$getGrouping("leiden") == "0"],
-  genes = c("CD3D", "IL7R", "LYZ")
-)
-```
+Avoid materializing full normalized expression for large datasets. Subset
+cells and genes first.
 
 Do not rely on `p2$counts`. The legacy full normalized slot was removed to
 reduce memory footprint. Use `getRawCounts()` for counts and
 `getExpressionBlock()` or matrix-view helpers for normalized expression.
 
-Use summary helpers when developing or debugging, not as required ceremony in
-user recipes:
+Debug helpers are useful during development but should not become required
+ceremony in user recipes:
 
 ```r
 p2$describeMatrices()
 p2$validateMatrices()
 ```
 
-## Flexible Metadata
+## Cell And Gene Metadata
 
-`cellMeta` and `geneMeta` can store flexible metadata. A metadata table may
+`cellMeta` and `geneMeta` can hold flexible metadata. A metadata table may
 cover only some cells/genes or include extra rows from a related object.
 
 Set a named vector:
@@ -126,13 +128,14 @@ p2$getCellMeta(c("sample", "qc_pass"))
 p2$getGeneMeta(c("analysis_pass", "feature_type"))
 ```
 
-`getCellMeta()` and `getGeneMeta()` default to unresolved flexible metadata.
-This is intentional.
+`getCellMeta()` and `getGeneMeta()` default to `resolved = FALSE`. This is
+intentional; pagoda2 users can carry flexible metadata until a method needs it
+aligned to the current matrix.
 
 ## Resolved Metadata
 
-Resolve metadata when a method, plot, or export needs one value per current
-cell or gene:
+Resolve metadata when a plot, marker calculation, export, or strict report
+needs one value per current cell or gene:
 
 ```r
 p2$resolveCellMeta(columns = c("sample", "qc_pass"))
@@ -147,16 +150,17 @@ Resolution rules:
 - unnamed vectors must match the current axis exactly
 - duplicate row names should error
 
-Use strict resolution when missing labels are invalid:
+Strict resolution:
 
 ```r
 p2$resolveCellMeta("cell_type", allow.missing = FALSE)
 ```
 
 Foreign formats such as h5ad require exact `obs` and `var` dimensions. Export
-resolves metadata before writing instead of dropping useful partial columns.
+resolves metadata onto the exported axes before writing instead of dropping
+partially mapped useful metadata.
 
-## Groupings
+## Groupings And `defaultGrouping`
 
 Groupings are discrete cell metadata columns used for clustering labels,
 plotting, marker tests, and summaries:
@@ -170,7 +174,13 @@ p2$setDefaultGrouping("cell_type")
 ```
 
 `defaultGrouping` is a pointer to a `cellMeta` column, not a separate identity
-slot. Methods use it when `grouping` is omitted.
+slot. Methods use it when `grouping` is omitted:
+
+```r
+p2$plotEmbedding()
+p2$runMarkers(name = p2$getDefaultGrouping())
+p2$plotMarkerDotPlot()
+```
 
 Direct group vectors are allowed for one-off work:
 
@@ -185,70 +195,60 @@ exports can reuse them.
 ## Cluster Annotation
 
 Use `annotateClusters()` for cluster-to-label mappings. Build the map from the
-current marker evidence rather than copying example labels:
+current marker evidence, not from a template:
 
 ```r
 # REPLACE with cluster-to-cell-type assignments derived from marker review.
-cluster_to_type <- c()
+cluster_to_type <- c(
+  # "<cluster_id>" = "<cell type>"
+)
 
 if (length(cluster_to_type) > 0) {
   p2$annotateClusters(from = "leiden",
                       to = "cell_type",
                       map = cluster_to_type,
                       unmapped = "keep",
-                      setDefault = TRUE)
+                      setDefault = TRUE,
+                      overwrite = TRUE)
 }
 ```
 
-Many-to-one mappings are expected. If every cluster must be annotated, use
-strict `unmapped = "error"` after building the mapping from marker evidence:
+Many-to-one mappings are expected. External annotations that do not correspond
+to clusters should be stored directly:
 
 ```r
-# REPLACE with a complete map derived from marker review.
-cluster_to_type <- c()
-
-if (length(cluster_to_type) > 0) {
-  p2$annotateClusters(from = "leiden",
-                      to = "cell_type",
-                      map = cluster_to_type,
-                      unmapped = "error",
-                      setDefault = TRUE)
-}
+p2$setGrouping("external_annotation", external_labels, setDefault = FALSE)
 ```
 
-External annotations that do not correspond to clusters should be stored
-directly:
+## Factor Colors And Plot Theme
+
+Pagoda2 plot methods use package-level factor color behavior by default and
+allow object/call-level ggplot theme overrides.
+
+Set an object-level ggplot theme:
 
 ```r
-p2$setGrouping("external_annotation", external_labels, setDefault = TRUE)
+p2$setPlotTheme(themePagoda2(base_size = 11))
 ```
 
-## Factor Colors
-
-Use pagoda2's factor-color resolution rather than ad hoc palettes. The same
-factor should look consistent across embeddings, dotplots, heatmaps, and
-metadata tracks:
+Override a single plot:
 
 ```r
-p2$resolveFactorColors(axis = "cell",
-                       name = "leiden",
-                       values = p2$getGrouping("leiden"))
+p2$plotPCAElbow(plot.theme = ggplot2::theme(plot.title = ggplot2::element_text(face = "bold")))
 ```
 
-By default, pagoda2 can resolve colors consistently without storing every
-generated palette in the object. Store a palette only when the user requests a
-fixed mapping:
+For factor colors, prefer the defaults unless a project requires a fixed
+palette. If a fixed palette is needed, pass named colors to the plotting
+method that accepts them, such as marker heatmap `group.colors`.
 
-```r
-# REPLACE with a user-approved mapping for existing factor levels.
-cell_type_colors <- c()
+## Metadata Report
 
-if (length(cell_type_colors) > 0) {
-  p2$setPalette("cell_type",
-                colors = cell_type_colors,
-                axis = "cell")
-}
-```
+Report:
 
-Use explicit plot-local colors only for a single figure or when the user asks
-for a custom color scheme.
+- raw count matrix dimensions and orientation used
+- whether normalized expression was materialized or queried as a subset
+- metadata columns added or resolved
+- missing values introduced by resolution
+- current `defaultGrouping`
+- stored groupings available for plots and markers
+- any annotation map applied and any unmapped clusters

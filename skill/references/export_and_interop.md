@@ -1,11 +1,11 @@
 # Export And Interoperability
 
 This reference covers native persistence, h5ad export, in-memory conversions,
-metadata alignment, and round-trip checks.
+metadata alignment, and read-back checks.
 
 ## Native Persistence
 
-Save pagoda2 objects with standard R serialization:
+Use standard R serialization for pagoda2-native continuation:
 
 ```r
 saveRDS(p2, "pagoda2_processed.rds")
@@ -13,30 +13,31 @@ p2 <- readRDS("pagoda2_processed.rds")
 stopifnot(identical(p2$apiVersion, "2.1"))
 ```
 
-Use RDS for pagoda2-native continuation because it preserves raw counts,
-matrix views, metadata, reductions, graphs, embeddings, groupings, markers,
-thread settings, history, and `apiVersion`.
+RDS preserves raw counts, matrix views, metadata, reductions, graphs,
+embeddings, groupings, markers, thread settings, history, and `apiVersion`.
 
-`p2$export("file.rds")` can also write RDS, but `saveRDS()` is the clearest
-R-native command.
+`p2$export("pagoda2_processed.rds", format = "rds")` is also implemented,
+but `saveRDS()` is the clearest R-native command.
 
 ## h5ad Export
 
 Export h5ad for AnnData/scanpy-compatible downstream work:
 
 ```r
-p2$export("pagoda2_processed.h5ad", format = "h5ad", overwrite = TRUE)
+p2$export("pagoda2_processed.h5ad",
+          format = "h5ad",
+          overwrite = TRUE)
 ```
 
-Current h5ad semantics:
+Current h5ad defaults:
 
-- `X`: normalized analysis expression by default
+- `X`: normalized analysis expression
 - `layers/counts`: raw counts
 - `obs`: resolved cell metadata on the exact exported cell axis
 - `var`: resolved gene metadata on the exact exported gene axis
 - `obsm`: reductions and embeddings where available
 
-Use raw counts in `X` only when the receiving workflow expects it:
+Use raw counts in `X` only when the receiving workflow expects that:
 
 ```r
 p2$export("pagoda2_counts_x.h5ad",
@@ -45,23 +46,34 @@ p2$export("pagoda2_counts_x.h5ad",
           overwrite = TRUE)
 ```
 
-For most scanpy-oriented interchange, keep normalized `X` plus
-`layers/counts`.
+Control whether counts, reductions, and embeddings are written:
 
-Pagoda2 writes h5ad directly; do not require scanpy, reticulate, Seurat, or
-SeuratDisk just to export this format.
+```r
+p2$export("pagoda2_no_obsm.h5ad",
+          format = "h5ad",
+          include.reductions = FALSE,
+          include.embeddings = FALSE,
+          overwrite = TRUE)
+```
+
+Do not require scanpy, reticulate, Seurat, or SeuratDisk just to export h5ad.
+Pagoda2 writes h5ad directly through hdf5r.
 
 ## Metadata Alignment On Export
 
 Pagoda2 metadata can be flexible internally. Foreign formats require exact
-axis dimensions, so export resolves metadata before writing:
+axis dimensions, so h5ad export resolves metadata before writing.
+
+Preview resolved cell metadata:
 
 ```r
-p2$resolveCellMeta(cells = rownames(p2$getRawCounts()))
-p2$resolveGeneMeta(genes = colnames(p2$getRawCounts()))
+cell_meta <- p2$resolveCellMeta(cells = rownames(p2$getRawCounts()))
+gene_meta <- p2$resolveGeneMeta(genes = colnames(p2$getRawCounts()))
+cat(sprintf("obs: %d rows; var: %d rows\n",
+            nrow(cell_meta), nrow(gene_meta)))
 ```
 
-Partial metadata maps by names and leaves unresolved cells/genes missing:
+Partial metadata maps by names and leaves unresolved cells or genes as `NA`:
 
 ```r
 p2$setCellMeta("manual_label", partial_labels)
@@ -70,17 +82,13 @@ cat(sprintf("%d cells have missing manual labels\n",
             sum(is.na(resolved$manual_label))))
 ```
 
-This is better than dropping a useful metadata column just because it does not
-cover every cell internally.
-
-AnnData does allow missing values in `obs`/`var`, but dimensions must match
-exactly. Therefore the export rule is: resolve by names first, keep missing
-values where names do not map, and fail only when the matrix axes themselves
-are inconsistent.
+AnnData allows missing values in `obs`/`var`, but dimensions must match the
+matrix axes. The export rule is: resolve by names first, preserve missing
+values where names do not map, and fail only when matrix axes are inconsistent.
 
 ## In-Memory Conversion
 
-List conversion is lightweight:
+List conversion is lightweight and has no optional dependency:
 
 ```r
 as_list <- p2$as("list")
@@ -106,45 +114,38 @@ if (requireNamespace("Seurat", quietly = TRUE)) {
 }
 ```
 
-Do not install Seurat or SingleCellExperiment just to run pagoda2. They are
-optional conversion targets.
+Do not install Seurat or SingleCellExperiment just to run pagoda2. Install
+them only when the user explicitly needs those conversion targets.
 
 ## Read-Back Checks
 
-When export code changes, test a small round trip:
+When export behavior changes or the user requests a check, read back counts
+from h5ad:
 
 ```r
 p2$export("tmp_pagoda2.h5ad", format = "h5ad", overwrite = TRUE)
+
 imported <- readCounts("tmp_pagoda2.h5ad",
                        format = "h5ad",
                        layer = "counts",
                        return.metadata = TRUE)
-dim(imported$counts)
-str(imported$cellMeta)
-str(imported$geneMeta)
+
+stopifnot(inherits(imported$counts, "dgCMatrix"))
+stopifnot(all(abs(imported$counts@x - round(imported$counts@x)) < 1e-8))
+cat(sprintf("Read back %d genes x %d cells\n",
+            nrow(imported$counts), ncol(imported$counts)))
 ```
 
-Remember orientation: `readCounts()` returns gene-by-cell; `p2$getRawCounts()`
-returns cell-by-gene.
+Remember orientation:
+
+- `readCounts()` returns gene-by-cell.
+- `p2$getRawCounts()` returns cell-by-gene.
 
 For source-code changes, compare a small fixture's raw counts against
 `layers/counts` and normalized expression against `X` within numerical
 tolerance.
 
-## Export Report
-
-Report:
-
-- native RDS filename
-- h5ad filename, if written
-- cells and genes exported
-- whether raw counts and normalized expression were both included
-- metadata/grouping columns included in `obs`
-- gene metadata columns included in `var`
-- missing metadata values introduced by resolution
-- optional conversion targets created, if any
-
-## Current Boundaries
+## Export Boundaries
 
 Current pagoda2.1 interop:
 
@@ -155,3 +156,17 @@ Current pagoda2.1 interop:
 
 Do not promise export to h5Seurat, loom, zarr, parquet, or every readable
 format unless the implementation exists.
+
+## Export Report
+
+Report:
+
+- native RDS filename
+- h5ad filename, if written
+- cells and genes exported
+- whether `X` is normalized or counts
+- whether raw counts were included in `layers/counts`
+- metadata/grouping columns included in `obs`
+- gene metadata columns included in `var`
+- missing metadata values introduced by resolution
+- optional conversion targets created, if any
