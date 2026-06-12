@@ -230,7 +230,9 @@ Rcpp::DataFrame colMeanVarView(SEXP sY,
   arma::vec nobsV(ncols,arma::fill::zeros);
 
 #ifdef _OPENMP
-#pragma omp parallel for num_threads(ncores) shared(meanV,varV,nobsV)
+// if(ncores>1): at ncores==1 no OpenMP region is entered at all, so the serial path is byte-identical
+// to single-threaded and is safe to call inside a fork (mclapply) where an OpenMP region would deadlock.
+#pragma omp parallel for num_threads(ncores) if(ncores > 1) shared(meanV,varV,nobsV)
 #endif
   for(int g=0;g<ncols;g++) {
     int p0=p[g]; int p1=p[g+1];
@@ -316,7 +318,8 @@ arma::mat colSumByFacView(SEXP sY,
                           const arma::mat& batchFactors,
                           const arma::vec& winsorCaps,
                           const arma::vec& preWinsorDepth,
-                          const arma::vec& postWinsorDepth) {
+                          const arma::vec& postWinsorDepth,
+                          int ncores=1) {
   S4 mat(sY);
   const arma::uvec i((unsigned int *)INTEGER(mat.slot("i")), LENGTH(mat.slot("i")), false, true);
   const arma::ivec dims(INTEGER(mat.slot("Dim")), LENGTH(mat.slot("Dim")), false, true);
@@ -340,6 +343,13 @@ arma::mat colSumByFacView(SEXP sY,
   if(nlevels==0) { stop("colSumByFacView(): supplied factor doesn't have any levels!"); }
   arma::mat sumM(nlevels+1,ncols,arma::fill::zeros);
 
+  // Parallel over genes (columns). sumM is column-major, so for a fixed g every write lands in column
+  // g (sumM.colptr(g)); different threads own different g -> disjoint columns, no race, no atomics, and
+  // each column is summed by one thread in index order so the result is bit-identical to serial and
+  // thread-count invariant. if(ncores>1): no OpenMP region at ncores==1 (fork/mclapply-safe default).
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(ncores) if(ncores > 1) shared(sumM)
+#endif
   for(int g=0;g<ncols;g++) {
     int p0=p[g]; int p1=p[g+1];
     if(p1-p0 <1) { continue; }

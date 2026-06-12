@@ -230,7 +230,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param name Matrix view name.
     #' @param cells Optional cells to include.
     #' @return Matrix with one row for NA values followed by factor levels present in groups.
-    viewColSumByFac = function(grouping = NULL, groups = NULL, name = "analysis", cells = NULL) .pagoda2_r6_view_col_sum_by_fac(self, grouping = grouping, groups = groups, name = name, cells = cells),
+    viewColSumByFac = function(grouping = NULL, groups = NULL, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL) .pagoda2_r6_view_col_sum_by_fac(self, grouping = grouping, groups = groups, name = name, cells = cells, n.cores = n.cores, threads = threads),
 
     #' @description Validate current matrix storage invariants.
     #'

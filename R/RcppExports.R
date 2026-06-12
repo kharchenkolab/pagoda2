@@ -37,8 +37,8 @@ colSumByFac <- function(sY, rowSel) {
     .Call('_pagoda2_colSumByFac', PACKAGE = 'pagoda2', sY, rowSel)
 }
 
-colSumByFacView <- function(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth) {
-    .Call('_pagoda2_colSumByFacView', PACKAGE = 'pagoda2', sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth)
+colSumByFacView <- function(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores = 1L) {
+    .Call('_pagoda2_colSumByFacView', PACKAGE = 'pagoda2', sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores)
 }
 
 inplaceColMult <- function(sY, mult, rowSel, ncores = 1L) {

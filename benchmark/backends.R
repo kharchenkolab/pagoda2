@@ -27,7 +27,8 @@ backend_mem <- function(art) {
       a <- .view_kernel_args(raw, recipe)
       cols <- as.integer(groups)                        # 1..nlev, NA stays NA (kernel row 0 = <NA>)
       out <- pagoda2:::colSumByFacView(raw, cols, a$depth, a$depthScale, a$normalize, a$log.scale,
-                                       a$batch, a$batchFactors, a$winsorCaps, a$preWinsorDepth, a$postWinsorDepth)
+                                       a$batch, a$batchFactors, a$winsorCaps, a$preWinsorDepth,
+                                       a$postWinsorDepth, n.cores)
       rownames(out) <- c("<NA>", levels(groups)); colnames(out) <- colnames(raw); out
     },
     materialize_block = function(recipe, genes, scale.variance = FALSE, varinfo = NULL) {

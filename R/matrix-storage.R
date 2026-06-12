@@ -276,7 +276,8 @@
   )
 }
 
-.pagoda2_r6_view_col_sum_by_fac <- function(p2, grouping = NULL, groups = NULL, name = "analysis", cells = NULL) {
+.pagoda2_r6_view_col_sum_by_fac <- function(p2, grouping = NULL, groups = NULL, name = "analysis", cells = NULL,
+                                            n.cores = NULL, threads = NULL) {
   raw <- p2$getRawCounts()
   selected <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
   if (!is.null(selected)) {
@@ -290,6 +291,8 @@
     allow.missing = TRUE
   )
   args <- .pagoda2_view_kernel_args(raw, view)
+  # native/OpenMP threads from the package policy; fork (mclapply) contexts resolve to 1 -> serial.
+  nc <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "variance")$native
   out <- colSumByFacView(
     raw,
     as.integer(cols),
@@ -301,7 +304,8 @@
     args$batchFactors,
     args$winsorCaps,
     args$preWinsorDepth,
-    args$postWinsorDepth
+    args$postWinsorDepth,
+    nc
   )
   rownames(out) <- c("<NA>", levels(cols)[seq_len(nrow(out) - 1L)])
   colnames(out) <- colnames(raw)
