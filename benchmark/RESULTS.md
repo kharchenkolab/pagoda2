@@ -21,10 +21,19 @@ three backends and measure the same four operations.
 
 | op | what it stresses | mem | bpcells | zarr |
 |----|------|------|------|------|
-| 1 variance / HVG | full streaming per-gene reduction | **0.48s** / 1319 | 3.87s / **448** | 6.82s / 900 |
-| 3 cluster pseudobulk | grouped reduction | 3.51s / 1327 | **1.94s** / 455 | 9.70s / 931 |
+| 1 variance / HVG | full streaming per-gene reduction | **0.27s** / 1319 | 3.97s / **448** | 1.60s / 570 |
+| 3 cluster pseudobulk | grouped reduction | **0.29s** / 1327 | 1.81s / 454 | 1.35s / 573 |
 | 4 gene-block (20 genes) | random small sub-block | **0.19s** / 1358 | 2.14s / 503 | 1.76s / 471 |
 | 2 PCA (materialize + irlba) | gene-subset block + iterative SVD | **12.9s** / 2179 | pathological† | 15.8s‡ / **1004** |
+
+> **Note — these op1/op3 numbers are *after* the optimization pass** (see "What the first numbers were
+> measuring", below). The original run had mem op3 **3.51s** (single-threaded), zarr op1 **6.82s** and
+> op3 **9.70s** (per-block `dgCMatrix` + a non-OpenMP R build). Four fixes — fork-safe threading of
+> pagoda2's `colSumByFacView`; OpenMP in lstar's R build (its kernels were silently serial); bulk file
+> reads; and a **fused depth-view streaming reducer** in lstar (`stream_col_stats(depth=)` /
+> `lstar_stream_col_sum_by_group`, applying the plain view + reducing in one threaded C++ pass, no
+> per-block `dgCMatrix`, no C++→R marshalling) — moved zarr from slowest to **beating BPCells on both
+> reductions**, with every fingerprint still exactly matching the in-memory golden.
 
 † BPCells PCA *off the raw h5ad* is pathological: the odgene block is 2662 *gene rows* of a **cell-major**
 on-disk matrix, so every irlba/SVD pass rescans — BPCells' native format storing the gene-major
@@ -48,31 +57,47 @@ gather** now shipped (`lstar_read_csc_cols`, an ascending chunk sweep) cut the 2
 One-time ingest: lstar zarr write 0.6s (uncompressed) / 25.9s (gzip); BPCells native write 2.1s;
 in-memory materialize from h5ad 15s.
 
-## The answer
+## What the first numbers were measuring (and why they flipped)
 
-**BPCells has real but *modest* advantages over lstar-zarr:**
-- **Memory** — the core disk-backing payoff. Both disk backends slash RAM vs in-memory (~450–930 MB vs
-  ~1.3–2.2 GB). BPCells is the leanest (~450 MB, ~3× under in-memory, ~2× under zarr): its fused
-  streaming has a smaller working set than zarr's read-block → build-dgCMatrix → kernel path.
-- **Speed** — BPCells beats zarr on every op (fused C++ streaming vs decode-materialize-then-kernel),
-  and even beats in-memory on pseudobulk. zarr is the slowest on the reductions: the per-block decode +
-  `dgCMatrix` construction + R-loop overhead is real.
-- **Disk** — BPCells bit-packing (145 MB) is only ~8% smaller than **gzip-zarr (157 MB)**. The disk win
-  is almost entirely the compression scheme, and gzip makes zarr competitive.
+The first run made BPCells look like it had a real engineering edge on the reductions. Chasing the
+mechanism (`bpcells-vs-zarr`, profiling) showed most of that edge was *our* glue and config, not BPCells:
+1. **pagoda2's `colSumByFacView` was single-threaded** (its OpenMP pragma was commented out to avoid a
+   fork/`mclapply` deadlock) → mem op3 lost to BPCells. Fix: fork-safe `if(ncores>1)` guarded pragma.
+2. **lstar's R build had no OpenMP flags** → every `stream_col_stats`/kernel ran serial regardless of
+   `n_threads` (this, not "IO-bound," was the "flat threading"). Fix: `$(SHLIB_OPENMP_*)` in Makevars.
+3. **The zarr backend built a `dgCMatrix` per block and marshalled each block C++→R** (~155M f4→f8
+   conversions / ~930 MB of R vectors per pass) — *that*, not the read or the kernel, was the cost (the
+   kernel alone is 0.4 s). Fix: a **fused depth-view reducer** in lstar (`stream_col_stats(depth=)` /
+   `lstar_stream_col_sum_by_group`) — apply the plain view + reduce in one threaded C++ pass, return only
+   the small result, no per-block matrix, no marshalling.
+4. **`read_bytes` read files byte-by-byte** — fixed to a bulk read (helps cold/large reads).
 
-**Where lstar-zarr wins / why it still matters:**
-- **Portability & "bring your own kernel."** The zarr backend uses lstar's *single* general primitive
-  (`lstar_read_block`) and drives **pagoda2's existing kernels** off-disk — zero new lstar code per op,
-  correct by construction. BPCells instead requires re-expressing the view in its transform-graph DSL.
-  This is exactly the "let consumers do optimized streaming without implementing it in lstar" goal.
-- The store is language-agnostic (Python/R/C++/JS read it), unlike BPCells' R-centric format.
+After those four, every fingerprint still matches the golden, and the reduction picture inverts.
 
-**Bottom line for pagoda2.1:** BPCells is the better *off-the-shelf* disk backend today for raw
-throughput and memory on the streaming reductions (variance/pseudobulk); lstar-zarr is the better
-*interchange + bring-your-own-kernel* substrate, gzip-competitive on disk, and — after the decode-once
-gather — **competitive on PCA (15.8s vs 12.9s) at 2× less RAM**. The remaining zarr gap is on the
-streaming reductions (op1/op3), where its read-block → build-dgCMatrix → kernel path costs more than
-BPCells' fused stream; a fused view-aware lstar reducer would close most of it.
+## The answer (after the fixes)
+
+**On the streaming reductions, lstar-zarr now *beats* BPCells** (op1 1.60 vs 3.97 s; op3 1.35 vs 1.81 s)
+at comparable RAM (~570 vs ~450 MB), and **in-memory wins outright** once pagoda2's op3 kernel is
+threaded (0.27–0.29 s). BPCells' apparent reduction advantage was the fused-streaming *pattern*, not
+something intrinsic to BPCells — once lstar gained an equivalent fused reducer, the portable zarr store
+matched and passed it.
+
+Where each still leads:
+- **Memory** — BPCells remains the leanest (~450 MB), but the gap to zarr (~570 MB) is now small; both
+  are ~2–3× under in-memory.
+- **Disk** — BPCells bit-packed **145 MB** vs gzip-zarr **157 MB** (~8%). BPCells' delta+zigzag/FOR
+  bit-packing is the one place it has a genuine, not-yet-matched structural edge (decode speed + size);
+  see `bpcells-vs-zarr` notes on lifting a BP128 codec into zarr.
+- **Gene-subset / PCA** — both falter off the "wrong" orientation; zarr's PCA is competitive (15.8 vs
+  12.9 s) after the decode-once gather; BPCells needs its native gene-major format here.
+
+**Where lstar-zarr wins structurally:** it's language-agnostic (Python/R/C++/JS read the same store),
+and the fused reducers are *general lstar primitives* a consumer drives — pagoda2 added zero per-op C++.
+
+**Bottom line for pagoda2.1:** with the fused reducers, **lstar-zarr is competitive-to-better than
+BPCells on the standard operations on a portable store** — there's no throughput reason to take on the
+BPCells dependency for these. BPCells' one durable edge is its bit-packed codec (size + decode speed),
+which is worth *lifting into zarr as a portable codec* rather than depending on the package for.
 
 ## Follow-ups (improve the zarr/lstar side to a fairer fight)
 1. ~~**Chunk-grouped gather** in `lstar_read_genes`~~ — **done** (`lstar_read_csc_cols`, decode each

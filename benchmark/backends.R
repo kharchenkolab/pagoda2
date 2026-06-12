@@ -98,28 +98,22 @@ backend_zarr <- function(art) {
   list(
     name = "zarr",
     col_mean_var = function(recipe, n.cores = 1) {
-      m <- numeric(G); v <- numeric(G); nobs <- numeric(G)
-      for (a in blocks()) {
-        b <- min(a + BLK, G)
-        blk <- lstar::lstar_read_block(store, field, a, b, cell_names = cn, gene_names = gn)
-        ar <- va(blk)
-        r <- pagoda2:::colMeanVarView(blk, NULL, ar$depth, ar$depthScale, ar$normalize, ar$log.scale,
-              ar$batch, ar$batchFactors, ar$winsorCaps, ar$preWinsorDepth, ar$postWinsorDepth, n.cores)
-        idx <- (a + 1L):b; m[idx] <- r$m; v[idx] <- r$v; nobs[idx] <- r$nobs
-      }
-      data.frame(m = m, v = v, nobs = nobs, row.names = gn)
+      # FUSED: one threaded C++ pass over the store applying the plain view (depth-normalize + log1p)
+      # while reducing -- no per-block dgCMatrix, no C++->R marshalling of the data. population=TRUE
+      # matches pagoda2's colMeanVarView variance convention (/nrows).
+      depth_vec <- as.numeric(depth[cn])          # per-cell depth in store row order
+      s <- lstar::stream_col_stats(store, field, block = BLK, n_threads = n.cores, lognorm = lg,
+                                   depth = depth_vec, depthScale = ds, population = TRUE)
+      data.frame(m = s$mean, v = s$var, nobs = s$nnz, row.names = gn)
     },
     col_sum_by_group = function(recipe, groups, n.cores = 1) {
-      cols <- as.integer(groups); out <- NULL
-      for (a in blocks()) {
-        b <- min(a + BLK, G)
-        blk <- lstar::lstar_read_block(store, field, a, b, cell_names = cn, gene_names = gn)
-        ar <- va(blk)
-        o <- pagoda2:::colSumByFacView(blk, cols, ar$depth, ar$depthScale, ar$normalize, ar$log.scale,
-              ar$batch, ar$batchFactors, ar$winsorCaps, ar$preWinsorDepth, ar$postWinsorDepth)
-        out <- if (is.null(out)) o else cbind(out, o)
-      }
-      rownames(out) <- c("<NA>", levels(groups)); colnames(out) <- gn; out
+      # FUSED pseudobulk: one threaded C++ pass, plain view applied inline, no per-block dgCMatrix.
+      depth_vec <- as.numeric(depth[cn])                       # per-cell depth in store row order
+      codes <- as.integer(groups); codes[is.na(codes)] <- 0L   # NA cells -> bucket 0 (the <NA> row)
+      ng <- nlevels(groups) + 1L
+      M <- lstar::lstar_stream_col_sum_by_group(store, field, codes, ng, lognorm = lg,
+                  depth = depth_vec, depthScale = ds, block = BLK, n_threads = n.cores)
+      rownames(M) <- c("<NA>", levels(groups)); colnames(M) <- gn; M
     },
     materialize_block = function(recipe, genes, scale.variance = FALSE, varinfo = NULL) {
       sub <- lstar::lstar_read_genes(store, field, genes, gn, cell_names = cn)   # cells x genes off disk
