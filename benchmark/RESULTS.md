@@ -24,14 +24,15 @@ three backends and measure the same four operations.
 | 1 variance / HVG | full streaming per-gene reduction | **0.48s** / 1319 | 3.87s / **448** | 6.82s / 900 |
 | 3 cluster pseudobulk | grouped reduction | 3.51s / 1327 | **1.94s** / 455 | 9.70s / 931 |
 | 4 gene-block (20 genes) | random small sub-block | **0.19s** / 1358 | 2.14s / 503 | 1.76s / 471 |
-| 2 PCA (materialize + irlba) | gene-subset block + iterative SVD | **12.9s** / 2179 | pathological† | 372.9s‡ / 1560 |
+| 2 PCA (materialize + irlba) | gene-subset block + iterative SVD | **12.9s** / 2179 | pathological† | 15.8s‡ / **1004** |
 
 † BPCells PCA *off the raw h5ad* is pathological: the odgene block is 2662 *gene rows* of a **cell-major**
 on-disk matrix, so every irlba/SVD pass rescans — BPCells' native format storing the gene-major
-orientation is what makes its `svds` fast (not exercised here). ‡ zarr op2 is slow because the naive
-`lstar_read_genes` re-decodes chunks for 2662 *scattered* odgenes; a chunk-grouped gather (decode each
-touched chunk once) brings it toward a single streaming pass (~op1 time). Both are storage-layout/
-gather issues, not fundamental — see "Follow-ups".
+orientation is what makes its `svds` fast (not exercised here). ‡ zarr op2 was **372.9s** with the
+first (naive, per-run) gather, which re-decoded chunks once per scattered odgene; the **decode-once
+gather** now shipped (`lstar_read_csc_cols`, an ascending chunk sweep) cut the 2662-odgene read from
+~370s to **2.5s**, bringing the whole PCA to **15.8s / 1004 MB** — competitive with in-memory and at
+2× less RAM. (BPCells op2 stays pathological here because it needs its native gene-major format.)
 
 ## Disk size (same 77.6M-nnz raw counts)
 
@@ -67,16 +68,19 @@ in-memory materialize from h5ad 15s.
 - The store is language-agnostic (Python/R/C++/JS read it), unlike BPCells' R-centric format.
 
 **Bottom line for pagoda2.1:** BPCells is the better *off-the-shelf* disk backend today for raw
-throughput and memory on the streaming reductions; lstar-zarr is the better *interchange + bring-your-
-own-kernel* substrate, gzip-competitive on disk, with the zarr backend's per-op slowness being
-read-then-materialize overhead + a naive scattered gather — both improvable.
+throughput and memory on the streaming reductions (variance/pseudobulk); lstar-zarr is the better
+*interchange + bring-your-own-kernel* substrate, gzip-competitive on disk, and — after the decode-once
+gather — **competitive on PCA (15.8s vs 12.9s) at 2× less RAM**. The remaining zarr gap is on the
+streaming reductions (op1/op3), where its read-block → build-dgCMatrix → kernel path costs more than
+BPCells' fused stream; a fused view-aware lstar reducer would close most of it.
 
 ## Follow-ups (improve the zarr/lstar side to a fairer fight)
-1. **Chunk-grouped gather** in `lstar_read_genes`: decode each touched chunk once instead of per gene
-   run → fixes op2's 373s (scattered odgenes) and op4 random access.
-2. **Fused view-aware reducer** in lstar (optional built-in: depth + log1p in `stream_col_stats`) to
+1. ~~**Chunk-grouped gather** in `lstar_read_genes`~~ — **done** (`lstar_read_csc_cols`, decode each
+   touched chunk once): zarr PCA 372.9s → 15.8s.
+2. ~~**R writer chunking/compression**~~ — **done** (`lstar_write(chunk_elems=, compression="gzip")`):
+   the chunked store can now be built from R, no Python writer needed.
+3. **Fused view-aware reducer** in lstar (optional built-in: depth + log1p in `stream_col_stats`) to
    avoid building an intermediate `dgCMatrix` per block on op1/op3 — closer to BPCells' fused path.
-3. **R writer chunking/compression** (see lstar task) so the chunked store can be built from R too.
 4. A BPCells **native-format** PCA row (gene-major) for a fair op2 BPCells number.
 
 ## Reproduce
