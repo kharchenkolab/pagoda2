@@ -297,6 +297,13 @@
 .pagoda2_r6_get_raw_counts <- function(p2, cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) {
   orientation <- match.arg(orientation)
   f <- p2$resolveFacet(facet)
+  if (identical(f$backend, "lstar")) { # disk-backed: block-read off the lstar store
+    raw <- .pagoda2_facet_lstar_raw(p2, f, cells = cells, genes = genes)
+    if (orientation == "gene_by_cell") {
+      return(Matrix::t(raw))
+    }
+    return(raw)
+  }
   raw <- f$rawCounts
   if (is.null(raw) && isTRUE(f$primary)) {
     raw <- p2$misc[["rawCounts"]]
@@ -389,6 +396,16 @@
 
 .pagoda2_r6_view_col_sum_by_fac <- function(p2, grouping = NULL, groups = NULL, name = "analysis", cells = NULL,
                                             n.cores = NULL, threads = NULL, facet = NULL) {
+  f <- p2$resolveFacet(facet)
+  if (identical(f$backend, "lstar")) { # fused streaming pseudobulk off disk (§8.6)
+    if (!is.null(cells)) {
+      stop("cell subsetting on a disk-backed facet is not supported yet", call. = FALSE)
+    }
+    cells.all <- names(p2$misc$facetStore[[f$name]]$depth)
+    cols <- p2$resolveGrouping(grouping = grouping, groups = groups, cells = cells.all, allow.missing = TRUE)
+    nc <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "variance")$native
+    return(.pagoda2_facet_lstar_col_sum_by_fac(f, p2$getMatrixView(name, facet = facet), cols, n.cores = nc))
+  }
   raw <- p2$getRawCounts(facet = facet)
   selected <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
   if (!is.null(selected)) {

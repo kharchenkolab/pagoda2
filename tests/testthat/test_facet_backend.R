@@ -31,3 +31,30 @@ test_that("disk-backed (lstar zarr) facet viewColMeanVar matches its in-memory t
   expect_equal(vd$m, vm$m, tolerance = 1e-8) # identical normalized math, different storage
   expect_equal(vd$v, vm$v, tolerance = 1e-8)
 })
+
+test_that("disk-backed (lstar) getExpressionBlock + viewColSumByFac match the in-memory twin", {
+  skip_if_not_installed("lstar")
+  set.seed(4)
+  ng <- 10
+  nc <- 30
+  rna <- matrix(rpois(ng * nc, 3), ng, nc, dimnames = list(paste0("g", seq_len(ng)), paste0("c", seq_len(nc))))
+  p2 <- Pagoda2$new(as(Matrix::Matrix(rna, sparse = TRUE), "dgCMatrix"), verbose = FALSE, n.cores = 1,
+    min.cells.per.gene = 0, min.transcripts.per.cell = 0, trim = 0, log.scale = TRUE)
+  np <- 6
+  a <- matrix(rpois(nc * np, 4) + 1L, nc, np, dimnames = list(paste0("c", seq_len(nc)), paste0("P", seq_len(np))))
+  am <- as(Matrix::Matrix(a, sparse = TRUE), "dgCMatrix")
+  p2$addFacet("ADTmem", am, modelType = "plain", featureType = "protein")
+  p2$addFacet("ADTdisk", am, modelType = "plain", featureType = "protein", backend = "lstar")
+
+  # block read (materialized analysis view) off disk vs in-memory
+  bm <- as.matrix(p2$getExpressionBlock(facet = "ADTmem"))
+  bd <- as.matrix(p2$getExpressionBlock(facet = "ADTdisk"))
+  expect_equal(bd, bm, tolerance = 1e-8)
+
+  # streaming grouped sums (pseudobulk) off disk vs in-memory
+  grp <- factor(rep(c("a", "b"), length.out = nc))
+  names(grp) <- paste0("c", seq_len(nc))
+  sm <- p2$viewColSumByFac(groups = grp, facet = "ADTmem")
+  sd <- p2$viewColSumByFac(groups = grp, facet = "ADTdisk")
+  expect_equal(as.matrix(sd), as.matrix(sm), tolerance = 1e-8)
+})

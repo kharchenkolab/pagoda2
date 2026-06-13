@@ -291,6 +291,46 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
   data.frame(m = as.numeric(s$mean), v = as.numeric(s$var), nobs = as.numeric(s$nnz), row.names = feats)
 }
 
+## Disk-backed (lstar) grouped column sums for a plain-model facet: one fused threaded C++ pass over the
+## store applying the plain view inline (no per-block dgCMatrix). Matches the in-memory colSumByFacView
+## output shape (rows: <NA> + factor levels; cols: features). §8.6 streaming pseudobulk.
+.pagoda2_facet_lstar_col_sum_by_fac <- function(facet, view, cols, n.cores = 1) {
+  if (!requireNamespace("lstar", quietly = TRUE)) {
+    stop("disk-backed (lstar) facet requires the lstar package", call. = FALSE)
+  }
+  if (!identical(view$model, "plain") && !identical(view$model, "raw")) {
+    stop("disk-backed (lstar) viewColSumByFac currently supports the plain/raw model only", call. = FALSE)
+  }
+  feats <- facet$parent$misc$facetStore[[facet$name]]$featureNames
+  lognorm <- identical(view$model, "plain") && isTRUE(view$log.scale)
+  depth.vec <- if (identical(view$model, "plain")) as.numeric(view$depth) else NULL
+  codes <- as.integer(cols)
+  codes[is.na(codes)] <- 0L
+  M <- lstar::lstar_stream_col_sum_by_group(facet$store, "counts", codes, nlevels(cols) + 1L,
+    lognorm = lognorm, depth = depth.vec, depthScale = view$depthScale, n_threads = n.cores)
+  rownames(M) <- c("<NA>", levels(cols))
+  colnames(M) <- feats
+  M
+}
+
+## Disk-backed (lstar) raw-count block read: a feature subset off disk (bounded), cells subset in R.
+.pagoda2_facet_lstar_raw <- function(p2, facet, cells = NULL, genes = NULL) {
+  if (!requireNamespace("lstar", quietly = TRUE)) {
+    stop("disk-backed (lstar) facet requires the lstar package", call. = FALSE)
+  }
+  st <- p2$misc$facetStore[[facet$name]]
+  feats <- st$featureNames
+  cells.all <- names(st$depth)
+  want <- if (is.null(genes)) feats else as.character(genes)
+  raw <- lstar::lstar_read_genes(facet$store, "counts", want, feats, cell_names = cells.all)
+  if (is.null(rownames(raw))) rownames(raw) <- cells.all
+  if (is.null(colnames(raw))) colnames(raw) <- want
+  if (!is.null(cells)) {
+    raw <- raw[.pagoda2_axis_selection_index(cells, rownames(raw), what = "cell(s)"), , drop = FALSE]
+  }
+  as(raw, "CsparseMatrix")
+}
+
 ## ---- resolution & keying (Phase 1, §4.5.1) ----
 
 ## Resolve a facet argument (NULL/name/Pagoda2Facet) to a Pagoda2Facet view.
