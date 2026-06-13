@@ -350,9 +350,19 @@
   .pagoda2_with_blas_threads(tp$blas, p2$calculatePcaReduction(..., .legacy.warn = FALSE))
 }
 
-## Generic reduction step: method defaults to the facet's defaultReduction (PCA for RNA, LSI for ATAC).
-## The algorithm is always a `method=`, mirroring runGraph/runClustering/runEmbedding (no runPCA/runLSI API).
-.pagoda2_r6_run_reduction <- function(p2, facet = NULL, method = NULL, name = NULL, ...) {
+## Map a facet to its lstar feature-axis name (for joint-product provenance, §5/§7).
+.pagoda2_facet_feature_axis <- function(facet) {
+  switch(facet$featureType, gene = "genes", protein = "proteins", peak = "peaks", facet$featureType)
+}
+
+## Generic reduction step. Single facet (facet=): method defaults to the facet's defaultReduction
+## (PCA for RNA, LSI for ATAC). Multiple facets (facets=): a JOINT reduction (the §0.4.4 "one joint
+## method"), a named cell-space product over the shared cells with the contributing feature axes in
+## provenance. The algorithm is always a `method=`, mirroring runGraph/runClustering/runEmbedding.
+.pagoda2_r6_run_reduction <- function(p2, facet = NULL, facets = NULL, method = NULL, name = NULL, ...) {
+  if (!is.null(facets) && length(facets) >= 2L) {
+    return(.pagoda2_r6_run_joint_reduction(p2, facets = facets, method = method, name = name, ...))
+  }
   f <- p2$resolveFacet(facet)
   if (is.null(method)) {
     method <- f$defaultReduction
@@ -368,6 +378,56 @@
     stop("LSI reduction is not implemented yet (Phase 2b); use method='pca' for now", call. = FALSE)
   }
   stop("unknown reduction method '", method, "'", call. = FALSE)
+}
+
+## Joint reduction (concat-PCA): the shipped "one joint method" (§0.4.4). Scales each facet's reduction
+## scores to unit average norm, concatenates, and re-PCAs to a shared latent over the common cells. Stored
+## as a name-keyed named product `reductions[[name]]` with provenance {facets, input_axes, method} — the
+## §5 shape (scores top-level; per-facet loadings stay in the facet). WNN/MOFA can replace `method` later.
+.pagoda2_r6_run_joint_reduction <- function(p2, facets, method = NULL, name = "WNN", reductions = NULL,
+                                            nPcs = 50, fastpath = TRUE, maxit = 100, verbose = TRUE, ...) {
+  if (is.null(name)) {
+    name <- "WNN"
+  }
+  if (is.null(method)) {
+    method <- "concat"
+  }
+  .pagoda2_validate_joint_name(p2, name) # no per-facet-method-name shadow (§4.5.1)
+  parts <- list()
+  input.axes <- character()
+  for (i in seq_along(facets)) {
+    f <- p2$resolveFacet(facets[[i]])
+    red <- if (!is.null(reductions)) reductions[[i]] else f$defaultReduction
+    key <- .pagoda2_reduction_key(p2, f$name, red)
+    sc <- p2$reductions[[key]]
+    if (is.null(sc)) {
+      stop("reduction `", key, "` not found; run runReduction(facet='", f$name, "') before the joint step", call. = FALSE)
+    }
+    parts[[i]] <- sc
+    input.axes <- c(input.axes, .pagoda2_facet_feature_axis(f))
+  }
+  common <- Reduce(intersect, lapply(parts, rownames))
+  if (length(common) < 2L) {
+    stop("joint reduction: facets share fewer than 2 cells", call. = FALSE)
+  }
+  scaled <- lapply(parts, function(m) {
+    m <- m[common, , drop = FALSE]
+    s <- sqrt(sum(m^2) / nrow(m))
+    if (s > 0) m / s else m
+  })
+  X <- do.call(cbind, scaled)
+  nPcs <- min(nPcs, ncol(X) - 1L, length(common) - 1L)
+  cm <- Matrix::colMeans(X)
+  pc <- irlba::irlba(X, nv = nPcs, nu = 0, center = cm, fastpath = fastpath, maxit = maxit)
+  scores <- as.matrix(sweep(X %*% pc$v, 2, as.numeric(cm %*% pc$v)))
+  rownames(scores) <- common
+  colnames(scores) <- paste0(name, seq_len(ncol(scores)))
+  attr(scores, "facets") <- as.character(facets)
+  attr(scores, "input_axes") <- input.axes # lstar provenance: feature-axis names (S5)
+  attr(scores, "method") <- paste0("joint:", method)
+  p2$reductions[[name]] <- scores
+  if (verbose) message("joint reduction `", name, "` over facets ", paste(facets, collapse = "+"), " -> ", ncol(scores), " dims")
+  invisible(scores)
 }
 
 .pagoda2_embedding_default_distance <- function(method) {

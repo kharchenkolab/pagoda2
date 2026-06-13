@@ -2237,7 +2237,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param name Stored reduction name. NULL = the method name.
     #' @param ... Passed to the underlying reduction.
     #' @return Invisibly the reduction scores.
-    runReduction = function(facet = NULL, method = NULL, name = NULL, ...) .pagoda2_r6_run_reduction(self, facet = facet, method = method, name = name, ...),
+    runReduction = function(facet = NULL, facets = NULL, method = NULL, name = NULL, ...) .pagoda2_r6_run_reduction(self, facet = facet, facets = facets, method = method, name = name, ...),
 
     #' @description Plot PCA variance explained.
     #'
