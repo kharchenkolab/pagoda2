@@ -331,6 +331,49 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
   as(raw, "CsparseMatrix")
 }
 
+## ---- canonical cell axis (union) + membership masks (§4.3) ----
+
+## Cell-id labels for a facet (works for in-memory and disk-backed facets).
+.pagoda2_facet_cell_names <- function(p2, fn) {
+  if (identical(fn, p2$defaultFacet)) {
+    rc <- p2$rawCounts
+    if (is.null(rc)) rc <- p2$misc[["rawCounts"]]
+    return(if (is.null(rc)) character(0) else rownames(rc))
+  }
+  st <- p2$misc$facetStore[[fn]]
+  if (is.null(st)) {
+    return(character(0))
+  }
+  if (!is.null(st$rawCounts)) rownames(st$rawCounts) else names(st$depth)
+}
+
+## The canonical cells axis = union of facet cell sets (default facet first), MuData-style. For a single
+## facet (or fully-aligned facets) this equals the default facet's cells, so single-RNA is unchanged.
+.pagoda2_r6_cells <- function(p2) {
+  u <- .pagoda2_facet_cell_names(p2, p2$defaultFacet)
+  for (fn in names(p2$misc$facetStore)) {
+    if (identical(fn, p2$defaultFacet)) next
+    u <- c(u, setdiff(.pagoda2_facet_cell_names(p2, fn), u))
+  }
+  u
+}
+
+## Per-facet membership mask over the canonical axis (TRUE where the facet measures that cell).
+.pagoda2_r6_facet_membership <- function(p2, facet = NULL) {
+  f <- p2$resolveFacet(facet)
+  p2$cells %in% .pagoda2_facet_cell_names(p2, f$name)
+}
+
+## Complete-cases selector: canonical cells measured in ALL named facets (intersection), in canonical order.
+.pagoda2_r6_require_facets <- function(p2, facets) {
+  if (length(facets) < 1L) {
+    stop("requireFacets() needs at least one facet", call. = FALSE)
+  }
+  covered <- Reduce(intersect, lapply(facets, function(fn) .pagoda2_facet_cell_names(p2, fn)))
+  cells <- p2$cells
+  cells[cells %in% covered]
+}
+
 ## ---- resolution & keying (Phase 1, §4.5.1) ----
 
 ## Resolve a facet argument (NULL/name/Pagoda2Facet) to a Pagoda2Facet view.

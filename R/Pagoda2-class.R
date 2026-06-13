@@ -538,6 +538,16 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @return A Pagoda2Facet view.
     resolveFacet = function(facet = NULL) .pagoda2_r6_resolve_facet(self, facet = facet),
 
+    #' @description Per-facet membership mask over the canonical cells axis.
+    #' @param facet Facet name (NULL = default facet).
+    #' @return Logical vector over p2$cells (TRUE where the facet measures that cell).
+    getFacetMembership = function(facet = NULL) .pagoda2_r6_facet_membership(self, facet = facet),
+
+    #' @description Complete-cases selector: canonical cells measured in ALL named facets.
+    #' @param facets Character vector of facet names.
+    #' @return Cell ids (in canonical order) covered by every named facet.
+    requireFacets = function(facets) .pagoda2_r6_require_facets(self, facets = facets),
+
     #' @description Add a non-default facet (e.g. ADT, ATAC) from a cells-by-features count matrix.
     #' @param name Facet name.
     #' @param countMatrix Cells-by-features count matrix (dgCMatrix or matrix).
@@ -3106,13 +3116,13 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       .pagoda2_r6_facets(self)
     },
 
-    #' @field cells Canonical (ordered) cell-id axis. Currently the default facet's cells; union across facets in a later phase.
+    #' @field cells Canonical (ordered) cell-id axis: the union of facet cell sets (default facet first).
+    #'   For a single facet or fully-aligned facets this equals the default facet's cells.
     cells = function(value) {
       if (!missing(value)) {
         stop("`cells` is read-only.", call. = FALSE)
       }
-      rc <- self$rawCounts
-      if (is.null(rc)) character(0) else rownames(rc)
+      .pagoda2_r6_cells(self)
     }
   )
 )
