@@ -1449,11 +1449,110 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
   stop("Unsupported conversion format `", format, "`")
 }
 
+## ---- lstar (zarr) interchange: pagoda2 <-> lstar store, multi-facet, round-trip ----
+
+## feature-axis name <-> facet spec (model/featureType/reduction)
+.pagoda2_axis_feature_spec <- function(fax) {
+  switch(fax,
+    genes = list(featureType = "gene", model = "plain", reduction = "PCA"),
+    proteins = list(featureType = "protein", model = "clr", reduction = "PCA"),
+    peaks = list(featureType = "peak", model = "tfidf", reduction = "LSI"),
+    list(featureType = "feature", model = "plain", reduction = "PCA")
+  )
+}
+
+## Export the multi-facet object to an lstar zarr store: a `cells` axis + one feature axis per facet
+## (genes/proteins/peaks) + one raw `counts` measure per facet. Aligned facets span (cells, <fax>);
+## a facet covering a cell subset gets its own `cells.<facet>` axis (faithful partial coverage).
+.pagoda2_export_lstar <- function(p2, path, overwrite = FALSE, ...) {
+  if (!requireNamespace("lstar", quietly = TRUE)) {
+    stop("Export format `lstar` requires the lstar package", call. = FALSE)
+  }
+  if (file.exists(path) && !isTRUE(overwrite)) {
+    stop("`", path, "` exists; pass overwrite = TRUE", call. = FALSE)
+  }
+  cells <- p2$cells
+  axes <- list(cells = list(labels = as.character(cells), origin = "observed", role = "observation"))
+  fields <- list()
+  for (fn in p2$listFacets()) {
+    f <- p2$getFacet(fn)
+    raw <- as(f$rawCounts, "CsparseMatrix") # cells x features
+    fax <- switch(f$featureType, gene = "genes", protein = "proteins", peak = "peaks", paste0(fn, "_features"))
+    axes[[fax]] <- list(labels = as.character(colnames(raw)), origin = "observed", role = "feature")
+    fname <- if (identical(fn, p2$defaultFacet)) "counts" else paste0(fn, ".counts")
+    prov <- list(facet = fn, feature_axis = fax, model = f$modelType, defaultReduction = f$defaultReduction)
+    if (identical(rownames(raw), as.character(cells))) {
+      fields[[fname]] <- list(values = raw, role = "measure", span = c("cells", fax), state = "raw", encoding = "csc", provenance = prov)
+    } else {
+      cax <- paste0("cells.", fn) # facet covers a cell subset -> its own observed cell axis
+      axes[[cax]] <- list(labels = as.character(rownames(raw)), origin = "observed", role = "observation")
+      fields[[fname]] <- list(values = raw, role = "measure", span = c(cax, fax), state = "raw", encoding = "csc", provenance = prov)
+    }
+  }
+  ds <- list(kind = "sample", axes = axes, fields = fields)
+  class(ds) <- "lstar_dataset"
+  lstar::lstar_write(ds, path)
+  invisible(path)
+}
+
+## Build a multi-facet Pagoda2 from an lstar store (the lstar-mediated import path, §0.4.2). The RNA facet
+## (counts over the `genes` axis) constructs the object; other raw count measures become facets.
+pagoda2FromLstar <- function(path, facets = NULL, verbose = TRUE,
+                             min.transcripts.per.cell = 0, min.cells.per.gene = 0, ...) {
+  if (!requireNamespace("lstar", quietly = TRUE)) {
+    stop("pagoda2FromLstar() requires the lstar package", call. = FALSE)
+  }
+  ds <- lstar::lstar_read(path)
+  is.raw.measure <- function(fl) {
+    identical(fl$role, "measure") && identical(fl$state, "raw") && length(fl$span) == 2L && fl$span[[1]] %in% names(ds$axes)
+  }
+  measures <- Filter(is.raw.measure, ds$fields)
+  if (length(measures) == 0L) {
+    stop("no raw count measures found in lstar store `", path, "`", call. = FALSE)
+  }
+  facet.of <- function(fl) {
+    if (!is.null(fl$provenance$facet)) {
+      return(fl$provenance$facet)
+    }
+    ## provenance may be dropped by older lstar builds -> map the feature axis to the facet name
+    switch(fl$span[[2]], genes = "RNA", proteins = "ADT", peaks = "ATAC", fl$span[[2]])
+  }
+  fnames <- vapply(measures, facet.of, character(1))
+  names(measures) <- fnames
+  if (!is.null(facets)) {
+    measures <- measures[intersect(facets, names(measures))]
+  }
+  ## lstar keeps element labels in axes, not on the matrix -> restore dimnames from the span axes.
+  named.values <- function(fl) {
+    m <- as(fl$values, "CsparseMatrix")
+    rownames(m) <- as.character(ds$axes[[fl$span[[1]]]]$labels)
+    colnames(m) <- as.character(ds$axes[[fl$span[[2]]]]$labels)
+    m
+  }
+  primary <- if ("RNA" %in% names(measures)) "RNA" else names(measures)[[1]]
+  pm <- measures[[primary]]
+  spec0 <- .pagoda2_axis_feature_spec(pm$span[[2]])
+  rna <- named.values(pm) # cells x genes
+  p2 <- Pagoda2$new(Matrix::t(rna), modelType = if (!is.null(pm$provenance$model)) pm$provenance$model else spec0$model,
+    verbose = verbose, min.transcripts.per.cell = min.transcripts.per.cell, min.cells.per.gene = min.cells.per.gene)
+  for (fn in setdiff(names(measures), primary)) {
+    fl <- measures[[fn]]
+    spec <- .pagoda2_axis_feature_spec(fl$span[[2]])
+    cxf <- named.values(fl) # cells x features
+    p2$addFacet(fn, cxf,
+      modelType = if (!is.null(fl$provenance$model)) fl$provenance$model else spec$model,
+      featureType = spec$featureType,
+      defaultReduction = if (!is.null(fl$provenance$defaultReduction)) fl$provenance$defaultReduction else spec$reduction)
+  }
+  if (verbose) message("imported from lstar: ", paste(p2$listFacets(), collapse = ", "))
+  p2
+}
+
 #' @keywords internal
 pagoda2Export <- function(p2, path, format = NULL, overwrite = FALSE, ...) {
   if (is.null(format)) {
     ext <- tolower(tools::file_ext(path))
-    format <- if (identical(ext, "rds")) "rds" else ext
+    format <- if (grepl("lstar", basename(path), fixed = TRUE)) "lstar" else if (identical(ext, "rds")) "rds" else ext
   }
   format <- tolower(format)
   if (format == "rds") {
@@ -1462,6 +1561,9 @@ pagoda2Export <- function(p2, path, format = NULL, overwrite = FALSE, ...) {
   }
   if (format %in% c("h5ad", "anndata")) {
     return(.pagoda2_export_h5ad(p2, path = path, overwrite = overwrite, ...))
+  }
+  if (format %in% c("lstar", "zarr")) {
+    return(.pagoda2_export_lstar(p2, path = path, overwrite = overwrite, ...))
   }
   stop("Export format `", format, "` is not implemented yet")
 }
