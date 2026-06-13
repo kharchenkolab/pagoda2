@@ -249,6 +249,22 @@ provenance) and an in-memory round-trip; lstar export skip-gated.
 strategic out-of-core capability) → D → E. A and B are the "optimized, well-tested threading" the container
 role demands; C is the disk-backed capability.
 
+> **Status (2026-06-13) — all green & committed:**
+> - **A** ✓ facet= threaded through variance/reduction/markers; facet/name-keyed registries.
+> - **B** ✓ CLR/TF-IDF C++ kernel branches (`viewKernelValue` model+clrDivisor+idf); thread-invariant,
+>   reference-gated.
+> - **C** ✓ (slice) disk-backed BPCells facet backend; `viewColMeanVar` out-of-core parity with in-memory
+>   (`test_facet_backend.R`). *Deferred:* disk path for the other accessors; the lstar-zarr fused reducer
+>   (needs lstar).
+> - **D** ✓ native 10x multimodal H5 import (`feature_type`→RNA/ADT/ATAC facets; real CITE-seq verified:
+>   33538 genes + 17 proteins/713 cells) + **LSI** (tfidf→SVD→drop-first) + the **joint reduction**
+>   (concat-PCA = the §0.4.4 shipped joint method). *Deferred:* full WNN algorithm; formal union-axis
+>   membership masks + `requireFacets`/`filterData` (import does basic covered-cells subsetting);
+>   lstar-mediated import (skip-gated, lstar R absent — native path covers the real need).
+> - **E** ✓ (core) joint reduction stored as a name-keyed named product with `input_axes` feature-axis
+>   provenance (lstar S5 shape). *Deferred:* MOFA loadings split; lstar export round-trip (skip-gated).
+> - **Cosmetic deferred:** `apiVersion` bump, remove `runPCA`, `runClustering` rename.
+
 ## CI vs local
 
 - **CI (GitHub):** the existing suite + synthetic CITE-seq fixture; all view-model invariance gates (they
