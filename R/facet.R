@@ -48,7 +48,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
           featureType = p$misc[["featureType"]],
           defaultReduction = p$defaults$reduction,
           backend = "memory",
-          bp = NULL,
+          store = NULL,
           stop("unknown facet field: ", field, call. = FALSE)
         )
       } else {
@@ -136,10 +136,10 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
     featureType = function(value) if (missing(value)) private$get_field("featureType") else private$set_field("featureType", value),
     #' @field defaultReduction Reduction implied by this facet (RNA->"PCA", ATAC->"LSI").
     defaultReduction = function(value) if (missing(value)) private$get_field("defaultReduction") else private$set_field("defaultReduction", value),
-    #' @field backend Storage backend ("memory" or "bpcells"); disk-backed facets stream out-of-core.
+    #' @field backend Storage backend ("memory" or "lstar"); disk-backed facets stream out-of-core.
     backend = function(value) if (missing(value)) private$get_field("backend") else private$set_field("backend", value),
-    #' @field bp Disk-backed handle (BPCells IterableMatrix, features x cells) for backend == "bpcells".
-    bp = function(value) if (missing(value)) private$get_field("bp") else private$set_field("bp", value)
+    #' @field store Disk-backed store path (lstar `.lstar.zarr`) for backend == "lstar".
+    store = function(value) if (missing(value)) private$get_field("store") else private$set_field("store", value)
   )
 )
 
@@ -177,7 +177,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
 
 .pagoda2_r6_add_facet <- function(p2, name, countMatrix, modelType = "plain",
                                   featureType = "gene", defaultReduction = "PCA", depth = NULL,
-                                  backend = c("memory", "bpcells"), backend.dir = NULL) {
+                                  backend = c("memory", "lstar"), backend.dir = NULL) {
   backend <- match.arg(backend)
   if (identical(name, p2$defaultFacet)) {
     stop("facet '", name, "' is the default facet, backed by top-level storage; use setCountMatrix() instead", call. = FALSE)
@@ -215,17 +215,34 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
     preWinsorDepth = NULL,
     postWinsorDepth = NULL
   )
-  bp <- NULL
+  store.path <- NULL
+  feature.axis <- switch(featureType, gene = "genes", protein = "proteins", peak = "peaks", "features")
   stored.raw <- countMatrix
-  if (identical(backend, "bpcells")) {
-    if (!requireNamespace("BPCells", quietly = TRUE)) {
-      stop("backend='bpcells' requires the BPCells package", call. = FALSE)
+  if (identical(backend, "lstar")) {
+    if (!requireNamespace("lstar", quietly = TRUE)) {
+      stop("backend='lstar' requires the lstar package", call. = FALSE)
     }
     if (is.null(backend.dir)) {
-      backend.dir <- tempfile(paste0("pagoda2_facet_", name, "_"))
+      backend.dir <- tempfile(paste0("pagoda2_facet_", name, "_"), fileext = ".lstar.zarr")
     }
-    ## BPCells convention: features x cells on disk. Stream from disk; keep no in-memory rawCounts.
-    bp <- BPCells::write_matrix_dir(methods::as(Matrix::t(countMatrix), "IterableMatrix"), dir = backend.dir, compress = FALSE)
+    ## Write the facet counts to an lstar zarr store as a `counts` measure over (cells, <feature-axis>);
+    ## the store streams off disk via lstar::stream_col_stats. Keep no in-memory rawCounts.
+    ds <- list(
+      kind = "sample",
+      axes = list(
+        cells = list(labels = rownames(countMatrix), origin = "observed", role = "observation"),
+        feat = list(labels = colnames(countMatrix), origin = "observed", role = "feature")
+      ),
+      fields = list(
+        counts = list(values = as(countMatrix, "CsparseMatrix"), role = "measure",
+                      span = c("cells", "feat"), state = "raw", encoding = "csc")
+      )
+    )
+    names(ds$axes)[2] <- feature.axis
+    ds$fields$counts$span <- c("cells", feature.axis)
+    class(ds) <- "lstar_dataset"
+    lstar::lstar_write(ds, backend.dir)
+    store.path <- backend.dir
     stored.raw <- NULL
   }
   store <- p2$misc$facetStore
@@ -245,34 +262,33 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
     odgenes = NULL,
     loadings = list(),
     backend = backend,
-    bp = bp
+    store = store.path,
+    featureAxis = feature.axis,
+    featureNames = colnames(countMatrix)
   )
   p2$misc$facetStore <- store
   invisible(p2)
 }
 
-## Disk-backed (BPCells) per-feature mean/variance for a plain-model facet: stream the depth-normalized
-## + log1p view off disk and reduce, with BPCells' sample variance rescaled to the population convention
-## (/n) used by the C++ kernel, so a disk-backed facet matches its in-memory twin. (§8.6 out-of-core seam.)
-.pagoda2_facet_bpcells_col_mean_var <- function(facet, view) {
-  M <- facet$bp # features x cells
+## Disk-backed (lstar zarr) per-feature mean/variance for a plain-model facet: lstar::stream_col_stats
+## runs one fused threaded C++ pass over the store applying the plain (depth-normalize + log1p) view while
+## reducing -- no per-block dgCMatrix, bounded memory. population=TRUE matches the C++ kernel's /n
+## variance, so a disk-backed facet matches its in-memory twin (§8.6 out-of-core seam).
+.pagoda2_facet_lstar_col_mean_var <- function(facet, view, n.cores = 1) {
+  if (!requireNamespace("lstar", quietly = TRUE)) {
+    stop("disk-backed (lstar) facet requires the lstar package", call. = FALSE)
+  }
   if (!identical(view$model, "plain") && !identical(view$model, "raw")) {
-    stop("disk-backed (bpcells) viewColMeanVar currently supports the plain/raw model only", call. = FALSE)
+    stop("disk-backed (lstar) viewColMeanVar currently supports the plain/raw model only", call. = FALSE)
   }
-  cells <- colnames(M)
-  Y <- M
-  if (identical(view$model, "plain")) {
-    sf <- as.numeric(view$depthScale) / as.numeric(view$depth[cells])
-    Y <- BPCells::multiply_cols(Y, sf)
-  }
-  if (isTRUE(view$log.scale)) {
-    Y <- log1p(Y)
-  }
-  n <- ncol(M)
-  m <- as.numeric(BPCells::rowMeans(Y))
-  v <- as.numeric(BPCells::rowVars(Y)) * (n - 1) / n # BPCells uses /(n-1); kernel uses /n
-  v[v < 0] <- 0
-  data.frame(m = m, v = v, nobs = NA_real_, row.names = rownames(M))
+  store <- facet$store
+  feats <- facet$parent$misc$facetStore[[facet$name]]$featureNames
+  lognorm <- identical(view$model, "plain") && isTRUE(view$log.scale)
+  ## view$depth is named/ordered by the facet's cell axis == the store's cell (row) order at write time.
+  depth.vec <- if (identical(view$model, "plain")) as.numeric(view$depth) else NULL
+  s <- lstar::stream_col_stats(store, "counts", n_threads = n.cores, lognorm = lognorm,
+    depth = depth.vec, depthScale = view$depthScale, population = TRUE)
+  data.frame(m = as.numeric(s$mean), v = as.numeric(s$var), nobs = as.numeric(s$nnz), row.names = feats)
 }
 
 ## ---- resolution & keying (Phase 1, §4.5.1) ----
