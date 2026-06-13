@@ -206,7 +206,7 @@
     if (!overwrite && !is.null(p2$reductions[[args$name]])) {
       skip_step("pca", args, paste0("reduction `", args$name, "` already exists"))
     } else {
-      run_step("pca", args, do.call(p2$runPCA, args))
+      run_step("pca", args, do.call(p2$runReduction, args))
     }
   }
 
@@ -350,6 +350,23 @@
   .pagoda2_with_blas_threads(tp$blas, p2$calculatePcaReduction(..., .legacy.warn = FALSE))
 }
 
+## Generic clustering step: method "leiden" (default) or a community-detection function. The algorithm is
+## a `method=`, mirroring runReduction/runGraph/runEmbedding (no runLeiden/runWNN primary verb).
+.pagoda2_r6_run_clustering <- function(p2, method = "leiden", name = NULL, ...) {
+  fn <- NULL
+  if (is.function(method)) {
+    fn <- method
+    if (is.null(name)) name <- "clustering"
+  } else {
+    if (!identical(tolower(method), "leiden")) {
+      stop("runClustering: `method` must be \"leiden\" or a community-detection function; got '", method, "'", call. = FALSE)
+    }
+    fn <- NULL # .pagoda2_r6_run_leiden defaults to leidenAlg::leiden.community
+    if (is.null(name)) name <- "leiden"
+  }
+  .pagoda2_r6_run_leiden(p2, name = name, method = fn, ...)
+}
+
 ## Map a facet to its lstar feature-axis name (for joint-product provenance, §5/§7).
 .pagoda2_facet_feature_axis <- function(facet) {
   switch(facet$featureType, gene = "genes", protein = "proteins", peak = "peaks", facet$featureType)
@@ -372,7 +389,7 @@
     name <- toupper(m)
   }
   if (identical(m, "pca")) {
-    return(p2$runPCA(facet = facet, name = name, ...))
+    return(.pagoda2_r6_run_pca(p2, facet = facet, name = name, ...))
   }
   if (identical(m, "lsi")) {
     return(.pagoda2_r6_run_lsi(p2, facet = facet, name = name, ...))

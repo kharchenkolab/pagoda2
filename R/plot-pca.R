@@ -9,7 +9,7 @@
   }
   info <- if (!is.null(p2$history$pca)) p2$history$pca[[reduction]] else NULL
   if (is.null(info) || is.null(info$variance)) {
-    stop("PCA variance information is not available for reduction `", reduction, "`. Re-run p2$runPCA(name = \"", reduction, "\").")
+    stop("PCA variance information is not available for reduction `", reduction, "`. Re-run p2$runReduction(name = \"", reduction, "\").")
   }
   df <- info$variance
   if (!is.null(max.components)) {

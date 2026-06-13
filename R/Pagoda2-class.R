@@ -20,7 +20,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
   lock_objects = FALSE,
   public = list(
     #' @field apiVersion Public API version implemented by this object layout.
-    apiVersion = "2.1",
+    apiVersion = "2.2",
 
     #' @field rawCounts Raw count matrix on the current filtered axis, cell-by-gene.
     rawCounts = NULL,
@@ -1120,6 +1120,14 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @return Invisibly returns the clustering community object.
     runLeiden = function(reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, n.cores = NULL, threads = NULL, ...) .pagoda2_r6_run_leiden(self, reduction = reduction, graph = graph, name = name, setDefault = setDefault, overwrite = overwrite, method = method, n.cores = n.cores, threads = threads, ...),
 
+    #' @description Generic graph clustering step. The algorithm is a `method=` (default "leiden"); the
+    #'   primary API mirrors runReduction/runGraph/runEmbedding (no runLeiden/runWNN/runPCA primary verbs).
+    #' @param method "leiden" (default) or a community-detection function.
+    #' @param reduction,graph,name,setDefault,overwrite,n.cores,threads See runLeiden().
+    #' @param ... Passed through to the clustering backend.
+    #' @return Invisibly the clustering result.
+    runClustering = function(method = "leiden", reduction = NULL, graph = NULL, name = NULL, setDefault = TRUE, overwrite = FALSE, n.cores = NULL, threads = NULL, ...) .pagoda2_r6_run_clustering(self, method = method, reduction = reduction, graph = graph, name = name, setDefault = setDefault, overwrite = overwrite, n.cores = n.cores, threads = threads, ...),
+
     #' @description Deprecated function. Use makeGeneKnnGraph() instead.
     #'
     #' @keywords internal
@@ -2103,7 +2111,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
                                      odgenes = NULL, center = TRUE, cells = NULL, fastpath = TRUE, maxit = 100, verbose = TRUE, var.scale = (type == "counts"),
                                      facet = NULL, .legacy.warn = TRUE, ...) {
       if (.legacy.warn) {
-        .pagoda2_deprecated_call("calculatePcaReduction()", "p2$runPCA(...)")
+        .pagoda2_deprecated_call("calculatePcaReduction()", "p2$runReduction(...)")
       }
       f <- self$resolveFacet(facet)
 
@@ -2223,12 +2231,6 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
       invisible(pcas)
     },
-
-    #' @description Calculate PCA using the pagoda2.1 API name.
-    #'
-    #' @param ... Arguments passed to calculatePcaReduction().
-    #' @return Invisible PCA result.
-    runPCA = function(...) .pagoda2_r6_run_pca(self, ...),
 
     #' @description Run a dimensionality reduction on a facet (generic; method defaults to the facet's
     #'   defaultReduction: RNA->PCA, ATAC->LSI). There is no runPCA/runLSI as primary API.

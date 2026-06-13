@@ -29,6 +29,7 @@
     viewColMeanVar = "variance",
     variance = "variance",
     runPCA = "pca",
+    runReduction = "pca",
     calculatePcaReduction = "pca",
     pca = "pca",
     runGraph = "graph",

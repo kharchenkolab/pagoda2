@@ -25,7 +25,16 @@ test_that("Pagoda2 objects expose the pagoda2.1 API version", {
     trim = 0
   )
 
-  expect_identical(p2$apiVersion, "2.1")
-  expect_identical(Pagoda2$new(p2)$apiVersion, "2.1")
-  expect_identical(unserialize(serialize(p2, NULL))$apiVersion, "2.1")
+  expect_identical(p2$apiVersion, "2.2")
+  expect_identical(Pagoda2$new(p2)$apiVersion, "2.2")
+  expect_identical(unserialize(serialize(p2, NULL))$apiVersion, "2.2")
+})
+
+test_that("generic step verbs are present; runPCA is removed (the algorithm is always a method=)", {
+  p2 <- Pagoda2$new(make_api_version_matrix(), verbose = FALSE, n.cores = 1,
+    min.cells.per.gene = 0, min.transcripts.per.cell = 0, trim = 0)
+  expect_true(is.function(p2$runReduction))
+  expect_true(is.function(p2$runClustering))
+  expect_true(is.function(p2$findMarkers))
+  expect_null(p2$runPCA) # removed: PCA is runReduction's default method on RNA
 })
