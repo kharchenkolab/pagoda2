@@ -291,12 +291,124 @@
   p2$adjustVariance(..., n.cores = tp$native, .legacy.warn = FALSE)
 }
 
-.pagoda2_r6_run_graph <- function(p2, reduction = NULL, n.cores = NULL, threads = NULL, ...) {
+.pagoda2_r6_run_graph <- function(p2, reduction = NULL, method = NULL, facets = NULL, n.cores = NULL, threads = NULL, ...) {
+  ## Multi-facet integration: runGraph(method="wnn", facets=) builds the WNN joint reduction + weighted
+  ## graph. Single-facet: a kNN graph on the (facet's) reduction. The algorithm is a `method=`.
+  if (!is.null(method) && identical(tolower(method), "wnn")) {
+    if (is.null(facets)) {
+      facets <- p2$listFacets()
+    }
+    return(.pagoda2_r6_run_wnn(p2, facets = facets, n.cores = n.cores, threads = threads, ...))
+  }
   if (is.null(reduction)) {
     reduction <- p2$defaults$reduction
   }
   tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "graph")
   p2$makeKnnGraph(type = reduction, ..., n.cores = tp$native, .legacy.warn = FALSE)
+}
+
+## kNN of rows of X (cells x dims) in Euclidean space; returns neighbor index/distance matrices (excl self).
+## Uses FNN when available (fast), else a base distance fallback. The container's scale path is N2R; this
+## stays correctness-first for the WNN weight computation.
+.pagoda2_knn_from_reduction <- function(X, k) {
+  n <- nrow(X)
+  k <- min(k, n - 1L)
+  if (requireNamespace("FNN", quietly = TRUE)) {
+    kn <- FNN::get.knn(as.matrix(X), k = k)
+    return(list(idx = kn$nn.index, dist = kn$nn.dist))
+  }
+  D <- as.matrix(stats::dist(X))
+  idx <- matrix(0L, n, k)
+  dst <- matrix(0, n, k)
+  for (i in seq_len(n)) {
+    o <- order(D[i, ])[-1][seq_len(k)]
+    idx[i, ] <- o
+    dst[i, ] <- D[i, o]
+  }
+  list(idx = idx, dist = dst)
+}
+
+## WNN-style integration (weighted nearest neighbors, after Hao 2021): per-cell modality weights from how
+## informative each modality's local neighborhood is for that cell (within-modality predicted state vs the
+## modality's global mean), so a modality that is locally unstructured for a cell (e.g. a noise modality)
+## is down-weighted there. Produces per-cell weights, a per-cell-weighted joint reduction, and a kNN graph
+## on it. The §0.4.4 "one joint method" upgraded from plain concat-PCA to this per-cell-weighted scheme.
+.pagoda2_r6_run_wnn <- function(p2, facets, reductions = NULL, k = 20, name = "WNN",
+                                n.cores = NULL, threads = NULL, verbose = TRUE, ...) {
+  if (length(facets) < 2L) {
+    stop("WNN needs >= 2 facets", call. = FALSE)
+  }
+  .pagoda2_validate_joint_name(p2, name)
+  red <- list()
+  input.axes <- character()
+  for (i in seq_along(facets)) {
+    f <- p2$resolveFacet(facets[[i]])
+    rname <- if (!is.null(reductions)) reductions[[i]] else f$defaultReduction
+    key <- .pagoda2_reduction_key(p2, f$name, rname)
+    sc <- p2$reductions[[key]]
+    if (is.null(sc)) {
+      stop("reduction `", key, "` not found; run runReduction(facet='", f$name, "') before WNN", call. = FALSE)
+    }
+    red[[as.character(facets[[i]])]] <- sc
+    input.axes <- c(input.axes, .pagoda2_facet_feature_axis(f))
+  }
+  common <- Reduce(intersect, lapply(red, rownames))
+  if (length(common) < 3L) {
+    stop("WNN: facets share fewer than 3 cells", call. = FALSE)
+  }
+  red <- lapply(red, function(m) as.matrix(m[common, , drop = FALSE]))
+  nmod <- length(red)
+  ncell <- length(common)
+  k <- min(k, ncell - 1L)
+  knn <- lapply(red, function(X) .pagoda2_knn_from_reduction(X, k))
+  ## Per-cell, per-modality informativeness: how much closer the cell sits to its within-modality kNN
+  ## (predicted state) than to the modality's global mean. ~1 where the modality is locally unstructured
+  ## for the cell (e.g. a noise modality, predicted no better than random) and large where the modality's
+  ## local neighborhood is informative. This is what makes WNN down-weight an uninformative modality.
+  ratio <- matrix(0, ncell, nmod)
+  for (m in seq_len(nmod)) {
+    X <- red[[m]]
+    nn <- knn[[m]]
+    g <- colMeans(X)
+    for (i in seq_len(ncell)) {
+      pred.in <- colMeans(X[nn$idx[i, ], , drop = FALSE]) # within-modality predicted state
+      dist.in <- sqrt(sum((X[i, ] - pred.in)^2))
+      dist.global <- sqrt(sum((X[i, ] - g)^2))
+      ratio[i, m] <- dist.global / max(dist.in, 1e-9)
+    }
+  }
+  W <- exp(ratio)
+  W <- W / rowSums(W) # per-cell modality weights (softmax over modalities), sum to 1
+  colnames(W) <- names(red)
+  # store per-cell modality weights as shared cell measures, aligned to the canonical axis
+  for (m in seq_len(nmod)) {
+    v <- stats::setNames(rep(NA_real_, length(p2$cells)), p2$cells)
+    v[common] <- W[, m]
+    p2$cellMeta[[paste0("wnn_weight_", names(red)[m])]] <- v[rownames(p2$cellMeta)]
+  }
+  # weighted-concat joint reduction (each facet scaled to unit average norm, then per-cell weighted)
+  scaled <- lapply(red, function(mm) {
+    s <- sqrt(sum(mm^2) / nrow(mm))
+    if (s > 0) mm / s else mm
+  })
+  Xj <- do.call(cbind, lapply(seq_len(nmod), function(m) scaled[[m]] * W[, m]))
+  rownames(Xj) <- common
+  colnames(Xj) <- paste0(name, seq_len(ncol(Xj)))
+  attr(Xj, "facets") <- as.character(facets)
+  attr(Xj, "input_axes") <- input.axes
+  attr(Xj, "method") <- "wnn"
+  p2$reductions[[name]] <- Xj
+  # weighted joint graph: kNN on the WNN joint reduction
+  tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "graph")
+  ok <- tryCatch({
+    p2$makeKnnGraph(type = name, n.cores = tp$native, .legacy.warn = FALSE)
+    TRUE
+  }, error = function(e) FALSE)
+  if (verbose) {
+    message("WNN over ", paste(facets, collapse = "+"), ": per-cell weights + reductions[['", name, "']]",
+      if (ok) " + graph" else " (graph skipped)")
+  }
+  invisible(W)
 }
 
 .pagoda2_r6_run_leiden <- function(p2, reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, n.cores = NULL, threads = NULL, ...) {

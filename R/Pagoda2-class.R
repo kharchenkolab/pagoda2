@@ -1055,7 +1055,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param reduction Reduction or matrix namespace to use.
     #' @param ... Arguments passed to makeKnnGraph().
     #' @return Invisibly returns the graph.
-    runGraph = function(reduction = NULL, ...) .pagoda2_r6_run_graph(self, reduction = reduction, ...),
+    runGraph = function(reduction = NULL, method = NULL, facets = NULL, ...) .pagoda2_r6_run_graph(self, reduction = reduction, method = method, facets = facets, ...),
 
     #' @description Calculate clusters based on the kNN graph
     #'
