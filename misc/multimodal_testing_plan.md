@@ -264,6 +264,21 @@ role demands; C is the disk-backed capability.
 > - **E** ✓ (core) joint reduction stored as a name-keyed named product with `input_axes` feature-axis
 >   provenance (lstar S5 shape). *Deferred:* MOFA loadings split; lstar export round-trip (skip-gated).
 > - **Cosmetic deferred:** `apiVersion` bump, remove `runPCA`, `runClustering` rename.
+>
+> **Deferred list now cleared (2026-06-13, all green) — except MOFA (won't support):**
+> - **Cosmetic** ✓ `apiVersion`→2.2; `runClustering(method=)` generic; public `runPCA` removed (routes via
+>   `runReduction`); `test_api_version.R` updated.
+> - **lstar import/export round-trip** ✓ `p2$export(format="lstar")` + `pagoda2FromLstar()`;
+>   pagoda2→lstar.zarr→pagoda2 multi-facet **fixed point** (`test_facet_lstar.R`; lstar loaded from its
+>   `.Rlib`). Disk backend switched **BPCells→lstar zarr** (`stream_col_stats`), per directive.
+> - **Disk path for other accessors** ✓ `getExpressionBlock` (`lstar_read_genes`) + `viewColSumByFac`
+>   (`lstar_stream_col_sum_by_group`), parity with in-memory (`test_facet_backend.R`).
+> - **Union-axis membership masks** ✓ union `cells` + `getFacetMembership` + `requireFacets`
+>   (`test_facet_membership.R`).
+> - **Full WNN** ✓ `runGraph(method="wnn")` → per-cell modality weights (down-weights the uninformative
+>   modality) + weighted joint reduction + graph (`test_facet_wnn.R`). *Caveat:* per-facet reduction dims
+>   should be comparable for unbiased weights; Seurat-faithful cross-prediction calibration is a refinement.
+> - **MOFA loadings split:** **not supported** (per directive).
 
 ## CI vs local
 
