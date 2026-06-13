@@ -279,6 +279,75 @@
 }
 
 #' @keywords internal
+## Map a 10x feature_type to a facet (name, view model, feature kind, default reduction).
+.pagoda2_10x_feature_facet <- function(feature.type) {
+  switch(feature.type,
+    "Gene Expression" = list(name = "RNA", model = "plain", featureType = "gene", reduction = "PCA"),
+    "Antibody Capture" = list(name = "ADT", model = "clr", featureType = "protein", reduction = "PCA"),
+    "Peaks" = list(name = "ATAC", model = "tfidf", featureType = "peak", reduction = "LSI"),
+    "Chromatin Accessibility" = list(name = "ATAC", model = "tfidf", featureType = "peak", reduction = "LSI"),
+    list(name = gsub("[^A-Za-z0-9]+", "_", feature.type), model = "plain", featureType = "feature", reduction = "PCA")
+  )
+}
+
+## Read a 10x CellRanger HDF5 (CITE-seq / multiome) and build a multi-facet Pagoda2: the primary feature
+## type (default "Gene Expression" -> RNA) constructs the object; other feature types (Antibody Capture
+## -> ADT/CLR, Peaks -> ATAC/TF-IDF) become facets over the same (RNA-retained) cell axis.
+.pagoda2_from_10x_h5_multimodal <- function(path, gene.id = c("symbol", "id"), genome = NULL,
+                                            primary = "Gene Expression", make.unique.genes = TRUE,
+                                            min.transcripts.per.cell = 0, min.cells.per.gene = 0,
+                                            verbose = TRUE, backend = "memory") {
+  gene.id <- match.arg(gene.id)
+  h5 <- .pagoda2_h5_open(path, mode = "r")
+  on.exit(h5$close_all())
+  group.name <- if ("matrix" %in% names(h5)) "matrix" else stop("Not a CellRanger HDF5 matrix: ", path)
+  group <- h5[[group.name]]
+  counts <- .pagoda2_read_h5_sparse_csc(group) # features x cells
+  cell.names <- as.character(group[["barcodes"]][])
+  features <- group[["features"]]
+  if (!"feature_type" %in% names(features)) {
+    stop("HDF5 file has no feature_type; not a multimodal 10x matrix: ", path)
+  }
+  ftype <- as.character(features[["feature_type"]][])
+  gene.meta <- data.frame(
+    gene_id = if ("id" %in% names(features)) as.character(features[["id"]][]) else as.character(seq_len(nrow(counts))),
+    gene_symbol = if ("name" %in% names(features)) as.character(features[["name"]][]) else as.character(seq_len(nrow(counts))),
+    feature_type = ftype, stringsAsFactors = FALSE
+  )
+  gene.names <- .pagoda2_select_gene_names(gene.meta, fallback = gene.meta$gene_symbol, gene.id = gene.id)
+  rownames(counts) <- gene.names
+  colnames(counts) <- cell.names
+
+  types <- unique(ftype)
+  if (!primary %in% types) {
+    stop("primary feature type `", primary, "` not present; have: ", paste(types, collapse = ", "))
+  }
+  # primary (RNA) -> construct the object (genes x cells)
+  prim <- .pagoda2_10x_feature_facet(primary)
+  rna <- counts[ftype == primary, , drop = FALSE]
+  if (isTRUE(make.unique.genes)) rownames(rna) <- make.unique(rownames(rna))
+  p2 <- Pagoda2$new(rna, modelType = prim$model, verbose = verbose,
+    min.transcripts.per.cell = min.transcripts.per.cell, min.cells.per.gene = min.cells.per.gene)
+  canonical <- p2$cells
+  # other feature types -> facets over the canonical cell axis
+  for (ft in setdiff(types, primary)) {
+    spec <- .pagoda2_10x_feature_facet(ft)
+    sub <- counts[ftype == ft, , drop = FALSE] # features x cells
+    cxf <- Matrix::t(sub)[canonical, , drop = FALSE] # cells x features, aligned to canonical
+    colnames(cxf) <- if (isTRUE(make.unique.genes)) make.unique(rownames(sub)) else rownames(sub)
+    # facet covers cells with >0 counts (partial overlap of the canonical axis; the rest are "not measured")
+    covered <- Matrix::rowSums(cxf) > 0
+    if (any(!covered)) {
+      if (verbose) message("facet ", spec$name, ": covers ", sum(covered), "/", length(covered), " cells (rest not measured)")
+      cxf <- cxf[covered, , drop = FALSE]
+    }
+    p2$addFacet(spec$name, as(cxf, "CsparseMatrix"), modelType = spec$model,
+      featureType = spec$featureType, defaultReduction = spec$reduction, backend = backend)
+  }
+  if (verbose) message("built multi-facet object: ", paste(p2$listFacets(), collapse = ", "))
+  p2
+}
+
 .pagoda2_read_h5_sparse_csc <- function(group) {
   data <- as.numeric(group[["data"]][])
   indices <- as.integer(group[["indices"]][] + 1L)

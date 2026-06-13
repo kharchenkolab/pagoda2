@@ -33,7 +33,18 @@ implemented yet — this is the validation plan the implementation is built agai
 | **CITE-seq 10x** `5k_pbmc_protein_v3.h5` | `lstar/testdata/citeseq_10x/` | Phase 2a 10x-H5 import | local |
 | **Multiome** `pbmc_multiome_3k.h5mu` (RNA+ATAC) | `lstar/testdata/mudata_examples/` | Phase 2b partial-overlap / TF-IDF / LSI | local |
 | **Multiome 10x** `pbmc_granulocyte_sorted_3k.h5` | `lstar/testdata/multiome_10x/` | Phase 2b multiome barcode translation | local |
+| **CITE-seq 10x** `{5k_pbmc,malt_10k,pbmc_1k}_protein_v3.h5` | `lstar/testdata/citeseq_10x/` | Phase 2a/D native 10x-H5 multimodal import (RNA+ADT in one H5) | local |
+| **Multiome 10x** `{human_brain_3k,pbmc_granulocyte_sorted_3k}.h5` | `lstar/testdata/multiome_10x/` | Phase 2b/D native 10x-H5 multiome import (RNA+Peaks in one H5) | local |
 | **synthetic mini CITE-seq** (~200 cells, RNA+ADT) | committed fixture (mirror lstar `synth.citeseq_*`) | CI for all ADT phases | **CI** |
+
+> **Corpus note (2026-06-13):** the on-disk `lstar/testdata/` corpus is **much richer than `CORPUS.md`
+> documents** — beyond the CITE-seq/multiome above it carries ~16 spatial h5ad (Visium/MERFISH/seqFISH/
+> slide-seq/IMC), 3 CRISPR-perturbation h5ad, and 5 RNA-velocity h5ad. Two consequences for testing:
+> (a) **native multimodal import is testable here without lstar** — the 10x CITE-seq/multiome H5s each
+> hold multiple feature types (`Gene Expression` + `Antibody Capture`/`Peaks`) that pagoda2's `hdf5r`
+> 10x reader can split by feature type into RNA + ADT/ATAC facets, so workstream D's import path is not
+> merely skip-gated on lstar; (b) the spatial/perturbation/velocity sets are real fixtures for future
+> facet/measure types (spatial coordinate axes, perturbation labels, velocity layers).
 
 **Export recipe (real fixtures → zarr), run once into a gitignored `tests/data/lstar/`:**
 
