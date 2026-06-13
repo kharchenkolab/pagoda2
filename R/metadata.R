@@ -164,10 +164,11 @@
   stop("`", what, "` must be NULL, a logical vector, character names, or integer indices")
 }
 
-.pagoda2_axis_names <- function(p2, axis = c("cell", "gene")) {
+.pagoda2_axis_names <- function(p2, axis = c("cell", "gene"), facet = NULL) {
   axis <- match.arg(axis)
-  matrix <- p2$rawCounts
-  if (is.null(matrix)) {
+  f <- p2$resolveFacet(facet)
+  matrix <- f$rawCounts
+  if (is.null(matrix) && isTRUE(f$primary)) {
     matrix <- p2$misc[["rawCounts"]]
   }
   if (is.null(matrix)) {

@@ -691,15 +691,16 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     adjustVariance = function(gam.k = 5, alpha = 5e-2, plot = FALSE, use.raw.variance = FALSE,
                               use.unadjusted.pvals = FALSE, do.par = TRUE, max.adjusted.variance = 1e3, min.adjusted.variance = 1e-3,
                               cells = NULL, genes = NULL, use.analysis.genes = TRUE, verbose = TRUE, min.gene.cells = 0, persist = is.null(cells), n.cores = self$n.cores,
-                              .legacy.warn = TRUE) {
+                              facet = NULL, .legacy.warn = TRUE) {
       if (.legacy.warn) {
         .pagoda2_deprecated_call("adjustVariance()", "p2$runVariance(...)")
       }
+      f <- self$resolveFacet(facet)
       # persist <- is.null(cells) # persist results only if variance normalization is performed for all cells (not a subset)
-      all.cells <- .pagoda2_axis_names(self, "cell")
-      all.genes <- .pagoda2_axis_names(self, "gene")
+      all.cells <- .pagoda2_axis_names(self, "cell", facet = facet)
+      all.genes <- .pagoda2_axis_names(self, "gene", facet = facet)
       if (is.null(genes) && isTRUE(use.analysis.genes)) {
-        genes <- .pagoda2_analysis_genes(self)
+        genes <- .pagoda2_analysis_genes(self, facet = facet)
       }
       gene.index <- NULL
       if (!is.null(genes)) {
@@ -726,10 +727,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       }
 
       if (verbose) message("calculating variance fit ...")
-      df <- if (!is.null(self$rawCounts) &&
-        !is.null(self$matrixViews$analysis) &&
-        self$matrixViews$analysis$model %in% c("plain", "raw")) {
-        self$viewColMeanVar(name = "analysis", cells = cells, n.cores = n.cores)
+      df <- if (!is.null(f$rawCounts) && !is.null(f$matrixViews$analysis)) {
+        self$viewColMeanVar(name = "analysis", cells = cells, n.cores = n.cores, facet = facet)
       } else {
         stop("Variance calculation requires a supported matrix view")
       }
@@ -765,7 +764,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
           ods <- ods[1:1e3]
         }
         if (persist) {
-          self$misc[["odgenes"]] <- rownames(df)[ods]
+          f$odgenes <- rownames(df)[ods]
         }
         variance.history$n.odgenes <- length(ods)
       } else {
@@ -810,7 +809,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         }
 
         if (persist) {
-          self$misc[["odgenes"]] <- rownames(df)[ods]
+          f$odgenes <- rownames(df)[ods]
         }
         variance.history$n.odgenes <- length(ods)
         if (verbose) message(length(ods), " overdispersed genes ... ", length(ods))
@@ -821,8 +820,12 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
       if (persist) {
         if (verbose) message("persisting ... ")
-        self$misc[["varinfo"]] <- df
-        self$history$variance <- variance.history
+        f$varinfo <- df
+        if (isTRUE(f$primary)) {
+          self$history$variance <- variance.history
+        } else {
+          self$history[[paste0("variance.", f$name)]] <- variance.history
+        }
       }
 
       # rescale mat variance
@@ -2090,10 +2093,11 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
     calculatePcaReduction = function(nPcs = 50, type = "counts", name = "PCA", use.odgenes = TRUE, n.odgenes = 3000,
                                      odgenes = NULL, center = TRUE, cells = NULL, fastpath = TRUE, maxit = 100, verbose = TRUE, var.scale = (type == "counts"),
-                                     .legacy.warn = TRUE, ...) {
+                                     facet = NULL, .legacy.warn = TRUE, ...) {
       if (.legacy.warn) {
         .pagoda2_deprecated_call("calculatePcaReduction()", "p2$runPCA(...)")
       }
+      f <- self$resolveFacet(facet)
 
       if (type != "counts") {
         if (!type %in% names(self$reductions)) {
@@ -2102,21 +2106,21 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         x <- self$reductions[[type]]
       }
       if ((use.odgenes || !is.null(n.odgenes)) && is.null(odgenes)) {
-        if (is.null(self$misc[["odgenes"]])) {
-          stop("Please run adjustVariance() first")
+        if (is.null(f$odgenes)) {
+          stop("Please run runVariance() first for facet `", f$name, "`")
         }
-        odgenes <- self$misc[["odgenes"]]
+        odgenes <- f$odgenes
         if (!is.null(n.odgenes)) {
           if (n.odgenes > length(odgenes)) {
-            # warning("number of specified odgenes is higher than the number of the statistically significant sites, will take top ",n.odgenes,' sites')
-            odgenes <- rownames(self$misc[["varinfo"]])[(order(self$misc[["varinfo"]]$lp, decreasing = FALSE)[1:min(nrow(self$misc[["varinfo"]]), n.odgenes)])]
+            vi <- f$varinfo
+            odgenes <- rownames(vi)[(order(vi$lp, decreasing = FALSE)[1:min(nrow(vi), n.odgenes)])]
           } else {
             odgenes <- odgenes[1:n.odgenes]
           }
         }
       }
       if (type == "counts") {
-        x <- self$getExpressionBlock(genes = odgenes)
+        x <- self$getExpressionBlock(genes = odgenes, facet = facet)
       } else if (!is.null(odgenes)) {
         x <- x[, odgenes]
       }
@@ -2127,7 +2131,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       }
       # apply scaling if using raw counts
       if (var.scale) {
-        x <- .pagoda2_apply_variance_scaling(x, self$misc[["varinfo"]])
+        x <- .pagoda2_apply_variance_scaling(x, f$varinfo)
       }
       if (verbose) message(".")
 
@@ -2159,7 +2163,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       } else {
         pcas <- as.matrix(x %*% pcs$v)
       }
-      self$misc$PCA <- pcs
+      if (isTRUE(f$primary)) {
+        self$misc$PCA <- pcs
+      }
+      f$loadings[[name]] <- pcs
       if (verbose) message(".")
       # pcas <- scde::winsorize.matrix(pcas,0.05)
       # # control for sequencing depth
@@ -2176,7 +2183,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       # pcas <- pcas[,-1]
       # pcas <- scde::winsorize.matrix(pcas,0.1)
       if (verbose) message(" done\n")
-      self$reductions[[name]] <- pcas
+      red.key <- .pagoda2_reduction_key(self, f$name, name)
+      self$reductions[[red.key]] <- pcas
       percent.variance <- if (is.finite(total.variance) && total.variance > 0) {
         100 * pcs$d^2 / total.variance
       } else {
@@ -2191,8 +2199,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       if (is.null(self$history$pca)) {
         self$history$pca <- list()
       }
-      self$history$pca[[name]] <- list(
-        reduction = name,
+      self$history$pca[[red.key]] <- list(
+        reduction = red.key,
         total_variance = total.variance,
         n.cells = if (is.null(cells)) nrow(x) else length(cells),
         n.genes = ncol(x),
@@ -2213,6 +2221,15 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param ... Arguments passed to calculatePcaReduction().
     #' @return Invisible PCA result.
     runPCA = function(...) .pagoda2_r6_run_pca(self, ...),
+
+    #' @description Run a dimensionality reduction on a facet (generic; method defaults to the facet's
+    #'   defaultReduction: RNA->PCA, ATAC->LSI). There is no runPCA/runLSI as primary API.
+    #' @param facet Facet name (NULL = default facet).
+    #' @param method Reduction method ("pca"; "lsi" reserved for ATAC). NULL = facet's defaultReduction.
+    #' @param name Stored reduction name. NULL = the method name.
+    #' @param ... Passed to the underlying reduction.
+    #' @return Invisibly the reduction scores.
+    runReduction = function(facet = NULL, method = NULL, name = NULL, ...) .pagoda2_r6_run_reduction(self, facet = facet, method = method, name = name, ...),
 
     #' @description Plot PCA variance explained.
     #'

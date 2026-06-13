@@ -1,17 +1,34 @@
 ## Filtering implementation for Pagoda2
 
 
-.pagoda2_analysis_genes <- function(p2, allow.empty = FALSE) {
-  genes <- .pagoda2_axis_names(p2, "gene")
-  if (is.null(p2$geneMeta) || !"analysis_pass" %in% colnames(p2$geneMeta)) {
+.pagoda2_analysis_genes <- function(p2, allow.empty = FALSE, facet = NULL) {
+  f <- p2$resolveFacet(facet)
+  if (isTRUE(f$primary)) {
+    genes <- .pagoda2_axis_names(p2, "gene")
+    if (is.null(p2$geneMeta) || !"analysis_pass" %in% colnames(p2$geneMeta)) {
+      return(genes)
+    }
+    meta <- p2$resolveGeneMeta("analysis_pass")
+    pass <- as.logical(meta$analysis_pass)
+    pass[is.na(pass)] <- FALSE
+    selected <- rownames(meta)[pass]
+    if (length(selected) == 0L && !isTRUE(allow.empty)) {
+      stop("No genes pass the current analysis gene mask")
+    }
+    return(selected)
+  }
+  ## non-default facet: analysis mask (if any) lives in the facet's featureMeta
+  genes <- .pagoda2_axis_names(p2, "gene", facet = facet)
+  fm <- f$featureMeta
+  if (is.null(fm) || !"analysis_pass" %in% colnames(fm)) {
     return(genes)
   }
-  meta <- p2$resolveGeneMeta("analysis_pass")
-  pass <- as.logical(meta$analysis_pass)
-  pass[is.na(pass)] <- FALSE
-  selected <- rownames(meta)[pass]
+  present <- intersect(genes, rownames(fm))
+  pv <- as.logical(fm[present, "analysis_pass"])
+  pv[is.na(pv)] <- FALSE
+  selected <- present[pv]
   if (length(selected) == 0L && !isTRUE(allow.empty)) {
-    stop("No genes pass the current analysis gene mask")
+    stop("No features pass the analysis mask for facet `", f$name, "`")
   }
   selected
 }

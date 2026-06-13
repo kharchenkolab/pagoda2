@@ -350,6 +350,26 @@
   .pagoda2_with_blas_threads(tp$blas, p2$calculatePcaReduction(..., .legacy.warn = FALSE))
 }
 
+## Generic reduction step: method defaults to the facet's defaultReduction (PCA for RNA, LSI for ATAC).
+## The algorithm is always a `method=`, mirroring runGraph/runClustering/runEmbedding (no runPCA/runLSI API).
+.pagoda2_r6_run_reduction <- function(p2, facet = NULL, method = NULL, name = NULL, ...) {
+  f <- p2$resolveFacet(facet)
+  if (is.null(method)) {
+    method <- f$defaultReduction
+  }
+  m <- tolower(method)
+  if (is.null(name)) {
+    name <- toupper(m)
+  }
+  if (identical(m, "pca")) {
+    return(p2$runPCA(facet = facet, name = name, ...))
+  }
+  if (identical(m, "lsi")) {
+    stop("LSI reduction is not implemented yet (Phase 2b); use method='pca' for now", call. = FALSE)
+  }
+  stop("unknown reduction method '", method, "'", call. = FALSE)
+}
+
 .pagoda2_embedding_default_distance <- function(method) {
   if (identical(method, "tSNE")) {
     return("L2")
