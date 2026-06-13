@@ -29,16 +29,16 @@ colMeanVarS <- function(sY, rowSel, ncores = 1L) {
     .Call('_pagoda2_colMeanVarS', PACKAGE = 'pagoda2', sY, rowSel, ncores)
 }
 
-colMeanVarView <- function(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores = 1L) {
-    .Call('_pagoda2_colMeanVarView', PACKAGE = 'pagoda2', sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores)
+colMeanVarView <- function(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model = 0L, clrDivisor, idf, ncores = 1L) {
+    .Call('_pagoda2_colMeanVarView', PACKAGE = 'pagoda2', sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model, clrDivisor, idf, ncores)
 }
 
 colSumByFac <- function(sY, rowSel) {
     .Call('_pagoda2_colSumByFac', PACKAGE = 'pagoda2', sY, rowSel)
 }
 
-colSumByFacView <- function(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores = 1L) {
-    .Call('_pagoda2_colSumByFacView', PACKAGE = 'pagoda2', sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores)
+colSumByFacView <- function(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model = 0L, clrDivisor, idf, ncores = 1L) {
+    .Call('_pagoda2_colSumByFacView', PACKAGE = 'pagoda2', sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model, clrDivisor, idf, ncores)
 }
 
 inplaceColMult <- function(sY, mult, rowSel, ncores = 1L) {

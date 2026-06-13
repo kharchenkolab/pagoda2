@@ -48,9 +48,31 @@ static void validateViewKernelArgs(const arma::ivec& dims,
                                    const arma::mat& batchFactors,
                                    const arma::vec& winsorCaps,
                                    const arma::vec& preWinsorDepth,
-                                   const arma::vec& postWinsorDepth) {
+                                   const arma::vec& postWinsorDepth,
+                                   const int model = 0,
+                                   const arma::vec& clrDivisor = arma::vec(),
+                                   const arma::vec& idf = arma::vec()) {
   const int nrows = dims[0];
   const int ncols = dims[1];
+
+  if (model == 1) { // CLR: per-row divisor
+    if (clrDivisor.n_elem != (arma::uword)nrows) {
+      stop("CLR view requires a per-row clrDivisor with one value per matrix row");
+    }
+    return;
+  }
+  if (model == 2) { // TF-IDF: per-row depth + per-column idf
+    if (depth.n_elem != (arma::uword)nrows) {
+      stop("TF-IDF view requires a per-row depth with one value per matrix row");
+    }
+    if (idf.n_elem != (arma::uword)ncols) {
+      stop("TF-IDF view requires a per-column idf with one value per matrix column");
+    }
+    if (!R_finite(depthScale) || depthScale == 0) {
+      stop("View depthScale must be finite and non-zero");
+    }
+    return;
+  }
 
   if (normalize) {
     if (depth.n_elem != (arma::uword)nrows) {
@@ -102,7 +124,23 @@ static inline double viewKernelValue(double value,
                                      const arma::mat& batchFactors,
                                      const arma::vec& winsorCaps,
                                      const arma::vec& preWinsorDepth,
-                                     const arma::vec& postWinsorDepth) {
+                                     const arma::vec& postWinsorDepth,
+                                     const int model = 0,
+                                     const arma::vec& clrDivisor = arma::vec(),
+                                     const arma::vec& idf = arma::vec()) {
+  // model: 0 = plain/raw (depth-normalize + optional log); 1 = CLR; 2 = TF-IDF.
+  // CLR/TF-IDF are pure per-entry functions of precomputed per-row (clrDivisor) / per-column (idf)
+  // scalars (the same structure as depth/winsorCaps), so the column-parallel accumulation stays
+  // thread-count invariant. Applied only to stored nonzeros; unstored entries are post-transform 0
+  // (matching the R materializer's sparse-preserving CLR/TF-IDF, see .pagoda2_materialize_view).
+  if (model == 1) { // CLR
+    return std::log1p(value) - clrDivisor[row];
+  }
+  if (model == 2) { // TF-IDF: tf = value/(depth/depthScale); * idf[col]; then log1p
+    double v = value / (depth[row] / depthScale);
+    v *= idf[col];
+    return logScale ? std::log1p(v) : v;
+  }
   if (normalize) {
     double d = depth[row];
 
@@ -200,6 +238,9 @@ Rcpp::DataFrame colMeanVarView(SEXP sY,
                                const arma::vec& winsorCaps,
                                const arma::vec& preWinsorDepth,
                                const arma::vec& postWinsorDepth,
+                               int model=0,
+                               const arma::vec& clrDivisor=arma::vec(),
+                               const arma::vec& idf=arma::vec(),
                                int ncores=1) {
   S4 mat(sY);
   const arma::uvec i((unsigned int *)INTEGER(mat.slot("i")), LENGTH(mat.slot("i")), false, true);
@@ -207,7 +248,7 @@ Rcpp::DataFrame colMeanVarView(SEXP sY,
   const arma::ivec p(INTEGER(mat.slot("p")), LENGTH(mat.slot("p")), false, true);
   const arma::vec Y(REAL(mat.slot("x")), LENGTH(mat.slot("x")), false, true);
 
-  validateViewKernelArgs(dims, depth, depthScale, normalize, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+  validateViewKernelArgs(dims, depth, depthScale, normalize, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model, clrDivisor, idf);
 
   bool rowSelSpecified=!Rf_isNull(rowSel);
   const arma::ivec rs=(rowSelSpecified) ? arma::ivec(INTEGER(rowSel),LENGTH(rowSel),false,true) : arma::ivec();
@@ -246,7 +287,8 @@ Rcpp::DataFrame colMeanVarView(SEXP sY,
       const int row = i[j];
       if(!rowSelSpecified || rs[row] == TRUE) {
         const double v = viewKernelValue(Y[j], row, g, depth, depthScale, normalize, logScale,
-                                         batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+                                         batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth,
+                                         model, clrDivisor, idf);
         sumV += v;
         sumSqV += v * v;
         nvalid++;
@@ -319,6 +361,9 @@ arma::mat colSumByFacView(SEXP sY,
                           const arma::vec& winsorCaps,
                           const arma::vec& preWinsorDepth,
                           const arma::vec& postWinsorDepth,
+                          int model=0,
+                          const arma::vec& clrDivisor=arma::vec(),
+                          const arma::vec& idf=arma::vec(),
                           int ncores=1) {
   S4 mat(sY);
   const arma::uvec i((unsigned int *)INTEGER(mat.slot("i")), LENGTH(mat.slot("i")), false, true);
@@ -326,7 +371,7 @@ arma::mat colSumByFacView(SEXP sY,
   const arma::ivec p(INTEGER(mat.slot("p")), LENGTH(mat.slot("p")), false, true);
   const arma::vec Y(REAL(mat.slot("x")), LENGTH(mat.slot("x")), false, true);
 
-  validateViewKernelArgs(dims, depth, depthScale, normalize, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+  validateViewKernelArgs(dims, depth, depthScale, normalize, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model, clrDivisor, idf);
 
   const arma::ivec rs=arma::ivec(INTEGER(rowSel),LENGTH(rowSel),false,true);
   if(rs.n_elem != (arma::uword)dims[0]) {
@@ -358,10 +403,12 @@ arma::mat colSumByFacView(SEXP sY,
       int f=rs[row];
       if(f==NA_INTEGER) {
         sumM(0,g)+=viewKernelValue(Y[j], row, g, depth, depthScale, normalize, logScale,
-                                   batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+                                   batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth,
+                                   model, clrDivisor, idf);
       } else if(f>0) {
         sumM(f,g)+=viewKernelValue(Y[j], row, g, depth, depthScale, normalize, logScale,
-                                   batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth);
+                                   batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth,
+                                   model, clrDivisor, idf);
       }
     }
   }

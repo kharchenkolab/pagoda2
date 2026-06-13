@@ -33,14 +33,15 @@ test_that("CLR view model materializes to the reference (float64)", {
   expect_equal(mat, ref, tolerance = 1e-12)
 })
 
-test_that("CLR per-protein mean/var match the dense reference; thread-count invariant", {
+test_that("CLR per-protein mean/var match the dense reference; thread-count invariant (C++ kernel)", {
   o <- clr_p2()
   ref <- clr_reference(o$adt)
   v1 <- o$p2$viewColMeanVar(facet = "ADT", n.cores = 1)
-  v2 <- o$p2$viewColMeanVar(facet = "ADT", n.cores = 2)
-  expect_identical(v1, v2) # deterministic / thread-count invariant
+  v4 <- o$p2$viewColMeanVar(facet = "ADT", n.cores = 4)
+  expect_identical(v1, v4) # bit-identical across thread counts (column-parallel kernel)
+  popvar <- function(x) mean((x - mean(x))^2) # kernel uses population variance (/n)
   expect_equal(v1$m, as.numeric(colMeans(ref)), tolerance = 1e-10)
-  expect_equal(v1$v, as.numeric(apply(ref, 2, var)), tolerance = 1e-8)
+  expect_equal(v1$v, as.numeric(apply(ref, 2, popvar)), tolerance = 1e-10)
 })
 
 test_that("a CLR facet does not perturb the default RNA plain view", {

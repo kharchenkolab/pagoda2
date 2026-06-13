@@ -113,8 +113,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // colMeanVarView
-Rcpp::DataFrame colMeanVarView(SEXP sY, SEXP rowSel, const arma::vec& depth, double depthScale, bool normalize, bool logScale, const arma::ivec& batch, const arma::mat& batchFactors, const arma::vec& winsorCaps, const arma::vec& preWinsorDepth, const arma::vec& postWinsorDepth, int ncores);
-RcppExport SEXP _pagoda2_colMeanVarView(SEXP sYSEXP, SEXP rowSelSEXP, SEXP depthSEXP, SEXP depthScaleSEXP, SEXP normalizeSEXP, SEXP logScaleSEXP, SEXP batchSEXP, SEXP batchFactorsSEXP, SEXP winsorCapsSEXP, SEXP preWinsorDepthSEXP, SEXP postWinsorDepthSEXP, SEXP ncoresSEXP) {
+Rcpp::DataFrame colMeanVarView(SEXP sY, SEXP rowSel, const arma::vec& depth, double depthScale, bool normalize, bool logScale, const arma::ivec& batch, const arma::mat& batchFactors, const arma::vec& winsorCaps, const arma::vec& preWinsorDepth, const arma::vec& postWinsorDepth, int model, const arma::vec& clrDivisor, const arma::vec& idf, int ncores);
+RcppExport SEXP _pagoda2_colMeanVarView(SEXP sYSEXP, SEXP rowSelSEXP, SEXP depthSEXP, SEXP depthScaleSEXP, SEXP normalizeSEXP, SEXP logScaleSEXP, SEXP batchSEXP, SEXP batchFactorsSEXP, SEXP winsorCapsSEXP, SEXP preWinsorDepthSEXP, SEXP postWinsorDepthSEXP, SEXP modelSEXP, SEXP clrDivisorSEXP, SEXP idfSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -129,8 +129,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type winsorCaps(winsorCapsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type preWinsorDepth(preWinsorDepthSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type postWinsorDepth(postWinsorDepthSEXP);
+    Rcpp::traits::input_parameter< int >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type clrDivisor(clrDivisorSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type idf(idfSEXP);
     Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
-    rcpp_result_gen = Rcpp::wrap(colMeanVarView(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores));
+    rcpp_result_gen = Rcpp::wrap(colMeanVarView(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model, clrDivisor, idf, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -147,8 +150,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // colSumByFacView
-arma::mat colSumByFacView(SEXP sY, SEXP rowSel, const arma::vec& depth, double depthScale, bool normalize, bool logScale, const arma::ivec& batch, const arma::mat& batchFactors, const arma::vec& winsorCaps, const arma::vec& preWinsorDepth, const arma::vec& postWinsorDepth, int ncores);
-RcppExport SEXP _pagoda2_colSumByFacView(SEXP sYSEXP, SEXP rowSelSEXP, SEXP depthSEXP, SEXP depthScaleSEXP, SEXP normalizeSEXP, SEXP logScaleSEXP, SEXP batchSEXP, SEXP batchFactorsSEXP, SEXP winsorCapsSEXP, SEXP preWinsorDepthSEXP, SEXP postWinsorDepthSEXP, SEXP ncoresSEXP) {
+arma::mat colSumByFacView(SEXP sY, SEXP rowSel, const arma::vec& depth, double depthScale, bool normalize, bool logScale, const arma::ivec& batch, const arma::mat& batchFactors, const arma::vec& winsorCaps, const arma::vec& preWinsorDepth, const arma::vec& postWinsorDepth, int model, const arma::vec& clrDivisor, const arma::vec& idf, int ncores);
+RcppExport SEXP _pagoda2_colSumByFacView(SEXP sYSEXP, SEXP rowSelSEXP, SEXP depthSEXP, SEXP depthScaleSEXP, SEXP normalizeSEXP, SEXP logScaleSEXP, SEXP batchSEXP, SEXP batchFactorsSEXP, SEXP winsorCapsSEXP, SEXP preWinsorDepthSEXP, SEXP postWinsorDepthSEXP, SEXP modelSEXP, SEXP clrDivisorSEXP, SEXP idfSEXP, SEXP ncoresSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -163,8 +166,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type winsorCaps(winsorCapsSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type preWinsorDepth(preWinsorDepthSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type postWinsorDepth(postWinsorDepthSEXP);
+    Rcpp::traits::input_parameter< int >::type model(modelSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type clrDivisor(clrDivisorSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type idf(idfSEXP);
     Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
-    rcpp_result_gen = Rcpp::wrap(colSumByFacView(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, ncores));
+    rcpp_result_gen = Rcpp::wrap(colSumByFacView(sY, rowSel, depth, depthScale, normalize, logScale, batch, batchFactors, winsorCaps, preWinsorDepth, postWinsorDepth, model, clrDivisor, idf, ncores));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -339,9 +345,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_pagoda2_sgd", (DL_FUNC) &_pagoda2_sgd, 15},
     {"_pagoda2_non0LogColLmS", (DL_FUNC) &_pagoda2_non0LogColLmS, 5},
     {"_pagoda2_colMeanVarS", (DL_FUNC) &_pagoda2_colMeanVarS, 3},
-    {"_pagoda2_colMeanVarView", (DL_FUNC) &_pagoda2_colMeanVarView, 12},
+    {"_pagoda2_colMeanVarView", (DL_FUNC) &_pagoda2_colMeanVarView, 15},
     {"_pagoda2_colSumByFac", (DL_FUNC) &_pagoda2_colSumByFac, 2},
-    {"_pagoda2_colSumByFacView", (DL_FUNC) &_pagoda2_colSumByFacView, 12},
+    {"_pagoda2_colSumByFacView", (DL_FUNC) &_pagoda2_colSumByFacView, 15},
     {"_pagoda2_inplaceColMult", (DL_FUNC) &_pagoda2_inplaceColMult, 4},
     {"_pagoda2_inplaceWinsorizeSparseCols", (DL_FUNC) &_pagoda2_inplaceWinsorizeSparseCols, 3},
     {"_pagoda2_orderColumnRows", (DL_FUNC) &_pagoda2_orderColumnRows, 2},

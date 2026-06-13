@@ -145,9 +145,49 @@
 }
 
 .pagoda2_view_kernel_args <- function(raw, view) {
-  if (!view$model %in% c("plain", "raw")) {
+  if (!view$model %in% c("plain", "raw", "clr", "tfidf")) {
     stop("Matrix view model `", view$model, "` is not supported by sparse view kernels yet")
   }
+  ## kernel model code: 0 = plain/raw, 1 = CLR, 2 = TF-IDF (§6.2 per-entry-of-precomputed-scalars).
+  model <- switch(view$model, plain = 0L, raw = 0L, clr = 1L, tfidf = 2L)
+  clr.divisor <- numeric()
+  idf <- numeric()
+
+  if (model == 1L) { # CLR: per-row divisor (precompute once, in CSC order, if not cached on the view)
+    clr.divisor <- view$clrDivisor
+    if (is.null(clr.divisor)) {
+      clr.divisor <- .pagoda2_clr_divisor(raw)
+    } else {
+      clr.divisor <- as.numeric(clr.divisor[rownames(raw)])
+    }
+    return(list(
+      depth = numeric(), depthScale = view$depthScale, normalize = FALSE,
+      log.scale = isTRUE(view$log.scale), batch = integer(),
+      batchFactors = matrix(numeric(), 0, 0), winsorCaps = numeric(),
+      preWinsorDepth = numeric(), postWinsorDepth = numeric(),
+      model = 1L, clrDivisor = as.numeric(clr.divisor), idf = numeric()
+    ))
+  }
+  if (model == 2L) { # TF-IDF: per-row depth + per-column idf
+    depth <- as.numeric(view$depth[rownames(raw)])
+    if (anyNA(depth)) {
+      stop("Matrix view depth is not available for all requested cells")
+    }
+    idf <- view$idf
+    if (is.null(idf)) {
+      idf <- .pagoda2_tfidf_idf(raw)
+    } else {
+      idf <- as.numeric(idf[colnames(raw)])
+    }
+    return(list(
+      depth = depth, depthScale = view$depthScale, normalize = FALSE,
+      log.scale = isTRUE(view$log.scale), batch = integer(),
+      batchFactors = matrix(numeric(), 0, 0), winsorCaps = numeric(),
+      preWinsorDepth = numeric(), postWinsorDepth = numeric(),
+      model = 2L, clrDivisor = numeric(), idf = as.numeric(idf)
+    ))
+  }
+
   normalize <- identical(view$model, "plain")
   depth <- numeric()
   if (normalize) {
@@ -188,7 +228,10 @@
     batchFactors = batch.factors,
     winsorCaps = winsor.caps,
     preWinsorDepth = pre.winsor.depth,
-    postWinsorDepth = post.winsor.depth
+    postWinsorDepth = post.winsor.depth,
+    model = 0L,
+    clrDivisor = numeric(),
+    idf = numeric()
   )
 }
 
@@ -308,31 +351,12 @@
   x
 }
 
-## Per-column mean/variance over a materialized (sparse) view; float64, single deterministic pass.
-## Used for view models the streaming C++ kernel does not yet handle (clr/tfidf). Sample variance (n-1).
-.pagoda2_col_mean_var_dense <- function(x) {
-  n <- nrow(x)
-  mm <- as.numeric(Matrix::colMeans(x))
-  x2 <- x
-  x2@x <- x2@x^2
-  sumsq <- as.numeric(Matrix::colSums(x2))
-  vv <- if (n > 1L) (sumsq - n * mm^2) / (n - 1L) else rep(0, ncol(x))
-  vv[vv < 0] <- 0
-  nobs <- as.integer(diff(x@p))
-  data.frame(m = mm, v = vv, nobs = nobs)
-}
-
 .pagoda2_r6_view_col_mean_var <- function(p2, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL, facet = NULL) {
   raw <- p2$getRawCounts(facet = facet)
   view <- p2$getMatrixView(name, facet = facet)
-  ## Models the streaming kernel doesn't (yet) handle: materialize in R, reduce in float64. Deterministic
-  ## (thread-count-invariant by construction). The C++ `viewKernelValue` clr/tfidf branch (§6.2) is a
-  ## perf follow-up validated against this path.
-  if (!view$model %in% c("plain", "raw")) {
-    x <- .pagoda2_materialize_view(if (is.null(cells)) raw else raw[.pagoda2_axis_selection_index(cells, rownames(raw), what = "cell(s)"), , drop = FALSE], view)
-    return(.pagoda2_col_mean_var_dense(x))
-  }
   rowSel <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
+  ## plain/raw/clr/tfidf all stream through the C++ kernel (CLR/TF-IDF via model=1/2 with precomputed
+  ## per-row clrDivisor / per-column idf); thread-count-invariant, population variance.
   args <- .pagoda2_view_kernel_args(raw, view)
   n.cores <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "variance")$native
   colMeanVarView(
@@ -347,6 +371,9 @@
     args$winsorCaps,
     args$preWinsorDepth,
     args$postWinsorDepth,
+    args$model,
+    args$clrDivisor,
+    args$idf,
     n.cores
   )
 }
@@ -380,6 +407,9 @@
     args$winsorCaps,
     args$preWinsorDepth,
     args$postWinsorDepth,
+    args$model,
+    args$clrDivisor,
+    args$idf,
     nc
   )
   rownames(out) <- c("<NA>", levels(cols)[seq_len(nrow(out) - 1L)])

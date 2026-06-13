@@ -35,8 +35,9 @@ test_that("TF-IDF per-peak mean/var match reference; thread-count invariant; fac
   o <- tfidf_p2()
   ref <- tfidf_reference(o$atac)
   v1 <- o$p2$viewColMeanVar(facet = "ATAC", n.cores = 1)
-  expect_identical(v1, o$p2$viewColMeanVar(facet = "ATAC", n.cores = 2))
+  expect_identical(v1, o$p2$viewColMeanVar(facet = "ATAC", n.cores = 4)) # bit-identical across threads
+  popvar <- function(x) mean((x - mean(x))^2) # kernel uses population variance (/n)
   expect_equal(v1$m, as.numeric(colMeans(ref)), tolerance = 1e-10)
-  expect_equal(v1$v, as.numeric(apply(ref, 2, var)), tolerance = 1e-8)
+  expect_equal(v1$v, as.numeric(apply(ref, 2, popvar)), tolerance = 1e-10)
   expect_identical(o$p2$getFacet("ATAC")$defaultReduction, "LSI")
 })
