@@ -1400,10 +1400,11 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'     M - log2 fold change
     #'     highest- a boolean flag indicating whether the expression of a given gene in a given vcell group was on average higher than in every other cell group
     #'     fe - fraction of cells in a given group having non-zero expression level of a given gene
-    getDifferentialGenes = function(type = "counts", clusterType = NULL, groups = NULL, grouping = NULL, name = "customClustering", z.threshold = 3, upregulated.only = FALSE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = FALSE, genes = NULL, use.analysis.genes = TRUE, n.cores = self$n.cores, .legacy.warn = TRUE) {
+    getDifferentialGenes = function(type = "counts", clusterType = NULL, groups = NULL, grouping = NULL, name = "customClustering", z.threshold = 3, upregulated.only = FALSE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = FALSE, genes = NULL, use.analysis.genes = TRUE, n.cores = self$n.cores, facet = NULL, .legacy.warn = TRUE) {
       if (.legacy.warn) {
         .pagoda2_deprecated_call("getDifferentialGenes()", "p2$runMarkers(...)")
       }
+      fkey <- self$resolveFacet(facet)$name
       name.missing <- missing(name)
       if (!is.null(grouping) && !is.null(groups)) {
         stop("Specify only one of `grouping` or `groups`")
@@ -1446,7 +1447,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       } else {
         cols <- groups
       }
-      all.cells <- .pagoda2_axis_names(self, "cell")
+      all.cells <- .pagoda2_axis_names(self, "cell", facet = facet)
       if (!all(all.cells %in% names(cols))) {
         warning("cluster vector doesn't specify groups for all of the cells, dropping missing cells from comparison")
       }
@@ -1456,9 +1457,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         stop("No cells with non-missing groups are present in counts")
       }
       if (is.null(genes) && type == "counts" && isTRUE(use.analysis.genes)) {
-        genes <- .pagoda2_analysis_genes(self)
+        genes <- .pagoda2_analysis_genes(self, facet = facet)
       }
-      cm <- self$getExpressionBlock(cells = all.cells[valid.cells], genes = genes)
+      cm <- self$getExpressionBlock(cells = all.cells[valid.cells], genes = genes, facet = facet)
       # reorder cols
       cols <- as.factor(cols[match(rownames(cm), names(cols))])
 
@@ -1531,14 +1532,13 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
       if (is.null(groups)) {
         if (is.null(clusterType)) {
-          # self$diffgenes[[type]][[ names(self$clusters[[type]])[1] ]] <- ds
           ## take last clustering generated
-          self$diffgenes[[type]][[names(self$clusters[[type]])[length(self$clusters[[type]])]]] <- ds
+          self$diffgenes[[fkey]][[names(self$clusters[[type]])[length(self$clusters[[type]])]]] <- ds
         } else {
-          self$diffgenes[[type]][[clusterType]] <- ds
+          self$diffgenes[[fkey]][[clusterType]] <- ds
         }
       } else {
-        self$diffgenes[[type]][[name]] <- ds
+        self$diffgenes[[fkey]][[name]] <- ds
       }
       return(ds)
     },
@@ -1555,7 +1555,12 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param append.specificity.metrics Whether to append specificity metrics.
     #' @param append.auc Whether to append AUC to marker tables.
     #' @return Marker result list returned by getDifferentialGenes().
-    runMarkers = function(grouping = NULL, groups = NULL, name = NULL, type = "counts", z.threshold = 3, upregulated.only = TRUE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE, n.cores = NULL, threads = NULL) .pagoda2_r6_run_markers(self, grouping = grouping, groups = groups, name = name, type = type, z.threshold = z.threshold, upregulated.only = upregulated.only, verbose = verbose, append.specificity.metrics = append.specificity.metrics, append.auc = append.auc, genes = genes, use.analysis.genes = use.analysis.genes, n.cores = n.cores, threads = threads),
+    runMarkers = function(grouping = NULL, groups = NULL, name = NULL, type = "counts", facet = NULL, z.threshold = 3, upregulated.only = TRUE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE, n.cores = NULL, threads = NULL) .pagoda2_r6_run_markers(self, grouping = grouping, groups = groups, name = name, type = type, facet = facet, z.threshold = z.threshold, upregulated.only = upregulated.only, verbose = verbose, append.specificity.metrics = append.specificity.metrics, append.auc = append.auc, genes = genes, use.analysis.genes = use.analysis.genes, n.cores = n.cores, threads = threads),
+
+    #' @description Alias for runMarkers() (pagoda2.1 naming).
+    #' @param ... Passed to runMarkers().
+    #' @return Invisibly the differential expression tables.
+    findMarkers = function(...) self$runMarkers(...),
 
 
     #' @description Plot heatmap of DE results
@@ -1578,6 +1583,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       if (.legacy.warn) {
         .pagoda2_deprecated_call("plotDiffGeneHeatmap()", "p2$plotMarkerHeatmap(...)")
       }
+      type <- .pagoda2_markers_lookup_key(self, type)
       if (!is.null(clusterType)) {
         x <- self$diffgenes[[type]][[clusterType]]
         if (is.null(x)) {

@@ -364,8 +364,8 @@ test_that("run auto dependencies can create marker result from fresh object", {
   expect_silent(do.call(p2$run, args))
 
   expect_true("leiden" %in% colnames(p2$cellMeta))
-  expect_true("leiden" %in% names(p2$diffgenes$counts))
-  expect_identical(attr(p2$diffgenes$counts$leiden, "pagoda2.marker")$grouping, "leiden")
+  expect_true("leiden" %in% names(p2$diffgenes$RNA))
+  expect_identical(attr(p2$diffgenes$RNA$leiden, "pagoda2.marker")$grouping, "leiden")
 })
 
 test_that("run validates step selection and dependency policy", {

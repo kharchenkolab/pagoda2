@@ -152,6 +152,15 @@
   list(reduction = reduction, embedding = embedding, value = p2$embeddings[[reduction]][[embedding]])
 }
 
+## Markers/diffgenes are facet-keyed (§4.5). Read methods take `type=` as the registry key; the legacy
+## default "counts" (and NULL) map to the default facet, so existing call sites resolve to RNA.
+.pagoda2_markers_lookup_key <- function(p2, type = NULL) {
+  if (is.null(type) || identical(type, "counts")) {
+    return(p2$defaultFacet)
+  }
+  type
+}
+
 .pagoda2_r6_resolve_markers <- function(p2, markers = NULL, type = "counts") {
   if (is.null(markers)) {
     markers <- p2$defaultGrouping
@@ -162,16 +171,18 @@
   if (!is.character(markers) || length(markers) != 1) {
     stop("`markers` must be a single marker result name")
   }
-  if (is.null(p2$diffgenes[[type]]) || is.null(p2$diffgenes[[type]][[markers]])) {
+  key <- .pagoda2_markers_lookup_key(p2, type)
+  if (is.null(p2$diffgenes[[key]]) || is.null(p2$diffgenes[[key]][[markers]])) {
     available <- p2$listMarkers()
-    available <- available$name[available$type == type]
-    stop("Unknown marker result `", markers, "`. Available markers: ", paste(available, collapse = ", "))
+    available <- available$name[available$type == key]
+    stop("Unknown marker result `", markers, "` for facet `", key, "`. Available markers: ", paste(available, collapse = ", "))
   }
-  value <- p2$diffgenes[[type]][[markers]]
+  value <- p2$diffgenes[[key]][[markers]]
   result <- NULL
-  if (!is.null(p2$markerResults[[type]]) && !is.null(p2$markerResults[[type]][[markers]])) {
-    result <- p2$markerResults[[type]][[markers]]
+  if (!is.null(p2$markerResults[[key]]) && !is.null(p2$markerResults[[key]][[markers]])) {
+    result <- p2$markerResults[[key]][[markers]]
   }
+  type <- key
   metadata <- attr(value, "pagoda2.marker")
   if (is.null(result) && !is.null(metadata)) {
     result <- metadata

@@ -167,8 +167,8 @@ test_that("runMarkers records grouping provenance", {
   marker.meta <- attr(markers, "pagoda2.marker")
   marker.result <- p2$getMarkerResult("leiden")
 
-  expect_true("leiden" %in% names(p2$diffgenes$counts))
-  expect_true("leiden" %in% names(p2$markerResults$counts))
+  expect_true("leiden" %in% names(p2$diffgenes$RNA))
+  expect_true("leiden" %in% names(p2$markerResults$RNA))
   expect_identical(marker.result$schema, "pagoda2.marker.v1")
   expect_identical(marker.result$tables, markers)
   expect_identical(marker.meta$grouping, "leiden")
@@ -197,7 +197,7 @@ test_that("marker plotting methods resolve marker schema and grouping", {
 test_that("marker selection presets are shared and inspectable", {
   p2 <- make_test_p2()
   p2$setGrouping("leiden", c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), setDefault = TRUE)
-  p2$diffgenes$counts$manual <- list(
+  p2$diffgenes$RNA$manual <- list(
     "0" = data.frame(
       Gene = c("g1", "g2", "g3"),
       Z = c(6, 6, 6),
@@ -242,7 +242,7 @@ test_that("marker dotplot orders matching groups by marker block by default", {
     factor(c(c1 = "0", c2 = "0", c3 = "1", c4 = "1"), levels = c("1", "0")),
     setDefault = TRUE
   )
-  p2$diffgenes$counts$manual <- list(
+  p2$diffgenes$RNA$manual <- list(
     "0" = data.frame(Gene = c("g1", "g3"), Z = c(5, 4), AUC = c(0.9, 0.8), highest = TRUE),
     "1" = data.frame(Gene = c("g2", "g4"), Z = c(5, 4), AUC = c(0.9, 0.8), highest = TRUE)
   )
@@ -585,7 +585,7 @@ test_that("legacy DE method uses defaultGrouping when available", {
     "runMarkers"
   )
 
-  expect_true("leiden" %in% names(p2$diffgenes$counts))
+  expect_true("leiden" %in% names(p2$diffgenes$RNA))
   expect_identical(names(markers), c("0", "1"))
 })
 

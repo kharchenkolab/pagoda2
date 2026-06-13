@@ -243,9 +243,10 @@
 }
 
 
-.pagoda2_r6_run_markers <- function(p2, grouping = NULL, groups = NULL, name = NULL, type = "counts", z.threshold = 3,
+.pagoda2_r6_run_markers <- function(p2, grouping = NULL, groups = NULL, name = NULL, type = "counts", facet = NULL, z.threshold = 3,
                                     upregulated.only = TRUE, verbose = FALSE, append.specificity.metrics = TRUE,
                                     append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE, n.cores = NULL, threads = NULL) {
+  fkey <- p2$resolveFacet(facet)$name
   resolved.grouping <- grouping
   if (is.null(resolved.grouping) && is.null(groups)) {
     resolved.grouping <- p2$defaultGrouping
@@ -263,6 +264,7 @@
   }
   ds <- p2$getDifferentialGenes(
     type = type,
+    facet = facet,
     groups = cols,
     name = name,
     z.threshold = z.threshold,
@@ -286,7 +288,7 @@
   )
   result <- .pagoda2_marker_result(
     name = name,
-    type = type,
+    type = fkey,
     grouping = resolved.grouping,
     groups = cols,
     tables = ds,
@@ -297,11 +299,11 @@
   meta$cell.names <- meta$cells
   attr(ds, "pagoda2.marker") <- meta
   result$tables <- ds
-  p2$diffgenes[[type]][[name]] <- ds
-  if (is.null(p2$markerResults[[type]])) {
-    p2$markerResults[[type]] <- list()
+  p2$diffgenes[[fkey]][[name]] <- ds
+  if (is.null(p2$markerResults[[fkey]])) {
+    p2$markerResults[[fkey]] <- list()
   }
-  p2$markerResults[[type]][[name]] <- result
+  p2$markerResults[[fkey]][[name]] <- result
   if (is.null(p2$history$markers)) {
     p2$history$markers <- list()
   }

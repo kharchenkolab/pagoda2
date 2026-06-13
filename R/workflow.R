@@ -264,8 +264,8 @@
       )
     )
     args <- add_run_threads(args, "markers")
-    marker.type <- if (!is.null(args$type)) args$type else "counts"
-    if (!overwrite && !is.null(p2$diffgenes[[marker.type]]) && !is.null(p2$diffgenes[[marker.type]][[args$name]])) {
+    marker.key <- p2$resolveFacet(args$facet)$name
+    if (!overwrite && !is.null(p2$diffgenes[[marker.key]]) && !is.null(p2$diffgenes[[marker.key]][[args$name]])) {
       skip_step("markers", args, paste0("marker result `", args$name, "` already exists"))
     } else {
       run_step("markers", args, do.call(p2$runMarkers, args))
