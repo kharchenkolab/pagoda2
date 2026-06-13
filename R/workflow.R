@@ -375,9 +375,37 @@
     return(p2$runPCA(facet = facet, name = name, ...))
   }
   if (identical(m, "lsi")) {
-    stop("LSI reduction is not implemented yet (Phase 2b); use method='pca' for now", call. = FALSE)
+    return(.pagoda2_r6_run_lsi(p2, facet = facet, name = name, ...))
   }
   stop("unknown reduction method '", method, "'", call. = FALSE)
+}
+
+## LSI = TF-IDF view -> SVD -> drop the first component (it tracks sequencing depth), §6.3. The view stays
+## a pure per-entry recipe; drop.first is a reduction post-step, so the §6.2 invariance argument is intact.
+.pagoda2_r6_run_lsi <- function(p2, facet = NULL, name = "LSI", nPcs = 50, drop.first = TRUE,
+                                genes = NULL, fastpath = TRUE, maxit = 100, verbose = TRUE, ...) {
+  f <- p2$resolveFacet(facet)
+  x <- p2$getExpressionBlock(facet = facet, genes = genes) # cells x peaks, TF-IDF view materialized
+  k <- if (isTRUE(drop.first)) nPcs + 1L else nPcs
+  k <- min(k, ncol(x) - 1L, nrow(x) - 1L)
+  if (k < 1L) {
+    stop("LSI: too few features/cells for the requested number of components", call. = FALSE)
+  }
+  sv <- irlba::irlba(x, nv = k, nu = 0, fastpath = fastpath, maxit = maxit)
+  scores <- as.matrix(x %*% sv$v) # cells x k
+  loadings <- sv$v
+  if (isTRUE(drop.first)) { # drop the depth-correlated first component
+    scores <- scores[, -1L, drop = FALSE]
+    loadings <- loadings[, -1L, drop = FALSE]
+  }
+  rownames(scores) <- rownames(x)
+  colnames(scores) <- paste0(name, seq_len(ncol(scores)))
+  rownames(loadings) <- colnames(x)
+  key <- .pagoda2_reduction_key(p2, f$name, name)
+  p2$reductions[[key]] <- scores
+  f$loadings[[name]] <- loadings
+  if (verbose) message("LSI on facet `", f$name, "` -> ", key, " (", ncol(scores), " dims", if (drop.first) ", dropped comp 1" else "", ")")
+  invisible(scores)
 }
 
 ## Joint reduction (concat-PCA): the shipped "one joint method" (§0.4.4). Scales each facet's reduction

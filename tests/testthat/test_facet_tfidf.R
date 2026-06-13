@@ -31,6 +31,29 @@ test_that("TF-IDF view model materializes to the reference (float64)", {
   expect_equal(mat, ref, tolerance = 1e-12)
 })
 
+test_that("LSI reduction (TF-IDF -> SVD -> drop comp 1) stores under the ATAC:LSI key", {
+  set.seed(11)
+  ng <- 10
+  nc <- 20
+  rna <- matrix(rpois(ng * nc, 3), ng, nc, dimnames = list(paste0("g", seq_len(ng)), paste0("c", seq_len(nc))))
+  p2 <- Pagoda2$new(as(Matrix::Matrix(rna, sparse = TRUE), "dgCMatrix"), verbose = FALSE, n.cores = 1,
+    min.cells.per.gene = 0, min.transcripts.per.cell = 0, trim = 0, log.scale = TRUE)
+  npk <- 8
+  pk <- matrix(rpois(nc * npk, 2) + 1L, nc, npk, dimnames = list(paste0("c", seq_len(nc)), paste0("pk", seq_len(npk))))
+  p2$addFacet("ATAC", as(Matrix::Matrix(pk, sparse = TRUE), "dgCMatrix"), modelType = "tfidf", featureType = "peak", defaultReduction = "LSI")
+
+  # bare runReduction on ATAC uses its defaultReduction = LSI
+  suppressWarnings(p2$runReduction(facet = "ATAC", nPcs = 3, verbose = FALSE))
+  expect_true("ATAC:LSI" %in% names(p2$reductions))
+  sc <- p2$reductions[["ATAC:LSI"]]
+  expect_identical(nrow(sc), 20L) # cells
+  expect_identical(ncol(sc), 3L) # nPcs, after dropping the depth-correlated first component
+  expect_true("LSI" %in% names(p2$getFacet("ATAC")$loadings))
+  # without drop.first, nPcs components are kept (one more than the equivalent drop.first run)
+  suppressWarnings(p2$runReduction(facet = "ATAC", method = "lsi", name = "LSIfull", nPcs = 3, drop.first = FALSE, verbose = FALSE))
+  expect_identical(ncol(p2$reductions[["ATAC:LSIfull"]]), 3L)
+})
+
 test_that("TF-IDF per-peak mean/var match reference; thread-count invariant; facet records LSI default", {
   o <- tfidf_p2()
   ref <- tfidf_reference(o$atac)
