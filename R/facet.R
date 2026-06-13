@@ -47,6 +47,8 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
           loadings = p$misc[["loadings"]],
           featureType = p$misc[["featureType"]],
           defaultReduction = p$defaults$reduction,
+          backend = "memory",
+          bp = NULL,
           stop("unknown facet field: ", field, call. = FALSE)
         )
       } else {
@@ -60,6 +62,9 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
       }
       if (field == "defaultReduction" && is.null(v)) {
         return("PCA")
+      }
+      if (field == "backend" && is.null(v)) {
+        return("memory")
       }
       v
     },
@@ -130,7 +135,11 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
     #' @field featureType Feature kind hint ("gene"/"protein"/"peak").
     featureType = function(value) if (missing(value)) private$get_field("featureType") else private$set_field("featureType", value),
     #' @field defaultReduction Reduction implied by this facet (RNA->"PCA", ATAC->"LSI").
-    defaultReduction = function(value) if (missing(value)) private$get_field("defaultReduction") else private$set_field("defaultReduction", value)
+    defaultReduction = function(value) if (missing(value)) private$get_field("defaultReduction") else private$set_field("defaultReduction", value),
+    #' @field backend Storage backend ("memory" or "bpcells"); disk-backed facets stream out-of-core.
+    backend = function(value) if (missing(value)) private$get_field("backend") else private$set_field("backend", value),
+    #' @field bp Disk-backed handle (BPCells IterableMatrix, features x cells) for backend == "bpcells".
+    bp = function(value) if (missing(value)) private$get_field("bp") else private$set_field("bp", value)
   )
 )
 
@@ -167,7 +176,9 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
 }
 
 .pagoda2_r6_add_facet <- function(p2, name, countMatrix, modelType = "plain",
-                                  featureType = "gene", defaultReduction = "PCA", depth = NULL) {
+                                  featureType = "gene", defaultReduction = "PCA", depth = NULL,
+                                  backend = c("memory", "bpcells"), backend.dir = NULL) {
+  backend <- match.arg(backend)
   if (identical(name, p2$defaultFacet)) {
     stop("facet '", name, "' is the default facet, backed by top-level storage; use setCountMatrix() instead", call. = FALSE)
   }
@@ -204,12 +215,25 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
     preWinsorDepth = NULL,
     postWinsorDepth = NULL
   )
+  bp <- NULL
+  stored.raw <- countMatrix
+  if (identical(backend, "bpcells")) {
+    if (!requireNamespace("BPCells", quietly = TRUE)) {
+      stop("backend='bpcells' requires the BPCells package", call. = FALSE)
+    }
+    if (is.null(backend.dir)) {
+      backend.dir <- tempfile(paste0("pagoda2_facet_", name, "_"))
+    }
+    ## BPCells convention: features x cells on disk. Stream from disk; keep no in-memory rawCounts.
+    bp <- BPCells::write_matrix_dir(methods::as(Matrix::t(countMatrix), "IterableMatrix"), dir = backend.dir, compress = FALSE)
+    stored.raw <- NULL
+  }
   store <- p2$misc$facetStore
   if (is.null(store)) {
     store <- list()
   }
   store[[name]] <- list(
-    rawCounts = countMatrix,
+    rawCounts = stored.raw,
     matrixViews = list(analysis = analysis.view),
     featureMeta = data.frame(row.names = colnames(countMatrix)),
     depth = depth,
@@ -219,10 +243,36 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
     defaultReduction = defaultReduction,
     varinfo = NULL,
     odgenes = NULL,
-    loadings = list()
+    loadings = list(),
+    backend = backend,
+    bp = bp
   )
   p2$misc$facetStore <- store
   invisible(p2)
+}
+
+## Disk-backed (BPCells) per-feature mean/variance for a plain-model facet: stream the depth-normalized
+## + log1p view off disk and reduce, with BPCells' sample variance rescaled to the population convention
+## (/n) used by the C++ kernel, so a disk-backed facet matches its in-memory twin. (§8.6 out-of-core seam.)
+.pagoda2_facet_bpcells_col_mean_var <- function(facet, view) {
+  M <- facet$bp # features x cells
+  if (!identical(view$model, "plain") && !identical(view$model, "raw")) {
+    stop("disk-backed (bpcells) viewColMeanVar currently supports the plain/raw model only", call. = FALSE)
+  }
+  cells <- colnames(M)
+  Y <- M
+  if (identical(view$model, "plain")) {
+    sf <- as.numeric(view$depthScale) / as.numeric(view$depth[cells])
+    Y <- BPCells::multiply_cols(Y, sf)
+  }
+  if (isTRUE(view$log.scale)) {
+    Y <- log1p(Y)
+  }
+  n <- ncol(M)
+  m <- as.numeric(BPCells::rowMeans(Y))
+  v <- as.numeric(BPCells::rowVars(Y)) * (n - 1) / n # BPCells uses /(n-1); kernel uses /n
+  v[v < 0] <- 0
+  data.frame(m = m, v = v, nobs = NA_real_, row.names = rownames(M))
 }
 
 ## ---- resolution & keying (Phase 1, §4.5.1) ----

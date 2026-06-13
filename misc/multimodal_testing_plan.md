@@ -168,6 +168,76 @@ lstar side (`test_collection_reduce.py`); the pagoda2-facing test arrives when t
 
 ---
 
+## Detailed remaining plan (workstreams, sequenced)
+
+The container-for-other-methods goal makes **optimized, bit-reproducible threading** and **disk-backed
+(out-of-core) processing** first-class, not afterthoughts. Workstreams, in dependency order:
+
+### A — Pipeline threading (prerequisite; facet= into the feature-space pipeline) — DONE & GREEN (2026-06-13)
+Threaded and tested: `runVariance`/`adjustVariance` (per-facet varinfo/odgenes), `runReduction`/
+`calculatePcaReduction` (name-keyed scores `reductions[["ADT:PCA"]]`, per-facet loadings, `misc$PCA`
+unpolluted), `runMarkers`/`findMarkers`/`getDifferentialGenes` (facet-keyed `markerResults[[facet]]`/
+`diffgenes[[facet]]`; legacy `"counts"` read maps to the default facet). Generic `runReduction` added;
+axis/analysis-gene helpers facet-scoped. Tests: `test_facet_variance.R`, `test_facet_markers.R` + the
+existing suite updated to `$RNA` keys. **Cosmetic remainder (deferred):** `runClustering` rename, remove
+`runPCA`, `apiVersion` bump — additive/cosmetic, no functional impact.
+
+### A (original spec)
+Thread `facet=` (default → default facet, behavior unchanged) through `runVariance`/`adjustVariance`,
+`runReduction`/`calculatePcaReduction`, `runMarkers`/`findMarkers`, replacing direct
+`self$rawCounts`/`self$matrixViews$analysis`/`self$misc[["varinfo"|"odgenes"]]` with the facet view, and
+the gene/cell axis helpers (`.pagoda2_analysis_genes`, `.pagoda2_axis_names`) with facet-scoped variants.
+Store: varinfo/odgenes → facet; reduction **scores** → `reductions[[.pagoda2_reduction_key(facet,red)]]`,
+**loadings** → `facets$<F>$loadings`; markers → `markerResults[[facet]][[grouping]]`. Rename `runLeiden`→
+`runClustering(method=)`; add `runReduction` generic; **remove `runPCA`**; bump `apiVersion` (+ update
+`test_api_version.R`). *Gates:* existing suite green (RNA default unchanged); `runVariance(facet="ADT")`
+populates `facets$ADT$varinfo`/`$odgenes`; `runReduction(facet="ADT")` → `reductions[["ADT:PCA"]]`;
+`findMarkers(facet="ADT")` ≠ `findMarkers()` keys, no collision.
+
+### B — Optimized C++ kernels for CLR/TF-IDF — DONE & GREEN (2026-06-13)
+`viewKernelValue` gained `model`/`clrDivisor`/`idf` (CLR → `log1p(value)−clrDivisor[row]`; TF-IDF →
+`value/(depth/scale)·idf[col]` then `log1p`), threaded through `colMeanVarView`/`colSumByFacView`
+(RcppExports regenerated); `.pagoda2_view_kernel_args` emits the scalars; the R fallback is removed —
+clr/tfidf summaries now stream through the kernel. Gates met: `test_facet_clr.R`/`test_facet_tfidf.R`
+assert bit-identical across 1↔4 threads and equality to the float64 dense reference (population variance).
+
+### B (original spec)
+Add a `model` enum + `clrDivisor` (per-row) / `idf` (per-col) args to `viewKernelValue` and its callers
+(`colMeanVarView`, `colSumByFacView`) in `misc2.cpp`: CLR → `log1p(value) - clrDivisor[row]`;
+TF-IDF → `value/(depth[row]/depthScale) * idf[col]` then `log1p`. Both are pure per-entry functions of
+precomputed per-row/per-col scalars → column-parallel accumulation stays thread-count-invariant by the
+same argument as `depth`/`winsorCaps` (§6.2). `.pagoda2_view_kernel_args` emits `clrDivisor`/`idf`; the
+wrappers route `clr`/`tfidf` to the kernel (dropping the R-materialization fallback for summaries).
+*Gates (both required):* **bit-identical across 1/2/4/8 threads** (`identical()`); **bit-identical to the
+R-materialization reference** already in `test_facet_clr.R`/`test_facet_tfidf.R` (the R path becomes the
+float64 reference oracle, exactly as §6.2 specifies).
+
+### C — Disk-backed facet storage (out-of-core; the container concern)
+Promote `benchmark/backends.R` into a package facet backend: a facet's `rawCounts` may be a disk-backed
+handle (lstar-zarr / BPCells) instead of an in-memory `dgCMatrix`. The view kernels stream column blocks
+(the fused zarr reducers from the recent benchmark work); `getExpressionBlock`/`viewColMeanVar`/
+`viewColSumByFac` operate in bounded memory without full materialization. A facet's `backend` field selects
+in-memory vs disk. *Gates:* a disk-backed facet yields **identical** `viewColMeanVar`/`viewColSumByFac` to
+its in-memory twin (bit-identical, all thread counts); peak memory bounded (block-sized, not matrix-sized);
+the §8.6 storage-backed-collection path becomes feasible.
+
+### D — WNN / LSI / partial overlap / import (Phase 2a/2b functional)
+- **WNN:** `runGraph(facets=c("RNA","ADT"), method="wnn")` → per-facet kNN + per-cell modality weights →
+  `reductions[["WNN"]]` + `cellMeta$wnn_weight_*` + `graphs[["WNN"]]` (provenance `input_axes`).
+- **LSI:** `tfidf` view → SVD → `drop.first` (depth-correlated comp) → `reductions[["ATAC:LSI"]]`.
+- **Partial overlap:** per-facet membership mask over the union `cells`; `requireFacets`; `filterData`
+  intersects masks; export emits a typed `index` (lstar S3).
+- **Import:** `Pagoda2$from(zarr, facets=)` via the lstar R reader — **skip-gated** (`skip_if(!requireNamespace("lstar"))`);
+  the non-lstar path builds facets from raw matrices (the `citeseq/*.mtx` corpus) and is fully tested.
+
+### E — Phase 3 joint-product shape round-trip
+Named-product storage (`reductions[["WNN"/"MOFA"]]` scores top-level + per-facet `loadings` + `input_axes`
+provenance) and an in-memory round-trip; lstar export skip-gated.
+
+**Priority order:** A (unblocks per-facet analysis) → B (optimize the kernels A leans on) → C (the
+strategic out-of-core capability) → D → E. A and B are the "optimized, well-tested threading" the container
+role demands; C is the disk-backed capability.
+
 ## CI vs local
 
 - **CI (GitHub):** the existing suite + synthetic CITE-seq fixture; all view-model invariance gates (they

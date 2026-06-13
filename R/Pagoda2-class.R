@@ -545,8 +545,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param featureType Feature kind ("gene"/"protein"/"peak").
     #' @param defaultReduction Reduction implied by this facet.
     #' @param depth Optional per-cell depth (default: row sums).
+    #' @param backend Storage backend: "memory" (default) or "bpcells" (on-disk, out-of-core).
+    #' @param backend.dir Optional directory for a disk-backed backend.
     #' @return Invisibly returns self.
-    addFacet = function(name, countMatrix, modelType = "plain", featureType = "gene", defaultReduction = "PCA", depth = NULL) .pagoda2_r6_add_facet(self, name = name, countMatrix = countMatrix, modelType = modelType, featureType = featureType, defaultReduction = defaultReduction, depth = depth),
+    addFacet = function(name, countMatrix, modelType = "plain", featureType = "gene", defaultReduction = "PCA", depth = NULL, backend = c("memory", "bpcells"), backend.dir = NULL) .pagoda2_r6_add_facet(self, name = name, countMatrix = countMatrix, modelType = modelType, featureType = featureType, defaultReduction = defaultReduction, depth = depth, backend = backend, backend.dir = backend.dir),
 
     #' @description List stored reductions.
     #'

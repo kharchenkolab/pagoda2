@@ -352,6 +352,14 @@
 }
 
 .pagoda2_r6_view_col_mean_var <- function(p2, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL, facet = NULL) {
+  f <- p2$resolveFacet(facet)
+  ## Disk-backed (out-of-core) facet: stream the view off disk instead of the in-memory kernel (§8.6).
+  if (identical(f$backend, "bpcells")) {
+    if (!is.null(cells)) {
+      stop("cell subsetting on a disk-backed facet is not supported yet", call. = FALSE)
+    }
+    return(.pagoda2_facet_bpcells_col_mean_var(f, p2$getMatrixView(name, facet = facet)))
+  }
   raw <- p2$getRawCounts(facet = facet)
   view <- p2$getMatrixView(name, facet = facet)
   rowSel <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
