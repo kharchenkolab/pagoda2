@@ -38,12 +38,64 @@
   stats::setNames(caps, colnames(x))
 }
 
+## Per-cell CLR divisor (geometric mean of log1p over each cell's NONZERO features), §6.2.
+## A per-row scalar, structurally identical to depth[row]; precompute once in CSC order.
+.pagoda2_clr_divisor <- function(x) {
+  ri <- x@i + 1L
+  lx <- log1p(as.numeric(x@x))
+  nnz <- tabulate(ri, nbins = nrow(x))
+  s <- numeric(nrow(x))
+  if (length(ri)) {
+    acc <- tapply(lx, ri, sum)
+    s[as.integer(names(acc))] <- as.numeric(acc)
+  }
+  divisor <- ifelse(nnz > 0, s / nnz, 0)
+  stats::setNames(divisor, rownames(x))
+}
+
+## Per-feature IDF weight log(1 + N_cells / n_cells_with_feature), §6.2 (TF-IDF). Per-column scalar.
+.pagoda2_tfidf_idf <- function(x) {
+  n.cells <- nrow(x)
+  n.with <- diff(x@p) # nonzeros per column = cells with the peak
+  idf <- log(1 + n.cells / pmax(n.with, 1))
+  stats::setNames(idf, colnames(x))
+}
+
 .pagoda2_materialize_view <- function(raw, view) {
   x <- raw
   x@x <- as.numeric(x@x)
   if (identical(view$model, "raw")) {
     if (isTRUE(view$log.scale)) {
       x@x <- log(x@x + 1)
+    }
+    return(x)
+  }
+  if (identical(view$model, "clr")) {
+    ## CLR (centered log-ratio over each cell's nonzero features), sparse-preserving:
+    ## materialized nonzero = log1p(x) - g_cell, with g_cell the per-cell mean of log1p over nonzeros.
+    divisor <- view$clrDivisor
+    if (is.null(divisor)) {
+      divisor <- .pagoda2_clr_divisor(x)
+    } else {
+      divisor <- divisor[rownames(x)]
+    }
+    x@x <- log1p(x@x) - as.numeric(divisor[x@i + 1L])
+    return(x)
+  }
+  if (identical(view$model, "tfidf")) {
+    ## TF-IDF: tf(x_cell) * idf_peak, with per-cell TF = x / depth and per-column IDF; then log1p.
+    idf <- view$idf
+    if (is.null(idf)) {
+      idf <- .pagoda2_tfidf_idf(x)
+    } else {
+      idf <- idf[colnames(x)]
+    }
+    depth <- view$depth[rownames(x)]
+    gene.index <- rep(seq_len(ncol(x)), diff(x@p))
+    x@x <- as.numeric(x@x / (depth[x@i + 1L] / view$depthScale))
+    x@x <- x@x * as.numeric(idf[gene.index])
+    if (isTRUE(view$log.scale)) {
+      x@x <- log1p(x@x)
     }
     return(x)
   }
@@ -199,14 +251,15 @@
   invisible(p2)
 }
 
-.pagoda2_r6_get_raw_counts <- function(p2, cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell")) {
+.pagoda2_r6_get_raw_counts <- function(p2, cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) {
   orientation <- match.arg(orientation)
-  raw <- p2$rawCounts
-  if (is.null(raw)) {
+  f <- p2$resolveFacet(facet)
+  raw <- f$rawCounts
+  if (is.null(raw) && isTRUE(f$primary)) {
     raw <- p2$misc[["rawCounts"]]
   }
   if (is.null(raw)) {
-    stop("Raw counts are not available")
+    stop("Raw counts are not available for facet `", f$name, "`")
   }
   if (!is.null(cells)) {
     raw <- raw[.pagoda2_axis_selection_index(cells, rownames(raw), what = "cell(s)"), , drop = FALSE]
@@ -221,18 +274,19 @@
   raw
 }
 
-.pagoda2_r6_get_matrix_view <- function(p2, name = "analysis") {
-  view <- p2$matrixViews[[name]]
+.pagoda2_r6_get_matrix_view <- function(p2, name = "analysis", facet = NULL) {
+  f <- p2$resolveFacet(facet)
+  view <- f$matrixViews[[name]]
   if (is.null(view)) {
-    stop("Unknown matrix view `", name, "`")
+    stop("Unknown matrix view `", name, "` for facet `", f$name, "`")
   }
   view
 }
 
-.pagoda2_r6_materialize_view <- function(p2, name = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell")) {
+.pagoda2_r6_materialize_view <- function(p2, name = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) {
   orientation <- match.arg(orientation)
-  view <- p2$getMatrixView(name)
-  raw <- p2$getRawCounts(cells = cells, genes = genes)
+  view <- p2$getMatrixView(name, facet = facet)
+  raw <- p2$getRawCounts(cells = cells, genes = genes, facet = facet)
   x <- .pagoda2_materialize_view(raw, view)
   if (orientation == "gene_by_cell") {
     return(Matrix::t(x))
@@ -242,11 +296,11 @@
 
 .pagoda2_r6_get_expression_block <- function(p2, layer = "analysis", cells = NULL, genes = NULL,
                                              orientation = c("cell_by_gene", "gene_by_cell"),
-                                             scale.variance = FALSE) {
+                                             scale.variance = FALSE, facet = NULL) {
   orientation <- match.arg(orientation)
-  x <- p2$materializeView(name = layer, cells = cells, genes = genes, orientation = "cell_by_gene")
+  x <- p2$materializeView(name = layer, cells = cells, genes = genes, orientation = "cell_by_gene", facet = facet)
   if (isTRUE(scale.variance)) {
-    x <- .pagoda2_apply_variance_scaling(x, p2$misc[["varinfo"]])
+    x <- .pagoda2_apply_variance_scaling(x, p2$resolveFacet(facet)$varinfo)
   }
   if (orientation == "gene_by_cell") {
     return(Matrix::t(x))
@@ -254,9 +308,30 @@
   x
 }
 
-.pagoda2_r6_view_col_mean_var <- function(p2, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL) {
-  raw <- p2$getRawCounts()
-  view <- p2$getMatrixView(name)
+## Per-column mean/variance over a materialized (sparse) view; float64, single deterministic pass.
+## Used for view models the streaming C++ kernel does not yet handle (clr/tfidf). Sample variance (n-1).
+.pagoda2_col_mean_var_dense <- function(x) {
+  n <- nrow(x)
+  mm <- as.numeric(Matrix::colMeans(x))
+  x2 <- x
+  x2@x <- x2@x^2
+  sumsq <- as.numeric(Matrix::colSums(x2))
+  vv <- if (n > 1L) (sumsq - n * mm^2) / (n - 1L) else rep(0, ncol(x))
+  vv[vv < 0] <- 0
+  nobs <- as.integer(diff(x@p))
+  data.frame(m = mm, v = vv, nobs = nobs)
+}
+
+.pagoda2_r6_view_col_mean_var <- function(p2, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL, facet = NULL) {
+  raw <- p2$getRawCounts(facet = facet)
+  view <- p2$getMatrixView(name, facet = facet)
+  ## Models the streaming kernel doesn't (yet) handle: materialize in R, reduce in float64. Deterministic
+  ## (thread-count-invariant by construction). The C++ `viewKernelValue` clr/tfidf branch (§6.2) is a
+  ## perf follow-up validated against this path.
+  if (!view$model %in% c("plain", "raw")) {
+    x <- .pagoda2_materialize_view(if (is.null(cells)) raw else raw[.pagoda2_axis_selection_index(cells, rownames(raw), what = "cell(s)"), , drop = FALSE], view)
+    return(.pagoda2_col_mean_var_dense(x))
+  }
   rowSel <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
   args <- .pagoda2_view_kernel_args(raw, view)
   n.cores <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "variance")$native
@@ -277,13 +352,13 @@
 }
 
 .pagoda2_r6_view_col_sum_by_fac <- function(p2, grouping = NULL, groups = NULL, name = "analysis", cells = NULL,
-                                            n.cores = NULL, threads = NULL) {
-  raw <- p2$getRawCounts()
+                                            n.cores = NULL, threads = NULL, facet = NULL) {
+  raw <- p2$getRawCounts(facet = facet)
   selected <- .pagoda2_cell_selection_mask(cells, rownames(raw), what = "cells")
   if (!is.null(selected)) {
     raw <- raw[selected, , drop = FALSE]
   }
-  view <- p2$getMatrixView(name)
+  view <- p2$getMatrixView(name, facet = facet)
   cols <- p2$resolveGrouping(
     grouping = grouping,
     groups = groups,

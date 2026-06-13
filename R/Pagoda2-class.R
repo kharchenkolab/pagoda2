@@ -91,6 +91,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @field history Workflow and result provenance.
     history = list(),
 
+    #' @field defaultFacet Name of the default facet (the one backed by top-level storage; default "RNA").
+    defaultFacet = "RNA",
+
     #' @description Initialize Pagoda2 class
     #'
     #' @param x input count matrix
@@ -114,7 +117,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
                           min.transcripts.per.cell = 10, batch = NULL,
                           lib.sizes = NULL, log.scale = TRUE, keep.genes = NULL) {
       if ("Pagoda2" %in% class(x)) { # copy constructor
-        for (n in setdiff(ls(x), "counts")) {
+        for (n in setdiff(ls(x), c("counts", "facets", "cells"))) {
           if (!is.function(get(n, x))) assign(n, get(n, x), self)
         }
 
@@ -188,13 +191,14 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param genes Optional genes to return.
     #' @param orientation Matrix orientation to return.
     #' @return Sparse raw count matrix.
-    getRawCounts = function(cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell")) .pagoda2_r6_get_raw_counts(self, cells = cells, genes = genes, orientation = orientation),
+    getRawCounts = function(cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) .pagoda2_r6_get_raw_counts(self, cells = cells, genes = genes, orientation = orientation, facet = facet),
 
     #' @description Return a matrix view recipe.
     #'
     #' @param name Matrix view name.
+    #' @param facet Facet name (NULL = default facet).
     #' @return List describing the view recipe.
-    getMatrixView = function(name = "analysis") .pagoda2_r6_get_matrix_view(self, name = name),
+    getMatrixView = function(name = "analysis", facet = NULL) .pagoda2_r6_get_matrix_view(self, name = name, facet = facet),
 
     #' @description Materialize a matrix view over selected cells and genes.
     #'
@@ -203,7 +207,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param genes Optional genes to include.
     #' @param orientation Matrix orientation to return.
     #' @return Sparse matrix for the requested view.
-    materializeView = function(name = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell")) .pagoda2_r6_materialize_view(self, name = name, cells = cells, genes = genes, orientation = orientation),
+    materializeView = function(name = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) .pagoda2_r6_materialize_view(self, name = name, cells = cells, genes = genes, orientation = orientation, facet = facet),
 
     #' @description Alias for materializeView() using expression terminology.
     #'
@@ -213,7 +217,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param orientation Matrix orientation to return.
     #' @param scale.variance Whether to apply stored gene variance scale factors.
     #' @return Sparse matrix for the requested expression block.
-    getExpressionBlock = function(layer = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), scale.variance = FALSE) .pagoda2_r6_get_expression_block(self, layer = layer, cells = cells, genes = genes, orientation = orientation, scale.variance = scale.variance),
+    getExpressionBlock = function(layer = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), scale.variance = FALSE, facet = NULL) .pagoda2_r6_get_expression_block(self, layer = layer, cells = cells, genes = genes, orientation = orientation, scale.variance = scale.variance, facet = facet),
 
     #' @description Calculate column means and variances for a matrix view without materializing it.
     #'
@@ -221,7 +225,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param cells Optional cells to include.
     #' @param n.cores Number of threads for the sparse kernel.
     #' @return data.frame with m, v, and nobs columns.
-    viewColMeanVar = function(name = "analysis", cells = NULL, n.cores = NULL, threads = NULL) .pagoda2_r6_view_col_mean_var(self, name = name, cells = cells, n.cores = n.cores, threads = threads),
+    viewColMeanVar = function(name = "analysis", cells = NULL, n.cores = NULL, threads = NULL, facet = NULL) .pagoda2_r6_view_col_mean_var(self, name = name, cells = cells, n.cores = n.cores, threads = threads, facet = facet),
 
     #' @description Calculate grouping-stratified column sums for a matrix view without materializing it.
     #'
@@ -230,7 +234,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param name Matrix view name.
     #' @param cells Optional cells to include.
     #' @return Matrix with one row for NA values followed by factor levels present in groups.
-    viewColSumByFac = function(grouping = NULL, groups = NULL, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL) .pagoda2_r6_view_col_sum_by_fac(self, grouping = grouping, groups = groups, name = name, cells = cells, n.cores = n.cores, threads = threads),
+    viewColSumByFac = function(grouping = NULL, groups = NULL, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL, facet = NULL) .pagoda2_r6_view_col_sum_by_fac(self, grouping = grouping, groups = groups, name = name, cells = cells, n.cores = n.cores, threads = threads, facet = facet),
 
     #' @description Validate current matrix storage invariants.
     #'
@@ -519,6 +523,30 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @return data.frame with grouping summaries.
     listGroupings = function() .pagoda2_r6_list_groupings(self),
+
+    #' @description List facet names (default facet first).
+    #' @return Character vector of facet names.
+    listFacets = function() .pagoda2_r6_list_facets(self),
+
+    #' @description Get a facet view by name.
+    #' @param name Facet name (NULL = default facet).
+    #' @return A Pagoda2Facet view.
+    getFacet = function(name = NULL) .pagoda2_r6_get_facet(self, name = name),
+
+    #' @description Resolve a facet argument to a facet view.
+    #' @param facet Facet name, NULL (default facet), or a Pagoda2Facet.
+    #' @return A Pagoda2Facet view.
+    resolveFacet = function(facet = NULL) .pagoda2_r6_resolve_facet(self, facet = facet),
+
+    #' @description Add a non-default facet (e.g. ADT, ATAC) from a cells-by-features count matrix.
+    #' @param name Facet name.
+    #' @param countMatrix Cells-by-features count matrix (dgCMatrix or matrix).
+    #' @param modelType Normalization model ("plain"/"raw"/"clr"/"tfidf").
+    #' @param featureType Feature kind ("gene"/"protein"/"peak").
+    #' @param defaultReduction Reduction implied by this facet.
+    #' @param depth Optional per-cell depth (default: row sums).
+    #' @return Invisibly returns self.
+    addFacet = function(name, countMatrix, modelType = "plain", featureType = "gene", defaultReduction = "PCA", depth = NULL) .pagoda2_r6_add_facet(self, name = name, countMatrix = countMatrix, modelType = modelType, featureType = featureType, defaultReduction = defaultReduction, depth = depth),
 
     #' @description List stored reductions.
     #'
@@ -3041,6 +3069,23 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         stop(.pagoda2_counts_removed_message("access"), call. = FALSE)
       }
       stop(.pagoda2_counts_removed_message("assign"), call. = FALSE)
+    },
+
+    #' @field facets Named list of facet views (default facet first). Read-only; use addFacet().
+    facets = function(value) {
+      if (!missing(value)) {
+        stop("`facets` is read-only; use addFacet()/getFacet() and setCountMatrix() for the default facet.", call. = FALSE)
+      }
+      .pagoda2_r6_facets(self)
+    },
+
+    #' @field cells Canonical (ordered) cell-id axis. Currently the default facet's cells; union across facets in a later phase.
+    cells = function(value) {
+      if (!missing(value)) {
+        stop("`cells` is read-only.", call. = FALSE)
+      }
+      rc <- self$rawCounts
+      if (is.null(rc)) character(0) else rownames(rc)
     }
   )
 )
