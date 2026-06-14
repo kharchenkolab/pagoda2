@@ -29,6 +29,13 @@ test_that("joint reduction (concat-PCA) is a named product with feature-axis pro
   expect_true(grepl("joint:concat", attr(w, "method")))
 })
 
+test_that("concat-PCA joint reduction defaults to a distinct name (not 'WNN')", {
+  p2 <- joint_p2()
+  suppressWarnings(p2$runReduction(facets = c("RNA", "ADT"), nPcs = 3, verbose = FALSE)) # no name=
+  expect_true("concatPCA" %in% names(p2$reductions)) # method-derived default, not "WNN"
+  expect_false("WNN" %in% names(p2$reductions)) # "WNN" reserved for runGraph(method="wnn")
+})
+
 test_that("joint reduction respects the no-shadow rule (can't be named after a per-facet method)", {
   p2 <- joint_p2()
   expect_error(suppressWarnings(p2$runReduction(facets = c("RNA", "ADT"), name = "PCA")), "collides")

@@ -57,6 +57,27 @@ test_that("B+F: WNN builds a weighted SNN graph (igraph) with provenance + a joi
   expect_identical(attr(p2$reductions[["WNN"]], "input_axes"), c("genes", "proteins"))
 })
 
+test_that("runGraph() auto-integrates all reduction-ready facets by default (§0.2.6)", {
+  skip_if_not_installed("FNN")
+  p2 <- build_wnn_p2()
+  suppressWarnings(p2$runGraph(verbose = FALSE)) # bare: 2 facets ready -> auto-WNN
+  expect_true("WNN" %in% names(p2$graphs))
+  expect_true(all(c("wnn_weight_RNA", "wnn_weight_ADT") %in% colnames(p2$cellMeta)))
+})
+
+test_that("single-facet runGraph() stays a plain kNN (no auto-WNN); needs N2R", {
+  skip_if_not_installed("N2R")
+  cm <- Matrix::Matrix(matrix(rpois(15 * 40, 3), 15, 40, dimnames = list(paste0("g", 1:15), paste0("c", 1:40))), sparse = TRUE)
+  p2 <- Pagoda2$new(as(cm, "dgCMatrix"), verbose = FALSE, n.cores = 1, min.cells.per.gene = 0, min.transcripts.per.cell = 0, trim = 0, log.scale = TRUE)
+  suppressWarnings({
+    p2$runVariance(use.raw.variance = TRUE, verbose = FALSE)
+    p2$runReduction(nPcs = 5, var.scale = FALSE, verbose = FALSE)
+    p2$runGraph(verbose = FALSE)
+  })
+  expect_false("WNN" %in% names(p2$graphs)) # single facet -> kNN, not WNN
+  expect_true("PCA" %in% names(p2$graphs))
+})
+
 test_that("E: WNN generalizes to >= 3 facets (weights still sum to 1; graph built)", {
   skip_if_not_installed("FNN")
   p2 <- build_wnn_p2(extra.noise = TRUE)

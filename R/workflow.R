@@ -292,11 +292,20 @@
 }
 
 .pagoda2_r6_run_graph <- function(p2, reduction = NULL, method = NULL, facets = NULL, n.cores = NULL, threads = NULL, ...) {
-  ## Multi-facet integration: runGraph(method="wnn", facets=) builds the WNN joint reduction + weighted
-  ## graph. Single-facet: a kNN graph on the (facet's) reduction. The algorithm is a `method=`.
-  if (!is.null(method) && identical(tolower(method), "wnn")) {
+  m <- if (is.null(method)) "" else tolower(method)
+  ## facets whose default reduction is already computed (candidates for auto-integration)
+  ready <- Filter(function(fn) {
+    f <- p2$resolveFacet(fn)
+    !is.null(p2$reductions[[.pagoda2_reduction_key(p2, fn, f$defaultReduction)]])
+  }, p2$listFacets())
+  ## Integrate facets by default (§0.2.6): explicit method="wnn", OR — when nothing single-facet was
+  ## requested — auto-WNN whenever >= 2 facets are reduction-ready. A single-facet object (or a run()
+  ## pipeline that has only computed the default facet's reduction) falls through to a plain kNN, so
+  ## single-RNA behavior is unchanged.
+  use.wnn <- identical(m, "wnn") || (is.null(method) && is.null(reduction) && length(ready) > 1L)
+  if (use.wnn) {
     if (is.null(facets)) {
-      facets <- p2$listFacets()
+      facets <- if (identical(m, "wnn")) p2$listFacets() else ready
     }
     return(.pagoda2_r6_run_wnn(p2, facets = facets, n.cores = n.cores, threads = threads, ...))
   }
@@ -588,13 +597,14 @@
 ## scores to unit average norm, concatenates, and re-PCAs to a shared latent over the common cells. Stored
 ## as a name-keyed named product `reductions[[name]]` with provenance {facets, input_axes, method} — the
 ## §5 shape (scores top-level; per-facet loadings stay in the facet). WNN/MOFA can replace `method` later.
-.pagoda2_r6_run_joint_reduction <- function(p2, facets, method = NULL, name = "WNN", reductions = NULL,
+.pagoda2_r6_run_joint_reduction <- function(p2, facets, method = NULL, name = NULL, reductions = NULL,
                                             nPcs = 50, fastpath = TRUE, maxit = 100, verbose = TRUE, ...) {
-  if (is.null(name)) {
-    name <- "WNN"
-  }
   if (is.null(method)) {
     method <- "concat"
+  }
+  if (is.null(name)) {
+    ## product name derived from the method (NOT "WNN" — that is reserved for runGraph(method="wnn"))
+    name <- if (identical(method, "concat")) "concatPCA" else toupper(method)
   }
   .pagoda2_validate_joint_name(p2, name) # no per-facet-method-name shadow (§4.5.1)
   parts <- list()
