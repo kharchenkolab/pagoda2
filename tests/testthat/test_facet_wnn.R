@@ -1,40 +1,119 @@
 library(pagoda2)
 
-test_that("WNN produces per-cell modality weights that down-weight the uninformative modality", {
-  skip_if_not_installed("FNN")
+# RNA with two clusters (structured) + extra noise facets; per-facet reductions at DIFFERENT dims
+# (the faithful, bandwidth-normalized WNN must be dimensionality-robust).
+build_wnn_p2 <- function(extra.noise = FALSE) {
   set.seed(12)
   ng <- 40
-  nc <- 60
+  nc <- 80
   grp <- rep(1:2, each = nc / 2)
   base <- matrix(rpois(ng * nc, 2), ng, nc)
-  base[1:20, grp == 2] <- base[1:20, grp == 2] + rpois(20 * (nc / 2), 15) # two strongly separated RNA clusters
+  base[1:20, grp == 2] <- base[1:20, grp == 2] + rpois(20 * (nc / 2), 12)
   dimnames(base) <- list(paste0("g", seq_len(ng)), paste0("c", seq_len(nc)))
   p2 <- Pagoda2$new(as(Matrix::Matrix(base, sparse = TRUE), "dgCMatrix"), verbose = FALSE, n.cores = 1,
     min.cells.per.gene = 0, min.transcripts.per.cell = 0, trim = 0, log.scale = TRUE)
-  np <- 10
-  adt <- matrix(rpois(nc * np, 4) + 1L, nc, np, dimnames = list(paste0("c", seq_len(nc)), paste0("P", seq_len(np)))) # pure noise
+  np <- 12
+  adt <- matrix(rpois(nc * np, 4) + 1L, nc, np, dimnames = list(paste0("c", seq_len(nc)), paste0("P", seq_len(np))))
   p2$addFacet("ADT", as(Matrix::Matrix(adt, sparse = TRUE), "dgCMatrix"), modelType = "plain", featureType = "protein")
-  # matched reduction dimensionality so the per-cell concentration weights compare fairly across facets
   suppressWarnings({
     p2$runVariance(use.raw.variance = TRUE, verbose = FALSE)
-    p2$runReduction(nPcs = 8, var.scale = FALSE, verbose = FALSE)
+    p2$runReduction(nPcs = 10, var.scale = FALSE, verbose = FALSE) # RNA: 10 dims
     p2$runVariance(facet = "ADT", use.raw.variance = TRUE, verbose = FALSE)
-    p2$runReduction(facet = "ADT", nPcs = 8, var.scale = FALSE, verbose = FALSE)
+    p2$runReduction(facet = "ADT", nPcs = 5, var.scale = FALSE, verbose = FALSE) # ADT: 5 dims (mismatched)
   })
+  if (extra.noise) {
+    nh <- 8
+    hto <- matrix(rpois(nc * nh, 3) + 1L, nc, nh, dimnames = list(paste0("c", seq_len(nc)), paste0("H", seq_len(nh))))
+    p2$addFacet("HTO", as(Matrix::Matrix(hto, sparse = TRUE), "dgCMatrix"), modelType = "plain", featureType = "feature")
+    suppressWarnings({
+      p2$runVariance(facet = "HTO", use.raw.variance = TRUE, verbose = FALSE)
+      p2$runReduction(facet = "HTO", nPcs = 4, var.scale = FALSE, verbose = FALSE)
+    })
+  }
+  p2
+}
 
+test_that("A: faithful WNN down-weights the noise modality even with mismatched reduction dims", {
+  skip_if_not_installed("FNN")
+  p2 <- build_wnn_p2()
   suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE))
-
-  # named-product joint reduction + provenance
-  expect_true("WNN" %in% names(p2$reductions))
-  expect_identical(attr(p2$reductions[["WNN"]], "facets"), c("RNA", "ADT"))
-  expect_identical(attr(p2$reductions[["WNN"]], "method"), "wnn")
-
-  # per-cell modality weights, shared cell measures, sum to 1
-  expect_true(all(c("wnn_weight_RNA", "wnn_weight_ADT") %in% colnames(p2$cellMeta)))
   wr <- p2$cellMeta$wnn_weight_RNA
   wa <- p2$cellMeta$wnn_weight_ADT
-  expect_equal(wr + wa, rep(1, nc), tolerance = 1e-9)
+  expect_equal(wr + wa, rep(1, length(wr)), tolerance = 1e-9) # weights sum to 1 per cell
+  expect_gt(mean(wr), mean(wa)) # structured RNA up-weighted over noise ADT, despite 10 vs 5 dims
+})
 
-  # the informative modality (structured RNA) gets a higher mean weight than the noise modality (ADT)
-  expect_gt(mean(wr), mean(wa))
+test_that("B+F: WNN builds a weighted SNN graph (igraph) with provenance + a joint reduction", {
+  skip_if_not_installed("FNN")
+  p2 <- build_wnn_p2()
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE))
+  g <- p2$graphs[["WNN"]]
+  expect_true(inherits(g, "igraph"))
+  expect_equal(igraph::vcount(g), 80)
+  expect_true(igraph::is_weighted(g))
+  expect_identical(attr(g, "facets"), c("RNA", "ADT"))
+  expect_identical(attr(g, "method"), "wnn")
+  expect_true("WNN" %in% names(p2$reductions))
+  expect_identical(attr(p2$reductions[["WNN"]], "input_axes"), c("genes", "proteins"))
+})
+
+test_that("E: WNN generalizes to >= 3 facets (weights still sum to 1; graph built)", {
+  skip_if_not_installed("FNN")
+  p2 <- build_wnn_p2(extra.noise = TRUE)
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT", "HTO"), verbose = FALSE))
+  w <- cbind(p2$cellMeta$wnn_weight_RNA, p2$cellMeta$wnn_weight_ADT, p2$cellMeta$wnn_weight_HTO)
+  expect_equal(rowSums(w), rep(1, nrow(w)), tolerance = 1e-9)
+  expect_gt(mean(w[, 1]), mean(w[, 2])) # RNA still beats a noise modality
+  expect_equal(igraph::vcount(p2$graphs[["WNN"]]), 80)
+})
+
+test_that("E: end-to-end WNN -> clustering on the WSNN graph + embedding on the joint reduction", {
+  skip_if_not_installed("FNN")
+  skip_if_not_installed("leidenAlg")
+  skip_if_not_installed("uwot")
+  p2 <- build_wnn_p2()
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE))
+  p2$runClustering(graph = "WNN", name = "wnn_leiden")
+  expect_true("wnn_leiden" %in% colnames(p2$cellMeta))
+  expect_gt(length(unique(na.omit(p2$cellMeta$wnn_leiden))), 1L) # the structured data yields >1 cluster
+  suppressWarnings(p2$runEmbedding(reduction = "WNN", name = "umap", verbose = FALSE))
+  expect_true("WNN" %in% names(p2$embeddings))
+})
+
+test_that("vs-Seurat: per-cell WNN weights rank-correlate with Seurat::FindMultiModalNeighbors (real CITE-seq)", {
+  skip_if_not_installed("Seurat")
+  skip_if_not_installed("SeuratObject")
+  skip_if_not_installed("FNN")
+  h5 <- Sys.getenv("P21_CITESEQ_10X_H5", "/home/pkharchenko/p21/lstar/testdata/citeseq_10x/pbmc_1k_protein_v3.h5")
+  skip_if(!file.exists(h5), "real 10x CITE-seq fixture not present")
+
+  # pagoda2 WNN on real RNA+ADT
+  p2 <- pagoda2:::.pagoda2_from_10x_h5_multimodal(h5, verbose = FALSE)
+  suppressWarnings({
+    p2$runVariance(verbose = FALSE)
+    p2$runReduction(nPcs = 20, verbose = FALSE)
+    p2$runVariance(facet = "ADT", use.raw.variance = TRUE, verbose = FALSE)
+    p2$runReduction(facet = "ADT", nPcs = 10, verbose = FALSE)
+    p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE)
+  })
+  rna <- p2$reductions[["PCA"]]
+  adtr <- p2$reductions[["ADT:PCA"]]
+  cells <- rownames(rna)
+  colnames(rna) <- paste0("rnapca_", seq_len(ncol(rna)))
+  colnames(adtr) <- paste0("adtpca_", seq_len(ncol(adtr)))
+
+  # Seurat WNN on the SAME reductions (fair algorithm comparison, not a preprocessing comparison)
+  so <- suppressWarnings(SeuratObject::CreateSeuratObject(counts = Matrix::t(as(p2$getFacet("RNA")$rawCounts, "CsparseMatrix"))))
+  so[["ADT"]] <- suppressWarnings(SeuratObject::CreateAssayObject(counts = Matrix::t(as(p2$getFacet("ADT")$rawCounts, "CsparseMatrix"))))
+  so[["rnapca"]] <- SeuratObject::CreateDimReducObject(embeddings = rna[colnames(so), ], key = "rnapca_", assay = "RNA")
+  so[["adtpca"]] <- SeuratObject::CreateDimReducObject(embeddings = adtr[colnames(so), ], key = "adtpca_", assay = "ADT")
+  so <- suppressWarnings(Seurat::FindMultiModalNeighbors(so,
+    reduction.list = list("rnapca", "adtpca"),
+    dims.list = list(seq_len(ncol(rna)), seq_len(ncol(adtr))), verbose = FALSE))
+
+  sr <- stats::setNames(so@meta.data[["RNA.weight"]], rownames(so@meta.data))
+  pr <- stats::setNames(p2$cellMeta[cells, "wnn_weight_RNA"], cells)
+  co <- intersect(cells, names(sr))
+  rho <- suppressWarnings(stats::cor(pr[co], sr[co], method = "spearman"))
+  expect_gt(rho, 0.2) # pagoda2 and Seurat WNN agree on which cells favor RNA (independent algorithms)
 })

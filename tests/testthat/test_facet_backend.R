@@ -3,7 +3,7 @@ library(pagoda2)
 # lstar is a sister package (built in its own lib); make it discoverable if present, else skip (CI-safe).
 lstar_lib <- Sys.getenv("P21_LSTAR_LIB", "/home/pkharchenko/p21/lstar/.Rlib")
 if (dir.exists(file.path(lstar_lib, "lstar"))) {
-  .libPaths(c(lstar_lib, .libPaths()))
+  .libPaths(c(.libPaths(), lstar_lib))
 }
 
 test_that("disk-backed (lstar zarr) facet viewColMeanVar matches its in-memory twin (§8.6 out-of-core seam)", {

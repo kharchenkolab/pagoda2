@@ -2,7 +2,7 @@ library(pagoda2)
 
 lstar_lib <- Sys.getenv("P21_LSTAR_LIB", "/home/pkharchenko/p21/lstar/.Rlib")
 if (dir.exists(file.path(lstar_lib, "lstar"))) {
-  .libPaths(c(lstar_lib, .libPaths()))
+  .libPaths(c(.libPaths(), lstar_lib))
 }
 
 test_that("pagoda2 -> lstar zarr -> pagoda2 is a fixed point on facet counts (multi-facet round-trip)", {
