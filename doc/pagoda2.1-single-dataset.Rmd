@@ -9,9 +9,11 @@ format:
 jupyter: ir44
 ---
 
-This notebook shows the current pagoda2.1 single-dataset workflow on a PBMC sample from GEO: [GSM5746259](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5746259).
+This notebook shows the current pagoda2.1 single-dataset scRNA-seq workflow on a PBMC sample from GEO: [GSM5746259](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5746259). For **multimodal** data (CITE-seq, ATAC/multiome) see the companion notebooks `pagoda2.1-citeseq` and `pagoda2.1-multiome`.
 
 The count data are downloaded from that GEO sample page as a 10x-style triplet: a sparse matrix file, a cell barcode file, and a gene/feature file. Here those three files are in a local folder named `data`.
+
+Pipeline steps are **generic, with the algorithm chosen by `method=`** — `p2$runReduction()`, `p2$runGraph()`, `p2$runClustering()`, `p2$runEmbedding()` (there is no `runPCA`/`runLeiden`/`runWNN`). `p2$run()` below chains the standard scRNA-seq sequence; the individual steps are used directly in the multimodal notebooks.
 
 ## Input Data
 
@@ -153,11 +155,12 @@ marker_name
 #| fig-dpi: 140
 p2$plotMarkerDotPlot(
   markers = marker_name,
-  n.genes.per.group = 5,
+  n.genes.per.group = 3,
   selection = "balanced",
   order.groups = TRUE,
-  dot.scale = 8.5
-) + ggplot2::labs(title = "Leiden marker genes")
+  dot.scale = 6
+) + ggplot2::labs(title = "Leiden marker genes") +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
 ```
 
 The native marker heatmap avoids a heavy ComplexHeatmap dependency. The top tracks show QC metrics so marker blocks can be inspected together with per-cell quality summaries.
@@ -192,3 +195,5 @@ p2$annotateClusters(
 ```
 
 After that, the same plotting and marker methods will use `cell_type` by default unless a different grouping is requested.
+
+For data with more than one modality, each modality is a **facet** and the same generic steps take a `facet=` (per modality) or `facets=` (joint) argument. See the [CITE-seq](pagoda2.1-citeseq.ipynb) and [ATAC / multiome](pagoda2.1-multiome.ipynb) notebooks for `addFacet()`, the CLR/TF-IDF view models, and WNN integration.

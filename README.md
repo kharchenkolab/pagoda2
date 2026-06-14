@@ -5,7 +5,7 @@
 # pagoda2
 
 - [Pagoda2.1 Development Version](#pagoda21-development-version)
-- [Tutorial](#tutorial)
+- [Tutorials](#tutorials)
 - [Installation](#installation)
 - [Citation](#citation)
 
@@ -13,33 +13,35 @@
 
 **Note:** this branch is a development version of pagoda2.1. It is intended for testing the next pagoda2 API and workflow design, not as a frozen CRAN-style release.
 
+Pagoda2 is an R package for analyzing single-cell datasets. The methods were optimized to rapidly process modern single-cell data, which is large and sparse. Pagoda2.1 keeps the **raw counts as the canonical matrix** and computes normalized "analysis views" on the fly from a small recipe, so it stays memory-lean and can run **out-of-core** off a portable on-disk store.
+
+Pagoda2.1 is now **multimodal**: a dataset is a set of **facets** (one molecular modality each — RNA, CITE-seq protein, ATAC peaks, ...), all sharing the same cells, with cross-modality integration.
+
 Highlights in this development branch:
 
-- cleaner single-dataset R6 workflow API with `Pagoda2$from()`, `p2$run()`, `p2$runQC()`, `p2$filterData()`, `p2$plotEmbedding()`, and marker plotting methods;
-- support for common scRNA-seq import formats, including 10x triplets, 10x/CellRanger HDF5, AnnData h5ad, h5Seurat, and loom;
-- export support for native RDS and h5ad, plus optional in-memory conversion to list, SingleCellExperiment, or Seurat objects;
-- smaller memory footprint through sparse raw counts and lightweight normalized matrix views instead of storing a full duplicate normalized matrix;
-- reduced dependency footprint, with heavy ecosystem packages kept optional where possible;
-- agent integration through the repository-local pagoda2.1 skill in [`skill/`](skill/).
+- **One R6 object, a generic step API.** `Pagoda2$from...()` to import, then `p2$runQC()`, `p2$filterData()`, `p2$runVariance()`, and the generic pipeline steps `p2$runReduction()`, `p2$runGraph()`, `p2$runClustering()`, `p2$runEmbedding()` — the algorithm is always a `method=` (e.g. `method = "pca"`, `"leiden"`, `"wnn"`), so there is no `runPCA`/`runLeiden`/`runWNN`. `p2$run()` chains the standard workflow.
+- **Multimodal via facets.** `p2$addFacet()` adds a modality; native 10x multimodal H5 import maps `feature_type` to facets automatically (`Gene Expression`→RNA, `Antibody Capture`→ADT/CLR, `Peaks`→ATAC/TF-IDF). Per-facet normalization view models: `plain` (RNA), `clr` (CITE-seq protein), `tfidf` (ATAC).
+- **Cross-modality integration.** `runGraph(method = "wnn")` (weighted nearest neighbors), and reduction-level `runReduction(facets = ..., method = "cca" | "scca" | "concat")` — joints are stored as ordinary name-keyed products (`reductions[["WNN"]]`, `reductions[["CCA"]]`).
+- **Memory-lean and disk-backed.** Sparse raw counts + lightweight view recipes instead of a duplicate normalized matrix; a facet's counts can live in a portable **lstar Zarr** store and stream in bounded memory (`backend = "lstar"`), bit-identical to in-memory.
+- **Fast.** Threaded approximate-kNN (RcppHNSW) for all graph building; RSpectra truncated SVD for PCA/LSI.
+- **I/O.** Imports 10x triplets, 10x/CellRanger HDF5 (incl. multimodal), AnnData h5ad, h5Seurat, and loom; exports native RDS, h5ad, and lstar Zarr; optional in-memory conversion to list, SingleCellExperiment, or Seurat.
+- **Agent integration** through the repository-local pagoda2.1 skill in [`skill/`](skill/).
 
-Web app support is currently disabled in this development version while the app export and frontend integration are redesigned.
+For joint analysis of **multiple datasets**, see [conos](https://github.com/kharchenkolab/conos) (pagoda2 preprocesses its input samples). Several methods here build on [SCDE](https://hms-dbmi.github.io/scde/) and PAGODA1. Web app support is currently disabled in this development version while the app export is redesigned.
 
-Pagoda2 is an R package for analyzing large-scale single-cell RNA-seq datasets. The methods were optimized to rapidly process modern scRNAseq datasets, which are both large and sparse. The package provides methods for quality control, filtering, clustering, visualization, differential expression, cross-cutting aspects/states, and geneset/pathway overdispersion analysis.
+## Tutorials
 
-Note that `pagoda2` is an R package developed for analyzing standalone scRNAseq datasets. For joint analysis of multiple datasets, please see the package [conos](https://github.com/kharchenkolab/conos). (The package `pagoda2` is primarily used to preprocess input datasets for conos.)
+GitHub-viewable notebooks (rendered from the `.Rmd` sources in [`doc/`](doc/); see [notebook rendering](doc/notebook_rendering.md)):
 
-Several methods within this package were developed based on the originals implemented within [SCDE](https://hms-dbmi.github.io/scde/) and PAGODA1.
+- [**Single-dataset scRNA-seq workflow**](doc/pagoda2.1-single-dataset.ipynb) — import → QC → variance/HVG → PCA → graph → UMAP → Leiden → markers, on a PBMC sample.
+- [**CITE-seq (RNA + protein)**](doc/pagoda2.1-citeseq.ipynb) — a 10x CITE-seq sample as RNA + ADT facets (CLR), per-facet reductions, **WNN** integration, joint clustering, and RNA + protein markers.
+- [**ATAC / 10x multiome (RNA + ATAC)**](doc/pagoda2.1-multiome.ipynb) — a 10x multiome sample as RNA + ATAC facets, RNA PCA + ATAC **LSI** (TF-IDF→SVD), **WNN** integration, and joint clustering.
 
-## Tutorial
-
-The current pagoda2.1 single-dataset workflow vignette is available as a GitHub-viewable notebook:
-
-- [Pagoda2.1 single-dataset workflow notebook](doc/pagoda2.1-single-dataset.ipynb)
-
-Development notes:
+More notes:
 
 - [Matrix storage and views](doc/pagoda2.1-matrix-views.md)
 - [Notebook rendering](doc/notebook_rendering.md)
+- [Disk-backing benchmarks (in-memory vs lstar-zarr)](benchmark/README.md)
 - [Agent skill and recipe](skill/)
 
 ## Installation
@@ -51,6 +53,8 @@ install.packages("remotes")
 remotes::install_github("kharchenkolab/sccore", ref = "devel")
 remotes::install_github("kharchenkolab/pagoda2", ref = "devel")
 ```
+
+The multimodal Zarr import/export and disk backing additionally require the `lstar` R package.
 
 ## Citation
 

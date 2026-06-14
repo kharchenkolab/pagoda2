@@ -72,6 +72,21 @@ p2$runMarkers(grouping = "leiden", facet = "ADT")  # facet-keyed: markerResults[
 Per-facet **loadings** stay in the facet (`p2$getFacet("ADT")$loadings[["PCA"]]`);
 reduction **scores** go top-level (`p2$reductions[["ADT:PCA"]]`).
 
+**Visualizing a facet.** The downstream plot/marker methods take `facet=` and draw that facet's own
+(correctly normalized) expression:
+
+```r
+p2$plotEmbedding(reduction = "WNN", gene = "CD3_TotalSeqB", facet = "ADT")  # color by a protein / peak
+p2$getTopMarkers(markers = "leiden", facet = "ADT")                          # the facet's marker table
+p2$plotMarkerDotPlot(markers = "leiden", facet = "ADT")                      # facet markers + expression
+p2$plotMarkerHeatmap(markers = "leiden", facet = "ADT")
+```
+
+`getExpressionBlock(genes=, facet=)` computes the CLR/TF-IDF view over the **full** feature axis before
+subsetting columns (CLR is per-cell across all features; subsetting first would collapse a single feature
+to 0), so single-feature/marker expression is correct. For CITE-seq protein, surface markers are detected
+in ~every cell, so a per-cluster CLR heatmap reads better than a dot plot's size dimension.
+
 ### The default / resolution rule (single-facet stays bare; joints can't shadow)
 
 - A bare reduction name (`reductions[["PCA"]]`) is the default facet's.
