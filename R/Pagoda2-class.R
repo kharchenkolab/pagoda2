@@ -2165,16 +2165,16 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         # cell subset is just for PC determination
         nPcs <- min(min(length(cells), ncol(x)) - 1, nPcs)
         cm <- Matrix::colMeans(x[cells, ])
-        pcs <- irlba(x[cells, ], nv = nPcs, nu = 0, center = cm, right_only = FALSE, fastpath = fastpath, maxit = maxit, reorth = TRUE, ...)
+        pcs <- .pagoda2_truncated_svd(x[cells, ], nv = nPcs, center = cm, maxit = maxit, fastpath = fastpath)
         total.variance <- .pagoda2_matrix_sumsq(x[cells, , drop = FALSE]) - length(cells) * sum(cm^2)
       } else {
         nPcs <- min(min(nrow(x), ncol(x)) - 1, nPcs)
         if (center) {
           cm <- Matrix::colMeans(x)
-          pcs <- irlba(x, nv = nPcs, nu = 0, center = cm, right_only = FALSE, fastpath = fastpath, maxit = maxit, reorth = TRUE, ...)
+          pcs <- .pagoda2_truncated_svd(x, nv = nPcs, center = cm, maxit = maxit, fastpath = fastpath)
           total.variance <- .pagoda2_matrix_sumsq(x) - nrow(x) * sum(cm^2)
         } else {
-          pcs <- irlba(x, nv = nPcs, nu = 0, right_only = FALSE, fastpath = fastpath, maxit = maxit, reorth = TRUE, ...)
+          pcs <- .pagoda2_truncated_svd(x, nv = nPcs, center = NULL, maxit = maxit, fastpath = fastpath)
           total.variance <- .pagoda2_matrix_sumsq(x)
         }
       }

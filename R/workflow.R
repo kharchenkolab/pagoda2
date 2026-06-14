@@ -569,6 +569,30 @@
   switch(facet$featureType, gene = "genes", protein = "proteins", peak = "peaks", facet$featureType)
 }
 
+## Centered truncated SVD for reductions. Prefers RSpectra (C++ Spectra — faster + more accurate than
+## irlba on these blocks, benchmark/README.md), implicit-centering via a matrix operator so the sparse
+## block is never densified; falls back to irlba. Returns a list(d, u, v) compatible with the irlba
+## object the reduction code consumes (uses $v, $d, and stores $center itself).
+.pagoda2_truncated_svd <- function(x, nv, center = NULL, maxit = 100L, fastpath = TRUE, ...) {
+  nv <- as.integer(min(nv, nrow(x) - 1L, ncol(x) - 1L))
+  if (requireNamespace("RSpectra", quietly = TRUE)) {
+    if (is.null(center)) {
+      r <- RSpectra::svds(x, k = nv, nu = 0L, nv = nv)
+    } else {
+      cm <- as.numeric(center)
+      A  <- function(v, args) as.numeric(x %*% v) - sum(cm * v)          # (X - 1 cm') v, no densify
+      At <- function(u, args) as.numeric(Matrix::crossprod(x, u)) - cm * sum(u)
+      r <- RSpectra::svds(A, k = nv, nu = 0L, nv = nv, Atrans = At, dim = dim(x))
+    }
+    return(list(d = r$d, u = r$u, v = r$v))
+  }
+  if (is.null(center)) {
+    irlba::irlba(x, nv = nv, nu = 0, fastpath = fastpath, maxit = maxit, reorth = TRUE)
+  } else {
+    irlba::irlba(x, nv = nv, nu = 0, center = center, fastpath = fastpath, maxit = maxit, reorth = TRUE)
+  }
+}
+
 ## Generic reduction step. Single facet (facet=): method defaults to the facet's defaultReduction
 ## (PCA for RNA, LSI for ATAC). Multiple facets (facets=): a JOINT reduction (the §0.4.4 "one joint
 ## method"), a named cell-space product over the shared cells with the contributing feature axes in
@@ -613,7 +637,7 @@
   if (k < 1L) {
     stop("LSI: too few features/cells for the requested number of components", call. = FALSE)
   }
-  sv <- irlba::irlba(x, nv = k, nu = 0, fastpath = fastpath, maxit = maxit)
+  sv <- .pagoda2_truncated_svd(x, nv = k, center = NULL, maxit = maxit, fastpath = fastpath)
   scores <- as.matrix(x %*% sv$v) # cells x k
   loadings <- sv$v
   if (isTRUE(drop.first)) { # drop the depth-correlated first component
@@ -672,7 +696,7 @@
   X <- do.call(cbind, scaled)
   nPcs <- min(nPcs, ncol(X) - 1L, length(common) - 1L)
   cm <- Matrix::colMeans(X)
-  pc <- irlba::irlba(X, nv = nPcs, nu = 0, center = cm, fastpath = fastpath, maxit = maxit)
+  pc <- .pagoda2_truncated_svd(X, nv = nPcs, center = cm, maxit = maxit, fastpath = fastpath)
   scores <- as.matrix(sweep(X %*% pc$v, 2, as.numeric(cm %*% pc$v)))
   rownames(scores) <- common
   colnames(scores) <- paste0(name, seq_len(ncol(scores)))
