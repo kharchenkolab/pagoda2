@@ -1,7 +1,7 @@
 ## Embedding plotting implementation for Pagoda2
 
 .pagoda2_r6_plot_embedding <- function(p2, type = NULL, embeddingType = NULL, reduction = NULL, embedding = NULL, clusterType = NULL,
-                                       groups = NULL, grouping = NULL, colors = NULL, gene = NULL, plot.theme = NULL, .legacy.warn = TRUE, ...) {
+                                       groups = NULL, grouping = NULL, colors = NULL, gene = NULL, facet = NULL, plot.theme = NULL, .legacy.warn = TRUE, ...) {
   dots <- list(...)
 
   if (!is.null(reduction)) {
@@ -70,10 +70,11 @@
   }
 
   if (!is.null(gene)) {
-    if (!(gene %in% .pagoda2_axis_names(p2, "gene"))) {
-      stop("Gene '", gene, "' isn't presented in the count matrix")
+    if (!(gene %in% .pagoda2_axis_names(p2, "gene", facet = facet))) {
+      stop("Feature '", gene, "' isn't present in the count matrix",
+           if (!is.null(facet)) paste0(" for facet '", facet, "'") else "")
     }
-    colors <- p2$getExpressionBlock(genes = gene)[, gene]
+    colors <- p2$getExpressionBlock(genes = gene, facet = facet)[, gene]
   }
 
   if (!is.null(grouping) && !is.null(clusterType)) {

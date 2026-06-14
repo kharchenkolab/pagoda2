@@ -293,6 +293,23 @@
 ## Read a 10x CellRanger HDF5 (CITE-seq / multiome) and build a multi-facet Pagoda2: the primary feature
 ## type (default "Gene Expression" -> RNA) constructs the object; other feature types (Antibody Capture
 ## -> ADT/CLR, Peaks -> ATAC/TF-IDF) become facets over the same (RNA-retained) cell axis.
+## TRUE if a 10x HDF5 holds more than one facet-eligible modality (Gene Expression / Antibody Capture /
+## Peaks / Chromatin Accessibility) -> import should build facets, not subset to RNA. Conservative: any
+## failure to read feature types returns FALSE (single-matrix path).
+.pagoda2_h5_is_multimodal <- function(path) {
+  if (!is.character(path) || length(path) != 1L || !file.exists(path)) return(FALSE)
+  fmt <- tryCatch(.pagoda2_detect_h5_format(path), error = function(e) NA_character_)
+  if (!identical(fmt, "10x_h5")) return(FALSE)
+  tryCatch({
+    h5 <- .pagoda2_h5_open(path, mode = "r"); on.exit(h5$close_all())
+    if (!("matrix" %in% names(h5))) return(FALSE)
+    grp <- h5[["matrix"]]
+    if (!("features" %in% names(grp)) || !("feature_type" %in% names(grp[["features"]]))) return(FALSE)
+    types <- unique(as.character(grp[["features"]][["feature_type"]][]))
+    sum(types %in% c("Gene Expression", "Antibody Capture", "Peaks", "Chromatin Accessibility")) > 1L
+  }, error = function(e) FALSE)
+}
+
 .pagoda2_from_10x_h5_multimodal <- function(path, gene.id = c("symbol", "id"), genome = NULL,
                                             primary = "Gene Expression", make.unique.genes = TRUE,
                                             min.transcripts.per.cell = 0, min.cells.per.gene = 0,
@@ -1309,6 +1326,14 @@ pagoda2From <- function(x, format = NULL, reader.args = list(), ...) {
   if (is.character(x) && length(x) == 1 && (dir.exists(x) || file.exists(x))) {
     if (is.null(format)) {
       format <- "auto"
+    }
+    ## Multimodal 10x HDF5 (CITE-seq / multiome): build facets (RNA + ADT/ATAC) rather than subsetting to
+    ## RNA. Skipped if the caller pins a single `feature.type`. Non-h5 / single-modality fall through.
+    if (format %in% c("auto", "10x_h5") && is.null(reader.args$feature.type) && .pagoda2_h5_is_multimodal(x)) {
+      allowed <- names(formals(.pagoda2_from_10x_h5_multimodal))
+      mm.args <- utils::modifyList(reader.args, constructor.args)
+      mm.args <- mm.args[intersect(names(mm.args), allowed)]
+      return(do.call(.pagoda2_from_10x_h5_multimodal, c(list(path = x), mm.args)))
     }
     if ("verbose" %in% names(constructor.args) && is.null(reader.args$verbose)) {
       reader.args$verbose <- constructor.args$verbose

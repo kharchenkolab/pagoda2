@@ -336,6 +336,16 @@
 .pagoda2_r6_materialize_view <- function(p2, name = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) {
   orientation <- match.arg(orientation)
   view <- p2$getMatrixView(name, facet = facet)
+  ## CLR / TF-IDF normalize across the FULL feature axis (CLR: per-cell geometric mean over all features;
+  ## TF-IDF: per-column IDF). When only a subset of genes is requested, the divisor/IDF must still come
+  ## from all features — otherwise CLR of a single feature collapses to 0. Precompute over the full facet
+  ## (for the requested cells) and attach to the recipe before subsetting columns.
+  if (!is.null(genes) && identical(view$model, "clr") && is.null(view$clrDivisor)) {
+    view$clrDivisor <- .pagoda2_clr_divisor(p2$getRawCounts(cells = cells, facet = facet))
+  }
+  if (!is.null(genes) && identical(view$model, "tfidf") && is.null(view$idf)) {
+    view$idf <- .pagoda2_tfidf_idf(p2$getRawCounts(cells = cells, facet = facet))
+  }
   raw <- p2$getRawCounts(cells = cells, genes = genes, facet = facet)
   x <- .pagoda2_materialize_view(raw, view)
   if (orientation == "gene_by_cell") {

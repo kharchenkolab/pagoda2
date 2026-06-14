@@ -1,7 +1,7 @@
 ## Marker heatmap implementation for Pagoda2
 
 
-.pagoda2_prepare_marker_heatmap <- function(p2, markers = NULL, type = "counts",
+.pagoda2_prepare_marker_heatmap <- function(p2, markers = NULL, type = "counts", facet = NULL,
                                             genes = NULL, grouping = NULL, groups = NULL,
                                             n.genes.per.group = 5, additional.genes = NULL,
                                             exclude.genes = NULL, z.threshold = 2,
@@ -128,7 +128,8 @@
     unlist(out, use.names = FALSE)
   }
 
-  resolved <- p2$resolveMarkers(markers = markers, type = type)
+  key <- if (!is.null(facet)) facet else .pagoda2_markers_lookup_key(p2, type)
+  resolved <- p2$resolveMarkers(markers = markers, type = key)
   selected <- .pagoda2_select_marker_genes(
     resolved$tables,
     n.genes.per.group = n.genes.per.group,
@@ -157,7 +158,7 @@
     selected.genes <- selected.genes[keep]
     selected.groups <- selected.groups[keep]
   }
-  available.genes <- .pagoda2_axis_names(p2, "gene")
+  available.genes <- .pagoda2_axis_names(p2, "gene", facet = key)
   missing.genes <- setdiff(selected.genes, available.genes)
   if (length(missing.genes) > 0) {
     warning("Omitting marker genes absent from count matrix: ", paste(missing.genes, collapse = ", "))
@@ -215,7 +216,7 @@
     )
   }
 
-  x <- as.matrix(t(p2$getExpressionBlock(cells = cells, genes = selected.genes)))
+  x <- as.matrix(t(p2$getExpressionBlock(cells = cells, genes = selected.genes, facet = key)))
   dimnames(x) <- list(selected.genes, cells)
   if (isTRUE(order.groups) && length(levels(resolved.groups)) > 1L) {
     xc <- do.call(cbind, tapply(seq_len(ncol(x)), resolved.groups[colnames(x)], function(ii) {
@@ -504,7 +505,7 @@
 #' @export Pagoda2
 
 
-.pagoda2_r6_plot_marker_heatmap <- function(p2, markers = NULL, type = "counts", engine = c("native", "complex", "legacy"),
+.pagoda2_r6_plot_marker_heatmap <- function(p2, markers = NULL, type = "counts", facet = NULL, engine = c("native", "complex", "legacy"),
                                             genes = NULL, grouping = NULL, groups = NULL, n.genes.per.group = 5,
                                             additional.genes = NULL, exclude.genes = NULL,
                                             z.threshold = 2, highest.only = TRUE,
@@ -531,7 +532,8 @@
                                             use.raster = TRUE, raster.by.magick = FALSE,
                                             return.details = FALSE, ...) {
   engine <- match.arg(engine)
-  resolved <- p2$resolveMarkers(markers = markers, type = type)
+  key <- if (!is.null(facet)) facet else .pagoda2_markers_lookup_key(p2, type)
+  resolved <- p2$resolveMarkers(markers = markers, type = key)
   if (engine == "legacy") {
     legacy.groups <- groups
     if (is.null(legacy.groups) && !is.null(grouping)) {
@@ -545,6 +547,7 @@
     p2,
     markers = markers,
     type = type,
+    facet = key,
     genes = genes,
     grouping = grouping,
     groups = groups,

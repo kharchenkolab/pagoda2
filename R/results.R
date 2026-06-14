@@ -200,13 +200,14 @@
   resolved$result
 }
 
-.pagoda2_r6_get_top_markers <- function(p2, markers = NULL, type = "counts", genes = NULL, n.genes.per.group = 5,
+.pagoda2_r6_get_top_markers <- function(p2, markers = NULL, type = "counts", facet = NULL, genes = NULL, n.genes.per.group = 5,
                                         selection = "balanced", z.threshold = 3, highest.only = TRUE,
                                         ordering = NULL, min.expression.fraction = NULL,
                                         min.precision = NULL, min.specificity = NULL,
                                         min.auc = NULL, min.m = NULL,
                                         remove.duplicates = TRUE, as.data.frame = TRUE) {
-  resolved <- p2$resolveMarkers(markers = markers, type = type)
+  key <- if (!is.null(facet)) facet else .pagoda2_markers_lookup_key(p2, type)
+  resolved <- p2$resolveMarkers(markers = markers, type = key)
   selected <- .pagoda2_select_marker_genes(
     resolved$tables,
     n.genes.per.group = n.genes.per.group,

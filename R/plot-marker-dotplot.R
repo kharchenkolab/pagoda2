@@ -1,6 +1,6 @@
 ## Marker dot plot implementation for Pagoda2
 
-.pagoda2_r6_plot_marker_dot_plot <- function(p2, markers = NULL, type = "counts", genes = NULL, grouping = NULL, groups = NULL,
+.pagoda2_r6_plot_marker_dot_plot <- function(p2, markers = NULL, type = "counts", facet = NULL, genes = NULL, grouping = NULL, groups = NULL,
                                              n.genes.per.group = 5, z.threshold = 3, highest.only = TRUE,
                                              ordering = NULL, selection = "balanced",
                                              min.expression.fraction = NULL,
@@ -42,7 +42,9 @@
     cell.groups
   }
 
-  resolved <- p2$resolveMarkers(markers = markers, type = type)
+  ## `facet=` (or the legacy `type=` facet key) selects which facet's markers AND expression to plot.
+  key <- if (!is.null(facet)) facet else .pagoda2_markers_lookup_key(p2, type)
+  resolved <- p2$resolveMarkers(markers = markers, type = key)
   selected <- .pagoda2_select_marker_genes(
     resolved$tables,
     n.genes.per.group = n.genes.per.group,
@@ -58,7 +60,7 @@
     min.m = min.m,
     remove.duplicates = remove.duplicates
   )
-  available.genes <- if (is.null(count.matrix)) .pagoda2_axis_names(p2, "gene") else colnames(count.matrix)
+  available.genes <- if (is.null(count.matrix)) .pagoda2_axis_names(p2, "gene", facet = key) else colnames(count.matrix)
   missing.genes <- setdiff(selected$genes, available.genes)
   if (length(missing.genes) > 0) {
     warning("Omitting marker genes absent from count matrix: ", paste(missing.genes, collapse = ", "))
@@ -69,7 +71,7 @@
   }
   selected.groups <- selected$groups[selected.genes]
   if (is.null(count.matrix)) {
-    count.matrix <- p2$getExpressionBlock(genes = selected.genes)
+    count.matrix <- p2$getExpressionBlock(genes = selected.genes, facet = key)
   }
   if (is.null(rownames(count.matrix)) || is.null(colnames(count.matrix))) {
     stop("`count.matrix` must have cell row names and gene column names")

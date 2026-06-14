@@ -49,3 +49,15 @@ test_that("a CLR facet does not perturb the default RNA plain view", {
   expect_identical(o$p2$getMatrixView("analysis", facet = "RNA")$model, "plain")
   expect_identical(o$p2$getMatrixView("analysis", facet = "ADT")$model, "clr")
 })
+
+test_that("subsetting genes keeps the CLR over the FULL feature axis (not collapsed to the subset)", {
+  o <- clr_p2()
+  full <- as.matrix(o$p2$getExpressionBlock(facet = "ADT"))            # all proteins
+  # a single-protein request must equal that protein's column of the full CLR block, NOT log1p-centered
+  # over one feature (which would be 0). This guards the marker/plotEmbedding(gene=, facet=) path.
+  one <- o$p2$getExpressionBlock(genes = "CD3", facet = "ADT")[, "CD3"]
+  expect_equal(unname(one), unname(full[names(one), "CD3"]), tolerance = 1e-12)
+  expect_gt(stats::sd(one), 0)                                          # not all-zero
+  two <- as.matrix(o$p2$getExpressionBlock(genes = c("CD4", "CD8"), facet = "ADT"))
+  expect_equal(two, full[rownames(two), c("CD4", "CD8")], tolerance = 1e-12)
+})
