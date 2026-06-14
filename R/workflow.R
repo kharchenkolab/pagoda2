@@ -337,7 +337,10 @@
       x = as.vector(r$dist), dims = c(n, n)))
   }
   if (requireNamespace("N2R", quietly = TRUE)) {
-    return(methods::as(N2R::Knn(X, k, nThreads = max(1L, as.integer(n.cores)), verbose = verbose, indexType = ann), "CsparseMatrix"))
+    ## N2R returns the transpose: triplets are (neighbor, query), so a query's neighbors are a COLUMN.
+    ## Transpose to the (query, neighbor) convention this function guarantees (row i = i's neighbors),
+    ## matching the RcppHNSW and FNN paths. (Harmless for symmetrized graphs, but WNN reads per-row.)
+    return(methods::as(Matrix::t(methods::as(N2R::Knn(X, k, nThreads = max(1L, as.integer(n.cores)), verbose = verbose, indexType = ann), "CsparseMatrix")), "CsparseMatrix"))
   }
   stop("no approximate-kNN backend available (install RcppHNSW or N2R)", call. = FALSE)
 }

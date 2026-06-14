@@ -45,10 +45,24 @@ the speed **and threads cleanly** — and unlike N2R you can trade `ef` for reca
 the cosine/angular path behaves the same — exact-cosine == exact-L2 on L2-normalized rows, verified in
 `tests/testthat/test_knn_backend.R`.)
 
-Orientation note: N2R returns `(neighbor, query)`; the new `.pagoda2_knn_sparse` returns `(query,
-neighbor)` (row i = cell i's own neighbors). For `makeKnnGraph`/`makeGeneKnnGraph` this is invisible (the
-graph is symmetrized to undirected). For WNN it is the intended Hao-2021 orientation (each cell weighted
-by *its own* neighbors rather than its reverse-neighbors); the WNN validation suite passes either way.
+### Orientation audit (was N2R read on the wrong axis anywhere?)
+
+N2R returns `(neighbor, query)` (a query's neighbors are a **column**); `.pagoda2_knn_sparse` returns
+`(query, neighbor)` (row i = cell i's own neighbors), and its N2R-fallback transposes to match. Audit:
+
+- **`makeKnnGraph`** (the long-standing main path): **not affected** — it symmetrizes `sxn <- (xn +
+  t(xn))/2` before building an undirected graph, so the orientation washes out (same edges, same weights).
+- **conos** (`R/conos.R` self-graph + `crossKnn`): **not affected** — edges feed an undirected joint
+  graph, so orientation washes out; conos also calls N2R with `nThreads=1`, so the threading bug never
+  bit it either.
+- **`makeGeneKnnGraph`**: builds a directed `from=neighbor,to=query` edge list with no symmetrization at
+  that step; downstream gene-network use treats it as undirected, so this is cosmetic (from/to swap).
+- **WNN** (pagoda2.1): the WSNN graph is symmetrized (orientation-neutral), but the per-cell modality
+  *weights* were computed per-row — i.e. on reverse-neighbors — under the old N2R-direct path, whereas the
+  function's own contract/comment and its FNN small-n branch used `(query, neighbor)`. The new backend
+  makes all paths `(query, neighbor)`, so WNN now weights each cell by *its own* neighbors (the intended
+  Hao-2021 orientation). Effect is small (the WNN validation suite passes either way), but it is now
+  correct and consistent across backends.
 
 ## The swap: `.pagoda2_knn_sparse` (RcppHNSW preferred, N2R fallback)
 
@@ -71,12 +85,17 @@ Wired into `makeKnnGraph`, `makeGeneKnnGraph`, and the WNN per-facet kNN. `RcppH
 > parallel hnswlib, and equally true of N2R). kNN is an approximate step; the view kernels' bit-exact
 > thread-invariance contract (`benchmark/RESULTS.md`) is unaffected.
 
-## Follow-up (sister ecosystem)
+## Sister ecosystem: N2R fixed (locally)
 
-N2R 1.0.5's non-threading bug affects anyone using it directly (conos, etc.). The backend swap fixes
-pagoda2 now; N2R itself should be patched separately (uncomment the query-loop `#pragma omp parallel
-for` in `src/n2knn.cpp`, with per-thread triplet buffers merged after the loop) so the wider ecosystem
-recovers query threading.
+Root cause of N2R's non-threading: in `n2`, `HnswSearch` holds a **single shared `visited_list_`**
+(`include/n2/hnsw_search_impl.h:103`), so concurrent `SearchById`/`SearchByVector` on one `Hnsw` corrupt
+each other — which is why the query-loop pragma in `src/n2knn.cpp` was deliberately commented out
+(naively uncommenting it tanks recall: 0.95 → 0.16 at 8 threads). The correct fix uses n2's built-in
+`BatchSearchByIds`/`BatchSearchByVectors`, which run a **per-thread searcher pool** (one `visited_list`
+each). Patched locally in `~/p21/N2R/src/n2knn.cpp` (gated `nThreads > 1`; serial single-searcher path at
+`nThreads <= 1`, fork-safe): recall preserved at **0.95 and identical across thread counts**, ~2.4× at 8
+cores. Even threaded, n2 (4.0s) stays ~5× slower than RcppHNSW (0.8s) — so pagoda2 keeps RcppHNSW; the
+N2R patch is for the wider ecosystem (conos uses `nThreads=1`, so unaffected regardless). **Not pushed.**
 
 ## Reproduce
 `/tmp` scratch scripts in the working session, or: build two facets, `runGraph(method="wnn",
