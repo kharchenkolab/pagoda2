@@ -55,7 +55,7 @@ test_that("plotMarkerHeatmap(facet=ADT) renders from the ADT facet", {
 
 test_that("plotEmbedding(gene=, facet=) colors by a feature from the named facet", {
   skip_if_not_installed("uwot")
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   p2 <- build_plot_p2()
   suppressWarnings({
     p2$runReduction(nPcs = 5, var.scale = FALSE, verbose = FALSE)

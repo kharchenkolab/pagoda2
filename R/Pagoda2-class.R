@@ -16,6 +16,25 @@ NULL
 
 ## Internal implementation code is split into domain files in R/.
 
+#' Pagoda2 R6 class
+#'
+#' The Pagoda2 class stores single-cell count matrices (one or more modality
+#' "facets") and provides the analysis pipeline: QC, normalization and variance
+#' modeling, dimensionality reduction, graph construction, clustering, embeddings,
+#' and marker detection. The pipeline is driven by generic verbs (`runReduction`,
+#' `runGraph`, `runClustering`, `runEmbedding`, `runMarkers`) whose algorithm is
+#' selected by a `method=` argument, or by `run()` which chains the standard
+#' sequence. See `vignette("pagoda2")` for a worked example and
+#' \code{\link{pagoda2-deprecated}} for the mapping from the former procedural API.
+#'
+#' @export
+#' @examples
+#' \donttest{
+#' cm <- readRDS(system.file("extdata", "sample_BM1_50.rds", package = "pagoda2"))
+#' rownames(cm) <- make.unique(rownames(cm))
+#' p2 <- Pagoda2$new(cm, log.scale = TRUE, min.cells.per.gene = 10, n.cores = 1)
+#' p2$runQC()
+#' }
 Pagoda2 <- R6::R6Class("Pagoda2",
   lock_objects = FALSE,
   public = list(
@@ -98,6 +117,14 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @param x input count matrix
     #' @param modelType Model used to normalize count matrices (default='plain'). Supported values are 'raw' and 'plain'; 'linearObs' is currently unavailable under matrix-view storage.
+    #' @param threads Thread allocation list (see getThreads()).
+    #' @param verbose Whether to print progress messages.
+    #' @param min.cells.per.gene Minimum number of cells in which a gene must be detected to be kept.
+    #' @param trim Winsorization trim (number of extreme cells trimmed per gene).
+    #' @param min.transcripts.per.cell Minimum number of molecules for a cell to be retained.
+    #' @param lib.sizes Optional precomputed per-cell library sizes.
+    #' @param log.scale Whether to log-transform the normalized expression.
+    #' @param keep.genes Optional vector of gene names to protect from filtering.
     #' @examples
     #' \donttest{
     #' ## Load pre-generated a dataset of 50 bone marrow cells as matrix
@@ -190,6 +217,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param cells Optional cells to return.
     #' @param genes Optional genes to return.
     #' @param orientation Matrix orientation to return.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @return Sparse raw count matrix.
     getRawCounts = function(cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) .pagoda2_r6_get_raw_counts(self, cells = cells, genes = genes, orientation = orientation, facet = facet),
 
@@ -206,6 +234,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param cells Optional cells to include.
     #' @param genes Optional genes to include.
     #' @param orientation Matrix orientation to return.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @return Sparse matrix for the requested view.
     materializeView = function(name = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), facet = NULL) .pagoda2_r6_materialize_view(self, name = name, cells = cells, genes = genes, orientation = orientation, facet = facet),
 
@@ -216,6 +245,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param genes Optional genes to include.
     #' @param orientation Matrix orientation to return.
     #' @param scale.variance Whether to apply stored gene variance scale factors.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @return Sparse matrix for the requested expression block.
     getExpressionBlock = function(layer = "analysis", cells = NULL, genes = NULL, orientation = c("cell_by_gene", "gene_by_cell"), scale.variance = FALSE, facet = NULL) .pagoda2_r6_get_expression_block(self, layer = layer, cells = cells, genes = genes, orientation = orientation, scale.variance = scale.variance, facet = facet),
 
@@ -224,6 +254,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param name Matrix view name.
     #' @param cells Optional cells to include.
     #' @param n.cores Number of threads for the sparse kernel.
+    #' @param threads Thread allocation list (see getThreads()).
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @return data.frame with m, v, and nobs columns.
     viewColMeanVar = function(name = "analysis", cells = NULL, n.cores = NULL, threads = NULL, facet = NULL) .pagoda2_r6_view_col_mean_var(self, name = name, cells = cells, n.cores = n.cores, threads = threads, facet = facet),
 
@@ -233,6 +265,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param groups Direct vector of group labels. Mutually exclusive with grouping.
     #' @param name Matrix view name.
     #' @param cells Optional cells to include.
+    #' @param n.cores Number of cores to use.
+    #' @param threads Thread allocation list (see getThreads()).
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @return Matrix with one row for NA values followed by factor levels present in groups.
     viewColSumByFac = function(grouping = NULL, groups = NULL, name = "analysis", cells = NULL, n.cores = NULL, threads = NULL, facet = NULL) .pagoda2_r6_view_col_sum_by_fac(self, grouping = grouping, groups = groups, name = name, cells = cells, n.cores = n.cores, threads = threads, facet = facet),
 
@@ -457,6 +492,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param profile Interaction profile: interactive, pipeline, or report.
     #' @param plots Plot behavior: show, none, or collect.
     #' @param verbose Whether to emit progress messages.
+    #' @param n.cores Number of cores to use.
+    #' @param threads Thread allocation list (see getThreads()).
     #' @param qc Step-specific argument list for runQC().
     #' @param filter Step-specific argument list for filterData().
     #' @param variance Step-specific argument list for runVariance().
@@ -497,7 +534,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
     #' @description Print and return effective thread policy.
     #'
-    #' @inheritParams getThreads
+    #' @param method Optional method name for role validation/defaulting.
+    #' @param n.cores Number of cores to use.
+    #' @param threads Thread allocation list (see getThreads()).
+    #' @param tasks Pipeline steps to describe thread allocation for.
     #' @return Invisibly returns resolved thread policy.
     describeThreads = function(method = NULL, n.cores = NULL, threads = NULL, tasks = NULL) .pagoda2_describe_threads(self, method = method, n.cores = n.cores, threads = threads, tasks = tasks),
 
@@ -638,6 +678,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @param markers Marker result name. NULL uses defaultGrouping.
     #' @param type Marker result namespace.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @param genes Optional explicit genes to return. NULL selects from marker tables.
     #' @param n.genes.per.group Number of marker genes to select per group.
     #' @param selection Marker selection preset: "balanced", "auc", "precision", "effect", or a custom function/list.
@@ -669,6 +710,13 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @param countMatrix input count matrix
     #' @param depthScale numeric Scaling factor for normalizing counts (defaul=1e3). If 'plain', counts are scaled by counts = counts/as.numeric(depth/depthScale).
+    #' @param min.cells.per.gene Minimum number of cells in which a gene must be detected to be kept.
+    #' @param trim Winsorization trim (number of extreme cells trimmed per gene).
+    #' @param min.transcripts.per.cell Minimum number of molecules for a cell to be retained.
+    #' @param lib.sizes Optional precomputed per-cell library sizes.
+    #' @param log.scale Whether to log-transform the normalized expression.
+    #' @param keep.genes Optional vector of gene names to protect from filtering.
+    #' @param verbose Whether to print progress messages.
     #' @return normalized count matrix (or if modelTye='raw', the unnormalized count matrix)
     setCountMatrix = function(countMatrix, depthScale = 1000, min.cells.per.gene = 0, trim = round(min.cells.per.gene / 2), min.transcripts.per.cell = 10, lib.sizes = NULL, log.scale = FALSE, keep.genes = NULL, verbose = TRUE) .pagoda2_r6_set_count_matrix(self, countMatrix = countMatrix, depthScale = depthScale, min.cells.per.gene = min.cells.per.gene, trim = trim, min.transcripts.per.cell = min.transcripts.per.cell, lib.sizes = lib.sizes, log.scale = log.scale, keep.genes = keep.genes, verbose = verbose),
 
@@ -685,6 +733,13 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param cells character vector Subset of cells upon which to perform variance normalization with adjustVariance() (default=NULL)
     #' @param min.gene.cells integer Minimum number of genes per cells (default=0). This parameter is used to filter counts.
     #' @param persist boolean Whether to save results (default=TRUE, i.e. is.null(cells)).
+    #' @param plot Whether to draw a diagnostic plot.
+    #' @param genes Optional subset of genes to use.
+    #' @param use.analysis.genes Whether to restrict to the analysis (overdispersed) gene set.
+    #' @param verbose Whether to print progress messages.
+    #' @param n.cores Number of cores to use.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @examples
     #' \donttest{
     #' ## Load pre-generated a dataset of 50 bone marrow cells as matrix
@@ -900,6 +955,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param x counts or reduction to use (default=NULL). If NULL, uses counts. Otherwise, checks for the reduction in self$reductions[[type]]
     #' @param p (default=NULL)
     #' @param var.scale boolean Apply scaling if using raw counts (default=TRUE). If type="counts", var.scale is TRUE by default.
+    #' @param n.cores Number of cores to use.
+    #' @param verbose Whether to print progress messages.
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @examples
     #' \donttest{
     #' ## Load pre-generated a dataset of 50 bone marrow cells as matrix
@@ -1053,6 +1111,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @description Build a kNN graph using the pagoda2.1 API name.
     #'
     #' @param reduction Reduction or matrix namespace to use.
+    #' @param method Algorithm to use for this step.
+    #' @param facets Facets to integrate jointly.
     #' @param ... Arguments passed to makeKnnGraph().
     #' @return Invisibly returns the graph.
     runGraph = function(reduction = NULL, method = NULL, facets = NULL, ...) .pagoda2_r6_run_graph(self, reduction = reduction, method = method, facets = facets, ...),
@@ -1065,6 +1125,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param g Input graph (default=NULL). If NULL, access graph from self$graphs[[type]].
     #' @param min.cluster.size Minimum size of clusters (default=1). This parameter is primarily used to remove very small clusters.
     #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
+    #' @param type Name of the reduction/graph to use.
+    #' @param n.cores Number of cores to use.
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @param ... Additional parameters to pass to 'method'
     #'
     #' @return the community structure calculated from 'method'
@@ -1126,6 +1189,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param setDefault Whether to make the output grouping the default.
     #' @param overwrite Whether to overwrite existing output labels/provenance.
     #' @param method Clustering function (default=leidenAlg::leiden.community).
+    #' @param n.cores Number of cores to use.
+    #' @param threads Thread allocation list (see getThreads()).
     #' @param ... Additional arguments passed to the clustering method.
     #' @return Invisibly returns the clustering community object.
     runLeiden = function(reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, n.cores = NULL, threads = NULL, ...) .pagoda2_r6_run_leiden(self, reduction = reduction, graph = graph, name = name, setDefault = setDefault, overwrite = overwrite, method = method, n.cores = n.cores, threads = threads, ...),
@@ -1157,6 +1222,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param persist boolean Whether to save the clusters and community structure (default=TRUE)
     #' @param z.threshold numeric Threshold of z-scores to filter, >=z.threshold are kept (default=2)
     #' @param min.set.size integer Minimum threshold of sets to keep (default=5)
+    #' @param n.cores Number of cores to use.
+    #' @param verbose Whether to print progress messages.
     #'
     #' @return hierarchical clustering
     getHierarchicalDiffExpressionAspects = function(type = "counts", groups = NULL, clusterName = NULL, method = "ward.D",
@@ -1315,6 +1382,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param fastpath boolean Whether to try a (fast) C algorithm implementation if possible (default=TRUE). This parameter is equivalent to 'fastpath' in irlba::irlba().
     #' @param maxit integer Maximum number of iterations (default=1000). This parameter is equivalent to 'maxit' in irlba::irlba().
     #' @param k integer Number of k clusters for calculating k-NN on the resulting principal components (default=30).
+    #' @param n.cores Number of cores to use.
+    #' @param verbose Whether to print progress messages.
     #'
     #' @return graph with gene similarity
     makeGeneKnnGraph = function(nPcs = 100, center = TRUE, fastpath = TRUE, maxit = 1000, k = 30, n.cores = self$n.cores, verbose = TRUE) {
@@ -1363,6 +1432,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
     #' @description Calculate density-based clusters
     #'
+    #' @param type Name of the reduction/graph to use.
     #' @param embeddingType The type of embedding used when calculating with `getEmbedding()` (default=NULL). Accepted values are: 'largeVis', 'tSNE', 'FR', 'UMAP', 'UMAP_graph'
     #' @param name string Name fo the clustering (default='density').
     #' @param eps numeric value of the eps parameter, fed into dbscan::dbscan(x=emb, eps=eps, ...)
@@ -1413,6 +1483,15 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param verbose boolean Whether to give verbose output (default=FALSE)
     #' @param append.specificity.metrics boolean Whether to append specifity metrics (default=TRUE). Uses the function sccore::appendSpecificityMetricsToDE().
     #' @param append.auc boolean If TRUE, append AUC values (default=FALSE). Parameter ignored if append.specificity.metrics is FALSE.
+    #' @param type Name of the reduction/graph to use.
+    #' @param clusterType Name of the reduction whose clustering to use.
+    #' @param groups Optional cell grouping (a factor over cells).
+    #' @param grouping Cell grouping to use (a cellMeta column name or factor).
+    #' @param genes Optional subset of genes to use.
+    #' @param use.analysis.genes Whether to restrict to the analysis (overdispersed) gene set.
+    #' @param n.cores Number of cores to use.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #'
     #' @return List with each element of the list corresponding to a cell group in the provided/used factor (i.e. factor levels)
     #'     Each element of a list is a data frame listing the differentially epxressed genes (row names), with the following columns:
@@ -1574,6 +1653,11 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param verbose Whether to emit progress messages.
     #' @param append.specificity.metrics Whether to append specificity metrics.
     #' @param append.auc Whether to append AUC to marker tables.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
+    #' @param genes Optional subset of genes to use.
+    #' @param use.analysis.genes Whether to restrict to the analysis (overdispersed) gene set.
+    #' @param n.cores Number of cores to use.
+    #' @param threads Thread allocation list (see getThreads()).
     #' @return Marker result list returned by getDifferentialGenes().
     runMarkers = function(grouping = NULL, groups = NULL, name = NULL, type = "counts", facet = NULL, z.threshold = 3, upregulated.only = TRUE, verbose = FALSE, append.specificity.metrics = TRUE, append.auc = TRUE, genes = NULL, use.analysis.genes = TRUE, n.cores = NULL, threads = NULL) .pagoda2_r6_run_markers(self, grouping = grouping, groups = groups, name = name, type = type, facet = facet, z.threshold = z.threshold, upregulated.only = upregulated.only, verbose = verbose, append.specificity.metrics = append.specificity.metrics, append.auc = append.auc, genes = genes, use.analysis.genes = use.analysis.genes, n.cores = n.cores, threads = threads),
 
@@ -1594,6 +1678,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param s numeric The “saturation” to be used to complete the HSV color descriptions (default=1). Equivalent to the 's' parameter in grDevices::rainbow().
     #' @param box boolean Whether to draw a box around the current plot in the given color and linetype (default=TRUE)
     #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
+    #' @param type Name of the reduction/graph to use.
+    #' @param clusterType Name of the reduction whose clustering to use.
+    #' @param groups Optional cell grouping (a factor over cells).
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @param ... Additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
     #'
     #' @return heatmap of DE results
@@ -1808,6 +1896,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param drawGroupNames boolean Whether to draw group names (default=FALSE)
     #' @param useRaster boolean If TRUE a bitmap raster is used to plot the image instead of polygons (default=TRUE). The grid must be regular in that case, otherwise an error is raised. For more information, see graphics::image().
     #' @param smooth.span Running mean span. NULL uses max(1, round(number of cells / 1024)).
+    #' @param type Name of the reduction/graph to use.
+    #' @param clusterType Name of the reduction whose clustering to use.
+    #' @param groups Optional cell grouping (a factor over cells).
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @param ... Additional parameters passed to internal function used for heatmap plotting, my.heatmap2()
     #'
     #' @return plot of gene heatmap
@@ -1952,6 +2044,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @param markers Marker result name. NULL uses defaultGrouping.
     #' @param type Marker result namespace.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @param genes Optional explicit genes to plot. NULL selects top marker genes.
     #' @param grouping Optional grouping column. NULL uses marker provenance when available, then defaultGrouping.
     #' @param groups Optional direct grouping vector.
@@ -1983,6 +2076,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #'
     #' @param markers Marker result name. NULL uses defaultGrouping.
     #' @param type Marker result namespace.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
     #' @param engine Heatmap engine: native for lightweight grid raster (default), complex for the optional ComplexHeatmap backend, or legacy for plotDiffGeneHeatmap().
     #' @param genes Optional explicit genes to plot. NULL selects top marker genes.
     #' @param grouping Optional grouping column. NULL uses marker provenance when available, then defaultGrouping.
@@ -2045,6 +2139,11 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param colors character vector List of gene names (default=NULL)
     #' @param gene (default=NULL)
     #' @param plot.theme Optional ggplot theme override.
+    #' @param reduction Name of the reduction to use.
+    #' @param embedding Name of the embedding to use.
+    #' @param grouping Cell grouping to use (a cellMeta column name or factor).
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @param ... Additional parameters passed to sccore::embeddingPlot()
     #'
     #' @return plot of the embedding
@@ -2070,6 +2169,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
     #' @description Get overdispersed genes
     #'
+    #' @param n.odgenes Number of overdispersed genes to use.
     #' @param alpha numeric The Type I error probability or the significance level (default=5e-2). This is the criterion used to measure statistical significance, i.e. if the p-value < alpha, then it is statistically significant.
     #' @param use.unadjusted.pvals boolean Whether to use Benjamini-Hochberg adjusted p-values (default=FALSE).
     #'
@@ -2092,6 +2192,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @description Return variance-normalized matrix for specified genes or a number of OD genes
     #'
     #' @param genes vector of gene names to explicitly return (default=NULL)
+    #' @param n.odgenes Number of overdispersed genes to use.
     #'
     #' @return cell by gene matrix
     getNormalizedExpressionMatrix = function(genes = NULL, n.odgenes = NULL) {
@@ -2115,6 +2216,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param fastpath boolean Use C implementation for speedup (default=TRUE)
     #' @param maxit numeric Maximum number of iterations (default=100). For more information, see 'maxit' parameter in irlba::irlba().
     #' @param var.scale boolean Apply scaling if using raw counts (default=TRUE). If type="counts", var.scale is TRUE by default.
+    #' @param verbose Whether to print progress messages.
+    #' @param facet Facet (modality) to operate on; defaults to the default facet.
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @param ... additional arguments forwarded to irlba::irlba
     #'
     #' @return Invisible PCA result (the reduction itself is saved in self$reductions[[name]])"
@@ -2246,6 +2350,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @description Run a dimensionality reduction on a facet (generic; method defaults to the facet's
     #'   defaultReduction: RNA->PCA, ATAC->LSI). There is no runPCA/runLSI as primary API.
     #' @param facet Facet name (NULL = default facet).
+    #' @param facets Facets to integrate jointly.
     #' @param method Reduction method ("pca"; "lsi" reserved for ATAC). NULL = facet's defaultReduction.
     #' @param name Stored reduction name. NULL = the method name.
     #' @param ... Passed to the underlying reduction.
@@ -2278,6 +2383,12 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param min.odgenes integer Minimum number of overdispersed genes to use (default=10)
     #' @param max.odgenes integer Maximum number of overdispersed genes to use (default=Inf)
     #' @param recursive boolean Whether to determine groups for which variance normalization will be rerun (default=TRUE)
+    #' @param type Name of the reduction/graph to use.
+    #' @param clusterType Name of the reduction whose clustering to use.
+    #' @param groups Optional cell grouping (a factor over cells).
+    #' @param n.odgenes Number of overdispersed genes to use.
+    #' @param verbose Whether to print progress messages.
+    #' @param n.cores Number of cores to use.
     #'
     #' @return List of overdispersed genes
     expandOdGenes = function(type = "counts", clusterType = NULL, groups = NULL, min.group.size = 30, od.alpha = 1e-1,
@@ -2417,6 +2528,12 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param perplexity integer Perplexity parameter within Rtsne::Rtsne() (default=k). Please see Rtsne for more details.
     #' @param return.pca boolean Whether to return the PCs (default=FALSE)
     #' @param skip.pca boolean If TRUE and return.pca=TRUE, will return a list of scale factors, cells, and overdispersed genes, i.e. list(sf=sf, cells=cells, odgenes=odgenes) (default=FALSE). Otherwise, ignored.
+    #' @param type Name of the reduction/graph to use.
+    #' @param clusterType Name of the reduction whose clustering to use.
+    #' @param groups Optional cell grouping (a factor over cells).
+    #' @param n.odgenes Number of overdispersed genes to use.
+    #' @param verbose Whether to print progress messages.
+    #' @param n.cores Number of cores to use.
     #'
     #' @return localPcaKnn return here
     localPcaKnn = function(nPcs = 5, type = "counts", clusterType = NULL, groups = NULL,
@@ -2698,6 +2815,10 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param top.aspects Restrict output to the top N aspects of heterogeneity (default=Inf)
     #' @param recalculate.pca boolean Whether to recalculate PCA (default=FALSE)
     #' @param save.pca boolean Whether to save the PCA results (default=TRUE). If TRUE, caches them in self$misc[['pwpca']].
+    #' @param type Name of the reduction/graph to use.
+    #' @param verbose Whether to print progress messages.
+    #' @param n.cores Number of cores to use.
+    #' @param plot Whether to draw a diagnostic plot.
     #'
     #' @return pathway output
     testPathwayOverdispersion = function(setenv, type = "counts", max.pathway.size = 1e3, min.pathway.size = 10,
@@ -2932,6 +3053,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @param diffusion.power numeric Factor to be used when calculating diffusion, (default=0.5)
     #' @param distance string 'cosine', 'L2', 'euclidean', 'pearson', 'spearman', 'JS' (default='cosine')
     #' @param n.sgd.cores numeric Number of cores to use (default=n.cores)
+    #' @param type Name of the reduction/graph to use.
+    #' @param n.cores Number of cores to use.
+    #' @param .legacy.warn Internal: whether to emit the deprecation message when the method is called directly.
     #' @param ...  Additional parameters passed to embedding functions, Rtsne::Rtsne() for tSNE, uwot::umap() if 'UMAP', embedKnnGraphUmap() if 'UMAP_graph'
     #'
     #' @return embedding stored in self$embedding

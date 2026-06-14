@@ -4,14 +4,22 @@
 \alias{papply}
 \title{Parallel, optionally verbose lapply. See ?parallel::mclapply for more info.}
 \usage{
-papply(..., n.cores = parallel::detectCores(), mc.preschedule = FALSE)
+papply(
+  ...,
+  n.cores = NULL,
+  threads = NULL,
+  mc.preschedule = TRUE,
+  mc.allow.recursive = FALSE
+)
 }
 \arguments{
-\item{...}{Additional arguments passed to mclapply(), lapply(), or BiocParallel::bplapply()}
+\item{...}{Additional arguments passed to mclapply() or lapply()}
 
-\item{n.cores}{Number of cores to use (default=parallel::detectCores())}
+\item{n.cores}{Total core budget. If NULL, uses the pagoda2 thread policy.}
 
-\item{mc.preschedule}{See ?parallel::mclapply (default=FALSE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.}
+\item{threads}{Optional advanced thread policy list.}
+
+\item{mc.preschedule}{See ?parallel::mclapply (default=TRUE). If TRUE then the computation is first divided to (at most) as many jobs are there are cores and then the jobs are started, each job possibly covering more than one value. If FALSE, then one job is forked for each value of X. The former is better for short computations or large number of values in X, the latter is better for jobs that have high variance of completion time and not too many values of X compared to mc.cores.}
 }
 \value{
 list, as returned by lapply

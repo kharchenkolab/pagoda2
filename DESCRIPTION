@@ -1,6 +1,6 @@
 Package: pagoda2
 Title: Single Cell Analysis and Differential Expression
-Version: 1.1.1
+Version: 2.0.0
 Authors@R: c(person("Nikolas","Barkas", email="nikolas_barkas@hms.harvard.edu", role="aut"), person("Viktor", "Petukhov", email="viktor.s.petuhov@ya.ru", role="aut"), person("Peter", "Kharchenko", email = "peter_kharchenko@hms.harvard.edu", role = "aut"), person("Simon", "Steiger", email = "simon.steiger@gmail.com", role = "ctb"), person("Rasmus", "Rydbirk", email = "rrydbirk@bmb.sdu.dk", role = "ctb"), person("Evan", "Biederstedt", email="evan.biederstedt@gmail.com", role=c("cre", "aut")))
 Description: Analyzing large-scale single-cell RNA-seq datasets. 'pagoda2' primarily performs normalization and differential gene expression analysis. It performs basic tasks such as cell size normalization, gene variance normalization, and can be used to identify subpopulations and run differential expression within individual samples. 'pagoda2' was written to rapidly process modern large-scale scRNAseq datasets of approximately 1e6 cells. The package also serves as the primary method for preprocessing data for conos, <https://github.com/kharchenkolab/conos>.
 License: GPL-3 
@@ -31,30 +31,22 @@ Imports:
     sccore (>= 0.1.1), 
     stats, 
     utils
-RoxygenNote: 7.3.2
 Suggests:
-    AnnotationDbi, 
-    BiocGenerics, 
-    BiocParallel,
     data.table,
-    dbscan, 
+    dbscan,
     dplyr,
-    ggplot2, 
-    GO.db, 
-    knitr, 
+    ggplot2,
+    knitr,
     leidenAlg,
-    org.Dr.eg.db,
-    org.Hs.eg.db,
-    org.Mm.eg.db,
-    pcaMethods,
     PMA,
     R.utils,
-    rmarkdown, 
-    robustbase, 
+    rmarkdown,
+    robustbase,
     S4Vectors,
     SingleCellExperiment,
     testthat,
     uwot
+VignetteBuilder: knitr
 Enhances:
     ComplexHeatmap,
     RhpcBLASctl
@@ -64,3 +56,4 @@ NeedsCompilation: yes
 LinkingTo: Rcpp, RcppArmadillo, RcppProgress, RcppEigen
 Author: Nikolas Barkas [aut], Viktor Petukhov [aut], Peter Kharchenko [aut], Simon Steiger [ctb], Rasmus Rydbirk [ctb], Evan Biederstedt [cre, aut]
 Maintainer: Evan Biederstedt <evan.biederstedt@gmail.com>
+Config/roxygen2/version: 8.0.0

@@ -1,0 +1,132 @@
+---
+title: "Getting started with pagoda2"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with pagoda2}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+## The vignette needs the optional UMAP / Leiden / plotting backends. If any is
+## missing (e.g. a stripped check environment) we show the code but do not run it.
+have.deps <- all(vapply(c("uwot", "leidenAlg", "ggplot2"), requireNamespace,
+                        logical(1), quietly = TRUE))
+knitr::opts_chunk$set(eval = have.deps)
+```
+
+`pagoda2` analyzes single-cell count data: normalization, variance modeling,
+dimensionality reduction, graph-based clustering, embeddings, and marker
+detection. The pipeline is driven by an R6 `Pagoda2` object whose steps are
+**generic verbs** — `runReduction()`, `runGraph()`, `runClustering()`,
+`runEmbedding()`, `runMarkers()` — where the algorithm is selected by a
+`method=` argument (there is no `runPCA`/`runLeiden`). `run()` chains the whole
+standard sequence in one call.
+
+Multi-modal data (CITE-seq, multiome) is supported through **facets**, one per
+modality; ordinary single-modality analysis (below) never needs them. See the
+tutorial notebooks linked from the
+[package README](https://github.com/kharchenkolab/pagoda2) for CITE-seq and
+ATAC/multiome workflows on real data.
+
+This vignette uses a small **synthetic** dataset so it is fast and
+self-contained; the commands are identical on real data.
+
+## A toy dataset
+
+We simulate 480 cells from four populations, each marked by its own block of 50
+genes elevated over a shared background. The expected input is a sparse
+gene-by-cell count matrix.
+
+```{r}
+library(pagoda2)
+set.seed(42)
+
+n.pop <- 4; cells.per <- 120; n.markers <- 50; n.background <- 600
+population <- rep(seq_len(n.pop), each = cells.per)
+n.cells <- length(population)
+n.genes <- n.pop * n.markers + n.background
+
+## per-gene, per-cell Poisson rate: low background, raised for a population's markers
+rate <- matrix(0.5, n.genes, n.cells)
+for (k in seq_len(n.pop)) {
+  marker.rows <- ((k - 1) * n.markers + 1):(k * n.markers)
+  rate[marker.rows, population == k] <- 4
+}
+rate <- sweep(rate, 2, runif(n.cells, 0.8, 1.2), "*")   # per-cell library-size variation
+
+counts <- matrix(rpois(length(rate), rate), n.genes, n.cells)
+rownames(counts) <- c(paste0("Marker", seq_len(n.pop * n.markers)),
+                      paste0("Bg", seq_len(n.background)))
+colnames(counts) <- paste0("cell", seq_len(n.cells))
+counts <- as(Matrix::Matrix(counts, sparse = TRUE), "dgCMatrix")
+dim(counts)   # genes x cells
+```
+
+## Build the object and run the standard workflow
+
+```{r}
+p2 <- Pagoda2$new(counts, log.scale = TRUE, min.cells.per.gene = 5,
+                  min.transcripts.per.cell = 10, n.cores = 1, verbose = FALSE)
+
+p2$run(plots = "none", verbose = FALSE,
+       variance  = list(use.raw.variance = TRUE),
+       pca       = list(nPcs = 15, n.odgenes = 300),
+       graph     = list(k = 20),
+       embedding = list(n_neighbors = 15, min_dist = 0.3),
+       markers   = list(z.threshold = 2))
+```
+
+`run()` performed QC, variance modeling, PCA, a kNN graph, a UMAP embedding,
+Leiden clustering, and marker detection, storing each result under a canonical
+name. (Every step is also callable on its own, e.g.
+`p2$runReduction(method = "pca")` or `p2$runClustering(method = "leiden")`.) The
+recovered clustering separates the four populations:
+
+```{r}
+table(population = population, cluster = p2$cellMeta[[p2$defaultGrouping]])
+```
+
+## Embedding
+
+`plotEmbedding()` draws the stored UMAP, colored by the default (Leiden)
+grouping.
+
+```{r, fig.width = 5, fig.height = 4.2}
+p2$plotEmbedding(mark.groups = TRUE, size = 1, alpha = 0.6,
+                 title = "Leiden clusters")
+```
+
+## Markers
+
+The default run computed markers for the Leiden grouping. `getTopMarkers()`
+returns the top genes per cluster as a data frame; each cluster recovers its
+population's marker block.
+
+```{r}
+p2$getTopMarkers(n = 3)
+```
+
+The dot plot summarizes them — color is mean expression, dot size the fraction
+of cells expressing the gene.
+
+```{r, fig.width = 7, fig.height = 4.5}
+p2$plotMarkerDotPlot(markers = p2$defaultGrouping, n.genes.per.group = 4,
+                     order.groups = TRUE, dot.scale = 6)
+```
+
+## Next steps
+
+Annotate the clusters from the marker evidence and make the annotation the
+default grouping, after which every plot uses it:
+
+```r
+p2$annotateClusters(from = "leiden", to = "cell_type",
+                    map = c("1" = "type A", "2" = "type B"), setDefault = TRUE)
+```
+
+For multi-modal data each modality is a **facet** and the same verbs take a
+`facet=` (one modality) or `facets=` (joint) argument; see the CITE-seq and
+ATAC/multiome notebooks linked from the
+[README](https://github.com/kharchenkolab/pagoda2).

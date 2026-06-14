@@ -4,7 +4,7 @@ library(pagoda2)
 ## Peaks -> ATAC/tfidf), per-facet reductions (RNA PCA + ATAC LSI), and WNN integration over the two.
 ## Skip-gated on the fixture (as with the CITE-seq WNN test); peaks subset for CI-friendly LSI runtime.
 test_that("scRNA+ATAC multiome: import -> RNA PCA + ATAC LSI -> WNN -> clustering", {
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   h5 <- Sys.getenv("P21_MULTIOME_10X_H5", "/home/pkharchenko/p21/lstar/testdata/multiome_10x/pbmc_granulocyte_sorted_3k.h5")
   skip_if(!file.exists(h5), "real 10x multiome fixture not present")
 

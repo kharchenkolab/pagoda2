@@ -69,21 +69,6 @@ score.cells.puram <- function(data, signature, correct=TRUE, show.plot=FALSE, ..
     return(ret.vals)
 }
 
-#' Plot the embedding of a 'Pagoda2' object with the given values
-#' 
-#' @param p2obj the 'Pagoda2' object
-#' @param values the values to plot, fed into p2obj$plotEmbedding(colors=values)
-#' @param title character Title for the plot (default="")
-#' @param type character Type reduction on which the embedding is based on (default="PCA")
-#' @param embeddingType character Type of embedding to plot (default="tSNE")
-#' @return NULL, simply updates p2obj$plotEmbedding()
-#' @export 
-plotOneWithValues <- function (p2obj, values, title = "", type = 'PCA', embeddingType = 'tSNE') {
-    p2obj$plotEmbedding(type = type, embeddingType = embeddingType, colors = values, alpha = 0.2, do.par = FALSE)
-    legend(x = "topleft", bty = "n", legend = title)
-    invisible(NULL)
-}
-
 #' Subset a gene signature to the genes in the given matrix
 #' with optional warning if genes are missing
 #' 

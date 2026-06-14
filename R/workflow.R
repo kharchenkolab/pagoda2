@@ -339,28 +339,38 @@
   if (requireNamespace("N2R", quietly = TRUE)) {
     ## N2R returns the transpose: triplets are (neighbor, query), so a query's neighbors are a COLUMN.
     ## Transpose to the (query, neighbor) convention this function guarantees (row i = i's neighbors),
-    ## matching the RcppHNSW and FNN paths. (Harmless for symmetrized graphs, but WNN reads per-row.)
+    ## matching the RcppHNSW path. (Harmless for symmetrized graphs, but WNN reads per-row.)
     return(methods::as(Matrix::t(methods::as(N2R::Knn(X, k, nThreads = max(1L, as.integer(n.cores)), verbose = verbose, indexType = ann), "CsparseMatrix")), "CsparseMatrix"))
   }
   stop("no approximate-kNN backend available (install RcppHNSW or N2R)", call. = FALSE)
 }
 
-## Per-facet kNN as a sparse distance matrix M (row i = i's k nearest, self excluded). Uses the threaded
-## ANN backend (.pagoda2_knn_sparse) at scale, else FNN (exact kd-tree) for small n. One representation
-## drives both the vectorized weight computation and the weighted graph.
+## Per-facet kNN as a sparse distance matrix M (row i = i's k nearest, self excluded). Large n: the
+## threaded ANN backend (.pagoda2_knn_sparse, RcppHNSW/N2R). Small n (<= 200): an exact base-R kNN — on
+## tiny inputs the approximate index's neighbor noise distorts the WNN weights, and exact is cheap here.
+## One representation drives both the vectorized weight computation and the weighted graph.
 .pagoda2_facet_knn_dist <- function(X, k, n.cores = 1L, distance = c("L2", "angular")) {
   distance <- match.arg(distance)
   X <- as.matrix(X)
   n <- nrow(X)
   k <- min(k, n - 1L)
-  if ((requireNamespace("RcppHNSW", quietly = TRUE) || requireNamespace("N2R", quietly = TRUE)) && n > 200L) {
+  if (n > 200L) {
     M <- .pagoda2_knn_sparse(X, k + 1L, n.cores = n.cores, distance = distance) # +1: self is dropped below
     Matrix::diag(M) <- 0
     return(Matrix::drop0(M))
   }
-  kn <- FNN::get.knn(X, k = k)
-  Matrix::sparseMatrix(i = rep(seq_len(n), k), j = as.vector(kn$nn.index),
-    x = as.vector(kn$nn.dist), dims = c(n, n))
+  ## exact kNN (no approximate-index noise on tiny inputs)
+  D <- if (identical(distance, "angular")) {
+    nr <- sqrt(rowSums(X^2)); nr[nr == 0] <- 1
+    1 - tcrossprod(X / nr)
+  } else {
+    as.matrix(stats::dist(X))
+  }
+  diag(D) <- Inf
+  ord <- t(apply(D, 1L, function(d) order(d)[seq_len(k)]))
+  i <- rep(seq_len(n), times = k)
+  j <- as.vector(ord)
+  Matrix::sparseMatrix(i = i, j = j, x = D[cbind(i, j)], dims = c(n, n))
 }
 
 ## Per-row (per-cell) min / mean of a sparse distance matrix's nonzeros (the 1st-NN distance and a local
@@ -395,8 +405,8 @@
   if (length(facets) < 2L) {
     stop("WNN needs >= 2 facets", call. = FALSE)
   }
-  if (!requireNamespace("FNN", quietly = TRUE) && !requireNamespace("N2R", quietly = TRUE)) {
-    stop("WNN requires a kNN backend (FNN or N2R)", call. = FALSE)
+  if (!requireNamespace("RcppHNSW", quietly = TRUE) && !requireNamespace("N2R", quietly = TRUE)) {
+    stop("WNN requires a kNN backend (RcppHNSW or N2R)", call. = FALSE)
   }
   .pagoda2_validate_joint_name(p2, name)
   tp <- .pagoda2_resolve_threads(p2, n.cores = n.cores, threads = threads, method = "graph")
@@ -496,7 +506,11 @@
   invisible(W)
 }
 
-.pagoda2_r6_run_leiden <- function(p2, reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, n.cores = NULL, threads = NULL, ...) {
+.pagoda2_r6_run_leiden <- function(p2, reduction = NULL, graph = NULL, name = "leiden", setDefault = TRUE, overwrite = FALSE, method = NULL, n.cores = NULL, threads = NULL, verbose = FALSE, ...) {
+  ## `verbose` is consumed here (used for pagoda2-level messaging) and deliberately NOT forwarded through
+  ## `...` to the community-detection backend: leidenAlg::leiden.community and igraph's community methods
+  ## do not accept a `verbose` argument, so forwarding it would error. This keeps `verbose=` working
+  ## uniformly across the run* verbs.
   if (!is.null(n.cores) || !is.null(threads)) {
     stop("runLeiden() does not currently use pagoda2 thread controls; pass backend-specific method arguments through `...` only if the backend supports them")
   }
@@ -524,6 +538,7 @@
   } else {
     method.name <- deparse(substitute(method))
   }
+  if (isTRUE(verbose)) message("Running Leiden clustering on graph `", graph, "` -> `", name, "`")
   cls <- p2$getKnnClusters(type = graph, method = method, name = name, persist = TRUE, .legacy.warn = FALSE, ...)
   groups <- p2$clusters[[graph]][[name]]
   p2$setGrouping(name, groups, source = list(method = "runLeiden", graph = graph), setDefault = setDefault, overwrite = TRUE)
@@ -575,6 +590,15 @@
 ## object the reduction code consumes (uses $v, $d, and stores $center itself).
 .pagoda2_truncated_svd <- function(x, nv, center = NULL, maxit = 100L, fastpath = TRUE, ...) {
   nv <- as.integer(min(nv, nrow(x) - 1L, ncol(x) - 1L))
+  ## Tiny matrices: iterative solvers (RSpectra requires dims >= 3; irlba requires nv < min(dim))
+  ## are not applicable -- compute the exact SVD densely. Never triggers on real PCA blocks.
+  if (nrow(x) < 3L || ncol(x) < 3L || nv < 1L) {
+    xm <- as.matrix(x)
+    if (!is.null(center)) xm <- sweep(xm, 2L, as.numeric(center), "-")
+    s <- svd(xm)
+    k <- max(1L, nv)
+    return(list(d = s$d[seq_len(k)], u = s$u[, seq_len(k), drop = FALSE], v = s$v[, seq_len(k), drop = FALSE]))
+  }
   if (requireNamespace("RSpectra", quietly = TRUE)) {
     if (is.null(center)) {
       r <- RSpectra::svds(x, k = nv, nu = 0L, nv = nv)

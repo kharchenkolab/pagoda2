@@ -34,7 +34,7 @@ build_wnn_p2 <- function(extra.noise = FALSE) {
 }
 
 test_that("A: faithful WNN down-weights the noise modality even with mismatched reduction dims", {
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   p2 <- build_wnn_p2()
   suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE))
   wr <- p2$cellMeta$wnn_weight_RNA
@@ -44,7 +44,7 @@ test_that("A: faithful WNN down-weights the noise modality even with mismatched 
 })
 
 test_that("B+F: WNN builds a weighted SNN graph (igraph) with provenance + a joint reduction", {
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   p2 <- build_wnn_p2()
   suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE))
   g <- p2$graphs[["WNN"]]
@@ -58,7 +58,7 @@ test_that("B+F: WNN builds a weighted SNN graph (igraph) with provenance + a joi
 })
 
 test_that("runGraph() auto-integrates all reduction-ready facets by default (§0.2.6)", {
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   p2 <- build_wnn_p2()
   suppressWarnings(p2$runGraph(verbose = FALSE)) # bare: 2 facets ready -> auto-WNN
   expect_true("WNN" %in% names(p2$graphs))
@@ -79,7 +79,7 @@ test_that("single-facet runGraph() stays a plain kNN (no auto-WNN); needs N2R", 
 })
 
 test_that("E: WNN generalizes to >= 3 facets (weights still sum to 1; graph built)", {
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   p2 <- build_wnn_p2(extra.noise = TRUE)
   suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT", "HTO"), verbose = FALSE))
   w <- cbind(p2$cellMeta$wnn_weight_RNA, p2$cellMeta$wnn_weight_ADT, p2$cellMeta$wnn_weight_HTO)
@@ -89,7 +89,7 @@ test_that("E: WNN generalizes to >= 3 facets (weights still sum to 1; graph buil
 })
 
 test_that("E: end-to-end WNN -> clustering on the WSNN graph + embedding on the joint reduction", {
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   skip_if_not_installed("leidenAlg")
   skip_if_not_installed("uwot")
   p2 <- build_wnn_p2()
@@ -104,7 +104,7 @@ test_that("E: end-to-end WNN -> clustering on the WSNN graph + embedding on the 
 test_that("vs-Seurat: per-cell WNN weights rank-correlate with Seurat::FindMultiModalNeighbors (real CITE-seq)", {
   skip_if_not_installed("Seurat")
   skip_if_not_installed("SeuratObject")
-  skip_if_not_installed("FNN")
+  skip_if_not_installed("RcppHNSW")
   h5 <- Sys.getenv("P21_CITESEQ_10X_H5", "/home/pkharchenko/p21/lstar/testdata/citeseq_10x/pbmc_1k_protein_v3.h5")
   skip_if(!file.exists(h5), "real 10x CITE-seq fixture not present")
 

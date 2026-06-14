@@ -21,18 +21,23 @@ test_that(".pagoda2_knn_sparse returns an n x n sparse distance matrix with ~k n
 
 test_that(".pagoda2_knn_sparse has high recall vs exact kNN (L2 and cosine)", {
   skip_if_not_installed("RcppHNSW")
-  skip_if_not_installed("FNN")
   set.seed(5)
   n <- 1500L
   k <- 15L
   X <- matrix(rnorm(n * 18L), n, 18L)
-  # ground truth must match the ANN's metric: exact cosine kNN == exact L2 kNN on L2-normalized rows.
+  # exact L2 kNN ground truth in base R (col 1 = self); cosine kNN == L2 kNN on L2-normalized rows.
+  exact_knnx <- function(Xref, query.rows, k) {
+    t(vapply(query.rows, function(i) {
+      d <- colSums((t(Xref) - Xref[i, ])^2)
+      order(d)[seq_len(k)]
+    }, integer(k)))
+  }
   recall_of <- function(distance, Xexact) {
     M <- pagoda2:::.pagoda2_knn_sparse(X, k, n.cores = 2L, distance = distance)
     Matrix::diag(M) <- 0
     M <- Matrix::drop0(M)
     idx <- sort(sample(n, 300L))
-    exact <- FNN::get.knnx(Xexact, Xexact[idx, , drop = FALSE], k = k)$nn.index # col 1 = self
+    exact <- exact_knnx(Xexact, idx, k) # col 1 = self
     mean(vapply(seq_along(idx), function(t) {
       nb <- which(M[idx[t], ] != 0)
       mean(exact[t, -1L] %in% nb)

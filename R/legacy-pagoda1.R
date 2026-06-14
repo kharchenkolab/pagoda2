@@ -33,7 +33,7 @@
 #' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
 #' @return a list structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 #'
-#' @export
+#' @keywords internal
 pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FALSE, cluster.method = "complete", distance.threshold = 0.01, corr.power = 4, abs = TRUE, n.cores = 1, ...) {
   pclc <- pathway.pc.correlation.distance(c(pwpca, clpca$cl.goc), tam$xv, target.ndf = 100, n.cores = n.cores)
   cda <- cor(t(tam$xv))
@@ -81,20 +81,21 @@ pagoda.reduce.loading.redundancy <- function(tam, pwpca, clpca = NULL, plot = FA
 #' @param pick.top boolean Whether to pick top aspects (default=FALSE)
 #' @return list of clusters from matrix of normalized aspect patterns and clusters from the corresponding weight matrix
 #'
-#' @export 
+#' @keywords internal
 collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) {
-  if (!requireNamespace("pcaMethods", quietly = TRUE)) {
-    stop("Package \"pcaMethods\" needed for this function to work. Please install it with `BiocManager::install('pcaMethods')`.", call. = FALSE)
-  }
-
   xvm <- do.call(rbind, tapply(seq_len(nrow(d)), factor(ct, levels = sort(unique(ct))), function(ii) {
     if(length(ii) == 1) return(d[ii, ])
     if(pick.top) {
       return(d[ii[which.max(apply(d[ii, ], 1, var))], ])
     }
-    xp <- pcaMethods::pca(t(d[ii, ]), nPcs = 1, center = TRUE, scale = "none")
-    xv <- pcaMethods::scores(xp)[, 1]
-    if(sum(abs(diff(xv))) > 0 && cor(xv, colMeans(d[ii, ]*abs(pcaMethods::loadings(xp)[, 1])))<0) { xv <- -1*xv }
+    ## first principal component via pagoda2's SVD engine (RSpectra, irlba fallback) -- replaces
+    ## pcaMethods::pca(nPcs = 1, center = TRUE). v = gene loadings; scores = centered projection.
+    m <- t(d[ii, ])
+    cm <- colMeans(m)
+    sv <- .pagoda2_truncated_svd(m, nv = 1L, center = cm)
+    ld <- sv$v[, 1]
+    xv <- as.numeric(m %*% ld) - sum(cm * ld)
+    if(sum(abs(diff(xv))) > 0 && cor(xv, colMeans(d[ii, ]*abs(ld)))<0) { xv <- -1*xv }
     #set scale at top pathway?
     if(sum(abs(diff(xv))) > 0) {
       if(scale) {
@@ -137,8 +138,8 @@ collapse.aspect.clusters <- function(d, dw, ct, scale = TRUE, pick.top = FALSE) 
 #' @param ... additional arguments are passed to the pagoda.view.aspects() method during plotting
 #' @return List structure analogous to that returned by pagoda.top.aspects(), but with addition of a $cnam element containing a list of aspects summarized by each row of the new (reduced) $xv and $xvw
 #'
-#' @export 
-pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.method="complete", 
+#' @keywords internal
+pagoda.reduce.redundancy <- function(tamr, distance.threshold=0.2, cluster.method="complete",
   distance=NULL, weighted.correlation=TRUE, plot=FALSE, top=Inf, trim=0, abs=FALSE, ...) {
   if(is.null(distance)) {
     if(weighted.correlation) {
@@ -226,7 +227,7 @@ winsorize.matrix <- function(mat, trim) {
 #' @param n.cores numeric Number of cores to use (default=1)
 #' @param target.ndf numeric Target dimensions (default=NULL)
 #' @return correlation distance matrix, akin to stats dist
-#' @export
+#' @keywords internal
 pathway.pc.correlation.distance <- function(pcc, xv, n.cores=1, target.ndf=NULL) {
   # all relevant gene names
   rotn <- unique(unlist(lapply(pcc[gsub("^#PC\\d+# ", "", rownames(xv))], function(d) rownames(d$xp$rotation))))

@@ -5,6 +5,9 @@ CHANGELOG.md
 ^LICENSE\.md$
 ^docker$
 ^doc$
+^misc$
+^benchmark$
+^skill$
 ^Meta$
 ^vignettes\*.md$
 ^vignettes\figure$
