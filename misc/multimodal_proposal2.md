@@ -573,7 +573,7 @@ method also handles it. The methods sort by which step they plug into and by **w
 | graph | naive merge (union/intersection/weighted-sum of per-modality kNN/SNN) | per-modality | crude but near-free |
 | reduction (`runReduction`) | **weighted concatenation** (scale + concat reductions, optional re-PCA) | per-modality-global | simplest baseline; the **low-risk fallback** for the shipped joint method |
 | reduction | **MOFA+ / MEFISTO** | learned (factor variances) | shared+specific factors, per-modality sparse loadings; maps onto lstar shared-factor-axis + per-facet loadings. Natural next R `method=` |
-| reduction | **CCA / sparse-CCA / PMA**; **DIABLO** (supervised) | per-modality | conos already carries CCA/PMA machinery to borrow |
+| reduction | **CCA / sparse-CCA / PMA** *(implemented, 2.1)*; **DIABLO** (supervised) | per-modality | `runReduction(facets=, method="cca"/"scca")`; centered cross-covariance SVD (dense `irlba`) or `PMA::CCA` (sparse, Suggests); per-facet feature loadings. conos shares the machinery (transposed to vertical) |
 | reduction | **MCIA**, **JIVE**, **LIGER/iNMF** (also mosaic), **scAI** | learned | co-inertia / joint+individual / integrative-NMF families |
 | reduction | **Schema** | **explicit per-modality** | metric learning with a tunable weight per modality — the cleanest weighting knob |
 | generative (optional backend) | **totalVI** (RNA+prot), **MultiVI** (RNA+ATAC±prot, mosaic), **MIRA**, **Cobolt**, **BABEL** | learned | model the counts, emit a joint latent; need a Python/Torch backend → "later, optional-backend" `method=` |
@@ -583,6 +583,18 @@ The design absorbs all of these without new structure: `runGraph(method=)` cover
 merge), `runReduction(method=)` covers joint-factor methods (concat, MOFA+, CCA, LIGER, Schema), and
 generative methods slot in as optional-backend `method=` later — each producing the same name-keyed
 named-product byproducts (§4.5).
+
+**Per-method scoping** (entry point, dependency status, input contract, output/loading shape, effort,
+scale, and a recommended build order) for **CCA / sparse-CCA / SNF / LIGER / Schema** is worked out in
+`integration_methods_scoping.md`. **CCA + sparse-CCA are now implemented** (reduction-level,
+`runReduction(facets=, method="cca"/"scca")`: centered cross-covariance SVD over the shared cells —
+dense `irlba` on a kept-sparse cross-product, or `PMA::CCA` for L1-sparse loadings, PMA a *Suggests*;
+emits `reductions[["CCA"]]` + per-facet feature loadings + `{facets, input_axes, method, cancor}`
+provenance; shares semantics with conos's `quickCCA` transposed to the vertical orientation). Still
+deferred: LIGER (interpretable but heavy dep + raw-matrix input), SNF (graph-only, `O(n²)`, small-`n`
+niche), and Schema (Python backend, fold into the MOFA+/totalVI reticulate effort). One contract
+wrinkle for those: LIGER and the generative/Python methods consume **raw/normalized feature matrices**,
+not per-facet **reductions** — a per-method input declaration the dispatcher should carry.
 
 ---
 

@@ -546,7 +546,15 @@
 ## provenance. The algorithm is always a `method=`, mirroring runGraph/runClustering/runEmbedding.
 .pagoda2_r6_run_reduction <- function(p2, facet = NULL, facets = NULL, method = NULL, name = NULL, ...) {
   if (!is.null(facets) && length(facets) >= 2L) {
-    return(.pagoda2_r6_run_joint_reduction(p2, facets = facets, method = method, name = name, ...))
+    m <- if (is.null(method)) "concat" else tolower(method)
+    if (m %in% c("cca", "scca", "sparse-cca", "sparsecca", "spcca")) {
+      ## CCA family: dense (irlba) or sparse (PMA). `sparse=` in ... wins; else the alias implies it.
+      dots <- list(...)
+      sp <- if (!is.null(dots$sparse)) isTRUE(dots$sparse) else !identical(m, "cca")
+      dots$sparse <- NULL
+      return(do.call(.pagoda2_r6_run_cca, c(list(p2, facets = facets, name = name, sparse = sp), dots)))
+    }
+    return(.pagoda2_r6_run_joint_reduction(p2, facets = facets, method = m, name = name, ...))
   }
   f <- p2$resolveFacet(facet)
   if (is.null(method)) {
@@ -602,9 +610,12 @@
   if (is.null(method)) {
     method <- "concat"
   }
+  if (!identical(method, "concat")) {
+    stop("joint reduction: unknown method '", method, "'; available joint methods are ",
+         "'concat' (concat-PCA), 'cca', 'scca' (use runReduction(facets=, method=...))", call. = FALSE)
+  }
   if (is.null(name)) {
-    ## product name derived from the method (NOT "WNN" — that is reserved for runGraph(method="wnn"))
-    name <- if (identical(method, "concat")) "concatPCA" else toupper(method)
+    name <- "concatPCA" # product name (NOT "WNN" — that is reserved for runGraph(method="wnn"))
   }
   .pagoda2_validate_joint_name(p2, name) # no per-facet-method-name shadow (§4.5.1)
   parts <- list()
@@ -641,6 +652,112 @@
   attr(scores, "method") <- paste0("joint:", method)
   p2$reductions[[name]] <- scores
   if (verbose) message("joint reduction `", name, "` over facets ", paste(facets, collapse = "+"), " -> ", ncol(scores), " dims")
+  invisible(scores)
+}
+
+## CCA / sparse-CCA — vertical (same-cell) canonical correlation between exactly two facets, §5.1.
+## Operates on each facet's scaled feature block (the same od-gene/feature matrix runReduction reduces),
+## restricted to the shared cells. The cross-covariance over cells, C = t(X1) %*% X2 (features1 x
+## features2), is SVD'd: the singular vectors ARE the per-facet FEATURE loadings (genes x k, proteins x k),
+## the canonical variates X1 U and X2 V are the per-facet cell scores, and the joint product is their
+## mean (the maximally-correlated pair averaged). This mirrors conos::quickCCA (conos.R:327) transposed
+## from its horizontal, shared-gene orientation to our vertical, shared-cell one. Dense path = irlba on a
+## kept-sparse centered cross-product (scales in n); sparse path = PMA::CCA (L1-sparse loadings; gated dep).
+## Stored as the §4.5 named product reductions[[name]] (default "CCA") + per-facet loadings[[name]].
+.pagoda2_r6_run_cca <- function(p2, facets, name = NULL, sparse = FALSE, nPcs = 30,
+                                reductions = NULL, genes = NULL, n.odgenes = NULL, var.scale = TRUE,
+                                penalty = 0.3, penaltyx = penalty, penaltyz = penalty,
+                                fastpath = TRUE, maxit = 100, verbose = TRUE, ...) {
+  if (length(facets) != 2L) {
+    stop("CCA is a two-block method; pass exactly two facets (use method='concat' for >2)", call. = FALSE)
+  }
+  if (is.null(name)) {
+    name <- "CCA"
+  }
+  .pagoda2_validate_joint_name(p2, name) # no per-facet-method-name shadow (§4.5.1)
+  blocks <- list()
+  facetObjs <- list()
+  input.axes <- character()
+  for (i in seq_along(facets)) {
+    f <- p2$resolveFacet(facets[[i]])
+    od <- if (!is.null(genes)) genes else f$odgenes
+    if (!is.null(od) && !is.null(n.odgenes)) {
+      od <- od[seq_len(min(length(od), n.odgenes))]
+    }
+    x <- p2$getExpressionBlock(genes = od, facet = facets[[i]]) # cells x features, view materialized
+    if (isTRUE(var.scale)) {
+      x <- .pagoda2_apply_variance_scaling(x, f$varinfo) # column scaling keeps it sparse
+    }
+    blocks[[i]] <- x
+    facetObjs[[i]] <- f
+    input.axes <- c(input.axes, .pagoda2_facet_feature_axis(f))
+  }
+  common <- Reduce(intersect, lapply(blocks, rownames))
+  if (length(common) < 3L) {
+    stop("CCA: facets share fewer than 3 cells", call. = FALSE)
+  }
+  X1 <- blocks[[1]][common, , drop = FALSE]
+  X2 <- blocks[[2]][common, , drop = FALSE]
+  n <- length(common)
+  k <- min(nPcs, ncol(X1), ncol(X2), n - 1L)
+  if (k < 1L) {
+    stop("CCA: too few features/cells for a canonical component", call. = FALSE)
+  }
+  mu1 <- Matrix::colMeans(X1)
+  mu2 <- Matrix::colMeans(X2)
+  if (isTRUE(sparse)) {
+    if (!requireNamespace("PMA", quietly = TRUE)) {
+      stop("sparse CCA needs the 'PMA' package: install.packages('PMA')", call. = FALSE)
+    }
+    ## PMA's L1-penalized CCA. Pre-standardize ourselves (center + unit sd) and pass standardize=FALSE,
+    ## so the same standardized blocks produce both the (sparse) loadings and the cell scores below.
+    Z1 <- scale(as.matrix(X1), center = TRUE, scale = TRUE)
+    Z2 <- scale(as.matrix(X2), center = TRUE, scale = TRUE)
+    Z1[, attr(Z1, "scaled:scale") == 0] <- 0
+    Z2[, attr(Z2, "scaled:scale") == 0] <- 0
+    res <- PMA::CCA(Z1, Z2, K = k, penaltyx = penaltyx, penaltyz = penaltyz,
+                    standardize = FALSE, trace = FALSE)
+    U <- res$u
+    V <- res$v
+    s1 <- Z1 %*% U
+    s2 <- Z2 %*% V
+    cancor <- if (!is.null(res$cors)) as.numeric(res$cors) else
+      vapply(seq_len(ncol(U)), function(j) abs(stats::cor(s1[, j], s2[, j])), numeric(1))
+  } else {
+    ## Centered cross-covariance via the identity C = t(X1)X2 - n * mu1 mu2', so X1/X2 stay sparse.
+    C <- as.matrix(Matrix::crossprod(X1, X2)) - n * outer(as.numeric(mu1), as.numeric(mu2))
+    sv <- if (k < min(dim(C))) {
+      irlba::irlba(C, nv = k, nu = k, fastpath = fastpath, maxit = maxit)
+    } else {
+      s <- svd(C, nu = k, nv = k)
+      s$d <- s$d[seq_len(k)]
+      s
+    }
+    U <- sv$u
+    V <- sv$v
+    ## per-facet cell scores = centered block projected (kept sparse: X U - 1 mu'U)
+    s1 <- sweep(as.matrix(X1 %*% U), 2L, as.numeric(crossprod(as.numeric(mu1), U)))
+    s2 <- sweep(as.matrix(X2 %*% V), 2L, as.numeric(crossprod(as.numeric(mu2), V)))
+    cancor <- sv$d[seq_len(k)] / (n - 1L) # cross-covariance singular values -> per-cell scale
+  }
+  rownames(U) <- colnames(X1)
+  rownames(V) <- colnames(X2)
+  colnames(U) <- colnames(V) <- paste0(name, seq_len(ncol(U)))
+  scores <- (s1 + s2) / 2 # the maximally-correlated canonical pair, averaged -> joint cells x k
+  rownames(scores) <- common
+  colnames(scores) <- paste0(name, seq_len(ncol(scores)))
+  attr(scores, "facets") <- as.character(facets)
+  attr(scores, "input_axes") <- input.axes # lstar S5 provenance: per-facet feature axes
+  attr(scores, "method") <- if (sparse) "joint:scca" else "joint:cca"
+  attr(scores, "cancor") <- cancor
+  p2$reductions[[name]] <- scores
+  ## feature-space loadings live with each facet (lstar shared-factor-axis induction, §5)
+  facetObjs[[1]]$loadings[[name]] <- U
+  facetObjs[[2]]$loadings[[name]] <- V
+  if (verbose) {
+    message(if (sparse) "sparse-CCA" else "CCA", " over facets ", paste(facets, collapse = "+"),
+            " -> ", ncol(scores), " components (top canonical assoc ", signif(cancor[[1]], 3), ")")
+  }
   invisible(scores)
 }
 
