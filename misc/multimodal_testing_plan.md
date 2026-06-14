@@ -275,9 +275,11 @@ role demands; C is the disk-backed capability.
 >   (`lstar_stream_col_sum_by_group`), parity with in-memory (`test_facet_backend.R`).
 > - **Union-axis membership masks** ✓ union `cells` + `getFacetMembership` + `requireFacets`
 >   (`test_facet_membership.R`).
-> - **Full WNN** ✓ `runGraph(method="wnn")` → per-cell modality weights (down-weights the uninformative
->   modality) + weighted joint reduction + graph (`test_facet_wnn.R`). *Caveat:* per-facet reduction dims
->   should be comparable for unbiased weights; Seurat-faithful cross-prediction calibration is a refinement.
+> - **Full WNN** ✓ **wrapped up** (`test_facet_wnn.R`): faithful cross-modality prediction + per-cell
+>   bandwidth kernel (A, dimensionality-robust — down-weights noise with mismatched 10-vs-5 dims); WSNN
+>   graph `sum_m diag(w_m)·K_m` (B); N2R kNN + vectorized weights (C); ≥3-facet + end-to-end
+>   WNN→cluster→embed + provenance (E/F); **validated vs `Seurat::FindMultiModalNeighbors` on real CITE-seq
+>   (Spearman 0.33, not skipped)**. Default cell set stays `common` (intersection) per directive.
 > - **MOFA loadings split:** **not supported** (per directive).
 
 ## CI vs local
