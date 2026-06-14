@@ -316,16 +316,42 @@
   p2$makeKnnGraph(type = reduction, ..., n.cores = tp$native, .legacy.warn = FALSE)
 }
 
-## Per-facet kNN as a sparse distance matrix M (row i = i's k nearest, self excluded). Uses N2R
-## (approximate, threaded) at scale, else FNN (exact kd-tree). One representation drives both the
-## vectorized weight computation and the weighted graph (C: scale + threading).
+## Approximate kNN as a sparse n x n distance matrix (self on the diagonal, like N2R::Knn's raw output;
+## callers zero/drop the diagonal). Backend preference: RcppHNSW (hnswlib, *threaded* + high-recall) when
+## available, else N2R. distance: "angular"/"cosine" (cosine) or "L2"/"euclidean". M/ef are the hnswlib
+## graph degree / search width; ef defaults generous for recall (N2R 1.0.5 is non-threading and stuck at
+## ~0.36 recall regardless of its ef — see benchmark/RESULTS). Note: multi-threaded HNSW build is not
+## bit-reproducible across thread counts (inherent to parallel hnswlib, as with N2R); kNN is approximate.
+.pagoda2_knn_sparse <- function(X, k, n.cores = 1L, distance = "angular",
+                                M = 16L, ef = NULL, ef.construction = 200L, verbose = FALSE) {
+  X <- as.matrix(X)
+  n <- nrow(X)
+  k <- min(k, n)
+  ann <- if (distance %in% c("angular", "cosine")) "angular" else "L2"
+  if (requireNamespace("RcppHNSW", quietly = TRUE)) {
+    if (is.null(ef)) ef <- max(50L, 2L * as.integer(k))
+    hd <- if (identical(ann, "angular")) "cosine" else "l2"
+    r <- RcppHNSW::hnsw_knn(X, k = k, distance = hd, n_threads = max(1L, as.integer(n.cores)),
+      M = as.integer(M), ef = as.integer(ef), ef_construction = as.integer(ef.construction), verbose = verbose)
+    return(Matrix::sparseMatrix(i = rep(seq_len(n), times = k), j = as.vector(r$idx),
+      x = as.vector(r$dist), dims = c(n, n)))
+  }
+  if (requireNamespace("N2R", quietly = TRUE)) {
+    return(methods::as(N2R::Knn(X, k, nThreads = max(1L, as.integer(n.cores)), verbose = verbose, indexType = ann), "CsparseMatrix"))
+  }
+  stop("no approximate-kNN backend available (install RcppHNSW or N2R)", call. = FALSE)
+}
+
+## Per-facet kNN as a sparse distance matrix M (row i = i's k nearest, self excluded). Uses the threaded
+## ANN backend (.pagoda2_knn_sparse) at scale, else FNN (exact kd-tree) for small n. One representation
+## drives both the vectorized weight computation and the weighted graph.
 .pagoda2_facet_knn_dist <- function(X, k, n.cores = 1L, distance = c("L2", "angular")) {
   distance <- match.arg(distance)
   X <- as.matrix(X)
   n <- nrow(X)
   k <- min(k, n - 1L)
-  if (requireNamespace("N2R", quietly = TRUE) && n > 200L) {
-    M <- methods::as(N2R::Knn(X, k, nThreads = max(1L, n.cores), verbose = FALSE, indexType = distance), "CsparseMatrix")
+  if ((requireNamespace("RcppHNSW", quietly = TRUE) || requireNamespace("N2R", quietly = TRUE)) && n > 200L) {
+    M <- .pagoda2_knn_sparse(X, k + 1L, n.cores = n.cores, distance = distance) # +1: self is dropped below
     Matrix::diag(M) <- 0
     return(Matrix::drop0(M))
   }

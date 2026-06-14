@@ -968,9 +968,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         if (center) {
           x <- x - Matrix::rowMeans(x) # centering for cosine distance
         }
-        xn <- N2R::Knn(as.matrix(x), k, nThreads = n.cores, verbose = verbose, indexType = "angular")
+        xn <- .pagoda2_knn_sparse(as.matrix(x), k, n.cores = n.cores, distance = "angular", verbose = verbose)
       } else if (distance == "L2") {
-        xn <- N2R::Knn(as.matrix(x), k, nThreads = n.cores, verbose = verbose, indexType = "L2")
+        xn <- .pagoda2_knn_sparse(as.matrix(x), k, n.cores = n.cores, distance = "L2", verbose = verbose)
       } else {
         stop("Unknown distance measure specified. Currently supported: angular, L2")
       }
@@ -1352,7 +1352,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       if (center) {
         pcas <- pcas - Matrix::rowMeans(pcas)
       }
-      xn <- N2R::Knn(pcas, k, nThreads = n.cores, verbose = verbose)
+      xn <- .pagoda2_knn_sparse(as.matrix(pcas), k, n.cores = n.cores, distance = "angular", verbose = verbose)
       diag(xn) <- 0 # Remove self edges
       xn <- as(xn, "TsparseMatrix") # will drop 0s
       # Turn into a dataframe, convert from correlation distance into weight
