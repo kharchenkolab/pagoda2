@@ -50,7 +50,7 @@ backend_mem <- function(art) {
 ## (pagoda2) streams gene blocks off disk and applies its existing kernels -> identical math to Mem,
 ## with no per-op kernel living inside lstar.
 backend_zarr <- function(art) {
-  store <- art$store; field <- "counts"; BLK <- 2048L
+  store <- art$store; field <- Sys.getenv("BENCH_FIELD", "counts"); BLK <- 2048L
   cn <- art$cell_names; gn <- art$gene_names; G <- length(gn)
   depth <- art$recipe$depth; ds <- art$recipe$depthScale; lg <- isTRUE(art$recipe$log.scale)
   va <- function(blk) list(depth = as.numeric(depth[rownames(blk)]), depthScale = ds,
@@ -87,7 +87,7 @@ backend_zarr <- function(art) {
   )
 }
 
-load_artifacts <- function(dir = "/tmp/bench", which = "mem") {
+load_artifacts <- function(dir = Sys.getenv("BENCH_DIR", "/tmp/bench"), which = "mem") {
   art <- list(recipe = readRDS(file.path(dir, "recipe.rds")),
               varinfo = readRDS(file.path(dir, "varinfo.rds")),
               odgenes = readRDS(file.path(dir, "odgenes.rds")),

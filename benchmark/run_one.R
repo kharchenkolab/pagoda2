@@ -7,7 +7,8 @@ source("/home/pkharchenko/p21/pagoda2/benchmark/backends.R")
 a <- commandArgs(trailingOnly = TRUE); bk <- a[1]; op <- a[2]
 art <- load_artifacts(which = bk)
 b <- switch(bk, mem = backend_mem(art), zarr = backend_zarr(art))
-rec <- art$recipe; vi <- art$varinfo; od <- art$odgenes; g20 <- art$genes20; grp <- art$grp
+rec <- art$recipe; vi <- art$varinfo; g20 <- art$genes20; grp <- art$grp
+od <- head(art$odgenes, as.integer(Sys.getenv("BENCH_PCA_ODGENES", "2000")))  # cap HVGs used for PCA
 nc <- as.integer(Sys.getenv("BENCH_NCORES", "8"))
 fp <- function(x) sprintf("%.6e", sum(as.numeric(x), na.rm = TRUE))   # cheap result fingerprint
 t <- proc.time()
