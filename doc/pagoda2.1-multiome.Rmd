@@ -9,82 +9,61 @@ format:
 jupyter: ir44
 ---
 
-This notebook shows the pagoda2.1 **multimodal** workflow on a 10x Genomics [PBMC granulocyte-sorted 3k multiome](https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0) sample, where each cell is measured by both gene expression (RNA) and chromatin accessibility (ATAC peaks). The public 10x file is `pbmc_granulocyte_sorted_3k_filtered_feature_bc_matrix.h5`; here it is in a local folder named `data`.
+A 10x [multiome](https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0) sample (PBMC, granulocyte-sorted 3k) measures each cell by both gene expression (RNA) and chromatin accessibility (ATAC peaks). Each modality is a **facet**: RNA uses the `plain` view, ATAC uses `tfidf` reduced by **LSI** (TF-IDF → SVD, dropping the depth-correlated first component). The two are integrated with **WNN**, exactly as for CITE-seq — only the per-facet reductions differ. The 10x file is in a local folder named `data`.
 
-Each modality is a **facet** with its own normalization view recipe. RNA uses `plain` (depth-normalize + log1p); ATAC uses `tfidf` (term-frequency × inverse-document-frequency), reduced by **LSI** (TF-IDF → SVD, dropping the depth-correlated first component). The two facets are then integrated with **WNN**, exactly as for CITE-seq — only the per-facet reductions differ.
-
-## Import into facets
-
-A 10x multiome HDF5 carries both `Gene Expression` and `Peaks` feature types; pagoda2 splits them into facets automatically.
+## Import
 
 ```{r}
-h5 <- "data/pbmc_granulocyte_sorted_3k_filtered_feature_bc_matrix.h5"
-p2 <- suppressMessages(pagoda2::Pagoda2$from10xH5(h5, verbose = FALSE))
-
-do.call(rbind, lapply(p2$listFacets(), function(f) {
-  x <- p2$getFacet(f)
-  data.frame(facet = f, model = x$modelType, feature_type = x$featureType,
-             features = ncol(x$rawCounts), cells = nrow(x$rawCounts),
-             default_reduction = x$defaultReduction)
-}))
+p2 <- pagoda2::Pagoda2$from10xH5("data/pbmc_granulocyte_sorted_3k_filtered_feature_bc_matrix.h5", verbose = FALSE)
+sapply(p2$listFacets(), function(f) p2$getFacet(f)$modelType)   # facet -> view model
 ```
-
-ATAC contributes tens of thousands of peaks; RNA contributes the genes.
 
 ## QC
 
 ```{r}
-suppressMessages(invisible(p2$runQC(verbose = FALSE)))
-qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
-data.frame(cells = nrow(qc),
-           median_RNA_molecules = median(qc$n_molecules, na.rm = TRUE),
-           median_RNA_genes = median(qc$n_genes, na.rm = TRUE))
+p2$runQC(verbose = FALSE)
 ```
 
 ## Per-facet reductions: RNA PCA + ATAC LSI
 
-RNA is reduced by PCA on overdispersed genes; ATAC by LSI on its TF-IDF view. For a quick tutorial we run LSI on the most-accessible peaks; for a full analysis use all peaks.
+RNA → PCA on overdispersed genes; ATAC → LSI on its TF-IDF view. For a quick tutorial we run LSI on the most-accessible peaks; drop the `genes =` subset for a full analysis.
 
 ```{r}
-suppressWarnings({
-  p2$runVariance(verbose = FALSE)
-  p2$runReduction(nPcs = 30, verbose = FALSE)                                   # RNA -> reductions[["PCA"]]
-  atac <- p2$getFacet("ATAC")
-  top.peaks <- names(sort(Matrix::colSums(atac$rawCounts), decreasing = TRUE))[seq_len(min(20000, ncol(atac$rawCounts)))]
-  p2$runReduction(facet = "ATAC", method = "lsi", genes = top.peaks, nPcs = 30, verbose = FALSE) # -> reductions[["ATAC:LSI"]]
-})
+p2$runVariance(verbose = FALSE)
+p2$runReduction(nPcs = 30, verbose = FALSE)
+top.peaks <- names(sort(Matrix::colSums(p2$getFacet("ATAC")$rawCounts), decreasing = TRUE))[1:20000]
+p2$runReduction(facet = "ATAC", method = "lsi", genes = top.peaks, nPcs = 30, verbose = FALSE)
 names(p2$reductions)
 ```
 
-## WNN integration
-
-`runGraph(method = "wnn")` learns per-cell modality weights and fuses the RNA and ATAC neighborhoods — the same call as for CITE-seq, now over `c("RNA", "ATAC")`.
+## WNN integration and clustering
 
 ```{r}
-suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ATAC"), verbose = FALSE))
-data.frame(mean_RNA_weight = round(mean(p2$cellMeta$wnn_weight_RNA, na.rm = TRUE), 3),
-           mean_ATAC_weight = round(mean(p2$cellMeta$wnn_weight_ATAC, na.rm = TRUE), 3))
+p2$runGraph(method = "wnn", facets = c("RNA", "ATAC"), verbose = FALSE)
+p2$runClustering(graph = "WNN", name = "wnn_leiden")
 ```
 
-## Joint clustering and embedding
+## What each modality resolves
+
+Embed each facet's reduction and the joint WNN reduction, colored by the **same** joint clusters:
 
 ```{r}
-suppressWarnings({
-  p2$runClustering(graph = "WNN", name = "wnn_leiden")
-  p2$runEmbedding(reduction = "WNN", name = "umap", verbose = FALSE)
-})
-data.frame(clusters = length(unique(stats::na.omit(p2$cellMeta$wnn_leiden))))
+p2$runEmbedding(reduction = "PCA", name = "umap", verbose = FALSE)        # RNA alone
+p2$runEmbedding(reduction = "ATAC:LSI", name = "umap", verbose = FALSE)   # ATAC alone
+p2$runEmbedding(reduction = "WNN", name = "umap", verbose = FALSE)        # joint
 ```
 
 ```{r}
-#| fig-width: 5
-#| fig-height: 4.5
+#| fig-width: 13
+#| fig-height: 4.3
 #| fig-dpi: 110
-p2$plotEmbedding(reduction = "WNN", embedding = "umap", grouping = "wnn_leiden",
-                 mark.groups = TRUE, size = 0.5, alpha = 0.6, title = "WNN clusters (RNA + ATAC)")
+g_rna <- p2$plotEmbedding(reduction = "PCA", embedding = "umap", grouping = "wnn_leiden", mark.groups = TRUE, size = 0.4, alpha = 0.5, title = "RNA only")
+g_atac <- p2$plotEmbedding(reduction = "ATAC:LSI", embedding = "umap", grouping = "wnn_leiden", mark.groups = TRUE, size = 0.4, alpha = 0.5, title = "ATAC only")
+g_wnn <- p2$plotEmbedding(reduction = "WNN", embedding = "umap", grouping = "wnn_leiden", mark.groups = TRUE, size = 0.4, alpha = 0.5, title = "WNN joint")
+cowplot::plot_grid(g_rna, g_atac, g_wnn, nrow = 1)
 ```
 
-The per-cell ATAC weight shows where chromatin accessibility, rather than RNA, drives the joint neighborhood structure.
+The per-cell ATAC weight shows where chromatin accessibility drives the joint structure:
 
 ```{r}
 #| fig-width: 5
@@ -95,12 +74,12 @@ p2$plotEmbedding(reduction = "WNN", embedding = "umap",
                  size = 0.5, alpha = 0.7, title = "per-cell ATAC weight")
 ```
 
-## RNA markers per cluster
+## Markers
 
-Markers are computed on the RNA facet (the interpretable modality); the joint WNN clusters are annotated from these.
+Markers are computed on the RNA facet (the interpretable modality); the joint clusters are annotated from these.
 
 ```{r}
-suppressWarnings(p2$runMarkers(grouping = "wnn_leiden", name = "wnn_markers", verbose = FALSE))
+p2$runMarkers(grouping = "wnn_leiden", name = "wnn_markers", verbose = FALSE)
 ```
 
 ```{r}
@@ -113,22 +92,18 @@ p2$plotMarkerDotPlot(markers = "wnn_markers", n.genes.per.group = 3, selection =
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
 ```
 
-Canonical lineage genes on the joint embedding confirm the clusters — `plotEmbedding(gene = ..., facet = "RNA")` (RNA is the default facet, so `facet=` is optional here):
+Canonical lineage genes on the joint embedding confirm the clusters:
 
 ```{r}
-#| fig-width: 9
-#| fig-height: 4
+#| fig-width: 11
+#| fig-height: 3.8
 #| fig-dpi: 110
-markers <- intersect(c("CD3D", "MS4A1", "CD14"), pagoda2:::.pagoda2_axis_names(p2, "gene"))
-plots <- lapply(markers, function(g)
-  p2$plotEmbedding(reduction = "WNN", embedding = "umap", gene = g, facet = "RNA",
-                   size = 0.5, alpha = 0.7, title = g))
+genes <- intersect(c("CD3D", "MS4A1", "CD14"), colnames(p2$getRawCounts()))
+plots <- lapply(genes, function(g)
+  p2$plotEmbedding(reduction = "WNN", embedding = "umap", gene = g, size = 0.5, alpha = 0.7, title = g))
 cowplot::plot_grid(plotlist = plots, nrow = 1)
 ```
 
 ## Next steps
 
-- **Annotate** the WNN clusters from the RNA markers (`p2$annotateClusters(from = "wnn_leiden", ...)`).
-- **Reduction-level integration** is also available — `p2$runReduction(facets = c("RNA","ATAC"), method = "cca")` (or `"concat"`) — though WNN is the usual choice for RNA + ATAC.
-- **Scale:** run LSI on all peaks (drop the `genes = top.peaks` subset) for a full analysis; the disk-backed `backend = "lstar"` keeps large peak matrices out of memory.
-- See the [single-dataset](pagoda2.1-single-dataset.ipynb) (RNA) and [CITE-seq](pagoda2.1-citeseq.ipynb) (RNA + protein) notebooks for the other modalities.
+Annotate the WNN clusters from the RNA markers. Reduction-level integration is also available (`p2$runReduction(facets = c("RNA","ATAC"), method = "cca")`), and a disk-backed `backend = "lstar"` facet keeps large peak matrices out of memory. See the [single-dataset](pagoda2.1-single-dataset.ipynb) and [CITE-seq](pagoda2.1-citeseq.ipynb) notebooks for the other modalities.
