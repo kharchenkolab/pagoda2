@@ -124,11 +124,12 @@ p2$graphs[["WNN"]]              # weighted SNN (igraph) over the common cells
 p2$reductions[["WNN"]]          # per-cell-weighted joint reduction (for embedding)
 ```
 
-Faithful Hao-2021 WNN: per-facet kNN, a per-cell bandwidth kernel, within- vs
-cross-modality predictive affinity → ratio-normalized weights (dimensionality-
-robust; validated vs `Seurat::FindMultiModalNeighbors`). `runGraph()` with no
-args **auto-integrates** via WNN when ≥2 facets are reduction-ready; a single
-facet falls through to a plain kNN.
+Faithful WNN (Hao et al., *Integrated analysis of multimodal single-cell data*,
+Cell 2021;184(13):3573-3587, https://doi.org/10.1016/j.cell.2021.04.048): per-facet
+kNN, a per-cell bandwidth kernel, within- vs cross-modality predictive affinity →
+ratio-normalized weights (dimensionality-robust; validated vs
+`Seurat::FindMultiModalNeighbors`). `runGraph()` with no args **auto-integrates**
+via WNN when ≥2 facets are reduction-ready; a single facet falls through to a plain kNN.
 
 ### CCA / sparse-CCA — reduction-level (per-facet feature loadings)
 

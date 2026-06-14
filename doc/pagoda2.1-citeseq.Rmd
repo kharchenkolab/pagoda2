@@ -67,7 +67,7 @@ We process each modality step by step here so the protein panel gets its own var
 
 ## Integrate the modalities with WNN
 
-With a reduction per modality, we integrate. **WNN** (weighted nearest neighbors; Hao et al., *Cell* 2021) asks, for each cell, how well its neighbors in each modality predict that cell's own profile, and turns the answer into a **per-cell weight for each modality**. A cell whose protein neighbors are more predictive than its RNA neighbors leans on protein, and vice versa — the integration is local, not a single global mixing ratio. WNN then fuses the per-modality neighbor graphs weighted this way into one graph.
+With a reduction per modality, we integrate. **WNN** (weighted nearest neighbors; [Hao et al., *Cell* 2021](https://doi.org/10.1016/j.cell.2021.04.048)) asks, for each cell, how well its neighbors in each modality predict that cell's own profile, and turns the answer into a **per-cell weight for each modality**. A cell whose protein neighbors are more predictive than its RNA neighbors leans on protein, and vice versa — the integration is local, not a single global mixing ratio. WNN then fuses the per-modality neighbor graphs weighted this way into one graph.
 
 `runGraph(method = "wnn")` produces the per-cell weights (`cellMeta$wnn_weight_RNA`, `..._ADT`), the fused graph (`graphs[["WNN"]]`), and a joint reduction for embedding (`reductions[["WNN"]]`). We then cluster on the fused graph with Leiden.
 

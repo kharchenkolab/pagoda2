@@ -62,7 +62,7 @@ We run the per-facet steps explicitly here so RNA and ATAC each get the reductio
 
 ## Integrate the modalities with WNN
 
-**WNN** (weighted nearest neighbors; Hao et al., *Cell* 2021) learns, for each cell, how informative each modality's neighborhood is about that cell, turns it into a **per-cell weight per modality**, and fuses the per-modality neighbor graphs accordingly — local weighting, not a single global ratio. `runGraph(method = "wnn")` stores the per-cell weights (`cellMeta$wnn_weight_RNA`, `..._ATAC`), the fused graph (`graphs[["WNN"]]`), and a joint reduction (`reductions[["WNN"]]`); we then cluster on the fused graph with Leiden.
+**WNN** (weighted nearest neighbors; [Hao et al., *Cell* 2021](https://doi.org/10.1016/j.cell.2021.04.048)) learns, for each cell, how informative each modality's neighborhood is about that cell, turns it into a **per-cell weight per modality**, and fuses the per-modality neighbor graphs accordingly — local weighting, not a single global ratio. `runGraph(method = "wnn")` stores the per-cell weights (`cellMeta$wnn_weight_RNA`, `..._ATAC`), the fused graph (`graphs[["WNN"]]`), and a joint reduction (`reductions[["WNN"]]`); we then cluster on the fused graph with Leiden.
 
 ```{r}
 p2$runGraph(method = "wnn", facets = c("RNA", "ATAC"), verbose = FALSE)

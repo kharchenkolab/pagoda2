@@ -21,7 +21,7 @@ Highlights in this development branch:
 
 - **One R6 object, a generic step API.** `Pagoda2$from...()` to import, then `p2$runQC()`, `p2$filterData()`, `p2$runVariance()`, and the generic pipeline steps `p2$runReduction()`, `p2$runGraph()`, `p2$runClustering()`, `p2$runEmbedding()` — the algorithm is always a `method=` (e.g. `method = "pca"`, `"leiden"`, `"wnn"`), so there is no `runPCA`/`runLeiden`/`runWNN`. `p2$run()` chains the standard workflow.
 - **Multimodal via facets.** `p2$addFacet()` adds a modality; native 10x multimodal H5 import maps `feature_type` to facets automatically (`Gene Expression`→RNA, `Antibody Capture`→ADT/CLR, `Peaks`→ATAC/TF-IDF). Per-facet normalization view models: `plain` (RNA), `clr` (CITE-seq protein), `tfidf` (ATAC).
-- **Cross-modality integration.** `runGraph(method = "wnn")` (weighted nearest neighbors), and reduction-level `runReduction(facets = ..., method = "cca" | "scca" | "concat")` — joints are stored as ordinary name-keyed products (`reductions[["WNN"]]`, `reductions[["CCA"]]`).
+- **Cross-modality integration.** `runGraph(method = "wnn")` (weighted nearest neighbors; [Hao et al., *Cell* 2021](https://doi.org/10.1016/j.cell.2021.04.048)), and reduction-level `runReduction(facets = ..., method = "cca" | "scca" | "concat")` — joints are stored as ordinary name-keyed products (`reductions[["WNN"]]`, `reductions[["CCA"]]`).
 - **Memory-lean and disk-backed.** Sparse raw counts + lightweight view recipes instead of a duplicate normalized matrix; a facet's counts can live in a portable **lstar Zarr** store and stream in bounded memory (`backend = "lstar"`), bit-identical to in-memory.
 - **Fast.** Threaded approximate-kNN (RcppHNSW) for all graph building; RSpectra truncated SVD for PCA/LSI.
 - **I/O.** Imports 10x triplets, 10x/CellRanger HDF5 (incl. multimodal), AnnData h5ad, h5Seurat, and loom; exports native RDS, h5ad, and lstar Zarr; optional in-memory conversion to list, SingleCellExperiment, or Seurat.
@@ -63,5 +63,14 @@ If you find `pagoda2` useful for your publication, please cite:
 ```
 Nikolas Barkas, Viktor Petukhov, Peter Kharchenko, Simon Steiger, 
 Rasmus Rydbirk, and Evan Biederstedt (2021). pagoda2: Single Cell 
-Analysis and Differential Expression. R package version 1.1.1.
+Analysis and Differential Expression. R package version 2.0.0.
+```
+
+When using weighted nearest neighbor (WNN) multimodal integration
+(`runGraph(method = "wnn")`), please also cite:
+
+```
+Hao Y, Hao S, Andersen-Nissen E, Mauck WM 3rd, Zheng S, Butler A, et al. (2021).
+Integrated analysis of multimodal single-cell data. Cell 184(13):3573-3587.e29.
+https://doi.org/10.1016/j.cell.2021.04.048
 ```
