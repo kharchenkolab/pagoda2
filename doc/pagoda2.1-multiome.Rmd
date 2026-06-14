@@ -9,7 +9,16 @@ format:
 jupyter: ir44
 ---
 
-pagoda2.1 represents a multi-modal dataset as a set of **facets** — one per molecular modality measured in the same cells. A facet bundles its modality's raw counts, the normalization *view recipe* suited to that modality, and its reductions; all facets share the same cells. Loading a plain count matrix creates a single **default facet** named `RNA` (so ordinary scRNA-seq needs no facet arguments — see the [single-dataset notebook](pagoda2.1-single-dataset.ipynb)); extra modalities become extra facets, and the analysis verbs take `facet =` (one modality) or `facets =` (integrate across them).
+pagoda2.1 represents a multi-modal dataset as a set of **facets** — one per molecular modality measured in the same cells. A facet bundles its modality's raw counts, the normalization *view recipe* suited to that modality, and its reductions; all facets share the same cells. Loading a plain count matrix creates a single **default facet** named `RNA` (so ordinary scRNA-seq needs no facet arguments — see the [single-dataset notebook](pagoda2.1-single-dataset.ipynb)); extra modalities become extra facets, and the analysis verbs take `facet =` (one modality) or `facets =` (integrate across them). The same verbs cover every modality — these are illustrative, not run here:
+
+```r
+p2$listFacets()                                  # which modalities are present, e.g. "RNA", "ATAC"
+p2$runReduction(facet = "ATAC", method = "lsi")  # reduce one modality (LSI for ATAC)
+p2$runGraph(facets = c("RNA", "ATAC"), method = "wnn")  # integrate across modalities
+p2$plotEmbedding(gene = "CD3D", facet = "RNA")   # color the embedding by a facet's feature
+```
+
+Steps written without `facet =` act on the default `RNA` facet.
 
 This notebook uses a 10x [multiome](https://www.10xgenomics.com/datasets/pbmc-from-a-healthy-donor-granulocytes-removed-through-cell-sorting-3-k-1-standard-2-0-0) sample (PBMC, granulocyte-sorted 3k): each cell is measured by both gene expression (RNA) and chromatin accessibility (ATAC peaks). The two modalities need different treatment — RNA is reduced by PCA, ATAC by LSI — and are then integrated with **weighted nearest neighbors (WNN)**. The pattern is the same as the [CITE-seq notebook](pagoda2.1-citeseq.ipynb); only the per-facet reductions differ. The 10x file is in a local folder named `data`.
 
@@ -41,6 +50,15 @@ top.peaks <- names(sort(Matrix::colSums(p2$getFacet("ATAC")$rawCounts), decreasi
 p2$runReduction(facet = "ATAC", method = "lsi", genes = top.peaks, nPcs = 30, verbose = FALSE)
 names(p2$reductions)
 ```
+
+The default `RNA` facet also has a one-call shortcut for its standard sequence (QC → filter → variance → PCA → graph → UMAP → Leiden → markers), which you can run whole or in part:
+
+```r
+p2$run()                                  # full standard pipeline on the RNA facet
+p2$run(steps = c("variance", "pca"))      # just the RNA reduction
+```
+
+We run the per-facet steps explicitly here so RNA and ATAC each get the reduction they need before WNN integration.
 
 ## Integrate the modalities with WNN
 

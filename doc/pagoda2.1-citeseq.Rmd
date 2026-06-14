@@ -11,7 +11,17 @@ jupyter: ir44
 
 pagoda2.1 can analyze datasets with **more than one molecular modality** measured in the same cells — CITE-seq (gene expression + surface-protein antibody counts), 10x multiome (gene expression + chromatin accessibility), and so on. Each modality is represented as a **facet**.
 
-A facet bundles everything specific to one modality: its raw count matrix, the normalization *view recipe* appropriate for that modality, and the reductions computed from it. All facets share the same cells. When you load an ordinary count matrix, pagoda2 creates a single **default facet** named `RNA` — so a plain scRNA-seq analysis (the [single-dataset notebook](pagoda2.1-single-dataset.ipynb)) never mentions facets at all. Additional modalities become additional facets, and the analysis verbs gain a `facet =` argument (act on one modality) or a `facets =` argument (integrate across them).
+A facet bundles everything specific to one modality: its raw count matrix, the normalization *view recipe* appropriate for that modality, and the reductions computed from it. All facets share the same cells. When you load an ordinary count matrix, pagoda2 creates a single **default facet** named `RNA` — so a plain scRNA-seq analysis (the [single-dataset notebook](pagoda2.1-single-dataset.ipynb)) never mentions facets at all. Additional modalities become additional facets, and the analysis verbs gain a `facet =` argument (act on one modality) or a `facets =` argument (integrate across them). The shape of the API is the same throughout — these are illustrative, not run here:
+
+```r
+p2$listFacets()                                  # which modalities are present, e.g. "RNA", "ADT"
+p2$runReduction(facet = "ADT")                   # reduce one modality
+p2$runGraph(facets = c("RNA", "ADT"), method = "wnn")   # integrate across modalities
+p2$runMarkers(grouping = "leiden", facet = "ADT")       # call markers on one modality
+p2$getExpressionBlock(facet = "ADT")             # pull one facet's normalized values
+```
+
+Steps written without `facet =` act on the default `RNA` facet, which is why single-modality analysis never needs the argument.
 
 This notebook uses a CITE-seq sample — 10x [PBMC 1k protein v3](https://www.10xgenomics.com/datasets/1-k-pbm-cs-using-3-prime-feature-barcoding-3-standard-3-0-0) — which carries RNA ("Gene Expression") and a 17-antibody surface-protein panel ("Antibody Capture"). We reduce each modality on its own terms and then integrate them with **weighted nearest neighbors (WNN)** into a single joint clustering and embedding. The 10x file is in a local folder named `data`.
 
@@ -45,6 +55,15 @@ p2$runVariance(facet = "ADT", use.raw.variance = TRUE, verbose = FALSE)
 p2$runReduction(facet = "ADT", nPcs = 15, verbose = FALSE)
 names(p2$reductions)
 ```
+
+For the default `RNA` facet the whole standard sequence (QC → filter → variance → PCA → graph → UMAP → Leiden → markers) chains in a single call — `p2$run()` — and you can restrict it to a few steps:
+
+```r
+p2$run()                                       # full standard pipeline on the RNA facet
+p2$run(steps = c("qc", "variance", "pca"))     # just the reduction steps
+```
+
+We process each modality step by step here so the protein panel gets its own variance and reduction settings before the two are integrated.
 
 ## Integrate the modalities with WNN
 
