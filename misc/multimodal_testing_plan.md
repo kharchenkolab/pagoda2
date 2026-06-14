@@ -225,7 +225,7 @@ float64 reference oracle, exactly as §6.2 specifies).
 
 ### C — Disk-backed facet storage (out-of-core; the container concern)
 Promote `benchmark/backends.R` into a package facet backend: a facet's `rawCounts` may be a disk-backed
-handle (lstar-zarr / BPCells) instead of an in-memory `dgCMatrix`. The view kernels stream column blocks
+handle (lstar-zarr) instead of an in-memory `dgCMatrix`. The view kernels stream column blocks
 (the fused zarr reducers from the recent benchmark work); `getExpressionBlock`/`viewColMeanVar`/
 `viewColSumByFac` operate in bounded memory without full materialization. A facet's `backend` field selects
 in-memory vs disk. *Gates:* a disk-backed facet yields **identical** `viewColMeanVar`/`viewColSumByFac` to
@@ -253,9 +253,8 @@ role demands; C is the disk-backed capability.
 > - **A** ✓ facet= threaded through variance/reduction/markers; facet/name-keyed registries.
 > - **B** ✓ CLR/TF-IDF C++ kernel branches (`viewKernelValue` model+clrDivisor+idf); thread-invariant,
 >   reference-gated.
-> - **C** ✓ (slice) disk-backed BPCells facet backend; `viewColMeanVar` out-of-core parity with in-memory
->   (`test_facet_backend.R`). *Deferred:* disk path for the other accessors; the lstar-zarr fused reducer
->   (needs lstar).
+> - **C** ✓ (slice) disk-backed lstar-zarr facet backend; `viewColMeanVar` out-of-core parity with
+>   in-memory (`test_facet_backend.R`). *Deferred:* disk path for the other accessors.
 > - **D** ✓ native 10x multimodal H5 import (`feature_type`→RNA/ADT/ATAC facets; real CITE-seq verified:
 >   33538 genes + 17 proteins/713 cells) + **LSI** (tfidf→SVD→drop-first) + the **joint reduction**
 >   (concat-PCA = the §0.4.4 shipped joint method). *Deferred:* full WNN algorithm; formal union-axis
@@ -270,7 +269,7 @@ role demands; C is the disk-backed capability.
 >   `runReduction`); `test_api_version.R` updated.
 > - **lstar import/export round-trip** ✓ `p2$export(format="lstar")` + `pagoda2FromLstar()`;
 >   pagoda2→lstar.zarr→pagoda2 multi-facet **fixed point** (`test_facet_lstar.R`; lstar loaded from its
->   `.Rlib`). Disk backend switched **BPCells→lstar zarr** (`stream_col_stats`), per directive.
+>   `.Rlib`). Disk backend is **lstar zarr** (`stream_col_stats`), per directive.
 > - **Disk path for other accessors** ✓ `getExpressionBlock` (`lstar_read_genes`) + `viewColSumByFac`
 >   (`lstar_stream_col_sum_by_group`), parity with in-memory (`test_facet_backend.R`).
 > - **Union-axis membership masks** ✓ union `cells` + `getFacetMembership` + `requireFacets`

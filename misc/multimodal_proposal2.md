@@ -964,7 +964,7 @@ the way through. The scenario stress-tests the §8.5 accessor contract against t
 
 **Scenario.** An atlas-scale collection — say 500 samples, ~50M cells, multi-facet (RNA + ADT, or RNA +
 ATAC multiome) — that we **never** want to hold in memory. Each sample is a storage-backed pagoda2.1 object
-(its facets' raw counts live in a Zarr/lstar/BPCells store, normalization is a view recipe applied on the
+(its facets' raw counts live in a Zarr/lstar store, normalization is a view recipe applied on the
 fly — exactly the disk-backed backends already benchmarked on `devel`). conos integrates the collection;
 cacoa runs case-control on top. Walk it end to end.
 
@@ -999,7 +999,7 @@ storage-backed facet reads its od-gene block by `(cells ∩ membership, od.genes
   return `(group × gene)` or `(gene)` summaries without ever stacking matrices. These replace
   `rawMatricesWithCommonGenes` for pseudobulk.
 - `getVarInfo(facet)`, `getReduction(facet)`, `getOdGenes(facet)` — small, in-memory, fine.
-- `getCountHandle(facet)` — an opaque lazy handle (Zarr/lstar/BPCells) supporting block extraction +
+- `getCountHandle(facet)` — an opaque lazy handle (Zarr/lstar) supporting block extraction +
   streaming reduction, for callers that want to drive their own out-of-core loop. `getCountMatrix` that
   materializes is explicitly the small-data fallback.
 

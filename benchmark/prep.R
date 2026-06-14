@@ -1,11 +1,20 @@
 # Phase A prep: build the in-memory baseline once and persist shared artifacts (raw dgCMatrix,
 # normalization recipe, varinfo/odgenes from a SINGLE adjustVariance fit, grouping, op4 genes).
 # All backends reuse these so the comparison is storage-only, never a re-fit.
-suppressMessages({library(pagoda2); library(Matrix); library(BPCells)})
+suppressMessages({library(pagoda2); library(Matrix)})
 H5 <- "/tmp/marrow_raw.h5ad"; OUT <- "/tmp/bench"
 t0 <- proc.time()
-m <- open_matrix_anndata_hdf5(H5)                       # genes x cells, on disk
-raw_gxc <- as(m, "dgCMatrix")                           # materialize once (genes x cells) for the Mem build
+## Read the anndata h5ad directly with hdf5r (no BPCells). X is a CSR cells x genes matrix, whose
+## (data, indices=gene, indptr=cell) slots ARE the CSC of the genes x cells transpose -> build it directly.
+read_h5ad_gxc <- function(h5) {
+  f <- hdf5r::H5File$new(h5, "r"); on.exit(f$close_all())
+  sh <- hdf5r::h5attributes(f[["X"]])[["shape"]]        # c(ncells, ngenes)
+  pick <- function(grp) { nm <- names(f[[grp]]); fld <- if ("_index" %in% nm) "_index" else "index"; f[[paste0(grp, "/", fld)]]$read() }
+  new("dgCMatrix", i = as.integer(f[["X/indices"]]$read()), p = as.integer(f[["X/indptr"]]$read()),
+      x = as.numeric(f[["X/data"]]$read()), Dim = c(as.integer(sh[2]), as.integer(sh[1])),
+      Dimnames = list(pick("var"), pick("obs")))
+}
+raw_gxc <- read_h5ad_gxc(H5)                            # genes x cells, materialized once for the Mem build
 cat(sprintf("materialized raw %d x %d (%.0fM nnz) in %.1fs\n", nrow(raw_gxc), ncol(raw_gxc),
             length(raw_gxc@x)/1e6, (proc.time()-t0)[3]))
 
