@@ -9,26 +9,34 @@ format:
 jupyter: ir44
 ---
 
-A CITE-seq sample (10x [PBMC 1k protein v3](https://www.10xgenomics.com/datasets/1-k-pbm-cs-using-3-prime-feature-barcoding-3-standard-3-0-0)) measures each cell by both RNA and a panel of surface-protein antibodies (ADT). In pagoda2.1 each modality is a **facet** with its own normalization recipe: RNA uses `plain` (depth-normalize + log1p), CITE-seq protein uses `clr` (centered log-ratio). Pipeline steps are generic (the algorithm is a `method=`); cross-modality integration is `runGraph(method = "wnn")`. The 10x file is in a local folder named `data`.
+pagoda2.1 can analyze datasets with **more than one molecular modality** measured in the same cells — CITE-seq (gene expression + surface-protein antibody counts), 10x multiome (gene expression + chromatin accessibility), and so on. Each modality is represented as a **facet**.
 
-## Import
+A facet bundles everything specific to one modality: its raw count matrix, the normalization *view recipe* appropriate for that modality, and the reductions computed from it. All facets share the same cells. When you load an ordinary count matrix, pagoda2 creates a single **default facet** named `RNA` — so a plain scRNA-seq analysis (the [single-dataset notebook](pagoda2.1-single-dataset.ipynb)) never mentions facets at all. Additional modalities become additional facets, and the analysis verbs gain a `facet =` argument (act on one modality) or a `facets =` argument (integrate across them).
 
-A multimodal 10x HDF5 is split into facets automatically from its `feature_type` column:
+This notebook uses a CITE-seq sample — 10x [PBMC 1k protein v3](https://www.10xgenomics.com/datasets/1-k-pbm-cs-using-3-prime-feature-barcoding-3-standard-3-0-0) — which carries RNA ("Gene Expression") and a 17-antibody surface-protein panel ("Antibody Capture"). We reduce each modality on its own terms and then integrate them with **weighted nearest neighbors (WNN)** into a single joint clustering and embedding. The 10x file is in a local folder named `data`.
+
+## Import: one object, two facets
+
+A multimodal 10x HDF5 records a `feature_type` for every feature; pagoda2 reads it and builds one facet per modality automatically. Each facet gets the normalization view model appropriate for its modality — RNA uses `plain` (library-size normalize, then `log1p`); CITE-seq protein uses `clr`, the centered log-ratio across the antibody panel within each cell, which removes per-cell differences in total antibody capture (a small, compositional panel where raw counts are not comparable across cells).
 
 ```{r}
 p2 <- pagoda2::Pagoda2$from10xH5("data/pbmc_1k_protein_v3_filtered_feature_bc_matrix.h5", verbose = FALSE)
 sapply(p2$listFacets(), function(f) p2$getFacet(f)$modelType)   # facet -> view model
 ```
 
+Both facets cover the same cells. `RNA` is the default facet, so steps written without a `facet=` argument act on it.
+
 ## QC
+
+`runQC()` computes per-cell quality metrics on the RNA facet — molecule and detected-gene counts and a gene-vs-molecule pass/fail flag — and records them in `p2$cellMeta`.
 
 ```{r}
 p2$runQC(verbose = FALSE)
 ```
 
-## Per-facet reductions
+## Reduce each modality on its own terms
 
-Each facet is reduced on its own: RNA → PCA, ADT → PCA on the CLR view. Scores are name-keyed (`PCA` for the default RNA facet, `ADT:PCA` for ADT).
+The pipeline verbs are generic: the algorithm is chosen by `method=`, so the same `runReduction()` does PCA on RNA and (in the multiome notebook) LSI on ATAC — there is no `runPCA`/`runLeiden`. Here we model gene variance and run PCA on the overdispersed RNA genes, and separately run PCA on the CLR-transformed protein panel. Reduction scores are stored under name-keyed slots — the default facet's is `reductions[["PCA"]]`, the ADT facet's is `reductions[["ADT:PCA"]]`.
 
 ```{r}
 p2$runVariance(verbose = FALSE)
@@ -38,9 +46,11 @@ p2$runReduction(facet = "ADT", nPcs = 15, verbose = FALSE)
 names(p2$reductions)
 ```
 
-## WNN integration and clustering
+## Integrate the modalities with WNN
 
-`runGraph(method = "wnn")` learns a per-cell weight for each modality and fuses their neighborhoods into `graphs[["WNN"]]` (with a joint `reductions[["WNN"]]` and per-cell `cellMeta$wnn_weight_*`). We then cluster on that graph.
+With a reduction per modality, we integrate. **WNN** (weighted nearest neighbors; Hao et al., *Cell* 2021) asks, for each cell, how well its neighbors in each modality predict that cell's own profile, and turns the answer into a **per-cell weight for each modality**. A cell whose protein neighbors are more predictive than its RNA neighbors leans on protein, and vice versa — the integration is local, not a single global mixing ratio. WNN then fuses the per-modality neighbor graphs weighted this way into one graph.
+
+`runGraph(method = "wnn")` produces the per-cell weights (`cellMeta$wnn_weight_RNA`, `..._ADT`), the fused graph (`graphs[["WNN"]]`), and a joint reduction for embedding (`reductions[["WNN"]]`). We then cluster on the fused graph with Leiden.
 
 ```{r}
 p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE)
@@ -49,7 +59,7 @@ p2$runClustering(graph = "WNN", name = "wnn_leiden")
 
 ## What each modality resolves
 
-Embed each facet's own reduction and the joint WNN reduction, then color all three by the **same** joint clusters. RNA alone and protein alone each separate some populations but blur others; WNN combines them.
+Why integrate at all? Because different populations are best distinguished by different modalities. To see this directly, we embed each facet's own reduction *and* the joint WNN reduction, then color all three UMAPs by the **same** joint clusters. Where a panel mixes cluster colors together, that modality alone cannot separate those cells; where the WNN panel pulls them apart, integration recovered the distinction.
 
 ```{r}
 p2$runEmbedding(reduction = "PCA", name = "umap", verbose = FALSE)        # RNA alone
@@ -67,7 +77,7 @@ g_wnn <- p2$plotEmbedding(reduction = "WNN", embedding = "umap", grouping = "wnn
 cowplot::plot_grid(g_rna, g_adt, g_wnn, nrow = 1)
 ```
 
-The per-cell ADT weight shows where protein, rather than RNA, drives the joint structure:
+RNA alone tends to merge the T-cell subsets; the protein panel separates them (by CD4/CD8/CD45RA/RO) but is coarser elsewhere; the WNN joint embedding combines the two. The per-cell ADT weight below maps where protein, rather than RNA, was the more informative modality — typically the protein-defined immune subsets.
 
 ```{r}
 #| fig-width: 5
@@ -80,7 +90,7 @@ p2$plotEmbedding(reduction = "WNN", embedding = "umap",
 
 ## Markers
 
-RNA markers per cluster (`runMarkers` on the default RNA facet, then the dot plot):
+We call marker genes on the RNA facet (the directly interpretable modality) for the joint clusters. The dot plot shows the top markers per cluster — color is mean expression, dot size is the fraction of cells expressing the gene.
 
 ```{r}
 p2$runMarkers(grouping = "wnn_leiden", name = "wnn_markers", verbose = FALSE)
@@ -96,7 +106,7 @@ p2$plotMarkerDotPlot(markers = "wnn_markers", n.genes.per.group = 3, selection =
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
 ```
 
-The protein panel is small and detected in ~every cell, so the clearest view is the mean CLR per protein across clusters (`getExpressionBlock(facet = "ADT")` gives the CLR matrix). Surface markers (CD3/CD4/CD8/CD19/CD14/...) cleanly label the joint clusters:
+On the protein side every antibody is detected in nearly every cell — that is exactly what CLR normalizes — so a dot plot's "fraction expressing" dimension carries no information. The clearer summary is the mean CLR of each protein across clusters (`getExpressionBlock(facet = "ADT")` returns the CLR matrix). The canonical surface markers light up the joint clusters: CD3/CD4/CD8 on T cells, CD19 on B cells, CD14/CD15 on monocytes, CD16/CD56 on NK.
 
 ```{r}
 #| fig-width: 8.5
@@ -118,4 +128,4 @@ ggplot2::ggplot(df, ggplot2::aes(protein, cluster, fill = z)) +
 
 ## Next steps
 
-Annotate the WNN clusters from the joint RNA + protein evidence (`p2$annotateClusters(from = "wnn_leiden", ...)`). Other joint methods are reduction-level: `p2$runReduction(facets = c("RNA","ADT"), method = "cca")`. Color the embedding by any feature from any facet with `p2$plotEmbedding(gene = "CD3_TotalSeqB", facet = "ADT")`. See the [single-dataset](pagoda2.1-single-dataset.ipynb) and [ATAC / multiome](pagoda2.1-multiome.ipynb) notebooks for the other modalities.
+The RNA and protein evidence together name each WNN cluster; record the annotation and make it the default grouping with `p2$annotateClusters(from = "wnn_leiden", to = "cell_type", map = ..., setDefault = TRUE)`, after which every plot uses it. Other integration choices exist at the reduction level (`p2$runReduction(facets = c("RNA","ADT"), method = "cca")`), and any feature from any facet can color the embedding (`p2$plotEmbedding(gene = "CD3_TotalSeqB", facet = "ADT")`). See the [single-dataset](pagoda2.1-single-dataset.ipynb) (RNA) and [ATAC / multiome](pagoda2.1-multiome.ipynb) (RNA + chromatin) notebooks for the other modalities.
