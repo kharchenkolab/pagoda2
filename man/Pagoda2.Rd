@@ -12,6 +12,9 @@ and marker detection. The pipeline is driven by generic verbs (`runReduction`,
 selected by a `method=` argument, or by `run()` which chains the standard
 sequence. See `vignette("pagoda2")` for a worked example and
 \code{\link{pagoda2-deprecated}} for the mapping from the former procedural API.
+
+Multimodal integration via \code{runGraph(method = "wnn")} implements weighted
+nearest neighbor (WNN) analysis from the Satija lab (see references).
 }
 \examples{
 \donttest{
@@ -71,6 +74,11 @@ p2_object$adjustVariance(plot=TRUE, gam.k=10)
 p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
 }
 
+}
+\references{
+Hao Y, Hao S, Andersen-Nissen E, Mauck WM 3rd, Zheng S, Butler A, et al.
+Integrated analysis of multimodal single-cell data. \emph{Cell}. 2021;184(13):3573-3587.e29.
+\doi{10.1016/j.cell.2021.04.048}
 }
 \author{
 Simon Steiger
@@ -1971,7 +1979,9 @@ p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
 \if{html}{\out{<a id="method-Pagoda2-runGraph"></a>}}
 \if{latex}{\out{\hypertarget{method-Pagoda2-runGraph}{}}}
 \subsection{\code{Pagoda2$runGraph()}}{
-  Build a kNN graph using the pagoda2.1 API name.
+  Build a kNN graph. With `method = "wnn"` (or >= 2 reduction-ready
+  facets) this performs weighted nearest neighbor integration across facets
+  (Hao et al., \emph{Cell} 2021; \doi{10.1016/j.cell.2021.04.048}).
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{Pagoda2$runGraph(reduction = NULL, method = NULL, facets = NULL, ...)}
@@ -1981,7 +1991,7 @@ p2_object$makeKnnGraph(k=20, center=FALSE, distance='L2')
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{reduction}}{Reduction or matrix namespace to use.}
-      \item{\code{method}}{Algorithm to use for this step.}
+      \item{\code{method}}{Algorithm to use for this step (e.g. "knn", or "wnn" for multimodal integration).}
       \item{\code{facets}}{Facets to integrate jointly.}
       \item{\code{...}}{Arguments passed to makeKnnGraph().}
     }

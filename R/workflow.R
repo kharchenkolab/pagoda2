@@ -393,8 +393,9 @@
   list(d0 = d0, sigma = sigma)
 }
 
-## WNN (weighted nearest neighbors, Hao 2021), faithful: per-cell modality weights from within- vs
-## cross-modality predictive affinity under a per-cell bandwidth kernel exp(-(d - d_nn1)/(sigma - d_nn1)).
+## WNN (weighted nearest neighbors), faithful to Hao et al., Integrated analysis of multimodal single-cell
+## data, Cell 2021;184(13):3573-3587 (doi:10.1016/j.cell.2021.04.048): per-cell modality weights from within-
+## vs cross-modality predictive affinity under a per-cell bandwidth kernel exp(-(d - d_nn1)/(sigma - d_nn1)).
 ## A modality whose OWN neighbors predict the cell's state much better than the other modalities' neighbors
 ## do is up-weighted for that cell; the bandwidth normalization makes this dimensionality-robust (a noise
 ## modality is down-weighted even with a different reduction dimension). Builds (A) per-cell weights, (B) a

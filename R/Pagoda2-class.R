@@ -27,6 +27,14 @@ NULL
 #' sequence. See `vignette("pagoda2")` for a worked example and
 #' \code{\link{pagoda2-deprecated}} for the mapping from the former procedural API.
 #'
+#' Multimodal integration via \code{runGraph(method = "wnn")} implements weighted
+#' nearest neighbor (WNN) analysis from the Satija lab (see references).
+#'
+#' @references
+#' Hao Y, Hao S, Andersen-Nissen E, Mauck WM 3rd, Zheng S, Butler A, et al.
+#' Integrated analysis of multimodal single-cell data. \emph{Cell}. 2021;184(13):3573-3587.e29.
+#' \doi{10.1016/j.cell.2021.04.048}
+#'
 #' @export
 #' @examples
 #' \donttest{
@@ -1108,10 +1116,12 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       invisible(g)
     },
 
-    #' @description Build a kNN graph using the pagoda2.1 API name.
+    #' @description Build a kNN graph. With `method = "wnn"` (or >= 2 reduction-ready
+    #'   facets) this performs weighted nearest neighbor integration across facets
+    #'   (Hao et al., \emph{Cell} 2021; \doi{10.1016/j.cell.2021.04.048}).
     #'
     #' @param reduction Reduction or matrix namespace to use.
-    #' @param method Algorithm to use for this step.
+    #' @param method Algorithm to use for this step (e.g. "knn", or "wnn" for multimodal integration).
     #' @param facets Facets to integrate jointly.
     #' @param ... Arguments passed to makeKnnGraph().
     #' @return Invisibly returns the graph.
