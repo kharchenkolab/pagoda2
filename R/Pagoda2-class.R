@@ -1393,12 +1393,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       # TODO: factor out gene PCA calculation
       # Do the PCA
       nPcs <- min(nrow(x) - 1, ncol(x) - 1, nPcs)
-      if (center) {
-        cm <- Matrix::colMeans(x)
-        pcs <- irlba(x, nv = nPcs, nu = 0, center = cm, right_only = FALSE, fastpath = fastpath, maxit = maxit, reorth = TRUE)
-      } else {
-        pcs <- irlba(x, nv = nPcs, nu = 0, right_only = FALSE, fastpath = fastpath, maxit = maxit, reorth = TRUE)
-      }
+      cm <- if (center) Matrix::colMeans(x) else NULL
+      pcs <- .pagoda2_truncated_svd(x, nv = nPcs, center = cm, maxit = maxit, fastpath = fastpath)
       rownames(pcs$v) <- colnames(x)
 
       # Optional centering
@@ -2648,7 +2644,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
         y <- t(t(x[cells, odgenes]) * sf)
         cm <- Matrix::colMeans(y)
         # PCA
-        pcs <- irlba(y, nv = nPcs, nu = 0, center = cm, right_only = FALSE, fastpath = TRUE, reorth = TRUE)
+        pcs <- .pagoda2_truncated_svd(y, nv = nPcs, center = cm)
         rownames(pcs$v) <- colnames(y)
         pcs$center <- cm
         # row-randomize x to get a sense for the pcs
@@ -2862,7 +2858,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
           if (sum(lab) < 1) {
             return(NULL)
           }
-          pcs <- irlba(x[, lab], nv = nPcs, nu = 0, center = cm[lab])
+          pcs <- .pagoda2_truncated_svd(x[, lab], nv = nPcs, center = cm[lab])
           pcs$d <- pcs$d / sqrt(nrow(x))
           pcs$rotation <- pcs$v
           pcs$v <- NULL
@@ -2871,7 +2867,7 @@ Pagoda2 <- R6::R6Class("Pagoda2",
           ngenes <- sum(lab)
           z <- do.call(rbind, lapply(seq_len(n.randomizations), function(i) {
             si <- sample(ncol(x), ngenes)
-            pcs <- irlba(x[, si], nv = nPcs, nu = 0, center = cm[si])$d
+            pcs <- .pagoda2_truncated_svd(x[, si], nv = nPcs, center = cm[si])$d
           }))
           z <- z / sqrt(nrow(x))
 
