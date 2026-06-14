@@ -27,6 +27,19 @@ tar -xzf "quarto-${version}-linux-amd64.tar.gz" -C "$HOME/.local"
 
 ## Render The Workflow Notebook
 
+**Use [`render_notebook.sh`](render_notebook.sh)** — it runs `quarto render --execute` *and* applies the
+`language_info` fixup below in one step, so the fixup is never forgotten (a bare `quarto render` leaves a
+Python kernelspec / R `language_info` that makes GitHub collapse R code formatting):
+
+```sh
+# symlink the sample data into doc/data first (see below), then:
+doc/render_notebook.sh pagoda2.1-single-dataset
+doc/render_notebook.sh pagoda2.1-citeseq
+doc/render_notebook.sh pagoda2.1-multiome
+```
+
+The manual steps it bundles are documented below for reference.
+
 The single-dataset notebook expects only the GSM5746259 10x triplet files in a
 folder named `data` next to the Rmd during execution. For local rendering, use a
 temporary folder with symlinks or copies of the three sample files:

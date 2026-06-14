@@ -9,191 +9,107 @@ format:
 jupyter: ir44
 ---
 
-This notebook shows the current pagoda2.1 single-dataset scRNA-seq workflow on a PBMC sample from GEO: [GSM5746259](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5746259). For **multimodal** data (CITE-seq, ATAC/multiome) see the companion notebooks `pagoda2.1-citeseq` and `pagoda2.1-multiome`.
+This notebook runs the pagoda2.1 single-dataset scRNA-seq workflow on a PBMC sample from GEO ([GSM5746259](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5746259)). The 10x triplet (matrix + barcodes + features) is in a local folder named `data`. For **multimodal** data see the [CITE-seq](pagoda2.1-citeseq.ipynb) and [ATAC / multiome](pagoda2.1-multiome.ipynb) notebooks.
 
-The count data are downloaded from that GEO sample page as a 10x-style triplet: a sparse matrix file, a cell barcode file, and a gene/feature file. Here those three files are in a local folder named `data`.
+Pipeline steps are generic — the algorithm is a `method=` of `runReduction()` / `runGraph()` / `runClustering()` / `runEmbedding()` (there is no `runPCA`/`runLeiden`). `p2$run()` chains the standard sequence below.
 
-Pipeline steps are **generic, with the algorithm chosen by `method=`** — `p2$runReduction()`, `p2$runGraph()`, `p2$runClustering()`, `p2$runEmbedding()` (there is no `runPCA`/`runLeiden`/`runWNN`). `p2$run()` below chains the standard scRNA-seq sequence; the individual steps are used directly in the multimodal notebooks.
-
-## Input Data
-
-The folder contains the three files needed for a 10x-style sparse count matrix. The next cell shows the folder name and the files that were downloaded from GEO.
+## Load counts
 
 ```{r}
-data_dir <- "data"
-
-data.frame(
-  data_dir = data_dir,
-  file = list.files(data_dir, pattern = "\\.(mtx|tsv)(\\.gz)?$")
-)
-```
-
-Create the pagoda2 object directly from that folder. The reader keeps raw counts in the object and creates a lightweight normalized analysis view for downstream calculations.
-
-```{r}
-p2 <- suppressMessages(pagoda2::Pagoda2$from10x(data_dir, verbose = FALSE))
-raw_dim <- dim(p2$getRawCounts())
-raw_nnz <- Matrix::nnzero(p2$getRawCounts())
-
-data.frame(
-  cells = raw_dim[1],
-  genes = raw_dim[2],
-  nonzero_entries = raw_nnz,
-  sparsity = round(1 - raw_nnz / prod(raw_dim), 4),
-  integer_like = all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8)
-)
+p2 <- pagoda2::Pagoda2$from10x("data", verbose = FALSE)
+dim(p2$getRawCounts())   # cells x genes
 ```
 
 ## QC
 
-`runQC()` records molecule counts, detected-gene counts, and a gene-versus-molecule QC decision in `p2$cellMeta`. Mitochondrial and ribosomal percentages are included when the gene annotation supports common prefix matching.
+`runQC()` records per-cell molecule and gene counts and a gene-vs-molecule QC flag in `p2$cellMeta`; failing cells are red.
 
 ```{r}
-suppressMessages(invisible(p2$runQC(verbose = FALSE)))
-qc <- p2$resolveCellMeta(c("n_molecules", "n_genes", "qc_pass"))
-
-data.frame(
-  cells = nrow(qc),
-  qc_pass = sum(as.logical(qc$qc_pass), na.rm = TRUE),
-  qc_fail = sum(!as.logical(qc$qc_pass), na.rm = TRUE),
-  fail_fraction = round(mean(!as.logical(qc$qc_pass), na.rm = TRUE), 4),
-  median_molecules = median(qc$n_molecules, na.rm = TRUE),
-  median_genes = median(qc$n_genes, na.rm = TRUE)
-)
-```
-
-The main QC plot shows detected genes versus molecule counts. Cells failing the default QC decision are highlighted in red.
-
-```{r}
-#| fig-width: 10
-#| fig-height: 4.5
-#| fig-dpi: 140
+#| fig-width: 6
+#| fig-height: 3.4
+#| fig-dpi: 110
+p2$runQC(verbose = FALSE)
 p2$plotQC()
 ```
 
-Composition QC is annotation-dependent. Here the sample has recognizable mitochondrial and ribosomal gene prefixes, so the violin plot is informative.
+Mitochondrial / ribosomal fractions, when the gene names support prefix matching:
 
 ```{r}
-#| fig-width: 7.5
-#| fig-height: 4.5
-#| fig-dpi: 140
+#| fig-width: 5
+#| fig-height: 3
+#| fig-dpi: 110
 p2$plotQCViolin()
 ```
 
-## Run The Default Workflow
+## Run the standard workflow
 
-The standard run performs filtering, variance modeling, PCA, graph construction, default UMAP embedding, Leiden clustering, and marker detection. Results are stored under canonical names so plotting calls can usually omit selectors.
+Filtering, variance modeling, PCA, graph, UMAP, Leiden clustering, and markers — stored under canonical names.
 
 ```{r}
-suppressMessages(invisible(p2$run(plots = "none", verbose = FALSE)))
-
-groups <- p2$getGrouping()
-summary <- data.frame(
-  cells = nrow(p2$getRawCounts()),
-  raw_genes = ncol(p2$getRawCounts()),
-  analysis_genes = sum(p2$resolveGeneMeta("analysis_pass")$analysis_pass),
-  od_genes = length(p2$misc$odgenes),
-  default_grouping = p2$getDefaultGrouping(),
-  clusters = length(levels(groups))
-)
-summary
+p2$run(plots = "none", verbose = FALSE)
 ```
 
-```{r}
-cluster_sizes <- sort(table(p2$getGrouping()), decreasing = TRUE)
-head(data.frame(cluster = names(cluster_sizes), cells = as.integer(cluster_sizes)), 15)
-```
+## Variance model
 
-## Variance Model QC
-
-`runVariance()` models the mean-variance relationship and selects overdispersed genes for PCA. The diagnostic plot checks the fitted trend and the adjusted variance distribution after normalization. Overdispersed genes are highlighted in red.
+`runVariance()` fits the mean-variance trend and selects overdispersed genes (red) for PCA.
 
 ```{r}
-#| fig-width: 10
-#| fig-height: 4.8
-#| fig-dpi: 140
+#| fig-width: 7
+#| fig-height: 3.4
+#| fig-dpi: 110
 p2$plotVarianceQC()
 ```
 
-## PCA And Default UMAP Embedding
-
-The PCA elbow plot shows percent total variance explained by each PC and cumulatively. Use it to assess whether the default PC range is reasonable before interpreting the graph and embedding.
+## PCA and UMAP
 
 ```{r}
-#| fig-width: 7.5
-#| fig-height: 4.2
-#| fig-dpi: 140
+#| fig-width: 4.5
+#| fig-height: 3
+#| fig-dpi: 110
 p2$plotPCAElbow()
 ```
 
-The default UMAP embedding below is colored by the default Leiden clustering. Check for coherent clusters, tiny outlying groups, and possible QC or batch structure before annotating cell types.
+UMAP colored by the Leiden clustering:
 
 ```{r}
-#| fig-width: 7.4
-#| fig-height: 6.2
-#| fig-dpi: 140
-p2$plotEmbedding(
-  mark.groups = TRUE,
-  size = 0.35,
-  alpha = 0.55,
-  title = "GSM5746259 Leiden clusters"
-)
+#| fig-width: 5
+#| fig-height: 4.5
+#| fig-dpi: 110
+p2$plotEmbedding(mark.groups = TRUE, size = 0.3, alpha = 0.5, title = "Leiden clusters")
 ```
 
-## Marker Genes
+## Markers
 
-The default run stores marker genes for the default grouping. The dot plot and heatmap use the same marker result and marker-selection logic.
-
-```{r}
-marker_name <- "leiden"
-marker_name
-```
+The default run computed markers for the Leiden grouping. The dot plot shows the top markers per cluster (color = mean expression, size = fraction of cells):
 
 ```{r}
-#| fig-width: 15
-#| fig-height: 10.5
-#| fig-dpi: 140
-p2$plotMarkerDotPlot(
-  markers = marker_name,
-  n.genes.per.group = 3,
-  selection = "balanced",
-  order.groups = TRUE,
-  dot.scale = 6
-) + ggplot2::labs(title = "Leiden marker genes") +
+#| fig-width: 14
+#| fig-height: 7.5
+#| fig-dpi: 130
+p2$plotMarkerDotPlot(markers = "leiden", n.genes.per.group = 3, selection = "balanced",
+                     order.groups = TRUE, dot.scale = 6) +
+  ggplot2::labs(title = "Leiden marker genes") +
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
 ```
 
-The native marker heatmap avoids a heavy ComplexHeatmap dependency. The top tracks show QC metrics so marker blocks can be inspected together with per-cell quality summaries.
+A native marker heatmap (no ComplexHeatmap dependency), with QC tracks on top:
 
 ```{r}
-#| fig-width: 13.8
-#| fig-height: 9
-#| fig-dpi: 140
-p2$plotMarkerHeatmap(
-  markers = marker_name,
-  engine = "native",
-  n.genes.per.group = 3,
-  selection = "balanced",
-  column.metadata = c("n_molecules", "n_genes"),
-  row.label.font.size = 9,
-  split = TRUE,
-  show_heatmap_legend = TRUE
-)
+#| fig-width: 12
+#| fig-height: 7
+#| fig-dpi: 130
+p2$plotMarkerHeatmap(markers = "leiden", engine = "native", n.genes.per.group = 3,
+                     selection = "balanced", column.metadata = c("n_molecules", "n_genes"),
+                     row.label.font.size = 9, split = TRUE, show_heatmap_legend = TRUE)
 ```
 
-## Next Steps
+## Next steps
 
-For real analyses, the next step is usually biological annotation. Store cluster annotations as another cell metadata column and make it the default grouping when appropriate:
+Annotate clusters from the marker evidence and make the annotation the default grouping:
 
 ```r
-p2$annotateClusters(
-  from = "leiden",
-  to = "cell_type",
-  map = c("1" = "T cells", "2" = "monocytes"),
-  setDefault = TRUE
-)
+p2$annotateClusters(from = "leiden", to = "cell_type",
+                    map = c("1" = "T cells", "2" = "monocytes"), setDefault = TRUE)
 ```
 
-After that, the same plotting and marker methods will use `cell_type` by default unless a different grouping is requested.
-
-For data with more than one modality, each modality is a **facet** and the same generic steps take a `facet=` (per modality) or `facets=` (joint) argument. See the [CITE-seq](pagoda2.1-citeseq.ipynb) and [ATAC / multiome](pagoda2.1-multiome.ipynb) notebooks for `addFacet()`, the CLR/TF-IDF view models, and WNN integration.
+The same plotting and marker methods then use `cell_type` by default. For multiple modalities, each is a **facet** and the same steps take `facet=` (per modality) or `facets=` (joint) — see the [CITE-seq](pagoda2.1-citeseq.ipynb) and [ATAC / multiome](pagoda2.1-multiome.ipynb) notebooks.

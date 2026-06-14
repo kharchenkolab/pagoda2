@@ -77,9 +77,9 @@ data.frame(clusters = length(unique(stats::na.omit(p2$cellMeta$wnn_leiden))))
 ```
 
 ```{r}
-#| fig-width: 7.2
-#| fig-height: 6
-#| fig-dpi: 140
+#| fig-width: 5
+#| fig-height: 4.5
+#| fig-dpi: 110
 p2$plotEmbedding(reduction = "WNN", embedding = "umap", grouping = "wnn_leiden",
                  mark.groups = TRUE, size = 0.5, alpha = 0.6, title = "WNN clusters (RNA + ATAC)")
 ```
@@ -87,9 +87,9 @@ p2$plotEmbedding(reduction = "WNN", embedding = "umap", grouping = "wnn_leiden",
 The per-cell ATAC weight shows where chromatin accessibility, rather than RNA, drives the joint neighborhood structure.
 
 ```{r}
-#| fig-width: 7.2
-#| fig-height: 6
-#| fig-dpi: 140
+#| fig-width: 5
+#| fig-height: 4.5
+#| fig-dpi: 110
 p2$plotEmbedding(reduction = "WNN", embedding = "umap",
                  colors = stats::setNames(p2$cellMeta$wnn_weight_ATAC, rownames(p2$cellMeta)),
                  size = 0.5, alpha = 0.7, title = "per-cell ATAC weight")
@@ -106,7 +106,7 @@ suppressWarnings(p2$runMarkers(grouping = "wnn_leiden", name = "wnn_markers", ve
 ```{r}
 #| fig-width: 14
 #| fig-height: 7.5
-#| fig-dpi: 140
+#| fig-dpi: 130
 p2$plotMarkerDotPlot(markers = "wnn_markers", n.genes.per.group = 3, selection = "balanced",
                      order.groups = TRUE, dot.scale = 6) +
   ggplot2::labs(title = "RNA markers by WNN cluster") +
@@ -116,9 +116,9 @@ p2$plotMarkerDotPlot(markers = "wnn_markers", n.genes.per.group = 3, selection =
 Canonical lineage genes on the joint embedding confirm the clusters — `plotEmbedding(gene = ..., facet = "RNA")` (RNA is the default facet, so `facet=` is optional here):
 
 ```{r}
-#| fig-width: 11
-#| fig-height: 4.6
-#| fig-dpi: 140
+#| fig-width: 9
+#| fig-height: 4
+#| fig-dpi: 110
 markers <- intersect(c("CD3D", "MS4A1", "CD14"), pagoda2:::.pagoda2_axis_names(p2, "gene"))
 plots <- lapply(markers, function(g)
   p2$plotEmbedding(reduction = "WNN", embedding = "umap", gene = g, facet = "RNA",

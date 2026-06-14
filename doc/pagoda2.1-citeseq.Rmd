@@ -77,9 +77,9 @@ data.frame(clusters = length(unique(stats::na.omit(p2$cellMeta$wnn_leiden))))
 ```
 
 ```{r}
-#| fig-width: 7.2
-#| fig-height: 6
-#| fig-dpi: 140
+#| fig-width: 5
+#| fig-height: 4.5
+#| fig-dpi: 110
 p2$plotEmbedding(reduction = "WNN", embedding = "umap", grouping = "wnn_leiden",
                  mark.groups = TRUE, size = 0.6, alpha = 0.6, title = "WNN clusters (RNA + ADT)")
 ```
@@ -87,9 +87,9 @@ p2$plotEmbedding(reduction = "WNN", embedding = "umap", grouping = "wnn_leiden",
 The per-cell ADT weight shows where protein information drives the joint structure: cells in protein-distinguished populations (e.g. T-cell subsets) lean on ADT, others on RNA.
 
 ```{r}
-#| fig-width: 7.2
-#| fig-height: 6
-#| fig-dpi: 140
+#| fig-width: 5
+#| fig-height: 4.5
+#| fig-dpi: 110
 p2$plotEmbedding(reduction = "WNN", embedding = "umap",
                  colors = stats::setNames(p2$cellMeta$wnn_weight_ADT, rownames(p2$cellMeta)),
                  size = 0.6, alpha = 0.7, title = "per-cell ADT weight")
@@ -100,9 +100,9 @@ p2$plotEmbedding(reduction = "WNN", embedding = "umap",
 Color the WNN embedding by a surface protein — the same `plotEmbedding(gene = ..., facet = "ADT")` call used for RNA, pointed at the ADT facet. CD3 marks T cells, CD19 marks B cells: the protein cleanly lights up the joint clusters.
 
 ```{r}
-#| fig-width: 11
-#| fig-height: 4.6
-#| fig-dpi: 140
+#| fig-width: 9
+#| fig-height: 4
+#| fig-dpi: 110
 g_cd3 <- p2$plotEmbedding(reduction = "WNN", embedding = "umap", gene = "CD3_TotalSeqB",
                           facet = "ADT", size = 0.6, alpha = 0.7, title = "CD3 protein (T cells)")
 g_cd19 <- p2$plotEmbedding(reduction = "WNN", embedding = "umap", gene = "CD19_TotalSeqB",
@@ -126,7 +126,7 @@ RNA markers by WNN cluster (vertical gene labels keep the axis legible at this m
 ```{r}
 #| fig-width: 14
 #| fig-height: 7.5
-#| fig-dpi: 140
+#| fig-dpi: 130
 p2$plotMarkerDotPlot(markers = "wnn_markers", n.genes.per.group = 3, selection = "balanced",
                      order.groups = TRUE, dot.scale = 6) +
   ggplot2::labs(title = "RNA markers by WNN cluster") +
@@ -138,7 +138,7 @@ Surface proteins are detected in nearly every cell (CLR), so a dot plot's size d
 ```{r}
 #| fig-width: 8.5
 #| fig-height: 5.5
-#| fig-dpi: 140
+#| fig-dpi: 130
 adt <- as.matrix(p2$getExpressionBlock(facet = "ADT"))                       # cells x proteins (CLR)
 cl <- p2$cellMeta[rownames(adt), "wnn_leiden"]
 prot_by_cluster <- t(sapply(split(seq_len(nrow(adt)), cl),
