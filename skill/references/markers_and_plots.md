@@ -34,6 +34,11 @@ p2$runMarkers(grouping = "leiden",
               verbose = TRUE)
 ```
 
+For multimodal data, `runMarkers()` takes `facet=` and stores results
+facet-keyed (e.g. protein markers via `p2$runMarkers(grouping="leiden",
+facet="ADT")`); `findMarkers()` is an alias. See
+`references/multimodal_facets.md`.
+
 If `grouping` is omitted, pagoda2 uses `defaultGrouping` when available:
 
 ```r
@@ -215,6 +220,32 @@ dev.off()
 
 The native engine draws expression, marker-origin groups, cell groups, and
 optional cell metadata tracks without requiring ComplexHeatmap.
+
+For a high-resolution PDF, do not render the native heatmap directly into
+`cairo_pdf()` if the matrix is large. The native engine renders one device
+pixel per matrix cell and does not expose a `raster_quality`, `raster_device`,
+or max-cells-DPI knob, so direct PDF embedding can look oversmoothed at
+typical zoom. Render the heatmap to a high-DPI PNG first, then embed that
+raster into the PDF:
+
+```r
+png("marker_heatmap_native_300dpi.png",
+    width = 13.8, height = 9, units = "in", res = 300,
+    type = "cairo", bg = "white")
+p2$plotMarkerHeatmap(
+  markers = "leiden",
+  engine = "native",
+  n.genes.per.group = 3,
+  split = TRUE,
+  show_heatmap_legend = TRUE
+)
+dev.off()
+
+cairo_pdf("marker_heatmap_native.pdf", width = 13.8, height = 9)
+grid::grid.raster(png::readPNG("marker_heatmap_native_300dpi.png"),
+                  interpolate = FALSE)
+dev.off()
+```
 
 ## Optional ComplexHeatmap Backend
 

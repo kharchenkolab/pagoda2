@@ -10,7 +10,7 @@ Use standard R serialization for pagoda2-native continuation:
 ```r
 saveRDS(p2, "pagoda2_processed.rds")
 p2 <- readRDS("pagoda2_processed.rds")
-stopifnot(identical(p2$apiVersion, "2.1"))
+stopifnot(identical(p2$apiVersion, "2.2"))
 ```
 
 RDS preserves raw counts, matrix views, metadata, reductions, graphs,
@@ -28,6 +28,12 @@ p2$export("pagoda2_processed.h5ad",
           format = "h5ad",
           overwrite = TRUE)
 ```
+
+For multimodal objects, `format = "lstar"` writes a portable lstar Zarr store
+(a `cells` axis + one feature axis per facet + per-facet raw `counts`, with
+facet/recipe provenance); `pagoda2:::pagoda2FromLstar(path)` reads it back. The
+lstar Zarr store also doubles as the out-of-core disk backing for facets. See
+`references/multimodal_facets.md`.
 
 Current h5ad defaults:
 

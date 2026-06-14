@@ -20,13 +20,13 @@ for (pkg in c("remotes", "ggplot2", "hdf5r", "data.table", "R.utils",
 }
 
 if (!requireNamespace("pagoda2", quietly = TRUE) ||
-    !identical(get("Pagoda2", envir = asNamespace("pagoda2"))$public_fields$apiVersion, "2.1")) {
+    !identical(get("Pagoda2", envir = asNamespace("pagoda2"))$public_fields$apiVersion, "2.2")) {
   remotes::install_github("kharchenkolab/pagoda2", ref = "devel",
                           dependencies = TRUE, upgrade = "never")
 }
 
 library(pagoda2)
-stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
+stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.2"))
 ```
 
 Do not install Seurat, SeuratDisk, scanpy, reticulate, or loomR just to read
@@ -122,6 +122,9 @@ p2 <- Pagoda2$from10x("/path/to/filtered_feature_bc_matrix",
 p2 <- Pagoda2$from10xH5("/path/to/filtered_feature_bc_matrix.h5",
                         reader.args = list(sample.name = "sample_01"),
                         verbose = FALSE)
+# Multimodal 10x H5 (CITE-seq / multiome): from10xH5 reads the feature_type column
+# and builds facets automatically -- Gene Expression->RNA, Antibody Capture->ADT (CLR),
+# Peaks->ATAC (TF-IDF). p2$listFacets() shows them. See references/multimodal_facets.md.
 
 p2 <- Pagoda2$fromAnnData("/path/to/sample.h5ad",
                           reader.args = list(layer = "counts",
@@ -295,7 +298,7 @@ p2 <- Pagoda2$fromLoom(
 After any constructor:
 
 ```r
-stopifnot(identical(p2$apiVersion, "2.1"))
+stopifnot(identical(p2$apiVersion, "2.2"))
 stopifnot(inherits(p2$getRawCounts(), "dgCMatrix"))
 stopifnot(all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8))
 

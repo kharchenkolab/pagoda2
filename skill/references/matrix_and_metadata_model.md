@@ -12,7 +12,7 @@ p2 <- Pagoda2$from("/path/to/sample_directory",
                    format = "10x",
                    reader.args = list(sample.name = "sample_01"),
                    verbose = FALSE)
-stopifnot(identical(p2$apiVersion, "2.1"))
+stopifnot(identical(p2$apiVersion, "2.2"))
 
 p2$runQC(verbose = TRUE)
 p2$filterData(verbose = TRUE)
@@ -27,7 +27,7 @@ returns that class.
 For class-level checks before loading data:
 
 ```r
-stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
+stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.2"))
 ```
 
 External packages should prefer `p2$apiVersion` and public accessors such as
@@ -68,6 +68,14 @@ Instead it stores:
 - matrix-view parameters for normalized expression
 - QC and analysis masks
 - variance-model results needed to scale expression on demand
+
+The normalized view is a *recipe* (`view$model`) applied on the fly, not a
+second matrix. Models: `plain` (RNA: depth-normalize → log1p), `clr` (ADT:
+centered-log-ratio), `tfidf` (ATAC: TF-IDF). Each modality is a **facet** with
+its own raw counts + recipe; the default facet is RNA, and every accessor below
+takes a `facet=` argument (`p2$getRawCounts(facet="ADT")`,
+`p2$getMatrixView("analysis", facet="ADT")`). See
+`references/multimodal_facets.md` for the full facet model.
 
 Preferred accessors:
 

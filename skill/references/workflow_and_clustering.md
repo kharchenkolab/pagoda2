@@ -86,16 +86,20 @@ Use `threads` for advanced role-specific control:
 ```r
 p2$runEmbedding(threads = list(total = 10, sgd = 1))
 p2$runMarkers(threads = list(total = 10, r.workers = 6))
-p2$runPCA(threads = list(total = 10, blas = 4))
+p2$runReduction(method = "pca", threads = list(total = 10, blas = 4))
 ```
 
 Supported thread roles:
 
 - `total`: total method budget
 - `r.workers`: forked R workers for marker-style parallel loops
-- `native`: C++/OpenMP/N2R-style workers
+- `native`: C++/OpenMP workers (incl. the threaded hnswlib/RcppHNSW kNN backend)
 - `sgd`: UMAP stochastic-gradient workers
 - `blas`: BLAS/LAPACK threads where controllable
+
+Threading note: streaming reductions (variance, cluster pseudobulk) and kNN
+graph building parallelize well; PCA (`runReduction(method="pca")`) is
+irlba/sparse-matvec-bound and barely speeds up with more cores.
 
 Set object defaults when later calls should share the same policy:
 
@@ -138,13 +142,22 @@ cat(sprintf("%d analysis genes; %d OD genes\n",
             length(p2$getOdGenes())))
 ```
 
-## PCA
+## PCA (and the generic reduction API)
 
-Default PCA is 50 components and 3000 OD genes:
+PCA is a `method=` of the generic `runReduction()` step — there is no `runPCA`
+verb (removed in 2.2; same for `runLeiden`/`runWNN`/`runUMAP`). Default PCA is
+50 components and 3000 OD genes; `method` defaults to the facet's
+`defaultReduction` (PCA for RNA, LSI for ATAC):
 
 ```r
-p2$runPCA(nPcs = 50, n.odgenes = 3000, verbose = TRUE)
+p2$runReduction(nPcs = 50, n.odgenes = 3000, verbose = TRUE)   # = method "pca" on the default facet
+p2$runReduction(facet = "ADT", nPcs = 20)                      # per-facet -> reductions[["ADT:PCA"]]
+p2$runReduction(facet = "ATAC", method = "lsi")                # tfidf -> SVD -> reductions[["ATAC:LSI"]]
+p2$runReduction(facets = c("RNA","ADT"), method = "cca")       # joint integration -> reductions[["CCA"]]
 ```
+
+For multimodal facets, joint integration, and WNN, see
+`references/multimodal_facets.md`.
 
 Save the built-in elbow plot:
 
@@ -245,20 +258,23 @@ p2$plotEmbedding(colors = stats::setNames(mito$percent_mito, rownames(mito)))
 Assess cluster coherence, outlying islands, and whether QC or sample metadata
 dominates the embedding.
 
-## Leiden Clustering
+## Clustering (Leiden)
 
-Run Leiden directly when rerunning only clustering:
+Clustering is a `method=` of the generic `runClustering()` step (`leiden` is the
+default and only built-in method; `runLeiden()` remains as a thin legacy alias).
+Rerun clustering only:
 
 ```r
-p2$runLeiden(graph = "PCA",
-             name = "leiden",
-             resolution = 1,
-             setDefault = TRUE,
-             overwrite = TRUE)
+p2$runClustering(method = "leiden",
+                 graph = "PCA",          # or graph = "WNN" for a joint multimodal graph
+                 name = "leiden",
+                 resolution = 1,
+                 setDefault = TRUE,
+                 overwrite = TRUE)
 ```
 
-`runLeiden()` stores the grouping as cell metadata and can make it the default
-grouping. Inspect available groupings:
+`runClustering()` stores the grouping as cell metadata and can make it the
+default grouping. Inspect available groupings:
 
 ```r
 p2$listGroupings()

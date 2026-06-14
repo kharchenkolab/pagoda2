@@ -1,8 +1,8 @@
 ---
 name: pagoda2-scrna-v2
-description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw count import through QC, filtering, variance QC, PCA, UMAP, Leiden, marker genes, marker plots, optional annotation, and RDS/h5ad export.
-when_to_use: Use for one raw single-cell RNA-seq dataset when the user wants pagoda2.1 analysis, sparse memory-conscious processing, common scRNA-seq file I/O, or clean QC/UMAP/marker figures. Use a separate integration recipe for multi-sample integration or cross-dataset label transfer.
-avoid_when: Do not use for multi-sample integration, ATAC/multiome-specific analysis, trajectory analysis, or a Seurat/scanpy-native workflow unless the user explicitly asks to convert pagoda2 outputs.
+description: Run a pagoda2.1 single-dataset scRNA-seq workflow from raw count import through QC, filtering, variance QC, PCA, UMAP, Leiden, marker genes, marker plots, optional annotation, and RDS/h5ad export. Also covers multimodal data (CITE-seq RNA+ADT, ATAC/multiome) via facets, with WNN/CCA integration.
+when_to_use: Use for one raw single-cell dataset (RNA, or multimodal CITE-seq / ATAC / 10x multiome) when the user wants pagoda2.1 analysis, sparse memory-conscious or disk-backed (lstar-zarr) processing, common scRNA-seq file I/O, or clean QC/UMAP/marker figures. For multimodal, see references/multimodal_facets.md. Use a separate integration recipe for multi-sample integration or cross-dataset label transfer.
+avoid_when: Do not use for multi-sample (cross-dataset) integration, trajectory analysis, or a Seurat/scanpy-native workflow unless the user explicitly asks to convert pagoda2 outputs. (Single-sample multimodal — CITE-seq, ATAC, multiome — IS supported here via facets.)
 requires_tools: [run_r]
 capabilities_needed: [R, pagoda2-devel, ggplot2, hdf5r, data.table, R.utils, uwot, leidenAlg]
 keywords: [pagoda2, pagoda2.1, scRNA-seq, single cell RNA-seq, QC, filtering, variance normalization, overdispersed genes, PCA, UMAP, Leiden, markers, dotplot, heatmap, h5ad, h5Seurat, loom, 10x, CellRanger]
@@ -43,6 +43,11 @@ only when the task needs a variant, parameter detail, or troubleshooting:
   views, cell/gene metadata resolution, groupings, colors, and object access.
 - `references/export_and_interop.md` - RDS, h5ad export, optional
   conversions, metadata alignment, and round-trip checks.
+- `references/multimodal_facets.md` - **multimodal data via facets**
+  (CITE-seq RNA+ADT, ATAC/multiome): `addFacet()`, CLR/TF-IDF view models,
+  per-facet `runReduction()` (PCA/LSI), joint integration (WNN, CCA/sparse-CCA,
+  concat-PCA), name-keyed reductions/graphs, native 10x multimodal import, and
+  lstar-zarr disk backing. Load this whenever the data has >1 modality.
 
 ## Install
 
@@ -75,7 +80,7 @@ if (needs_pagoda2) {
 library(pagoda2)
 library(ggplot2)
 
-stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.1"))
+stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.2"))
 ```
 
 Do not run the pagoda2 package test suite as part of user analysis or routine
@@ -131,7 +136,7 @@ p2 <- Pagoda2$from10x(
   verbose = FALSE
 )
 
-stopifnot(identical(p2$apiVersion, "2.1"))
+stopifnot(identical(p2$apiVersion, "2.2"))
 stopifnot(inherits(p2$getRawCounts(), "dgCMatrix"))
 stopifnot(all(abs(p2$getRawCounts()@x - round(p2$getRawCounts()@x)) < 1e-8))
 
@@ -407,6 +412,43 @@ included raw counts and normalized expression.
 For metadata resolution and export semantics, read
 `references/matrix_and_metadata_model.md` and
 `references/export_and_interop.md`.
+
+---
+
+## Multimodal data (facets): CITE-seq, ATAC, 10x multiome
+
+When the input has more than one modality, each modality is a **facet** — a
+first-class bundle of raw counts + a normalization view recipe + its own
+variance/reductions. RNA is the default facet; add others with `addFacet()`.
+Pipeline steps are **generic with a `method=`** — there is no `runPCA`,
+`runLeiden`, `runWNN`, or `runUMAP`; the algorithm is always a `method=` of
+`runReduction` / `runGraph` / `runClustering` / `runEmbedding`.
+
+Native 10x multimodal import maps `feature_type` to facets automatically
+(`Gene Expression`→RNA/plain, `Antibody Capture`→ADT/CLR, `Peaks`→ATAC/TF-IDF):
+
+```r
+p2 <- Pagoda2$from10xH5("/path/filtered_feature_bc_matrix.h5", verbose = FALSE) # RNA + ADT/ATAC facets
+p2$listFacets()                                   # e.g. c("RNA","ADT") or c("RNA","ATAC")
+```
+
+Per-facet reductions, then **integrate** (joint products are name-keyed:
+`reductions[["PCA"]]`, `reductions[["ADT:PCA"]]`, `reductions[["WNN"]]`):
+
+```r
+p2$runVariance();                p2$runReduction(nPcs = 30)               # RNA -> PCA
+p2$runVariance(facet = "ADT", use.raw.variance = TRUE)
+p2$runReduction(facet = "ADT", nPcs = 20)                                 # ADT (CLR) -> ADT:PCA
+# ATAC instead: p2$runReduction(facet = "ATAC", method = "lsi")           # TF-IDF -> SVD -> ATAC:LSI
+
+p2$runGraph(method = "wnn", facets = c("RNA", "ADT"))   # WNN: per-cell modality weights + WSNN graph
+#   or a joint reduction: p2$runReduction(facets = c("RNA","ADT"), method = "cca")   # also "scca","concat"
+p2$runClustering(graph = "WNN", name = "wnn_leiden")
+p2$runEmbedding(reduction = "WNN", name = "umap")
+```
+
+Full API (membership masks / `requireFacets`, view models, CCA/concat options,
+lstar import-export, disk backing) is in `references/multimodal_facets.md`.
 
 ---
 
