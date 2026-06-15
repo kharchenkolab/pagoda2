@@ -8,7 +8,7 @@
 \alias{readPagoda2}
 \title{Create A Pagoda2 Object From Input}
 \usage{
-pagoda2From(x, format = NULL, reader.args = list(), ...)
+pagoda2From(x, format = NULL, reader.args = list(), make.unique.genes = TRUE, ...)
 
 pagoda2From10x(path, reader.args = list(), ...)
 
@@ -30,6 +30,10 @@ readPagoda2(path, format = NULL, reader.args = list(), ...)
 \item{format}{Input format for paths. \code{NULL} guesses from input.}
 
 \item{reader.args}{Named list of arguments passed to \code{readCounts()}.}
+
+\item{make.unique.genes}{Whether to make duplicated gene names unique with \code{make.unique()}
+(default=TRUE). Applies to both the path readers and a matrix supplied directly, so
+\code{Pagoda2$from(counts)} works even when the count matrix carries repeated gene symbols.}
 
 \item{...}{Arguments passed to \code{Pagoda2$new()}.}
 }

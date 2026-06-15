@@ -571,6 +571,11 @@
 .pagoda2_r6_set_count_matrix <- function(p2, countMatrix, depthScale = 1e3, min.cells.per.gene = 0,
                                          trim = round(min.cells.per.gene / 2), min.transcripts.per.cell = 10,
                                          lib.sizes = NULL, log.scale = FALSE, keep.genes = NULL, verbose = TRUE) {
+  # Normalize dimnames to plain character vectors. Some inputs (e.g. matrices whose dimnames are 1-D
+  # `array`s) otherwise break S4 by-name subsetting of the stored sparse matrix ("object of type 'S4' is
+  # not subsettable"), which surfaces later in filterCells()/filterData().
+  if (!is.null(rownames(countMatrix))) rownames(countMatrix) <- as.character(rownames(countMatrix))
+  if (!is.null(colnames(countMatrix))) colnames(countMatrix) <- as.character(colnames(countMatrix))
   # check names
   if (any(duplicated(rownames(countMatrix)))) {
     stop("Duplicate gene names are not allowed - please reduce")

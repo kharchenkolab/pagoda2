@@ -1314,14 +1314,17 @@ readCounts <- function(path, format = c("auto", "10x", "10x_h5", "h5ad", "h5seur
 
 #' Create A Pagoda2 Object From Input
 #'
-#' @param x Matrix-like object or input path.
+#' @param x Matrix-like object (genes x cells) or input path.
 #' @param format Input format for paths. NULL guesses from input.
 #' @param reader.args Named list of arguments passed to readCounts().
+#' @param make.unique.genes Whether to make duplicated gene names unique with `make.unique()` (default=TRUE).
+#'   Applies to both the path readers and a matrix supplied directly, so `Pagoda2$from(counts)` works even
+#'   when the count matrix carries repeated gene symbols.
 #' @param ... Arguments passed to Pagoda2$new().
 #'
 #' @return Pagoda2 object.
 #' @export
-pagoda2From <- function(x, format = NULL, reader.args = list(), ...) {
+pagoda2From <- function(x, format = NULL, reader.args = list(), make.unique.genes = TRUE, ...) {
   constructor.args <- list(...)
   if (is.character(x) && length(x) == 1 && (dir.exists(x) || file.exists(x))) {
     if (is.null(format)) {
@@ -1338,13 +1341,22 @@ pagoda2From <- function(x, format = NULL, reader.args = list(), ...) {
     if ("verbose" %in% names(constructor.args) && is.null(reader.args$verbose)) {
       reader.args$verbose <- constructor.args$verbose
     }
-    reader.args <- utils::modifyList(list(path = x, format = format, return.metadata = TRUE, make.unique.genes = TRUE), reader.args)
+    reader.args <- utils::modifyList(list(path = x, format = format, return.metadata = TRUE, make.unique.genes = make.unique.genes), reader.args)
     imported <- do.call(readCounts, reader.args)
     p2 <- do.call(Pagoda2$new, c(list(x = imported$counts), constructor.args))
     p2$setCellMeta(imported$cellMeta)
     p2$setGeneMeta(imported$geneMeta)
     p2$history$input <- list(format = reader.args$format, files = imported$files)
     return(p2)
+  }
+  ## Matrix supplied directly: de-duplicate gene names here (the constructor rejects duplicates) so the
+  ## common `Pagoda2$from(counts)` call does not require the caller to make.unique() first.
+  if (isTRUE(make.unique.genes) && !is.null(rownames(x)) && anyDuplicated(rownames(x)) > 0L) {
+    n.dup <- sum(duplicated(rownames(x)))
+    rownames(x) <- make.unique(rownames(x))
+    if (!isFALSE(constructor.args$verbose)) {
+      message("Made ", n.dup, " duplicate gene name(s) unique")
+    }
   }
   do.call(Pagoda2$new, c(list(x = x), constructor.args))
 }
