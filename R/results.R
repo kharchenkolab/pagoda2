@@ -1,16 +1,33 @@
 ## Result registry implementation for Pagoda2
 
-.pagoda2_r6_list_reductions <- function(p2) {
+.pagoda2_r6_list_reductions <- function(p2, long = FALSE) {
   nms <- names(p2$reductions)
   if (length(nms) == 0) {
-    return(data.frame(name = character(), n.cells = numeric(), n.dims = numeric(), stringsAsFactors = FALSE))
+    out <- data.frame(name = character(), n.cells = numeric(), n.dims = numeric(), stringsAsFactors = FALSE)
+    if (isTRUE(long)) {
+      out$facets <- character()
+      out$method <- character()
+      out$input_axes <- character()
+    }
+    return(out)
   }
-  data.frame(
+  out <- data.frame(
     name = nms,
     n.cells = vapply(p2$reductions[nms], nrow, numeric(1)),
     n.dims = vapply(p2$reductions[nms], ncol, numeric(1)),
     stringsAsFactors = FALSE
   )
+  if (isTRUE(long)) {
+    ## Surface the provenance the joint-reduction builders attach (workflow.R: WNN / joint-CCA / concat
+    ## set attr "facets"/"method"/"input_axes"); plain per-facet PCA/LSI carry none -> NA. comma-join the
+    ## (short) character-vector attrs so the result stays a flat one-row-per-reduction table.
+    prov <- function(red, a) { v <- attr(red, a); if (is.null(v)) NA_character_ else paste(as.character(v), collapse = ",") }
+    out$facets <- vapply(p2$reductions[nms], prov, character(1), a = "facets")
+    out$method <- vapply(p2$reductions[nms], prov, character(1), a = "method")
+    out$input_axes <- vapply(p2$reductions[nms], prov, character(1), a = "input_axes")
+  }
+  rownames(out) <- NULL
+  out
 }
 
 .pagoda2_r6_list_graphs <- function(p2) {

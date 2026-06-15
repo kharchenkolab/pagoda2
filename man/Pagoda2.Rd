@@ -1437,11 +1437,18 @@ p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=
   List stored reductions.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
-    \preformatted{Pagoda2$listReductions()}
+    \preformatted{Pagoda2$listReductions(long = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{long}}{logical If TRUE, append provenance columns (\code{facets}, \code{method}, \code{input_axes}) read from each reduction's attributes, so callers can tell what a joint reduction (e.g. WNN/CCA) integrates and how. Per-facet reductions (plain PCA/LSI) carry no such attributes and report NA (default=FALSE).}
+    }
     \if{html}{\out{</div>}}
   }
   \subsection{Returns}{
-    data.frame with reduction summaries.
+    data.frame with one row per reduction: \code{name}, \code{n.cells}, \code{n.dims} (and, when \code{long=TRUE}, \code{facets}, \code{method}, \code{input_axes}).
   }
 }
 

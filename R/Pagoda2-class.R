@@ -610,8 +610,9 @@ Pagoda2 <- R6::R6Class("Pagoda2",
 
     #' @description List stored reductions.
     #'
-    #' @return data.frame with reduction summaries.
-    listReductions = function() .pagoda2_r6_list_reductions(self),
+    #' @param long logical If TRUE, append provenance columns (\code{facets}, \code{method}, \code{input_axes}) read from each reduction's attributes, so callers can tell what a joint reduction (e.g. WNN/CCA) integrates and how. Per-facet reductions (plain PCA/LSI) carry no such attributes and report NA (default=FALSE).
+    #' @return data.frame with one row per reduction: \code{name}, \code{n.cells}, \code{n.dims} (and, when \code{long=TRUE}, \code{facets}, \code{method}, \code{input_axes}).
+    listReductions = function(long = FALSE) .pagoda2_r6_list_reductions(self, long = long),
 
     #' @description List stored graphs.
     #'

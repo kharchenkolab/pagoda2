@@ -57,6 +57,27 @@ test_that("B+F: WNN builds a weighted SNN graph (igraph) with provenance + a joi
   expect_identical(attr(p2$reductions[["WNN"]], "input_axes"), c("genes", "proteins"))
 })
 
+test_that("listReductions(long=TRUE) surfaces joint-reduction provenance; plain reductions report NA", {
+  skip_if_not_installed("RcppHNSW")
+  p2 <- build_wnn_p2()
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE))
+
+  short <- p2$listReductions()
+  expect_identical(colnames(short), c("name", "n.cells", "n.dims")) # default is unchanged (back-compat)
+
+  long <- p2$listReductions(long = TRUE)
+  expect_identical(colnames(long), c("name", "n.cells", "n.dims", "facets", "method", "input_axes"))
+  expect_true(all(c("PCA", "ADT:PCA", "WNN") %in% long$name))
+
+  w <- long[long$name == "WNN", ] # the joint reduction self-describes via its attrs
+  expect_identical(w$facets, "RNA,ADT")
+  expect_identical(w$method, "wnn")
+  expect_identical(w$input_axes, "genes,proteins")
+
+  pca <- long[long$name == "PCA", ] # a plain per-facet reduction has no provenance attrs -> NA
+  expect_true(is.na(pca$facets) && is.na(pca$method) && is.na(pca$input_axes))
+})
+
 test_that("runGraph() auto-integrates all reduction-ready facets by default (§0.2.6)", {
   skip_if_not_installed("RcppHNSW")
   p2 <- build_wnn_p2()
