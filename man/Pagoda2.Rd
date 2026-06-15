@@ -197,6 +197,7 @@ For a single facet or fully-aligned facets this equals the default facet's cells
     \item \href{#method-Pagoda2-requireFacets}{\code{Pagoda2$requireFacets()}}
     \item \href{#method-Pagoda2-addFacet}{\code{Pagoda2$addFacet()}}
     \item \href{#method-Pagoda2-listReductions}{\code{Pagoda2$listReductions()}}
+    \item \href{#method-Pagoda2-getModalityWeights}{\code{Pagoda2$getModalityWeights()}}
     \item \href{#method-Pagoda2-listGraphs}{\code{Pagoda2$listGraphs()}}
     \item \href{#method-Pagoda2-listEmbeddings}{\code{Pagoda2$listEmbeddings()}}
     \item \href{#method-Pagoda2-listMarkers}{\code{Pagoda2$listMarkers()}}
@@ -1449,6 +1450,33 @@ p2_object <- Pagoda2$new(counts, log.scale=TRUE, min.cells.per.gene=10, n.cores=
   }
   \subsection{Returns}{
     data.frame with one row per reduction: \code{name}, \code{n.cells}, \code{n.dims} (and, when \code{long=TRUE}, \code{facets}, \code{method}, \code{input_axes}).
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Pagoda2-getModalityWeights"></a>}}
+\if{latex}{\out{\hypertarget{method-Pagoda2-getModalityWeights}{}}}
+\subsection{\code{Pagoda2$getModalityWeights()}}{
+  Per-cell modality weights from a WNN joint reduction (cells x facets). These are the
+  data-driven weights `runGraph(method="wnn")` learns, attached to the joint reduction so multiple
+  WNN joints over different facet subsets coexist without clobbering each other. This is the documented
+  accessor downstream tools (e.g. conos multimodal fusion) consume.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{Pagoda2$getModalityWeights(name = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{character Joint-reduction name to read weights from. NULL picks the object's default
+reduction if it is a WNN joint, else the first weighted reduction; errors if none exist (default=NULL).}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    numeric matrix (cells x facets, columns = facet names) of per-cell modality weights summing to
+  1 per cell; NULL if `name` is given but is not a weighted (WNN) joint or does not exist.
   }
 }
 

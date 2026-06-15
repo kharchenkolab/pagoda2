@@ -614,6 +614,16 @@ Pagoda2 <- R6::R6Class("Pagoda2",
     #' @return data.frame with one row per reduction: \code{name}, \code{n.cells}, \code{n.dims} (and, when \code{long=TRUE}, \code{facets}, \code{method}, \code{input_axes}).
     listReductions = function(long = FALSE) .pagoda2_r6_list_reductions(self, long = long),
 
+    #' @description Per-cell modality weights from a WNN joint reduction (cells x facets). These are the
+    #'   data-driven weights `runGraph(method="wnn")` learns, attached to the joint reduction so multiple
+    #'   WNN joints over different facet subsets coexist without clobbering each other. This is the documented
+    #'   accessor downstream tools (e.g. conos multimodal fusion) consume.
+    #' @param name character Joint-reduction name to read weights from. NULL picks the object's default
+    #'   reduction if it is a WNN joint, else the first weighted reduction; errors if none exist (default=NULL).
+    #' @return numeric matrix (cells x facets, columns = facet names) of per-cell modality weights summing to
+    #'   1 per cell; NULL if `name` is given but is not a weighted (WNN) joint or does not exist.
+    getModalityWeights = function(name = NULL) .pagoda2_r6_get_modality_weights(self, name = name),
+
     #' @description List stored graphs.
     #'
     #' @return data.frame with graph summaries.

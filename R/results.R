@@ -1,5 +1,25 @@
 ## Result registry implementation for Pagoda2
 
+## Per-cell modality weights (cells x facets) carried by a WNN joint reduction (attr "weights"). The
+## name-scoped accessor surface for §3.3 ask #1 (conos Path-B fusion): unlike the cellMeta
+## wnn_weight_<facet> columns (which hold only the most-recent run), this resolves a specific joint.
+.pagoda2_r6_get_modality_weights <- function(p2, name = NULL) {
+  has.w <- function(r) !is.null(attr(r, "weights"))
+  if (is.null(name)) {
+    cand <- names(p2$reductions)[vapply(p2$reductions, has.w, logical(1))]
+    if (length(cand) == 0L) {
+      stop("no reduction carries per-cell modality weights; run runGraph(method = \"wnn\", ...) first", call. = FALSE)
+    }
+    dr <- tryCatch(p2$defaults$reduction, error = function(e) NULL)
+    name <- if (!is.null(dr) && dr %in% cand) dr else cand[[1]]
+  }
+  red <- p2$reductions[[name]]
+  if (is.null(red)) {
+    return(NULL) # unknown reduction -> NULL (probe-friendly for cross-package callers)
+  }
+  attr(red, "weights") # cells x facets, or NULL when this reduction is not a WNN joint
+}
+
 .pagoda2_r6_list_reductions <- function(p2, long = FALSE) {
   nms <- names(p2$reductions)
   if (length(nms) == 0) {

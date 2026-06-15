@@ -78,6 +78,50 @@ test_that("listReductions(long=TRUE) surfaces joint-reduction provenance; plain 
   expect_true(is.na(pca$facets) && is.na(pca$method) && is.na(pca$input_axes))
 })
 
+## capture only the clobber-guard warning, ignoring unrelated/benign warnings + messages
+clobber_warned <- function(expr) {
+  w <- character()
+  withCallingHandlers(suppressMessages(expr),
+    warning = function(cnd) { w <<- c(w, conditionMessage(cnd)); invokeRestart("muffleWarning") })
+  any(grepl("overwriting reduction", w))
+}
+
+test_that("getModalityWeights() returns name-scoped per-cell weights; survives multiple WNN joints (ask #1)", {
+  skip_if_not_installed("RcppHNSW")
+  p2 <- build_wnn_p2(extra.noise = TRUE) # RNA + ADT + HTO
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), name = "WNNra", verbose = FALSE))
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "HTO"), name = "WNNrh", verbose = FALSE))
+
+  w1 <- p2$getModalityWeights("WNNra")
+  expect_identical(colnames(w1), c("RNA", "ADT"))               # name-scoped: NOT clobbered by the WNNrh run
+  expect_equal(unname(rowSums(w1)), rep(1, nrow(w1)), tolerance = 1e-9)
+  w2 <- p2$getModalityWeights("WNNrh")
+  expect_identical(colnames(w2), c("RNA", "HTO"))               # the second joint keeps its own weights
+
+  expect_null(p2$getModalityWeights("PCA"))                     # a plain reduction has no weights -> NULL
+  expect_null(p2$getModalityWeights("does_not_exist"))          # unknown name -> NULL (probe-friendly)
+
+  p3 <- build_wnn_p2()                                          # reductions present, but no WNN run
+  expect_error(p3$getModalityWeights(), "run runGraph")
+})
+
+test_that("subset-facet joints coexist; clobber-guard warns only on name reuse with different provenance (ask #3)", {
+  skip_if_not_installed("RcppHNSW")
+  p2 <- build_wnn_p2(extra.noise = TRUE)
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), name = "WNNra", verbose = FALSE))
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "HTO"), name = "WNNrh", verbose = FALSE))
+
+  expect_true(all(c("WNNra", "WNNrh") %in% names(p2$reductions))) # two subset joints coexist
+  expect_true(all(c("WNNra", "WNNrh") %in% names(p2$graphs)))
+  expect_identical(attr(p2$reductions[["WNNra"]], "facets"), c("RNA", "ADT")) # distinct provenance
+  expect_identical(attr(p2$reductions[["WNNrh"]], "facets"), c("RNA", "HTO"))
+
+  # re-running the SAME facets under the SAME name is a legitimate refresh -> no clobber warning
+  expect_false(clobber_warned(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), name = "WNNra", verbose = FALSE)))
+  # reusing a name for a DIFFERENT facet set is almost always an accident -> warn
+  expect_true(clobber_warned(p2$runGraph(method = "wnn", facets = c("RNA", "HTO"), name = "WNNra", verbose = FALSE)))
+})
+
 test_that("runGraph() auto-integrates all reduction-ready facets by default (§0.2.6)", {
   skip_if_not_installed("RcppHNSW")
   p2 <- build_wnn_p2()

@@ -462,6 +462,7 @@
   rs[rs == 0] <- 1
   W <- ratio / rs # per-cell modality weights (normalized affinity ratios), sum to 1; overflow-free
   colnames(W) <- names(red)
+  rownames(W) <- common
   for (m in seq_len(nmod)) { # store as shared cell measures, aligned to the canonical axis
     v <- stats::setNames(rep(NA_real_, length(p2$cells)), p2$cells)
     v[common] <- W[, m]
@@ -499,6 +500,12 @@
   attr(Xj, "facets") <- as.character(facets)
   attr(Xj, "input_axes") <- input.axes
   attr(Xj, "method") <- "wnn"
+  ## Name-scoped per-cell modality weights (cells x facets): travel WITH the joint reduction so multiple
+  ## WNN joints over different facet subsets coexist without clobbering each other (the cellMeta
+  ## wnn_weight_<facet> columns above hold only the most-recent run). This is the accessor surface
+  ## getModalityWeights() / conos Path-B fusion reads (§3.3 ask #1).
+  attr(Xj, "weights") <- W
+  .pagoda2_warn_joint_clobber(p2, name, facets, "wnn")
   p2$reductions[[name]] <- Xj
   if (verbose) {
     message("WNN over ", paste(facets, collapse = "+"), ": per-cell weights + graphs[['", name,
@@ -728,9 +735,28 @@
   attr(scores, "facets") <- as.character(facets)
   attr(scores, "input_axes") <- input.axes # lstar provenance: feature-axis names (S5)
   attr(scores, "method") <- paste0("joint:", method)
+  .pagoda2_warn_joint_clobber(p2, name, facets, paste0("joint:", method))
   p2$reductions[[name]] <- scores
   if (verbose) message("joint reduction `", name, "` over facets ", paste(facets, collapse = "+"), " -> ", ncol(scores), " dims")
   invisible(scores)
+}
+
+## Warn before a joint write silently replaces an existing reduction of the SAME name but DIFFERENT
+## provenance (different facet set or method) -- the safety net for "multiple joints coexist" (§3.3 ask
+## #3): reusing a name across facet subsets is almost always an accident, so flag it and point at name=.
+.pagoda2_warn_joint_clobber <- function(p2, name, facets, method) {
+  prev <- p2$reductions[[name]]
+  if (is.null(prev)) {
+    return(invisible(NULL))
+  }
+  pf <- attr(prev, "facets")
+  pm <- attr(prev, "method")
+  if (!identical(as.character(pf), as.character(facets)) || !identical(pm, method)) {
+    was <- if (is.null(pm)) "a per-facet reduction" else paste0(pm, " over ", paste(pf, collapse = "+"))
+    warning("overwriting reduction '", name, "' (was ", was, ") with ", method, " over ",
+            paste(facets, collapse = "+"), "; pass a distinct name= to keep both", call. = FALSE)
+  }
+  invisible(NULL)
 }
 
 ## CCA / sparse-CCA — vertical (same-cell) canonical correlation between exactly two facets, §5.1.
@@ -828,6 +854,7 @@
   attr(scores, "input_axes") <- input.axes # lstar S5 provenance: per-facet feature axes
   attr(scores, "method") <- if (sparse) "joint:scca" else "joint:cca"
   attr(scores, "cancor") <- cancor
+  .pagoda2_warn_joint_clobber(p2, name, facets, attr(scores, "method"))
   p2$reductions[[name]] <- scores
   ## feature-space loadings live with each facet (lstar shared-factor-axis induction, §5)
   facetObjs[[1]]$loadings[[name]] <- U
