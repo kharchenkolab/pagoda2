@@ -101,6 +101,12 @@ test_that("getModalityWeights() returns name-scoped per-cell weights; survives m
   expect_null(p2$getModalityWeights("PCA"))                     # a plain reduction has no weights -> NULL
   expect_null(p2$getModalityWeights("does_not_exist"))          # unknown name -> NULL (probe-friendly)
 
+  # named (subset) joints do NOT write ambiguous cellMeta wnn_weight_* columns (§4.5.1 namespace) -- their
+  # weights live only in the name-scoped reduction attr; the canonical default "WNN" DOES populate them
+  expect_length(grep("^wnn_weight_", colnames(p2$cellMeta)), 0L)
+  suppressWarnings(p2$runGraph(method = "wnn", facets = c("RNA", "ADT"), verbose = FALSE)) # default name "WNN"
+  expect_true(all(c("wnn_weight_RNA", "wnn_weight_ADT") %in% colnames(p2$cellMeta)))
+
   p3 <- build_wnn_p2()                                          # reductions present, but no WNN run
   expect_error(p3$getModalityWeights(), "run runGraph")
 })

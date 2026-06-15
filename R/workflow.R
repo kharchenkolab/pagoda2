@@ -463,10 +463,16 @@
   W <- ratio / rs # per-cell modality weights (normalized affinity ratios), sum to 1; overflow-free
   colnames(W) <- names(red)
   rownames(W) <- common
-  for (m in seq_len(nmod)) { # store as shared cell measures, aligned to the canonical axis
-    v <- stats::setNames(rep(NA_real_, length(p2$cells)), p2$cells)
-    v[common] <- W[, m]
-    p2$cellMeta[[paste0("wnn_weight_", names(red)[m])]] <- v[rownames(p2$cellMeta)]
+  ## The canonical default joint ("WNN") also exposes its per-cell weights as cellMeta columns (Seurat-like
+  ## `<assay>.weight`; back-compat + convenience). NAMED joints (subset / multiple coexisting) would make the
+  ## bare `wnn_weight_<facet>` column ambiguous, so they keep their weights ONLY in the name-scoped reduction
+  ## attr below -- read via getModalityWeights(name). This keeps the cellMeta namespace unambiguous (§4.5.1).
+  if (identical(name, "WNN")) {
+    for (m in seq_len(nmod)) { # store as shared cell measures, aligned to the canonical axis
+      v <- stats::setNames(rep(NA_real_, length(p2$cells)), p2$cells)
+      v[common] <- W[, m]
+      p2$cellMeta[[paste0("wnn_weight_", names(red)[m])]] <- v[rownames(p2$cellMeta)]
+    }
   }
   ## (B) weighted SNN graph: combined affinity sum_m diag(w_m) %*% K_m, symmetrized (C + t(C)).
   C <- NULL
