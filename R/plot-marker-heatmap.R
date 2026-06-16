@@ -336,7 +336,7 @@
       )
     }
   }
-  annotation.colors <- .pagoda2_heatmap_annotation_colors(
+  annotation.colors <- sccore::heatmapAnnotationColors(
     column.annotation,
     color.list = column.metadata.colors,
     s = s,
@@ -368,7 +368,7 @@
     }
   }
 
-  .pagoda2_native_heatmap_spec(
+  sccore::heatmapSpec(
     x,
     column.groups = resolved.groups,
     row.groups = row.groups,
@@ -594,7 +594,7 @@
     legend.columns = legend.columns
   )
   if (engine == "native") {
-    .pagoda2_draw_native_heatmap(spec, newpage = native.newpage)
+    sccore::drawHeatmap(spec, newpage = native.newpage)
     if (return.details) {
       return(.pagoda2_marker_heatmap_details(spec, heatmap = NULL, engine = "native"))
     }

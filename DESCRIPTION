@@ -28,7 +28,7 @@ Imports:
     R6,
     RMTstat,
     Rtsne, 
-    sccore (>= 0.1.1), 
+    sccore (>= 1.1.0), 
     stats, 
     utils
 Suggests:
