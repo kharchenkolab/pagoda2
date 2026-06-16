@@ -53,7 +53,11 @@ only when the task needs a variant, parameter detail, or troubleshooting:
 
 Install pagoda2 from GitHub `devel` before use. The full workflow also needs
 ggplot2 for plots, data.table/R.utils for gzipped 10x text files, uwot for
-UMAP, and leidenAlg for Leiden clustering.
+UMAP, and leidenAlg for Leiden clustering. Pagoda2.1 also requires
+**sccore >= 1.1.0** (the native marker-heatmap engine lives in sccore); that
+version is on GitHub `dev` until the next CRAN release, so install it from
+source first — `dependencies = TRUE` would otherwise pull the older CRAN sccore
+and `plotMarkerHeatmap(engine = "native")` would fail.
 
 ```r
 options(repos = c(CRAN = "https://cloud.r-project.org"))
@@ -65,11 +69,18 @@ for (pkg in c("remotes", "ggplot2", "hdf5r", "data.table", "R.utils",
   }
 }
 
+# sccore >= 1.1.0 from GitHub `dev` (carries the native heatmap engine pagoda2 calls);
+# upgrade = "never" keeps the pagoda2 install below from downgrading it.
+if (!requireNamespace("sccore", quietly = TRUE) ||
+    utils::packageVersion("sccore") < "1.1.0") {
+  remotes::install_github("kharchenkolab/sccore", ref = "dev", upgrade = "never")
+}
+
 needs_pagoda2 <- !requireNamespace("pagoda2", quietly = TRUE)
 if (!needs_pagoda2) {
   needs_pagoda2 <- !identical(
     get("Pagoda2", envir = asNamespace("pagoda2"))$public_fields$apiVersion,
-    "2.1"
+    "2.2"
   )
 }
 if (needs_pagoda2) {
@@ -81,6 +92,7 @@ library(pagoda2)
 library(ggplot2)
 
 stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.2"))
+stopifnot(utils::packageVersion("sccore") >= "1.1.0")
 ```
 
 Do not run the pagoda2 package test suite as part of user analysis or routine

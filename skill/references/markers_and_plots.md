@@ -181,7 +181,10 @@ Assess:
 
 ## Native Marker Heatmap
 
-Use the native heatmap engine by default:
+Use the native heatmap engine by default. `engine = "native"` is drawn by the
+shared `sccore` heatmap renderer (`sccore::heatmapSpec()` / `drawHeatmap()`), so
+it needs **sccore >= 1.1.0** — guaranteed by the install step in
+`installation_and_io.md`; no ComplexHeatmap required.
 
 ```r
 png("marker_heatmap_native.png",

@@ -19,6 +19,14 @@ for (pkg in c("remotes", "ggplot2", "hdf5r", "data.table", "R.utils",
   }
 }
 
+# pagoda2.1 requires sccore >= 1.1.0 (native heatmap engine); on GitHub `dev`
+# until the next CRAN release. Install from source first so dependencies = TRUE
+# below does not pull the older CRAN sccore.
+if (!requireNamespace("sccore", quietly = TRUE) ||
+    utils::packageVersion("sccore") < "1.1.0") {
+  remotes::install_github("kharchenkolab/sccore", ref = "dev", upgrade = "never")
+}
+
 if (!requireNamespace("pagoda2", quietly = TRUE) ||
     !identical(get("Pagoda2", envir = asNamespace("pagoda2"))$public_fields$apiVersion, "2.2")) {
   remotes::install_github("kharchenkolab/pagoda2", ref = "devel",
@@ -27,6 +35,7 @@ if (!requireNamespace("pagoda2", quietly = TRUE) ||
 
 library(pagoda2)
 stopifnot(identical(pagoda2::Pagoda2$public_fields$apiVersion, "2.2"))
+stopifnot(utils::packageVersion("sccore") >= "1.1.0")
 ```
 
 Do not install Seurat, SeuratDisk, scanpy, reticulate, or loomR just to read
