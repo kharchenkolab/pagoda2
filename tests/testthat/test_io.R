@@ -665,3 +665,12 @@ test_that("Pagoda2 as Seurat carries named embeddings when available", {
   expect_true("pca_umap" %in% names(seu@reductions))
   expect_equal(get("Embeddings", envir = asNamespace("Seurat"))(seu, "pca_umap"), emb)
 })
+
+test_that("readers warn when a file lacks names (positional fallback)", {
+  # the broken-file signature: names come back as positional 1..n (e.g. an .h5seurat written from a
+  # Seurat v5 object by a SeuratObject<5 SeuratDisk, which stores integer placeholders)
+  expect_warning(.pagoda2_warn_positional_names(as.character(seq_len(50)), "gene", "h5Seurat"),
+                 "lack gene names")
+  expect_silent(.pagoda2_warn_positional_names(c("CD3E", "MS4A1", "FCN1"), "gene", "h5ad"))
+  expect_silent(.pagoda2_warn_positional_names(character(0), "gene", "loom"))      # nothing to flag
+})

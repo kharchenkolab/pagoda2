@@ -993,6 +993,23 @@
   invisible(path)
 }
 
+## Warn when a reader had to fall back to positional ("1","2",...) names -- a sign the source file did not
+## store real names. This happens, e.g., with an .h5seurat written from a Seurat v5 object by a
+## SeuratObject < 5 build of SeuratDisk, which serializes the Assay5 feature/cell metadata as integer
+## placeholders. Positional gene names break gene-space intersection across a panel, so flag them rather
+## than silently returning numbered genes.
+#' @keywords internal
+.pagoda2_warn_positional_names <- function(names, what, format) {
+  n <- length(names)
+  if (n > 1L && !anyNA(names) && all(names == as.character(seq_len(n)))) {
+    warning("the ", format, " file appears to lack ", what, " names (got positional 1..", n,
+            "); the source may not have stored them. If it was written from a Seurat v5 object via ",
+            "SeuratDisk, re-export from a v3 assay or with a SeuratObject>=5-compatible SeuratDisk.",
+            call. = FALSE)
+  }
+  invisible(names)
+}
+
 #' @keywords internal
 .pagoda2_read_loom <- function(path, gene.id = c("symbol", "id"), layer = NULL,
                                make.unique.genes = FALSE, cell.prefix = NULL,
@@ -1043,6 +1060,7 @@
     row.meta$gene_symbol <- as.character(row.meta[[gene.symbol.column]])
   }
   gene.names <- .pagoda2_select_gene_names(row.meta, fallback = gene.fallback, gene.id = gene.id)
+  gene.names <- .pagoda2_warn_positional_names(gene.names, "gene", "loom")
   if (!is.null(cell.prefix)) {
     cell.names <- paste(cell.prefix, cell.names, sep = "_")
   }
@@ -1100,6 +1118,7 @@
     cell.meta$sample <- sample.name
   }
   gene.names <- .pagoda2_select_gene_names(gene.meta, fallback = gene.fallback, gene.id = gene.id)
+  gene.names <- .pagoda2_warn_positional_names(gene.names, "gene", "h5ad")
   .pagoda2_finalize_import(
     counts = counts,
     gene.names = gene.names,
@@ -1184,7 +1203,7 @@
   }
   .pagoda2_finalize_import(
     counts = counts,
-    gene.names = rownames(gene.meta),
+    gene.names = .pagoda2_warn_positional_names(rownames(gene.meta), "gene", "h5Seurat"),
     cell.names = cell.names,
     gene.meta = gene.meta,
     cell.meta = cell.meta,
