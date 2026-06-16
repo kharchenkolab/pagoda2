@@ -19,4 +19,5 @@ utils::globalVariables(.pagoda2_global_variables)
   Pagoda2$fromAnnData <- pagoda2FromAnnData
   Pagoda2$fromH5Seurat <- pagoda2FromH5Seurat
   Pagoda2$fromLoom <- pagoda2FromLoom
+  Pagoda2$fromLstar <- pagoda2FromLstar
 }
