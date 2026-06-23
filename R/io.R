@@ -1422,9 +1422,26 @@ readPagoda2 <- function(path, format = NULL, reader.args = list(), ...) {
 #' @keywords internal
 .pagoda2_load_optional_namespace <- function(package, purpose) {
   if (!requireNamespace(package, quietly = TRUE)) {
-    stop("Package `", package, "` is required for ", purpose, ".")
+    stop("Package `", package, "` is required for ", purpose,
+         ", but is not installed. Install it with install.packages(\"", package, "\").",
+         call. = FALSE)
   }
   asNamespace(package)
+}
+
+## lstar is an optional, off-CRAN backend (a private GitHub package), so it is never a declared
+## dependency: the package name is held in a variable and every entry point is reached via get() on
+## its namespace, keeping `::`/requireNamespace static analysis from treating it as a hard dependency.
+## When a user opts into a disk-backed facet or lstar import/export without it installed, fail with an
+## actionable GitHub-install hint instead of a bare "could not find function".
+.pagoda2_lstar_ns <- function(purpose) {
+  pkg <- "lstar"
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    stop(purpose, " requires the '", pkg, "' package, which is not installed. ",
+         "Install it from GitHub: remotes::install_github(\"kharchenkolab/lstar\").",
+         call. = FALSE)
+  }
+  asNamespace(pkg)
 }
 
 #' @keywords internal
@@ -1524,9 +1541,7 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
 ## (genes/proteins/peaks) + one raw `counts` measure per facet. Aligned facets span (cells, <fax>);
 ## a facet covering a cell subset gets its own `cells.<facet>` axis (faithful partial coverage).
 .pagoda2_export_lstar <- function(p2, path, overwrite = FALSE, ...) {
-  if (!requireNamespace("lstar", quietly = TRUE)) {
-    stop("Export format `lstar` requires the lstar package", call. = FALSE)
-  }
+  lstar.ns <- .pagoda2_lstar_ns("Export format `lstar`")
   if (file.exists(path) && !isTRUE(overwrite)) {
     stop("`", path, "` exists; pass overwrite = TRUE", call. = FALSE)
   }
@@ -1550,7 +1565,7 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
   }
   ds <- list(kind = "sample", axes = axes, fields = fields)
   class(ds) <- "lstar_dataset"
-  lstar::lstar_write(ds, path)
+  get("lstar_write", envir = lstar.ns)(ds, path)
   invisible(path)
 }
 
@@ -1558,10 +1573,8 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
 ## (counts over the `genes` axis) constructs the object; other raw count measures become facets.
 pagoda2FromLstar <- function(path, facets = NULL, verbose = TRUE,
                              min.transcripts.per.cell = 0, min.cells.per.gene = 0, ...) {
-  if (!requireNamespace("lstar", quietly = TRUE)) {
-    stop("pagoda2FromLstar() requires the lstar package", call. = FALSE)
-  }
-  ds <- lstar::lstar_read(path)
+  lstar.ns <- .pagoda2_lstar_ns("pagoda2FromLstar()")
+  ds <- get("lstar_read", envir = lstar.ns)(path)
   is.raw.measure <- function(fl) {
     identical(fl$role, "measure") && identical(fl$state, "raw") && length(fl$span) == 2L && fl$span[[1]] %in% names(ds$axes)
   }

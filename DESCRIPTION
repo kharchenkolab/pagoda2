@@ -10,7 +10,6 @@ Depends:
     R (>= 3.5.0), Matrix, igraph
 biocViews:
 Imports:
-    dendsort, 
     fastcluster,
     graphics,
     grDevices,

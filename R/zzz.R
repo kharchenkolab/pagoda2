@@ -1,6 +1,8 @@
 .pagoda2_global_variables <- c(
   "component",
   "curve",
+  "log10_magnitude",
+  "log10_variance",
   "percent",
   "qc_gene_molecule_fitted",
   "qc_gene_molecule_lower",
@@ -8,7 +10,9 @@
   "qc_log_genes",
   "qc_log_molecules",
   "qc_pass",
-  "value"
+  "threshold",
+  "value",
+  "yintercept"
 )
 utils::globalVariables(.pagoda2_global_variables)
 

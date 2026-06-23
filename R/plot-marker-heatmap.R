@@ -485,26 +485,10 @@
 }
 
 
-#' @title Pagoda2 R6 class
-#' @description The class encompasses gene count matrices, providing methods for normalization, calculating embeddings, and differential expression.
-#' @param type string Data type (default='counts'). Currently only 'counts' supported.
-#' @param n.cores numeric Number of cores to use (default=1)
-#' @param n.odgenes integer Number of overdispersed genes to retrieve (default=NULL). If NULL, will return all.
-#' @param verbose boolean Whether to give verbose output (default=TRUE)
-#' @param batch fctor Batch factor for the dataset (default=NULL)
-#' @param lib.sizes character vector of library sizes (default=NULL)
-#' @param log.scale boolean If TRUE, scale counts by log() (default=TRUE)
-#' @param min.cells.per.gene integer Legacy deferred default for the minimum detected cells required by filterData() analysis gene masking (default=0)
-#' @param min.transcripts.per.cell integer Legacy deferred default for the minimum molecule count used by runQC()/filterData() (default=10)
-#' @param keep.genes list of genes to keep in the filterData() analysis gene mask regardless of coverage (default=NULL)
-#' @param trim numeric Parameter used for winsorizing count data (default=round(min.cells.per.gene/2)). If value>0, will winsorize counts in normalized space in the hopes of getting a more stable depth estimates. If value<=0, ignored.
-#' @param clusterType Optional cluster type to use as a group-defining factor (default=NULL)
-#' @param groups factor named with cell names specifying the clusters of cells to be compared (one against all) (default=NULL). To compare two cell clusters against each other, simply pass a factor containing only two levels.
-#' @param plot boolean Whether to output the plot (default=FALSE)
-#'
-#' @export Pagoda2
-
-
+#' Internal worker for Pagoda2$plotMarkerHeatmap(); see the `plotMarkerHeatmap` method on the
+#' \code{\link{Pagoda2}} class for the user-facing documentation.
+#' @keywords internal
+#' @noRd
 .pagoda2_r6_plot_marker_heatmap <- function(p2, markers = NULL, type = "counts", facet = NULL, engine = c("native", "complex", "legacy"),
                                             genes = NULL, grouping = NULL, groups = NULL, n.genes.per.group = 5,
                                             additional.genes = NULL, exclude.genes = NULL,

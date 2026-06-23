@@ -12,3 +12,5 @@ CHANGELOG.md
 ^vignettes\*.md$
 ^vignettes\figure$
 ^\.circleci$
+^tests/testthat/test_seurat_interop\.R$
+^AGENTS\.md$

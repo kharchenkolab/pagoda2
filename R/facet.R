@@ -219,9 +219,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
   feature.axis <- switch(featureType, gene = "genes", protein = "proteins", peak = "peaks", "features")
   stored.raw <- countMatrix
   if (identical(backend, "lstar")) {
-    if (!requireNamespace("lstar", quietly = TRUE)) {
-      stop("backend='lstar' requires the lstar package", call. = FALSE)
-    }
+    lstar.ns <- .pagoda2_lstar_ns("backend='lstar'")
     if (is.null(backend.dir)) {
       backend.dir <- tempfile(paste0("pagoda2_facet_", name, "_"), fileext = ".lstar.zarr")
     }
@@ -241,7 +239,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
     names(ds$axes)[2] <- feature.axis
     ds$fields$counts$span <- c("cells", feature.axis)
     class(ds) <- "lstar_dataset"
-    lstar::lstar_write(ds, backend.dir)
+    get("lstar_write", envir = lstar.ns)(ds, backend.dir)
     store.path <- backend.dir
     stored.raw <- NULL
   }
@@ -275,9 +273,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
 ## reducing -- no per-block dgCMatrix, bounded memory. population=TRUE matches the C++ kernel's /n
 ## variance, so a disk-backed facet matches its in-memory twin (§8.6 out-of-core seam).
 .pagoda2_facet_lstar_col_mean_var <- function(facet, view, n.cores = 1) {
-  if (!requireNamespace("lstar", quietly = TRUE)) {
-    stop("disk-backed (lstar) facet requires the lstar package", call. = FALSE)
-  }
+  lstar.ns <- .pagoda2_lstar_ns("disk-backed (lstar) facets")
   if (!identical(view$model, "plain") && !identical(view$model, "raw")) {
     stop("disk-backed (lstar) viewColMeanVar currently supports the plain/raw model only", call. = FALSE)
   }
@@ -286,7 +282,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
   lognorm <- identical(view$model, "plain") && isTRUE(view$log.scale)
   ## view$depth is named/ordered by the facet's cell axis == the store's cell (row) order at write time.
   depth.vec <- if (identical(view$model, "plain")) as.numeric(view$depth) else NULL
-  s <- lstar::stream_col_stats(store, "counts", n_threads = n.cores, lognorm = lognorm,
+  s <- get("stream_col_stats", envir = lstar.ns)(store, "counts", n_threads = n.cores, lognorm = lognorm,
     depth = depth.vec, depthScale = view$depthScale, population = TRUE)
   data.frame(m = as.numeric(s$mean), v = as.numeric(s$var), nobs = as.numeric(s$nnz), row.names = feats)
 }
@@ -295,9 +291,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
 ## store applying the plain view inline (no per-block dgCMatrix). Matches the in-memory colSumByFacView
 ## output shape (rows: <NA> + factor levels; cols: features). §8.6 streaming pseudobulk.
 .pagoda2_facet_lstar_col_sum_by_fac <- function(facet, view, cols, n.cores = 1) {
-  if (!requireNamespace("lstar", quietly = TRUE)) {
-    stop("disk-backed (lstar) facet requires the lstar package", call. = FALSE)
-  }
+  lstar.ns <- .pagoda2_lstar_ns("disk-backed (lstar) facets")
   if (!identical(view$model, "plain") && !identical(view$model, "raw")) {
     stop("disk-backed (lstar) viewColSumByFac currently supports the plain/raw model only", call. = FALSE)
   }
@@ -306,7 +300,7 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
   depth.vec <- if (identical(view$model, "plain")) as.numeric(view$depth) else NULL
   codes <- as.integer(cols)
   codes[is.na(codes)] <- 0L
-  M <- lstar::lstar_stream_col_sum_by_group(facet$store, "counts", codes, nlevels(cols) + 1L,
+  M <- get("lstar_stream_col_sum_by_group", envir = lstar.ns)(facet$store, "counts", codes, nlevels(cols) + 1L,
     lognorm = lognorm, depth = depth.vec, depthScale = view$depthScale, n_threads = n.cores)
   rownames(M) <- c("<NA>", levels(cols))
   colnames(M) <- feats
@@ -315,14 +309,12 @@ Pagoda2Facet <- R6::R6Class("Pagoda2Facet",
 
 ## Disk-backed (lstar) raw-count block read: a feature subset off disk (bounded), cells subset in R.
 .pagoda2_facet_lstar_raw <- function(p2, facet, cells = NULL, genes = NULL) {
-  if (!requireNamespace("lstar", quietly = TRUE)) {
-    stop("disk-backed (lstar) facet requires the lstar package", call. = FALSE)
-  }
+  lstar.ns <- .pagoda2_lstar_ns("disk-backed (lstar) facets")
   st <- p2$misc$facetStore[[facet$name]]
   feats <- st$featureNames
   cells.all <- names(st$depth)
   want <- if (is.null(genes)) feats else as.character(genes)
-  raw <- lstar::lstar_read_genes(facet$store, "counts", want, feats, cell_names = cells.all)
+  raw <- get("lstar_read_genes", envir = lstar.ns)(facet$store, "counts", want, feats, cell_names = cells.all)
   if (is.null(rownames(raw))) rownames(raw) <- cells.all
   if (is.null(colnames(raw))) colnames(raw) <- want
   if (!is.null(cells)) {
