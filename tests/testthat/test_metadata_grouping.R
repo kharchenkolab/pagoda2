@@ -322,8 +322,8 @@ test_that("native marker heatmap returns details and draws without ComplexHeatma
 })
 
 test_that("native heatmap renderer accepts generic matrix specs", {
-  native_heatmap_spec <- getFromNamespace(".pagoda2_native_heatmap_spec", "pagoda2")
-  draw_native_heatmap <- getFromNamespace(".pagoda2_draw_native_heatmap", "pagoda2")
+  native_heatmap_spec <- sccore::heatmapSpec
+  draw_native_heatmap <- sccore::drawHeatmap
   x <- matrix(
     c(0, 0.2, 0.7, 1, 0.1, 0.3, 0.8, 0.9, 0.6, 0.4, 0.2, 0),
     nrow = 3,
@@ -353,7 +353,7 @@ test_that("native heatmap renderer accepts generic matrix specs", {
     show_heatmap_legend = TRUE
   )
 
-  expect_s3_class(spec, "pagoda2_native_heatmap_spec")
+  expect_s3_class(spec, "sccoreHeatmapSpec")
   expect_false(inherits(spec, "pagoda2_marker_heatmap_spec"))
   expect_identical(spec$row.groups, spec$gene.groups)
   expect_identical(spec$row.group.colors, spec$gene.group.colors)
@@ -367,8 +367,8 @@ test_that("native heatmap renderer accepts generic matrix specs", {
 })
 
 test_that("native heatmap legend shows all discrete levels by default when they fit", {
-  native_heatmap_spec <- getFromNamespace(".pagoda2_native_heatmap_spec", "pagoda2")
-  draw_native_heatmap <- getFromNamespace(".pagoda2_draw_native_heatmap", "pagoda2")
+  native_heatmap_spec <- sccore::heatmapSpec
+  draw_native_heatmap <- sccore::drawHeatmap
   x <- matrix(
     seq_len(28 * 140) / (28 * 140),
     nrow = 28,
@@ -418,8 +418,8 @@ test_that("native heatmap legend shows all discrete levels by default when they 
 })
 
 test_that("native heatmap angles crowded column group labels", {
-  native_heatmap_spec <- getFromNamespace(".pagoda2_native_heatmap_spec", "pagoda2")
-  draw_native_heatmap <- getFromNamespace(".pagoda2_draw_native_heatmap", "pagoda2")
+  native_heatmap_spec <- sccore::heatmapSpec
+  draw_native_heatmap <- sccore::drawHeatmap
   cell.types <- c(
     "Classical monocytes",
     "Naive CD4 T cells",
