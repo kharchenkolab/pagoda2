@@ -44,7 +44,10 @@
 #' @keywords internal
 .pagoda2_h5_open <- function(path, mode = "r") {
   if (!requireNamespace("hdf5r", quietly = TRUE)) {
-    stop("Package `hdf5r` is required to read HDF5-based formats.")
+    stop("Reading or writing HDF5-based formats (.h5ad, .h5Seurat, .loom, 10x .h5) requires the ",
+         "'hdf5r' package, which is not installed. Install it with install.packages(\"hdf5r\") ",
+         "(hdf5r needs the HDF5 system library, e.g. 'libhdf5-dev' on Debian/Ubuntu or ",
+         "'hdf5' via Homebrew on macOS).", call. = FALSE)
   }
   hdf5r::H5File$new(filename = path, mode = mode)
 }

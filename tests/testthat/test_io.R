@@ -329,6 +329,7 @@ test_that("readCounts requires explicit sample selection for multiple triplets",
 })
 
 test_that("readCounts autodetects CellRanger HDF5 files", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   path <- tempfile(fileext = ".h5")
   write_cellranger_h5(path, cm)
@@ -341,6 +342,7 @@ test_that("readCounts autodetects CellRanger HDF5 files", {
 })
 
 test_that("readCounts autodetects loom files and reads attributes", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   path <- tempfile(fileext = ".loom")
   write_loom_file(path, cm)
@@ -356,6 +358,7 @@ test_that("readCounts autodetects loom files and reads attributes", {
 })
 
 test_that("readCounts reads loom layers and transposed loom matrices", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()[1:2, , drop = FALSE]
   path <- tempfile(fileext = ".loom")
   write_loom_file(path, cm, transpose = TRUE)
@@ -368,6 +371,7 @@ test_that("readCounts reads loom layers and transposed loom matrices", {
 })
 
 test_that("readCounts autodetects h5ad files without reticulate", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   path <- tempfile(fileext = ".h5ad")
   write_h5ad_file(path, cm)
@@ -382,6 +386,7 @@ test_that("readCounts autodetects h5ad files without reticulate", {
 })
 
 test_that("readCounts autodetects h5Seurat files without Seurat", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   path <- tempfile(fileext = ".h5Seurat")
   write_h5seurat_file(path, cm)
@@ -416,6 +421,7 @@ test_that("Pagoda2$from constructs objects from 10x paths and records metadata",
 })
 
 test_that("specific Pagoda2 file constructors call fixed format readers", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   path <- tempfile(fileext = ".h5ad")
   write_h5ad_file(path, cm)
@@ -436,6 +442,7 @@ test_that("specific Pagoda2 file constructors call fixed format readers", {
 })
 
 test_that("Pagoda2$fromLoom constructs objects from loom files", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   path <- tempfile(fileext = ".loom")
   write_loom_file(path, cm)
@@ -483,6 +490,7 @@ test_that("Pagoda2 as list and RDS export preserve core axes", {
 })
 
 test_that("Pagoda2 exports h5ad with exact AnnData axes and sparse counts", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
     cm,
@@ -529,6 +537,7 @@ test_that("Pagoda2 exports h5ad with exact AnnData axes and sparse counts", {
 })
 
 test_that("h5ad export writes normalized X from matrix views", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
     cm,
@@ -555,6 +564,7 @@ test_that("h5ad export writes normalized X from matrix views", {
 })
 
 test_that("h5ad export resolves flexible AnnData metadata before writing", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
     cm,
@@ -580,6 +590,7 @@ test_that("h5ad export resolves flexible AnnData metadata before writing", {
 })
 
 test_that("h5ad export rejects unnamed non-axis metadata", {
+  testthat::skip_if_not_installed("hdf5r")
   cm <- make_io_matrix()
   p2 <- Pagoda2$new(
     cm,
