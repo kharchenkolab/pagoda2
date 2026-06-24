@@ -49,6 +49,8 @@ VignetteBuilder: knitr
 Enhances:
     ComplexHeatmap,
     RhpcBLASctl
+Remotes:
+    kharchenkolab/sccore@dev
 URL: https://github.com/kharchenkolab/pagoda2
 BugReports: https://github.com/kharchenkolab/pagoda2/issues
 NeedsCompilation: yes
