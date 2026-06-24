@@ -1,6 +1,7 @@
 .pagoda2_global_variables <- c(
   "component",
   "curve",
+  "gene",
   "log10_magnitude",
   "log10_variance",
   "percent",

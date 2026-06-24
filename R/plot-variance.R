@@ -76,6 +76,20 @@
       )
     )
   }
+  ## Keep guide lines from inflating the (free-scaled) Adjusted variance panel beyond the genes
+  ## themselves: drop any threshold above the panel's actual data max -- chiefly the variance `cap`
+  ## at log10(max.adjusted.variance), which is rarely reached -- so the axis tracks the gene cloud.
+  adj.value.max <- max(plot.df$value[plot.df$panel == "Adjusted variance"])
+  thresholds <- thresholds[thresholds$yintercept <= adj.value.max, , drop = FALSE]
+
+  ## Label the most overdispersed genes (highest adjusted variance) in the Adjusted variance panel,
+  ## using ggrepel when available so names don't overplot. ggrepel is optional: skip labels if absent.
+  label.df <- NULL
+  if (length(odgenes) > 0L && requireNamespace("ggrepel", quietly = TRUE)) {
+    od.adj <- od[od$panel == "Adjusted variance", , drop = FALSE]
+    od.adj <- od.adj[order(od.adj$value, decreasing = TRUE), , drop = FALSE]
+    label.df <- utils::head(od.adj, 10L)
+  }
 
   p <- ggplot2::ggplot() +
     ggplot2::geom_point(
@@ -103,6 +117,19 @@
       inherit.aes = FALSE,
       color = "#2c7fb8",
       linewidth = 0.7
+    )
+  }
+  if (!is.null(label.df) && nrow(label.df) > 0L) {
+    p <- p + ggrepel::geom_text_repel(
+      data = label.df,
+      ggplot2::aes(x = log10_magnitude, y = value, label = gene),
+      inherit.aes = FALSE,
+      size = 2.6,
+      color = "firebrick4",
+      segment.size = 0.2,
+      segment.color = "grey55",
+      min.segment.length = 0,
+      max.overlaps = Inf
     )
   }
   p +
