@@ -329,13 +329,13 @@ embedKnnGraphUmap <- function(knn.graph, k=NULL, ...) {
     stop("You need to install package 'uwot' to be able to use UMAP embedding.")
   }
 
-  adj.mat <- igraph::as_adj(knn.graph, attr="weight") %>% as("TsparseMatrix")
+  adj.mat <- as(igraph::as_adj(knn.graph, attr="weight"), "TsparseMatrix")
   vals.per.col <- split(setNames(adj.mat@x, adj.mat@i + 1), adj.mat@j + 1)
-  k.min <- sapply(vals.per.col, length) %>% min()
+  k.min <- min(sapply(vals.per.col, length))
   k <- if (is.null(k)) k.min else min(k, k.min)
   
   knns <- lapply(vals.per.col, function(x) sort(x, decreasing=TRUE)[1:k])
-  knn.ids <- sapply(knns, function(x) as.integer(names(x))) %>% t()
+  knn.ids <- t(sapply(knns, function(x) as.integer(names(x))))
   knn.sims <- do.call(rbind, knns)
   knn.dists <- 1 - knn.sims / max(knn.sims)
   

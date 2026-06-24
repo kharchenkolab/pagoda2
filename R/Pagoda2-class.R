@@ -8,7 +8,6 @@
 #' @import RMTstat
 #' @importFrom irlba irlba
 #' @importFrom parallel mclapply
-#' @importFrom magrittr %>%
 #' @importFrom mgcv gam
 #' @importFrom N2R Knn
 #' @importFrom Rtsne Rtsne
@@ -1641,9 +1640,8 @@ Pagoda2 <- R6::R6Class("Pagoda2",
       names(ds) <- colnames(x)
 
       if (append.specificity.metrics) {
-        ds <- names(ds) %>%
-          setNames(., .) %>%
-          papply(function(n) sccore::appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts = cm, append.auc = append.auc), n.cores = n.cores)
+        nm <- setNames(names(ds), names(ds))
+        ds <- papply(nm, function(n) sccore::appendSpecificityMetricsToDE(ds[[n]], cols, n, p2.counts = cm, append.auc = append.auc), n.cores = n.cores)
       }
 
       if (is.null(groups)) {

@@ -544,10 +544,7 @@
     stop("Clustering `", name, "` already exists for graph `", graph, "`; use overwrite=TRUE")
   }
   if (is.null(method)) {
-    if (!requireNamespace("leidenAlg", quietly = TRUE)) {
-      stop("Package `leidenAlg` is required for runLeiden()")
-    }
-    method <- leidenAlg::leiden.community
+    method <- leidenAlg::leiden.community # leidenAlg is a hard dependency; the default Leiden backend
     method.name <- "leidenAlg::leiden.community"
   } else {
     method.name <- deparse(substitute(method))
