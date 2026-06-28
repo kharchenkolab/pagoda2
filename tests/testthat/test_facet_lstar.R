@@ -43,3 +43,21 @@ test_that("pagoda2 -> lstar zarr -> pagoda2 is a fixed point on facet counts (mu
   expect_equal(as.character(p3$cellMeta[p2$cells, "leiden"]), as.character(p2$cellMeta[p2$cells, "leiden"]))
   expect_equal(p3$cellMeta[p2$cells, "depth"], dep)
 })
+
+# A viewer-extended store carries viewer@0.1 `cache` navigators (counts_cellmajor + stats/markers/od).
+# The `cache`-tagged counts_cellmajor is a raw cells x genes measure, so without the cache guard
+# fromLstar would mistake it for a second RNA facet. It must be skipped.
+test_that("fromLstar skips viewer@0.1 cache navigators (counts_cellmajor is not a phantom facet)", {
+  skip_if_not_installed("lstar")
+  set.seed(11); ng <- 14; nc <- 30
+  rna <- matrix(rpois(ng * nc, 3), ng, nc, dimnames = list(paste0("g", seq_len(ng)), paste0("c", seq_len(nc))))
+  p2 <- Pagoda2$new(as(Matrix::Matrix(rna, sparse = TRUE), "dgCMatrix"), verbose = FALSE, n.cores = 1,
+    min.cells.per.gene = 0, min.transcripts.per.cell = 0, trim = 0, log.scale = TRUE)
+  p2$setGrouping("leiden", factor(paste0("k", (seq_len(nc) - 1) %% 4)), setDefault = TRUE)
+  path <- tempfile(fileext = ".lstar.zarr")
+  p2$export(path, format = "lstar")
+  lstar::viewer_extend(path)                 # add the viewer@0.1 cache navigators (in place)
+  p3 <- pagoda2:::pagoda2FromLstar(path, verbose = FALSE)
+  expect_setequal(p3$listFacets(), "RNA")    # counts_cellmajor (cache) is NOT imported as a 2nd facet
+  expect_equal(as.matrix(p3$getFacet("RNA")$rawCounts), as.matrix(p2$getFacet("RNA")$rawCounts))
+})

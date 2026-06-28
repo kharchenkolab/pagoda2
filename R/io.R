@@ -1559,7 +1559,8 @@ pagoda2FromLstar <- function(path, facets = NULL, verbose = TRUE,
   lstar.ns <- .pagoda2_lstar_ns("pagoda2FromLstar()")
   ds <- get("lstar_read", envir = lstar.ns)(path)
   is.raw.measure <- function(fl) {
-    identical(fl$role, "measure") && identical(fl$state, "raw") && length(fl$span) == 2L && fl$span[[1]] %in% names(ds$axes)
+    identical(fl$role, "measure") && identical(fl$state, "raw") && length(fl$span) == 2L &&
+      fl$span[[1]] %in% names(ds$axes) && is.null(fl$provenance$cache)   # skip regenerable caches (e.g. counts_cellmajor)
   }
   measures <- Filter(is.raw.measure, ds$fields)
   if (length(measures) == 0L) {
