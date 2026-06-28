@@ -1545,26 +1545,9 @@ pagoda2As <- function(p2, format = c("list", "sce", "seurat"), assay = "RNA",
   if (file.exists(path) && !isTRUE(overwrite)) {
     stop("`", path, "` exists; pass overwrite = TRUE", call. = FALSE)
   }
-  cells <- p2$cells
-  axes <- list(cells = list(labels = as.character(cells), origin = "observed", role = "observation"))
-  fields <- list()
-  for (fn in p2$listFacets()) {
-    f <- p2$getFacet(fn)
-    raw <- as(f$rawCounts, "CsparseMatrix") # cells x features
-    fax <- switch(f$featureType, gene = "genes", protein = "proteins", peak = "peaks", paste0(fn, "_features"))
-    axes[[fax]] <- list(labels = as.character(colnames(raw)), origin = "observed", role = "feature")
-    fname <- if (identical(fn, p2$defaultFacet)) "counts" else paste0(fn, ".counts")
-    prov <- list(facet = fn, feature_axis = fax, model = f$modelType, defaultReduction = f$defaultReduction)
-    if (identical(rownames(raw), as.character(cells))) {
-      fields[[fname]] <- list(values = raw, role = "measure", span = c("cells", fax), state = "raw", encoding = "csc", provenance = prov)
-    } else {
-      cax <- paste0("cells.", fn) # facet covers a cell subset -> its own observed cell axis
-      axes[[cax]] <- list(labels = as.character(rownames(raw)), origin = "observed", role = "observation")
-      fields[[fname]] <- list(values = raw, role = "measure", span = c(cax, fax), state = "raw", encoding = "csc", provenance = prov)
-    }
-  }
-  ds <- list(kind = "sample", axes = axes, fields = fields)
-  class(ds) <- "lstar_dataset"
+  # Extraction (multi-facet counts + embeddings + cellMeta) is the lstar `read_pagoda2` profile -- one
+  # source of truth shared with lstar's own converter, so export and `fromLstar` stay symmetric.
+  ds <- get("read_pagoda2", envir = lstar.ns)(p2)
   get("lstar_write", envir = lstar.ns)(ds, path)
   invisible(path)
 }
@@ -1615,6 +1598,28 @@ pagoda2FromLstar <- function(path, facets = NULL, verbose = TRUE,
       modelType = if (!is.null(fl$provenance$model)) fl$provenance$model else spec$model,
       featureType = spec$featureType,
       defaultReduction = if (!is.null(fl$provenance$defaultReduction)) fl$provenance$defaultReduction else spec$reduction)
+  }
+  # restore embeddings (role=embedding -> embeddings[[reduction]][[name]]) and cellMeta columns
+  # (provenance$cellmeta), aligned to this object's cell order -- the converse of lstar read_pagoda2,
+  # so a Pagoda2 -> lstar -> Pagoda2 round-trip preserves the embedding, clustering, and metadata.
+  cells <- as.character(p2$cells)
+  for (fn in names(ds$fields)) {
+    fl <- ds$fields[[fn]]
+    if (identical(fl$role, "embedding") && !is.null(fl$provenance$reduction)) {
+      em <- as.matrix(fl$values)
+      rownames(em) <- as.character(ds$axes[[fl$span[[1]]]]$labels)
+      if (length(fl$span) > 1L && !is.null(ds$axes[[fl$span[[2]]]])) {
+        colnames(em) <- as.character(ds$axes[[fl$span[[2]]]]$labels)
+      }
+      red <- fl$provenance$reduction
+      enm <- if (!is.null(fl$provenance$embedding)) fl$provenance$embedding else fn
+      if (is.null(p2$embeddings[[red]])) p2$embeddings[[red]] <- list()
+      p2$embeddings[[red]][[enm]] <- em[cells, , drop = FALSE]
+    } else if (!is.null(fl$provenance$cellmeta) && length(fl$span) == 1L && fl$span[[1]] %in% names(ds$axes)) {
+      v <- fl$values
+      names(v) <- as.character(ds$axes[[fl$span[[1]]]]$labels)
+      p2$cellMeta[[fl$provenance$cellmeta]] <- v[cells]
+    }
   }
   if (verbose) message("imported from lstar: ", paste(p2$listFacets(), collapse = ", "))
   p2

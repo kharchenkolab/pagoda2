@@ -17,6 +17,13 @@ test_that("pagoda2 -> lstar zarr -> pagoda2 is a fixed point on facet counts (mu
   a <- matrix(rpois(nc * np, 5) + 1L, nc, np, dimnames = list(paste0("c", seq_len(nc)), paste0("P", seq_len(np))))
   p2$addFacet("ADT", as(Matrix::Matrix(a, sparse = TRUE), "dgCMatrix"), modelType = "clr", featureType = "protein")
 
+  # embedding + clustering + cell metadata must also survive the round-trip (not just counts)
+  umap <- matrix(rnorm(nc * 2), nc, 2, dimnames = list(p2$cells, c("d1", "d2")))
+  p2$embeddings$PCA$UMAP <- umap
+  lei <- factor(paste0("k", (seq_len(nc) - 1) %% 4)); names(lei) <- p2$cells
+  p2$setGrouping("leiden", lei, setDefault = TRUE)
+  dep <- as.numeric(Matrix::colSums(rna)); p2$cellMeta$depth <- dep
+
   path <- tempfile(fileext = ".lstar.zarr")
   p2$export(path, format = "lstar")
   expect_true(dir.exists(path) || file.exists(path)) # a .lstar.zarr store is a directory
@@ -30,4 +37,9 @@ test_that("pagoda2 -> lstar zarr -> pagoda2 is a fixed point on facet counts (mu
   expect_identical(p3$getFacet("ADT")$modelType, "clr")
   expect_identical(p3$getFacet("ADT")$featureType, "protein")
   expect_identical(p3$cells, p2$cells)
+  # embedding, clustering, and metadata survive (the lstar read_pagoda2 / fromLstar restoration)
+  expect_false(is.null(p3$embeddings$PCA$UMAP))
+  expect_equal(p3$embeddings$PCA$UMAP[p2$cells, ], umap[p2$cells, ])
+  expect_equal(as.character(p3$cellMeta[p2$cells, "leiden"]), as.character(p2$cellMeta[p2$cells, "leiden"]))
+  expect_equal(p3$cellMeta[p2$cells, "depth"], dep)
 })
